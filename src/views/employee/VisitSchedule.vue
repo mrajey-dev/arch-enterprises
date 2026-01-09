@@ -85,15 +85,17 @@
           <label class="upload-btn">
             <i class="fas fa-upload"></i> Upload
             <input
-              type="file"
-              @change="
-                handleReportUpload(
-                  $event,
-                  item,
-                  item.visitType === 'AMC' ? 'amc' : 'service'
-                )
-              "
-            />
+  type="file"
+  multiple
+  @change="
+    handleReportUpload(
+      $event,
+      item,
+      item.visitType === 'AMC' ? 'amc' : 'service'
+    )
+  "
+/>
+
           </label>
           <span v-if="item.reportName">{{ item.reportName }}</span>
         </td>
@@ -115,15 +117,19 @@
 
         <!-- View -->
         <td data-label="View Report: ">
-          <button
-            v-if="item.report_path"
-            class="view-report-btn"
-            @click="viewReport(item.report_path)"
-          >
-            View
-          </button>
-          <span v-else>No Report</span>
-        </td>
+  <div v-if="item.report_paths && item.report_paths.length">
+    <button
+      v-for="(path, rIndex) in item.report_paths"
+      :key="rIndex"
+      class="view-report-btn"
+      @click="viewReport(path)"
+    >
+      View {{ rIndex + 1 }}
+    </button>
+  </div>
+  <span v-else>No Report</span>
+</td>
+
       </tr>
     </tbody>
   </table>
@@ -280,27 +286,32 @@ export default {
       });
   },
     // ✅ File Upload
-  handleReportUpload(event, record, type = "amc") {
-  const file = event.target.files[0];
-  if (!file) return;
+// ✅ File Upload Handler
+handleReportUpload(event, record, type = "amc") {
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
 
-  record.reportFile = file;
-  record.reportName = file.name;
+  record.reportFiles = files;
+  record.reportNames = files.map(f => f.name);
 
-  this.uploadReport(file, record, type);
+  this.uploadReport(files, record, type);
 },
 
-
-async uploadReport(file, record, type) {
+// ✅ Upload Reports to API
+async uploadReport(files, record, type) {
   const formData = new FormData();
-  formData.append("report", file);
+
+  if (type === "service") {
+    // Send each file with repeated 'report' key (Option 1)
+    files.forEach(file => formData.append("report", file));
+  } else {
+    // AMC API expects 'reports[]'
+    files.forEach(file => formData.append("reports[]", file));
+  }
+
   formData.append("company_name", record.company_name);
   formData.append("po_number", record.po_number);
-
-  // ✅ Include the record ID
-  if (record.id) {
-    formData.append("id", record.id);
-  }
+  if (record.id) formData.append("id", record.id);
 
   const endpoint =
     type === "service"
@@ -312,21 +323,16 @@ async uploadReport(file, record, type) {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    // Save the returned file path
-    record.reportPath = response.data.file_path;
-    record.reportName = response.data.report_name;
+    // Update record with paths and names returned from backend
+    record.report_paths = response.data.report_paths || [];
+    record.reportNames = response.data.report_names || [];
 
-    console.log("Report uploaded successfully:", record.reportPath);
-
-    // Optional: reload or refresh table
-    setTimeout(() => {
-      window.location.reload();
-    }, 10);
-
+    console.log("✅ Reports uploaded:", record.report_paths);
   } catch (error) {
-    console.error("Error uploading report", error);
+    console.error("❌ Error uploading reports", error.response?.data || error);
   }
 },
+
 
 
 
@@ -353,28 +359,60 @@ async uploadReport(file, record, type) {
     },
 
     // ✅ Fetch AMC Visits
-    async fetchAmcVisits() {
-      try {
-        const response = await axios.get("/api/visit_assign");
-        this.amcVisits = response.data;
-      } catch (error) {
-        console.error("Error fetching AMC visits:", error);
-      }
-    },
+  async fetchAmcVisits() {
+  try {
+    const response = await axios.get("/api/visit_assign");
+
+    this.amcVisits = response.data.map(item => {
+      return {
+        ...item,
+        // ✅ convert JSON string → array
+       report_paths: item.report_path
+  ? item.report_path.split(",")
+  : []
+
+      };
+    });
+
+  } catch (error) {
+    console.error("Error fetching AMC visits:", error);
+  }
+},
+
 
     // ✅ Fetch Service Visits
-    async fetchServices() {
-      try {
-        const response = await axios.get("/api/service_assign");
-        this.services = response.data;
-      } catch (error) {
-        console.error("Error fetching service visits:", error);
-      }
-    },
+async fetchServices() {
+  try {
+    const response = await axios.get("/api/service_assign");
 
- // ✅ Update AMC Status
+    this.services = response.data.map(item => ({
+      ...item,
+      report_paths: item.report_path
+        ? item.report_path.split(",")
+        : []
+    }));
+
+  } catch (error) {
+    console.error("Error fetching service visits:", error);
+  }
+},
+
+
+
+// ✅ Update AMC Status with confirmation
 async updateAmcStatus(visit) {
   try {
+    // If status is changing to Completed and no report is uploaded
+    if (visit.status === "Completed" && (!visit.report_paths || visit.report_paths.length === 0)) {
+      const confirmMsg = "You want to complete service without uploading report?";
+      const proceed = window.confirm(confirmMsg);
+      if (!proceed) {
+        // Revert status back to Pending
+        visit.status = "Pending";
+        return;
+      }
+    }
+
     // Update AMC visit status
     await axios.put(`/api/visit_assign/${visit.id}`, { status: visit.status });
 
@@ -396,9 +434,19 @@ async updateAmcStatus(visit) {
   }
 },
 
-// ✅ Update Service Status
+// ✅ Update Service Status with confirmation
 async updateServiceStatus(service) {
   try {
+    if (service.status === "Completed" && (!service.report_paths || service.report_paths.length === 0)) {
+      const confirmMsg = "You want to complete service without uploading report?";
+      const proceed = window.confirm(confirmMsg);
+      if (!proceed) {
+        // Revert status back to Pending
+        service.status = "Pending";
+        return;
+      }
+    }
+
     // Update Service visit status
     await axios.put(`/api/service_assign/${service.id}`, {
       status: service.status,

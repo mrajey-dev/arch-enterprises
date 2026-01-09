@@ -618,7 +618,7 @@
   <div class="modal-card">
 
     <!-- Header -->
-    <div class="modal-header" style="flex-direction: row;">
+    <div class="modal-header" style="float: right;">
       
       <button class="btn btn-dark" @click="closeWelcomeModal"> ⬅ Back</button>
       
@@ -627,14 +627,14 @@
     <!-- Body -->
  <div class="modal-body">
   <h3>
-    Welcome to <strong>{{ selectedCompany }}</strong> reports
+     <strong>{{ selectedCompany }}</strong> reports
   </h3>
 
   <table class="report-table" v-if="allReports.length">
     <thead>
       <tr>
         <th>Type</th>
-        <th>Updated On</th>
+        <th>Report uploaded date</th>
         <th>Report</th>
       </tr>
     </thead>
@@ -662,18 +662,23 @@
         <td>{{ new Date(item.updated_at).toLocaleString() }}</td>
 
         <td>
-  <button
-    v-if="item.report_path"
-    class="view-btn"
-    @click="openReport(item.report_path)"
-  >
-    View Report
-  </button>
+  <div v-if="item.report_path">
+    <button
+      v-for="(path, idx) in item.report_path.split(',')"
+      :key="idx"
+      class="view-btn"
+      @click="openReport(path)"
+      style="margin-right:5px;"
+    >
+      View {{ idx + 1 }}
+    </button>
+  </div>
 
   <span v-else style="color:#999;font-size:13px;">
     Not Available
   </span>
 </td>
+
 
       </tr>
     </tbody>
@@ -897,16 +902,21 @@
         <span class="completed-btn">Completed</span>
       </td> -->
 
-      <td>
-        <button
-          v-if="row.report_path && row.report_path.trim() !== ''"
-          class="view-report-btn"
-          @click="viewReport(row.report_path)"
-        >
-          View
-        </button>
-        <span v-else>No Report</span>
-      </td>
+     <td>
+  <div v-if="row.report_path && row.report_path.trim() !== ''">
+    <button
+      v-for="(path, idx) in row.report_path.split(',')"
+      :key="idx"
+      class="view-report-btn"
+      @click="viewReport(path)"
+      style="margin-right: 5px;"
+    >
+      View {{ idx + 1 }}
+    </button>
+  </div>
+  <span v-else>No Report</span>
+</td>
+
     </tr>
   </tbody>
 
@@ -1113,15 +1123,20 @@
       </td> -->
 
       <td>
-        <button
-          v-if="item.report_path && item.report_path.trim() !== ''"
-          class="view-report-btn"
-          @click="viewReport(item.report_path)"
-        >
-          View
-        </button>
-        <span v-else>No Report</span>
-      </td>
+  <div v-if="item.report_path && item.report_path.trim() !== ''">
+    <button
+      v-for="(path, idx) in item.report_path.split(',')"
+      :key="idx"
+      class="view-report-btn"
+      @click="viewReport(path)"
+      style="margin-right:5px;"
+    >
+      View {{ idx + 1 }}
+    </button>
+  </div>
+  <span v-else>No Report</span>
+</td>
+
     </tr>
   </tbody>
 
@@ -1354,7 +1369,7 @@
   <div class="modal-card">
 
     <!-- Close Button -->
-    <button class="btn btn-dark" @click="showViewQuotationPopup = false">⬅ Back</button>
+    <button class="btn btn-dark" style="float: right;" @click="showViewQuotationPopup = false">⬅ Back</button>
 
     <h2>All Quotations</h2>
 
@@ -4679,8 +4694,7 @@ async saveAmcDetails() {
     })
     .then(() => {
       alert(this.editingCustomerId ? 'Customer updated!' : 'Customer registered!');
-      this.resetCustomerForm();
-      this.fetchCustomers();
+      window.location.reload();
     })
     .catch(() => {
       alert('Failed to save customer.');
