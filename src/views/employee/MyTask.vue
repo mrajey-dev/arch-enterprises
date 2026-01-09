@@ -93,7 +93,7 @@
   class="task-priority"
   :class="task.isVisit ? 'visit-service' : task.priority.toLowerCase()"
 >
-  {{ task.isVisit ? 'Visit / Service' : task.priority }}
+  {{ task.isVisit ? 'Service Due' : task.priority }}
 </span>
 
             </div>
@@ -331,6 +331,7 @@ filteredTasks() {
 
     const filtered = this.tasks
       .filter(task => {
+        if (task.isVisit && task.status === 'Completed') return false;
         const taskDate = task.isVisit ? task.deadline : task.dueDate;
         if (!taskDate) return false;
 
@@ -401,7 +402,7 @@ async fetchAssignedServices() {
     );
 
     const serviceTasks = res.data
-      .filter(s => s.status !== 'Completed')   // 🔑 filter completed
+      .filter(s => s.status && s.status.toLowerCase().trim() !== 'completed')
       .map(s => ({
         id: `service-${s.id}`,
         title: s.company_name,
@@ -415,11 +416,12 @@ async fetchAssignedServices() {
         isService: true
       }));
 
-    this.tasks = [...this.tasks, ...serviceTasks];
+    this.tasks.push(...serviceTasks);
   } catch (err) {
     console.error('Failed to fetch assigned services', err);
   }
 },
+
 
     goToVisitSchedule() {
   window.location.href =
@@ -436,12 +438,11 @@ async fetchAssignedVisits() {
       { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
     );
 
-    // Only include tasks where status !== 'Completed'
     const visitTasks = res.data
-      .filter(v => v.status !== 'Completed')   // 🔑 filter completed
+      .filter(v => v.status && v.status.toLowerCase().trim() !== 'completed')
       .map(v => ({
         id: `visit-${v.id}`,
-        title: `${v.company_name}`,
+        title: v.company_name,
         dueDate: null,
         deadline: v.visit_date,
         priority: 'Task Assigned',
@@ -451,11 +452,12 @@ async fetchAssignedVisits() {
         isVisit: true
       }));
 
-    this.tasks = [...this.tasks, ...visitTasks];
+    this.tasks.push(...visitTasks);
   } catch (err) {
     console.error('Failed to fetch assigned visits', err);
   }
 },
+
 
      filterTitle() {
     // Allow: letters, numbers, space, and &
@@ -928,7 +930,7 @@ async mounted() {
   color: #08306b;
 }
 .visit-service {
-  background: #171717 !important;
+  background: #0a5153 !important
 
 }
 
@@ -1459,13 +1461,13 @@ async mounted() {
     color: #ffffff;
 }
 .task-priority.low {
-  background-color: #ffffff;
+  background-color: #2c8487;
 }
 .task-priority.medium {
-  background-color: #ffffff;
+  background-color: #2c8487;
 }
 .task-priority.high {
-  background-color: #ffffff;
+  background-color: #2c8487;
 }
 
 /* Status Color Borders */

@@ -433,6 +433,7 @@
           <option value="NOS.">NOS.</option>
           <option value="Box">Box</option>
           <option value="Set">Set</option>
+            <option value="K.G.">K.G.</option> 
           <option value="Day">Day</option>
         </select>
       </div>
@@ -1895,7 +1896,15 @@
     </div>
 
     <div class="modal-buttons">
-      <button class="btn btn-success" @click="saveSupplyDetails">Save</button>
+      <!-- <button class="btn btn-success" @click="saveSupplyDetails">Save</button> -->
+           <button 
+  class="btn btn-success" style="background-color: cornflowerblue;"
+  :disabled="isSavingSupply"
+  @click="saveSupplyDetails"
+>
+  <span v-if="isSavingSupply" class="loader"></span>
+  <span v-else>Save Supply</span>
+</button>
       <button class="btn btn-secondary" @click="closeSupplyModal">Cancel</button>
     </div>
   </div>
@@ -1968,7 +1977,15 @@
     </div>
 
     <div class="modal-buttons">
-      <button class="btn btn-success" @click="saveServiceDetails">Save</button>
+      <!-- <button class="btn btn-success" @click="saveServiceDetails">Save</button> -->
+         <button 
+  class="btn btn-success" style="background-color: cornflowerblue;"
+  :disabled="isSavingService"
+  @click="saveServiceDetails"
+>
+  <span v-if="isSavingService" class="loader"></span>
+  <span v-else>Save Service</span>
+</button>
       <button class="btn btn-secondary" @click="closeServiceModal">Cancel</button>
     </div>
   </div>
@@ -2064,7 +2081,15 @@
     </div>
 
     <div class="modal-buttons">
-      <button class="btn btn-success" @click="saveAmcDetails">Save AMC</button>
+      <button 
+  class="btn btn-success" style="background-color: cornflowerblue;"
+  :disabled="isSavingAmc"
+  @click="saveAmcDetails"
+>
+  <span v-if="isSavingAmc" class="loader"></span>
+  <span v-else>Save</span>
+</button>
+
       <button class="btn btn-secondary" @click="closeAmcModal">Cancel</button>
     </div>
   </div>
@@ -2427,6 +2452,9 @@
     },
     data() {
       return {
+        isSavingAmc: false, // 👈 loader state
+         isSavingSupply: false,
+         isSavingService:false,
         deliveredFilters: {
       search: '',
       month: ''
@@ -4216,6 +4244,13 @@ assignVisit(visit) {
     this.amcDetails.po_file = event.target.files[0];
   },
 async saveAmcDetails() {
+  if (!this.amcDetails.PONumber || !this.amcDetails.PODate) {
+    alert("Please fill required fields");
+    return;
+  }
+
+  this.isSavingAmc = true; // 🔄 start loader
+
   try {
     const token = localStorage.getItem('token');
     const formData = new FormData();
@@ -4229,14 +4264,11 @@ async saveAmcDetails() {
     formData.append('assign_to', this.amcDetails.assigned_employee);
     formData.append('company_name', this.selectedCustomer.company_name);
 
-    // ✅ NEW FIELDS (required)
-    formData.append('date', this.amcDetails.PODate);             // PO DATE
-    formData.append('value_of_po', this.amcDetails.value_of_po); // PO VALUE
+    // Required fields
+    formData.append('date', this.amcDetails.PODate);
+    formData.append('value_of_po', this.amcDetails.value_of_po);
 
-    // ❌ REMOVED — you told me you don't want service type
-    // formData.append('service_type', this.amcDetails.service_type);
-
-    // Append visit1 … visit12 separately
+    // Visit dates
     this.visitDates.forEach((date, index) => {
       formData.append(`visit${index + 1}`, date || '');
     });
@@ -4246,7 +4278,7 @@ async saveAmcDetails() {
       formData.append('po_file', this.amcDetails.po_file);
     }
 
-    const response = await axios.post('/api/add_po', formData, {
+    await axios.post('/api/add_po', formData, {
       headers: { 
         Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data'
@@ -4254,13 +4286,17 @@ async saveAmcDetails() {
     });
 
     alert('AMC PO saved successfully');
-   window.location.reload();
+    window.location.reload();
 
   } catch (error) {
     console.error(error);
     alert('Error saving AMC PO ❌');
+  } finally {
+    this.isSavingAmc = false; // ✅ stop loader ALWAYS
   }
-},
+}
+
+,
 
 
     openPoDetails(po) {
@@ -4394,80 +4430,89 @@ async saveAmcDetails() {
     },
 
   saveSupplyDetails() {
-    if (!this.supplyDetails.poNumber || !this.supplyDetails.date) {
-      alert("Please fill required fields");
-      return;
+  if (!this.supplyDetails.poNumber || !this.supplyDetails.date) {
+    alert("Please fill required fields");
+    return;
+  }
+
+  this.isSavingSupply = true; // 🔄 start loader
+
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+
+  formData.append('company_name', this.selectedCustomer.company_name);
+  formData.append('po_type', 'Supply');
+  formData.append('po_number', this.supplyDetails.poNumber);
+  formData.append('date', this.supplyDetails.date);
+  formData.append('value_of_po', this.supplyDetails.value || 0);
+  formData.append('recommended_by', this.supplyDetails.recommendedBy || '');
+
+  if (this.supplyDetails.poFile) {
+    formData.append('po_file', this.supplyDetails.poFile);
+  }
+
+  axios.post('/api/add_po', formData, {
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data'
     }
-
-    const token = localStorage.getItem('token');
-    const formData = new FormData();
-
-    formData.append('company_name', this.selectedCustomer.company_name);
-    formData.append('po_type', 'Supply');
-    formData.append('po_number', this.supplyDetails.poNumber);
-    formData.append('date', this.supplyDetails.date);
-    formData.append('value_of_po', this.supplyDetails.value || 0);
-    formData.append('recommended_by', this.supplyDetails.recommendedBy || '');
-
-    if (this.supplyDetails.poFile) {
-      formData.append('po_file', this.supplyDetails.poFile);
-    }
-
-    axios.post('/api/add_po', formData, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    .then(res => {
-      alert('Supply PO saved successfully');
-     window.location.reload();
-    })
-    .catch(err => {
-      console.error('Save error:', err.response?.data || err);
-      alert('Failed to save Supply PO');
-    });
-  },
+  })
+  .then(() => {
+    alert('Supply PO saved successfully');
+    window.location.reload();
+  })
+  .catch(err => {
+    console.error('Save error:', err.response?.data || err);
+    alert('Failed to save Supply PO');
+  })
+  .finally(() => {
+    this.isSavingSupply = false; // ✅ stop loader ALWAYS
+  });
+},
 
 
-  saveServiceDetails() {
-    if (!this.serviceDetails.poNumber || !this.serviceDetails.date) {
-      alert("Please fill required fields");
-      return;
-    }
 
-    const token = localStorage.getItem('token');
-    const formData = new FormData();
+ saveServiceDetails() {
+  if (!this.serviceDetails.poNumber || !this.serviceDetails.date) {
+    alert("Please fill required fields");
+    return;
+  }
 
-    formData.append('company_name', this.selectedCustomer.company_name);
-    formData.append('po_type', 'Service');
-    formData.append('po_number', this.serviceDetails.poNumber);
-    formData.append('date', this.serviceDetails.date);
-    formData.append('type_of_service', this.serviceDetails.serviceType);
-    formData.append('value_of_po', this.serviceDetails.poValue);
+  this.isSavingService = true; // 🔄 start loader
+
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+
+  formData.append('company_name', this.selectedCustomer.company_name);
+  formData.append('po_type', 'Service');
+  formData.append('po_number', this.serviceDetails.poNumber);
+  formData.append('date', this.serviceDetails.date);
+  formData.append('type_of_service', this.serviceDetails.serviceType);
+  formData.append('value_of_po', this.serviceDetails.poValue);
   formData.append('assign_to', this.serviceDetails.assignTo);
 
+  if (this.serviceDetails.poCopy) {
+    formData.append('po_file', this.serviceDetails.poCopy);
+  }
 
-    if (this.serviceDetails.poCopy) {
-      formData.append('po_file', this.serviceDetails.poCopy);
+  axios.post('/api/add_po', formData, {
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data'
     }
-
-    axios.post('/api/add_po', formData, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    .then(() => {
-      alert('Service PO saved successfully');
-       window.location.reload();
-      
-    })
-    .catch(err => {
-      console.error('Save error:', err.response?.data || err);
-      alert('Failed to save Service PO');
-    });
-  },
+  })
+  .then(() => {
+    alert('Service PO saved successfully');
+    window.location.reload();
+  })
+  .catch(err => {
+    console.error('Save error:', err.response?.data || err);
+    alert('Failed to save Service PO');
+  })
+  .finally(() => {
+    this.isSavingService = false; // ✅ stop loader ALWAYS
+  });
+},
 
 
 
@@ -4706,6 +4751,21 @@ async saveAmcDetails() {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.loader {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #ffffff;
+  border-top: 3px solid transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .filter-bar {
   display: flex;
   gap: 10px;
