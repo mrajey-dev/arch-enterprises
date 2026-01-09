@@ -102,17 +102,11 @@
 
         <!-- Status -->
         <td  data-label="Status: ">
-          <select
-            v-model="item.status"
-            @change="
-              item.visitType === 'AMC'
-                ? updateAmcStatus(item)
-                : updateServiceStatus(item)
-            "
-          >
-            <option value="Pending">Pending</option>
-            <option value="Completed">Completed</option>
-          </select>
+         <select :value="item.status" @change="onStatusChange($event, item)">
+  <option value="Pending">Pending</option>
+  <option value="Completed">Completed</option>
+</select>
+
         </td>
 
         <!-- View -->
@@ -257,6 +251,33 @@ export default {
   },
   },
   methods: {
+async onStatusChange(event, item) {
+  const newStatus = event.target.value;
+
+  if (
+    newStatus === "Completed" &&
+    (!item.report_paths || item.report_paths.length === 0)
+  ) {
+    const ok = window.confirm(
+      "You want to complete service without uploading report?"
+    );
+
+    if (!ok) {
+      event.target.value = item.status;
+      return;
+    }
+  }
+
+  item.status = newStatus;
+
+  if (item.visitType === "AMC") {
+    this.updateAmcStatus(item);
+  } else {
+    this.updateServiceStatus(item);
+  }
+},
+
+
     resetFilters() {
   this.filters.month = "";
   this.filters.status = "";
@@ -387,40 +408,34 @@ async fetchServices() {
 
     this.services = response.data.map(item => ({
       ...item,
-      report_paths: item.report_path
-        ? item.report_path.split(",")
-        : []
+      report_paths:
+        item.report_path && item.report_path.trim() !== ""
+          ? item.report_path.split(",")
+          : []
     }));
 
   } catch (error) {
     console.error("Error fetching service visits:", error);
   }
-},
+}
+,
+
 
 
 
 // ✅ Update AMC Status with confirmation
 async updateAmcStatus(visit) {
   try {
-    // If status is changing to Completed and no report is uploaded
-    if (visit.status === "Completed" && (!visit.report_paths || visit.report_paths.length === 0)) {
-      const confirmMsg = "You want to complete service without uploading report?";
-      const proceed = window.confirm(confirmMsg);
-      if (!proceed) {
-        // Revert status back to Pending
-        visit.status = "Pending";
-        return;
-      }
-    }
 
-    // Update AMC visit status
-    await axios.put(`/api/visit_assign/${visit.id}`, { status: visit.status });
+    await axios.put(`/api/visit_assign/${visit.id}`, {
+      status: visit.status,
+    });
 
-    // Update AddPo table
     const poStatus = visit.status === "Completed" ? "Closed" : null;
-    await axios.put(`/api/add-po-status/${visit.po_number}`, { status: poStatus });
+    await axios.put(`/api/add-po-status/${visit.po_number}`, {
+      status: poStatus,
+    });
 
-    // Optional: add to completed orders table
     await axios.post("/api/completed-order", {
       company_name: visit.company_name,
       po_number: visit.po_number,
@@ -429,6 +444,7 @@ async updateAmcStatus(visit) {
       status: visit.status,
       service_type: "AMC",
     });
+
   } catch (error) {
     console.error("Error updating AMC status:", error);
   }
@@ -437,26 +453,15 @@ async updateAmcStatus(visit) {
 // ✅ Update Service Status with confirmation
 async updateServiceStatus(service) {
   try {
-    if (service.status === "Completed" && (!service.report_paths || service.report_paths.length === 0)) {
-      const confirmMsg = "You want to complete service without uploading report?";
-      const proceed = window.confirm(confirmMsg);
-      if (!proceed) {
-        // Revert status back to Pending
-        service.status = "Pending";
-        return;
-      }
-    }
-
-    // Update Service visit status
     await axios.put(`/api/service_assign/${service.id}`, {
       status: service.status,
     });
 
-    // Update AddPo table
     const poStatus = service.status === "Completed" ? "Closed" : null;
-    await axios.put(`/api/add-po-status/${service.po_number}`, { status: poStatus });
+    await axios.put(`/api/add-po-status/${service.po_number}`, {
+      status: poStatus,
+    });
 
-    // Optional: add to completed orders table
     await axios.post("/api/completed-order", {
       company_name: service.company_name,
       po_number: service.po_number,
@@ -469,6 +474,7 @@ async updateServiceStatus(service) {
     console.error("Error updating service status:", error);
   }
 },
+
 
 
     // ✅ New: Update AMC Visit Date
