@@ -118,7 +118,7 @@
       class="view-report-btn"
       @click="viewReport(path)"
     >
-      View {{ rIndex + 1 }}
+      Report {{ rIndex + 1 }}
     </button>
   </div>
   <span v-else>No Report</span>

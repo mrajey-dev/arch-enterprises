@@ -670,7 +670,7 @@
       @click="openReport(path)"
       style="margin-right:5px;"
     >
-      View {{ idx + 1 }}
+      Report {{ idx + 1 }}
     </button>
   </div>
 
@@ -911,7 +911,7 @@
       @click="viewReport(path)"
       style="margin-right: 5px;"
     >
-      View {{ idx + 1 }}
+      Report {{ idx + 1 }}
     </button>
   </div>
   <span v-else>No Report</span>
@@ -1131,7 +1131,7 @@
       @click="viewReport(path)"
       style="margin-right:5px;"
     >
-      View {{ idx + 1 }}
+      Report {{ idx + 1 }}
     </button>
   </div>
   <span v-else>No Report</span>

@@ -21,9 +21,16 @@
       <form @submit.prevent="submitLeaveType" class="attractive-form">
         <div class="form-row">
           <div class="input-group">
-            <label><i class="fas fa-heading"></i> Leave Name *</label>
-            <input v-model="leaveForm.leaveName" placeholder="Enter Leave Name" required />
-          </div>
+  <label><i class="fas fa-heading"></i> Leave Name *</label>
+  <input
+  v-model="leaveForm.leaveName"
+  maxlength="20"
+  required
+  @input="allowOnlyText('leaveName')"
+/>
+
+</div>
+
 
          <div class="input-group">
   <label><i class="fas fa-code"></i> Total Leaves *</label>
@@ -40,19 +47,25 @@
 
         <div class="form-row">
           <div class="input-group full-width">
-            <label><i class="fas fa-align-left"></i> Description</label>
-            <textarea
-              v-model="leaveForm.description"
-              placeholder="Enter Description (optional)"
-              rows="4"
-            ></textarea>
-          </div>
+  <label><i class="fas fa-align-left"></i> Description</label>
+   <textarea
+      v-model="leaveForm.description"
+      placeholder="Enter Description (optional)"
+      rows="4"
+      maxlength="50"
+      @input="allowOnlyText('description')"
+    ></textarea>
+</div>
+
         </div>
 
         <div class="modal-buttons">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> Save Leave Type
-          </button>
+          <button type="submit" class="btn btn-primary" :disabled="isSaving">
+  <i v-if="!isSaving" class="fas fa-save"></i>
+  <i v-else class="fas fa-spinner fa-spin"></i>
+  {{ isSaving ? 'Saving...' : 'Save Leave Type' }}
+</button>
+
           <button type="button" class="btn btn-secondary" @click="closeLeaveTypeForm()">
             Cancel
           </button>
@@ -90,12 +103,22 @@
       <td>{{ type.description }}</td>
       <td>
         <div class="action-buttons">
-          <button class="btn-edit" @click="editLeaveType(type)">
-            <i class="fas fa-edit"></i> Edit
-          </button>
-          <button class="btn-delete" @click="deleteLeaveType(type.id)">
-            <i class="fas fa-trash-alt"></i> Delete
-          </button>
+         <button class="btn-edit"
+        :disabled="editingId === type.id"
+        @click="editLeaveType(type)">
+  <i v-if="editingId !== type.id" class="fas fa-edit"></i>
+  <i v-else class="fas fa-spinner fa-spin"></i>
+  {{ editingId === type.id ? 'Opening...' : 'Edit' }}
+</button>
+
+          <button class="btn-delete"
+        :disabled="deletingId === type.id"
+        @click="deleteLeaveType(type.id)">
+  <i v-if="deletingId !== type.id" class="fas fa-trash-alt"></i>
+  <i v-else class="fas fa-spinner fa-spin"></i>
+  {{ deletingId === type.id ? 'Deleting...' : 'Delete' }}
+</button>
+
         </div>
       </td>
     </tr>
@@ -129,6 +152,10 @@ isSidebarVisible: true,
       leaveTypes: [],
        editingLeaveId: null,
       showLeaveTypeForm: false,
+      // 🔹 loaders
+    isSaving: false,
+    deletingId: null,
+    editingId: null,
     leaveForm: {
       leaveName: '',
      totalLeaves: '',
@@ -137,6 +164,12 @@ isSidebarVisible: true,
   }
   },
   methods: {
+   allowOnlyText(field) {
+  if (!this.leaveForm[field]) return;
+
+  this.leaveForm[field] = this.leaveForm[field].replace(/[^a-zA-Z\s]/g, '');
+},
+
     checkIfMobile() {
     this.isMobile = window.innerWidth <= 768;
     if (this.isMobile) {
@@ -166,40 +199,49 @@ isSidebarVisible: true,
         console.error("Error fetching leave types:", error);
       }
     },
-    editLeaveType(type) {
-      // Logic to open edit modal with this type's data
-    },
-    deleteLeaveType(id) {
-      // Logic to delete leave type
-  },
-    async submitLeaveType() {
+async submitLeaveType() {
+  this.isSaving = true
   try {
     if (this.editingLeaveId) {
-      // Update existing leave type
-      const response = await axios.put(`https://employees.archenterprises.co.in/api/api/leave-types/${this.editingLeaveId}`, {
-        leave_name: this.leaveForm.leaveName,
-        total_leaves: this.leaveForm.totalLeaves,
-        description: this.leaveForm.description
-      });
-      alert(response.data.message || 'Leave type updated successfully!');
+      await axios.put(
+        `https://employees.archenterprises.co.in/api/api/leave-types/${this.editingLeaveId}`,
+        {
+          leave_name: this.leaveForm.leaveName,
+          total_leaves: this.leaveForm.totalLeaves,
+          description: this.leaveForm.description
+        }
+      )
+      alert('Leave type updated successfully!')
     } else {
-      // Create new leave type
-      const response = await axios.post('https://employees.archenterprises.co.in/api/api/leave-types', {
-        leave_name: this.leaveForm.leaveName,
-        total_leaves: this.leaveForm.totalLeaves,
-        description: this.leaveForm.description
-      });
-      alert(response.data.message || 'Leave type created successfully!');
+      await axios.post(
+        'https://employees.archenterprises.co.in/api/api/leave-types',
+        {
+          leave_name: this.leaveForm.leaveName,
+          total_leaves: this.leaveForm.totalLeaves,
+          description: this.leaveForm.description
+        }
+      )
+      alert('Leave type created successfully!')
     }
 
-    this.fetchLeaveTypes(); // refresh list
-    this.closeLeaveTypeForm(); // reset form and close modal
-
+    this.fetchLeaveTypes()
+    this.closeLeaveTypeForm()
   } catch (error) {
-    console.error('Failed to save leave type:', error);
-    alert('Failed to save leave type');
+    if (error.response?.status === 422) {
+      const errors = error.response.data.errors
+      alert(
+        errors.leave_name?.[0] ||
+        errors.total_leaves?.[0] ||
+        'Validation error'
+      )
+    } else {
+      alert('Server error')
+    }
+  } finally {
+    this.isSaving = false
   }
 },
+
 
   closeLeaveTypeForm() {
     this.showLeaveTypeForm = false;
@@ -209,25 +251,36 @@ isSidebarVisible: true,
       description: ''
     };
   },
-    async deleteLeaveType(id) {
-    if (confirm('Are you sure you want to delete this leave type?')) {
-      try {
-        await axios.delete(`https://employees.archenterprises.co.in/api/api/leave-types/${id}`)
-        this.fetchLeaveTypes() // refresh after delete
-        alert('Leave type deleted!')
-      } catch (error) {
-        console.error('Delete failed:', error)
-        alert('Failed to delete.')
-      }
-    }
-  },
-  editLeaveType(type) {
-  this.leaveForm.leaveName = type.leave_name
-  this.leaveForm.totalLeaves = type.total_leaves
-  this.leaveForm.description = type.description
-  this.editingLeaveId = type.id
-  this.showLeaveTypeForm = true
+ async deleteLeaveType(id) {
+  if (!confirm('Are you sure you want to delete this leave type?')) return
+
+  this.deletingId = id
+  try {
+    await axios.delete(
+      `https://employees.archenterprises.co.in/api/api/leave-types/${id}`
+    )
+    this.fetchLeaveTypes()
+    alert('Leave type deleted!')
+  } catch (error) {
+    alert('This leave type is already used and cannot be deleted.')
+  } finally {
+    this.deletingId = null
+  }
 },
+
+  editLeaveType(type) {
+  this.editingId = type.id
+
+  setTimeout(() => {
+    this.leaveForm.leaveName = type.leave_name
+    this.leaveForm.totalLeaves = type.total_leaves
+    this.leaveForm.description = type.description
+    this.editingLeaveId = type.id
+    this.showLeaveTypeForm = true
+    this.editingId = null
+  }, 300) // small UX delay
+},
+
    
        closeLeaveTypeForm() {
   this.showLeaveTypeForm = false
@@ -838,5 +891,10 @@ h2 {
 .attractive-btn i {
   font-size: 14px;
 }
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 
 </style>
