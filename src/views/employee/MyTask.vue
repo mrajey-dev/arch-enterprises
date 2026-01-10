@@ -22,6 +22,15 @@
 
         <div class="task-header">
          <button class="add-task-btn" @click="openAddTaskModal">✚ Add Task</button>
+        <button
+  class="add-task-btn"
+  v-if="currentUser.department?.toLowerCase() === 'management'"
+  @click="goTo('employee/empworkreport')"
+>
+  <i class="fas fa-tasks"></i> Task Assign & Report
+</button>
+
+
         </div>  
 <!-- Reminder Popups -->
 <div
@@ -274,7 +283,9 @@ export default {
   status: ''
 },
       currentUser: {
-  username: ''
+   id: null,
+  username: '',
+  department: ''
 },
       isMobile: false,
 isSidebarVisible: true,
@@ -549,6 +560,7 @@ openEditTaskModal(task) {
     });
    this.currentUser.id = response.data.id;
 this.currentUser.username = response.data.name;
+ this.currentUser.department = response.data.department;
 
   } catch (error) {
     console.error('Failed to fetch current user:', error);

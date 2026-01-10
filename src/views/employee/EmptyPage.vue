@@ -1,8 +1,10 @@
+
+
 <template>
   <div class="layout">
     <!-- Header -->
-   <header class="header">
-     <a href="https://employees.archenterprises.co.in/">
+  <header class="header">
+   <a href="https://employees.archenterprises.co.in/">
   <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
 </a>
 
@@ -10,869 +12,1368 @@
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>
 
+
+    <!-- Main Content -->
     <div class="main-content">
-      <Sidebar v-if="!isMobile || isSidebarVisible" />
+       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-      <!-- Content -->
-      <div class="content" v-show="!isMobile || !isSidebarVisible">
-        <h2 class="page-title">Visit Schedule</h2>
+<!-- Hide task content when sidebar is open on mobile -->
+<div class="task-container" v-if="!isMobile || !isSidebarVisible">
 
-    
-<!-- 🔍 Filters -->
-<div class="filter-bar">
-  <input type="month" v-model="filters.month" class="filter-input" />
+        <div class="task-header">
+         <button class="add-task-btn" @click="openAddTaskModal">✚ Add Task</button>
+         <button class="assign-task-btn" @click="openAssignTaskModal">📝 Assign Task</button>
+        </div>  
+<!-- Reminder Popups -->
+<div
+  v-for="(task, index) in upcomingTasks"
+  :key="task.id"
+  class="upcoming-task-popup"
+  @click="dismissUpcomingTask(index)"
+  :style="{
+    background: '#ffffff',
+    color: 'red',
+    height: '81px',
+    padding: '10px 20px',
+    borderRadius: '12px',
+    top: '0px',
+    marginBottom: '10px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+  }"
+  @mouseover="hover = index"
+  @mouseleave="hover = null"
+  :class="{ 'popup-hover': hover === index }"
+>
+  <strong style="font-size: 1.1em;">⚠️ {{ task.title }}</strong><br />
+  <small style="opacity: 0.9;">Due: {{ task.dueDate }}</small>
+</div>
 
-  <select v-model="filters.status" class="filter-input">
-    <option value="">All Status</option>
-    <option value="Pending">Pending</option>
-    <option value="Completed">Completed</option>
+
+
+
+
+<!-- Filter Controls -->
+<div class="task-filters">
+  <input type="date" v-model="filters.date" />
+  <select v-model="filters.month">
+    <option value="">All Months</option>
+    <option v-for="m in 12" :key="m" :value="m">{{ new Date(0, m - 1).toLocaleString('default', { month: 'long' }) }}</option>
   </select>
+  <select v-model="filters.status">
+    <option value="">All Statuses</option>
+    <option>Pending</option>
+    <option>In Progress</option>
+    <option>Completed</option>
+  </select>
+  <button @click="clearFilters">Reset</button>
+</div>
+        <div class="task-grid">
+          <div
+            class="task-card"
+            v-for="task in filteredTasks" :key="task.id"
 
-  <input
-    type="text"
-    v-model="filters.company"
-    placeholder="Search Company"
-    class="filter-input"
-  />
+            :class="formatStatus(task.status)"
+          >
+            <div class="task-header">
+           <span class="task-date">
+  <i> Deadline:</i>
+  {{
+    task.isVisit
+      ? task.deadline
+      : task.dueDate
+  }}
+</span>
 
-  <!-- ✅ RESET -->
-  <button class="btn-reset" @click="resetFilters">
-    View All
+            
+              <div v-if="task.status === 'Completed'" class="completed-date">
+  ✅{{ new Date(task.completedAt).toLocaleDateString() }}
+</div>
+            <span
+  class="task-priority"
+  :class="task.isVisit ? 'visit-service' : task.priority.toLowerCase()"
+>
+  {{ task.isVisit ? 'Service Due' : task.priority }}
+</span>
+
+            </div>
+           <div class="task-title-row">
+ <h3
+  class="task-title visit-link"
+  v-if="task.isVisit"
+  @click="goToVisitSchedule"
+>
+  {{ task.title }}
+</h3>
+
+<h3
+  class="task-title"
+  v-else
+>
+  {{ task.title }}
+</h3>
+
+ 
+</div>
+
+
+
+         <!-- Status Dropdown -->
+<select
+  v-if="!task.isVisit"
+  v-model="task.status"
+  @change="updateTaskStatus(task)"
+  :class="['task-status-dropdown', formatStatus(task.status)]"
+>
+  <option>Pending</option>
+  <option>In Progress</option>
+  <option>Completed</option>
+</select>
+
+ <!-- Task Card Buttons -->
+<button
+  class="edit-btn"
+  @click="openEditTaskModal(task)"
+  v-if="task.priority !== 'Task Assigned'"
+>
+  Edit
+</button>
+
+<button
+  class="delete-btn"
+  @click="deleteTask(task)"
+  v-if="task.priority !== 'Task Assigned'"
+>
+  Delete
+</button>
+
+
+
+          </div>
+          
+        </div>
+                                                  <!-- Show More Button -->
+<div
+  v-if="visibleTaskCount < totalFilteredTasks"
+  class="show-more-container"
+>
+  <button @click="loadMore" class="show-more-btn">
+    Show More Task
   </button>
 </div>
 
 
-     <div class="table-container">
-  <table class="modern-table">
-    <thead>
-      <tr>
-        <th>Company Name</th>
-        <th>PO Number</th>
-        <th>Visit Date</th>
-        <th>Service Type</th>
-        <th>Upload Report</th>
-        <th>Status</th>
-        <th>View Report</th>
-      </tr>
-    </thead>
+      </div>
 
-    <tbody>
-      <tr v-for="(item, index) in combinedVisits" :key="index">
-        <td  data-label="Company Name: ">{{ item.company_name }}</td>
-        <td  data-label="PO Nymber: ">{{ item.po_number }}</td>
+    </div>
 
-        <!-- Visit Date -->
-        <td  data-label="Visit Date: ">
-          <input
-            type="date"
-            v-model="item.visit_date"
-            class="editable-date"
-            @change="
-              item.visitType === 'AMC'
-                ? updateAmcVisitDate(item)
-                : updateServiceVisitDate(item)
-            "
-          />
-        </td>
+<!-- Assign Task Modal -->
+<div class="modal" v-if="showAssignTaskForm">
+  <div class="modal-content">
+    <h3>📝 Assign New Task</h3>
+    <form @submit.prevent="assignTask">
 
-        <!-- Type -->
-        <td data-label="Service Type: ">
-          {{ item.visitType === 'AMC' ? 'AMC' : item.type_of_service }}
-        </td>
+      <!-- Assign To (Employee List) -->
+     <label>Assign To *</label>
+<select v-model="assignTaskForm.assignTo" required>
+  <option disabled value="">
+    {{ users.length === 0 ? 'Loading employees...' : 'Select Employee' }}
+  </option>
+  <option v-for="user in users" :key="user.id" :value="user.id">
+    {{ user.username }}
+  </option>
+</select>
 
-        <!-- Upload -->
-        <td data-label="Upload Report: ">
-          <label class="upload-btn">
-            <i class="fas fa-upload"></i> Upload
-            <input
-              type="file"
-              @change="
-                handleReportUpload(
-                  $event,
-                  item,
-                  item.visitType === 'AMC' ? 'amc' : 'service'
-                )
-              "
-            />
-          </label>
-          <span v-if="item.reportName">{{ item.reportName }}</span>
-        </td>
 
-        <!-- Status -->
-        <td  data-label="Status: ">
-          <select
-            v-model="item.status"
-            @change="
-              item.visitType === 'AMC'
-                ? updateAmcStatus(item)
-                : updateServiceStatus(item)
-            "
-          >
-            <option value="Pending">Pending</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </td>
+      <!-- Task Name -->
+      <label>Task Name *</label>
+      <input type="text" v-model="assignTaskForm.title" maxlength="50" required />
 
-        <!-- View -->
-        <td data-label="View Report: ">
-          <button
-            v-if="item.report_path"
-            class="view-report-btn"
-            @click="viewReport(item.report_path)"
-          >
-            View
-          </button>
-          <span v-else>No Report</span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+      <!-- Description -->
+      <label>Description</label>
+      <textarea v-model="assignTaskForm.description" maxlength="250"></textarea>
+
+      <!-- Priority -->
+      <label>Priority *</label>
+      <select v-model="assignTaskForm.priority" required>
+        <option disabled value="">Select Priority</option>
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+      </select>
+
+      <!-- Due Date -->
+      <label>Due Date *</label>
+      <input type="date" v-model="assignTaskForm.dueDate" :min="today" required />
+
+      <!-- Status -->
+      <label>Status *</label>
+      <select v-model="assignTaskForm.status" required>
+        <option>Pending</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button type="submit">Assign Task</button>
+        <button type="button" @click="closeAssignTaskModal">Cancel</button>
+      </div>
+    </form>
+  </div>
 </div>
 
+
+
+   <!-- Add Task Modal -->
+<div class="modal" v-if="showAddTaskForm">
+  <div class="modal-content">
+    <h3>{{ isEditTaskMode ? 'Edit Task' : 'Add New Task' }}</h3>
+    <form @submit.prevent="submitTask">
+      <!-- Start Date -->
+  Due Date:
+<input
+  type="date"
+  v-model="newTask.dueDate"
+  :min="today"
+  required
+/>
+
+
+      <!-- Deadline Date -->
+      <!-- Deadline:
+      <input type="date" v-model="newTask.deadline" :min="newTask.startDate" required /> -->
+
+      <!-- Priority -->
+       Select Priority: 
+      <select v-model="newTask.priority" required>
+        <option disabled value="">Select Priority</option>
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+      </select>
+
+      <!-- Title -->
+  <input
+  type="text"
+  v-model="newTask.title"
+  placeholder="Title"
+  maxlength="50"
+  required
+  @input="filterTitle"
+/>
+<small style="color: #b39b9b;">{{ newTask.title.length }}/50</small>
+
+
+
+      <!-- Description -->
+     <textarea
+  v-model="newTask.description"
+  placeholder="Description (optional)"
+  maxlength="250"
+></textarea>
+<small style="color: #b39b9b;">{{ newTask.description.length }}/250</small>
+
+
+      <!-- Modules -->
+    <textarea
+  v-model="newTask.modules"
+  placeholder="Modules..."
+  rows="5"
+  maxlength="250"
+></textarea>
+<small style="color: #b39b9b;">{{ newTask.modules.length }}/250</small>
+
+
+      <!-- Status -->
+      <select v-model="newTask.status" required>
+        <option disabled value="">Select Status</option>
+        <option>Pending</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button type="submit">Save</button>
+        <button type="button" @click="showAddTaskForm = false">Cancel</button>
       </div>
-    </div>
+    </form>
   </div>
+</div>
+
+
+  
+</div>
+
 </template>
 
+
+
 <script>
-import axios from "axios";
-import Sidebar from "./components/Sidebar.vue";
+import axios from 'axios'
+import Sidebar from './components/Sidebar.vue'
+
 
 export default {
-  components: { Sidebar },
+    components: {
+    Sidebar
+  },
   data() {
     return {
+      assignTaskForm: {
+  title: '',
+  description: '',
+   priority: '',
+  assignTo: '',
+  dueDate: '',
+  status: 'Pending'
+},
+showAssignTaskForm: false,
+      totalFilteredTasks: 0,
+      upcomingTasks: [], // tasks with deadline = today+1
+    showReminderPopup: false,
+      visibleTaskCount: 6, // initially show 6 tasks
       filters: {
-      month: "",
-      status: "",
-      company: "",
-    },
-      filteredAmcVisits: [],
+  date: '',
+  month: '',
+  status: ''
+},
+      currentUser: {
+  username: ''
+},
       isMobile: false,
-      isSidebarVisible: true,
-      // activeTable: "amc",
-      amcVisits: [],
-      services: [],
-      currentUser: null,
-    };
-  },
-  mounted() {
-     this.filters.month = new Date().toISOString().slice(0, 7);
-    this.setCurrentMonth(); 
-    this.fetchCompletedAmc();
-    this.checkIfMobile();
-    window.addEventListener("resize", this.checkIfMobile);
-    this.currentUser = localStorage.getItem("name");
-    this.fetchAmcVisits();
-    this.fetchServices();
-    this.fetchCurrentUser();
+isSidebarVisible: true,
+
+       tasks: [], // Your existing task list
+      showAddTaskForm: false, // Controls the modal/form visibility
+     newTask: {
+  dueDate: '',        // use dueDate consistently (YYYY-MM-DD)
+  deadline: '', 
+  priority: '',
+  title: '',
+  description: '',
+  status: '',
+  modules: ''
+},
+
+      isEditTaskMode: false,
+editingTaskId: null,
+     
+      selectedDocumentType: '',
+typedDocuments: {},
+      showPassword: true,
+      users: [],
+      showRegister: false,
+      isEditMode: false,
+      editingId: null,  // changed from editingEmail to editingId
+      registerForm: {
+        id: '',  // include id for edit
+        empId: '',
+        username: '',
+        email: '',
+        gender: '',
+        department: '',
+        city: '',
+        address: '',
+        mobile: '',
+        keyResponsibility: '',
+        password: '',
+        documents: [],
+      }
+    }
   },
   computed: {
-    combinedVisits() {
-    const amc = this.amcVisits.map(v => ({
-      ...v,
-      visitType: "AMC",
-      type_of_service: "AMC"
-    }));
-
-    const service = this.services.map(s => ({
-      ...s,
-      visitType: "SERVICE"
-    }));
-
-    return [...amc, ...service].filter(record => {
-      const matchesUser = record.assign_to === this.currentUser;
-
-      const matchesStatus =
-        !this.filters.status || record.status === this.filters.status;
-
-      const matchesCompany =
-        !this.filters.company ||
-        record.company_name
-          ?.toLowerCase()
-          .includes(this.filters.company.toLowerCase());
-
-      const matchesMonth =
-        !this.filters.month ||
-        record.visit_date?.startsWith(this.filters.month);
-
-      return matchesUser && matchesStatus && matchesCompany && matchesMonth;
-    });
+    today() {
+    const date = new Date();
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   },
-    filteredAmcVisits() {
-    return this.amcVisits.filter((visit) => {
-      const matchesUser = visit.assign_to === this.currentUser;
+    
+filteredTasks() {
+    const todayStr = new Date().toISOString().substr(0, 10);
 
-      const matchesStatus =
-        !this.filters.status || visit.status === this.filters.status;
+    const filtered = this.tasks
+      .filter(task => {
+        if (task.isVisit && task.status === 'Completed') return false;
+        const taskDate = task.isVisit ? task.deadline : task.dueDate;
+        if (!taskDate) return false;
 
-      const matchesCompany =
-        !this.filters.company ||
-        visit.company_name
-          .toLowerCase()
-          .includes(this.filters.company.toLowerCase());
+        const dateStr = new Date(taskDate).toISOString().substr(0, 10);
+        const taskMonth = new Date(taskDate).getMonth() + 1;
+        const isIncomplete = task.status !== 'Completed';
 
-      const matchesMonth =
-        !this.filters.month ||
-        visit.visit_date?.startsWith(this.filters.month);
+        const matchDate =
+          !this.filters.date ||
+          (isIncomplete && this.filters.date === todayStr) ||
+          dateStr === this.filters.date;
 
-      return (
-        matchesUser &&
-        matchesStatus &&
-        matchesCompany &&
-        matchesMonth
-      );
-    });
-  },
-      filteredServices() {
-    return this.services.filter((service) => {
-      const matchesUser = service.assign_to === this.currentUser;
+        const matchMonth =
+          !this.filters.month || taskMonth === Number(this.filters.month);
 
-      const matchesStatus =
-        !this.filters.status || service.status === this.filters.status;
+        const matchStatus =
+          !this.filters.status || task.status === this.filters.status;
 
-      const matchesCompany =
-        !this.filters.company ||
-        service.company_name
-          .toLowerCase()
-          .includes(this.filters.company.toLowerCase());
-
-      const matchesMonth =
-        !this.filters.month ||
-        service.visit_date?.startsWith(this.filters.month);
-
-      return (
-        matchesUser &&
-        matchesStatus &&
-        matchesCompany &&
-        matchesMonth
-      );
-    });
-  },
-  },
-  methods: {
-    resetFilters() {
-  this.filters.month = "";
-  this.filters.status = "";
-  this.filters.company = "";
-},
-
-    setCurrentMonth() {
-  const today = new Date();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const year = today.getFullYear();
-
-  // Format: YYYY-MM (required by <input type="month">)
-  this.filters.month = `${year}-${month}`;
-},
-    viewReport(filePath) {
-    const baseUrl = "https://employees.archenterprises.co.in"; // your base URL
-    window.open(`${baseUrl}${filePath}`, "_blank");
-  },
-    fetchCompletedAmc() {
-    axios
-      .get("https://employees.archenterprises.co.in/api/api/completed-amc")
-      .then((res) => {
-        this.filteredAmcVisits = res.data;
+        return matchDate && matchMonth && matchStatus;
       })
-      .catch((err) => {
-        console.error(err);
+      .sort((a, b) => {
+        const dateA = new Date(a.isVisit ? a.deadline : a.dueDate);
+        const dateB = new Date(b.isVisit ? b.deadline : b.dueDate);
+        return dateB - dateA;
       });
+
+    // 🔑 store total filtered count
+    this.totalFilteredTasks = filtered.length;
+
+    return filtered.slice(0, this.visibleTaskCount);
   },
-    // ✅ File Upload
-  handleReportUpload(event, record, type = "amc") {
-  const file = event.target.files[0];
-  if (!file) return;
 
-  record.reportFile = file;
-  record.reportName = file.name;
 
-  this.uploadReport(file, record, type);
+
+
+
+
+},
+watch: {
+  'filters.month'(newVal) {
+    if (newVal) {
+      // ✅ When month is selected, clear date
+      this.filters.date = '';
+    }
+  },
+  'filters.date'(newVal) {
+    if (newVal) {
+      // (Optional) When date is selected, clear month
+      this.filters.month = '';
+    }
+  },
+  showAddTaskForm(newVal) {
+    if (newVal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+  }
 },
 
 
-async uploadReport(file, record, type) {
-  const formData = new FormData();
-  formData.append("report", file);
-  formData.append("company_name", record.company_name);
-  formData.append("po_number", record.po_number);
-
-  // ✅ Include the record ID
-  if (record.id) {
-    formData.append("id", record.id);
+  methods: {
+async assignTask() {
+  if (
+    !this.assignTaskForm.title ||
+    !this.assignTaskForm.assignTo ||
+    !this.assignTaskForm.dueDate ||
+    !this.assignTaskForm.priority
+  ) {
+    alert("Please fill all required fields!");
+    return;
   }
 
-  const endpoint =
-    type === "service"
-      ? "/api/upload-service-report"
-      : "/api/upload-amc-report";
+  const payload = {
+    title: this.assignTaskForm.title,
+    description: this.assignTaskForm.description,
+    priority: this.assignTaskForm.priority,
+    due_date: this.assignTaskForm.dueDate,
+    status: this.assignTaskForm.status,
+    user_id: this.assignTaskForm.assignTo,
+    completed_at:
+      this.assignTaskForm.status === 'Completed'
+        ? new Date().toISOString()
+        : null
+  };
 
   try {
-    const response = await axios.post(endpoint, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    await axios.post(
+      'https://employees.archenterprises.co.in/api/api/assign-task',
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
+    );
 
-    // Save the returned file path
-    record.reportPath = response.data.file_path;
-    record.reportName = response.data.report_name;
-
-    console.log("Report uploaded successfully:", record.reportPath);
-
-    // Optional: reload or refresh table
-    setTimeout(() => {
-      window.location.reload();
-    }, 10);
+    alert("Task assigned successfully!");
+    this.showAssignTaskForm = false;
+    this.fetchTasks();
 
   } catch (error) {
-    console.error("Error uploading report", error);
+    console.error(error);
+    alert("Failed to assign task!");
+  }
+},
+
+     fetchEmployees() {
+      axios.get('https://employees.archenterprises.co.in/api/api/users', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+        .then(res => {
+          this.employeesDropdown = res.data
+            .filter(user => user.id && user.name && user.department !== 'Ownership') // ✅ filter applied here too
+            .map(user => ({
+              id: user.id,
+              name: user.name,
+              department: user.department
+            }))
+        })
+        .catch(err => {
+          console.error('Error fetching employees:', err)
+          this.employeesDropdown = []
+        })
+    },
+ async openAssignTaskModal() {
+  await this.fetchUsers(); // make sure users are loaded
+  this.assignTaskForm = {
+    title: '',
+    description: '',
+    assignTo: '',
+    dueDate: this.today,
+    priority: '',
+    status: 'Pending'
+  };
+  this.showAssignTaskForm = true;
+},
+
+
+  closeAssignTaskModal() {
+    this.showAssignTaskForm = false;
+  },
+
+async submitAssignTask() {
+  if (!this.assignTaskForm.assignTo) {
+    alert('Please select an employee to assign the task.');
+    return;
+  }
+
+  try {
+    const payload = {
+      title: this.assignTaskForm.title,
+      description: this.assignTaskForm.description,
+      priority: this.assignTaskForm.priority,
+      due_date: this.assignTaskForm.dueDate,
+      status: this.assignTaskForm.status,
+      user_id: this.assignTaskForm.assignTo, // ✅ assign to selected employee
+      completed_at: this.assignTaskForm.status === 'Completed' ? new Date().toISOString() : null
+    };
+
+    await axios.post('https://employees.archenterprises.co.in/api/api/tasks', payload, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+
+    alert('Task assigned successfully!');
+    this.showAssignTaskForm = false;
+    this.fetchTasks(); // refresh task list
+  } catch (err) {
+    console.error('Failed to assign task', err);
+    alert('Failed to assign task.');
   }
 },
 
 
+async fetchAssignedServices() {
+  try {
+    const res = await axios.get(
+      `/api/get-assigned-services/${this.currentUser.id}`,
+      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+    );
+
+    const serviceTasks = res.data
+      .filter(s => s.status && s.status.toLowerCase().trim() !== 'completed')
+      .map(s => ({
+        id: `service-${s.id}`,
+        title: s.company_name,
+        dueDate: null,
+        deadline: s.visit_date,
+        priority: 'Task Assigned',
+        description: `Service: ${s.service_type || ''}`,
+        status: s.status || 'Pending',
+        createdAt: s.visit_date,
+        isVisit: true,
+        isService: true
+      }));
+
+    this.tasks.push(...serviceTasks);
+  } catch (err) {
+    console.error('Failed to fetch assigned services', err);
+  }
+},
 
 
+    goToVisitSchedule() {
+  window.location.href =
+    'https://employees.archenterprises.co.in/employee/visitschedule'
+},
 
+    loadMore() {
+    this.visibleTaskCount += 6;
+  },
+async fetchAssignedVisits() {
+  try {
+    const res = await axios.get(
+      `https://employees.archenterprises.co.in/api/api/assigned-visits/${this.currentUser.id}`,
+      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+    );
+
+    const visitTasks = res.data
+      .filter(v => v.status && v.status.toLowerCase().trim() !== 'completed')
+      .map(v => ({
+        id: `visit-${v.id}`,
+        title: v.company_name,
+        dueDate: null,
+        deadline: v.visit_date,
+        priority: 'Task Assigned',
+        description: `Service: ${v.service_type}`,
+        status: v.status || 'Pending',
+        createdAt: v.visit_date,
+        isVisit: true
+      }));
+
+    this.tasks.push(...visitTasks);
+  } catch (err) {
+    console.error('Failed to fetch assigned visits', err);
+  }
+},
+
+
+     filterTitle() {
+    // Allow: letters, numbers, space, and &
+    this.newTask.title = this.newTask.title.replace(/[^a-zA-Z0-9 &\-_.(),@#]/g, '');
+
+  },
+    getReminderGradient(task) {
+    const due = new Date(task.dueDate);
+    const now = new Date();
+    const diff = (due - now) / (1000 * 60 * 60 * 24); // days left
+
+    if (diff < 0) return '#ffffff;'; // past due - red
+    if (diff <= 1) return '#ffffff;'; // due today - orange
+    if (diff <= 3) return '#ffffff;'; // soon - blue
+    return '#ffffff;'; // later - green
+  },
+    getReminderColor(task) {
+    if (!task.dueDate) return 'gray'; // fallback
+
+    const today = new Date();
+    const due = new Date(task.dueDate);
+    
+    const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return 'red';       // past due
+    if (diffDays === 0) return 'orange';  // today
+    if (diffDays >= 1 && diffDays <= 2) return 'yellow'; // 1-2 days away
+
+    return 'gray'; // default
+  },
+
+  dismissUpcomingTask(index) {
+  this.upcomingTasks.splice(index, 1);
+},
+
+  dismissReminder() {
+    this.showReminderPopup = false;
+  },
+    closeTaskModal() {
+  this.showAddTaskForm = false;
+  this.resetNewTaskForm();
+},
+
+resetNewTaskForm() {
+  this.newTask = {
+ 
+    dueDate: '',
+     deadline: '',
+    priority: '',
+    title: '',
+    description: '',
+    status: '',
+    modules: ''
+  };
+  this.isEditTaskMode = false;
+  this.editingTaskId = null;
+},
+openEditTaskModal(task) {
+  if (!task) return;
+
+  this.newTask = {
+    dueDate: task.dueDate ? task.dueDate.substr(0, 10) : this.today, // ensure date string
+    deadline: task.deadline ? task.deadline.substr(0, 10) : '',       // ensure date string
+    priority: task.priority || '',
+    title: task.title || '',
+    description: task.description || '',
+    status: task.status || 'Pending',
+    modules: task.modules || ''
+  };
+
+  this.editingTaskId = task.id;
+  this.isEditTaskMode = true;
+  this.showAddTaskForm = true;
+},
+
+
+    clearFilters() {
+  this.filters.date = '';
+  this.filters.month = '';
+  this.filters.status = '';
+},
 
     async fetchCurrentUser() {
-      try {
-        const res = await axios.get("/api/current-user");
-        this.currentUser = res.data.id;
-        this.fetchAmcVisits();
-        this.fetchServices();
-      } catch (e) {
-        console.error("Failed to fetch current user", e);
+  try {
+    const response = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
-    },
+    });
+   this.currentUser.id = response.data.id;
+this.currentUser.username = response.data.name;
+
+  } catch (error) {
+    console.error('Failed to fetch current user:', error);
+    alert('Could not fetch logged-in user info.');
+  }
+},
 
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
-      this.isSidebarVisible = !this.isMobile;
-    },
-    toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible;
-    },
-
-    // ✅ Fetch AMC Visits
-    async fetchAmcVisits() {
-      try {
-        const response = await axios.get("/api/visit_assign");
-        this.amcVisits = response.data;
-      } catch (error) {
-        console.error("Error fetching AMC visits:", error);
-      }
-    },
-
-    // ✅ Fetch Service Visits
-    async fetchServices() {
-      try {
-        const response = await axios.get("/api/service_assign");
-        this.services = response.data;
-      } catch (error) {
-        console.error("Error fetching service visits:", error);
-      }
-    },
-
- // ✅ Update AMC Status
-async updateAmcStatus(visit) {
+    this.isMobile = window.innerWidth <= 768;
+    if (this.isMobile) {
+      this.isSidebarVisible = false;
+    } else {
+      this.isSidebarVisible = true;
+    }
+  },
+  toggleSidebar() {
+    this.isSidebarVisible = !this.isSidebarVisible;
+  },
+async fetchTasks() {
   try {
-    // Update AMC visit status
-    await axios.put(`/api/visit_assign/${visit.id}`, { status: visit.status });
-
-    // Update AddPo table
-    const poStatus = visit.status === "Completed" ? "Closed" : null;
-    await axios.put(`/api/add-po-status/${visit.po_number}`, { status: poStatus });
-
-    // Optional: add to completed orders table
-    await axios.post("/api/completed-order", {
-      company_name: visit.company_name,
-      po_number: visit.po_number,
-      visit_date: visit.visit_date,
-      assign_to: visit.assign_to || null,
-      status: visit.status,
-      service_type: "AMC",
+    const response = await axios.get('https://employees.archenterprises.co.in/api/api/tasks', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
+
+    this.tasks = response.data
+      .filter(task => task.user_id === this.currentUser.id)
+      .map(task => ({
+        id: task.id,
+        title: task.title,
+        dueDate: task.due_date,
+        deadline: task.deadline_date,
+        priority: task.priority,
+        description: task.description,
+        status: task.status,
+        completedAt: task.completed_at,
+        createdAt: task.created_at,
+        assignedTo: task.user_name
+      }));
+
+   // Populate upcomingTasks for popups — exclude completed tasks
+const today = new Date();
+this.upcomingTasks = this.tasks.filter(task => {
+  if (!task.dueDate) return false;
+  if (task.status === 'Completed') return false; // ✅ Skip completed tasks
+  const due = new Date(task.dueDate);
+  const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+  return diffDays >= 0 && diffDays <= 2;
+});
+
+
   } catch (error) {
-    console.error("Error updating AMC status:", error);
-  }
-},
-
-// ✅ Update Service Status
-async updateServiceStatus(service) {
-  try {
-    // Update Service visit status
-    await axios.put(`/api/service_assign/${service.id}`, {
-      status: service.status,
-    });
-
-    // Update AddPo table
-    const poStatus = service.status === "Completed" ? "Closed" : null;
-    await axios.put(`/api/add-po-status/${service.po_number}`, { status: poStatus });
-
-    // Optional: add to completed orders table
-    await axios.post("/api/completed-order", {
-      company_name: service.company_name,
-      po_number: service.po_number,
-      visit_date: service.visit_date,
-      assign_to: service.assign_to || null,
-      status: service.status,
-      service_type: service.type_of_service || "Service",
-    });
-  } catch (error) {
-    console.error("Error updating service status:", error);
+    console.error('Failed to fetch tasks:', error);
+    alert('Could not load tasks');
   }
 },
 
 
-    // ✅ New: Update AMC Visit Date
-    async updateAmcVisitDate(visit) {
+
+
+
+    deleteTask(task) {
+  if (confirm(`Are you sure you want to delete the task "${task.title}"?`)) {
+    axios.delete(`https://employees.archenterprises.co.in/api/api/tasks/${task.id}`)
+      .then(() => {
+        this.tasks = this.tasks.filter(t => t.id !== task.id);
+        // alert('Task deleted successfully!');
+      })
+      .catch(error => {
+        console.error('Error deleting task:', error);
+        alert('Failed to delete task.');
+      });
+  }
+},
+
+async updateTaskStatus(task) {
+  const oldStatus = task.status;
+  const oldCompletedAt = task.completedAt;
+  const payload = { status: task.status };
+
+  if (task.status === 'Completed' && !task.completedAt) {
+    const today = new Date().toISOString();
+    payload.completed_at = today;
+    task.completedAt = today;
+  } else if (task.status !== 'Completed' && task.completedAt) {
+    payload.completed_at = null;
+    task.completedAt = null;
+  }
+
+  if (!task.id) {
+    alert('Task has no id, cannot update. Please refresh the page.');
+    return;
+  }
+
+  try {
+    await axios.put(`https://employees.archenterprises.co.in/api/api/tasks/${task.id}`, payload, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    // success — optionally show toast
+  } catch (error) {
+    // rollback UI
+    task.status = oldStatus;
+    task.completedAt = oldCompletedAt;
+    console.error('Failed to update task status', error);
+    alert('Failed to update task status on server. Changes reverted.');
+  }
+},
+
+
+
+
+
+    formatStatus(status) {
+    return status.toLowerCase().replace(/\s+/g, '-'); // "In Progress" → "in-progress"
+  },
+  openAddTaskModal() {
+    const today = new Date().toISOString().substr(0, 10); // format: yyyy-mm-dd
+    this.newTask.dueDate = today;
+    this.newTask.priority = '';
+    this.newTask.title = '';
+    this.newTask.description = '';
+    this.newTask.status = '';
+    this.showAddTaskForm = true;
+  },
+submitTask() {
+  const payload = {
+  title: this.newTask.title,
+  description: this.newTask.description,
+  status: this.newTask.status,
+  priority: this.newTask.priority,
+  due_date: this.newTask.dueDate,
+
+  deadline_date: this.newTask.deadline, // <-- must be a date string like "2025-10-11"
+  modules: this.newTask.modules,
+  user_id: this.currentUser.id,
+  user_name: this.currentUser.username,
+  completed_at: this.newTask.status === 'Completed' ? new Date().toISOString() : null
+};
+
+
+  const url = this.isEditTaskMode
+    ? `https://employees.archenterprises.co.in/api/api/tasks/${this.editingTaskId}`
+    : 'https://employees.archenterprises.co.in/api/api/tasks';
+
+  const method = this.isEditTaskMode ? 'put' : 'post';
+
+  axios({
+    method,
+    url,
+    data: payload,
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  })
+    .then(() => {
+      this.fetchTasks();
+      this.closeTaskModal();
+    })
+    .catch(error => {
+      console.error('Error saving task:', error);
+      alert('Failed to save task.');
+    });
+},
+
+
+
+
+
+
+
+    handleTypedFileUpload(event) {
+  const file = event.target.files[0];
+  if (this.selectedDocumentType && file) {
+    this.typedDocuments[this.selectedDocumentType] = file;
+    this.registerForm.documents = Object.values(this.typedDocuments); // update form data
+  } else {
+    alert('Please select a document type before uploading.');
+  }
+},
+
+    togglePasswordVisibility() {
+  this.showPassword = !this.showPassword
+},
+
+generatePassword() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+'
+  let password = ''
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  this.registerForm.password = password
+},
+
+    goTo(route) {
+      this.$router.push(`/${route}`)
+    },
+
+    openRegisterForm() {
+      this.resetForm()
+      this.showRegister = true
+    },
+
+    closeRegisterForm() {
+      this.showRegister = false
+      this.resetForm()
+    },
+
+    async handleRegister() {
       try {
-        await axios.put(`/api/visit_assign/${visit.id}`, {
-          visit_date: visit.visit_date,
-        });
-        console.log(`AMC visit date updated for ${visit.company_name}`);
+        const formData = new FormData()
+        for (const key in this.registerForm) {
+          if (key === 'documents') {
+            this.registerForm.documents.forEach((file) =>
+              formData.append('documents', file)
+            )
+          } else {
+            formData.append(key, this.registerForm[key])
+          }
+        }
+
+        const url = this.isEditMode
+          ? `https://employees.archenterprises.co.in/api/api/users/${this.editingId}`   // use id here
+          : 'https://employees.archenterprises.co.in/api/api/register'
+
+        const method = this.isEditMode ? 'put' : 'post'
+
+        await axios({
+          method,
+          url,
+          data: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+
+        alert(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
+        this.showRegister = false
+        this.resetForm()
+        this.fetchUsers()
       } catch (error) {
-        console.error("Error updating AMC visit date:", error);
+        console.error('Register error:', error)
+        if (error.response && error.response.data && error.response.data.message) {
+          alert(`Operation failed: ${error.response.data.message}`)
+        } else {
+          alert('Operation failed due to network or server error.')
+        }
       }
     },
 
-    // ✅ New: Update Service Visit Date
-    // ✅ New: Update Service Visit Date
-async updateServiceVisitDate(service) {
+    handleFileUpload(event) {
+      this.registerForm.documents = Array.from(event.target.files)
+    },
+
+    resetForm() {
+      this.registerForm = {
+        id: '',
+        empId: '',
+        username: '',
+        email: '',
+        gender: '',
+        department: '',
+        city: '',
+        address: '',
+        mobile: '',
+        keyResponsibility: '',
+        password: '',
+        documents: [],
+        
+      }
+      this.isEditMode = false
+      this.editingId = null
+    },
+
+   async fetchUsers() {
   try {
-    console.log("Updating service visit date for:", service);
-
-    const payload = { visit_date: service.visit_date };
-
-    const response = await axios.put(`/api/service_assign/${service.id}`, payload);
-
-    console.log("✅ Service visit date updated:", response.data);
-
-    // Optional feedback
-    this.$nextTick(() => {
-      alert(`Visit date updated for ${service.company_name}`);
+    const token = localStorage.getItem('token');
+    const response = await axios.get('https://employees.archenterprises.co.in/api/api/users', {
+      headers: { Authorization: `Bearer ${token}` }
     });
+
+    // Map API data to match modal
+    this.users = response.data.map(u => ({
+      id: u.id,
+      username: u.name // use name from API
+    }));
+
   } catch (error) {
-    console.error("❌ Error updating service visit date:", error.response?.data || error);
-    alert("Failed to update service visit date. Check API endpoint or field name.");
+    console.error('Failed to fetch users', error);
+    alert('Failed to fetch users');
+    this.users = [];
   }
+},
+
+
+    editUser(user) {
+      // Populate form with user data for editing
+      this.registerForm = {
+        id: user.id || '',               // assign id here
+        empId: user.empId || '',
+        username: user.username || '',
+        email: user.email || '',
+        gender: user.gender || '',
+        department: user.department || '',
+        city: user.city || '',
+        address: user.address || '',
+        mobile: user.mobile || '',
+        keyResponsibility: user.keyResponsibility || '',
+        password: '', // password not required on edit
+        documents: []
+      }
+      this.isEditMode = true
+      this.editingId = user.id   // set editingId here
+      this.showRegister = true
+    },
+
+    async deleteUser(id) {
+      if (confirm('Are you sure you want to delete this user?')) {
+        try {
+          await axios.delete(`https://employees.archenterprises.co.in/api/api/users/${encodeURIComponent(id)}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+          this.fetchUsers()
+          alert('User deleted successfully!')
+        } catch (error) {
+          alert('Failed to delete user.')
+          console.error(error)
+        }
+      }
+    },
+
+    logout() {
+      const token = localStorage.getItem('token')
+      axios
+        .post(
+          'https://employees.archenterprises.co.in/api/api/logout',
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        )
+        .finally(() => {
+          localStorage.removeItem('token')
+          this.$router.push('/auth')
+        })
+    }
+  },
+
+async mounted() {
+   this.fetchEmployees()
+  this.checkIfMobile();
+  window.addEventListener('resize', this.checkIfMobile);
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    this.$router.push('/auth');
+    return;
+  }
+
+  this.filters.date = new Date().toISOString().substr(0, 10);
+
+  await this.fetchCurrentUser();     // 1️⃣ user
+  await this.fetchTasks();           // 2️⃣ normal tasks
+  await this.fetchAssignedVisits();  // 3️⃣ visit tasks
+  await this.fetchAssignedServices(); // 4️⃣ ✅ service tasks
+
+  this.fetchUsers();
 }
 
-  },
-};
-</script>
 
+
+
+}
+</script>
 
 
 
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.btn-reset {
-  padding: 9px 18px;
-  background: linear-gradient(135deg, #6c757d, #495057);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+.visit-link {
   cursor: pointer;
-  transition: all 0.25s ease;
-  white-space: nowrap;
+  text-decoration: none;
 }
 
-.btn-reset:hover {
-  background: linear-gradient(135deg, #495057, #343a40);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+.visit-link:hover {
+  color: #08306b;
+}
+.visit-service {
+  background: #0a5153 !important
+
 }
 
-.btn-reset:active {
-  transform: translateY(0);
-  box-shadow: none;
+.task-assigned {
+  border-left: 5px solid #ff9800;
+  background: #fffaf0;
 }
 
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
+.logo-img {
+  height: 65px;
 }
-
-.filter-input {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  min-width: 180px;
-}
-
-.view-report-btn {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.view-report-btn:hover {
-  background-color: #0056b3;
-}
-
-.editable-date {
-  border: 1px solid #ccc;
-  padding: 4px;
-  border-radius: 6px;
-  font-size: 14px;
-}
-/* General Layout */
-.layout {
-  background: linear-gradient(to bottom right, #f3f6ff, #e9f0fa);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Title */
-.page-title {
-  font-size: 23px;
-    color: #3e7a7c;
-    text-transform: uppercase;
-    font-weight: 800;
-  font-weight: 800;
-  margin-bottom: 25px;
-  padding-left: 12px;
-}
-
-/* Button Switch */
-.button-group {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.btn-switch {
-  padding: 10px 18px;
-  font-weight: 600;
-  background: white;
-  color: #5f9ea0;
-  border: 2px solid #5f9ea0;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-.btn-switch.active {
-  background-color: #5f9ea0;
-  color: white;
-  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
-}
-.btn-switch:hover {
-  transform: translateY(-2px);
-}
-
-/* Table Container */
-.table-container {
-  background: white;
-  padding: 6px;
-  border-radius: 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-  overflow-x: auto;
-}
-
-/* Modern Table */
-.modern-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
-  border-radius: 12px;
-  overflow: hidden;
-}
-.modern-table thead tr {
-  background-color: #5f9ea0;
-  color: white;
-  text-align: left;
-}
-.modern-table th,
-.modern-table td {
-  padding: 14px 18px;
-  border-bottom: 1px solid #e0e0e0;
-}
-.modern-table tbody tr {
-  transition: all 0.3s ease;
-}
-.modern-table tbody tr:hover {
-  background-color: #f2f8ff;
-  box-shadow: 0 3px 8px rgba(0, 123, 255, 0.2);
-  transform: scale(1.01);
-}
-
-/* Upload Button */
-.upload-btn {
+.upcoming-task-popup {
   position: relative;
   overflow: hidden;
-  width: 64px;
-  background-color: #000000;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  font-size: 14px;
-  gap: 6px;
-}
-.upload-btn input[type="file"] {
-  /* position: absolute; */
-  left: 0;
-  top: 0;
-  opacity: 0;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-}
-.file-name {
-  display: block;
-  margin-top: 6px;
-  color: #518587;
-  font-size: 13px;
 }
 
-/* Status Badges */
-.status-badge {
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-right: 10px;
-  text-transform: capitalize;
-}
-.status-pending {
-  background: #fff4e6;
-  color: #ff7b00;
-}
-.status-completed {
-  background: #e6ffed;
-  color: #1aa34a;
+.popup-hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
-/* Dropdown */
-.modern-table select {
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  padding: 5px 8px;
-  font-weight: 500;
+/* Optional: smooth fade-in for all popups */
+.upcoming-task-popup {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.upcoming-task-popup {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  margin-top: 10px;
+  padding: 10px;
+  /* box-shadow: 0 2px 10px rgb(255 0 0 / 21%); */
+  border-radius: 5px;
   cursor: pointer;
-  background: white;
   transition: all 0.3s ease;
+  width: 250px;
+  z-index: 9999;
+
+  /* Add animation */
+  animation: zoomInOut 1s ease-in-out infinite;
 }
-.modern-table select:hover {
-  border-color: #5f9ea0;
+
+/* Task background colors */
+.upcoming-task-past {
+  background-color: rgb(255, 111, 111);
 }
 
-/* Mobile view */
-/* 📱 Improved Mobile View: Field Left, Value Right */
-@media (max-width: 768px) {
-  .modern-table thead {
-    display: none; /* hide table headers */
-  }
+.upcoming-task-today {
+  background-color: rgb(223, 180, 100);
+}
 
-  .modern-table,
-  .modern-table tbody,
-  .modern-table tr,
-  .modern-table td {
-    display: block;
-    width: 100%;
-  }
+.upcoming-task-soon {
+  background-color: rgb(240, 240, 122);
+}
 
-  .modern-table tr {
- margin-bottom: 16px;
-        background: #fff;
-        border-radius: 0px;
-        box-shadow: inset -15px -5px 0px 0px #5f9ea0;
-        padding: 10px 14px;
+/* Keyframes for zoom in/out */
+@keyframes zoomInOut {
+  0%, 100% {
+    transform: scale(1);
   }
-
-  .modern-table td {
-   align-items: center;
-        display: flex;
-        padding: 10px 0;
-        border: none;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-        flex-direction: row;
-  }
-
-  .modern-table td:last-child {
-    border-bottom: none;
-  }
-
-  /* Show field name on left side */
-  .modern-table td::before {
-    content: attr(data-label);
-    flex-basis: 45%;
-    text-align: left;
-    font-weight: 600;
-    color: #5f9ea0;
-  }
-
-  /* Value styling (right side) */
-  .modern-table td span,
-  .modern-table td select,
-  .modern-table td input,
-  .modern-table td label {
-    flex-basis: 32%;
-    /* text-align: right; */
-/* color: #427172; */
-    font-weight: 500;
-  }
-
-  .modern-table td label.upload-btn {
-    justify-content: flex-end;
-  }
-
-  .file-name {
-    text-align: right;
-    font-size: 12px;
+  50% {
+    transform: scale(1.05); /* slightly bigger */
   }
 }
 
-
-
-/* 📱 Mobile-friendly vertical table */
-@media (max-width: 768px) {
-  .user-table th, .user-table td{
-    text-align: right!important;
-    color: #00145b!important;
-    font-size: 11px!important;
-    
-  }
-  .user-table thead {
-    display: none; /* hide header */
-  }
-  .user-table td{
-    padding: 14px 0px!important;
-  }
-.user-table tbody tr{
-    background-color: #1081771f!important;
-    justify-self: center!important;
-}
-  .user-table, 
-  .user-table tbody, 
-  .user-table tr, 
-  .user-table td {
-    display: block;
-    width: 100%;
-  }
-
-  .user-table tr {
-    margin-bottom: 18px;
-    border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-    padding: 12px;
-  }
-
-  .user-table td {
-    text-align: left;
-    padding: 10px 14px;
-    border: none !important;
-    font-size: 14px;
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #e5e5e5;
-  }
-
-  .user-table td:last-child {
-    border-bottom: none;
-  }
-
-  /* Show label using data-label attr */
-  .user-table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: #042140!important ;
-    flex-basis: 50%;
-    text-align: left;
-  }
+.upcoming-task-popup + .upcoming-task-popup {
+  margin-top: 10px;
 }
 
-
-/* Table Base */
-.user-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 12px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.deadline-reminder-popup {
+  position: fixed;
+  top: 86px;
+  right: 20px;
+  background: #ffeeba;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 9999;
+  cursor: pointer;
+  width: 250px;
 }
 
-/* Table Header */
-.user-table th {
-  background-color: #5f9ea0;
-  color: white;
-  font-weight: 700;
-  padding: 14px 20px;
-  text-align: left;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+.deadline-reminder-popup h4 {
+  margin: 0 0 8px 0;
   font-size: 16px;
 }
 
-/* Table Rows */
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-  border-radius: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.user-table tbody tr:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  background-color: #e9f5ff;
-}
-
-/* Table Cells */
-.user-table td {
-  padding: 14px 20px;
-  vertical-align: middle;
-  border: none;
-  font-size: 15px;
-  color: #427778;
-}
-
-/* Dropdown Styling */
-.user-table select {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1.5px solid #ced4da;
+.deadline-reminder-popup ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-size: 14px;
-  font-weight: 500;
-  background-color: #fff;
+}
+
+.deadline-reminder-popup small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #555;
+}
+
+.edit-btn {
+  background-color: #5f9ea0;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  margin-right: 5px;
+  margin-left: 7px;
 }
 
-.user-table select:hover {
-  border-color: #5f9ea0;
-  box-shadow: 0 0 8px rgba(0,123,255,0.3);
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.user-table select:focus {
-  outline: none;
-  border-color: #5f9ea0;
-  box-shadow: 0 0 10px rgba(0,123,255,0.4);
+/* .edit-btn{
+  background-color: transparent!important ;
+      border: white;
+    margin-left: 7%;
+    cursor: pointer;
+        font-size: 15px;
+} */
+.show-more-container {
+  text-align: center;
+  margin-top: 16px;
+}
+.show-more-btn {
+  padding: 8px 16px;
+  background-color: #5f9ea0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.show-more-btn:hover {
+  background-color: #426b6c;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .user-table th, .user-table td {
-    padding: 12px 10px;
-    font-size: 14px;
+  .add-task-btn{
+        width: 32%!important;
+  }
+  .main-content {
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+  }
+  .task-filters {
+   .task-filters {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+    gap: 10px;
+  }
+  }
+
+  .task-filters input,
+  .task-filters select,
+  .task-filters button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .task-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .add-task-btn {
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 90%;
   }
 }
 
-.attractive-btn.active {
-  background-color: #426b6c;
-  color: white;
+@media (max-width: 480px) {
+
+  .header img {
+    height: 36px;
+  }
+
+  .header i {
+    align-self: flex-end;
+  }
 }
+.task-status-dropdown {
+  width: 100%;
+}
+
+.task-filters {
+  display: flex;
+  /* flex-wrap: wrap; */
+  width: 59%;
+  gap: 10px;  
+  /* background-color: #ffffff; */
+  border-radius: 12px;
+  /* box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); */
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  animation: fadeIn 0.4s ease-in-out;
+  transition: all 0.3s ease;
+}
+
+.task-filters input[type="date"],
+.task-filters select {
+  padding: 10px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  background-color: #f9fbff;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  flex: 1 1 180px;
+}
+
+.task-filters input[type="date"]:focus,
+.task-filters select:focus {
+  border-color: #5f9ea0;
+  outline: none;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+}
+
+.task-filters button {
+  padding: 10px 16px;
+  background-color: #5f9ea0;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.task-filters button:hover {
+  background-color: #426b6c;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
 .mobile-menu-icon {
   font-size: 22px;
   margin-left: 10px;
@@ -884,7 +1385,13 @@ async updateServiceVisitDate(service) {
   .mobile-menu-icon {
     display: inline-block;
   }
-
+.task-container{
+  padding: 0px!important;
+    background: #f4f7fa00!important;
+    min-height: 100vh;
+    width: 100%;
+    font-family: 'Segoe UI', sans-serif;
+}
   .sidebar {
     position: absolute;
     z-index: 1000;
@@ -897,14 +1404,270 @@ async updateServiceVisitDate(service) {
     margin-left: 0 !important;
     transition: margin 0.3s ease-in-out;
   }
-  .main-content{
-  padding: 1px!important;
-}
-.content{
-  padding: 23px 8px!important;
-}
 }
 
+.task-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* .delete-btn {
+  margin-left: 26px;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: red;
+} */
+
+.task-status-dropdown {
+  width: 43%;
+  padding: 6px 10px;
+  font-size: 14px;
+  background-color: #d5d8e078;
+    border-radius: 6px;
+    border: 1px solid #d5d8e078;
+  margin-top: 8px;
+}
+
+  .modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 30px;
+  width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-content h3 {
+  margin-bottom: 20px;
+  font-size: 22px;
+  text-align: center;
+  color: #427172;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
+  border-color: #4caf50;
+  outline: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  padding: 10px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-actions button[type="submit"] {
+  background-color: #5f9ea0;
+  color: white;
+}
+
+.modal-actions button[type="submit"]:hover {
+  background-color: #41787a;
+}
+
+.modal-actions button[type="button"] {
+  background-color: #e0e0e0;
+  color: #427172;
+}
+
+.modal-actions button[type="button"]:hover {
+  background-color: #d5d5d5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add task button */
+.add-task-btn {
+  background-color: #5f9ea0;
+  color: white;
+  padding: 11px 13px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.add-task-btn:hover {
+  background-color: #41787a;
+}
+
+/* Modal styling */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  width: 400px;
+  border-radius: 8px;
+}
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  margin: 8px 0;
+  padding: 8px;
+  box-sizing: border-box;
+}
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.modal-actions button {
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.modal-actions button:first-child {
+  background-color: #5f9ea0;
+  color: white;
+}
+.modal-actions button:last-child {
+  background-color: #ccc;
+}
+
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-container {
+  padding: 30px;
+  background: #f4f7fa;
+  min-height: 100vh;
+  border-radius: 17px;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+.heading {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 26px;
+  font-weight: bold;
+  color: #427172;
+}
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 38px;
+}
+.task-card {
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  width: 92%;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-left: 6px solid transparent;
+}
+.task-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #666;
+}
+.task-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #427172;
+  margin-bottom: 8px;
+}
+.task-status {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+.task-priority {
+      padding: 2px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    background-color: cadetblue;
+    font-weight: 700;
+    color: #ffffff;
+}
+.task-priority.low {
+  background-color: #2c8487;
+}
+.task-priority.medium {
+  background-color: #2c8487;
+}
+.task-priority.high {
+  background-color: #2c8487;
+}
+
+/* Status Color Borders */
+.task-card.in-progress {
+  border-left-color: #2196f3;
+}
+.task-card.pending {
+  border-left-color: #ff9800;
+}
+.task-card.completed {
+  border-left-color: #4caf50;
+}
 .password-wrapper {
   display: flex;
   align-items: center;
@@ -943,15 +1706,20 @@ async updateServiceVisitDate(service) {
 }
 /* Layout */
 .layout {
-  display: flex;
+  /* display: flex; */
   flex-direction: column;
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #427778;
 }
+ .layout{
+        background: #ffffff!important;
+  }
+    .layout {
+  display: flex;
+}
 
-/* Header */
 .header {
   font-size: 17px;
     font-weight: 700;
@@ -996,7 +1764,7 @@ async updateServiceVisitDate(service) {
 .logout-btn {
   background-color: white;
   color: #003977;
-  border: 2px solid #5f9ea0;
+  border: 2px solid #007bff;
 }
 
 .logout-btn:hover {
@@ -1006,6 +1774,7 @@ async updateServiceVisitDate(service) {
 /* Main Content */
 .main-content {
   display: flex;
+  
   flex: 1;
   padding: 30px;
   gap: 20px;
@@ -1045,10 +1814,10 @@ async updateServiceVisitDate(service) {
 /* Content Section */
 .content {
   flex: 1;
-  background-color: #f0f2f8;
+  background-color: white;
   padding: 30px 40px;
   border-radius: 15px;
-  /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
+  box-shadow: 0 5px 30px rgba(0,0,0,0.08);
   overflow-x: auto;
 }
 
@@ -1077,11 +1846,10 @@ h2 {
 }
 
 .user-table th {
-  background-color: #d1d8df;
-  border: 1px solid #3b3737;
+  background-color: #f8f9fa;
   font-weight: 700;
-  /* border-bottom: none; */
- border-radius: 0px 0px 0 0;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
 }
 
 .user-table tbody tr {
@@ -1097,8 +1865,7 @@ h2 {
 }
 
 .user-table tbody td {
-    border: 1px solid #a09e9e;
-  /* border: none; */
+  border: none;
   vertical-align: middle;
 }
 
@@ -1300,7 +2067,6 @@ h2 {
   .header {
     flex-direction: row;
     gap: 10px;
-    font-size: 17px;
   }
   .menu-btn, .logout-btn {
     width: 100%;
@@ -1320,13 +2086,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: #2e5758;
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: #021f4a;
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 
@@ -1352,12 +2118,12 @@ h2 {
 }
 
 .logo-img {
-  height: 45px;
+  height: 65px;
 }
 
 .header-title {
   flex: 1;
-  text-align: center;
+  text-align: right;
   color: white;
   margin: 0;
   font-size: 1.3rem;
@@ -1368,5 +2134,10 @@ h2 {
   color: white;
   cursor: pointer;
 }
-
+@media (max-width: 768px) {
+ 
+.header-title {
+  text-align: center;
+}
+}
 </style>

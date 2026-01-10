@@ -26,6 +26,7 @@ import ApplyLeave from '../views/employee/ApplyLeave.vue'
 import Report from '../views/employee/Report.vue'
 import FollowUp from '../views/employee/FollowUp.vue'
 import ViewAllPo from '../views/employee/ViewAllPo.vue'
+import EmpWorkReport from '../views/employee/EmpWorkReport.vue'
 
 
 import AssignTask from '../views/AssignTask.vue'
@@ -108,6 +109,7 @@ const routes = [
 
  {path: '/employee/mydsi' , name: 'MyDsi', component: MyDsi },
  {path: '/employee/help' , name: 'Help', component: Help },
+    {path: '/employee/empworkreport' , name: 'EmpWorkReport', component: EmpWorkReport },
  
 
 
