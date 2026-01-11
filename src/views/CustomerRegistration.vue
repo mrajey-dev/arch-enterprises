@@ -800,16 +800,27 @@
 
     <td>{{ visit.company_name }}</td>
     <!-- <td>{{ visit.po_number }}</td> -->
-    <td>{{ visit.visit_date }}</td>
+  <td>
+    <input
+      type="date"
+      v-model="visit.visit_date"
+      class="date-input"
+      :placeholder="'Select date'"
+      @change="updateAmcVisitDate(visit)"
+    />
+  </td>
+
+
 
     <td>
-      <select v-model="visit.assign_to" @change="assignVisit(visit)">
-        <option disabled value="">-- Select Employee --</option>
-        <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-          {{ emp.name }}
-        </option>
-      </select>
-    </td>
+    <select v-model.number="visit.assign_to" @change="assignVisit(visit)">
+      <option disabled value="">-- Select Employee --</option>
+      <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+        {{ emp.name }}
+      </option>
+    </select>
+  </td>
+
 
     <!-- <td>{{ visit.status }}</td> -->
   </tr>
@@ -1003,7 +1014,19 @@
       <td>{{ order.company_name }}</td>
       <!-- <td>{{ order.po_number }}</td> -->
       <!-- <td>{{ order.date }}</td> -->
-      <td>{{ order.service_date }}</td>
+<td>
+  <input
+    type="date"
+    class="date-input"
+    v-model="order.service_date"
+    @change="updateServiceDate(order)"
+  />
+</td>
+
+
+
+
+
       <td>{{ order.type_of_service }}</td>
 
   
@@ -1601,7 +1624,25 @@
 
 
 </template>
+<template v-if="selectedPo.po_type === 'Service+Supply'">
+   <tr>
+          <th>PO Date</th>
+          <td>{{ selectedPo.date }}</td>
+        </tr>
+        <tr>
+          <th>Type Of Service</th>
+          <td>{{ selectedPo.type_of_service }}</td>
+        </tr>
+        <tr>
+          <th>Value Of PO</th>
+          <td>{{ selectedPo.value_of_po }}</td>
+        </tr>
+        <tr>
+          <th>Recommended By</th>
+          <td>{{ selectedPo.recommended_by }}</td>
+        </tr>
 
+</template>
         <!-- Service Specific -->
         <template v-else-if="selectedPo.po_type === 'Service'">
          
@@ -1848,6 +1889,7 @@
           <option value="AMC">AMC</option>
           <option value="Service">Service</option>
           <option value="Supply">Supply</option>
+           <option value="Service+Supply">Service + Supply</option>
         </select>
       </div>
     </div>
@@ -1859,6 +1901,93 @@
   </div>
 </div>
 
+<!-- Service + Supply Modal -->
+<div class="modal-backdrop" v-if="showServiceSupplyModal">
+  <div class="modal-card medium">
+    <h2 class="modal-title" style="font-size: 17px!important;">Service + Supply Purchase Order</h2>
+
+    <!-- Company Name -->
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>Company Name</label>
+        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
+      </div>
+    </div>
+
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>PO Number</label>
+        <input type="text" v-model="serviceSupply.poNumber" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>PO Recive Date</label>
+        <input type="date" v-model="serviceSupply.date" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>Total PO Value</label>
+        <input type="number" v-model="serviceSupply.totalValue" />
+      </div>
+    </div>
+
+   
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>Recommended By</label>
+        <select v-model="serviceSupply.recommendedBy">
+          <option value="">Select Name</option>
+          <option v-for="user in users" :key="user.id" :value="user.name">
+            {{ user.name }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>Type of Service</label>
+        <select v-model="serviceSupply.serviceType">
+          <option value="">Select Service</option>
+          <option value="Breakdown">Breakdown</option>
+          <option value="Inspection">Inspection</option>
+          <option value="B-Check / Maintenance">B-Check / Maintenance</option>
+        </select>
+      </div>
+    </div>
+ <div class="form-row">
+      <div class="input-group full-width">
+        <label>PO Attachment</label>
+        <input type="file" @change="handleServiceSupplyFile" />
+      </div>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="modal-buttons"> 
+      <button
+        class="btn btn-success"
+        style="background-color: cornflowerblue;"
+        :disabled="isSavingServiceSupply"
+        @click="saveServiceSupply"
+      >
+        <span v-if="isSavingServiceSupply" class="loader"></span>
+        <span v-else>Save</span>
+      </button>
+
+      <button class="btn btn-secondary" @click="closeServiceSupplyModal">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <!-- Supply Modal -->
 <div class="modal-backdrop" v-if="showSupplyModal">
   <div class="modal-card small">
@@ -1868,7 +1997,7 @@
     <div class="form-row">
       <div class="input-group full-width">
         <label>Company Name</label>
-        <p>{{ selectedCustomer.company_name }}</p>
+        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
       </div>
     </div>
 
@@ -1881,7 +2010,7 @@
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Date</label>
+        <label> PO Date</label>
         <input type="date" v-model="supplyDetails.date" />
       </div>
     </div>
@@ -1935,7 +2064,7 @@
     <div class="form-row">
       <div class="input-group full-width">
         <label>Company Name</label>
-        <p>{{ selectedCustomer.company_name }}</p>
+        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
       </div>
     </div>
 
@@ -1948,7 +2077,7 @@
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Date</label>
+        <label>PO Date</label>
         <input type="date" v-model="serviceDetails.date" />
       </div>
     </div>
@@ -2017,7 +2146,7 @@
     <div class="form-row">
       <div class="input-group full-width">
         <label>Company Name</label>
-        <p>{{ selectedCustomer.company_name }}</p>
+        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
       </div>
     </div>
 
@@ -2467,6 +2596,21 @@
     },
     data() {
       return {
+        visit_assign: [],
+        showServiceSupplyModal: false,
+        serviceSupply: {
+  poNumber: "",
+  date: "",
+  totalValue: "",
+  file: null,
+
+  // Supply only
+  recommendedBy: "",
+
+  // Service only
+  serviceType: "",
+},
+isSavingServiceSupply: false,
         isSavingAmc: false, // 👈 loader state
          isSavingSupply: false,
          isSavingService:false,
@@ -3017,6 +3161,10 @@ PODate: "",
 
   },
 watch: {
+  showVisitPopup(val) {
+    if (val) this.loadVisitAssign(); // fetch data when modal opens
+  },
+
   showWelcomeModal(val) {
     if (val) {
       this.fetchServiceReports();
@@ -3047,6 +3195,39 @@ filterCompany(newCompany) {
 
 
  methods: {
+  loadVisitAssign() {
+    axios.get('/api/visit-assign-for-vue')
+      .then(res => {
+        this.visit_assign = res.data; // use visit_assign table data
+      })
+      .catch(err => console.error(err));
+  },
+
+updateAmcVisitDate(visit) {
+    axios.post('/api/update-amc-visit-date', {
+      company_name: visit.company_name,
+      visit_date: visit.visit_date
+    }).then(res => {
+      console.log(res.data.message);
+    });
+  },
+   updateVisitDate(date, order) {
+    order.service_date = date
+
+    axios.post('/api/service-assign/update-visit-date', {
+      company_name: order.company_name,
+      visit_date: date
+    })
+    .then(() => {
+      this.$toast?.success('Visit date updated')
+    })
+    .catch(() => {
+      this.$toast?.error('Failed to update visit date')
+    })
+  },
+     handleServiceSupplyFile(e) {
+      this.serviceSupply.file = e.target.files[0];
+    },
   onAssignChange(order) {
     // ⛔ Ignore empty / initial changes
     if (!order.assign_to) return;
@@ -3375,7 +3556,10 @@ fetchReports() {
   });
 },
 
-
+ ServiceformatDate(date) {
+    if (!date) return ''
+    return new Date(date).toISOString().split('T')[0]
+  },
   formatDate(date) {
     return new Date(date).toLocaleDateString('en-IN');
   },
@@ -4023,31 +4207,30 @@ updateStatus(id, materialStatus) {
 async fetchVisitOrders() {
   try {
     const response = await axios.get("https://employees.archenterprises.co.in/api/get-visit-orders");
-    this.visit_assign = response.data || [];
-    console.log(this.assignedVisits);
+    // Convert assign_to to number
+    this.visit_assign = (response.data || []).map(visit => ({
+      ...visit,
+      assign_to: visit.assign_to ? Number(visit.assign_to) : ''
+    }));
+    console.log(this.visit_assign);
   } catch (error) {
     console.error("Failed to load Visit Orders", error);
   }
 },
 
+
 assignVisit(visit) {
-  const payload = {
-    visit_assign_id: visit.id,
+    axios.post('https://employees.archenterprises.co.in/api/api/complete-amc', {
+  visit_assign_id: visit.id,
     company_name: visit.company_name,
     po_number: visit.po_number,
     visit_date: visit.visit_date,
     assign_to: visit.assign_to, // selected employee ID
     status: visit.status ?? "Pending"
-  };
-
-  axios.post("https://employees.archenterprises.co.in/api/api/complete-amc", payload)
-    .then((res) => {
-      console.log(res.data);
-    })
-    .catch((err) => {
-      console.error(err);
+    }).then(res => {
+      console.log(res.data.message);
     });
-},
+  },
 
     // Fetch data
     async fetchServiceOrders() {
@@ -4390,18 +4573,29 @@ async saveAmcDetails() {
       });
   },
     // Handle PO type selection
-    handlePoTypeChange() {
-      if (this.poType === "Service") {
-        this.showPoModal = false;
-        this.showServiceModal = true;
-      } else if (this.poType === "AMC") {
-        this.showPoModal = false;
-        this.showAmcModal = true;
-      } else if (this.poType === "Supply") {
-        this.showSupplyModal = true;
-        this.fetchUsers(); // load dropdown data
-      }
-    },
+   handlePoTypeChange() {
+  if (this.poType === "Service") {
+    this.showPoModal = false;
+    this.showServiceModal = true;
+
+  } else if (this.poType === "AMC") {
+    this.showPoModal = false;
+    this.showAmcModal = true;
+
+  } else if (this.poType === "Supply") {
+    this.showPoModal = false;
+    this.showSupplyModal = true;
+    this.fetchUsers(); // load dropdown data
+
+  } else if (this.poType === "Service+Supply") {
+    this.showPoModal = false;
+    this.showServiceSupplyModal = true;
+    this.fetchUsers(); // needed for recommendedBy + assignTo
+  }
+},
+closeServiceSupplyModal(){
+  this.showServiceSupplyModal = false;
+},
 
     closeSupplyModal() {
       this.showSupplyModal = false;
@@ -4443,6 +4637,67 @@ async saveAmcDetails() {
       });
       this.closePoModal();
     },
+
+    saveServiceSupply() {
+  // Basic validation (common required fields)
+  if (!this.serviceSupply.poNumber || !this.serviceSupply.date) {
+    alert("Please fill required fields");
+    return;
+  }
+
+  this.isSavingServiceSupply = true; // 🔄 start loader
+
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+
+  // COMMON FIELDS
+  formData.append("company_name", this.selectedCustomer.company_name);
+  formData.append("po_type", "Service+Supply");
+  formData.append("po_number", this.serviceSupply.poNumber);
+  formData.append("date", this.serviceSupply.date);
+  formData.append("value_of_po", this.serviceSupply.totalValue || 0);
+
+  // SUPPLY-SPECIFIC
+  formData.append(
+    "recommended_by",
+    this.serviceSupply.recommendedBy || ""
+  );
+
+  // SERVICE-SPECIFIC
+  formData.append(
+    "type_of_service",
+    this.serviceSupply.serviceType || ""
+  );
+  formData.append(
+    "assign_to",
+    this.serviceSupply.assignTo || ""
+  );
+
+  // FILE (single common PO file)
+  if (this.serviceSupply.file) {
+    formData.append("po_file", this.serviceSupply.file);
+  }
+
+  axios
+    .post("/api/add_po", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then(() => {
+      alert("Service + Supply PO saved successfully");
+      window.location.reload();
+    })
+    .catch((err) => {
+      console.error("Save error:", err.response?.data || err);
+      alert("Failed to save Service + Supply PO");
+    })
+    .finally(() => {
+      this.isSavingServiceSupply = false; // ✅ stop loader ALWAYS
+    });
+},
+
 
   saveSupplyDetails() {
   if (!this.supplyDetails.poNumber || !this.supplyDetails.date) {
