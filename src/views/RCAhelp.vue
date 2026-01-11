@@ -33,11 +33,13 @@
 
           <!-- Ask Question -->
           <div class="ask-box">
-           <textarea
+         <textarea
   v-model="newQuestion"
   placeholder="Describe the problem..."
-  @keyup="onMentionKeyup($event, 'question')"
-></textarea>
+  @input="onMentionInput($event, 'question')"
+  @keydown="onMentionKeydown"
+/>
+
 
 
             <input
@@ -96,11 +98,13 @@
 
                 <!-- Add Answer -->
                 <div class="reply-box">
-                 <input
+<input
   v-model="q.replyText"
   placeholder="Write an answer..."
-  @keyup="onMentionKeyup($event, q)"
+  @input="onMentionInput($event, q)"
+  @keydown="onMentionKeydown"
 />
+
 
                   <input
                     type="file"
@@ -187,6 +191,65 @@ this.fetchNotifications();
   },
 
   methods: {
+    onMentionKeydown(e) {
+  if (!this.showMentionBox || !this.mentionUsers.length) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    this.selectedMentionIndex =
+      (this.selectedMentionIndex + 1) % this.mentionUsers.length
+  }
+
+  if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    this.selectedMentionIndex =
+      (this.selectedMentionIndex - 1 + this.mentionUsers.length) %
+      this.mentionUsers.length
+  }
+
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    this.selectMention(this.mentionUsers[this.selectedMentionIndex])
+  }
+
+  if (e.key === 'Escape') {
+    this.showMentionBox = false
+  }
+},
+
+    onMentionInput(e, target) {
+  const input = e.target
+  const text = input.value
+  const cursorPos = input.selectionStart
+  const beforeCursor = text.slice(0, cursorPos)
+
+  const match = beforeCursor.match(/@([A-Za-z]+(?:\s+[A-Za-z]+){0,4})$/)
+  if (!match) {
+    this.showMentionBox = false
+    return
+  }
+
+  const query = match[1].trim()
+  if (!query) {
+    this.showMentionBox = false
+    return
+  }
+
+  this.mentionQuery = query
+  this.mentionTarget = target
+  this.selectedMentionIndex = 0
+  this.setMentionPosition(input)
+
+  axios.get('/api/qa/mention-users', { params: { q: query } })
+    .then(res => {
+      this.mentionUsers = res.data
+      this.showMentionBox = res.data.length > 0
+    })
+    .catch(() => {
+      this.showMentionBox = false
+    })
+},
+
      async fetchNotifications() {
     const res = await axios.get('/api/notifications');
     this.notifications = res.data;
@@ -294,9 +357,11 @@ selectMention(user) {
   const before = text.slice(0, cursorPos)
   const after = text.slice(cursorPos)
 
-  // Replace last @mention in text with selected user
-  const newBefore = before.replace(/@([A-Za-z0-9_]+)$/, `@${user.handle}`)
-
+  // ✅ replace EXACT same pattern used while typing
+  const newBefore = before.replace(
+    /@([A-Za-z]+(?:\s+[A-Za-z]+){0,4})$/,
+    `@${user.handle}`
+  )
 
   const finalText = newBefore + ' ' + after
 
@@ -308,6 +373,7 @@ selectMention(user) {
 
   this.showMentionBox = false
 },
+
 
 
 
