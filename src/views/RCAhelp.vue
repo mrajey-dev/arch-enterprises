@@ -15,6 +15,12 @@
         v-if="isMobile"
         @click="toggleSidebar"
       ></i>
+    <div class="notification-bell-wrapper">
+  <i class="fas fa-bell"></i>
+  <span v-if="unreadMentionsCount" class="badge">{{ unreadMentionsCount }}</span>
+</div>
+
+
     </header>
 
     <!-- Main Content -->
@@ -27,10 +33,12 @@
 
           <!-- Ask Question -->
           <div class="ask-box">
-            <textarea
-              v-model="newQuestion"
-              placeholder="Describe the problem..."
-            ></textarea>
+           <textarea
+  v-model="newQuestion"
+  placeholder="Describe the problem..."
+  @keyup="onMentionKeyup($event, 'question')"
+></textarea>
+
 
             <input
               type="file"
@@ -60,7 +68,8 @@
               ></i>
             </div>
 
-            <p class="question-text">{{ q.question }}</p>
+           <p class="question-text" v-html="highlightMentions(q.question)"></p>
+
             <img
               v-if="q.image_url"
               :src="q.image_url"
@@ -77,7 +86,8 @@
 >
 
   <h5>{{ a.creator_name || 'ADMIN' }}</h5>
-  <p>{{ a.answer }}</p>
+<p v-html="highlightMentions(a.answer)"></p>
+
   <img v-if="a.image_url" :src="a.image_url" class="qa-image" />
 
  
@@ -86,10 +96,12 @@
 
                 <!-- Add Answer -->
                 <div class="reply-box">
-                  <input
-                    v-model="q.replyText"
-                    placeholder="Write an answer..."
-                  />
+                 <input
+  v-model="q.replyText"
+  placeholder="Write an answer..."
+  @keyup="onMentionKeyup($event, q)"
+/>
+
                   <input
                     type="file"
                     accept="image/*"
@@ -101,6 +113,24 @@
             </transition>
           </div>
         </div>
+        <!-- Mention Dropdown -->
+<div
+  v-if="showMentionBox"
+  class="mention-box"
+  :style="{ top: mentionPosition.top + 'px', left: mentionPosition.left + 'px' }"
+>
+  <div
+  v-for="(user, index) in mentionUsers"
+  :key="user.id"
+  class="mention-item"
+  :class="{ active: index === selectedMentionIndex }"
+  @click="selectMention(user)"
+>
+ @{{ user.handle }}
+</div>
+
+</div>
+
       </div>
     </div>
   </div>
@@ -117,25 +147,180 @@ export default {
 
   data() {
     return {
+      latestMentionMessage: '',
+       unreadMentionsCount: 0,
+       notifications: [],
+       selectedMentionIndex: 0,
       questions: [],
       newQuestion: '',
       questionImage: null,
       isMobile: false,
-      isSidebarVisible: true
+      isSidebarVisible: true,
+       // ✅ MENTION SYSTEM
+    showMentionBox: false,
+    mentionUsers: [],
+    mentionQuery: '',
+    mentionTarget: null,
+    mentionPosition: { top: 0, left: 0 }
     }
   },
 
   mounted() {
+    document.addEventListener('click', this.closeMentionBox)
+
+   axios.get('/api/mentions/unread-count')
+  .then(res => {
+    console.log(res.data)  // Check if it has { count: number }
+    this.unreadMentionsCount = res.data.count
+  })
+  .catch(err => console.error('Failed to fetch unread mentions', err))
+this.fetchNotifications();
     this.fetchQuestions()
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
   },
 
   beforeUnmount() {
+    document.removeEventListener('click', this.closeMentionBox)
+
     window.removeEventListener('resize', this.checkIfMobile)
   },
 
   methods: {
+     async fetchNotifications() {
+    const res = await axios.get('/api/notifications');
+    this.notifications = res.data;
+
+    // extract latest message
+    if (this.notifications.length) {
+      const data = JSON.parse(this.notifications[0].data);
+      this.latestMentionMessage = data.message ?? '';
+    }
+  },
+    closeMentionBox(e) {
+  if (!e.target.closest('.mention-box')) {
+    this.showMentionBox = false
+  }
+},
+
+highlightMentions(text) {
+  if (!text) return ''
+  // Match @handles (alphanumeric + underscores, e.g., @ajay_123)
+  return text.replace(
+    /@([A-Za-z0-9_]+)/g,
+    '<span class="mention-highlight">@$1</span>'
+  )
+},
+
+
+
+
+onMentionKeyup(e, target) {
+  const input = e.target
+  const text = input.value
+  const cursorPos = input.selectionStart
+
+  // Text before cursor
+  const beforeCursor = text.slice(0, cursorPos)
+
+  // Match last @mention (1–5 words, multi-word support)
+  const mentionMatch = beforeCursor.match(/@([A-Za-z]+(?:\s+[A-Za-z]+){0,4})$/)
+  if (!mentionMatch) {
+    this.showMentionBox = false
+    return
+  }
+
+  const query = mentionMatch[1].trim()
+  if (!query) {
+    this.showMentionBox = false
+    return
+  }
+
+  // ✅ Store mention info
+  this.mentionQuery = query
+  this.mentionTarget = target
+  this.selectedMentionIndex = 0
+  this.setMentionPosition(input)
+
+  // Keyboard navigation
+  if (this.showMentionBox && this.mentionUsers.length) {
+    if (e.key === 'ArrowDown') {
+      this.selectedMentionIndex =
+        (this.selectedMentionIndex + 1) % this.mentionUsers.length
+      return
+    }
+
+    if (e.key === 'ArrowUp') {
+      this.selectedMentionIndex =
+        (this.selectedMentionIndex - 1 + this.mentionUsers.length) %
+        this.mentionUsers.length
+      return
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      this.selectMention(this.mentionUsers[this.selectedMentionIndex])
+      return
+    }
+
+    if (e.key === 'Escape') {
+      this.showMentionBox = false
+      return
+    }
+  }
+
+  // Fetch matching users from API
+  axios.get('/api/qa/mention-users', { params: { q: query } })
+    .then(res => {
+      this.mentionUsers = res.data
+      this.showMentionBox = res.data.length > 0
+    })
+    .catch(() => {
+      this.showMentionBox = false
+    })
+},
+
+
+
+
+
+
+selectMention(user) {
+  const isQuestion = this.mentionTarget === 'question'
+  const text = isQuestion ? this.newQuestion : this.mentionTarget.replyText
+  const inputEl = document.activeElement
+  const cursorPos = inputEl.selectionStart
+
+  const before = text.slice(0, cursorPos)
+  const after = text.slice(cursorPos)
+
+  // Replace last @mention in text with selected user
+  const newBefore = before.replace(/@([A-Za-z0-9_]+)$/, `@${user.handle}`)
+
+
+  const finalText = newBefore + ' ' + after
+
+  if (isQuestion) {
+    this.newQuestion = finalText
+  } else {
+    this.mentionTarget.replyText = finalText
+  }
+
+  this.showMentionBox = false
+},
+
+
+
+
+
+setMentionPosition(input) {
+  const rect = input.getBoundingClientRect()
+  this.mentionPosition = {
+    top: rect.bottom + window.scrollY,
+    left: rect.left + window.scrollX
+  }
+},
+
     toggleLike(answer) {
   axios.post(`/api/qa/answer/${answer.id}/like`)
     .then(res => {
@@ -238,6 +423,33 @@ export default {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.notification-bell-wrapper {
+  position: relative;
+  text-align: center;
+}
+
+.notification-short-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mention-item.active {
+  background: #1976d2;
+  color: white;
+}
+
+.mention-highlight {
+  color: #1976d2;
+  font-weight: 600;
+  background: rgba(25,118,210,0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
 
 .loader {
   width: 16px;
@@ -788,5 +1000,42 @@ button{
 
     border-color: rgba(255, 255, 255, 0)!important;
 }
+.mention-box {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ddd;
+  width: 220px;
+  max-height: 160px;
+  overflow-y: auto;
+  z-index: 9999;
+  border-radius: 6px;
+}
+
+.mention-item {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mention-item:hover {
+  background: #f2f2f2;
+}
+
+.notification-bell-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.notification-bell-wrapper .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+}
+
 
 </style>
