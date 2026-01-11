@@ -1102,6 +1102,10 @@ button{
   padding: 2px 6px;
   font-size: 0.7rem;
 }
+:deep(.mention-highlight) {
+  font-weight: 800!important;
+  color: #0a58ca!important; /* optional */
+}
 
 
 </style>
