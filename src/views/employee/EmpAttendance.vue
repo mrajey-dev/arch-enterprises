@@ -2,11 +2,16 @@
     <div class="layout">
       <!-- Header -->
       <header class="header">
-      <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
-</a>
-
-     🅰️RCH360⚙️
+   <div class="head-title"><a href="https://employees.archenterprises.co.in/">
+        <img
+          src="https://archenterprises.co.in/ajay/ajay.png"
+          style="height: 65px;"
+          alt="Logo"
+        />
+         </a>
+         🅰️RCH360⚙️
+     
+      </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>
 
@@ -1148,7 +1153,13 @@ updateStatus() {
 
 
 <style scoped>
-
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
 .public-holiday {
   background-color: #fff !important; /* soft green */
   border: 2px solid #58cc71;

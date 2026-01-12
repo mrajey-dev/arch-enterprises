@@ -3,11 +3,16 @@
   <div class="layout">
     <!-- Header -->
       <header class="header">
-     <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
-</a>
-
-      🅰️RCH360⚙️
+    <div class="head-title"><a href="https://employees.archenterprises.co.in/">
+        <img
+          src="https://archenterprises.co.in/ajay/ajay.png"
+          style="height: 65px;"
+          alt="Logo"
+        />
+         </a>
+         🅰️RCH360⚙️
+     
+      </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>
 
@@ -467,7 +472,13 @@ deleteTask(id) {
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 /* work report */
-
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
 .edit-task-btn{
   background-color: #5f9ea0;
     color: white;

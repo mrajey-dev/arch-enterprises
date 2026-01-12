@@ -701,7 +701,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 12px 35px;
 }
 
 .logo-img {

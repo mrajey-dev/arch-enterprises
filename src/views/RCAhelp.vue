@@ -15,10 +15,10 @@
         v-if="isMobile"
         @click="toggleSidebar"
       ></i>
-    <div class="notification-bell-wrapper">
+    <!-- <div class="notification-bell-wrapper">
   <i class="fas fa-bell"></i>
   <span v-if="unreadMentionsCount" class="badge">{{ unreadMentionsCount }}</span>
-</div>
+</div> -->
 
 
     </header>
@@ -831,7 +831,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 12px 35px;
 }
 
 .logo-img {
@@ -897,7 +897,7 @@ h2 {
 }
 
 .question-card {
-  background: #7deb8ab8;
+  background: #c0d9d9;
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -935,13 +935,13 @@ h2 {
   flex: 1;
     padding: 8px;
     color: #ffffff;
-    background-color: #559a5e;
+    background-color: #4b8c8f;
     border-radius: 6px;
     border: 1px solid #ffffff;
 }
 
 .reply-box button {
-  background: #29502e;
+  background: #5f9ea0;
   color: white;
   border: none;
   padding: 8px 14px;
@@ -974,7 +974,7 @@ h2 {
   overflow: hidden;
 }
 h5{
-      color: #646213;
+      color: #32696b;
 }
 p{
   font-family: math;
@@ -1102,10 +1102,10 @@ button{
   padding: 2px 6px;
   font-size: 0.7rem;
 }
-
 :deep(.mention-highlight) {
   font-weight: 800!important;
   color: #0a58ca!important; /* optional */
 }
+
 
 </style>

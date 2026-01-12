@@ -1552,7 +1552,7 @@ input[type="date"] {
     margin-bottom: 16px;
     border-radius: 10px;
     /* box-shadow: 1px 0px 0px 2px rgb(176 176 176); */
-    padding: 12px 16px;
+    padding: 12px 35px;
   }
   .container-fluid{
         width: 100%!important;

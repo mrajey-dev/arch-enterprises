@@ -173,7 +173,7 @@ export default {
 .upload-form .input-group textarea {
   border: 1px solid #ccc;
   border-radius: 10px;
-  padding: 12px 16px;
+  padding: 12px 35px;
   font-size: 15px;
 }
 

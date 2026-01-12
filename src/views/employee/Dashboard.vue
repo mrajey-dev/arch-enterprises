@@ -2,9 +2,16 @@
   <div class="layout">
     <!-- Header -->
    <header class="header">
-    <a href="https://employees.archenterprises.co.in/">
-      <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
-    </a>
+    <div class="head-title"><a href="https://employees.archenterprises.co.in/">
+        <img
+          src="https://archenterprises.co.in/ajay/ajay.png"
+          style="height: 65px;"
+          alt="Logo"
+        />
+         </a>
+         🅰️RCH360⚙️
+     
+      </div>
 <div class="download-app" style="position: relative; display: inline-block;">
       <button @click="toggleDownloadMenu">Download Arch App ⬇️</button>
 
@@ -25,7 +32,7 @@
         </div>
       </div>
     </div>
-    🅰️RCH360⚙️
+    
     <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
 
     <!-- Download Button -->
@@ -623,6 +630,13 @@ export default {
 <style scoped>
 
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1563,8 +1577,8 @@ h2 {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
+  justify-content: flex-start;
+  padding: 12px 35px;
 }
 
 .logo-img {
@@ -1585,12 +1599,12 @@ h2 {
   cursor: pointer;
 }
 .download-app button {
-  padding: 10px 18px;
+  padding: 8px 13px;
   cursor: pointer;
   border-radius: 30px;
   border: none;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 11px;
   color: #000000;
   /* background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); */
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);

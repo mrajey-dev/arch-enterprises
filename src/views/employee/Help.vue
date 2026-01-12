@@ -2,23 +2,26 @@
   <div class="layout">
     <!-- Header -->
     <header class="header">
-      <a href="https://employees.archenterprises.co.in/">
+      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
           style="height: 65px;"
           alt="Logo"
         />
-      </a>
-      🅰️RCH360⚙️
+         </a>
+         🅰️RCH360⚙️
+     
+      </div>
+     
       <i
         class="fas fa-bars mobile-menu-icon"
         v-if="isMobile"
         @click="toggleSidebar"
       ></i>
-    <div class="notification-bell-wrapper">
+    <!-- <div class="notification-bell-wrapper">
   <i class="fas fa-bell"></i>
   <span v-if="unreadMentionsCount" class="badge">{{ unreadMentionsCount }}</span>
-</div>
+</div> -->
 
 
     </header>
@@ -831,7 +834,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 12px 35px;
 }
 
 .logo-img {
@@ -897,7 +900,7 @@ h2 {
 }
 
 .question-card {
-  background: #7deb8ab8;
+  background: #c0d9d9;
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -935,13 +938,13 @@ h2 {
   flex: 1;
     padding: 8px;
     color: #ffffff;
-    background-color: #559a5e;
+    background-color: #4b8c8f;
     border-radius: 6px;
     border: 1px solid #ffffff;
 }
 
 .reply-box button {
-  background: #29502e;
+  background: #5f9ea0;
   color: white;
   border: none;
   padding: 8px 14px;
@@ -974,7 +977,7 @@ h2 {
   overflow: hidden;
 }
 h5{
-      color: #646213;
+      color: #32696b;
 }
 p{
   font-family: math;
@@ -1107,5 +1110,11 @@ button{
   color: #0a58ca!important; /* optional */
 }
 
-
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
 </style>
