@@ -49,30 +49,24 @@
               <tbody>
                 <tr>
   
-               <td data-label="Punch In"><br>
-<select
-  v-model="user.status"
-  @change="updateStatus"
-  :disabled="user.status !== '' || disableStatusSelect"
-  class="status-select"
->
-  <option disabled value="">🔽 Select</option>
-  <option
-    v-for="status in availableStatuses"
-    :key="status"
-    :value="status"
+  <td data-label="Punch In"><br>
+  <select
+    v-model="user.status"
+    @change="updateStatus"
+    :disabled="user.statusLocked"
+    class="status-select"
   >
-    {{ getStatusLabel(status) }}
-  </option>
-</select>
+    <option disabled value="">🔽 Select</option>
+    <option
+      v-for="status in availableStatuses"
+      :key="status"
+      :value="status"
+    >
+      {{ getStatusLabel(status) }}
+    </option>
+  </select>
+</td>
 
-
-
-
-
-
-
-  </td>
 
 
 
@@ -278,6 +272,7 @@
         }
       }
         return {
+           lockTimer: null,
   disableStatusSelect: false,
              status: '',
   statusLocked: false,        // disables dropdown temporarily
@@ -940,12 +935,12 @@ updateStatus() {
   this.user.clockIn = formattedTime;
   this.user.clockOut = '';
   this.user.actualTime = '';
-  this.user.statusLocked = true; // Lock immediately for UI
-  this.user.permanentlyLocked = false; // Allow 1 min re-selection
+  this.user.statusLocked = false;      // keep enabled initially
+  this.user.permanentlyLocked = false; // allow 30-sec re-selection
 
   // Time thresholds
   const earlyThreshold = new Date(now); earlyThreshold.setHours(9, 30, 0, 0);
-  const lateThreshold = new Date(now); lateThreshold.setHours(10, 0, 0, 0);
+  const lateThreshold  = new Date(now); lateThreshold.setHours(10, 0, 0, 0);
   const halfDayThreshold = new Date(now); halfDayThreshold.setHours(13, 0, 0, 0);
 
   // Status logic
@@ -976,40 +971,41 @@ updateStatus() {
   }).then(() => {
     console.log('✅ Attendance inserted');
 
-    // ✅ Increment CL leave if Sunday
+    // Increment CL leave if Sunday
     if (isSunday) {
       axios.put('https://employees.archenterprises.co.in/api/api/user/update-cl-leave', {
         name: this.user.name,
-        increment: 1  // Backend should handle adding 1 to cl_leave_used
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(() => {
+        increment: 1
+      }, { headers: { Authorization: `Bearer ${token}` }})
+      .then(() => {
         console.log('✅ CL leave incremented for Sunday punch-in');
-
-        // Update localStorage for logged-in user
         const localUser = JSON.parse(localStorage.getItem('user'));
         localUser.cl_leave_used = (localUser.cl_leave_used || 0) + 1;
         localStorage.setItem('user', JSON.stringify(localUser));
-      }).catch(err => {
-        console.error('❌ Failed to increment CL leave:', err);
-      });
+      })
+      .catch(err => console.error('❌ Failed to increment CL leave:', err));
     }
 
-  }).catch(err => {
-    console.error('❌ Attendance store failed:', err);
-  });
+  }).catch(err => console.error('❌ Attendance store failed:', err));
 
-  // Save attendance in localStorage
+  // Save locally
   localStorage.setItem('attendance_' + today + '_' + this.user.name, JSON.stringify(this.user));
 
-  // ⏳ Allow 1 minute re-selection before permanently locking
-  setTimeout(() => {
+  // ⏳ Lock dropdown AFTER 30 SECONDS
+  if (this.lockTimer) clearTimeout(this.lockTimer); // reset if user changes again
+  this.lockTimer = setTimeout(() => {
     this.user.statusLocked = true;
     this.user.permanentlyLocked = true;
-    localStorage.setItem('attendance_' + today + '_' + this.user.name, JSON.stringify(this.user));
-    console.log('🔒 Status locked permanently after 1 minute');
-  }, 60 * 1000); // 1 minute
+
+    localStorage.setItem(
+      'attendance_' + today + '_' + this.user.name,
+      JSON.stringify(this.user)
+    );
+
+    console.log('🔒 Status locked permanently after 30 seconds');
+  }, 30 * 1000); // 30 seconds
 },
+
 
 
 

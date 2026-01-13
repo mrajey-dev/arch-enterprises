@@ -44,6 +44,20 @@
     Name must contain only letters and spaces.
   </small>
 </div>
+<div class="input-group">
+  <label><i class="fas fa-user-tag"></i> Handle *</label>
+  <input
+    v-model="registerForm.handle"
+    placeholder="Enter handle"
+    maxlength="25"
+    @input="registerForm.handle = registerForm.handle.replace(/[^A-Za-z0-9_]/g, '').slice(0,25)"
+    required
+  />
+  <small style="color: gray; font-size: 12px;">
+    Only letters, numbers, and underscore allowed. Max 25 chars.
+  </small>
+</div>
+
 
                           </div>
 
@@ -402,6 +416,7 @@
               id: '',
               empId: '',
               username: '',
+               handle: '',
               email: '',
               gender: '',
               department: '',
@@ -769,6 +784,7 @@
               id: user.id,
               empId: user.empId || '',
               username: user.name || '',
+               handle: user.handle || '', 
               email: user.email || '',
               gender: user.gender || '',
               department: user.department || '',
@@ -787,12 +803,12 @@ async handleRegister() {
     alert("Invalid name format!");
     return;
   }
- // Check if at least one document is uploaded
-  // Only validate documents during new registration, not during edit
-if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
+
+  // Check if at least one document is uploaded (only for new registration)
+  if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
     alert("Please upload at least one document.");
     return;
-}
+  }
 
   // Validate form before submitting
   if (!this.validateForm()) return;
@@ -805,20 +821,26 @@ if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
   // Check email only while registering new user
   if (!this.isEditMode) {
     const exists = await this.checkEmailExists();
-
     if (exists) {
       alert("❌ Email is already registered! Please use another email.");
       return; // Stop registration
     }
   }
 
+  // Generate random password if new registration
+  if (!this.isEditMode && !this.registerForm.password) {
+    this.generatePassword();
+  }
+
   this.loading = true;
   try {
     if (this.isEditMode) {
+      // Edit existing user
       await axios.put(
         `https://employees.archenterprises.co.in/api/api/users/${this.editingId}`,
         {
           username: this.registerForm.username,
+          handle: this.registerForm.handle,
           email: this.registerForm.email.toLowerCase(),
           gender: this.registerForm.gender,
           department: this.registerForm.department,
@@ -833,11 +855,13 @@ if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
       );
       alert("User updated successfully!");
     } else {
+      // New registration
       await axios.post(
         "https://employees.archenterprises.co.in/api/api/register",
         {
           ...this.registerForm,
-          email: this.registerForm.email.toLowerCase()
+          email: this.registerForm.email.toLowerCase(),
+          handle: this.registerForm.handle
         },
         {
           headers: {
@@ -845,6 +869,24 @@ if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
           }
         }
       );
+
+      // Send welcome email via backend
+      try {
+        await axios.post(
+          "https://employees.archenterprises.co.in/api/api/send-registration-email",
+          {
+            name: this.registerForm.username,
+            handle: this.registerForm.handle,
+            email: this.registerForm.email,
+            password: this.registerForm.password
+          }
+        );
+        console.log("Welcome email sent successfully!");
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError.response?.data || emailError.message);
+        alert("User registered but email could not be sent.");
+      }
+
       alert("Registration successful!");
     }
 
@@ -858,6 +900,7 @@ if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
     this.loading = false;
   }
 },
+
 
 
 validateForm() {
@@ -874,6 +917,12 @@ validateForm() {
     alert("Full Name should contain alphabets only!");
     return false;
   }
+
+  // Handle validation
+if (!/^[A-Za-z0-9_]+$/.test(form.handle.trim())) {
+  alert("Handle can only contain letters, numbers, and underscores!");
+  return false;
+}
 
   // Convert email to lowercase
   form.email = form.email.toLowerCase();
