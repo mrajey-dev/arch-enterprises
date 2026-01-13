@@ -56,12 +56,19 @@ export default {
     const resNotif = await axios.get("/api/notifications")
 
     // ✅ IMPORTANT CHECK
-    if (this.unreadMentionsCount > 0 && resNotif.data.length) {
-      const data = JSON.parse(resNotif.data[0].data)
-      this.latestMessage = data.message ?? ''
-    } else {
-      this.latestMessage = ''
-    }
+   if (this.unreadMentionsCount > 0 && resNotif.data.length) {
+  const data = JSON.parse(resNotif.data[0].data)
+
+  const username = data.mentioned_user ?? 'Greetings!'
+//   const message = data.message ?? 'You are mentioned in comment'
+  const message = 'You are mentioned in comment'
+
+  // ✅ final formatted message
+  this.latestMessage = `${username}, ${message}.`
+} else {
+  this.latestMessage = ''
+}
+
   } catch (err) {
     console.error("Notification fetch failed", err)
   }
@@ -88,7 +95,7 @@ mounted() {
   this.poller = setInterval(() => {
     this.fetchNotifications()
     this.fetchUnreadMentions()
-  }, 1000)
+  }, 30000)
 },
 
   beforeUnmount() {

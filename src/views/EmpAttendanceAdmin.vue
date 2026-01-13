@@ -4,11 +4,16 @@
   <div class="layout">
     <!-- Header -->
    <header class="header">
-      <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
-</a>
-
-      🅰️RCH360⚙️
+      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
+        <img
+          src="https://archenterprises.co.in/ajay/ajay.png"
+          style="height: 65px;"
+          alt="Logo"
+        />
+         </a>
+         🅰️RCH360⚙️
+     
+      </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>
 
@@ -1253,6 +1258,14 @@ window.addEventListener('resize', this.checkIfMobile);
 
 
 <style scoped>
+  .head-title{
+      color: white;
+    display: flex;
+    font-size: 17px;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
 /* Background overlay */
 .popup-overlay {
   position: fixed;

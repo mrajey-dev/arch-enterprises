@@ -2,11 +2,16 @@
   <div class="layout">
     <!-- Header -->
     <header class="header">
-      <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
-</a>
-
-      🅰️RCH360⚙️
+   <div class="head-title"><a href="https://employees.archenterprises.co.in/">
+        <img
+          src="https://archenterprises.co.in/ajay/ajay.png"
+          style="height: 65px;"
+          alt="Logo"
+        />
+         </a>
+         🅰️RCH360⚙️
+     
+      </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>
 
@@ -39,7 +44,7 @@
       </div>
        <div class="dashboard-card clickable-card leavetype" @click="goTo('Customerregistration')">
         <div>
-          <p class="label label-cust">Customers & PO 🤝</p>
+          <p class="label label-cust">CRM 🤝</p>
           <p class="tagline">Our clients and PO</p>
         </div>
       </div>
@@ -595,6 +600,14 @@ async generateMonthlyRevenue() {
 
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
+.head-title{
+      color: white;
+    display: flex;
+    font-size: 17px;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
 .dashboard-slider-container {
   position: relative;
   width: 100%;

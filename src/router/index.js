@@ -59,80 +59,71 @@ import MyProfile from '../views/employee/MyProfile.vue'
 
 
 const routes = [
-  { path: '/', component: AuthForm },         // or Home if you want
-  { path: '/auth', component: AuthForm },
-  { path: '/dashboard', component: Dashboard,   meta: { requiresAuth: true }},
-  { path: '/employees', name: 'ManageEmp', component: Employee },
-  { path: '/settings', name: 'Settings', component: Settings },
-    { path: '/leaveapplications', name: 'LeaveApplications', component: LeaveApplications },
-    {path: '/approvedleaves' , name: 'ApprovedLeaves', component: ApprovedLeaves },
-    {path: '/rejectedleaves' , name: 'RejectedLeaves', component: RejectedLeaves },
-    {path: '/pendingleaves' , name: 'PendingLeaves', component: PendingLeaves },
-    {path: '/manageleavetype' , name: 'ManageLeavetype', component: ManageLeavetype },
-    {path: '/customerregistration' , name: 'CustomerRegistration', component: CustomerRegistration },
-    {path: '/quotation', name: 'Quotation', component: Quotation},
+  { path: '/', component: AuthForm, meta: { hideBell: true } },
+  { path: '/auth', component: AuthForm, meta: { hideBell: true } },
 
-    {path: '/managedepartments' , name: 'ManageDepartments', component: ManageDepartments },
-    {path: '/assigntask' , name: 'AssignTask', component: AssignTask },
-    {path: '/announcement' , name: 'Announcement', component: Announcement },
-    {path: '/workreport' , name: 'WorkReport', component: WorkReport },
-    {path: '/empattendanceadmin' , name: 'empattendanceadmin', component: EmpAttendanceAdmin },
- {path: '/empdsi' , name: 'EmpDsi', component: EmpDsi },
- {path: '/rcahelp' , name: 'RCAhelp', component: RCAhelp },
-   
+  { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, meta: { hideBell: true }
+   },
+  { path: '/employees', name: 'ManageEmp', component: Employee, meta: { hideBell: true } },
+  { path: '/settings', name: 'Settings', component: Settings, meta: { hideBell: true } },
 
+  { path: '/leaveapplications', name: 'LeaveApplications', component: LeaveApplications, meta: { hideBell: true } },
+  { path: '/approvedleaves', name: 'ApprovedLeaves', component: ApprovedLeaves, meta: { hideBell: true } },
+  { path: '/rejectedleaves', name: 'RejectedLeaves', component: RejectedLeaves, meta: { hideBell: true } },
+  { path: '/pendingleaves', name: 'PendingLeaves', component: PendingLeaves, meta: { hideBell: true } },
+  { path: '/manageleavetype', name: 'ManageLeavetype', component: ManageLeavetype, meta: { hideBell: true } },
 
+  { path: '/customerregistration', name: 'CustomerRegistration', component: CustomerRegistration, meta: { hideBell: true } },
 
+  // 🔔 Bell hidden here
+  { 
+    path: '/quotation',
+    name: 'Quotation',
+    component: Quotation,
+    meta: { hideBell: true }
+  },
 
+  { path: '/managedepartments', name: 'ManageDepartments', component: ManageDepartments, meta: { hideBell: true } },
+  { path: '/assigntask', name: 'AssignTask', component: AssignTask, meta: { hideBell: true } },
+  { path: '/announcement', name: 'Announcement', component: Announcement, meta: { hideBell: true } },
+  { path: '/workreport', name: 'WorkReport', component: WorkReport, meta: { hideBell: true } },
+  { path: '/empattendanceadmin', name: 'empattendanceadmin', component: EmpAttendanceAdmin, meta: { hideBell: true } },
+  { path: '/empdsi', name: 'EmpDsi', component: EmpDsi, meta: { hideBell: true } },
+  { path: '/rcahelp', name: 'RCAhelp', component: RCAhelp, meta: { hideBell: true } },
 
-    
+  // ───── EMPLOYEE SECTION ─────
+  { path: '/employee/dashboard', name: 'EmployeeDashboard', component: EmployeeDashboard },
+  { path: '/employee/mytask', name: 'MyTask', component: MyTask },
+  { path: '/employee/myperformance', name: 'MyPerformance', component: MyPerformance },
+  { path: '/employee/applyleave', name: 'ApplyLeave', component: ApplyLeave },
+  { path: '/employee/viewannouncement', name: 'ViewAnnouncement', component: ViewAnnouncement },
 
+  { path: '/employee/approvedleavesemp', name: 'ApprovedLeavesEmp', component: ApprovedLeavesEmp },
+  { path: '/employee/rejectedleavesemp', name: 'RejectedLeavesEmp', component: RejectedLeavesEmp },
+  { path: '/employee/leaveapplicationsemp', name: 'LeaveApplicationsEmp', component: LeaveApplicationsEmp },
+  { path: '/employee/pendingleaves', name: 'PendingLeavesEmp', component: PendingLeavesEmp },
+  { path: '/employee/empattendance', name: 'empattendance', component: EmpAttendance },
 
-    // employee section 
-    // {path: '/employee/dailyworkreport' , name: 'DailyWorkReport', component: DailyWorkReport },
-    {path: '/employee/mytask' , name: 'MyTask', component: MyTask },
-    {path: '/employee/myperformance' , name: 'MyPerformance', component: MyPerformance },
-    {path: '/employee/applyleave' , name: 'ApplyLeave', component: ApplyLeave },
-   
-    {path: '/employee/ViewAnnouncement' , name: 'ViewAnnouncement', component: ViewAnnouncement },
-    {path: '/employee/approvedleavesemp' , name: 'ApprovedLeavesEmp', component: ApprovedLeavesEmp },
-    {path: '/employee/rejectedleavesemp' , name: 'RejectedLeavesEmp', component: RejectedLeavesEmp },
-    { path: '/employee/leaveapplicationsemp', name: 'LeaveApplicationsEmp', component: LeaveApplicationsEmp },
-    {path: '/employee/pendingleaves' , name: 'PendingLeavesEmp', component: PendingLeavesEmp },
-    {path: '/employee/empattendance' , name: 'empattendance', component: EmpAttendance },
-     { path: '/employee/viewkra', name: 'ViewKra', component: ViewKra },  // 👈 New route
-    {path: '/employee/report' , name: 'Report', component: Report },
-    {path: '/employee/customerregistrations' , name: 'CustomerRegistrations', component: CustomerRegistrations },
-    {path: '/employee/visitschedule' , name: 'VisitSchedule', component: VisitSchedule },
- {path: '/employee/followup' , name: 'FollowUp', component: FollowUp },
- {path: '/employee/viewallpo' , name: 'ViewAllPo', component: ViewAllPo },
+  { path: '/employee/viewkra', name: 'ViewKra', component: ViewKra },
+  { path: '/employee/report', name: 'Report', component: Report },
+  { path: '/employee/customerregistrations', name: 'CustomerRegistrations', component: CustomerRegistrations },
+  { path: '/employee/visitschedule', name: 'VisitSchedule', component: VisitSchedule },
 
- {path: '/employee/mydsi' , name: 'MyDsi', component: MyDsi },
- {path: '/employee/help' , name: 'Help', component: Help },
-    {path: '/employee/empworkreport' , name: 'EmpWorkReport', component: EmpWorkReport },
- 
+  // 🔔 Bell hidden here also
+  { 
+    path: '/employee/followup',
+    name: 'FollowUp',
+    component: FollowUp,
+    meta: { hideBell: true }
+  },
 
-
- {path: '/employee/myprofile' , name: 'MyProfile', component: MyProfile },
-
-
-
-
-
-    
-
-
-
-{
-  path: '/employee/dashboard',
-  name: 'EmployeeDashboard',
-  component: EmployeeDashboard
-}
-
-
-
-
+  { path: '/employee/viewallpo', name: 'ViewAllPo', component: ViewAllPo },
+  { path: '/employee/mydsi', name: 'MyDsi', component: MyDsi },
+  { path: '/employee/help', name: 'Help', component: Help },
+  { path: '/employee/empworkreport', name: 'EmpWorkReport', component: EmpWorkReport },
+  { path: '/employee/myprofile', name: 'MyProfile', component: MyProfile },
 ]
+
 
 const router = createRouter({
   history: createWebHistory(),

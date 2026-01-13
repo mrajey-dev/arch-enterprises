@@ -1,7 +1,7 @@
 <template>
   <div class="app-layout">
    <!-- 🔔 Global Notification Bell -->
-    <NotificationBell />
+    <NotificationBell v-if="showBell"/>
     <router-view /> <!-- Render routed components -->
   </div>
 </template>
@@ -13,6 +13,11 @@ import axios from 'axios'
 export default {
    components: {
     NotificationBell
+  },
+  computed:{
+      showBell() {
+        return !this.$route.meta?.hideBell
+    }
   },
   data() {
     

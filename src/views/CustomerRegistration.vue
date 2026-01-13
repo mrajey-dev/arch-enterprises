@@ -2,11 +2,16 @@
   <div class="layout">
     <!-- Header -->
     <header class="header">
-      <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
-</a>
-
-     🅰️RCH360⚙️
+   <div class="head-title"><a href="https://employees.archenterprises.co.in/">
+        <img
+          src="https://archenterprises.co.in/ajay/ajay.png"
+          style="height: 65px;"
+          alt="Logo"
+        />
+         </a>
+         🅰️RCH360⚙️
+     
+      </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>
 
@@ -566,16 +571,17 @@
   <tr v-for="(cust, index) in filteredCustomers" :key="cust.id">
       <td  style="color: #5c5d5f">{{ index + 1 }}</td>
 
-    <td>
+<td>
   <a
     href="#"
     class="company-link tooltip-link"
     data-tooltip="View customer & add PO"
     @click.prevent="viewCustomerDetails(cust)"
   >
-    {{ cust.company_name }}
+    {{ formatCompanyName(cust.company_name) }}
   </a>
 </td>
+
 
 
       <td style="color: #5c5d5f;">{{ formatNumber(cust.id) }}</td>
@@ -763,17 +769,17 @@
     class="filter-input"
   />
 
-  <!-- Month Filter -->
-  <select v-model="filters.month" class="filter-select">
-    <option value="">All Months</option>
-    <option
-      v-for="(m, index) in months"
-      :key="index"
-      :value="index + 1"
-    >
-      {{ m }}
-    </option>
-  </select>
+<!-- Month Filter -->
+<select v-model="filters.month" class="filter-select">
+  <option :value="null">All Months</option>
+  <option
+    v-for="(m, index) in months"
+    :key="index"
+    :value="index + 1"
+  >
+    {{ m }}
+  </option>
+</select>
 
   <!-- Clear -->
   <button class="btn btn-light" @click="clearFilters">
@@ -796,7 +802,10 @@
 
   <!-- DATA ROWS -->
   <tbody v-if="visit_assign.length">
-  <tr v-for="visit in filteredVisits" :key="visit.id">
+  <tr
+  v-for="(visit, index) in filteredVisits"
+  :key="`${visit.company_name}-${visit.visit_date}-${index}`"
+>
 
     <td>{{ visit.company_name }}</td>
     <!-- <td>{{ visit.po_number }}</td> -->
@@ -2659,11 +2668,11 @@ isSavingServiceSupply: false,
       'January', 'February', 'March', 'April',
       'May', 'June', 'July', 'August',
       'September', 'October', 'November', 'December'
-    ],
-        filters: {
-      search: '',
-      month: ''
-    },
+    ],filters: {
+  search: '',
+  month: new Date().getMonth() + 1 
+},
+
     months: [
       'January', 'February', 'March', 'April',
       'May', 'June', 'July', 'August',
@@ -2907,6 +2916,11 @@ PODate: "",
       }
     },
     mounted() {
+       console.table(this.filteredVisits.map(v => ({
+    id: v.id,
+    company: v.company_name,
+    date: v.visit_date
+  })))
        this.getLoggedInUser();
       const date = new Date();
       this.currentMonth = date.toLocaleString('default', { month: 'long' });
@@ -3083,7 +3097,7 @@ PODate: "",
       }
 
       // 📅 Month filter
-      if (this.filters.month && visit.visit_date) {
+    if (this.filters.month !== null && visit.visit_date) {
         const visitMonth = new Date(visit.visit_date).getMonth() + 1
         if (visitMonth !== this.filters.month) return false
       }
@@ -3195,6 +3209,23 @@ filterCompany(newCompany) {
 
 
  methods: {
+   formatCompanyName(name) {
+    if (!name) return ''
+
+    const exceptions = ['PVT', 'LTD','A2Z','LLC','BNB','LMW','LN','SPC','FZE','YMCC','PVT.','LTD.']  // Words to always keep uppercase
+
+    return name
+      .toLowerCase()
+      .split(' ')
+      .map(word => {
+        const upperWord = word.toUpperCase()
+        if (exceptions.includes(upperWord)) return upperWord
+        return word.length === 1
+          ? upperWord
+          : word.charAt(0).toUpperCase() + word.slice(1)
+      })
+      .join(' ')
+  },
   loadVisitAssign() {
     axios.get('/api/visit-assign-for-vue')
       .then(res => {
@@ -4206,7 +4237,7 @@ updateStatus(id, materialStatus) {
 
 async fetchVisitOrders() {
   try {
-    const response = await axios.get("https://employees.archenterprises.co.in/api/get-visit-orders");
+    const response = await axios.get("https://employees.archenterprises.co.in/api/api/get-visit-orders");
     // Convert assign_to to number
     this.visit_assign = (response.data || []).map(visit => ({
       ...visit,
@@ -4218,19 +4249,23 @@ async fetchVisitOrders() {
   }
 },
 
-
 assignVisit(visit) {
-    axios.post('https://employees.archenterprises.co.in/api/api/complete-amc', {
-  visit_assign_id: visit.id,
+  // if (!visit.visit_date) {
+  //   alert('Please select visit date first');
+  //   return;
+  // }
+
+  axios.post('/api/complete-amc', {
     company_name: visit.company_name,
     po_number: visit.po_number,
     visit_date: visit.visit_date,
-    assign_to: visit.assign_to, // selected employee ID
-    status: visit.status ?? "Pending"
-    }).then(res => {
-      console.log(res.data.message);
-    });
-  },
+    assign_to: visit.assign_to,
+    status: visit.status ?? 'Pending'
+  }).then(res => {
+    console.log(res.data.message);
+    visit.id = res.data.id; // 🔥 now ID exists
+  });
+},
 
     // Fetch data
     async fetchServiceOrders() {
@@ -5020,6 +5055,13 @@ closeServiceSupplyModal(){
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
 .loader {
   width: 18px;
   height: 18px;
@@ -5653,7 +5695,7 @@ background-color: #6f256f;
 
 .company-link:hover {
   color: #0e5c52;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 /* Tooltip */
@@ -7644,6 +7686,7 @@ flex-wrap: wrap;
 }
 
 .user-table td a {
+  font-family: system-ui;
   color: #5c5d5f;
   text-decoration: none;
   cursor: pointer;
