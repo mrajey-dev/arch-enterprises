@@ -12,6 +12,7 @@
          🅰️RCH360⚙️
      
       </div>
+     
       <i
         class="fas fa-bars mobile-menu-icon"
         v-if="isMobile"
@@ -61,18 +62,36 @@
             :key="q.id"
           >
             <div class="question-header">
-              <h5>{{ q.creator_name || 'ADMIN' }}</h5>
-              <span class="date">{{ formatDate(q.created_at) }}</span>
+  <h5>{{ capitalizeHandle(q.user?.handle) || 'ADMIN' }}</h5>
 
-              <i
-                class="fas"
-                :class="q.showAnswers ? 'fa-chevron-up' : 'fa-chevron-down'"
-                @click="toggleAnswers(q)"
-                style="cursor:pointer;margin-left:10px;"
-              ></i>
-            </div>
+  <span class="date">{{ formatDateTime(q.created_at) }}</span>
 
-           <p class="question-text" v-html="highlightMentions(q.question)"></p>
+ <div class="qa-actions">
+  <template v-if="canModify(q)">
+    <i class="fas fa-edit" @click="editQuestion(q)"></i>
+    <i class="fas fa-trash" @click="deleteQuestion(q)"></i>
+  </template>
+
+  <i
+    class="fas"
+    :class="q.showAnswers ? 'fa-chevron-up' : 'fa-chevron-down'"
+    @click="toggleAnswers(q)"
+  ></i>
+</div>
+
+</div>
+
+
+         <div v-if="!q.isEditing">
+  <p class="question-text" v-html="highlightMentions(q.question)"></p>
+</div>
+
+<div v-else>
+  <textarea v-model="q.editText"></textarea>
+  <button @click="updateQuestion(q)">Save</button>
+  <button @click="cancelEditQuestion(q)">Cancel</button>
+</div>
+
 
             <img
               v-if="q.image_url"
@@ -89,8 +108,28 @@
   :key="a.id"
 >
 
-  <h5>{{ a.creator_name || 'ADMIN' }}</h5>
-<p v-html="highlightMentions(a.answer)"></p>
+<div class="answer-header">
+  <h5>{{ capitalizeHandle(a.user?.handle) || 'ADMIN' }}</h5>
+
+  <span class="date">{{ formatDateTime(a.created_at) }}</span>
+<div class="qa-actions" v-if="canModify(a)">
+  <i class="fas fa-edit" @click="editAnswer(a)"></i>
+  <i class="fas fa-trash" @click="deleteAnswer(a, q)"></i>
+</div>
+
+</div>
+
+<div v-if="!a.isEditing">
+  <p v-html="highlightMentions(a.answer)"></p>
+</div>
+
+<div v-else>
+  <textarea v-model="a.editText"></textarea>
+  <button @click="updateAnswer(a)">Save</button>
+  <button @click="cancelEditAnswer(a)">Cancel</button>
+</div>
+
+
 
   <img v-if="a.image_url" :src="a.image_url" class="qa-image" />
 
@@ -153,6 +192,10 @@ export default {
 
   data() {
     return {
+      authUser: {
+      id: null,
+      role: null
+    },
       latestMentionMessage: '',
        unreadMentionsCount: 0,
        notifications: [],
@@ -172,6 +215,10 @@ export default {
   },
 
   mounted() {
+    axios.get('/api/user').then(res => {
+    this.authUser.id = res.data.id
+    this.authUser.role = res.data.role
+  })
     document.addEventListener('click', this.closeMentionBox)
 
    axios.get('/api/mentions/unread-count')
@@ -193,6 +240,71 @@ this.fetchNotifications();
   },
 
   methods: {
+    canModify(item) {
+  return (
+    item.user_id === this.authUser.id ||
+    this.authUser.role === 'admin'
+  )
+},
+    editQuestion(q) {
+  q.isEditing = true
+  q.editText = q.question
+},
+
+cancelEditQuestion(q) {
+  q.isEditing = false
+},
+
+updateQuestion(q) {
+  axios.put(`/api/qa/question/${q.id}`, {
+    question: q.editText
+  }).then(() => {
+    q.question = q.editText
+    q.isEditing = false
+  })
+},
+
+deleteQuestion(q) {
+  if (!confirm('Delete this question?')) return
+
+  axios.delete(`/api/qa/question/${q.id}`)
+    .then(() => {
+      this.questions = this.questions.filter(x => x.id !== q.id)
+    })
+},
+editAnswer(a) {
+  a.isEditing = true
+  a.editText = a.answer
+},
+
+cancelEditAnswer(a) {
+  a.isEditing = false
+},
+
+updateAnswer(a) {
+  axios.put(`/api/qa/answer/${a.id}`, {
+    answer: a.editText
+  }).then(() => {
+    a.answer = a.editText
+    a.isEditing = false
+  })
+},
+
+deleteAnswer(a, q) {
+  if (!confirm('Delete this answer?')) return
+
+  axios.delete(`/api/qa/answer/${a.id}`)
+    .then(() => {
+      q.answers = q.answers.filter(x => x.id !== a.id)
+    })
+}
+,
+
+    capitalizeHandle(handle) {
+  if (!handle) return ''
+  return handle.charAt(0).toUpperCase() + handle.slice(1)
+},
+
     onMentionKeydown(e) {
   if (!this.showMentionBox || !this.mentionUsers.length) return
 
@@ -219,30 +331,27 @@ this.fetchNotifications();
   }
 },
 
-    onMentionInput(e, target) {
+onMentionInput(e, target) {
   const input = e.target
   const text = input.value
   const cursorPos = input.selectionStart
   const beforeCursor = text.slice(0, cursorPos)
 
-  const match = beforeCursor.match(/@([A-Za-z]+(?:\s+[A-Za-z]+){0,4})$/)
+  // Match @mention start
+  const match = beforeCursor.match(/@([A-Za-z0-9_]*)$/)
   if (!match) {
     this.showMentionBox = false
     return
   }
 
   const query = match[1].trim()
-  if (!query) {
-    this.showMentionBox = false
-    return
-  }
-
   this.mentionQuery = query
   this.mentionTarget = target
   this.selectedMentionIndex = 0
   this.setMentionPosition(input)
 
-  axios.get('/api/qa/mention-users', { params: { q: query } })
+  // Fetch matching users OR all users if query is empty
+  axios.get('/api/qa/mention-users', { params: { q: query || '' } })
     .then(res => {
       this.mentionUsers = res.data
       this.showMentionBox = res.data.length > 0
@@ -251,6 +360,7 @@ this.fetchNotifications();
       this.showMentionBox = false
     })
 },
+
 
      async fetchNotifications() {
     const res = await axios.get('/api/notifications');
@@ -400,18 +510,35 @@ setMentionPosition(input) {
     /* ===============================
        FETCH QUESTIONS
     =============================== */
-    fetchQuestions() {
-      axios.get('/api/qa')
-        .then(res => {
-          this.questions = res.data.map(q => ({
-            ...q,
-            showAnswers: false,
-            replyText: '',
-            replyImage: null
-          }))
-        })
-        .catch(err => console.error(err))
-    },
+   fetchQuestions() {
+  axios.get('/api/qa')
+    .then(res => {
+      this.questions = res.data.map(q => ({
+        ...q,
+
+        // fallback handle
+        creator_handle: q.creator_handle || q.creator_name,
+
+        // UI flags for question
+        showAnswers: false,
+        isEditing: false,
+        editText: q.question,
+        replyText: '',
+        replyImage: null,
+
+        // answers mapping
+        answers: q.answers.map(a => ({
+          ...a,
+          creator_handle: a.creator_handle || a.creator_name,
+
+          // UI flags for answer
+          isEditing: false,
+          editText: a.answer
+        }))
+      }))
+    })
+    .catch(err => console.error(err))
+},
 
     /* ===============================
        POST QUESTION
@@ -471,9 +598,18 @@ setMentionPosition(input) {
       question.showAnswers = !question.showAnswers
     },
 
-    formatDate(date) {
-      return new Date(date).toLocaleDateString('en-GB')
-    },
+   formatDateTime(date) {
+  if (!date) return ''
+  return new Date(date).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })
+},
+
 
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
@@ -491,14 +627,6 @@ setMentionPosition(input) {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.head-title{
-      color: white;
-    display: flex;
-    font-size: 17px;
-    gap: 7px;
-    text-decoration: none;
-    align-items: center;
-}
 .notification-bell-wrapper {
   position: relative;
   text-align: center;
@@ -1117,5 +1245,48 @@ button{
   color: #0a58ca!important; /* optional */
 }
 
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    text-decoration: none;
+    align-items: center;
+}
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.question-header .date,
+.answer-header .date {
+  margin-left: auto;
+  font-size: 12px;
+  color: #777;
+}
+
+.qa-actions {
+  display: flex;
+  margin-left: 15px;
+  gap: 10px;
+  align-items: center;
+}
+
+.qa-actions i {
+  cursor: pointer;
+  color: #5f9ea0;
+}
+
+.qa-actions i:hover {
+  color: #2f6f71;
+}
+
+textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+}
 
 </style>

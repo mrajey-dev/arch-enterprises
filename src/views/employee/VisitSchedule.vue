@@ -436,10 +436,10 @@ async updateAmcStatus(visit) {
       status: visit.status,
     });
 
-    const poStatus = visit.status === "Completed" ? "Closed" : null;
-    await axios.put(`/api/add-po-status/${visit.po_number}`, {
-      status: poStatus,
-    });
+    // const poStatus = visit.status === "Completed" ? "Closed" : null;
+    // await axios.put(`/api/add-po-status/${visit.po_number}`, {
+    //   status: poStatus,
+    // });
 
     await axios.post("/api/completed-order", {
       company_name: visit.company_name,

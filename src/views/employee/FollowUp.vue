@@ -45,7 +45,8 @@
   Quotation-{{ q.id }}-{{ formatCompanyName(q.company_name) }}
 </td>
 
-              <td>{{ formatDate(q.updated_at) }}</td>
+             <td>{{ formatDate(q.created_at) }}</td>
+
               <td>{{ q.company_name }}</td>
               <td>{{ q.engine_serial }}</td>
               <td class="description-col" style="font-size: 10px;">
@@ -120,14 +121,15 @@ export default {
     };
   },
   computed: {
-    sortedQuotations() {
+sortedQuotations() {
     return [...this.filteredQuotations].sort((a, b) => {
-     
-      return new Date(b.updated_at) - new Date(a.updated_at);
+      // Sort by created_at descending (latest first)
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB - dateA; // latest first
     });
   },
-
-  filteredQuotations() {
+ filteredQuotations() {
     if (!this.selectedStatus) {
       return this.followUpQuotations;
     }

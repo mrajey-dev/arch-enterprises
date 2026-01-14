@@ -1628,8 +1628,24 @@
  <!-- Visits (only show if not null/empty) -->
 <tr v-for="visit in filledVisits" :key="visit.number">
   <th>Visit {{ visit.number }}</th>
-  <td>{{ visit.date }}</td>
+  <td>
+    {{ visit.date }}
+
+    <!-- Completed -->
+    <span v-if="getVisitStatus(visit.date) === 'Completed'"
+          style="color:green; margin-left:6px;">
+      ✔
+    </span>
+
+    <!-- Pending -->
+    <span v-else-if="getVisitStatus(visit.date) === 'Pending'"
+          style="color:orange; margin-left:6px;">
+      ⏳
+    </span>
+  </td>
 </tr>
+
+
 
 
 </template>
@@ -2605,6 +2621,9 @@
     },
     data() {
       return {
+        filledVisits: [],
+        visitStatusList: [],
+        completedVisitDates: [],
         visit_assign: [],
         showServiceSupplyModal: false,
         serviceSupply: {
@@ -2921,6 +2940,8 @@ PODate: "",
     company: v.company_name,
     date: v.visit_date
   })))
+   this.fetchVisitStatuses();
+   this.fetchCompletedVisits();
        this.getLoggedInUser();
       const date = new Date();
       this.currentMonth = date.toLocaleString('default', { month: 'long' });
@@ -3209,6 +3230,27 @@ filterCompany(newCompany) {
 
 
  methods: {
+  fetchVisitStatuses() {
+    axios.get('/api/visit-status-dates')
+      .then(res => {
+        this.visitStatusList = res.data;
+      });
+  },
+getVisitStatus(date) {
+    const record = this.visitStatusList.find(
+      v => v.visit_date === date
+    );
+    return record ? record.status : null;
+  },
+
+  async fetchCompletedVisits() {
+    const res = await axios.get('/api/completed-visit-dates');
+    this.completedVisitDates = res.data;
+  },
+
+  isVisitCompleted(date) {
+    return this.completedVisitDates.includes(date);
+  },
    formatCompanyName(name) {
     if (!name) return ''
 
@@ -3836,6 +3878,7 @@ async editQuotation(quotation) {
   try {
     // Make an API call to update the visit column in add_po table
     await axios.post('https://employees.archenterprises.co.in/api/api/add-visit', {
+      company_name: this.selectedPo.company_name,
       po_id: this.selectedPo.id,
       visit_column: this.selectedVisit, // visit1, visit2, etc.
       visit_date: this.visitDate
