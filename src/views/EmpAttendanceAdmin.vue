@@ -24,7 +24,14 @@
  <div class="attendance-container container-fluid p-4">
 
     <h2 class="popup-title">Daily Attendance</h2>
-       <button class="logout-btn" @click="showPopupsalary = true">Calculate Salary</button>
+    <button class="logout-btn" @click="showPopupsalary = true">
+  Calculate Salary
+</button>
+
+<button class="mark-btn" @click="showMarkAttendancePopup = true">
+  Mark Attendance
+</button>
+
         <!-- Summary Section -->
   <div v-if="viewMode === 'day'" class="attendance-table">
   <h5 class="mb-4">{{ currentDate }}</h5>
@@ -70,6 +77,77 @@
 
 
   </div>
+
+
+<!-- Mark Attendance Popup -->
+<div v-if="showMarkAttendancePopup" class="popup-overlay fancy-overlay">
+  <div class="popup-card animate-pop">
+
+    <div class="popup-header">
+      <h3>📝 Mark Attendance</h3>
+      <button class="icon-close" @click="showMarkAttendancePopup = false">✕</button>
+    </div>
+
+    <div class="popup-body">
+
+      <!-- Employee -->
+      <div class="field">
+        <label>Employee</label>
+        <select v-model="markAttendance.employee">
+          <option value="">Select Employee</option>
+          <option v-for="emp in employees" :key="emp.id" :value="emp.name">
+            {{ emp.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="field">
+        <label>Status</label>
+        <select v-model="markAttendance.status" :class="markAttendance.status">
+          <option value="">Select Status</option>
+          <option>Present</option>
+          <option>Traveling</option>
+          <option>OnSite</option>
+          <option>HalfDay</option>
+          <option>Leave</option>
+          <option>Absent</option>
+        </select>
+      </div>
+
+      <!-- Date & Time -->
+      <div class="two-col">
+       <div class="field">
+  <label>Date</label>
+  <input 
+    type="date" 
+    v-model="markAttendance.date" 
+    :max="today" 
+  />
+</div>
+
+
+        <div class="field">
+          <label>Time</label>
+          <input type="time" v-model="markAttendance.time" />
+        </div>
+      </div>
+
+    </div>
+
+    <div class="popup-footer">
+      <button class="btn-cancel" @click="showMarkAttendancePopup = false">
+        Cancel
+      </button>
+      <button class="btn-save" @click="submitMarkedAttendance">
+        ✔ Save Attendance
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
 
 <!-- Popup Modal -->
     <div v-if="showPopupsalary" class="popup-overlay">
@@ -216,6 +294,15 @@ export default {
   data() {
 
     return {
+      
+markAttendance: {
+  employee: '',
+  status: '',
+  date: '',
+  time: ''
+},
+today: '',
+      showMarkAttendancePopup: false,
       employees: [],
        present_quarter: null,
       attendanceByMonth: {},
@@ -337,6 +424,51 @@ computed: {
 
 
   methods: {
+async submitMarkedAttendance() {
+  if (
+    !this.markAttendance.employee ||
+    !this.markAttendance.status ||
+    !this.markAttendance.date
+  ) {
+    alert('Please fill all required fields');
+    return;
+  }
+
+  try {
+    const payload = {
+      name: this.markAttendance.employee,
+      status: this.markAttendance.status,
+      clock_in: this.markAttendance.time || null,
+      date: this.markAttendance.date
+    };
+
+    // 🔥 SINGLE API CALL (backend handles update or insert)
+    await axios.post(
+      'https://employees.archenterprises.co.in/api/api/attendance/store-or-update',
+      payload
+    );
+
+    alert('Attendance saved successfully');
+
+    this.showMarkAttendancePopup = false;
+
+    // reset form
+    this.markAttendance = {
+      employee: '',
+      status: '',
+      date: '',
+      time: ''
+    };
+
+    this.fetchAttendance(); // refresh table
+
+  } catch (error) {
+    console.error('Error saving attendance:', error);
+    alert('Failed to save attendance');
+  }
+},
+
+
 async fetchAllEmployees() {
   try {
     const res = await axios.get('https://employees.archenterprises.co.in/api/api/users') // removed extra /api
@@ -1181,6 +1313,14 @@ localStorage.setItem('attendanceData', JSON.stringify(this.users))
   },
 
 mounted() {
+   const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0'); // month is 0-indexed
+  const dd = String(now.getDate()).padStart(2, '0');
+  this.today = `${yyyy}-${mm}-${dd}`;
+  
+  // Set default date to today
+  this.markAttendance.date = this.today;
    this.fetchAllEmployees();
     this.fetchHolidays();
   this.checkIfMobile();
@@ -3006,5 +3146,173 @@ img {
   vertical-align: middle;
   border-style: none;
 }
+
+.mark-btn {
+  margin-left: 10px;
+  background: #6f42c1;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+/* Overlay */
+.fancy-overlay {
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Card */
+.popup-card {
+  width: 420px;
+  max-width: 92%;
+  background: linear-gradient(180deg, #ffffff, #f8f9ff);
+  border-radius: 18px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* Animation */
+.animate-pop {
+  animation: popScale 0.35s ease;
+}
+
+@keyframes popScale {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.popup-header {
+  background: linear-gradient(135deg, #6f42c1, #845ef7);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.icon-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: white;
+  cursor: pointer;
+}
+
+/* Body */
+.popup-body {
+  padding: 20px;
+}
+
+/* Fields */
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+  color: #444;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dcdde1;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: #845ef7;
+  box-shadow: 0 0 0 3px rgba(132, 94, 247, 0.15);
+}
+
+/* Two column */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Status color hint */
+select.Present { border-left: 4px solid #28a745; }
+select.Absent { border-left: 4px solid #dc3545; }
+select.Leave { border-left: 4px solid #fd7e14; }
+select.HalfDay { border-left: 4px solid #ffc107; }
+select.OnSite { border-left: 4px solid #0d6efd; }
+select.Traveling { border-left: 4px solid #20c997; }
+
+/* Footer */
+.popup-footer {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #eee;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #6f42c1, #845ef7);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  opacity: 0.9;
+}
+
+.btn-cancel {
+  background: #f1f3f5;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .popup-card {
+    width: 95%;
+  }
+}
+
 
 </style>

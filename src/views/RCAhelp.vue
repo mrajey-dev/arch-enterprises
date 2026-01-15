@@ -2,28 +2,22 @@
   <div class="layout">
     <!-- Header -->
     <header class="header">
-      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
-          alt="Logo"
-        />
-         </a>
-         🅰️RCH360⚙️
-     
+      <div class="head-title">
+        <a href="https://employees.archenterprises.co.in/">
+          <img
+            src="https://archenterprises.co.in/ajay/ajay.png"
+            style="height: 65px;"
+            alt="Logo"
+          />
+        </a>
+        🅰️RCH360⚙️
       </div>
-     
+
       <i
         class="fas fa-bars mobile-menu-icon"
         v-if="isMobile"
         @click="toggleSidebar"
       ></i>
-    <!-- <div class="notification-bell-wrapper">
-  <i class="fas fa-bell"></i>
-  <span v-if="unreadMentionsCount" class="badge">{{ unreadMentionsCount }}</span>
-</div> -->
-
-
     </header>
 
     <!-- Main Content -->
@@ -36,14 +30,13 @@
 
           <!-- Ask Question -->
           <div class="ask-box">
-         <textarea
-  v-model="newQuestion"
-  placeholder="Type..."
-  @input="onMentionInput($event, 'question')"
-  @keydown="onMentionKeydown"
-/>
-
-
+            <textarea
+              v-model="newQuestion"
+              placeholder="Type..."
+              maxlength="500"
+              @input="onMentionInput($event, 'question')"
+              @keydown="onMentionKeydown"
+            />
 
             <input
               type="file"
@@ -55,6 +48,10 @@
             <button @click="addQuestion">Post</button>
           </div>
 
+          <p v-if="questionError" class="error-text">
+            {{ questionError }}
+          </p>
+
           <!-- Question List -->
           <div
             class="question-card"
@@ -62,91 +59,87 @@
             :key="q.id"
           >
             <div class="question-header">
-  <h5>{{ capitalizeHandle(q.user?.handle) || 'ADMIN' }}</h5>
+              <h5>{{ capitalizeHandle(q.user?.handle) || 'ADMIN' }}</h5>
+              <span class="date">{{ formatDateTime(q.created_at) }}</span>
 
-  <span class="date">{{ formatDateTime(q.created_at) }}</span>
+              <div class="qa-actions">
+                <template v-if="canModify(q) && q.answers.length === 0">
+                  <i class="fas fa-edit" @click="editQuestion(q)"></i>
+                  <i class="fas fa-trash" @click="deleteQuestion(q)"></i>
+                </template>
 
- <div class="qa-actions">
-  <template v-if="canModify(q) && q.answers.length === 0">
-  <i class="fas fa-edit" @click="editQuestion(q)"></i>
-  <i class="fas fa-trash" @click="deleteQuestion(q)"></i>
-</template>
+                <i
+                  class="fas"
+                  :class="q.showAnswers ? 'fa-chevron-up' : 'fa-chevron-down'"
+                  @click="toggleAnswers(q)"
+                ></i>
+              </div>
+            </div>
 
+            <!-- Question text -->
+            <div v-if="!q.isEditing">
+              <p class="question-text" v-html="highlightMentions(q.question)"></p>
+            </div>
 
-  <i
-    class="fas"
-    :class="q.showAnswers ? 'fa-chevron-up' : 'fa-chevron-down'"
-    @click="toggleAnswers(q)"
-  ></i>
-</div>
+            <div v-else>
+              <textarea v-model="q.editText"></textarea>
+              <button @click="updateQuestion(q)">Save</button>
+              <button @click="cancelEditQuestion(q)">Cancel</button>
+            </div>
 
-</div>
-
-
-         <div v-if="!q.isEditing">
-  <p class="question-text" v-html="highlightMentions(q.question)"></p>
-</div>
-
-<div v-else>
-  <textarea v-model="q.editText"></textarea>
-  <button @click="updateQuestion(q)">Save</button>
-  <button @click="cancelEditQuestion(q)">Cancel</button>
-</div>
-
-
+            <!-- ✅ NEW: QUESTION IMAGE -->
             <img
               v-if="q.image_url"
               :src="q.image_url"
               class="qa-image"
+              @click="openImage(q.image_url)"
             />
 
             <!-- Answers -->
             <transition name="slide-fade">
               <div v-show="q.showAnswers">
-               <div
-  class="answer-box"
-  v-for="a in [...q.answers].reverse()"
-  :key="a.id"
->
+                <div
+                  class="answer-box"
+                  v-for="a in [...q.answers].reverse()"
+                  :key="a.id"
+                >
+                  <div class="answer-header">
+                    <h5>{{ capitalizeHandle(a.user?.handle) || 'ADMIN' }}</h5>
+                    <span class="date">{{ formatDateTime(a.created_at) }}</span>
 
-<div class="answer-header">
-  <h5>{{ capitalizeHandle(a.user?.handle) || 'ADMIN' }}</h5>
+                    <div class="qa-actions" v-if="canModify(a)">
+                      <i class="fas fa-edit" @click="editAnswer(a)"></i>
+                      <i class="fas fa-trash" @click="deleteAnswer(a, q)"></i>
+                    </div>
+                  </div>
 
-  <span class="date">{{ formatDateTime(a.created_at) }}</span>
-<div class="qa-actions" v-if="canModify(a)">
-  <i class="fas fa-edit" @click="editAnswer(a)"></i>
-  <i class="fas fa-trash" @click="deleteAnswer(a, q)"></i>
-</div>
+                  <div v-if="!a.isEditing">
+                    <p v-html="highlightMentions(a.answer)"></p>
+                  </div>
 
-</div>
+                  <div v-else>
+                    <textarea v-model="a.editText"></textarea>
+                    <button @click="updateAnswer(a)">Save</button>
+                    <button @click="cancelEditAnswer(a)">Cancel</button>
+                  </div>
 
-<div v-if="!a.isEditing">
-  <p v-html="highlightMentions(a.answer)"></p>
-</div>
-
-<div v-else>
-  <textarea v-model="a.editText"></textarea>
-  <button @click="updateAnswer(a)">Save</button>
-  <button @click="cancelEditAnswer(a)">Cancel</button>
-</div>
-
-
-
-  <img v-if="a.image_url" :src="a.image_url" class="qa-image" />
-
- 
-</div>
-
+                  <!-- ✅ FIXED: ANSWER IMAGE (click to open) -->
+                  <img
+                    v-if="a.image_url"
+                    :src="a.image_url"
+                    class="qa-image"
+                    @click="openImage(a.image_url)"
+                  />
+                </div>
 
                 <!-- Add Answer -->
                 <div class="reply-box">
-<input
-  v-model="q.replyText"
-  placeholder="Type..."
-  @input="onMentionInput($event, q)"
-  @keydown="onMentionKeydown"
-/>
-
+                  <input
+                    v-model="q.replyText"
+                    placeholder="Type..."
+                    @input="onMentionInput($event, q)"
+                    @keydown="onMentionKeydown"
+                  />
 
                   <input
                     type="file"
@@ -155,32 +148,42 @@
                   />
                   <button @click="addAnswer(q)">Send</button>
                 </div>
+
+                <p v-if="answerError[q.id]" class="error-text">
+                  {{ answerError[q.id] }}
+                </p>
               </div>
             </transition>
           </div>
         </div>
+
         <!-- Mention Dropdown -->
-<div
-  v-if="showMentionBox"
-  class="mention-box"
-  :style="{ top: mentionPosition.top + 'px', left: mentionPosition.left + 'px' }"
->
-  <div
-  v-for="(user, index) in mentionUsers"
-  :key="user.id"
-  class="mention-item"
-  :class="{ active: index === selectedMentionIndex }"
-  @click="selectMention(user)"
->
- @{{ user.handle }}
-</div>
+        <div
+          v-if="showMentionBox"
+          class="mention-box"
+          :style="{ top: mentionPosition.top + 'px', left: mentionPosition.left + 'px' }"
+        >
+          <div
+            v-for="(user, index) in mentionUsers"
+            :key="user.id"
+            class="mention-item"
+            :class="{ active: index === selectedMentionIndex }"
+            @click="selectMention(user)"
+          >
+            @{{ user.handle }}
+          </div>
+        </div>
 
-</div>
-
+        <!-- Image Preview Modal -->
+        <div v-if="showImageModal" class="image-modal" @click="closeImage">
+          <img :src="previewImage" class="image-full" />
+          <span class="close-btn">✖</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
@@ -193,6 +196,10 @@ export default {
 
   data() {
     return {
+      showImageModal: false,
+previewImage: null,
+       questionError: '',
+    answerError: {},
       authUser: {
       id: null,
       role: null
@@ -216,6 +223,9 @@ export default {
   },
 
   mounted() {
+     document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') this.closeImage()
+  })
     axios.get('/api/user').then(res => {
     this.authUser.id = res.data.id
     this.authUser.role = res.data.role
@@ -241,6 +251,18 @@ this.fetchNotifications();
   },
 
   methods: {
+    openImage(src) {
+  this.previewImage = src
+  this.showImageModal = true
+  document.body.style.overflow = 'hidden'
+},
+
+closeImage() {
+  this.showImageModal = false
+  this.previewImage = null
+  document.body.style.overflow = ''
+},
+
     canModify(item) {
   return (
     item.user_id === this.authUser.id ||
@@ -548,23 +570,34 @@ setMentionPosition(input) {
       this.questionImage = e.target.files[0]
     },
 
-    addQuestion() {
-      if (!this.newQuestion.trim()) return
+ addQuestion() {
+  this.questionError = ''
 
-      const formData = new FormData()
-      formData.append('question', this.newQuestion)
+  // ✅ both empty → error
+  if (!this.newQuestion.trim() && !this.questionImage) {
+    this.questionError = 'Please enter text or upload an image'
+    return
+  }
 
-      if (this.questionImage) {
-        formData.append('image', this.questionImage)
-      }
+  const formData = new FormData()
 
-      axios.post('/api/qa/question', formData)
-        .then(() => {
-          this.newQuestion = ''
-          this.questionImage = null
-          this.fetchQuestions()
-        })
-    },
+  if (this.newQuestion.trim()) {
+    formData.append('question', this.newQuestion)
+  }
+
+  if (this.questionImage) {
+    formData.append('image', this.questionImage)
+  }
+
+  axios.post('/api/qa/question', formData)
+    .then(() => {
+      this.newQuestion = ''
+      this.questionImage = null
+      this.questionError = ''
+      this.fetchQuestions()
+    })
+},
+
 
     /* ===============================
        POST ANSWER
@@ -573,24 +606,39 @@ setMentionPosition(input) {
       question.replyImage = e.target.files[0]
     },
 
-    addAnswer(question) {
-      if (!question.replyText.trim()) return
+addAnswer(question) {
+  // clear error
+  this.answerError[question.id] = ''
 
-      const formData = new FormData()
-      formData.append('question_id', question.id)
-      formData.append('answer', question.replyText)
+  // ❌ both empty → error
+  if (!question.replyText.trim() && !question.replyImage) {
+    this.answerError[question.id] = 'Please enter text or upload an image'
+    return
+  }
 
-      if (question.replyImage) {
-        formData.append('image', question.replyImage)
-      }
+  const formData = new FormData()
+  formData.append('question_id', question.id)
 
-      axios.post('/api/qa/answer', formData)
-        .then(() => {
-          question.replyText = ''
-          question.replyImage = null
-          this.fetchQuestions()
-        })
-    },
+  if (question.replyText.trim()) {
+    formData.append('answer', question.replyText)
+  }
+
+  if (question.replyImage) {
+    formData.append('image', question.replyImage)
+  }
+
+  axios.post('/api/qa/answer', formData)
+    .then(() => {
+      question.replyText = ''
+      question.replyImage = null
+      this.answerError[question.id] = ''
+      this.fetchQuestions()
+    })
+    .catch(err => {
+      console.error('Answer submit failed', err)
+    })
+},
+
 
     /* ===============================
        UI HELPERS
@@ -628,6 +676,12 @@ setMentionPosition(input) {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.error-text {
+  color: #e53935;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 .notification-bell-wrapper {
   position: relative;
   text-align: center;
@@ -1289,5 +1343,32 @@ textarea {
   padding: 8px;
   border-radius: 6px;
 }
+.image-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  cursor: zoom-out;
+}
+
+.image-full {
+  max-width: 95%;
+  max-height: 95%;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  font-size: 28px;
+  color: white;
+  cursor: pointer;
+}
+
 
 </style>

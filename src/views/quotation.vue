@@ -241,24 +241,21 @@
 
       <td style="width:10%;"><div class="static-field" style="text-align: right">{{ formatNumber(row.line_total) }}</div></td>
     </tr>
-  </tbody>
-  <tfoot>
-  <tr style="font-weight: bold; background:#f5f5f5;">
+
+    <!-- ✅ FINAL TOTAL ROW (ONLY ONCE) -->
+  <tr class="final-total-row">
     <td colspan="6" style="text-align:right;">TOTAL</td>
 
-    <!-- TOTAL column -->
     <td style="text-align:right;">
       {{ formatNumber(columnTotals.total) }}
     </td>
 
     <td></td>
 
-    <!-- TAXABLE column -->
     <td style="text-align:right;">
       {{ formatNumber(columnTotals.taxable) }}
     </td>
 
-    <!-- GST columns -->
     <template v-if="form.nature_of_sale === 'Intrastate'">
       <td></td>
       <td style="text-align:right;">—</td>
@@ -277,7 +274,8 @@
 
     <td></td>
   </tr>
-</tfoot>
+  </tbody>
+ 
 
 </table>
 
@@ -1291,4 +1289,26 @@ textarea:focus {
         color: #666;
         font-style: italic;
     }
+@media print {
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* 🔥 Prevent total row from breaking */
+  .final-total-row {
+    font-weight: bold;
+    background: #f5f5f5;
+    page-break-inside: avoid;
+  }
+}
+
 </style>
