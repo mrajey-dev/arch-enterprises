@@ -781,10 +781,7 @@
   </option>
 </select>
 
-  <!-- Clear -->
-  <button class="btn btn-light" @click="clearFilters">
-    Clear
-  </button>
+
 </div>
 
 
@@ -890,9 +887,7 @@
   </select>
 
   <!-- Clear -->
-  <button class="btn btn-light" @click="clearCompletedFilters">
-    Clear
-  </button>
+ 
 </div>
 
     <!-- Table (same style as styled-table) -->
@@ -999,9 +994,7 @@
   </select>
 
   <!-- Clear -->
-  <button class="btn btn-light" @click="clearServiceFilters">
-    Clear
-  </button>
+
 </div>
 
   <table class="styled-table">
@@ -1117,9 +1110,7 @@
 
 
   <!-- Clear -->
-  <button class="btn btn-light" @click="clearAssignedServiceFilters">
-    Clear
-  </button>
+
 </div>
 
    <table class="styled-table">
@@ -1229,10 +1220,7 @@
     </option>
   </select>
 
-  <!-- Clear -->
-  <button class="btn btn-light" @click="clearSupplyFilters">
-    Clear
-  </button>
+
 </div>
 
 <table class="styled-table">
@@ -2297,10 +2285,7 @@
     </option>
   </select>
 
-  <!-- Clear -->
-  <button class="btn btn-light" @click="clearDeliveredFilters">
-    Clear
-  </button>
+
 </div>
 
    <table class="styled-table">
@@ -6455,7 +6440,7 @@ input, select, textarea {
 }
 
 .modal-card {
-  background: #fff;
+  background: #d2ebd2!important;
   padding: 20px;
   width: 450px;
   max-height: 90vh;
@@ -6563,7 +6548,7 @@ textarea {
   border-bottom: 1px solid #ccc;
   outline: none;
   width: 80%;
-  background: transparent;
+  background: #ffffff;
 }
 
 input:focus,
@@ -7393,11 +7378,12 @@ margin-left: 8px;
 
 .styled-table th, 
 .styled-table td {
-  text-align: left;
-  font-weight: 600 !important;
-  border: 1px solid #ddd;
-  padding: 6px 20px;
-  /* text-align: center; */ 
+ text-align: left;
+    font-weight: 600 !important;
+    border: 1px solid #ddd;
+    color: #000000;
+    background-color: #00800057;
+    padding: 6px 20px;
 }
 
 .styled-table thead {

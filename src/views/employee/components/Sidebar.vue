@@ -109,7 +109,7 @@
             <i class="fas fa-tasks"></i> DSI
           </li>
            <li @click="goTo('employee/help')">
-            <i class="fa fa-question-circle" aria-hidden="true"></i> Help
+            <i class="fas fa-comments" aria-hidden="true"></i> Chat
           </li>
           <li @click="goTo('employee/myprofile')">
             <i class="fa-solid fa-user"></i> My Profile

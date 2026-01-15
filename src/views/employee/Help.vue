@@ -38,7 +38,7 @@
           <div class="ask-box">
          <textarea
   v-model="newQuestion"
-  placeholder="Describe the problem..."
+  placeholder="Type..."
   @input="onMentionInput($event, 'question')"
   @keydown="onMentionKeydown"
 />
@@ -52,7 +52,7 @@
               @change="handleQuestionImage"
             />
 
-            <button @click="addQuestion">Post Question</button>
+            <button @click="addQuestion">Post</button>
           </div>
 
           <!-- Question List -->
@@ -67,10 +67,11 @@
   <span class="date">{{ formatDateTime(q.created_at) }}</span>
 
  <div class="qa-actions">
-  <template v-if="canModify(q)">
-    <i class="fas fa-edit" @click="editQuestion(q)"></i>
-    <i class="fas fa-trash" @click="deleteQuestion(q)"></i>
-  </template>
+  <template v-if="canModify(q) && q.answers.length === 0">
+  <i class="fas fa-edit" @click="editQuestion(q)"></i>
+  <i class="fas fa-trash" @click="deleteQuestion(q)"></i>
+</template>
+
 
   <i
     class="fas"
@@ -141,7 +142,7 @@
                 <div class="reply-box">
 <input
   v-model="q.replyText"
-  placeholder="Write an answer..."
+  placeholder="Type..."
   @input="onMentionInput($event, q)"
   @keydown="onMentionKeydown"
 />
@@ -152,7 +153,7 @@
                     accept="image/*"
                     @change="handleAnswerImage($event, q)"
                   />
-                  <button @click="addAnswer(q)">Reply</button>
+                  <button @click="addAnswer(q)">Send</button>
                 </div>
               </div>
             </transition>
@@ -1091,7 +1092,7 @@ h2 {
   margin-top: 8px;
   max-width: 260px;
   border-radius: 6px;
-  border: 1px solid #ddd;
+  /* border: 1px solid #ddd; */
 }
 
 /* Slide down/up animation for answers */
