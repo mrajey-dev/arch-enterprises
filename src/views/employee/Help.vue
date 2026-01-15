@@ -1090,11 +1090,11 @@ h2 {
 }
 
 .question-card {
-  background: #c0d9d9;
+  background: #c0d9d954;
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  /* box-shadow: 0 6px 18px rgba(0,0,0,0.06); */
 }
 
 .question-header {
