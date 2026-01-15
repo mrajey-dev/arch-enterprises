@@ -49,13 +49,27 @@
 
               <td>{{ q.company_name }}</td>
               <td>{{ q.engine_serial }}</td>
-              <td class="description-col" style="font-size: 10px;">
-  <ul>
-    <li v-for="item in q.items" :key="item.sr">
+<td class="description-col" style="font-size: 10px;">
+  <ul :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 3 }">
+    <li 
+      v-for="(item, idx) in q.items" 
+      :key="item.sr" 
+      v-show="idx < 3 || expandedQuotations[q.id]"
+    >
       {{ item.description }}
     </li>
   </ul>
+  <button 
+    v-if="q.items.length > 3" 
+    @click="toggleSeeMore(q.id)" 
+    class="see-more-btn"
+  >
+    {{ expandedQuotations[q.id] ? "See Less" : "See More" }}
+  </button>
 </td>
+
+
+
 
  <td>
   {{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}
@@ -112,6 +126,7 @@ export default {
   name: "FollowUp",
   data() {
     return {
+          expandedQuotations: {},
        selectedStatus: "",
       debounceTimers: {} ,
       isMobile: false,
@@ -140,6 +155,12 @@ sortedQuotations() {
 },
 
   methods: {
+     toggleSeeMore(quotationId) {
+    this.expandedQuotations = {
+      ...this.expandedQuotations,
+      [quotationId]: !this.expandedQuotations[quotationId]
+    };
+  },
  calculateTaxableValue(items) {
   if (!items || !items.length) return 0;
 
@@ -248,6 +269,19 @@ fetchQuotations() {
 <style scoped>
 
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.see-more-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 0;
+  font-size: 10px;
+  margin-top: 2px;
+}
+.see-more-btn:hover {
+  text-decoration: underline;
+}
+
 /* ===== REMARKS COLUMN WIDTH ===== */
 .remarks-col {
   min-width: 240px;
@@ -457,5 +491,31 @@ fetchQuotations() {
   border-radius: 10px;
   background: white;
 }
+
+.description-col ul {
+  padding-left: 16px;
+  margin: 0;
+  list-style-type: disc;
+}
+
+.description-col ul.collapsed {
+  display: block;
+  max-height: 3.2em; /* approx 3 items high, adjust if needed */
+  overflow: hidden;
+}
+
+
+.description-col ul {
+  padding-left: 16px;
+  margin: 0;
+  list-style-type: disc;
+}
+
+.description-col ul.collapsed {
+  display: block;
+  max-height: 3.2em; /* approx 3 items high, adjust if needed */
+  overflow: hidden;
+}
+
 
 </style>

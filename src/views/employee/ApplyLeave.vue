@@ -73,8 +73,34 @@
      
 
 
-      
+      <!-- Leave Type -->
+<div class="form-group">
+  <label for="leaveType">Leave Type</label>
+  <select v-model="form.leaveType" id="leaveType" required>
+    <option disabled value="">Select leave type</option>
+    <p v-if="overlapWarning" class="warning-text">{{ overlapWarning }}</p>
 
+    <option v-for="type in leaveTypes"
+            :key="type.id"
+            :value="type.leave_name">
+      {{ type.leave_name }}
+    </option>
+    <option value="Half Day">Half Day</option>
+  </select>
+
+  <!-- ⚠️ Instant leave warning -->
+  <p v-if="leaveWarning" class="warning-text">{{ leaveWarning }}</p>
+</div>
+
+<!-- ✅ Time Slot (only for Half Day) -->
+<div class="form-group" v-if="isHalfDay">
+  <label for="timeSlot">Time Slot</label>
+  <select v-model="form.timeSlot" id="timeSlot" required>
+    <option disabled value="">Select time</option>
+    <option value="9:30 AM - 2:30 PM">9:30 AM - 1:30 PM</option>
+    <option value="2:30 PM - 5:30 PM">1:30 PM - 5:30 PM</option>
+  </select>
+</div>
 
 <!-- From Date -->
 <div class="form-group">
@@ -101,38 +127,12 @@
   />
 </div>
 
-<!-- ✅ Time Slot (only for Half Day) -->
-<div class="form-group" v-if="isHalfDay">
-  <label for="timeSlot">Time Slot</label>
-  <select v-model="form.timeSlot" id="timeSlot" required>
-    <option disabled value="">Select time</option>
-    <option value="9:30 AM - 2:30 PM">9:30 AM - 2:30 PM</option>
-    <option value="2:30 PM - 5:30 PM">2:30 PM - 5:30 PM</option>
-  </select>
-</div>
-<!-- Leave Type -->
-<div class="form-group">
-  <label for="leaveType">Leave Type</label>
-  <select v-model="form.leaveType" id="leaveType" required>
-    <option disabled value="">Select leave type</option>
-    <p v-if="overlapWarning" class="warning-text">{{ overlapWarning }}</p>
 
-    <option v-for="type in leaveTypes"
-            :key="type.id"
-            :value="type.leave_name">
-      {{ type.leave_name }}
-    </option>
-    <option value="Half Day">Half Day</option>
-  </select>
-
-  <!-- ⚠️ Instant leave warning -->
-  <p v-if="leaveWarning" class="warning-text">{{ leaveWarning }}</p>
-</div>
   
       <!-- Reason (full row) -->
       <div class="form-group full-width">
         <label for="reason">Reason</label>
-        <textarea v-model="form.reason" id="reason" rows="4" required></textarea>
+        <textarea v-model="form.reason" id="reason" rows="4"></textarea>
       </div>
 
       <!-- File Upload -->
