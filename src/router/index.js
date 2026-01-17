@@ -25,6 +25,8 @@ import ApplyLeave from '../views/employee/ApplyLeave.vue'
 
 import Report from '../views/employee/Report.vue'
 import FollowUp from '../views/employee/FollowUp.vue'
+import AmcRecord from '../views/employee/AmcRecord.vue'
+
 import ViewAllPo from '../views/employee/ViewAllPo.vue'
 import EmpWorkReport from '../views/employee/EmpWorkReport.vue'
 
@@ -116,7 +118,12 @@ const routes = [
     component: FollowUp,
     meta: { hideBell: true }
   },
-
+  { 
+    path: '/employee/AmcRecord',
+    name: 'AmcRecord',
+    component: AmcRecord,
+    meta: { hideBell: true }
+  },
   { path: '/employee/viewallpo', name: 'ViewAllPo', component: ViewAllPo },
   { path: '/employee/mydsi', name: 'MyDsi', component: MyDsi },
   { path: '/employee/help', name: 'Help', component: Help },

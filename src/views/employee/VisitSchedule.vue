@@ -161,6 +161,9 @@ export default {
       currentUser: null,
     };
   },
+  beforeUnmount() {
+  clearInterval(this.autoRefresh);
+},
   mounted() {
      this.filters.month = new Date().toISOString().slice(0, 7);
     this.setCurrentMonth(); 
@@ -171,6 +174,10 @@ export default {
     this.fetchAmcVisits();
     this.fetchServices();
     this.fetchCurrentUser();
+    this.autoRefresh = setInterval(() => {
+    this.fetchAmcVisits();
+    this.fetchServices();
+  }, 30000); // every 30 sec
   },
   computed: {
     combinedVisits() {
@@ -257,6 +264,7 @@ export default {
   },
   methods: {
 async onStatusChange(event, item) {
+  const oldStatus = item.status;
   const newStatus = event.target.value;
 
   if (
@@ -266,19 +274,24 @@ async onStatusChange(event, item) {
     const ok = window.confirm(
       "You want to complete service without uploading report?"
     );
-
     if (!ok) {
-      event.target.value = item.status;
+      event.target.value = oldStatus;
       return;
     }
   }
 
+  // 🔥 Update UI immediately
   item.status = newStatus;
 
-  if (item.visitType === "AMC") {
-    this.updateAmcStatus(item);
-  } else {
-    this.updateServiceStatus(item);
+  try {
+    if (item.visitType === "AMC") {
+      await this.updateAmcStatus(item);
+    } else {
+      await this.updateServiceStatus(item);
+    }
+  } catch (e) {
+    // rollback if API fails
+    item.status = oldStatus;
   }
 },
 

@@ -28,7 +28,7 @@
   Calculate Salary
 </button>
 
-<button class="mark-btn" @click="showMarkAttendancePopup = true">
+<button class="logout-btn" @click="showMarkAttendancePopup = true">
   Mark Attendance
 </button>
 
@@ -1311,8 +1311,14 @@ localStorage.setItem('attendanceData', JSON.stringify(this.users))
 }
 
   },
-
+beforeUnmount() {
+  clearInterval(this.attendanceInterval);
+},
 mounted() {
+  this.attendanceInterval = setInterval(() => {
+  this.fetchAttendance();
+}, 30000); // every 30 seconds
+
    const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0'); // month is 0-indexed
@@ -2626,6 +2632,7 @@ color: #427172;
 .logout-btn {
   background-color: #407173;
     color: #ffffff;
+    margin-left: 10px;
     margin-bottom: 22px;
 }
 

@@ -3,16 +3,20 @@ import App from './App.vue'
 import router from './router'
 import axios from 'axios'
 
-// ✅ Base API URL
+// Base API URL
 axios.defaults.baseURL = 'https://employees.archenterprises.co.in/api'
-
-// ✅ Send cookies and session data
 axios.defaults.withCredentials = true
 
-// ✅ Attach Bearer token
-const token = localStorage.getItem('token')
-if (token) {
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-}
+// ✅ ALWAYS attach token before every request
+axios.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  error => Promise.reject(error)
+)
 
 createApp(App).use(router).mount('#app')

@@ -64,6 +64,7 @@
                 <option value="Pending">Pending</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
+                  <option value="Assigned">Assigned Tasks</option>
               </select>
 
               <button class="btn btn-primary attractive-btn" @click="clearFilters">
@@ -306,6 +307,7 @@ editTaskId: null,
             summary: task.description || 'No summary provided.',
             modules: task.modules || 'N/A',
             completed_at: task.completed_at || 'Not completed',
+              priority: task.priority || '',
             assigned_by_manager: isManagerAssigned,
             manager_name: isManagerAssigned ? (task.manager_name || this.managerName) : null
           }
@@ -314,7 +316,16 @@ editTaskId: null,
           const nameMatch = !this.filters.name || task.username === this.filters.name
           const dateMatch = !this.filters.date || task.date === this.filters.date
           const monthMatch = !this.filters.month || new Date(task.date).getMonth() + 1 === parseInt(this.filters.month)
-          const statusMatch = !this.filters.status || (task.status ? task.status.toLowerCase() === this.filters.status.toLowerCase() : false)
+          let statusMatch = true
+
+if (this.filters.status === 'Assigned') {
+  statusMatch = task.priority === 'Task Assigned'
+} else if (this.filters.status) {
+  statusMatch =
+    task.status &&
+    task.status.toLowerCase() === this.filters.status.toLowerCase()
+}
+
 
           const searchText = this.filters.search.trim().toLowerCase()
           const searchMatch = !searchText ||

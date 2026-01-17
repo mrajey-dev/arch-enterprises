@@ -157,14 +157,15 @@
 
 
     <!-- Submit Button -->
-   <button
+ <button
   type="submit"
   class="submit-button"
   :disabled="submitLoading"
 >
-  <span v-if="submitLoading">Submitting...</span>
+  <span v-if="submitLoading" class="btn-loader"></span>
   <span v-else>Submit Leave Request</span>
 </button>
+
 <div v-if="submitSuccessMsg" class="success-msg">{{ submitSuccessMsg }}</div>
 
   </form>
@@ -1054,6 +1055,28 @@ input:focus, select:focus, textarea:focus {
   font-size: 22px;
   color: white;
   cursor: pointer;
+}
+
+.btn-loader {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Disabled button look */
+.submit-button:disabled {
+  background-color: #9fbfc1;
+  cursor: not-allowed;
 }
 
 </style>

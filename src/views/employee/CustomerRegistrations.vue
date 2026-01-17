@@ -48,6 +48,9 @@
    <button class="assign-btn "@click="goTo('employee/followup')">
     Follow Up
   </button>
+   <button class="assign-btn "@click="goTo('employee/amcrecord')">
+    AMC Record Data
+  </button>
    <!-- <button class="assign-btn "@click="goTo('employee/viewallpo')">
     Purchase Order
   </button> -->
@@ -200,14 +203,40 @@
     {{ form.company_name }}
   </div>
 </div>
+<div class="quotation-form-group">
+  <label style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Shipping Address (Optional)</span>
+
+    
+  </label>
+
+  <textarea
+    v-model="form.shipping_address"
+    rows="3"
+    placeholder="Enter shipping address if different from company address"
+  ></textarea>
+  <button
+      type="button"
+      class="save-shipp-address"
+      style="padding:4px 10px; font-size:12px;"
+      @click="updateShippingAddress"
+    >
+      🔄 Update Address
+    </button>
+</div>
+
+
         <div class="quotation-form-group">
-          <label>Nature of Sale</label>
+          <label>Nature of Sale *</label>
           <select v-model="form.nature_of_sale">
             <option value="">Select Nature</option>
             <option value="Intrastate">Intrastate</option>
             <option value="Interstate">Interstate</option>
             <option value="Export">Export</option>
           </select>
+           <div v-if="!form.nature_of_sale" class="error-message">
+    ⚠ Nature of Sale is required
+  </div>
         </div>
 
         <div class="quotation-form-group" v-if="form.nature_of_sale === 'Export'">
@@ -398,6 +427,7 @@
 
     <!-- ITEMS -->
   <!-- ITEMS -->
+<!-- ITEMS -->
 <div class="quotation-section-card">
   <h3 class="quotation-section-title">📦 Item Details</h3>
 
@@ -413,40 +443,61 @@
 
       <!-- DESCRIPTION -->
       <div class="quotation-form-group">
-        <label>Description of Goods</label>
-        <textarea v-model="item.description" rows="2"></textarea>
+        <label>Description of Goods *</label>
+        <textarea
+          v-model="item.description"
+          rows="2"
+          :class="{ 'input-error': !item.description }"
+        ></textarea>
+        <span v-if="!item.description" class="error-message">Required</span>
       </div>
 
       <!-- HSN -->
       <div class="quotation-form-group">
-        <label>HSN / SAC Code</label>
-        <input v-model="item.hsn" type="number" />
+        <label>HSN / SAC Code *</label>
+        <input
+          v-model="item.hsn"
+          type="number"
+          :class="{ 'input-error': !item.hsn }"
+        />
+        <span v-if="!item.hsn" class="error-message">Required</span>
       </div>
 
       <!-- QTY -->
       <div class="quotation-form-group">
-        <label>QTY</label>
-        <input v-model="item.qty" type="number" />
+        <label>QTY *</label>
+        <input
+          v-model="item.qty"
+          type="number"
+          :class="{ 'input-error': !item.qty }"
+        />
+        <span v-if="!item.qty" class="error-message">Required</span>
       </div>
 
       <!-- UOM -->
       <div class="quotation-form-group">
-        <label>UOM</label>
-        <select v-model="item.uom">
+        <label>UOM *</label>
+        <select v-model="item.uom" :class="{ 'input-error': !item.uom }">
           <option value="">Select UOM</option>
           <option value="Lit.">Lit.</option>
           <option value="NOS.">NOS.</option>
           <option value="Box">Box</option>
           <option value="Set">Set</option>
-            <option value="K.G.">K.G.</option> 
+          <option value="K.G.">K.G.</option>
           <option value="Day">Day</option>
         </select>
+        <span v-if="!item.uom" class="error-message">Required</span>
       </div>
 
       <!-- RATE -->
       <div class="quotation-form-group">
-        <label>Rate</label>
-        <input v-model="item.rate" type="number" />
+        <label>Rate *</label>
+        <input
+          v-model="item.rate"
+          type="number"
+          :class="{ 'input-error': !item.rate }"
+        />
+        <span v-if="!item.rate" class="error-message">Required</span>
       </div>
 
       <!-- DISCOUNT -->
@@ -456,7 +507,6 @@
       </div>
 
       <!-- GST SECTION (ITEM LEVEL) -->
-      <!-- Intrastate -->
       <template v-if="form.nature_of_sale === 'Intrastate'">
         <div class="quotation-form-group">
           <label>CGST (%)</label>
@@ -468,7 +518,6 @@
         </div>
       </template>
 
-      <!-- Interstate -->
       <template v-if="form.nature_of_sale === 'Interstate'">
         <div class="quotation-form-group">
           <label>IGST (%)</label>
@@ -476,18 +525,24 @@
         </div>
       </template>
 
-      <!-- Export -->
       <template v-if="form.nature_of_sale === 'Export'">
         <div class="quotation-export-note">
           🌍 GST Not Applicable for Export
         </div>
       </template>
-
+<!-- LINE TOTAL -->
+<div class="quotation-form-group">
+  <label>Item Total</label>
+  <div class="readonly-field" style="font-weight: 700;">
+    {{ (item.qty * item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+  </div>
+</div>
     </div>
   </div>
 
   <button class="quotation-add-btn" @click="addItem">+ Add Item</button>
 </div>
+
 
 
     <!-- TERMS & CONDITIONS -->
@@ -1591,6 +1646,10 @@
         <tr>
           <th>PO Number</th>
           <td>{{ selectedPo.po_number }}</td>
+        </tr>
+ <tr>
+          <th>PO Value</th>
+          <td>{{ selectedPo.value_of_po }}</td>
         </tr>
 
         <!-- AMC Specific -->
@@ -2829,10 +2888,11 @@ PODate: "",
       form: {
         nature_of_sale: "",
         company_name: "",
+          shipping_address: '',
         engine_serial: "",
         model_no: "",
-        payment_terms: "",
-        delivery: "",
+        payment_terms: "100% Advance",
+        delivery: 'EX Works, Freight Prepaid',
         description: "",
         hsn_code: "",
         qty: "",
@@ -3215,6 +3275,23 @@ filterCompany(newCompany) {
 
 
  methods: {
+  updateShippingAddress() {
+    if (!this.form.company_name || !this.form.shipping_address) {
+      alert("⚠ Please select company and enter shipping address");
+      return;
+    }
+
+    axios.post("/api/update-shipping-address", {
+      company_name: this.form.company_name,
+      shipping_address: this.form.shipping_address
+    })
+    .then(() => {
+      this.$toast?.success("✅ Shipping address updated successfully");
+    })
+    .catch(() => {
+      alert("❌ Failed to update shipping address");
+    });
+  },
   fetchVisitStatuses() {
     axios.get('/api/visit-status-dates')
       .then(res => {
@@ -3689,16 +3766,27 @@ fetchReports() {
       console.warn("User not logged in, using Admin");
     }
   },
-  openQuotationlist(cust) {
-    this.showQuotation = true;
-    this.isEdit = false;
+async openQuotationlist(cust) {
+  this.showQuotation = true;
+  this.isEdit = false;
 
-    // set selected company
-    this.form.company_name = cust.company_name;
+  this.form.company_name = cust.company_name;
+  this.form.customer_id = cust.id;
 
-    // optional: store customer id if needed later
-    this.form.customer_id = cust.id;
-  },
+  try {
+    const res = await axios.get(`/api/customers/${cust.id}`);
+
+    // ✅ Correct fallback logic
+    this.form.shipping_address =
+      res.data.shipping_address ?? res.data.address ?? "";
+
+  } catch (error) {
+    console.error("Failed to load shipping address", error);
+    this.form.shipping_address = "";
+  }
+},
+
+
   // -----------------------------
   // SUBMIT STATUS FROM POPUP
   // -----------------------------
@@ -3886,7 +3974,31 @@ async editQuotation(quotation) {
     this.visitDate = '';
     this.showAddVisitModal = true;
   },
-    addItem() {
+addItem() {
+  // 1️⃣ Validate Nature of Sale
+  if (!this.form.nature_of_sale) {
+    alert("⚠ Please select Nature of Sale before adding items.");
+    return;
+  }
+
+  // 2️⃣ Validate the last item (if exists)
+  if (this.form.items.length > 0) {
+    const lastItem = this.form.items[this.form.items.length - 1];
+    if (
+      !lastItem.description ||
+      !lastItem.hsn ||
+      !lastItem.qty ||
+      !lastItem.uom ||
+      !lastItem.rate
+    ) {
+      alert(
+        "⚠ Please fill all required fields (*) in the current item before adding a new one."
+      );
+      return;
+    }
+  }
+
+  // 3️⃣ Add new item
   this.form.items.push({
     sr: this.form.items.length + 1,
     description: "",
@@ -3906,6 +4018,7 @@ async editQuotation(quotation) {
     line_total: 0,
   });
 },
+
 
 removeItem(index) {
   this.form.items.splice(index, 1);
@@ -3950,6 +4063,28 @@ openViewQuotationPopup(companyName) {
 
 
 submitQuotation() {
+  // 1️⃣ Check Nature of Sale
+  if (!this.form.nature_of_sale) {
+    alert("⚠ Please select Nature of Sale before saving the quotation.");
+    return;
+  }
+
+  // 2️⃣ Check if at least one item is added
+  if (!this.form.items || this.form.items.length === 0) {
+    alert("⚠ Please add at least one item before saving the quotation.");
+    return;
+  }
+
+  // 3️⃣ Validate required fields for each item
+  for (let i = 0; i < this.form.items.length; i++) {
+    const item = this.form.items[i];
+    if (!item.description || !item.hsn || !item.qty || !item.uom || !item.rate) {
+      alert(`⚠ Please fill all required fields (*)`);
+      return;
+    }
+  }
+
+  // ✅ Proceed with API call
   const url = this.isEdit 
     ? `/api/quotations/${this.form.id}`   // UPDATE URL
     : `/api/quotations`;                  // CREATE URL
@@ -3976,6 +4111,7 @@ submitQuotation() {
       alert("Error saving quotation");
     });
 },
+
 
 
 
@@ -5072,7 +5208,26 @@ closeServiceSupplyModal(){
         this.$router.push('/auth');
       });
     }
-  }
+ 
+  },
+   async loadShippingAddress() {
+    if (!this.form.company_id) return;
+
+    try {
+      const res = await axios.get(
+        `/api/customers/${this.form.company_id}`
+      );
+
+      // ✅ Only autofill when creating new quotation
+      if (!this.isEdit) {
+        this.form.shipping_address =
+          res.data.shipping_address || res.data.address || "";
+      }
+
+    } catch (err) {
+      console.error("Shipping address load failed", err);
+    }
+  },
 
 
   }
@@ -5083,6 +5238,13 @@ closeServiceSupplyModal(){
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.save-shipp-address{
+      background-color: #000000;
+    cursor: pointer;
+    width: 149px;
+    color: white;
+    border-radius: 6px;
+}
 .head-title{
       color: white;
     display: flex;
@@ -7208,7 +7370,7 @@ margin-left: 8px;
 
 .details-table th {
   width: 35%;
-  background: #f7f7f7;
+  /* background: #f7f7f7; */
   color: #427172;
 }
 
@@ -7311,7 +7473,7 @@ margin-left: 8px;
 
 /* Button */
 .assign-btn {
-  background-color: #5f9ea0;
+  background-color: #0a9094;
   color: #fff;
   border: none;
   padding: 10px 22px;
@@ -9023,6 +9185,16 @@ justify-self: center;
 .crm-modal-close:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+.input-error {
+  border: 1px solid red;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.8rem;
+  margin-top: 2px;
 }
 
 

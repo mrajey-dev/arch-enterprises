@@ -84,11 +84,13 @@
 </div>
         <div class="task-grid">
           <div
-            class="task-card"
-            v-for="task in filteredTasks" :key="task.id"
+  class="task-card"
+  v-for="task in filteredTasks"
+  :key="task.id"
+  :class="formatStatus(task.status)"
+  @click="openTaskPopup(task)"
+>
 
-            :class="formatStatus(task.status)"
-          >
             <div class="task-header">
            <span class="task-date">
   <i> Deadline:</i>
@@ -136,9 +138,11 @@
 <select
   v-if="!task.isVisit"
   v-model="task.status"
-  @change="updateTaskStatus(task)"
+  @change.stop="updateTaskStatus(task)"
+  @click.stop
   :class="['task-status-dropdown', formatStatus(task.status)]"
 >
+
   <option>Pending</option>
   <option>In Progress</option>
   <option>Completed</option>
@@ -147,7 +151,7 @@
  <!-- Task Card Buttons -->
 <button
   class="edit-btn"
-  @click="openEditTaskModal(task)"
+  @click.stop="openEditTaskModal(task)"
   v-if="task.priority !== 'Task Assigned'"
 >
   Edit
@@ -155,11 +159,12 @@
 
 <button
   class="delete-btn"
-  @click="deleteTask(task)"
+  @click.stop="deleteTask(task)"
   v-if="task.priority !== 'Task Assigned'"
 >
   Delete
 </button>
+
 
 
 
@@ -181,7 +186,66 @@
 
     </div>
 
-    <!-- Add Task Modal -->
+<!-- Task Details Popup -->
+<div v-if="showTaskPopup" class="modal">
+  <div class="modal-content task-details-modal">
+
+    <!-- Header -->
+    <div class="task-popup-header">
+      <h3>📌 {{ selectedTask.title }}</h3>
+      <span
+        class="status-badge"
+        :class="formatStatus(selectedTask.status)"
+      >
+        {{ selectedTask.status }}
+      </span>
+    </div>
+
+    <!-- Body -->
+    <div class="task-popup-body">
+
+      <div class="info-row">
+        <span class="label">📅 Due Date</span>
+        <span class="value">
+          {{ formatDate(selectedTask.dueDate) }}
+        </span>
+      </div>
+
+      <div class="info-block" v-if="selectedTask.description">
+        <span class="label">📝 Description</span>
+        <p class="text">
+          {{ selectedTask.description }}
+        </p>
+      </div>
+
+      <div class="info-block" v-if="selectedTask.modules">
+        <span class="label">🧩 Modules</span>
+        <p class="text">
+          {{ selectedTask.modules }}
+        </p>
+      </div>
+
+      <div class="info-row">
+        <span class="label">⏳ Completed On</span>
+        <span class="value">
+          {{ formatDate(selectedTask.completedAt) }}
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-actions">
+      <button class="btn-secondary" @click="closeTaskPopup">
+        Close
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+
    <!-- Add Task Modal -->
 <div class="modal" v-if="showAddTaskForm">
   <div class="modal-content">
@@ -265,8 +329,6 @@
 
 </template>
 
-
-
 <script>
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue'
@@ -278,6 +340,9 @@ export default {
   },
   data() {
     return {
+      showTaskPopup: false,
+selectedTask: null,
+
       totalFilteredTasks: 0,
       upcomingTasks: [], // tasks with deadline = today+1
     showReminderPopup: false,
@@ -410,6 +475,30 @@ watch: {
 
 
   methods: {
+    formatDate(date) {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+},
+
+    openTaskPopup(task) {
+  this.selectedTask = { ...task }; // clone to avoid mutation
+  this.showTaskPopup = true;
+},
+
+closeTaskPopup() {
+  this.showTaskPopup = false;
+  this.selectedTask = null;
+},
+
+openEditFromPopup() {
+  this.closeTaskPopup();
+  this.openEditTaskModal(this.selectedTask);
+},
+
 async fetchAssignedServices() {
   try {
     const res = await axios.get(
@@ -1341,7 +1430,7 @@ async mounted() {
 
 .modal-actions button[type="button"] {
   background-color: #e0e0e0;
-  color: #427172;
+  color: #ffffff;
 }
 
 .modal-actions button[type="button"]:hover {
@@ -1415,7 +1504,9 @@ async mounted() {
   color: white;
 }
 .modal-actions button:last-child {
-  background-color: #ccc;
+ background-color: #000000;
+    box-shadow: 0 6px 15px #6c757d00;
+
 }
 
 
@@ -1446,6 +1537,7 @@ async mounted() {
   gap: 38px;
 }
 .task-card {
+      cursor: pointer;
   background-color: #fff;
   border-radius: 16px;
   padding: 20px;
@@ -1976,4 +2068,76 @@ h2 {
   text-align: center;
 }
 }
+.task-view-modal {
+  max-width: 500px;
+}
+
+.task-view-modal p {
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.task-details-modal {
+  max-width: 520px;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.task-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.task-popup-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: white;
+  text-transform: uppercase;
+}
+
+.task-popup-body {
+  font-size: 0.95rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.info-block {
+  margin-bottom: 15px;
+}
+
+.label {
+  font-weight: 600;
+  color: #555;
+}
+
+.value {
+  color: #333;
+}
+
+.text {
+  margin-top: 5px;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+.btn-secondary {
+  background: #ddd;
+}
+
 </style>

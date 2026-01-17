@@ -196,6 +196,7 @@ export default {
 
   data() {
     return {
+      autoRefreshTimer: null,
       showImageModal: false,
 previewImage: null,
        questionError: '',
@@ -223,6 +224,10 @@ previewImage: null,
   },
 
   mounted() {
+      this.fetchQuestions()
+       this.autoRefreshTimer = setInterval(() => {
+    this.fetchQuestions()
+  }, 5000)
      document.addEventListener('keydown', e => {
     if (e.key === 'Escape') this.closeImage()
   })
@@ -245,9 +250,10 @@ this.fetchNotifications();
   },
 
   beforeUnmount() {
-    document.removeEventListener('click', this.closeMentionBox)
+   clearInterval(this.autoRefreshTimer)
 
-    window.removeEventListener('resize', this.checkIfMobile)
+  document.removeEventListener('click', this.closeMentionBox)
+  window.removeEventListener('resize', this.checkIfMobile)
   },
 
   methods: {
@@ -533,35 +539,48 @@ setMentionPosition(input) {
     /* ===============================
        FETCH QUESTIONS
     =============================== */
-   fetchQuestions() {
+fetchQuestions() {
   axios.get('/api/qa')
     .then(res => {
-      this.questions = res.data.map(q => ({
-        ...q,
 
-        // fallback handle
-        creator_handle: q.creator_handle || q.creator_name,
+      // 🔒 preserve current UI state
+      const currentQuestions = this.questions || []
 
-        // UI flags for question
-        showAnswers: false,
-        isEditing: false,
-        editText: q.question,
-        replyText: '',
-        replyImage: null,
+      this.questions = res.data.map(q => {
+        const oldQ = currentQuestions.find(x => x.id === q.id)
 
-        // answers mapping
-        answers: q.answers.map(a => ({
-          ...a,
-          creator_handle: a.creator_handle || a.creator_name,
+        return {
+          ...q,
 
-          // UI flags for answer
-          isEditing: false,
-          editText: a.answer
-        }))
-      }))
+          // fallback handle
+          creator_handle: q.creator_handle || q.creator_name,
+
+          // 🔁 PRESERVE UI STATE
+          showAnswers: oldQ?.showAnswers ?? false,
+          isEditing: oldQ?.isEditing ?? false,
+          editText: oldQ?.editText ?? q.question,
+          replyText: oldQ?.replyText ?? '',
+          replyImage: null,
+
+          // answers mapping
+          answers: q.answers.map(a => {
+            const oldA = oldQ?.answers?.find(x => x.id === a.id)
+
+            return {
+              ...a,
+              creator_handle: a.creator_handle || a.creator_name,
+
+              // 🔁 PRESERVE ANSWER UI STATE
+              isEditing: oldA?.isEditing ?? false,
+              editText: oldA?.editText ?? a.answer
+            }
+          })
+        }
+      })
     })
     .catch(err => console.error(err))
 },
+
 
     /* ===============================
        POST QUESTION
