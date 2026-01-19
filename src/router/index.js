@@ -85,6 +85,12 @@ const routes = [
     meta: { hideBell: true }
   },
 
+  {
+  path: '/employee/quotations',
+  component: () => import('@/views/ViewAllQuotations.vue')
+},
+
+
   { path: '/managedepartments', name: 'ManageDepartments', component: ManageDepartments, meta: { hideBell: true } },
   { path: '/assigntask', name: 'AssignTask', component: AssignTask, meta: { hideBell: true } },
   { path: '/announcement', name: 'Announcement', component: Announcement, meta: { hideBell: true } },

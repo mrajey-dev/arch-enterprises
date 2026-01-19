@@ -45,6 +45,10 @@
     <!-- View & Assign PO in {{ currentMonth }} 2025 -->
      Manage PO
   </button>
+ <button class="assign-btn" @click="showViewAllQuotationPopup=true">
+  View All Quotations
+</button>
+
    <button class="assign-btn "@click="goTo('employee/followup')">
     Follow Up
   </button>
@@ -1438,6 +1442,173 @@
   </div>
 </div>
 
+<div v-if="showViewAllQuotationPopup" class="modal-backdrop">
+  <div class="modal-card">
+
+    <!-- Close Button -->
+    <button class="btn btn-dark" style="float: right;" @click="showViewAllQuotationPopup = false">⬅ Back</button>
+
+    <h2>All Quotations</h2>
+
+    <!-- Company Filter -->
+  <!-- Filters -->
+<div class="filters-row" style="display:flex; gap:42px; margin-bottom:15px; flex-wrap:wrap; align-items:end;">
+
+  <!-- Company Search -->
+  <div style="flex:1; min-width:220px;">
+    <label style="font-size:1.05em;">Search Company</label>
+    <input
+      type="text"
+      v-model="searchCompany"
+      placeholder="Type company name..."
+      class="input"
+      style="width:100%;"
+    />
+  </div>
+
+  <!-- Status Filter -->
+  <div style="flex:1; min-width:180px;">
+    <label style="font-size:1.05em;">Filter by Status</label>
+    <select v-model="filterStatus" class="input" style="width:100%;">
+      <option value="">All Status</option>
+      <option value="pending">Pending</option>
+      <option value="followup">Follow-up</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+    </select>
+  </div>
+<!-- Month, Year Combined Filter -->
+<div style="flex:1; min-width:260px;">
+  <label style="font-size:1.05em;">Filter by Month, Year</label>
+
+  <div style="display:flex; gap:6px; align-items:center;">
+    <!-- Month -->
+    <select v-model="filterMonth" class="input" style="flex:1;">
+      <option value="">Month</option>
+      <option v-for="(m, index) in months" :key="index" :value="index + 1">
+        {{ m }}
+      </option>
+    </select>
+
+    <span style="font-weight:bold;">,</span>
+
+    <!-- Year -->
+    <select v-model="filterYear" class="input" style="width:110px;">
+      <option value="">Year</option>
+      <option v-for="y in years" :key="y" :value="y">
+        {{ y }}
+      </option>
+    </select>
+  </div>
+</div>
+
+  <!-- Grand Total Card -->
+  <div class="grand-total-card">
+    <div class="grand-total-header">
+      <span class="title">Grand Total</span>
+      <button
+        class="btn gst-toggle"
+        :class="showGstInclusive ? 'btn-success' : 'btn-outline-secondary'"
+        @click="showGstInclusive = !showGstInclusive"
+      >
+        {{ showGstInclusive ? 'GST Included' : 'GST Excluded' }}
+      </button>
+    </div>
+
+    <div class="grand-total-amount">
+     ₹ {{ (totalQuotationAmount ?? 0).toLocaleString('en-IN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+}) }}
+
+     
+<br>
+ 
+    {{ formatCurrency(currencyTotals.USD ?? 0, 'USD') }}
+
+         </div>
+  </div>
+</div>
+
+    <!-- Loader -->
+    <div v-if="quotationLoading" class="quotation-loader">
+      <span class="spinner"></span>
+      <p>Loading quotations...</p>
+    </div>
+
+
+    <div v-else-if="filteredAllQuotations.length > 0" class="cards-container">
+  <div 
+    v-for="q in filteredAllQuotations" 
+    :key="q.id" 
+    class="quote-card"
+    @click="openQuotationInNewTab(q)"
+  >
+    <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
+
+     <p>{{ q.company_name }}</p>
+
+     <!-- ✅ Follow-up Status -->
+  <p class="followup-status">
+    Status : 
+    <span :class="'status-' + q.quotation_followup_status?.toLowerCase()">
+<span
+  :class="{
+    'status-pending': !q.quotation_followup_status,
+    'status-follow-up': q.quotation_followup_status?.toLowerCase() === 'followup',
+    'status-approved': q.quotation_followup_status?.toLowerCase() === 'approved',
+    'status-rejected': q.quotation_followup_status?.toLowerCase() === 'rejected'
+  }"
+>
+  {{ q.quotation_followup_status || 'Pending' }}
+</span>
+
+
+    </span>
+  </p>
+
+  
+
+    <!-- <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
+      <i class="fas fa-edit"></i> Edit
+    </button>
+
+    <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
+      <i class="fas fa-trash"></i> Delete
+    </button> -->
+  </div>
+</div>
+
+
+    <!-- Quotation Cards -->
+<div v-else-if="filteredQuotations.length > 0" class="cards-container">
+  <div 
+    v-for="q in filteredQuotations" 
+    :key="q.id" 
+    class="quote-card"
+    @click="openQuotationInNewTab(q)"
+  >
+    <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
+
+    <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
+      <i class="fas fa-edit"></i> Edit
+    </button>
+
+    <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
+      <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>
+</div>
+
+
+
+    <!-- No Data Message -->
+    <div v-else-if="filterCompany && !quotationLoading">
+      <p>No quotations found.</p>
+    </div>
+
+  </div>
+</div>
 
 <!-- VIEW QUOTATIONS POPUP -->
 <div v-if="showViewQuotationPopup" class="modal-backdrop">
@@ -2665,6 +2836,11 @@
     },
     data() {
       return {
+         filterMonth: '',
+        filterYear: '',
+          searchCompany: '',
+          filterStatus: '',
+           showGstInclusive: false,
         filledVisits: [],
         visitStatusList: [],
         completedVisitDates: [],
@@ -2767,6 +2943,7 @@ isSavingServiceSupply: false,
         visitDate: '',
         quotationList: [],  
          showViewQuotationPopup: false,
+         showViewAllQuotationPopup:false,
     filterCompany: "",
     allQuotations: [],      
     quotations: [],
@@ -3008,6 +3185,149 @@ PODate: "",
 
     },
   computed: {
+     years() {
+    const years = new Set()
+
+    this.quotations.forEach(q => {
+      if (q.created_at) {
+        years.add(new Date(q.created_at).getFullYear())
+      }
+    })
+
+    return Array.from(years).sort((a, b) => b - a)
+  },
+    currencyTotals() {
+  return this.filteredAllQuotations.reduce((totals, q) => {
+
+    // Normalize currency
+    const currency = q.currency ? q.currency.toUpperCase() : 'INR';
+
+    // Initialize currency bucket if not exists
+    if (!totals[currency]) {
+      totals[currency] = 0;
+    }
+
+    let items = q.items;
+
+    if (typeof items === "string") {
+      try {
+        items = JSON.parse(items);
+      } catch {
+        items = [];
+      }
+    }
+
+    const quotationTotal = items.reduce((sum, item) => {
+      const qty = Number(item.qty) || 0;
+      const rate = Number(item.rate) || 0;
+      const baseAmount = qty * rate;
+
+      if (!this.showGstInclusive) {
+        return sum + baseAmount;
+      }
+
+      const cgst = baseAmount * (Number(item.cgst_rate) || 0) / 100;
+      const sgst = baseAmount * (Number(item.sgst_rate) || 0) / 100;
+      const igst = baseAmount * (Number(item.igst_rate) || 0) / 100;
+
+      return sum + baseAmount + cgst + sgst + igst;
+    }, 0);
+
+    totals[currency] += quotationTotal;
+    return totals;
+  }, {});
+},
+
+totalQuotationAmount() {
+  return this.filteredAllQuotations.reduce((grandTotal, q) => {
+
+    // ✅ Allow only INR or empty/null currency
+    if (q.currency && q.currency !== 'INR') {
+      return grandTotal;
+    }
+
+    let items = q.items;
+
+    if (typeof items === "string") {
+      try {
+        items = JSON.parse(items);
+      } catch {
+        items = [];
+      }
+    }
+
+    const quotationTotal = items.reduce((sum, item) => {
+      const qty = Number(item.qty) || 0;
+      const rate = Number(item.rate) || 0;
+      const baseAmount = qty * rate;
+
+      if (!this.showGstInclusive) {
+        return sum + baseAmount;
+      }
+
+      // GST calculation
+      const cgst = baseAmount * (Number(item.cgst_rate) || 0) / 100;
+      const sgst = baseAmount * (Number(item.sgst_rate) || 0) / 100;
+      const igst = baseAmount * (Number(item.igst_rate) || 0) / 100;
+
+      return sum + baseAmount + cgst + sgst + igst;
+    }, 0);
+
+    return grandTotal + quotationTotal;
+  }, 0);
+},
+filteredAllQuotations() {
+  let list = this.quotations || [] // always use this.quotations as source
+
+  // 🔍 Company name search
+  if (this.searchCompany) {
+    const search = this.searchCompany.toLowerCase()
+    list = list.filter(q =>
+      q.company_name?.toLowerCase().includes(search)
+    )
+  }
+
+  // ⚙ Engine serial search
+  if (this.engineSearch) {
+    const engine = this.engineSearch.toLowerCase()
+    list = list.filter(q =>
+      q.engine_serial_number?.toLowerCase().includes(engine)
+    )
+  }
+
+  // 📌 Status filter
+  if (this.filterStatus) {
+    list = list.filter(q => {
+      const status = (q.quotation_followup_status || 'pending').toLowerCase()
+      return status === this.filterStatus
+    })
+  }
+
+  // 📅 Month filter (from created_at)
+  if (this.filterMonth) {
+    list = list.filter(q => {
+      if (!q.created_at) return false
+      return (
+        new Date(q.created_at).getMonth() + 1 === Number(this.filterMonth)
+      )
+    })
+  }
+
+  // 📆 Year filter (from created_at)
+  if (this.filterYear) {
+    list = list.filter(q => {
+      if (!q.created_at) return false
+      return (
+        new Date(q.created_at).getFullYear() === Number(this.filterYear)
+      )
+    })
+  }
+
+  return list
+},
+
+
+
     filteredDeliveredSupplies() {
     return this.deliveredSupplies.filter(supply => {
 
@@ -3241,6 +3561,22 @@ PODate: "",
 
   },
 watch: {
+   showViewAllQuotationPopup(newVal) {
+    if (newVal) {
+      this.quotationLoading = true;
+
+      fetch("https://employees.archenterprises.co.in/api/api/quotations")
+        .then(res => res.json())
+        .then(data => this.quotations = data)
+        .catch(err => {
+          console.error(err);
+          this.quotations = [];
+        })
+        .finally(() => {
+          this.quotationLoading = false;
+        });
+    }
+  },
   showVisitPopup(val) {
     if (val) this.loadVisitAssign(); // fetch data when modal opens
   },
@@ -3254,6 +3590,8 @@ watch: {
 
 filterCompany(newCompany) {
   if (!this.showViewQuotationPopup) return;
+  if (!this.showViewAllQuotationPopup) return;
+
 
   if (newCompany) {
     this.fetchQuotationsById(newCompany);
@@ -3275,6 +3613,20 @@ filterCompany(newCompany) {
 
 
  methods: {
+  formatCurrency(amount, currency) {
+    const currencyMap = {
+      INR: { locale: 'en-IN', symbol: '₹' },
+      USD: { locale: 'en-US', symbol: '$' },
+      EUR: { locale: 'de-DE', symbol: '€' }
+    };
+
+    const config = currencyMap[currency] || { locale: 'en-US', symbol: '' };
+
+    return `${config.symbol} ${Number(amount).toLocaleString(config.locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  },
   updateShippingAddress() {
     if (!this.form.company_name || !this.form.shipping_address) {
       alert("⚠ Please select company and enter shipping address");
@@ -3874,6 +4226,8 @@ async editQuotation(quotation) {
   this.isEdit = true;
   this.showQuotation = true;
   this.showViewQuotationPopup = false;
+  this.showViewAllQuotationPopup = false;
+
 
   try {
     const res = await axios.get(`/api/quotations/${quotation.id}`);
@@ -4030,6 +4384,8 @@ removeItem(index) {
     openQuotation(id) {
     localStorage.setItem("selectedQuotationId", id); // remember ID
     this.showViewQuotationPopup = false;
+    this.showViewAllQuotationPopup = false;
+
 
     this.$router.push("/quotation"); // navigate to quotation.vue
   },
@@ -4054,6 +4410,8 @@ openViewQuotationPopup(companyName) {
   this.currentCompany = companyName;
   this.filterCompany = companyName;
   this.showViewQuotationPopup = true;
+  // this.showViewAllQuotationPopup = true;
+
 
   this.quotationList = [];          // clear old data
   this.quotationLoading = true;     // 🔄 start loader
@@ -5207,9 +5565,7 @@ closeServiceSupplyModal(){
         localStorage.removeItem('token');
         this.$router.push('/auth');
       });
-    }
- 
-  },
+    },
    async loadShippingAddress() {
     if (!this.form.company_id) return;
 
@@ -5228,7 +5584,7 @@ closeServiceSupplyModal(){
       console.error("Shipping address load failed", err);
     }
   },
-
+ }
 
   }
   </script>
@@ -8829,10 +9185,10 @@ h2 {
 
 /* Quote ID */
 .quote-card p {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   margin-bottom: 12px;
-  color: #2c3e50;
+  color: #5b5b60;
 }
 
 /* Action Buttons */
@@ -9196,6 +9552,116 @@ justify-self: center;
   font-size: 0.8rem;
   margin-top: 2px;
 }
+
+.followup-status {
+  margin: 6px 0 10px;
+  font-size: 0.95em;
+}
+
+.status-pending {
+       color: #453802;
+    background-color: #ebe395;
+    border-radius: 7px;
+    padding: 2px 5px;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.status-follow-up {
+   color: #090542;
+    background-color: #bebbd4;
+    border-radius: 7px;
+    padding: 2px 5px;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.status-closed {
+     color: #064f06;
+    background-color: #7dd47d;
+    border-radius: 7px;
+    padding: 2px 5px;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+.status-approved {
+      color: #064f06;
+    background-color: #7dd47d;
+    border-radius: 7px;
+    padding: 2px 5px;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.status-rejected {
+    color: #7c0101;
+    background-color: #f19c9c;
+    border-radius: 7px;
+    padding: 2px 5px;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.total-amount-box {
+  padding: 10px;
+  background: #f4f6fa;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #2c3e50;
+}
+
+.grand-total-card {
+    min-width: 244px;
+    background: linear-gradient(135deg, #ffffff, #0095ffa8);
+    border-radius: 14px;
+    padding: 6px 20px;
+    box-shadow: 1px 5px 20px 0px #000000c7;
+    border: 7px solid #e6e6e6;
+}
+
+.grand-total-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  
+}
+
+.grand-total-header .title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #333;
+}
+
+.gst-toggle {
+     font-size: .85em;
+    padding: 5px 12px;
+    background-color: red;
+    cursor: pointer;
+    color: white;
+    border-radius: 7px;
+}
+
+.grand-total-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: #085f36;
+  TEXT-ALIGN: -WEBKIT-LEFT;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+
+.grand-total-sub {
+  font-size: 0.9em;
+  color: #6c757d;
+}
+
 
 
 </style>
