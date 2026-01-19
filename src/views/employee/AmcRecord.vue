@@ -99,11 +99,13 @@
 
 
         <td>
-          <input
-            type="text"
-            v-model="row.invoice_status[n]"
-            class="invoice-input"
-          />
+         <input
+  type="text"
+  :value="row.invoice_status[n]"
+  class="invoice-input"
+  @input="onInvoiceInput(row, n, $event.target.value)"
+/>
+
         </td>
       </template>
     </tr>
@@ -122,6 +124,7 @@ export default {
   data() {
     return {
       amcRecords: [], // API response from add_po
+      saveTimers: {}, //  debounce map
       filterMonth: "", // e.g., "2026-01"
     filterStatus: "", // "", "completed", "pending", "overdue"
     };
@@ -176,6 +179,36 @@ computed: {
 },
 
   methods: {
+     onInvoiceInput(row, visitNo, value) {
+    // Update local state
+    row.invoice_status[visitNo] = value;
+
+    const key = `${row.add_po_id}-${visitNo}`;
+
+    // Clear previous debounce
+    if (this.saveTimers[key]) {
+      clearTimeout(this.saveTimers[key]);
+    }
+
+    // Debounced save (500ms)
+    this.saveTimers[key] = setTimeout(() => {
+      this.saveInvoiceStatus(row, visitNo, value);
+    }, 500);
+  },
+
+  saveInvoiceStatus(row, visitNo, value) {
+    axios.post("/api/save-invoice-status", {
+      add_po_id: row.add_po_id,
+      visit_assign_id: row.visit_assign_id,
+      visit_no: visitNo,
+      visit_date: row["visit" + visitNo],
+      invoice_status: value,
+    }).then(() => {
+      console.log("Invoice saved ✔");
+    }).catch(() => {
+      console.error("Invoice save failed ❌");
+    });
+  },
     getAssignedUser(row, visitNo) {
   const visitDate = row["visit" + visitNo];
   if (!visitDate || !row.assigned_visit_map) return null;
@@ -263,27 +296,33 @@ isVisitCompleted(row, visitNo) {
 
   },
 
-  mounted() {
-    axios.get("/api/add-po-list").then((res) => {
-      this.amcRecords = res.data.map((row) => ({
-        ...row,
-        invoice_status: {
-          1: "",
-          2: "",
-          3: "",
-          4: "",
-          5: "",
-          6: "",
-          7: "",
-          8: "",
-          9: "",
-          10: "",
-          11: "",
-          12: "",
-        },
-      }));
-    });
-  },
+mounted() {
+  axios.get("/api/add-po-list").then((res) => {
+    this.amcRecords = res.data.map((row) => ({
+      ...row,
+
+      // ✅ REQUIRED FOR FOREIGN KEYS
+      add_po_id: row.id,
+      visit_assign_id: row.visit_assign_id ?? null,
+
+      invoice_status: {
+        1: row.invoice_status1 ?? "",
+        2: row.invoice_status2 ?? "",
+        3: row.invoice_status3 ?? "",
+        4: row.invoice_status4 ?? "",
+        5: row.invoice_status5 ?? "",
+        6: row.invoice_status6 ?? "",
+        7: row.invoice_status7 ?? "",
+        8: row.invoice_status8 ?? "",
+        9: row.invoice_status9 ?? "",
+        10: row.invoice_status10 ?? "",
+        11: row.invoice_status11 ?? "",
+        12: row.invoice_status12 ?? "",
+      },
+    }));
+  });
+},
+
 };
 </script>
 
