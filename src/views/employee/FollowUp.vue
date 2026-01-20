@@ -136,12 +136,9 @@ export default {
     };
   },
   computed: {
-sortedQuotations() {
-    return [...this.filteredQuotations].sort((a, b) => {
-      // Sort by created_at descending (latest first)
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
-      return dateB - dateA; // latest first
+ sortedQuotations() {
+    return [...this.followUpQuotations].sort((a, b) => {
+      return new Date(b.created_at) - new Date(a.created_at);
     });
   },
  filteredQuotations() {
