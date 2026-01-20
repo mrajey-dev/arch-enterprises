@@ -500,32 +500,50 @@ openEditFromPopup() {
 },
 
 async fetchAssignedServices() {
+  console.log('🔥 fetchAssignedServices CALLED');
+
   try {
     const res = await axios.get(
-      `/api/get-assigned-services/${this.currentUser.id}`,
+      `https://employees.archenterprises.co.in/api/api/get-assigned-services/${this.currentUser.id}`,
       { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
     );
 
-    const serviceTasks = res.data
-      .filter(s => s.status && s.status.toLowerCase().trim() !== 'completed')
-      .map(s => ({
-        id: `service-${s.id}`,
-        title: s.company_name,
-        dueDate: null,
-        deadline: s.visit_date,
-        priority: 'Task Assigned',
-        description: `Service: ${s.service_type || ''}`,
-        status: s.status || 'Pending',
-        createdAt: s.visit_date,
-        isVisit: true,
-        isService: true
-      }));
+    console.log('🔥 FULL RESPONSE:', res.data);
+
+    // 🔥 FIX: normalize correctly
+    let services = [];
+    if (Array.isArray(res.data)) {
+      services = res.data;
+    } else if (Array.isArray(res.data.data)) {
+      services = res.data.data;
+    } else if (res.data.data) {
+      services = [res.data.data];
+    }
+
+    console.log('✅ NORMALIZED SERVICES:', services);
+
+    const serviceTasks = services.map(s => ({
+      id: `service-${s.id}`,
+      title: s.company_name,
+      deadline: s.visit_date,
+      priority: 'Task Assigned',
+      description: `Service: ${s.type_of_service}`,
+      status: 'Pending',
+      createdAt: s.visit_date,
+      isVisit: true,
+      isService: true
+    }));
 
     this.tasks.push(...serviceTasks);
+
+    console.log('✅ TASKS AFTER SERVICE PUSH:', this.tasks);
+
   } catch (err) {
-    console.error('Failed to fetch assigned services', err);
+    console.error('❌ Failed to fetch assigned services', err);
   }
 },
+
+
 
 
     goToVisitSchedule() {
