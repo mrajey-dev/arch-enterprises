@@ -500,17 +500,12 @@ openEditFromPopup() {
 },
 
 async fetchAssignedServices() {
-  console.log('🔥 fetchAssignedServices CALLED');
-
   try {
     const res = await axios.get(
       `https://employees.archenterprises.co.in/api/api/get-assigned-services/${this.currentUser.id}`,
       { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
     );
 
-    console.log('🔥 FULL RESPONSE:', res.data);
-
-    // 🔥 FIX: normalize correctly
     let services = [];
     if (Array.isArray(res.data)) {
       services = res.data;
@@ -520,7 +515,10 @@ async fetchAssignedServices() {
       services = [res.data.data];
     }
 
-    console.log('✅ NORMALIZED SERVICES:', services);
+    // 🔥 FILTER OUT COMPLETED SERVICES (case-insensitive)
+    services = services.filter(
+      s => s.status && s.status.toLowerCase().trim() !== 'completed'
+    );
 
     const serviceTasks = services.map(s => ({
       id: `service-${s.id}`,
@@ -546,6 +544,7 @@ async fetchAssignedServices() {
 
 
 
+
     goToVisitSchedule() {
   window.location.href =
     'https://employees.archenterprises.co.in/employee/visitschedule'
@@ -561,8 +560,10 @@ async fetchAssignedVisits() {
       { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
     );
 
+    console.log('VISITS RAW:', res.data); // 🔥 important
+
     const visitTasks = res.data
-      .filter(v => v.status && v.status.toLowerCase().trim() !== 'completed')
+      .filter(v => !v.status || v.status.toLowerCase().trim() !== 'completed')
       .map(v => ({
         id: `visit-${v.id}`,
         title: v.company_name,
@@ -570,16 +571,20 @@ async fetchAssignedVisits() {
         deadline: v.visit_date,
         priority: 'Task Assigned',
         description: `Service: ${v.service_type}`,
-        status: v.status || 'Pending',
+        status: v.status ?? 'Pending',
         createdAt: v.visit_date,
-        isVisit: true
+        isVisit: true,
+        isService: true
       }));
 
     this.tasks.push(...visitTasks);
+
+    console.log('VISIT TASKS ADDED:', visitTasks);
   } catch (err) {
     console.error('Failed to fetch assigned visits', err);
   }
 },
+
 
 
      filterTitle() {

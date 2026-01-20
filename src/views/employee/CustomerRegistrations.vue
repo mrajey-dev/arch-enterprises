@@ -215,14 +215,16 @@
     rows="3"
     placeholder="Enter shipping address if different from company address"
   ></textarea>
-  <button
-      type="button"
-      class="save-shipp-address"
-      style="padding:4px 10px; font-size:12px;"
-      @click="updateShippingAddress"
-    >
-      🔄 Update Address
-    </button>
+ <button
+    type="button"
+    class="save-shipp-address"
+    :disabled="loading"
+    style="padding:4px 10px; font-size:12px;"
+    @click="handleClick"
+  >
+    <span v-if="loading">⏳ Updating...</span>
+    <span v-else>🔄 Update Address</span>
+  </button>
 </div>
 
 
@@ -2665,6 +2667,8 @@
     },
     data() {
       return {
+         loading: false,
+         
         filledVisits: [],
         visitStatusList: [],
         completedVisitDates: [],
@@ -3275,6 +3279,15 @@ filterCompany(newCompany) {
 
 
  methods: {
+   handleClick() {
+      this.loading = true;
+
+      // Simulate 1-second delay for loader
+      setTimeout(() => {
+        this.updateShippingAddress();
+        this.loading = false;
+      }, 1000);
+    },
   updateShippingAddress() {
     if (!this.form.company_name || !this.form.shipping_address) {
       alert("⚠ Please select company and enter shipping address");
@@ -5032,10 +5045,13 @@ closeServiceSupplyModal(){
     // Edit customer
   editCustomer(customer) {
     const token = localStorage.getItem('token');
-    axios.get(`https://employees.archenterprises.co.in/api/api/customers/${customer.id}`, {
+    axios.get(`https://employees.archenterprises.co.in/api/api/customers/full/${customer.id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
+    
     .then(res => {
+      console.log('Customer data:', res.data);
+
       let customerData = res.data;
 
       // Map related tables to equipment object
