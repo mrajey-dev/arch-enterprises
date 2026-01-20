@@ -542,35 +542,30 @@ setMentionPosition(input) {
 fetchQuestions() {
   axios.get('/api/qa')
     .then(res => {
-
-      // 🔒 preserve current UI state
       const currentQuestions = this.questions || []
 
-      this.questions = res.data.map(q => {
+      this.questions = res.data.map((q, index) => {
         const oldQ = currentQuestions.find(x => x.id === q.id)
 
         return {
           ...q,
 
-          // fallback handle
           creator_handle: q.creator_handle || q.creator_name,
 
-          // 🔁 PRESERVE UI STATE
-          showAnswers: oldQ?.showAnswers ?? false,
+          // ✅ DEFAULT EXPAND FIRST QUESTION
+          showAnswers: oldQ?.showAnswers ?? (index === 0),
+
           isEditing: oldQ?.isEditing ?? false,
           editText: oldQ?.editText ?? q.question,
           replyText: oldQ?.replyText ?? '',
           replyImage: null,
 
-          // answers mapping
           answers: q.answers.map(a => {
             const oldA = oldQ?.answers?.find(x => x.id === a.id)
 
             return {
               ...a,
               creator_handle: a.creator_handle || a.creator_name,
-
-              // 🔁 PRESERVE ANSWER UI STATE
               isEditing: oldA?.isEditing ?? false,
               editText: oldA?.editText ?? a.answer
             }
@@ -580,6 +575,7 @@ fetchQuestions() {
     })
     .catch(err => console.error(err))
 },
+
 
 
     /* ===============================

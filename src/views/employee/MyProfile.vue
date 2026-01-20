@@ -45,6 +45,8 @@
             </div>
 
             <div class="profile-right">
+              <div class="profile-row"><span class="label">Handle:</span><span class="value">{{ user.handle }}</span></div>
+
               <div class="profile-row"><span class="label">Email:</span><span class="value">{{ user.email }}</span></div>
               <div class="profile-row"><span class="label">Gender:</span><span class="value">{{ user.gender }}</span></div>
               <div class="profile-row"><span class="label">Mobile:</span><span class="value">{{ user.mobile }}</span></div>
@@ -67,10 +69,14 @@
                   <label>Name</label>
                   <input v-model="form.name">
                 </div>
+                 <div class="profile-row">
+                  <label>Handle</label>
+                  <input v-model="form.handle" disabled>
+                </div>
 
                 <div class="profile-row">
                   <label>Email</label>
-                  <input v-model="form.email" disabled>
+                  <input v-model="form.email" disabled >
                 </div>
 
                 <div class="profile-row">
