@@ -7,7 +7,7 @@
  <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -1055,7 +1055,17 @@ async mounted() {
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .visit-link {
   cursor: pointer;
@@ -1076,7 +1086,7 @@ async mounted() {
 }
 
 .logo-img {
-  height: 65px;
+  height: 65px; background-color: white; border-radius: 9px;
 }
 .upcoming-task-popup {
   position: relative;
@@ -1173,11 +1183,11 @@ async mounted() {
   display: block;
   margin-top: 8px;
   font-size: 12px;
-  color: #555;
+  color: var(--text); 
 }
 
 .edit-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   padding: 6px 12px;
   border: none;
@@ -1209,14 +1219,14 @@ async mounted() {
 }
 .show-more-btn {
   padding: 8px 16px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
 .show-more-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 @media (max-width: 768px) {
@@ -1301,14 +1311,14 @@ async mounted() {
 
 .task-filters input[type="date"]:focus,
 .task-filters select:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
 }
 
 .task-filters button {
   padding: 10px 16px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 600;
   border: none;
@@ -1318,7 +1328,7 @@ async mounted() {
 }
 
 .task-filters button:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
 }
 
@@ -1345,7 +1355,7 @@ async mounted() {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -1366,7 +1376,7 @@ async mounted() {
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  color: red;
+  var(--text);
 } */
 
 .task-status-dropdown {
@@ -1405,7 +1415,7 @@ async mounted() {
   margin-bottom: 20px;
   font-size: 22px;
   text-align: center;
-  color: #427172;
+  color: var(--text);
 }
 
 .modal-content input,
@@ -1443,12 +1453,12 @@ async mounted() {
 }
 
 .modal-actions button[type="submit"] {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
 }
 
 .modal-actions button[type="submit"]:hover {
-  background-color: #41787a;
+  background-color: var(--text);
 }
 
 .modal-actions button[type="button"] {
@@ -1473,7 +1483,7 @@ async mounted() {
 
 /* Add task button */
 .add-task-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   padding: 11px 13px;
   margin-bottom: 12px;
@@ -1482,7 +1492,7 @@ async mounted() {
   cursor: pointer;
 }
 .add-task-btn:hover {
-  background-color: #41787a;
+  background-color: var(--text);
 }
 
 /* Modal styling */
@@ -1523,12 +1533,12 @@ async mounted() {
   border-radius: 4px;
 }
 .modal-actions button:first-child {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
 }
 .modal-actions button:last-child {
- background-color: #000000;
-    box-shadow: 0 6px 15px #6c757d00;
+ background-color: var(--text);
+    box-shadow: 0 6px 15px var(--text)00;
 
 }
 
@@ -1552,7 +1562,7 @@ async mounted() {
   margin-bottom: 30px;
   font-size: 26px;
   font-weight: bold;
-  color: #427172;
+  color: var(--text);
 }
 .task-grid {
   display: grid;
@@ -1583,30 +1593,30 @@ async mounted() {
 .task-title {
   font-size: 18px;
   font-weight: 600;
-  color: #427172;
+  color: var(--text);
   margin-bottom: 8px;
 }
 .task-status {
   font-size: 14px;
   font-weight: 500;
-  color: #555;
+  color: var(--text);
 }
 .task-priority {
       padding: 2px 10px;
     border-radius: 5px;
     font-size: 12px;
-    background-color: cadetblue;
+    background-color: var(--primary);
     font-weight: 700;
     color: #ffffff;
 }
 .task-priority.low {
-  background-color: #2c8487;
+  background-color: var(--text);
 }
 .task-priority.medium {
-  background-color: #2c8487;
+  background-color: var(--text);
 }
 .task-priority.high {
-  background-color: #2c8487;
+  background-color: var(--text);
 }
 
 /* Status Color Borders */
@@ -1632,7 +1642,7 @@ async mounted() {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -1648,7 +1658,7 @@ async mounted() {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -1662,7 +1672,7 @@ async mounted() {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
  .layout{
         background: #ffffff!important;
@@ -1676,7 +1686,7 @@ async mounted() {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -1739,7 +1749,7 @@ async mounted() {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -1757,7 +1767,7 @@ async mounted() {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -1774,10 +1784,10 @@ async mounted() {
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 700;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -1793,7 +1803,7 @@ h2 {
   padding: 14px 20px;
   text-align: left;
   font-size: 16px;
-  color: #427778;
+  color: var(--text);
 }
 
 .user-table th {
@@ -1886,7 +1896,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -1919,7 +1929,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1941,7 +1951,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -1974,24 +1984,24 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -2037,7 +2047,7 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #2e5758;
+  background-color: var(--text);
   border: none;
   color: white;
 }
@@ -2064,12 +2074,22 @@ h2 {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 35px;
+}
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
 }
 
 .logo-img {
-  height: 65px;
+  height: 65px; background-color: white; border-radius: 9px;
 }
 
 .header-title {
@@ -2144,11 +2164,11 @@ h2 {
 
 .label {
   font-weight: 600;
-  color: #555;
+  color: var(--text);
 }
 
 .value {
-  color: #333;
+  color: var(--text);
 }
 
 .text {

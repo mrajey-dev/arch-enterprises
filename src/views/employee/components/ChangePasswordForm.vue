@@ -164,18 +164,18 @@ input:focus {
 }
 
 .btn.primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
 }
 
 .btn.primary:hover {
-  background-color: #125a9c;
+  background-color: var(--text);
   transform: translateY(-1px);
 }
 
 .btn.cancel {
   background-color: #e0e0e0;
-  color: #427172;
+  color: var(--text);
 }
 
 .btn.cancel:hover {

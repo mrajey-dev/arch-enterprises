@@ -7,7 +7,7 @@
     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -389,7 +389,17 @@ generatePassword() {
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .badge {
   padding: 4px 10px;
@@ -399,7 +409,7 @@ generatePassword() {
 }
 .badge-success { background-color: #28a745; }
 .badge-danger { background-color: #dc3545; }
-.badge-secondary { background-color: #6c757d; }
+.badge-secondary { background-color: var(--text); }
 
 .mobile-menu-icon {
   font-size: 22px;
@@ -418,7 +428,7 @@ generatePassword() {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -513,7 +523,7 @@ generatePassword() {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -529,7 +539,7 @@ generatePassword() {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -544,7 +554,7 @@ generatePassword() {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 
 /* Header */
@@ -553,7 +563,7 @@ generatePassword() {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 8px 30px;
   display: flex;
@@ -615,7 +625,7 @@ generatePassword() {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -633,7 +643,7 @@ generatePassword() {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -641,7 +651,7 @@ generatePassword() {
 /* Content Section */
 .content {
   flex: 1;
-  background-color: #f0f2f8;
+  background-color: var(--sidebar);
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -650,11 +660,11 @@ generatePassword() {
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 800;
   text-transform: uppercase;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -670,12 +680,12 @@ border-spacing: 6px 9px;
   padding: 11px 20px;
   text-align: left;
   font-size: 16px;
-  color: #427778;
+  color: var(--text);
 }
 
 .user-table th {
   padding: 11px 20px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
       color: #ffffff;
   font-weight: 700;
   border-bottom: none;
@@ -765,7 +775,7 @@ border-spacing: 6px 9px;
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -798,7 +808,7 @@ border-spacing: 6px 9px;
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -820,7 +830,7 @@ border-spacing: 6px 9px;
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -853,24 +863,24 @@ border-spacing: 6px 9px;
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -917,13 +927,13 @@ border-spacing: 6px 9px;
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 
@@ -977,8 +987,18 @@ border-spacing: 6px 9px;
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 35px;
+}
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
 }
 
 .logo-img {

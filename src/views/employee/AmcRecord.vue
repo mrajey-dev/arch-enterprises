@@ -332,7 +332,7 @@ mounted() {
   .assigned-user {
   font-size: 11px;
   margin-top: 2px;
-  color: #2c3e50;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -362,7 +362,7 @@ mounted() {
 
 .amc-table th {
 background: #ffc99499;
-    color: #000000;
+    color: var(--text);
     font-size: 12px;
     font-family: system-ui;
     text-transform: uppercase;
@@ -559,7 +559,7 @@ background: #ffc99499;
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
-  background: #2c3e50;
+  background: var(--text);
   color: #fff;
   padding: 6px 10px;
   border-radius: 6px;
@@ -580,7 +580,7 @@ background: #ffc99499;
   transform: translateX(-50%);
   border-width: 6px;
   border-style: solid;
-  border-color: #2c3e50 transparent transparent transparent;
+  border-color: var(--text) transparent transparent transparent;
 }
 
 /* Show on hover */

@@ -5,7 +5,7 @@
      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -709,7 +709,17 @@ async submitForm() {
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .warning-text {
   color: #e67e22;
@@ -750,7 +760,7 @@ async submitForm() {
   font-weight: 700;
   margin-bottom: 1rem;
   text-align: center;
-  color: #427172;
+  color: var(--text);
 }
 
 .form-grid {
@@ -792,7 +802,7 @@ async submitForm() {
 }
 
 .submit-button {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: #fff;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
@@ -805,7 +815,7 @@ async submitForm() {
 }
 
 .submit-button:hover {
-  background: #3d6769;
+  background: var(--text);
 }
 
 .error-msg {
@@ -823,7 +833,7 @@ async submitForm() {
 
 /* Button */
 .leave-balance-btn {
- background: #000000;
+ background: var(--text);
     color: #ffffff;
     margin-bottom: 17px;
     padding: 0.55rem 1.25rem;
@@ -920,7 +930,7 @@ async submitForm() {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 
 .header {
@@ -928,7 +938,7 @@ async submitForm() {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -953,7 +963,7 @@ async submitForm() {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .leave-form-wrapper {
@@ -961,7 +971,7 @@ async submitForm() {
   width: 100%;
   margin: -1px auto;
   padding: 25px;
-  background: linear-gradient(135deg, #f5f7fa, #e4ecf4);
+  background: linear-gradient(135deg, #f5f7fa, var(--text)) ;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0);
   border-radius: 16px;
 }
@@ -974,7 +984,7 @@ async submitForm() {
   text-align: center;
   font-size: 28px;
   margin-bottom: 30px;
-  color: #427172;
+  color: var(--text);
 }
 
 .form-row {
@@ -985,7 +995,7 @@ label {
   display: block;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #444;
+  color: var(--text);
 }
 
 input, select, textarea {
@@ -1029,18 +1039,28 @@ input:focus, select:focus, textarea:focus {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 }
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 35px;
+}
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
 }
 
 .logo-img {
-  height: 65px;
+  height: 65px; background-color: white; border-radius: 9px;
 }
 
 .header-title {

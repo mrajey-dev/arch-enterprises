@@ -7,7 +7,7 @@
        <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -358,7 +358,7 @@ window.addEventListener('resize', this.checkIfMobile);
 }
 
 .leave-table thead th {
-  background: #5f9ea0;
+  background: var(--primary);
   color: white;
   text-transform: uppercase;
   padding: 12px;
@@ -377,7 +377,7 @@ window.addEventListener('resize', this.checkIfMobile);
 .leave-table tbody td {
   padding: 14px;
   font-size: 15px;
-  color: #222;
+  color: var(--text);
 }
 
 .leave-table tbody tr:hover {
@@ -445,7 +445,7 @@ window.addEventListener('resize', this.checkIfMobile);
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -467,7 +467,7 @@ window.addEventListener('resize', this.checkIfMobile);
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -483,7 +483,7 @@ window.addEventListener('resize', this.checkIfMobile);
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -497,7 +497,7 @@ window.addEventListener('resize', this.checkIfMobile);
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 .company-name {
   font-size: 20px;
@@ -511,7 +511,7 @@ window.addEventListener('resize', this.checkIfMobile);
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 8px 30px;
   display: flex;
@@ -550,13 +550,13 @@ window.addEventListener('resize', this.checkIfMobile);
 
 
 .logout-btn {
-   background-color: #407173;
+   background-color: var(--text);
     color: #ffffff;
     margin-bottom: 22px;
 }
 
 .logout-btn:hover {
- background-color: #1f3b3c;
+ background-color: var(--primary);
   color: #ffffff;
     margin-bottom: 22px;
 }
@@ -577,7 +577,7 @@ window.addEventListener('resize', this.checkIfMobile);
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -595,7 +595,7 @@ window.addEventListener('resize', this.checkIfMobile);
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -603,7 +603,7 @@ window.addEventListener('resize', this.checkIfMobile);
 /* Content Section */
 .content {
   flex: 1;
-  background-color: #f0f2f8;
+  background-color: var(--sidebar);
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(255, 255, 255, 0.08); */
@@ -612,11 +612,11 @@ window.addEventListener('resize', this.checkIfMobile);
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 800;
   text-transform: uppercase;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -636,7 +636,7 @@ h2 {
 }
 
 .user-table th {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   font-weight: 700;
   border-bottom: none;
   border-radius: 12px 12px 0 0;
@@ -725,7 +725,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -758,7 +758,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -780,7 +780,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -813,24 +813,24 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -879,13 +879,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 

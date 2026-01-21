@@ -7,7 +7,7 @@
      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -28,7 +28,7 @@
                             <div class="input-group" v-if="!isEditMode">
                               <label><i class="fas fa-id-badge"></i> Employee ID</label>
                              <input  v-model="registerForm.empId" @input="registerForm.empId = registerForm.empId.replace(/[^0-9]/g, '')" required />
-                              <small v-if="!registerForm.empId" style="color: red;">
+                              <small v-if="!registerForm.empId" style=" color:var(--text);">
     ID must contain numbers only.
   </small>
                             </div>
@@ -40,7 +40,7 @@
     @input="validateName"
     required
   />
-  <small v-if="nameError" style="color: red;">
+  <small v-if="nameError" style=" color:var(--text);">
     Name must contain only letters and spaces.
   </small>
 </div>
@@ -72,7 +72,7 @@
   @blur="checkEmailExists"
   required
 />
-<small v-if="emailExists && !isEditMode" style="color: red;">
+<small v-if="emailExists && !isEditMode" style=" color:var(--text);">
   This email is already registered!
 </small>
 
@@ -107,7 +107,7 @@
     @input="checkAddressLength"
     required
   ></textarea>
-  <p v-if="addressWarning" style="color: red; font-size: 12px;">
+  <p v-if="addressWarning" style=" color:var(--text); font-size: 12px;">
     Address cannot exceed 250 characters!
   </p>
   <p style="font-size: 12px; color: gray;">
@@ -127,7 +127,7 @@
        v-model="registerForm.birthDate"
        @change="validateDOB" />
 
-<p v-if="dobError" style="color: red; font-size: 13px; margin-top: 4px;">
+<p v-if="dobError" style=" color:var(--text); font-size: 13px; margin-top: 4px;">
   * Invalid Date of Birth! Must be 18+ and not a future date.
 </p>
 
@@ -1211,7 +1211,7 @@ body.modal-open {
     .uploaded-docs {
   margin-top: 10px;
   padding-left: 20px;
-  color: #427172;
+  color: var(--text);
   font-size: 15px;
 }
 
@@ -1287,7 +1287,7 @@ body.modal-open {
         z-index: 1000;
         width: 240px;
         height: 100vh;
-        background-color: #2c3e50;
+        background-color: var(--text);
       }
 
       .expanded-content {
@@ -1417,7 +1417,7 @@ body.modal-open {
       border: 1px solid #3b82f6;
       border-radius: 12px;
       background-color: #fff;
-  color: #427172;
+  color: var(--text);
       transition: all 0.3s ease;
     }
 
@@ -1429,7 +1429,7 @@ body.modal-open {
 
     .clickable {
       cursor: pointer;
-      color: #518587!important;
+      color: var(--text)!important;
       text-decoration: none;
     }
     .password-wrapper {
@@ -1445,7 +1445,7 @@ body.modal-open {
     .toggle-btn,
     .generate-btn {
       padding: 6px 10px;
-      background-color: #5f9ea0;
+      background-color: var(--primary);
       border: none;
       color: white;
       border-radius: 4px;
@@ -1461,7 +1461,7 @@ body.modal-open {
 
     .toggle-btn:hover,
     .generate-btn:hover {
-      background-color: #426b6c;
+      background-color: var(--text);
     }
 
     .user-table td .btn-group {
@@ -1475,7 +1475,7 @@ body.modal-open {
       min-height: 100vh;
       background: #ffffff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #427778;
+      color: var(--text);
     }
 .company-name {
 font-size: 21px;
@@ -1488,7 +1488,7 @@ font-size: 21px;
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 8px 30px;
   display: flex;
@@ -1516,14 +1516,14 @@ font-size: 21px;
     }
 
     .menu-btn {
-   background-color: #407173;
+   background-color: var(--text);
     color: #ffffff;
     margin-bottom: 22px;
 
     }
 
     .menu-btn:hover {
-    background-color: #1f3b3c;
+    background-color: var(--primary);
   color: #ffffff;
     margin-bottom: 22px;
     }
@@ -1554,7 +1554,7 @@ font-size: 21px;
       border-radius: 12px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.05);
       font-weight: 600;
-      color: #495057;
+      color: var(--text);
     }
 
     .sidebar ul {
@@ -1572,7 +1572,7 @@ font-size: 21px;
     }
 
     .sidebar li:hover {
-      background-color: #5f9ea0;
+      background-color: var(--primary);
       color: white;
       font-weight: 700;
     }
@@ -1580,7 +1580,7 @@ font-size: 21px;
     /* Content Section */
     .content {
       flex: 1;
-      background-color: #f0f2f8;
+      background-color: var(--sidebar);
       padding: 30px 40px;
       border-radius: 15px;
       /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -1589,11 +1589,11 @@ font-size: 21px;
 
     h2 {
       margin-bottom: 30px;
-      color: #417475;
+      color: var(--text);
       font-weight: 800;
       font-size: 21px;
           text-transform: uppercase;
-      border-bottom: 2px solid #5f9ea0;
+      border-bottom: 2px solid var(--primary);
       padding-bottom: 8px;
     }
 
@@ -1614,7 +1614,7 @@ font-size: 21px;
 
     .user-table th {
       padding: 11px 20px;
-      background-color: #5f9ea0;
+      background-color: var(--primary);
       font-weight: 700;
       border-bottom: none;
       border-radius: 12px 12px 0 0;
@@ -1652,7 +1652,7 @@ font-size: 21px;
     /* Modal Backdrop */
     .modal-backdrop {
       position: fixed;
-      background-color: #000000b8;
+      background-color: var(--text)b8;
 
       top: 0;
       left: 0;
@@ -1724,7 +1724,7 @@ font-size: 21px;
         /* font-weight: 800; */
         text-align: center;
         margin-bottom: 35px;
-        color: #041f3d;
+        color: var(--text);
         letter-spacing: 1.3px;
     }
 
@@ -1757,7 +1757,7 @@ font-size: 21px;
     .input-group label {
       font-weight: 700;
       margin-bottom: 10px;
-      color: #427778;
+      color: var(--text);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -1779,7 +1779,7 @@ font-size: 21px;
     .input-group input:focus,
     .input-group select:focus,
     .input-group textarea:focus {
-      border-color: #5f9ea0;
+      border-color: var(--primary);
       outline: none;
       box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
       background-color: #f9fbff;
@@ -1814,24 +1814,24 @@ font-size: 21px;
     }
 
     .btn-primary {
-      background-color: #5f9ea0;
+      background-color: var(--primary);
       color: white;
       box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
     }
 
     .btn-primary:hover {
-      background-color: #426b6c;
+      background-color: var(--text);
       box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
     }
 
     .btn-secondary {
-      background-color: #6c757d;
+      background-color: var(--text);
       color: white;
       box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
     }
 
     .btn-secondary:hover {
-      background-color: #5a6268;
+      background-color: var(--primary);
       box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
     }
 
@@ -1879,13 +1879,13 @@ font-size: 21px;
 
     .btn-primary.attractive-btn {
       
-      background-color: #5f9ea0;
+      background-color: var(--primary);
       border: none;
       color: white;
     }
 
     .btn-primary.attractive-btn:hover {
-      background-color: #426b6c;
+      background-color: var(--text);
       box-shadow: 0 4px 12px rgba(13,110,253,0.6);
     }
 

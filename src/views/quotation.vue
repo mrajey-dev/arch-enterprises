@@ -287,11 +287,11 @@
 
        <!-- COMPANY REGISTRATION & BANK DETAILS -->
   <div style="flex:1; min-width:250px; padding:12px; border-radius:8px; 
-              border:1px solid #000; display:flex; gap:10px; flex-wrap:wrap;">
+              border:1px solid black; display:flex; gap:10px; flex-wrap:wrap;">
 
     <!-- Registration Details -->
     <div style="flex:1; min-width:130px; font-size:9px; line-height:1.4;">
-      <strong style="font-size:9px; color:#000; text-decoration:underline;">Company Registration Details</strong><br>
+      <strong style="font-size:9px; color:black; text-decoration:underline;">Company Registration Details</strong><br>
       <div>GST No.: 27ASHPK7144E1ZQ</div>
       <div>PAN No.: ASHPK7144E</div>
       <div>IEC Code: 3113021731</div>
@@ -304,7 +304,7 @@
 
   <!-- EXPORT ACCOUNT DETAILS -->
   <div v-if="form.nature_of_sale === 'Export'">
-    <strong style="font-size:9px; color:#000; text-decoration:underline;">
+    <strong style="font-size:9px; color:black; text-decoration:underline;">
       Bank Details for Payment Transfer
     </strong><br>
     <div>Beneficiary Name: Arch Enterprises</div>
@@ -318,7 +318,7 @@
 
   <!-- DOMESTIC ACCOUNT DETAILS -->
   <div v-else>
-    <strong style="font-size:9px; color:#000; text-decoration:underline;">
+    <strong style="font-size:9px; color:black; text-decoration:underline;">
       Account Details for Payment
     </strong><br>
     <div>Beneficiary: Arch Enterprises</div>
@@ -335,24 +335,24 @@
   
   <!-- INVOICE TOTAL & AMOUNT IN WORDS -->
   <div style="flex:1; min-width:200px;  padding:10px 12px; 
-              border-radius:8px; border:1px solid #000;">
+              border-radius:8px; border:1px solid black;">
 
     <div class="row-field" style="margin-bottom:8px;">
-      <label style="font-size:9px; font-weight:bold; color:#000;">
+      <label style="font-size:9px; font-weight:bold; color:black;">
   TOTAL ({{ form.currency }}):
 </label>
 
       <div class="static-field" 
-           style="font-size:11px; font-weight:700; color:#000; margin-top:3px;">
+           style="font-size:11px; font-weight:700; color:black; margin-top:3px;">
         {{ formatNumber(form.subtotal) }}
 
       </div>
     </div>
 
     <div class="row-field" style="margin-top:10px;">
-      <label style="font-size:9px; font-weight:bold; color:#000;">Amount in Words:</label>
+      <label style="font-size:9px; font-weight:bold; color:black;">Amount in Words:</label>
       <div class="static-field" 
-           style="font-size:9px; font-weight:700; color:#000; margin-top:3px;">
+           style="font-size:9px; font-weight:700; color:black; margin-top:3px;">
         {{ form.amount_words }}
       </div>
     </div>
@@ -366,7 +366,7 @@
 
 
 <!-- WRAPPER BOX WITH BORDER -->
-<div style="border:1px solid #000; padding:10px; margin-top:15px;">
+<div style="border:1px solid black; padding:10px; margin-top:15px;">
 
   <!-- ROW 1: TERMS (75%) + SIGNATORY (25%) -->
   <div style="display:flex; justify-content:space-between; gap:10px;">
@@ -1060,7 +1060,7 @@ if (Array.isArray(data.items)) {
         --bg: #f7f9fc;
         --border: #d1d5db;
         --text: #222;
-        --muted: #555;
+        --muted: black;
         --card-bg: #ffffff;
     }
 
@@ -1069,7 +1069,7 @@ if (Array.isArray(data.items)) {
         background: var(--bg);
         margin: 0;
         padding: 30px;
-        color: var(--text);
+        color: black;
     }
 
     form {
@@ -1081,15 +1081,15 @@ if (Array.isArray(data.items)) {
     h1 {
         text-align: center;
         font-size: 1.8em;
-        color: var(--primary);
+        color: black;
         letter-spacing: 0.5px;
         margin-bottom: 25px;
     }
 
     .section-title {
     font-weight: 700;
-    background: var(--primary);
-    color: #000000;
+    /* background: black; */
+    color: black;
     padding: 5px 10px; /* reduced from 8px 12px */
     border-radius: 4px;
     font-size: 9px;
@@ -1113,7 +1113,7 @@ textarea {
 
 input:focus,
 textarea:focus {
-  border-bottom: 1px solid #000; /* optional focus effect */
+  border-bottom: 1px solid black; /* optional focus effect */
   outline: none;
   box-shadow: none;
 }
@@ -1135,7 +1135,7 @@ textarea:focus {
 
    .card {
     background: #fff;
-    border: 1px solid #000612;
+    border: 1px solid black;
     border-radius: 8px;
     box-shadow: 0 1px 5px rgba(0,0,0,0.04);
     padding: 12px; /* reduced from 20px */
@@ -1148,7 +1148,7 @@ textarea:focus {
         font-size: 1.05em;
         font-weight: 600;
         font-size: 8px;
-        color: var(--primary);
+        color: black;
         border-bottom: 2px solid var(--primary-light);
         padding-bottom: 0px;
             text-align: center;
@@ -1174,7 +1174,7 @@ textarea:focus {
 
     table th {
         background: #f0f4ff;
-        color: var(--primary);
+        color: black;
         font-weight: 600;
     }
 
@@ -1205,7 +1205,7 @@ textarea:focus {
     }
 
     .add-row {
-        background: var(--primary);
+        background: black;
         color: #fff;
         margin-top: 8px;
             margin-bottom: 5px;
@@ -1214,7 +1214,7 @@ textarea:focus {
     .add-row:hover { background: var(--primary-light); }
 
     .remove-row {
-        background: #ef4444;
+        background: black;
         color: white;
     }
 
@@ -1249,9 +1249,9 @@ textarea:focus {
     }
 
     .totals-box tr:last-child td {
-        border-top: 2px solid var(--primary);
+        border-top: 2px solid black;
         font-size: 1.05em;
-        color: var(--primary);
+        color: black;
         font-size: 0.6em;
     }
 
@@ -1263,13 +1263,13 @@ textarea:focus {
         font-size: 10px;
         border-radius: 6px;
         border: 1px solid #dbeafe;
-        color: #333;
+        color: black;
     }
 
     .submit-btn {
         display: block;
         width: 100%;
-        background: var(--primary);
+        background: black;
         color: white;
         font-size: 1.1em;
         padding: 12px;

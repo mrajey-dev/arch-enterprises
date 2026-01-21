@@ -7,7 +7,7 @@
 
       <div class="header-left">
    <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
+  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px; background-color: white; border-radius: 9px;" alt="Logo">
 </a>
 
     <!-- <h1 class="company-name">ARCH ENTERPRISES</h1> -->
@@ -275,7 +275,7 @@ assignTask() {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -310,7 +310,7 @@ assignTask() {
 
 .task-card-header h4 {
   font-size: 18px;
-  color: #427172;
+  color: var(--text);
   margin: 0;
 }
 
@@ -326,7 +326,7 @@ assignTask() {
 .task-card-body p {
   margin: 6px 0;
   font-size: 14px;
-  color: #555;
+  color: var(--text);
 }
 
 .task-card-body i {
@@ -425,7 +425,7 @@ label {
   display: block;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #555;
+  color: var(--text);
 }
 
 input,
@@ -480,7 +480,7 @@ select:focus {
 .task-group h3 {
   margin-bottom: 15px;
   font-size: 20px;
-  color: #555;
+  color: var(--text);
   border-bottom: 1px solid #ddd;
   padding-bottom: 6px;
 }
@@ -501,7 +501,7 @@ select:focus {
 
 .task-card h4 {
   margin: 0 0 5px;
-  color: #427172;
+  color: var(--text);
 }
 
 .task-card p {
@@ -535,7 +535,7 @@ select:focus {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -551,7 +551,7 @@ select:focus {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -565,7 +565,7 @@ select:focus {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 .company-name {
   font-size: 20px;
@@ -575,7 +575,7 @@ select:focus {
 }
 /* Header */
 .header {
-  background-color: cadetblue; 
+  background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -638,7 +638,7 @@ select:focus {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -656,7 +656,7 @@ select:focus {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -664,7 +664,7 @@ select:focus {
 /* Content Section */
 .content {
   flex: 1;
-  background-color: #f0f2f8;
+  background-color: var(--sidebar);
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -673,10 +673,10 @@ select:focus {
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 700;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -692,7 +692,7 @@ h2 {
   padding: 14px 20px;
   text-align: left;
   font-size: 16px;
-  color: #427778;
+  color: var(--text);
 }
 
 .user-table th {
@@ -785,7 +785,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -818,7 +818,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -840,7 +840,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -873,24 +873,24 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -936,13 +936,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 

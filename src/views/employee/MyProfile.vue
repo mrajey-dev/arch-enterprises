@@ -5,7 +5,7 @@
     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -243,7 +243,17 @@ export default {
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 /* Layout */
 .layout {
@@ -252,7 +262,7 @@ export default {
   min-height: 100vh;
   background: #f5f8fa;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
+  color: var(--text);
 }
 
 /* Header */
@@ -261,7 +271,7 @@ export default {
   font-weight: 700;
   letter-spacing: 1px;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, .1);
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   padding: 15px 30px;
   display: flex;
@@ -310,7 +320,7 @@ export default {
   height: 150px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #5f9ea0;
+  border: 3px solid var(--primary);
 }
 
 /* Details */
@@ -329,12 +339,12 @@ export default {
 
 .label {
   font-weight: 600;
-  color: #5f9ea0;
+  color: var(--primary);
   min-width: 120px;
 }
 
 .value {
-  color: #333;
+  color: var(--text);
 }
 
 /* Loading */
@@ -376,7 +386,7 @@ export default {
   height: 80px;
   object-fit: cover;
   border-radius: 10px; /* slight rounded corners for logo look */
-  border: 2px solid #5f9ea0;
+  border: 2px solid var(--primary);
 }
 
 /* Profile Card */
@@ -417,7 +427,7 @@ export default {
   height: 130px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px dotted  #5f9ea0;
+  border: 3px dotted  var(--primary);
   margin-bottom: 20px;
 }
 
@@ -430,13 +440,13 @@ export default {
 .profile-name {
   font-size: 17px;
   font-weight: 700;
-  color: #333;
+  color: var(--text);
   margin-bottom: 5px;
 }
 
 .profile-role {
   font-size: 16px;
-  color: #5f9ea0;
+  color: var(--primary);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -456,7 +466,7 @@ export default {
     padding: 12px 20px;
     background-color: #fdfdfd;
     border-radius: 12px;
-    box-shadow: 0 4px 12px #0000000d;
+    box-shadow: 0 4px 12px var(--text)0d;
     transition: all .2s ease;
     flex-wrap: nowrap;
 }
@@ -467,12 +477,12 @@ export default {
 
 .label {
   font-weight: 600;
-  color: #5f9ea0;
+  color: var(--primary);
 }
 
 .value {
   font-weight: 500;
-  color: #555;
+  color: var(--text);
 }
 
 /* Loading */
@@ -512,7 +522,7 @@ export default {
   align-items: center;
   gap: 8px;
   width: 162px;
-  background: linear-gradient(135deg, #5f9ea0, #4aa3a3);
+  background: linear-gradient(135deg, var(--primary), var(--primary));
   color: #fff;
   border: none;
   padding: 12px 22px;
@@ -542,6 +552,7 @@ export default {
 .edit-profile-form select {
   width: 100%;
   padding: 12px 15px;
+  color: var(--text);
   border-radius: 12px;
   border: 1px solid #dce3e8;
   font-size: 14px;
@@ -551,7 +562,7 @@ export default {
 
 .edit-profile-form input:focus,
 .edit-profile-form select:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(95, 158, 160, 0.15);
   outline: none;
 }
@@ -559,12 +570,12 @@ export default {
 .edit-profile-form label {
   font-size: 13px;
   font-weight: 600;
-  color: #5f9ea0;
+  color: var(--primary);
   margin-bottom: 6px;
   display: block;
 }
 .save-btn {
-  background: linear-gradient(135deg, #5f9ea0, #4aa3a3);
+  background: linear-gradient(135deg, var(--primary), var(--primary));
   color: white;
   padding: 12px 28px;
   border-radius: 30px;
@@ -582,7 +593,7 @@ export default {
 
 .cancel-btn {
   background: #f2f4f7;
-  color: #555;
+  color: var(--text);
   padding: 12px 26px;
   border-radius: 30px;
   border: none;

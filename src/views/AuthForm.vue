@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="card">
     <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;" alt="Logo">
+  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px; background-color: white; border-radius: 9px;" alt="Logo">
 </a>
 
 
@@ -397,7 +397,7 @@ const response = await axios.post(url, {
 }
 
 .modal input:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
@@ -430,7 +430,7 @@ const response = await axios.post(url, {
 
 .forgot-password {
   margin-top: 10px;
-  color: #518587;
+  color: var(--text);
   cursor: pointer;
   text-decoration: none;
 }
@@ -474,7 +474,7 @@ const response = await axios.post(url, {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   min-height: 100vh;
   width: 100%;
   padding: 0;
@@ -494,7 +494,7 @@ const response = await axios.post(url, {
 }
 
 .card {
-  background: #ccdcdd;
+  background: var(--sidebar);
   padding: 35px 30px;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
@@ -511,7 +511,7 @@ const response = await axios.post(url, {
 
 h2 {
   margin-bottom: 25px;
-  color: #2c3e50;
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -532,11 +532,11 @@ input {
 
 input:hover {
   background-color: #fff;
-  border-color: #5f9ea0;
+  border-color: var(--primary);
 }
 
 input:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
 }
@@ -564,16 +564,16 @@ input:focus {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .btn-success {
-  background-color: #000104;
+  background-color: var(--text);
   color: white;
 }
 

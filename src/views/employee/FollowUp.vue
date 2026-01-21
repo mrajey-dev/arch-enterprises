@@ -336,7 +336,7 @@ fetchQuotations() {
 
 .announcement-board h2 {
   margin-bottom: 15px;
-  color: #2c3e50;
+  color: var(--text);
   font-size: 19px;
 }
 
@@ -347,7 +347,7 @@ fetchQuotations() {
 }
 
 .styled-customer-table thead {
-  background-color: #2c3e50;
+  background-color: var(--text);
   color: #fff;
   position: sticky;
   top: 0;

@@ -5,7 +5,7 @@
    <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -94,7 +94,7 @@
         >
           <button
             @click="prevMonth"
-            style="background: #f7f7f7; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; color: #555; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
+            style="background: #f7f7f7; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; color: var(--text); display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
             @mouseover="hover=true"
             @mouseleave="hover=false"
             :style="{ background: hover ? '#e0e0e0' : '#f7f7f7' }"
@@ -102,13 +102,13 @@
             ‹
           </button>
 
-          <span style="font-size: 16px; font-weight: 600; color: #427172; min-width: 80px; text-align: center;">
+          <span style="font-size: 16px; font-weight: 600; color: var(--text); min-width: 80px; text-align: center;">
             {{ selectedMonthName }}
           </span>
 
           <button
             @click="nextMonth"
-            style="background: #f7f7f7; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; color: #555; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
+            style="background: #f7f7f7; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; color: var(--text); display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
             @mouseover="hoverNext=true"
             @mouseleave="hoverNext=false"
             :style="{ background: hoverNext ? '#e0e0e0' : '#f7f7f7' }"
@@ -188,8 +188,8 @@
                   style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;"
                 />
                 <div>
-                  <p style="font-weight: 600; color: #427172;">{{ emp.name }}</p>
-                  <p style="font-size: 13px; color: #777;">🎂 {{ formatBirthday(emp.dateofbirth) }}</p>
+                  <p style="font-weight: 600; color: var(--text);">{{ emp.name }}</p>
+                  <p style="font-size: 13px; color: var(--text-white);">🎂 {{ formatBirthday(emp.dateofbirth) }}</p>
                   <p style="font-size: 13px; color: #999;">{{ emp.department || '—' }}</p>
                 </div>
               </div>
@@ -440,7 +440,7 @@ async generateMonthlyRevenue() {
           responsive: true,
           scales: {
             y: { beginAtZero: true, ticks: { stepSize: 50000 } },
-            x: { ticks: { color: '#333' } }
+            x: { ticks: { color: 'var(--text)' } }
           },
           plugins: { legend: { display: false } }
         }
@@ -795,7 +795,7 @@ async generateMonthlyRevenue() {
 .label {
   font-weight: 700;
   font-size: 1.1rem;
-  color: #1e293b;
+  color: var(--text);
 }
 
 .tagline {
@@ -874,7 +874,7 @@ async generateMonthlyRevenue() {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 8px 30px;
   display: flex;
@@ -961,7 +961,7 @@ async generateMonthlyRevenue() {
 .label {
   font-size: 16px;
   font-weight: 600;
-  color: #427172;
+  color: var(--text);
   margin-bottom: 4px;
 }
 
@@ -1058,13 +1058,13 @@ async generateMonthlyRevenue() {
 .app-title {
   font-size: 18px;
   font-weight: 600;
-  color: #427172;
+  color: var(--text);
   letter-spacing: 0.5px;
 }
 .mobile-menu-icon {
   font-size: 22px;
   cursor: pointer;
-  color: #427172;
+  color: var(--text);
 }
 
 /* Dashboard */
@@ -1096,17 +1096,17 @@ async generateMonthlyRevenue() {
 }
 .dashboard-card i {
   font-size: 28px;
-  color: #518587;
+  color: var(--text);
 }
 .card-info h3 {
   font-size: 15px;
   font-weight: 600;
-  color: #555;
+  color: var(--text);
 }
 .card-info p {
   font-size: 20px;
   font-weight: 700;
-  color: #222;
+  color: var(--text);
 }
 
 /* Tasks Recorder */
@@ -1124,7 +1124,7 @@ async generateMonthlyRevenue() {
   display: flex;
   justify-content: space-between;
   font-weight: 500;
-  color: #555;
+  color: var(--text);
 }
 .progress-bar {
   width: 100%;
@@ -1135,7 +1135,7 @@ async generateMonthlyRevenue() {
 }
 .progress-fill {
   height: 100%;
-  bbackground-color: #5f9ea0;
+  bbackground-color: var(--primary);
   border-radius: 12px;
   transition: width 0.4s ease;
 }
@@ -1149,7 +1149,7 @@ async generateMonthlyRevenue() {
 }
 .charts-section h3 {
   margin-bottom: 20px;
-  color: #427172;
+  color: var(--text);
   font-weight: 600;
 }
 .bar-chart-container {
@@ -1169,7 +1169,7 @@ async generateMonthlyRevenue() {
 .revenue-item .task-label {
   font-weight: bold;
   font-size: 1rem;
-  color: #427172;
+  color: var(--text);
   margin-top: 8px;
 }
 .task-item {
@@ -1181,7 +1181,7 @@ async generateMonthlyRevenue() {
   justify-content: space-between;
   margin-bottom: 6px;
   font-weight: 600;
-  color: #427172;
+  color: var(--text);
 }
 
 .progress-bar {
@@ -1272,7 +1272,7 @@ async generateMonthlyRevenue() {
 
 .chart-container h3 {
   margin-bottom: 15px;
-  color: #427172;
+  color: var(--text);
 }
 
 .tasks-recorder-box {
@@ -1310,7 +1310,7 @@ async generateMonthlyRevenue() {
   text-align: center;
   margin-bottom: 20px;
   font-size: 20px;
-  color: #518587;
+  color: var(--text);
   font-weight: 700;
 }
 
@@ -1326,7 +1326,7 @@ async generateMonthlyRevenue() {
   padding: 14px 18px;
   border-radius: 10px;
   font-size: 16px;
-  color: #427172;
+  color: var(--text);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1384,7 +1384,7 @@ async generateMonthlyRevenue() {
   text-align: center;
   margin-bottom: 20px;
   font-size: 18px;
-  color: #427172;
+  color: var(--text);
 }
 .dashboard-card{
    background-color: #aedbe782;
@@ -1444,7 +1444,7 @@ background-color: #ffffff !important;
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -1493,7 +1493,7 @@ background-color: #ffffff !important;
   font-size: 32px;
   font-weight: 600;
   margin-bottom: 30px;
-  color: #427172;
+  color: var(--text);
   text-align: center;
 }
 
@@ -1584,7 +1584,7 @@ background-color: #ffffff !important;
 .value {
   font-size: 20px;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--text);
 }
 
 
@@ -1671,7 +1671,7 @@ background-color: #ffffff !important;
 
 .logout-btn {
   background-color: white;
-  color: #518587;
+  color: var(--text);
   border: 2px solid #007bff;
 }
 
@@ -1695,7 +1695,7 @@ background-color: #ffffff !important;
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -1713,7 +1713,7 @@ background-color: #ffffff !important;
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -1721,7 +1721,7 @@ background-color: #ffffff !important;
 /* Content Section */
 .content {
   flex: 1;
-  background-color: rgb(240, 242, 248);
+  background-color: var(--sidebar);
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -1730,10 +1730,10 @@ background-color: #ffffff !important;
 
 h2 {
   margin-bottom: 30px;
-  color: #518587;
+  color: var(--text);
   font-weight: 700;
   font-size: 28px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -1749,7 +1749,7 @@ h2 {
   padding: 14px 20px;
   text-align: left;
   font-size: 16px;
-  color: #427778;
+  color: var(--text);
 }
 
 .user-table th {
@@ -1838,7 +1838,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -1871,7 +1871,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1893,7 +1893,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -1926,24 +1926,24 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -1989,13 +1989,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 
@@ -2039,7 +2039,7 @@ h2 {
 }
 
 .pie-slider-wrapper::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--text);
   border-radius: 10px;
 }
 
@@ -2058,7 +2058,7 @@ h2 {
   padding: 10px 4px 14px;
   scroll-behavior: smooth;
   scrollbar-width: thin;     /* Firefox */
-  scrollbar-color: #c1c1c1 transparent;
+  scrollbar-color: var(--text) transparent;
 }
 
 /* Show scrollbar (Chrome, Edge, Safari) */

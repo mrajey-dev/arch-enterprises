@@ -5,7 +5,7 @@
    <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -630,7 +630,7 @@
 
   <tbody >
   <tr v-for="(cust, index) in filteredCustomers" :key="cust.id">
-      <td  style="color: #5c5d5f">{{ index + 1 }}</td>
+      <td  style="color: var(--text)">{{ index + 1 }}</td>
 
 <td>
   <a
@@ -645,7 +645,7 @@
 
 
 
-      <td style="color: #5c5d5f;">{{ formatNumber(cust.id) }}</td>
+      <td style="color: var(--text);">{{ formatNumber(cust.id) }}</td>
 
      <td class="action-btns">
   <button class="tooltip-btn btn-view-po"
@@ -2217,7 +2217,7 @@
     <div class="modal-buttons"> 
       <button
         class="btn btn-success"
-        style="background-color: cornflowerblue;"
+        style="background-color: var(--text);"
         :disabled="isSavingServiceSupply"
         @click="saveServiceSupply"
       >
@@ -2287,7 +2287,7 @@
     <div class="modal-buttons">
       <!-- <button class="btn btn-success" @click="saveSupplyDetails">Save</button> -->
            <button 
-  class="btn btn-success" style="background-color: cornflowerblue;"
+  class="btn btn-success" style="background-color: var(--text);"
   :disabled="isSavingSupply"
   @click="saveSupplyDetails"
 >
@@ -2368,7 +2368,7 @@
     <div class="modal-buttons">
       <!-- <button class="btn btn-success" @click="saveServiceDetails">Save</button> -->
          <button 
-  class="btn btn-success" style="background-color: cornflowerblue;"
+  class="btn btn-success" style="background-color: var(--text);"
   :disabled="isSavingService"
   @click="saveServiceDetails"
 >
@@ -2471,7 +2471,7 @@
 
     <div class="modal-buttons">
       <button 
-  class="btn btn-success" style="background-color: cornflowerblue;"
+  class="btn btn-success" style="background-color: var(--text);"
   :disabled="isSavingAmc"
   @click="saveAmcDetails"
 >
@@ -5607,7 +5607,7 @@ closeServiceSupplyModal(){
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 .save-shipp-address{
-      background-color: #000000;
+      background-color: var(--text);
     cursor: pointer;
     width: 149px;
     color: white;
@@ -5618,7 +5618,17 @@ closeServiceSupplyModal(){
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .loader {
   width: 18px;
@@ -5765,7 +5775,7 @@ closeServiceSupplyModal(){
 .crm-input-group label {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text);
   margin-bottom: 6px;
 }
 
@@ -5814,7 +5824,7 @@ closeServiceSupplyModal(){
   align-items: center;
   font-size: 18px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
   margin-bottom: 15px;
 }
 
@@ -5843,7 +5853,7 @@ closeServiceSupplyModal(){
 }
 
 .crm-remove-btn {
-  background: #ef4444;
+  background: var(--sidebar);
   color: #ffffff;
   border: none;
   padding: 6px 10px;
@@ -6080,7 +6090,7 @@ width: 100%;
   bottom: 130%;
   left: 50%;
   transform: translateX(-50%);
-  background: #333;
+  background: var(--text);
   color: #fff;
   padding: 6px 10px;
   font-size: 12px;
@@ -6099,7 +6109,7 @@ width: 100%;
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: #333;
+  border-top-color: var(--text);
   opacity: 0;
   transition: 0.2s ease;
 }
@@ -6179,7 +6189,7 @@ background-color: #6f256f;
 }
 
 .view-report-btn:hover {
-  background-color: #0056b3;
+  background-color: var(--text);
 }
 .delete-btn {
   background: #ff4d4d;
@@ -6207,7 +6217,7 @@ background-color: #6f256f;
 /* Header */
 .styled-customer-table thead tr {
       height: 44px;
-  background: #5f9ea0;
+  background: var(--primary);
   color: #ffffff;
 }
 
@@ -6238,7 +6248,7 @@ background-color: #6f256f;
 .styled-customer-table td {
   padding: 12px;
   font-size: 14px;
-  color: #333;
+  color: var(--text);
   text-align: left;
   border-left: ridge;
   white-space: nowrap;
@@ -6422,7 +6432,7 @@ background-color: #6f256f;
 }
 
 .visit-btn-close {
-  background: #ef4444;
+  background: var(--sidebar);
   border: none;
   padding: 10px 18px;
   color: white;
@@ -6449,7 +6459,7 @@ background-color: #6f256f;
 
 /* View All PO button */
 .view-all-btn {
-background-color: #5f9ea0;
+background-color: var(--primary);
     color: #fff;
     border-radius: 11px;
     border-block: #2196f3;
@@ -6525,7 +6535,7 @@ width: 81%;
 
 /* SECTIONS */
 .quotation-section-card {
-  background: #f0f2f8;
+  background: var(--sidebar);
   padding: 15px 20px;
   border-radius: 10px;
   display: flex;
@@ -6536,7 +6546,7 @@ width: 81%;
 .quotation-section-title {
   font-size: 1.2rem;
   margin-bottom: 10px;
-  color: #333;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -6678,7 +6688,7 @@ width: 81%;
 .header-bar h2 {
   font-size: 22px;
   font-weight: bold;
-  color: #333;
+  color: var(--text);
 }
 
 .header-actions {
@@ -6699,7 +6709,7 @@ width: 81%;
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 12px;
-  color: #333;
+  color: var(--text);
 }
 
 /* ROWS & COLS */
@@ -6718,7 +6728,7 @@ width: 81%;
 label {
   font-weight: 600;
   font-size: 13px;
-  color: #333;
+  color: var(--text);
 }
 
 input, select, textarea {
@@ -6788,7 +6798,7 @@ input:focus, select:focus, textarea:focus {
 
 /* SECONDARY BUTTON */
 .secondary-btn {
-  background: #6c757d;
+  background: var(--text);
   color: white;
   padding: 8px 14px;
   border-radius: 8px;
@@ -6915,7 +6925,7 @@ input, select, textarea {
 }
 
 .export-note {
-  color: red;
+  color: var(--text);
   font-weight: bold;
   margin: 10px 0;
 }
@@ -6970,7 +6980,7 @@ input, select, textarea {
 }
 
 .modal-card {
-  background: #d2ebd2!important;
+  background: var(--sidebar)!important;
   padding: 20px;
   width: 450px;
   max-height: 90vh;
@@ -7023,8 +7033,8 @@ input, select, textarea {
         --primary-bg: #eff6ff;
         --bg: #f7f9fc;
         --border: #d1d5db;
-        --text: #222;
-        --muted: #555;
+        --text: var(--text);
+        --muted: var(--text);
         --card-bg: #ffffff;
     }
 
@@ -7056,7 +7066,7 @@ input, select, textarea {
     .section-title {
     font-weight: 600;
     background: var(--primary);
-    /* color: #000000; */
+    /* color: var(--text); */
     padding: 5px 10px; /* reduced from 8px 12px */
     border-radius: 4px;
     font-size: 0.6em;
@@ -7191,7 +7201,7 @@ textarea:focus {
 .quote-table .add-row:hover { background: var(--primary-light); }
 
 .quote-table .remove-row {
-    background: #ef4444;
+    background: var(--sidebar);
     color: white;
 }
 
@@ -7220,7 +7230,7 @@ textarea:focus {
     .add-row:hover { background: var(--primary-light); }
 
     .remove-row {
-        background: #ef4444;
+        background: var(--sidebar);
         color: white;
     }
 
@@ -7274,7 +7284,7 @@ textarea:focus {
         font-size: 10px;
         border-radius: 6px;
         border: 1px solid #dbeafe;
-        color: #333;
+        color: var(--text);
     }
 
     .submit-btn {
@@ -7308,7 +7318,7 @@ textarea:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000000c4;
+  background: var(--text)c4;
   backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
@@ -7373,7 +7383,7 @@ textarea:focus {
   display: block;
   font-weight: 500;
   margin-bottom: 5px;
-  color: #333;
+  color: var(--text);
 }
 
 .input-supply {
@@ -7431,7 +7441,7 @@ textarea:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: #000000e0;
+  background-color: var(--text)e0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -7451,7 +7461,7 @@ textarea:focus {
 }
 .modal-header h3 {
   margin: 0;
-  color: #2c3e50;
+  color: var(--text);
   font-weight: bold;
   text-decoration: none;
 }
@@ -7720,7 +7730,7 @@ margin-left: 8px;
   font-weight: 600;
   margin-bottom: 20px;
   text-align: center;
-  color: #2c3e50;
+  color: var(--text);
   text-decoration: none;
 }
 
@@ -7739,13 +7749,13 @@ margin-left: 8px;
 .details-table th {
   width: 35%;
   /* background: #f7f7f7; */
-  color: #427172;
+  color: var(--text);
 }
 
 .equipment-section h3 {
   margin-top: 15px;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -7788,7 +7798,7 @@ margin-left: 8px;
 
 .btn-secondary {
   background-color: #bdc3c7;
-  color: #2c3e50;
+  color: var(--text);
 }
 
 .btn-secondary:hover {
@@ -7836,12 +7846,12 @@ margin-left: 8px;
   outline: none;
   flex: 1;
   font-size: 14px;
-  color: #374151;
+  color: var(--text);
 }
 
 /* Button */
 .assign-btn {
-  background-color: #0a9094;
+  background-color: var(--text);
   color: #fff;
   border: none;
   padding: 10px 22px;
@@ -7910,14 +7920,14 @@ margin-left: 8px;
 .styled-table td {
  text-align: left;
     font-weight: 600 !important;
-    border: 1px solid #ddd;
-    color: #000000;
-    background-color: #00800057;
+    border: 1px solid #ffffff;
+    color: var(--text);
+    background-color: var(--sidebar);
     padding: 6px 20px;
 }
 
 .styled-table thead {
-  background-color: #518587;
+  background-color: var(--text);
   color: #ffffff;
   /* font-weight: bold; */
 }
@@ -7936,7 +7946,7 @@ margin-left: 8px;
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000000c4!important;
+  background: var(--text)c4!important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7957,7 +7967,7 @@ margin-left: 8px;
   margin-bottom: 20px;
   font-size: 1.4em;
   text-align: center;
-  color: #427172;
+  color: var(--text);
 }
 
 .po-table {
@@ -7977,11 +7987,11 @@ margin-left: 8px;
   background: #f7f7f7;
   width: 40%;
   font-weight: 600;
-  color: #555;
+  color: var(--text);
 }
 
 .po-table td {
-  color: #427172;
+  color: var(--text);
 }
 
 .close-btn {
@@ -8006,7 +8016,7 @@ margin-left: 8px;
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000000c4;
+  background: var(--text)c4;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -8029,7 +8039,7 @@ margin-left: 8px;
 .modal-title {
   font-size: 1.5rem;
   margin-bottom: 20px;
-  color: #427172;
+  color: var(--text);
 }
 
 .po-list {
@@ -8083,7 +8093,7 @@ flex-wrap: wrap;
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: #000000c4;
+  background: var(--text)c4;
   display: flex; justify-content: center; align-items: center;
 }
 .modal-contentDetails {
@@ -8246,13 +8256,13 @@ flex-wrap: wrap;
 
 .user-table td a {
   font-family: system-ui;
-  color: #5c5d5f;
+  color: var(--text);
   text-decoration: none;
   cursor: pointer;
 }
 
 .user-table td a:hover {
-  color: #0056b3;
+  color: var(--text);
 }
 
 .user-table .btn-group button {
@@ -8269,7 +8279,7 @@ flex-wrap: wrap;
   background-color: transparent;
   border: none;
   cursor: pointer;
-  color: #518587;
+  color: var(--text);
 }
 .equipment-entry.aligned-row {
         margin-bottom: 24px;
@@ -8291,7 +8301,7 @@ flex-wrap: wrap;
   font-size: 20px;
   background: transparent;
   border: none;
-  color: red;
+  color: var(--text);
   cursor: pointer;
   padding-bottom: 8px;
 }
@@ -8324,7 +8334,7 @@ textarea {
 /* Labels for required fields */
 .input-group label::after {
   /* content: ' *';
-  color: red; */
+  var(--text); */
   font-weight: 700;
 }
 
@@ -8361,7 +8371,7 @@ textarea {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -8383,7 +8393,7 @@ textarea {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -8399,7 +8409,7 @@ textarea {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -8407,7 +8417,7 @@ textarea {
     gap: .5rem;
     margin-right: 8px;
     color: #3c696a;
-    background-color: #4277782e;
+    background-color: var(--text)2e;
     padding: 8px 22px;
     font-size: 13px;
     border-radius: 8px;
@@ -8420,7 +8430,7 @@ textarea {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 .company-name {
   font-size: 20px;
@@ -8434,7 +8444,7 @@ textarea {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -8495,7 +8505,7 @@ textarea {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -8513,7 +8523,7 @@ textarea {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -8521,7 +8531,7 @@ textarea {
 /* Content Section */
 .content {
   flex: 1;
-  background-color: #f0f2f8;
+  background-color: var(--sidebar);
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -8530,13 +8540,13 @@ textarea {
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
- border-bottom: 2px solid #5f9ea0;
+  color: var(--text);
+ border-bottom: 2px solid var(--primary);
     padding-bottom: 8px;
     font-weight: 800;
   text-transform: uppercase;
   font-size: 21px;
-  /* border-bottom: 2px solid #5f9ea0;
+  /* border-bottom: 2px solid var(--primary);
   padding-bottom: 8px; */
 }
 
@@ -8599,6 +8609,7 @@ h2 {
   left: 0;
   width: 97vw;
   height: 100vh;
+    background: rgba(0,0,0,0.6);
    /* background-color: #154477 */;
   display: flex;
   justify-content: center;
@@ -8645,7 +8656,7 @@ h2 {
     font-weight: 800;
     text-align: center; 
     margin-bottom: 35px;
-    color: #518587 ;
+    color: var(--text) ;
     letter-spacing: 1.3px;
 }
 
@@ -8678,7 +8689,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -8700,7 +8711,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -8733,7 +8744,7 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #00a0a5;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
@@ -8750,18 +8761,18 @@ h2 {
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #000000;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -8807,13 +8818,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 
@@ -8929,7 +8940,7 @@ h2 {
    SECTION CARDS
 ================================ */
 .quotation-section-card {
-  background: #f0f2f8;
+  background: var(--sidebar);
   margin: 0px;
   padding: 17px;
   border-radius: 16px;
@@ -9223,7 +9234,7 @@ h2 {
 /* Empty State */
 .modal-card {
   text-align: center;
-  color: #777;
+  color: var(--text);
   font-size: 16px;
 }
 @media (max-width: 768px) {
@@ -9236,11 +9247,11 @@ h2 {
   }
   h2 {
     margin-bottom: 13px;
-    color: #417475;
+    color: var(--text);
     font-weight: 800;
     text-transform: uppercase;
     font-size: 17px;
-    border-bottom: 2px solid #5f9ea0;
+    border-bottom: 2px solid var(--primary);
     padding-bottom: 8px;
   }
 
@@ -9336,12 +9347,22 @@ justify-content: center;
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 35px;
+}
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
 }
 
 .logo-img {
- height: 65px;;
+ height: 65px; background-color: white; border-radius: 9px;;
 }
 
 .header-title {
@@ -9414,7 +9435,7 @@ justify-self: center;
 
 .no-data {
   text-align: center;
-  color: #777;
+  color: var(--text);
   padding: 10px;
 }
 
@@ -9521,7 +9542,7 @@ justify-self: center;
 }
 
 .modal-card::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--text);
 }
 
 /* ===============================
@@ -9536,7 +9557,7 @@ justify-self: center;
   border-radius: 50%;
   border: none;
   background: #f3f4f6;
-  color: #374151;
+  color: var(--text);
   font-size: 20px;
   font-weight: 600;
   cursor: pointer;
@@ -9545,7 +9566,7 @@ justify-self: center;
 }
 
 .crm-modal-close:hover {
-  background: #ef4444;
+  background: var(--sidebar);
   color: #ffffff;
   transform: rotate(90deg);
 }
@@ -9560,7 +9581,7 @@ justify-self: center;
 }
 
 .error-message {
-  color: red;
+  color: var(--text);
   font-size: 0.8rem;
   margin-top: 2px;
 }
@@ -9625,7 +9646,7 @@ justify-self: center;
   border-radius: 8px;
   font-weight: bold;
   font-size: 1.2em;
-  color: #2c3e50;
+  color: var(--text);
 }
 
 .grand-total-card {
@@ -9633,7 +9654,7 @@ justify-self: center;
     background: linear-gradient(135deg, #ffffff, #0095ffa8);
     border-radius: 14px;
     padding: 6px 20px;
-    box-shadow: 1px 5px 20px 0px #000000c7;
+    box-shadow: 1px 5px 20px 0px var(--text)c7;
     border: 7px solid #e6e6e6;
 }
 
@@ -9648,13 +9669,13 @@ justify-self: center;
 .grand-total-header .title {
   font-size: 1.1em;
   font-weight: 600;
-  color: #333;
+  color: var(--text);
 }
 
 .gst-toggle {
      font-size: .85em;
     padding: 5px 12px;
-    background-color: red;
+    background-color: var(--text);
     cursor: pointer;
     color: white;
     border-radius: 7px;
@@ -9671,7 +9692,7 @@ justify-self: center;
 
 .grand-total-sub {
   font-size: 0.9em;
-  color: #6c757d;
+  color: var(--text);
 }
 
 

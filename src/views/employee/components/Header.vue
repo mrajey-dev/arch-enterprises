@@ -1,6 +1,6 @@
 <template>
     <header class="header">
-      <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;">
+      <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px; background-color: white; border-radius: 9px;">
       ARCH ENTERPRISES
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>

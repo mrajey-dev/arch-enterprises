@@ -5,7 +5,7 @@
     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -544,11 +544,21 @@ async updateServiceVisitDate(service) {
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .btn-reset {
   padding: 9px 18px;
-  background: linear-gradient(135deg, #6c757d, #495057);
+  background: linear-gradient(135deg, var(--text), var(--text));
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -560,7 +570,7 @@ async updateServiceVisitDate(service) {
 }
 
 .btn-reset:hover {
-  background: linear-gradient(135deg, #495057, #343a40);
+  background: linear-gradient(135deg, var(--text), #343a40);
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
@@ -594,7 +604,7 @@ async updateServiceVisitDate(service) {
 }
 
 .view-report-btn:hover {
-  background-color: #0056b3;
+  background-color: var(--text);
 }
 
 .editable-date {
@@ -614,7 +624,7 @@ async updateServiceVisitDate(service) {
 /* Title */
 .page-title {
   font-size: 23px;
-    color: #3e7a7c;
+    color: var(--text);
     text-transform: uppercase;
     font-weight: 800;
   font-weight: 800;
@@ -632,14 +642,14 @@ async updateServiceVisitDate(service) {
   padding: 10px 18px;
   font-weight: 600;
   background: white;
-  color: #5f9ea0;
-  border: 2px solid #5f9ea0;
+  color: var(--primary);
+  border: 2px solid var(--primary);
   border-radius: 8px;
   transition: all 0.3s ease;
   cursor: pointer;
 }
 .btn-switch.active {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
 }
@@ -665,7 +675,7 @@ async updateServiceVisitDate(service) {
   overflow: hidden;
 }
 .modern-table thead tr {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   text-align: left;
 }
@@ -688,7 +698,7 @@ async updateServiceVisitDate(service) {
   position: relative;
   overflow: hidden;
   width: 64px;
-  background-color: #000000;
+  background-color: var(--text);
   color: white;
   padding: 6px 12px;
   border-radius: 6px;
@@ -710,7 +720,7 @@ async updateServiceVisitDate(service) {
 .file-name {
   display: block;
   margin-top: 6px;
-  color: #518587;
+  color: var(--text);
   font-size: 13px;
 }
 
@@ -743,7 +753,7 @@ async updateServiceVisitDate(service) {
   transition: all 0.3s ease;
 }
 .modern-table select:hover {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
 }
 
 /* Mobile view */
@@ -765,7 +775,7 @@ async updateServiceVisitDate(service) {
  margin-bottom: 16px;
         background: #fff;
         border-radius: 0px;
-        box-shadow: inset -15px -5px 0px 0px #5f9ea0;
+        box-shadow: inset -15px -5px 0px 0px var(--primary);
         padding: 10px 14px;
   }
 
@@ -789,7 +799,7 @@ async updateServiceVisitDate(service) {
     flex-basis: 45%;
     text-align: left;
     font-weight: 600;
-    color: #5f9ea0;
+    color: var(--primary);
   }
 
   /* Value styling (right side) */
@@ -799,7 +809,7 @@ async updateServiceVisitDate(service) {
   .modern-table td label {
     flex-basis: 32%;
     /* text-align: right; */
-/* color: #427172; */
+/* color: var(--text); */
     font-weight: 500;
   }
 
@@ -884,7 +894,7 @@ async updateServiceVisitDate(service) {
 
 /* Table Header */
 .user-table th {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
   padding: 14px 20px;
@@ -914,7 +924,7 @@ async updateServiceVisitDate(service) {
   vertical-align: middle;
   border: none;
   font-size: 15px;
-  color: #427778;
+  color: var(--text);
 }
 
 /* Dropdown Styling */
@@ -930,13 +940,13 @@ async updateServiceVisitDate(service) {
 }
 
 .user-table select:hover {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   box-shadow: 0 0 8px rgba(0,123,255,0.3);
 }
 
 .user-table select:focus {
   outline: none;
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   box-shadow: 0 0 10px rgba(0,123,255,0.4);
 }
 
@@ -949,7 +959,7 @@ async updateServiceVisitDate(service) {
 }
 
 .attractive-btn.active {
-  background-color: #426b6c;
+  background-color: var(--text);
   color: white;
 }
 .mobile-menu-icon {
@@ -969,7 +979,7 @@ async updateServiceVisitDate(service) {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -997,7 +1007,7 @@ async updateServiceVisitDate(service) {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -1013,7 +1023,7 @@ async updateServiceVisitDate(service) {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -1027,7 +1037,7 @@ async updateServiceVisitDate(service) {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 
 /* Header */
@@ -1036,7 +1046,7 @@ async updateServiceVisitDate(service) {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -1075,7 +1085,7 @@ async updateServiceVisitDate(service) {
 .logout-btn {
   background-color: white;
   color: #003977;
-  border: 2px solid #5f9ea0;
+  border: 2px solid var(--primary);
 }
 
 .logout-btn:hover {
@@ -1098,7 +1108,7 @@ async updateServiceVisitDate(service) {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -1116,7 +1126,7 @@ async updateServiceVisitDate(service) {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -1124,7 +1134,7 @@ async updateServiceVisitDate(service) {
 /* Content Section */
 .content {
   flex: 1;
-  background-color: #f0f2f8;
+  background-color: var(--sidebar);
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -1133,10 +1143,10 @@ async updateServiceVisitDate(service) {
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 700;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -1152,7 +1162,7 @@ h2 {
   padding: 14px 20px;
   text-align: left;
   font-size: 16px;
-  color: #427778;
+  color: var(--text);
 }
 
 .user-table th {
@@ -1247,7 +1257,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -1280,7 +1290,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1302,7 +1312,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -1335,24 +1345,24 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -1399,13 +1409,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 
@@ -1426,8 +1436,18 @@ h2 {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 35px;
+}
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
 }
 
 .logo-img {

@@ -202,7 +202,7 @@ export default {
 .chart-box h3 {
   text-align: center;
   margin-bottom: 18px;
-  color: #2c3e50;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -257,7 +257,7 @@ export default {
 }
 .details strong {
   font-size: 15px;
-  color: #427172;
+  color: var(--text);
 }
 .dob {
   font-size: 13px;
@@ -266,7 +266,7 @@ export default {
 }
 .dept {
   font-size: 13px;
-  color: #777;
+  color: var(--text-white);
   font-style: italic;
   margin-top: 2px;
 }

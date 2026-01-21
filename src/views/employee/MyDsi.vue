@@ -5,7 +5,7 @@
     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -516,7 +516,17 @@ openImage(img) {
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .loader {
   width: 16px;
@@ -561,7 +571,7 @@ openImage(img) {
 }
 
 .image-upload-card:hover {
-  border-color: cadetblue;
+  border-color: var(--primary);
   background: #eef6f6;
   transform: translateY(-2px);
 }
@@ -702,7 +712,7 @@ openImage(img) {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -721,7 +731,7 @@ openImage(img) {
 
 .card-header h3 {
   font-size: 18px;
-  color: #427172;
+  color: var(--text);
   margin: 0;
 }
 
@@ -732,7 +742,7 @@ openImage(img) {
 
 .card-message {
   font-size: 15px;
-  color: #444;
+  color: var(--text);
   margin-top: 5px;
   line-height: 1.5;
 }
@@ -749,7 +759,7 @@ openImage(img) {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -765,7 +775,7 @@ openImage(img) {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -779,7 +789,7 @@ openImage(img) {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 
 /* Header */
@@ -788,7 +798,7 @@ openImage(img) {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -850,7 +860,7 @@ openImage(img) {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -868,7 +878,7 @@ openImage(img) {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -886,10 +896,10 @@ openImage(img) {
 h2 {
       text-transform: uppercase;
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 800;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -960,7 +970,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -993,7 +1003,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1015,7 +1025,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -1070,8 +1080,18 @@ h2 {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 35px;
+}
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
 }
 
 .logo-img {
@@ -1130,7 +1150,7 @@ h2 {
 
 .status-btn {
   background: #e5e7eb;
-  color: #374151;
+  color: var(--text);
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px dashed #9ca3af;
@@ -1172,7 +1192,7 @@ h2 {
 
 .status-btn {
   background: #e5e7eb;
-  color: #374151;
+  color: var(--text);
   border: 1px dashed #9ca3af;
   border-radius: 8px;
   padding: 8px 12px;
@@ -1245,8 +1265,8 @@ h2 {
 
 /* Header */
 .dsi-table thead th {
-  border-left: 1px ridge #5f9ea0;
-  background: linear-gradient(135deg, cadetblue, #5f9ea0);
+  border-left: 1px ridge var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary));
   color: white;
   font-weight: 700;
   padding: 14px;
@@ -1274,7 +1294,7 @@ h2 {
 .dsi-table td {
   padding: 12px 14px;
   font-size: 14px;
-  color: #374151;
+  color: var(--text);
       border-left: 1px ridge #6cc4c7;
   border-bottom: 1px solid #6cc4c7;
   vertical-align: middle;
@@ -1351,7 +1371,7 @@ h2 {
 }
 
 .view-all-btn {
-  background: linear-gradient(135deg, #5f9ea0, #3c6769);
+  background: linear-gradient(135deg, var(--primary), #3c6769);
   color: #fff;
   border: none;
   padding: 10px 18px;
@@ -1369,7 +1389,7 @@ h2 {
 .view-all-btn:hover {
   transform: translateY(-3px) scale(1.05);
   box-shadow: 0 10px 28px rgba(79, 70, 229, 0.55);
- background: linear-gradient(135deg, #3c6769, #5f9ea0);
+ background: linear-gradient(135deg, #3c6769, var(--primary));
 }
 
 .view-all-btn:active {
@@ -1443,7 +1463,7 @@ display: inline-block;
     /* color: #fff; */
     text-align: center;
     transition: all .3s ease;
-    /* box-shadow: 0 2px 6px #00000026; */
+    /* box-shadow: 0 2px 6px var(--text)26; */
       cursor: not-allowed;
 }
 
@@ -1574,7 +1594,7 @@ h2{
   .dsi-table-wrapper td::before {
     content: attr(data-label);
     font-weight: 600;
-    color: #555;
+    color: var(--text);
   }
 
   .img-cell img {

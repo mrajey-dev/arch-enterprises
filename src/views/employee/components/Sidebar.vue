@@ -376,7 +376,7 @@ async mounted() {
 .mobile-menu-icon {
   font-size: 22px;
   cursor: pointer;
-  color: #427172;
+  color: var(--text);
 }
 .profile-pic-wrapper {
   position: relative;
@@ -403,7 +403,7 @@ async mounted() {
  position: absolute;
     bottom: 10px;
     right: 4px;
-    background-color: #5f9ea0;
+    background-color: var(--primary);
     color: #ffffff;
     border-radius: 73%;
     padding: 4px;
@@ -431,9 +431,9 @@ async mounted() {
     height: 79vh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #5f9ea0, #f0f2f8);
+    background: var(--sidebar);
     border-radius: 21px;
-    color: #2e5758;
+    color: var(--text);
     font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
     /* z-index: 2000; */
 
@@ -443,7 +443,7 @@ async mounted() {
 .profile-section {
   text-align: center;
   padding: 12px 10px 15px;
-  background-color: #5f9ea0a6;
+  background-color: var(--primary)a6;
 }
 
 .profile-pic {
@@ -491,7 +491,7 @@ async mounted() {
 
 .dropdown-menu li {
   padding: 10px 15px;
-  color: #427172;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -499,12 +499,12 @@ async mounted() {
 }
 
 .dropdown-menu li:hover {
-  color: #466d6f;
+  color: var(--text);
   transform: translateX(5px);
 }
 
 .danger-bg {
-  background-color: #5f9ea0 !important;
+  background-color: var(--text) !important;
   color: white !important;
 }
 
@@ -518,7 +518,7 @@ async mounted() {
 @media (max-width: 768px) {
   .profile-section{
     /* margin-top: 22%!important; */
-    background: linear-gradient(135deg, #5f9ea0, #5f9ea0) !important;
+    background: linear-gradient(135deg, var(--primary), var(--primary)) !important;
   }
   .profile-pic{
     margin-top: 100%!important;
@@ -556,7 +556,7 @@ async mounted() {
   width: 6px;
 }
 .menu-scroll::-webkit-scrollbar-thumb {
-  background: rgba(95, 158, 160, 0.6);
+  background: var(--primary);
   border-radius: 10px;
 }
 .menu-scroll::-webkit-scrollbar-track {
@@ -605,7 +605,7 @@ async mounted() {
       border-radius: 20px;
   text-align: center;
   padding: 18px 10px;
-  background: linear-gradient(135deg, #5f9ea0, #427172);
+  background: var(--primary);
   color: #fff;
 }
 
@@ -700,7 +700,7 @@ async mounted() {
 .popup h3 {
   margin-bottom: 15px;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--text);
 }
 
 /* Table */
@@ -717,7 +717,7 @@ async mounted() {
 
 .results-table th {
   background-color: #f5f5f5;
-  color: #555;
+  color: var(--text);
   font-weight: 600;
   border-bottom: 2px solid #eee;
 }
@@ -740,8 +740,8 @@ async mounted() {
 
 /* Close Button */
 .close-btn {
-      background-color: #bec8c8;
-    color: #000000;
+      background-color: var(--primary);
+    color: var(--text);
   padding: 10px 25px;
   border: none;
   border-radius: 8px;

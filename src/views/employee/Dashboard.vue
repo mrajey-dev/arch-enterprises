@@ -5,33 +5,14 @@
     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
          🅰️RCH360⚙️
      
       </div>
-<div class="download-app" style="position: relative; display: inline-block;">
-      <button @click="toggleDownloadMenu">Download Arch App ⬇️</button>
 
-      <!-- Dropdown -->
-      <div 
-        v-if="showDownloadMenu" 
-        class="download-menu" 
-        style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ccc; padding: 10px; z-index: 100;"
-      >
-        <div style="margin-bottom: 10px;">
-          <!-- QR Code -->
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://median.co/share/qddwled#apk" alt="QR Code">
-          <div style="font-size: 12px; margin-top: 5px; color: #000000;">Scan QR Code</div>
-        </div>
-        <div style="text-align: center;">
-          <!-- Direct Link -->
-          <a href="https://median.co/share/qddwled#apk" target="_blank" style="color: blue; text-decoration: underline;">Download via Link</a>
-        </div>
-      </div>
-    </div>
     
     <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
 
@@ -635,7 +616,17 @@ export default {
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .modal-overlay {
   position: fixed;
@@ -737,7 +728,7 @@ export default {
   display: block;
   margin-top: 8px;
   font-size: 12px;
-  color: #555;
+  color: var(--text);
 }
 .upcoming-task-popup {
   position: fixed;
@@ -754,8 +745,8 @@ export default {
 
 
 .leavetype{
-background-color: #6419ed33 !important;
-    box-shadow: 9px 10px #bdaddb !important;
+/* background-color: #6419ed33 !important; */
+    box-shadow: -6px 0 0 0 var(--primary)!important;
 }
 .birthday-reminder {
   margin-top: -25px;
@@ -767,7 +758,7 @@ background-color: #6419ed33 !important;
 
 .birthday-reminder h2 {
   font-size: 15px;
-  color: #518587;
+  color: var(--text);
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -800,7 +791,7 @@ background-color: #6419ed33 !important;
 .birthday-info h3 {
   margin: 0;
   font-size: 13px;
-  color: #427172;
+  color: var(--text);
 }
 
 .birthday-info p {
@@ -826,7 +817,7 @@ background-color: #6419ed33 !important;
 .static-info-section h2 {
   font-size: 20px;
   margin-bottom: 15px;
-  color: #427172;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -838,23 +829,23 @@ background-color: #6419ed33 !important;
 .static-info-section ul li {
   padding: 8px 0;
   font-size: 16px;
-  color: #555;
+  color: var(--text);
 }
 
 
 
 
 .Tasks{
-  background-color: #ffc0cb52 !important;
-     box-shadow: 9px 10px #e4bbc3 !important;
+  /* background-color: #ffc0cb52 !important; */
+     box-shadow: -6px 0px 0px 0px var(--primary) !important;
 }
 .Leaves{
-   background-color: #ff9d0052 !important ;
-  box-shadow: 9px 10px #e2c18c !important;
+   /* background-color: #ff9d0052 !important ; */
+  box-shadow: -6px 0px 0px 0px var(--primary)!important;
 }
 .Attendance{
-   background-color: #00ff3745 !important ;
-   box-shadow: 9px 10px #84cf94 !important;
+   /* background-color: #00ff3745 !important ; */
+   box-shadow: -6px 0px 0px 0px var(--primary) !important;
 }
 
 
@@ -886,7 +877,7 @@ background-color: #6419ed33 !important;
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -920,7 +911,7 @@ background-color: #6419ed33 !important;
 .label {
   
   font-size: 18px;
-  color: #427172;
+  color: var(--text);
 }
 
 .modal-overlay {
@@ -970,7 +961,7 @@ textarea {
   resize: vertical;
 }
 .submit-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   padding: 10px 16px;
   border: none;
@@ -1055,7 +1046,7 @@ textarea {
 }
 
 .submit-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   padding: 10px 16px;
   border: none;
@@ -1078,7 +1069,7 @@ textarea {
   font-size: 32px;
   font-weight: 600;
   margin-bottom: 30px;
-  color: #427172;
+  color: var(--text);
   text-align: center;
 }
 
@@ -1118,7 +1109,7 @@ textarea {
 
 .label {
   font-size: 18px;
-  color: #2e5758;
+  color: var(--text);
   margin-bottom: 5px;
 }
 
@@ -1126,7 +1117,7 @@ textarea {
 .value {
   font-size: 20px;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--text);
 }
 
 /* Responsive design for mobile */
@@ -1142,7 +1133,7 @@ textarea {
   .label[data-v-5dea76fb] {
     font-size: 15px;
         font-weight: 600;
-    color: #2e5758;
+    color: var(--text);
     margin-bottom: 5px;
 }
   .dashboard-card {
@@ -1179,7 +1170,7 @@ textarea {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 
 /* Header */
@@ -1188,7 +1179,7 @@ textarea {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -1226,7 +1217,7 @@ textarea {
 
 .logout-btn {
   background-color: white;
-  color: #518587;
+  color: var(--text);
   border: 2px solid #007bff;
 }
 
@@ -1251,7 +1242,7 @@ textarea {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -1269,7 +1260,7 @@ textarea {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -1286,10 +1277,10 @@ textarea {
 
 h2 {
   margin-bottom: 30px;
-  color: #518587;
+  color: var(--text);
   font-weight: 700;
   font-size: 28px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -1305,7 +1296,7 @@ h2 {
   padding: 14px 20px;
   text-align: left;
   font-size: 16px;
-  color: #427778;
+  color: var(--text);
 }
 
 .user-table th {
@@ -1334,7 +1325,7 @@ h2 {
 
 /* Footer */
 .footer {
-  background-color: #2e5758;
+  background-color: var(--text);
   color: white;
   text-align: center;
   padding: 15px 0;
@@ -1398,7 +1389,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -1431,7 +1422,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1453,7 +1444,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -1486,24 +1477,24 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -1550,13 +1541,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 
@@ -1580,7 +1571,16 @@ h2 {
   justify-content: flex-start;
   padding: 12px 35px;
 }
-
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
+}
 .logo-img {
   height: 45px;
 }
@@ -1605,7 +1605,7 @@ h2 {
   border: none;
   font-weight: 600;
   font-size: 11px;
-  color: #000000;
+  color: var(--text);
   /* background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); */
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
   transition: all 0.3s ease;
@@ -1617,7 +1617,7 @@ h2 {
 /* Hover Effect */
 .download-app button:hover {
   transform: translateY(-2px);
-  color:#000000;
+  color:var(--text);
   box-shadow: 0 10px 25px rgba(44, 83, 100, 0.6);
   /* background: linear-gradient(135deg, #2c5364, #203a43, #0f2027); */
 }

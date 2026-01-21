@@ -7,7 +7,7 @@
      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -704,7 +704,7 @@ saveKRA() {
   bottom: 130%;
   left: 50%;
   transform: translateX(-50%);
-  background: #222;
+  background: var(--text);
   color: #fff;
   padding: 6px 10px;
   font-size: 12px;
@@ -723,7 +723,7 @@ saveKRA() {
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: #222;
+  border-top-color: var(--text);
   opacity: 0;
   transition: 0.2s ease;
 }
@@ -772,7 +772,7 @@ saveKRA() {
 .styled-table td {
   padding: 12px;
   font-size: 14px;
-  color: #333;
+  color: var(--text);
   text-align: center;
 }
 
@@ -897,7 +897,7 @@ font-size: 21px;
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -907,11 +907,11 @@ font-size: 21px;
 }
 
 .input-error {
-  border-color: red;
+  border-color:var(--text);
 }
 
 .error-message {
-  color: red;
+   color:var(--text);
   font-size: 0.875rem;
   margin-top: 4px;
 }
@@ -920,7 +920,7 @@ font-size: 21px;
 .nested-list {
   padding-left: 1.5rem;
   list-style-type: disc;     /* Use disc for dark round bullets */
-  color: #2e5758;                /* Optional: darken text color */
+  color: var(--text);                /* Optional: darken text color */
 }
 
 .nested-list li {
@@ -1069,7 +1069,7 @@ font-size: 21px;
 
 .kpi-chip i {
   font-size: 0.85rem;
-  color: #ef4444; /* red-500 */
+  color: var(--sidebar); /* red-500 */
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -1124,7 +1124,7 @@ font-size: 21px;
 .target-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #427172;
+  color: var(--text);
   display: block;
   margin-bottom: 20px;
 }
@@ -1158,7 +1158,7 @@ font-size: 21px;
 .kpi-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #427172;
+  color: var(--text);
   display: block;
   margin-bottom: 20px;
 }
@@ -1201,7 +1201,7 @@ font-size: 21px;
 .task-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #427172;
+  color: var(--text);
   display: block;
   margin-bottom: 20px;
 }
@@ -1225,7 +1225,7 @@ font-size: 21px;
   border: 1px solid #d8b4fe;
   border-radius: 12px;
   background-color: #fff;
-  color: #427172;
+  color: var(--text);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
@@ -1262,7 +1262,7 @@ font-size: 21px;
 .kra-step label {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--text);
   margin-bottom: 5px;
   display: block;
 }
@@ -1305,7 +1305,7 @@ body.modal-open {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -1321,7 +1321,7 @@ body.modal-open {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -1335,7 +1335,7 @@ body.modal-open {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 .company-name {
   font-size: 20px;
@@ -1349,7 +1349,7 @@ body.modal-open {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 8px 30px;
   display: flex;
@@ -1387,13 +1387,13 @@ body.modal-open {
 }
 
 .logout-btn {
-   background-color: #407173;
+   background-color: var(--text);
     color: #ffffff;
     margin-bottom: 22px;
 }
 
 .logout-btn:hover {
- background-color: #1f3b3c;
+ background-color: var(--primary);
   color: #ffffff;
     margin-bottom: 22px;
 }
@@ -1415,7 +1415,7 @@ body.modal-open {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -1433,7 +1433,7 @@ body.modal-open {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -1441,7 +1441,7 @@ body.modal-open {
 /* Content Section */
 .content {
   flex: 1;
-  background-color: #f0f2f8;
+  background-color: var(--sidebar);
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -1450,11 +1450,11 @@ body.modal-open {
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 800;
   text-transform: uppercase;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -1474,7 +1474,7 @@ h2 {
 
 .user-table th {
   padding: 11px 20px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   font-weight: 700;
   border-bottom: none;
   border-radius: 12px 12px 0 0;
@@ -1564,7 +1564,7 @@ h2 {
     /* font-weight: 800; */
     text-align: center;
     margin-bottom: 35px;
-    color: #041f3d;
+    color: var(--text);
     letter-spacing: 1.3px;
     
 }
@@ -1598,7 +1598,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1620,7 +1620,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -1644,7 +1644,7 @@ h2 {
   flex: 1;
   padding: 14px 0;
   font-weight: 700;
-      background-color: #000000;
+      background-color: var(--text);
     color: white;
   
   border-radius: 12px;
@@ -1655,24 +1655,24 @@ h2 {
 }
 
 .btn-primary {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 .btn-primary:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--text);
   color: white;
   box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--primary);
   box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
@@ -1721,13 +1721,13 @@ h2 {
 }
 
 .btn-primary.attractive-btn {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
 }
 
 .btn-primary.attractive-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
   box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 

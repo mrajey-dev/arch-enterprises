@@ -6,7 +6,7 @@
         <a href="https://employees.archenterprises.co.in/">
           <img
             src="https://archenterprises.co.in/ajay/ajay.png"
-            style="height: 65px;"
+            style="height: 65px; background-color: white; border-radius: 9px;"
             alt="Logo"
           />
         </a>
@@ -769,7 +769,7 @@ addAnswer(question) {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -788,7 +788,7 @@ addAnswer(question) {
 
 .card-header h3 {
   font-size: 18px;
-  color: #427172;
+  color: var(--text);
   margin: 0;
 }
 
@@ -799,7 +799,7 @@ addAnswer(question) {
 
 .card-message {
   font-size: 15px;
-  color: #444;
+  color: var(--text);
   margin-top: 5px;
   line-height: 1.5;
 }
@@ -816,7 +816,7 @@ addAnswer(question) {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -832,7 +832,7 @@ addAnswer(question) {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 
@@ -843,7 +843,7 @@ addAnswer(question) {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 
 /* Header */
@@ -852,7 +852,7 @@ addAnswer(question) {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 0 30px;
   display: flex;
@@ -895,7 +895,7 @@ addAnswer(question) {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -913,7 +913,7 @@ addAnswer(question) {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -931,10 +931,10 @@ addAnswer(question) {
 h2 {
       text-transform: uppercase;
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 800;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -994,7 +994,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -1042,8 +1042,18 @@ h2 {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 35px;
+}
+@media (max-width: 768px) {
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 35px;
+  margin-bottom: 6px;
+      height: 52px;
+}
 }
 
 .logo-img {
@@ -1082,7 +1092,7 @@ h2 {
 }
 
 .ask-box {
-  background: #c0d9d9;
+  background: var(--sidebar);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 30px;
@@ -1100,7 +1110,7 @@ h2 {
 }
 
 .ask-box button {
-  background: cadetblue;
+  background: var(--primary);
   color: white;
   padding: 10px 16px;
   border-radius: 6px;
@@ -1109,7 +1119,7 @@ h2 {
 }
 
 .question-card {
-  background: #c0d9d954;
+  background: var(--sidebar);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -1120,19 +1130,19 @@ h2 {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-  color: #555;
+  color: var(--text);
 }
 
 .question-text {
   font-size: 16px;
   margin: 15px 0;
-  color: #333;
+  color: var(--text);
 }
 
 .answer-box {
   background: #ffffff;
     padding: 10px 15px;
-    color: #000000;
+    color: var(--text);
     border-radius: 8px;
     margin-bottom: 10px;
 }
@@ -1147,13 +1157,13 @@ h2 {
   flex: 1;
     padding: 8px;
     color: #ffffff;
-    background-color: #4b8c8f;
+    background-color: var(--primary);
     border-radius: 6px;
     border: 1px solid #ffffff;
 }
 
 .reply-box button {
-  background: #5f9ea0;
+  background: var(--primary);
   color: white;
   border: none;
   padding: 8px 14px;
@@ -1324,7 +1334,17 @@ button{
     display: flex;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+    align-items: center; width: 100%;
+}
+@media (max-width: 768px) {
+.head-title{
+      color: white;
+    display: flex;
+    gap: 7px;
+    display: none;
+    text-decoration: none;
+    align-items: center; width: 100%;
+}
 }
 .answer-header {
   display: flex;
@@ -1338,7 +1358,7 @@ button{
 .answer-header .date {
   margin-left: auto;
   font-size: 12px;
-  color: #777;
+  color: var(--text-white);
 }
 
 .qa-actions {
@@ -1350,7 +1370,7 @@ button{
 
 .qa-actions i {
   cursor: pointer;
-  color: #5f9ea0;
+  color: var(--primary);
 }
 
 .qa-actions i:hover {

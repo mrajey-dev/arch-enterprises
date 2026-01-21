@@ -943,7 +943,7 @@ calculatePerformance() {
 .performance-title {
   text-align: center;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text);
   margin-bottom: 22px;
   letter-spacing: 0.5px;
 }
@@ -1108,7 +1108,7 @@ calculatePerformance() {
 }
 
 .vault-theme-content {
-  background: #111827;
+  background: var(--text);
   color: #f8fafc;
   padding: 2rem;
   border-radius: 14px;
@@ -1141,7 +1141,7 @@ calculatePerformance() {
   margin: 8px 0;
   border-radius: 8px;
   border: 1px solid #334155;
-  background: #1e293b;
+  background: var(--text);
   color: #f1f5f9;
   outline: none;
   transition: border 0.2s;
@@ -1204,7 +1204,7 @@ calculatePerformance() {
   text-decoration: none;
 }
 .vault-theme-delete-btn {
-  background: #ef4444;
+  background: var(--sidebar);
   color: white;
   border: none;
   padding: 6px 10px;
@@ -1348,7 +1348,7 @@ calculatePerformance() {
 
 .vault-modal-header h3 {
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: var(--text);
 }
 
 .vault-close-btn {
@@ -1408,7 +1408,7 @@ calculatePerformance() {
 /* Files Table */
 .vault-files-section h4 {
   margin-bottom: 10px;
-  color: #2c3e50;
+  color: var(--text);
 }
 
 .vault-files-table {
@@ -1476,7 +1476,7 @@ calculatePerformance() {
 }
 
 .error-msg {
-  color: red;
+   color:var(--text);
   font-size: 14px;
   margin-top: 5px;
 }
@@ -1562,12 +1562,12 @@ calculatePerformance() {
 }
 
 .danger-bg{
-      background-color: #5f9ea0 !important;
+      background-color: var(--primary) !important;
       color: white!important;
 
 }
 .review-percentage {
- color: #2c3e50;
+ color: var(--text);
     margin-top: 8px;
     font-size: 11px;
 }
@@ -1655,7 +1655,7 @@ calculatePerformance() {
   padding: 10px 18px;
   border: none;
   border-radius: 6px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: bold;
   cursor: pointer;
@@ -1714,7 +1714,7 @@ calculatePerformance() {
 
 .dropdown-menu li {
   padding: 10px 15px;
-  color: #427172;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1749,7 +1749,7 @@ calculatePerformance() {
     height: 83vh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #5f9ea0, #f0f2f8);
+    background: linear-gradient(180deg, var(--primary), var(--sidebar));
     border-radius: 21px;
   
     /* z-index: 2000; */
@@ -1760,7 +1760,7 @@ calculatePerformance() {
   text-align: center;
   border-radius: 17px;
   padding: 20px 10px;
-  /* background: linear-gradient(135deg, #5f9ea0, #427172); */
+  /* background: linear-gradient(135deg, var(--primary), var(--text)); */
 }
 
 .profile-pic {
@@ -1776,7 +1776,7 @@ calculatePerformance() {
   text-align: center;
   font-size: 20px;
   font-weight: 700;
-  color: #2e5758;
+  color: var(--text);
   margin-top: -18px;
 }
 
@@ -1792,7 +1792,7 @@ calculatePerformance() {
   width: 6px;
 }
 .menu-section::-webkit-scrollbar-thumb {
-  background: rgba(95, 158, 160, 0.6);
+  background: var(--primary);
   border-radius: 10px;
 }
 .menu-section::-webkit-scrollbar-track {
@@ -1828,7 +1828,7 @@ calculatePerformance() {
 .sidebar-menu i {
   min-width: 18px;
   text-align: center;
-  color: #427172;
+  color: var(--text);
 }
 
 /* ================= DROPDOWN ================= */
@@ -1847,7 +1847,7 @@ calculatePerformance() {
 
 /* ================= LOGOUT ================= */
 .danger-bg {
-  background: #5f9ea0 !important;
+  background: var(--primary) !important;
   color: #ffffff !important;
 }
 
@@ -1962,7 +1962,7 @@ calculatePerformance() {
 .popup h3 {
   margin-bottom: 15px;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--text);
 }
 
 /* Table */
@@ -1980,7 +1980,7 @@ calculatePerformance() {
 
 .results-table th {
   background-color: #f5f5f5;
-  color: #555;
+  color: var(--text);
   font-weight: 600;
   border-bottom: 2px solid #eee;
 }
@@ -2003,8 +2003,8 @@ calculatePerformance() {
 
 /* Close Button */
 .close-btn {
-      background-color: #bec8c8;
-    color: #000000;
+      background-color: var(--primary);
+    color: var(--text);
   padding: 10px 25px;
   border: none;
   border-radius: 8px;

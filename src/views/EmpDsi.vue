@@ -5,7 +5,7 @@
       <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;"
+          style="height: 65px; background-color: white; border-radius: 9px;"
           alt="Logo"
         />
          </a>
@@ -231,7 +231,7 @@ export default {
 }
 
 .image-upload-card:hover {
-  border-color: cadetblue;
+  border-color: var(--primary);
   background: #eef6f6;
   transform: translateY(-2px);
 }
@@ -372,7 +372,7 @@ export default {
     z-index: 1000;
     width: 240px;
     height: 100vh;
-    background-color: #2c3e50;
+    background-color: var(--text);
   }
 
   .expanded-content {
@@ -391,7 +391,7 @@ export default {
 
 .card-header h3 {
   font-size: 18px;
-  color: #427172;
+  color: var(--text);
   margin: 0;
 }
 
@@ -402,7 +402,7 @@ export default {
 
 .card-message {
   font-size: 15px;
-  color: #444;
+  color: var(--text);
   margin-top: 5px;
   line-height: 1.5;
 }
@@ -419,7 +419,7 @@ export default {
 .toggle-btn,
 .generate-btn {
   padding: 6px 10px;
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   border: none;
   color: white;
   border-radius: 4px;
@@ -435,7 +435,7 @@ export default {
 
 .toggle-btn:hover,
 .generate-btn:hover {
-  background-color: #426b6c;
+  background-color: var(--text);
 }
 
 .user-table td .btn-group {
@@ -449,7 +449,7 @@ export default {
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #427778;
+  color: var(--text);
 }
 
 /* Header */
@@ -458,7 +458,7 @@ export default {
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: cadetblue; 
+ background-color: var(--primary); 
   color: white;
   padding: 8px 30px;
   display: flex;
@@ -521,7 +521,7 @@ export default {
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   font-weight: 600;
-  color: #495057;
+  color: var(--text);
 }
 
 .sidebar ul {
@@ -539,7 +539,7 @@ export default {
 }
 
 .sidebar li:hover {
-  background-color: #5f9ea0;
+  background-color: var(--primary);
   color: white;
   font-weight: 700;
 }
@@ -556,10 +556,10 @@ export default {
 
 h2 {
   margin-bottom: 30px;
-  color: #417475;
+  color: var(--text);
   font-weight: 700;
   font-size: 21px;
-  border-bottom: 2px solid #5f9ea0;
+  border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
 }
 
@@ -630,7 +630,7 @@ h2 {
   font-weight: 800;
   text-align: center;
   margin-bottom: 35px;
-  color: #518587;
+  color: var(--text);
   letter-spacing: 1.3px;
 }
 
@@ -663,7 +663,7 @@ h2 {
 .input-group label {
   font-weight: 700;
   margin-bottom: 10px;
-  color: #427778;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -685,7 +685,7 @@ h2 {
 .input-group input:focus,
 .input-group select:focus,
 .input-group textarea:focus {
-  border-color: #5f9ea0;
+  border-color: var(--primary);
   outline: none;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
   background-color: #f9fbff;
@@ -792,7 +792,7 @@ h2 {
 
 .status-btn {
   background: #e5e7eb;
-  color: #374151;
+  color: var(--text);
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px dashed #9ca3af;
@@ -834,7 +834,7 @@ h2 {
 
 .status-btn {
   background: #e5e7eb;
-  color: #374151;
+  color: var(--text);
   border: 1px dashed #9ca3af;
   border-radius: 8px;
   padding: 8px 12px;
@@ -908,7 +908,7 @@ h2 {
 
 /* Header */
 .dsi-table thead th {
-  background: linear-gradient(135deg, cadetblue, #5f9ea0);
+  background: linear-gradient(135deg, var(--primary), var(--primary));
   color: white;
   font-weight: 700;
   border-left: 1px ridge #6cc4c700;
@@ -937,7 +937,7 @@ h2 {
 .dsi-table td {
   padding: 12px 14px;
   font-size: 14px;
-  color: #374151;
+  color: var(--text);
   /* border-bottom: 1px solid #e5e7eb; */
   vertical-align: middle;
 }
