@@ -29,48 +29,94 @@
         <!-- Dashboard Cards -->
  <div class="dashboard-slider-container">
     
+<div v-if="showSkeleton" class="dashboard-slider skeleton-wrapper">
+  <div
+    v-for="n in 6"
+    :key="n"
+    class="dashboard-card skeleton-card"
+  >
+    <div class="skeleton-label"></div>
+    <div class="skeleton-text"></div>
+  </div>
+</div>
 
     <!-- Scrollable Card Section -->
-    <div class="dashboard-slider" ref="slider">
+    <div v-else class="dashboard-slider" ref="slider">
       <!-- Left Arrow -->
     <!-- <button class="scroll-arrow left" @click="scrollLeft">
       <i class="fas fa-chevron-left"></i>
     </button> -->
-      <div class="dashboard-card clickable-card temp" @click="goTo('employees')">
+      <div class="dashboard-card clickable-card temp" @click="goTo('employees')" v-if="currentUserName !== 'crm'" >
         <div>
           <p class="label label-emp">Employees 👨🏻‍💼</p>
           <p class="tagline">Manage all employees</p>
         </div>
       </div>
-       <div class="dashboard-card clickable-card leavetype" @click="goTo('Customerregistration')">
+        <div 
+  class="dashboard-card clickable-card leavetype" 
+  v-if="currentUserName !== 'hr'" 
+  @click="goTo('Customerregistration')"
+>
+  <div>
+    <p class="label label-cust">Customers & PO 🤝</p>
+    <p class="tagline">Our clients & Purchase Orders</p>
+  </div>
+</div>
+
+ <div class="dashboard-card clickable-card temp" @click="goTo('employee/followup')" v-if="currentUserName !== 'hr'" >
         <div>
-          <p class="label label-cust">CRM 🤝</p>
-          <p class="tagline">Our clients and PO</p>
+          <p class="label label-emp">follow-up 📞</p>
+          <p class="tagline">Quotations follow-up</p>
         </div>
       </div>
 
-      <div class="dashboard-card clickable-card attendance" @click="goTo('empattendanceadmin')">
+         <div class="dashboard-card clickable-card Leaves" @click="goTo('employee/amcrecord')" v-if="currentUserName !== 'hr'">
+        <div>
+          <p class="label label-leave">AMC Record Data 📄</p>
+          <p class="tagline">View Current Service status</p>
+        </div>
+      </div>
+
+      <div 
+  class="dashboard-card clickable-card leavetype" 
+  v-if="currentUserName !== 'crm'" 
+  @click="goTo('workreport')"
+>
+  <div>
+    <p class="label label-cust">Work Report & Tasks 📄</p>
+    <p class="tagline">Employees Tasks Management</p>
+  </div>
+</div>
+
+ <div class="dashboard-card clickable-card attendance" @click="goTo('rcahelp')" v-if="currentUserName !== 'hr'">
+        <div>
+          <p class="label label-att">RCA 🗪</p>
+          <p class="tagline">Root Cause Analysis</p>
+        </div>
+      </div>
+      
+      <div class="dashboard-card clickable-card attendance" @click="goTo('empattendanceadmin')" v-if="currentUserName !== 'crm'">
         <div>
           <p class="label label-att">Attendance 🗓️</p>
           <p class="tagline">Track employee check-ins</p>
         </div>
       </div>
 
-      <div class="dashboard-card clickable-card announcement" @click="goTo('announcement')">
+      <div class="dashboard-card clickable-card announcement" @click="goTo('announcement')" v-if="currentUserName !== 'crm'">
         <div>
           <p class="label label-ann">Announcement 📢</p>
           <p class="tagline">Share news & updates</p>
         </div>
       </div>
 
-      <div class="dashboard-card clickable-card dept" @click="goTo('managedepartments')">
+      <div class="dashboard-card clickable-card dept" @click="goTo('managedepartments')" v-if="currentUserName !== 'crm'">
         <div>
           <p class="label label-dept">Departments 🏛️</p>
           <p class="tagline">Organize teams and roles</p>
         </div>
       </div>
 
-      <div class="dashboard-card clickable-card Leaves" @click="goToLeaveApplications">
+      <div class="dashboard-card clickable-card Leaves" @click="goToLeaveApplications" v-if="currentUserName !== 'crm'">
         <div>
           <p class="label label-leave">Leave Applications 🏖️</p>
           <p class="tagline">Review and approve requests</p>
@@ -87,39 +133,10 @@
    
   </div>
 
-        <!-- Common Month Switcher -->
-        <div
-          class="month-switcher"
-          style="display: flex; justify-content: center; align-items: center; margin-top: 30px; gap: 12px; background: #fff; padding: 8px 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);"
-        >
-          <button
-            @click="prevMonth"
-            style="background: #f7f7f7; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; color: var(--text); display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
-            @mouseover="hover=true"
-            @mouseleave="hover=false"
-            :style="{ background: hover ? '#e0e0e0' : '#f7f7f7' }"
-          >
-            ‹
-          </button>
-
-          <span style="font-size: 16px; font-weight: 600; color: var(--text); min-width: 80px; text-align: center;">
-            {{ selectedMonthName }}
-          </span>
-
-          <button
-            @click="nextMonth"
-            style="background: #f7f7f7; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 18px; font-weight: bold; color: var(--text); display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
-            @mouseover="hoverNext=true"
-            @mouseleave="hoverNext=false"
-            :style="{ background: hoverNext ? '#e0e0e0' : '#f7f7f7' }"
-          >
-            ›
-          </button>
-        </div>
-
+        
         <!-- Pie Charts Row -->
         <div class="pie-slider-wrapper">
-  <div class="pie-slider">
+  <div class="pie-slider" v-if="currentUserName !== 'hr'">
 
           <div
             v-for="(chartData, index) in pieChartsData"
@@ -221,6 +238,9 @@ export default {
   components: { Sidebar },
   data() {
     return {
+       showSkeleton: true,
+      showLoader: true,
+       currentUserName: '', 
       hover: false,
       hoverNext: false,
       currentMonth: '',
@@ -575,23 +595,37 @@ async generateMonthlyRevenue() {
     }
   },
 
-  mounted() {
-    const now = new Date()
-    this.currentMonth = `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`
-    this.checkIfMobile()
-    window.addEventListener('resize', this.checkIfMobile)
+ mounted() {
+   setTimeout(() => {
+    // this.showLoader = false;
+     this.showSkeleton = false;
+  }, 1000); // 2 seconds
+  const now = new Date()
+  this.currentMonth = `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`
+  this.checkIfMobile()
+  window.addEventListener('resize', this.checkIfMobile)
 
-    axios.get('https://employees.archenterprises.co.in/api/api/total-employees')
-      .then(response => { this.totalEmployees = response.data.count })
-      .catch(err => console.error(err))
+  // Fetch total employees
+  axios.get('https://employees.archenterprises.co.in/api/api/total-employees')
+    .then(response => { this.totalEmployees = response.data.count })
+    .catch(err => console.error(err))
 
-    this.generateMonthlyRevenue()
-    this.$nextTick(() => {
-   
-      this.updateDashboardForSelectedMonth()
-      this.fetchBirthdayReminders() // 🎂 Fetch birthdays
-    })
-  }
+  // ✅ Fetch current logged-in admin info
+  axios.get('https://employees.archenterprises.co.in/api/api/admin-info', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } // include auth token
+  })
+  .then(res => {
+    this.currentUserName = res.data.name.toLowerCase() // store name in lowercase
+  })
+  .catch(err => console.error('Error fetching admin info:', err))
+
+  this.generateMonthlyRevenue()
+  this.$nextTick(() => {
+    this.updateDashboardForSelectedMonth()
+    this.fetchBirthdayReminders() // 🎂 Fetch birthdays
+  })
+}
+
 }
 </script>
 
@@ -2051,6 +2085,7 @@ h2 {
 
 /* Horizontal scrolling row */
 .dashboard-slider {
+  /* flex-flow: wrap; */
   display: flex;
   gap: 16px;
   overflow-x: auto;          /* ✅ enable horizontal scroll */
@@ -2098,6 +2133,81 @@ h2 {
   .dashboard-card {
     min-width: 180px;
   }
+}
+
+.dashboard-loader {
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--text);
+  animation: fadeIn 0.5s ease-in;
+}
+
+.spinner {
+  width: 45px;
+  height: 45px;
+  border: 4px solid #ddd;
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.skeleton-wrapper {
+  gap: 16px;
+}
+
+.skeleton-card {
+  pointer-events: none;
+  background: #e5e7eb;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.6),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+.skeleton-label {
+  width: 60%;
+  height: 16px;
+  background: #d1d5db;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.skeleton-text {
+  width: 80%;
+  height: 12px;
+  background: #d1d5db;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 </style>

@@ -10,8 +10,8 @@
       class="profile-pic"
     />
   </div>
+<h2 class="sidebar-title">{{ adminName }}</h2>
 
-  <h2 class="sidebar-title">Admin</h2>
 
   <!-- NEW WRAPPER ADDED HERE -->
   <div class="menu-section">
@@ -399,6 +399,8 @@ import axios from 'axios'
 export default {
   data() {
     return {
+       adminEmail: '',
+         adminName: '',
         searchQuery: "",
       results: [],
       showPopup: false,
@@ -460,6 +462,27 @@ computed: {
 
 
   methods: {
+
+async fetchAdmin() {
+  try {
+    const res = await axios.get(
+      "https://employees.archenterprises.co.in/api/api/admin-info",
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      }
+    );
+
+    this.adminName = res.data.name;
+    this.adminEmail = res.data.email;
+
+  } catch (error) {
+    console.error("Admin info error:", error);
+  }
+},
+
+
      handleSearch() {
       if (this.searchQuery.length < 1) {
         this.results = [];
@@ -904,6 +927,7 @@ calculatePerformance() {
 
   },
   mounted() {
+      this.fetchAdmin();
     const token = localStorage.getItem('token');
     if (!token) {
       this.$router.push('/auth');
