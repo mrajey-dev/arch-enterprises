@@ -5,7 +5,7 @@
     <!-- Header -->
     <header class="header">
       <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px; background-color: white; border-radius: 9px;" alt="Logo">
+  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;  border-radius: 9px;" alt="Logo">
 </a>
 
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>

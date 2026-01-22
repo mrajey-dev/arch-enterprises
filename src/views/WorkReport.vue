@@ -6,11 +6,11 @@
      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px; background-color: white; border-radius: 9px;"
+          style="height: 65px;  border-radius: 9px;"
           alt="Logo"
         />
          </a>
-         🅰️RCH360⚙️
+         Arch 360
      
       </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
@@ -486,10 +486,10 @@ deleteTask(id) {
 .head-title{
       color: white;
     display: flex;
-    font-size: 17px;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+font-family: cursive;
+    align-items: center; width: 100%;
 }
 .edit-task-btn{
   background-color: var(--primary);

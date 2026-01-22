@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="card">
     <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px; background-color: white; border-radius: 9px;" alt="Logo">
+  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;  border-radius: 9px;" alt="Logo">
 </a>
 
 
@@ -494,7 +494,7 @@ const response = await axios.post(url, {
 }
 
 .card {
-  background: var(--sidebar);
+  background: #ffffffa8;
   padding: 35px 30px;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);

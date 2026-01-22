@@ -913,24 +913,24 @@ if (Array.isArray(data.items)) {
       alert("Quotation Saved Successfully!");
     },
 
-   printQuotation() {
+printQuotation() {
   const quoteId = this.form.quote_no;
+
   const company = (this.form.bill_to.company || "Customer")
-    .replace(/[^a-zA-Z0-9]/g, "_"); // sanitize filename
+    .replace(/\./g, ""); // ❌ remove dot only
 
   const originalTitle = document.title;
-
   document.title = `Quotation-${quoteId}-${company}`;
 
   this.$nextTick(() => {
     window.print();
 
-    // Restore original title after print
     setTimeout(() => {
       document.title = originalTitle;
     }, 500);
   });
 }
+
 
   }
 };

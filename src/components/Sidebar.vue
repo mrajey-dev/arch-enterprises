@@ -15,7 +15,7 @@
 
   <!-- NEW WRAPPER ADDED HERE -->
   <div class="menu-section">
-     <div class="search-bar">
+     <div class="search-bar" v-if="adminName && adminName.toLowerCase() !== 'hr'">
       <input
         type="text"
         placeholder="Search..."
@@ -28,9 +28,11 @@
       <li @click="goTo('dashboard')">
         <i class="fas fa-tachometer-alt"></i> Dashboard
       </li>
-
+<li @click="goTo('rcahelp')">
+            <i class="fas fa-comments" aria-hidden="true"></i> Chat
+          </li>
       <!-- Leaves Dropdown -->
-      <li class="dropdown">
+      <li class="dropdown" v-if="adminName && adminName.toLowerCase() !== 'crm'">
         <div class="" @click="toggleDropdown">
           <i class="fas fa-calendar-alt"></i> Leaves
           <i class="fas fa-caret-down" style="margin-left:auto;"></i>
@@ -51,24 +53,22 @@
         </ul>
       </li>
 
-      <li @click="goTo('employees')">
+      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('employees')">
         <i class="fas fa-users"></i> Manage Employees
       </li>
 
-      <li @click="goTo('manageleavetype')">
+      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('manageleavetype')">
         <i class="fas fa-sliders-h"></i> Manage Leave Type
       </li>
 
-      <li @click="goTo('workreport')">
+      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('workreport')">
         <i class="fas fa-clipboard-list"></i> Work Report & Task
       </li>
- <li @click="goTo('empdsi')">
+ <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('empdsi')">
             <i class="fas fa-tasks"></i> View DSI
           </li>
-           <li @click="goTo('rcahelp')">
-            <i class="fas fa-comments" aria-hidden="true"></i> Chat
-          </li>
-      <li @click="showPerformanceModal = true">
+           
+      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="showPerformanceModal = true">
         <i class="fas fa-chart-line"></i> Performance
       </li>
 

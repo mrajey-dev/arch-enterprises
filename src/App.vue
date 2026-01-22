@@ -9,13 +9,13 @@
     <option value="default">⚪ Default</option>
     <option value="blue">🟦 Blue</option>
     <option value="green">🟩 Green</option>
-    <option value="dark">🌙 Dark</option>
+    <!-- <option value="dark">🌙 Dark</option> -->
     <option value="orange">🟧 Orange</option>
     <option value="red">🟥 Red</option>
-    <option value="amber">🟨 Yellow</option>
+    <!-- <option value="amber">🟨 Yellow</option> -->
     <option value="teal">🟦 Teal</option>
-    <option value="dark-blue">🌌 Dark Blue</option>
-    <option value="pink">🌸 Pink</option>
+    <option value="purple">🟥 Purple</option>
+    <!-- <option value="pink">🌸 Pink</option> -->
   </select>
 </div>
 
@@ -99,18 +99,19 @@ export default {
 }
 
 [data-theme="green"] {
-  --primary: #3fc470bd;
+  --primary: #3fc470;
   --sidebar: #b6f7ca;
   --card: #3fc470bd;
   --text: #065f46;
   --text-white: #ffffff;
 }
 
+
 [data-theme="blue"] {
-  --primary: #007bff;
+  --primary: #034081;
   --sidebar: #b4ccf9;
-  --card: #007bff;
-  --text: #053e7b;
+  --card: #034081;
+  --text: #042345;
   --text-white: #ffffff;
 }
 
@@ -123,34 +124,34 @@ export default {
 }
 
 [data-theme="orange"] {
-  --primary: #f97316;
+  --primary: #ae4c08;
   --sidebar: #fed7aa;
-  --card: #f97316;
-  --text: #7c2d12;
+  --card: #ae4c08;
+  --text: #691f06;
   --text-white: #ffffff;
 }
 
 [data-theme="red"] {
-  --primary: #ef4444;
+  --primary: #a80606;
   --sidebar: #fecaca;
-  --card: #ef4444;
-  --text: #7f1d1d;
+  --card: #a80606;
+  --text: #540101;
   --text-white: #ffffff;
 }
 
 
 [data-theme="amber"] {
-  --primary: #f59e0b;
-  --sidebar: #fde68a;
-  --card: #f59e0b;
-  --text: #78350f;
+  --primary: #afb805;
+  --sidebar: #afb80569;
+  --card: #afb805;
+  --text: #727802;
   --text-white: #ffffff;
 }
 
 [data-theme="teal"] {
-  --primary: #14b8a6;
-  --sidebar: #99f6e4;
-  --card: #14b8a6;
+  --primary: #08a594;
+  --sidebar: #0081734f;
+  --card: #08a594;
   --text: #134e4a;
   --text-white: #ffffff;
 }
@@ -162,11 +163,11 @@ export default {
   --text: #831843;
   --text-white: #ffffff;
 }
-[data-theme="dark-blue"] {
-  --primary: #0f172a;
-  --sidebar: #455774;
-  --card: #0f172a;
-  --text: #0f172a;
+[data-theme="purple"] {
+  --primary: #8d004e;
+  --sidebar: #8d004e2e;
+  --card: #8d004e;
+  --text: #580433;
   --text-white: #ffffff;
 }
 
@@ -257,7 +258,7 @@ export default {
   top: 28px;
     right: 54px;
   z-index: 9999;
-  background: var(--sidebar);
+  background: #ffffff8c;
   padding: 10px 14px;
   border-radius: 16px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);

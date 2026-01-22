@@ -6,11 +6,11 @@
         <a href="https://employees.archenterprises.co.in/">
           <img
             src="https://archenterprises.co.in/ajay/ajay.png"
-            style="height: 65px; background-color: white; border-radius: 9px;"
+            style="height: 65px;  border-radius: 9px;"
             alt="Logo"
           />
         </a>
-        🅰️RCH360⚙️
+        Arch 360
       </div>
 
       <i
@@ -1088,7 +1088,7 @@ h2 {
 }
 
 .ask-box {
-  background: var(--sidebar);
+  background: var(--primary);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 30px;
@@ -1106,7 +1106,7 @@ h2 {
 }
 
 .ask-box button {
-  background: var(--primary);
+  background: #ffffff94;
   color: white;
   padding: 10px 16px;
   border-radius: 6px;
@@ -1322,7 +1322,7 @@ button{
 }
 :deep(.mention-highlight) {
   font-weight: 800!important;
-  color: #0a58ca!important; /* optional */
+  color: var(--text)!important; /* optional */
 }
 
 .head-title{
@@ -1330,6 +1330,7 @@ button{
     display: flex;
     gap: 7px;
     text-decoration: none;
+font-family: cursive;
     align-items: center; width: 100%;
 }
 @media (max-width: 768px) {
@@ -1354,7 +1355,7 @@ button{
 .answer-header .date {
   margin-left: auto;
   font-size: 12px;
-  color: var(--text-white);
+  color: var(--text);
 }
 
 .qa-actions {

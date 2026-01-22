@@ -5,11 +5,11 @@
    <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px; background-color: white; border-radius: 9px;"
+          style="height: 65px;  border-radius: 9px;"
           alt="Logo"
         />
          </a>
-         🅰️RCH360⚙️
+         Arch 360
      
       </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
@@ -135,8 +135,8 @@
 
         
         <!-- Pie Charts Row -->
-        <div class="pie-slider-wrapper">
-  <div class="pie-slider" v-if="currentUserName !== 'hr'">
+        <div class="pie-slider-wrapper" v-if="currentUserName !== 'hr'">
+  <div class="pie-slider" >
 
           <div
             v-for="(chartData, index) in pieChartsData"
@@ -161,7 +161,7 @@
         </div>
 
        <!-- Monthly Revenue Row -->
-<div class="monthly-revenue-row" style="margin-top: 30px;">
+<div class="monthly-revenue-row" style="margin-top: 30px;" v-if="currentUserName !== 'crm'">
   <div
     class="bar-chart-container"
     style="width: 100%; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
@@ -303,6 +303,47 @@ export default {
     }
   },
   methods: {
+    async fetchAllTimePieData() {
+  try {
+    const [
+      pendingRes,
+      completedRes,
+      serviceRes,
+      materialRes,
+      visitRes
+    ] = await Promise.allSettled([
+      axios.get('https://employees.archenterprises.co.in/api/api/tasks/pending-count'),
+      axios.get('https://employees.archenterprises.co.in/api/api/tasks/completed-count'),
+      axios.get('https://employees.archenterprises.co.in/api/api/service-assign/status-count'),
+      axios.get('https://employees.archenterprises.co.in/api/api/material-orders-supply-status'),
+      axios.get('https://employees.archenterprises.co.in/api/api/visit-assign/status-count')
+    ])
+
+    const getData = (res, field) =>
+      res.status === 'fulfilled' && res.value?.data?.[field]
+        ? res.value.data[field]
+        : 0
+
+    this.tasksRecorder.pendingTasks =
+      getData(pendingRes, 'pendingTasks') || getData(pendingRes, 'pending')
+
+    this.tasksRecorder.completedTasks =
+      getData(completedRes, 'completedTasks') || getData(completedRes, 'completed')
+
+    this.tasksRecorder.ordersPending = getData(serviceRes, 'pending')
+    this.tasksRecorder.ordersCompleted = getData(serviceRes, 'completed')
+
+    this.tasksRecorder.materialOrdersPending = getData(materialRes, 'pending')
+    this.tasksRecorder.materialOrdersCompleted = getData(materialRes, 'completed')
+
+    this.tasksRecorder.pendingVisits = getData(visitRes, 'pending')
+    this.tasksRecorder.completedVisits = getData(visitRes, 'completed')
+
+    this.updatePieCharts()
+  } catch (err) {
+    console.error('Pie chart all-time error:', err)
+  }
+},
   scrollLeft() {
       const slider = this.$refs.slider;
       slider.scrollBy({ left: -300, behavior: 'smooth' });
@@ -362,7 +403,7 @@ export default {
     this.tasksRecorder.completedVisits = getData(visitRes, 'completed')
 
     this.generateMonthlyRevenue()
-    this.updatePieCharts()
+    // this.updatePieCharts()
     this.renderRevenueBarChart()
 
     this.currentMonth = `${this.months[this.selectedMonth]} ${this.selectedYear}`
@@ -469,14 +510,14 @@ async generateMonthlyRevenue() {
 
     updatePieCharts() {
       this.pieChartsData = [
-        {
-          title: 'Tasks Status',
-          canvasId: 'tasksPieChart1',
-          tasks: {
-            'Pending Tasks': this.tasksRecorder.pendingTasks,
-            'Completed Tasks': this.tasksRecorder.completedTasks
-          }
-        },
+        // {
+        //   title: 'Tasks Status',
+        //   canvasId: 'tasksPieChart1',
+        //   tasks: {
+        //     'Pending Tasks': this.tasksRecorder.pendingTasks,
+        //     'Completed Tasks': this.tasksRecorder.completedTasks
+        //   }
+        // },
         {
           title: 'Service Orders Status',
           canvasId: 'tasksPieChart2',
@@ -596,6 +637,7 @@ async generateMonthlyRevenue() {
   },
 
  mounted() {
+  
    setTimeout(() => {
     // this.showLoader = false;
      this.showSkeleton = false;
@@ -622,6 +664,7 @@ async generateMonthlyRevenue() {
   this.generateMonthlyRevenue()
   this.$nextTick(() => {
     this.updateDashboardForSelectedMonth()
+    this.fetchAllTimePieData()
     this.fetchBirthdayReminders() // 🎂 Fetch birthdays
   })
 }
@@ -637,10 +680,10 @@ async generateMonthlyRevenue() {
 .head-title{
       color: white;
     display: flex;
-    font-size: 17px;
     gap: 7px;
     text-decoration: none;
-    align-items: center;
+font-family: cursive;
+    align-items: center; width: 100%;
 }
 .dashboard-slider-container {
   position: relative;

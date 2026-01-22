@@ -51,7 +51,9 @@
           <li @click="goTo('employee/dashboard')">
             <i class="fas fa-tachometer-alt"></i> Dashboard
           </li>
-
+ <li @click="goTo('employee/help')">
+            <i class="fas fa-comments" aria-hidden="true"></i> Chat
+          </li>
           <!-- Leave Dropdown -->
           <li class="dropdown-wrapper">
             <div @click="toggleLeaveDropdown">
@@ -108,9 +110,7 @@
            <li @click="goTo('employee/mydsi')">
             <i class="fas fa-tasks"></i> DSI
           </li>
-           <li @click="goTo('employee/help')">
-            <i class="fas fa-comments" aria-hidden="true"></i> Chat
-          </li>
+          
           <li @click="goTo('employee/myprofile')">
             <i class="fa-solid fa-user"></i> My Profile
           </li>

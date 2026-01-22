@@ -5,11 +5,11 @@
     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
         <img
           src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px; background-color: white; border-radius: 9px;"
+          style="height: 65px;  border-radius: 9px;"
           alt="Logo"
         />
          </a>
-         🅰️RCH360⚙️
+         Arch 360
      
       </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
@@ -65,10 +65,21 @@
 
               <!-- Right -->
               <div class="profile-right">
-                <div class="profile-row">
-                  <label>Name</label>
-                  <input v-model="form.name">
-                </div>
+           <div class="profile-row">
+  <label>Name *</label>
+  <input
+    v-model="form.name"
+    @input="validateName"
+    maxlength="20"
+    placeholder="Enter name"
+    required
+  />
+ 
+</div>
+ <small v-if="nameError" class="error-text">
+    Name is required
+  </small>
+
                  <div class="profile-row">
                   <label>Handle</label>
                   <input v-model="form.handle" disabled>
@@ -79,33 +90,82 @@
                   <input v-model="form.email" disabled >
                 </div>
 
-                <div class="profile-row">
-                  <label>Mobile</label>
-                  <input v-model="form.mobile">
-                </div>
+<div class="profile-row">
+  <label>Mobile *</label>
+  <input
+    ref="mobileInput"
+    :value="formattedMobile"
+    @keydown="allowOnlyNumbers"
+    @input="handleMobile"
+    placeholder="+911234567890"
+  />
 
-                <div class="profile-row">
-                  <label>Gender</label>
-                  <select v-model="form.gender">
-                    <option>Male</option>
-                    <option>Female</option>
-                  </select>
-                </div>
+</div>
+  <small v-if="mobileError" class="error-text">
+    Mobile number is required
+  </small>
 
-                <div class="profile-row">
-                  <label>Address</label>
-                  <input v-model="form.address">
-                </div>
 
-                <div class="profile-row">
-                  <label>City</label>
-                  <input v-model="form.city">
-                </div>
 
-                <div class="profile-row">
-                  <label>Blood Group</label>
-                  <input v-model="form.bloodgroup">
-                </div>
+
+<div class="profile-row">
+  <label>Gender *</label>
+  <select v-model="form.gender">
+    <option value="" disabled>Select gender</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+    <option value="Other">Other</option>
+    <option value="Non-binary">Non-binary</option>
+    <option value="Transgender">Transgender</option>
+    <option value="Prefer not to say">Prefer not to say</option>
+  </select>
+</div>
+<div class="profile-row">
+  <label>Address *</label>
+  <input
+    v-model="form.address"
+    maxlength="250"
+    placeholder="Enter address"
+    @input="validateAddress"
+    required
+  />
+
+</div>
+  <small v-if="addressError" class="error-text">
+    Address is required
+  </small>
+
+<div class="profile-row">
+  <label>City *</label>
+  <input
+    v-model="form.city"
+    @input="validateCity"
+    maxlength="20"
+    placeholder="Enter city"
+    required
+  />
+
+</div>
+  <small v-if="cityError" class="error-text">
+    City is required
+  </small>
+
+
+               <div class="profile-row">
+  <label>Blood Group *</label>
+  <select v-model="form.bloodgroup">
+    <option value="" disabled>Select blood group</option>
+    <option value="A+">A+</option>
+    <option value="A-">A-</option>
+    <option value="B+">B+</option>
+    <option value="B-">B-</option>
+    <option value="AB+">AB+</option>
+    <option value="AB-">AB-</option>
+    <option value="O+">O+</option>
+    <option value="O-">O-</option>
+  </select>
+</div>
+
 
                 <div class="profile-actions">
                   <button type="submit" class="save-btn">💾 Save</button>
@@ -136,6 +196,10 @@ export default {
 
   data() {
     return {
+          cityError: false,
+         addressError: false,
+         mobileError: false,
+        nameError: false,
       isMobile: false,
       isSidebarVisible: true,
 
@@ -143,12 +207,15 @@ export default {
 
       // edit profile states
       editMode: false,
-      form: {},
+      form: { mobile: ''},
       previewImage: null
     }
   },
 
   computed: {
+     formattedMobile() {
+      return this.form.mobile ? `+91${this.form.mobile}` : '+91';
+  },
     profileImage() {
       return this.user?.profile_photo
         ? `https://employees.archenterprises.co.in/backend/storage/app/public/${this.user.profile_photo}`
@@ -167,6 +234,93 @@ export default {
   },
 
   methods: {
+     validateAddress() {
+    // Prevent only-spaces input
+    this.form.address = this.form.address.replace(/\s+/g, ' ').trimStart();
+
+    // Required check
+    this.addressError = this.form.address.trim() === '';
+  },
+allowOnlyNumbers(e) {
+    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
+    if (allowedKeys.includes(e.key)) return;
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  },
+
+
+ handleMobile(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.startsWith('91')) value = value.slice(2);
+    this.form.mobile = value.slice(0, 10);
+
+    // Live validation
+    this.mobileError = this.form.mobile.length !== 10;
+  },
+
+submitForm() {
+  // Mobile
+  if (!this.form.mobile || this.form.mobile.length !== 10) {
+    this.mobileError = true
+    this.$refs.mobileInput.focus()
+    return
+  } else {
+    this.mobileError = false
+  }
+
+  // Name
+  if (!this.form.name || this.form.name.trim() === '') {
+    this.nameError = true
+    this.$refs.nameInput.focus()
+    return
+  } else {
+    this.nameError = false
+  }
+
+  // City
+  if (!this.form.city || this.form.city.trim() === '') {
+    this.cityError = true
+    this.$refs.cityInput.focus()
+    return
+  } else {
+    this.cityError = false
+  }
+
+  // Address
+  if (!this.form.address || this.form.address.trim() === '') {
+    this.addressError = true
+    this.$refs.addressInput.focus()
+    return
+  } else {
+    this.addressError = false
+  }
+
+  // All good → call API
+  this.updateProfile()
+},
+
+validateCity() {
+    // Allow only letters and spaces
+    this.form.city = this.form.city
+      .replace(/[^a-zA-Z\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trimStart();
+
+    // Required check
+    this.cityError = this.form.city.trim() === '';
+  },
+
+  validateName() {
+    this.form.name = this.form.name
+      .replace(/[^a-zA-Z\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trimStart();
+
+    // Empty check
+    this.nameError = this.form.name.trim() === '';
+  },
+
+
+
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -238,11 +392,17 @@ export default {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.error-text {
+  color: red;
+  font-size: 12px;
+}
+
 .head-title{
       color: white;
     display: flex;
     gap: 7px;
     text-decoration: none;
+font-family: cursive;
     align-items: center; width: 100%;
 }
 @media (max-width: 768px) {
@@ -395,7 +555,7 @@ export default {
   flex-direction: column;
   gap: 30px;
   padding: 40px 30px;
-  background: linear-gradient(135deg, #ffffff 0%, #f3f6f9 100%);
+  background: linear-gradient(135deg,  var(--sidebar), var(--sidebar));
   border-radius: 20px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
@@ -522,7 +682,7 @@ export default {
   align-items: center;
   gap: 8px;
   width: 162px;
-  background: linear-gradient(135deg, var(--primary), var(--primary));
+  background: linear-gradient(135deg, var(--text), var(--text));
   color: #fff;
   border: none;
   padding: 12px 22px;
@@ -575,7 +735,7 @@ export default {
   display: block;
 }
 .save-btn {
-  background: linear-gradient(135deg, var(--primary), var(--primary));
+  background: linear-gradient(135deg, var(--text), var(--text));
   color: white;
   padding: 12px 28px;
   border-radius: 30px;

@@ -32,7 +32,7 @@
             </tr>
           </thead>
           <tbody>
-           <tr v-for="(q, index) in sortedQuotations" :key="q.id"
+           <tr v-for="(q, index) in filteredAndSortedQuotations" :key="q.id"
               :class="{
                 'approved-row': q.status === 'approved',
                 'pending-row': q.status === 'pending',
@@ -141,12 +141,15 @@ export default {
       return new Date(b.created_at) - new Date(a.created_at);
     });
   },
- filteredQuotations() {
-    if (!this.selectedStatus) {
-      return this.followUpQuotations;
+filteredAndSortedQuotations() {
+    let list = this.followUpQuotations;
+
+    if (this.selectedStatus) {
+      list = list.filter(q => q.status === this.selectedStatus);
     }
-    return this.followUpQuotations.filter(
-      q => q.status === this.selectedStatus
+
+    return [...list].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
   }
 },
@@ -175,10 +178,11 @@ export default {
 },
 
 
-    formatCompanyName(name) {
-    if (!name) return '';
-    return name.replace(/[^A-Za-z0-9._-]/g, '_');
-  },
+   formatCompanyName(name) {
+  if (!name) return '';
+  return name.replace(/[^A-Za-z0-9_-]/g, '_');
+},
+
 
 saveRemark(q) {
   axios.put(`/api/quotations/${q.id}`, { remarks: q.remarks })
