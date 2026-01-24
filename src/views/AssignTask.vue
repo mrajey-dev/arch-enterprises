@@ -678,6 +678,7 @@ h2 {
   font-size: 21px;
   border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
+  text-transform: uppercase;
 }
 
 /* User Table */

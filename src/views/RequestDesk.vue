@@ -28,7 +28,7 @@
     <div class="spinner-border text-primary" role="status">
       <span class="sr-only">Loading...</span>
     </div>
-    <p>Loading...</p>
+    <p>Loading requests...</p>
   </div>
 
   <!-- Request Tabs -->
@@ -263,6 +263,7 @@ h2 {
   font-size: 21px;
   border-bottom: 2px solid var(--primary);
   padding-bottom: 8px;
+  text-transform: uppercase;
 }
 
 /* Mobile */

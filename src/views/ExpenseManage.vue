@@ -25,7 +25,7 @@
         <!-- OFFICE EXPENSE MANAGEMENT -->
         <div class="expense-box">
           <div class="expense-header">
-            <h3>Office Expense Management</h3>
+            <h3></h3>
           <button class="add-expense-btn" @click="openExpenseModal">
   <i class="fas fa-plus"></i> Add Expense
 </button>
@@ -36,61 +36,145 @@
           <div class="expense-summary">
             <div class="summary-card">
               <i class="fas fa-wallet"></i>
-              <p class="amount">₹ 1,25,000</p>
+              <p class="amount">₹ {{ summary.total }}</p>
               <span>Total Expenses</span>
             </div>
 
-            <div class="summary-card">
+            <!-- <div class="summary-card">
               <i class="fas fa-hourglass-half"></i>
-              <p class="amount">₹ 32,000</p>
+             <p class="amount">₹ {{ summary.pending }}</p>
               <span>Pending Approval</span>
             </div>
 
             <div class="summary-card approved">
               <i class="fas fa-check-circle"></i>
-              <p class="amount">₹ 78,000</p>
+             <p class="amount">₹ {{ summary.approved }}</p>
               <span>Approved</span>
             </div>
 
             <div class="summary-card rejected">
               <i class="fas fa-times-circle"></i>
-              <p class="amount">₹ 15,000</p>
+              <p class="amount">₹ {{ summary.rejected }}</p>
               <span>Rejected</span>
-            </div>
+            </div> -->
           </div>
 
           <!-- CATEGORIES -->
           <div class="expense-categories">
-            <div class="category-card">
-              <i class="fas fa-bolt"></i>
-              <p>Electricity</p>
-            </div>
+            <div
+  class="category-card"
+  :class="{ active: selectedCategory === 'Electricity' }"
+  @click="filterByCategory('Electricity')"
+>
+  <i class="fas fa-bolt"></i>
+  <p>Electricity</p>
+</div>
 
-            <div class="category-card">
-              <i class="fas fa-wifi"></i>
-              <p>Internet</p>
-            </div>
+<div
+  class="category-card"
+  :class="{ active: selectedCategory === 'Internet' }"
+  @click="filterByCategory('Internet')"
+>
+  <i class="fas fa-wifi"></i>
+  <p>Internet</p>
+</div>
 
-            <div class="category-card">
-              <i class="fas fa-tools"></i>
-              <p>Maintenance</p>
-            </div>
+<div
+  class="category-card"
+  :class="{ active: selectedCategory === 'Maintenance' }"
+  @click="filterByCategory('Maintenance')"
+>
+  <i class="fas fa-tools"></i>
+  <p>Maintenance</p>
+</div>
 
-            <div class="category-card">
-              <i class="fas fa-print"></i>
-              <p>Office Supplies</p>
-            </div>
+<div
+  class="category-card"
+  :class="{ active: selectedCategory === 'Office Supplies' }"
+  @click="filterByCategory('Office Supplies')"
+>
+  <i class="fas fa-print"></i>
+  <p>Office Supplies</p>
+</div>
 
-            <div class="category-card">
-              <i class="fas fa-car"></i>
-              <p>Travel</p>
-            </div>
+<div
+  class="category-card"
+  :class="{ active: selectedCategory === 'Travel' }"
+  @click="filterByCategory('Travel')"
+>
+  <i class="fas fa-car"></i>
+  <p>Travel</p>
+</div>
 
-            <div class="category-card">
-              <i class="fas fa-file-invoice"></i>
-              <p>Miscellaneous</p>
-            </div>
+<div
+  class="category-card"
+  :class="{ active: selectedCategory === 'Miscellaneous' }"
+  @click="filterByCategory('Miscellaneous')"
+>
+  <i class="fas fa-file-invoice"></i>
+  <p>Miscellaneous</p>
+</div>
+
           </div>
+          <!-- EXPENSE LIST TABLE -->
+<div class="expense-table-box">
+  <h3>Expense List</h3>
+
+  <div class="table-wrapper">
+    <table class="expense-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Description</th>
+
+          <th>Category</th>
+          <th>Amount (₹)</th>
+          <!-- <th>Status</th> -->
+          <th>Date</th>
+          <th style="text-align:center;">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr v-if="expenses.length === 0">
+          <td colspan="7" class="no-data">No expenses found</td>
+        </tr>
+
+        <tr v-for="(expense, index) in expenses" :key="expense.id">
+          <td>{{ index + 1 }}</td>
+          <td>{{ expense.title }}</td>
+          <td>{{ expense.remarks }}</td>
+
+          <td>{{ expense.category }}</td>
+          <td>₹ {{ expense.amount }}</td>
+
+          <!-- <td>
+            <span
+              class="status-badge"
+              :class="expense.status"
+            >
+              {{ expense.status }}
+            </span>
+          </td> -->
+
+          <td>{{ formatDate(expense.expense_date) }}</td>
+
+          <td class="action-btns">
+            <button class="btn-edit" @click="editExpense(expense)">
+              <i class="fas fa-edit"></i>
+            </button>
+
+            <button class="btn-delete" @click="deleteExpense(expense.id)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
         </div>
     
         <!-- ADD EXPENSE MODAL -->
@@ -99,25 +183,26 @@
     <h3>Add Office Expense</h3>
 
     <div class="modal-form">
-      <input type="text" placeholder="Expense Title" />
-      <input type="number" placeholder="Amount (₹)" />
-      
-      <select>
-        <option value="">Select Category</option>
-        <option>Electricity</option>
-        <option>Internet</option>
-        <option>Maintenance</option>
-        <option>Office Supplies</option>
-        <option>Travel</option>
-        <option>Miscellaneous</option>
-      </select>
+      <input type="text" v-model="expenseForm.title" placeholder="Expense Title" />
+<input type="number" v-model="expenseForm.amount" placeholder="Amount (₹)" />
 
-      <textarea placeholder="Remarks (optional)"></textarea>
+<select v-model="expenseForm.category">
+  <option value="">Select Category</option>
+  <option>Electricity</option>
+  <option>Internet</option>
+  <option>Maintenance</option>
+  <option>Office Supplies</option>
+  <option>Travel</option>
+  <option>Miscellaneous</option>
+</select>
+
+<textarea v-model="expenseForm.remarks" placeholder="Remarks"></textarea>
+
     </div>
 
     <div class="modal-actions">
       <button class="btn-cancel" @click="closeExpenseModal">Cancel</button>
-      <button class="btn-save">Save Expense</button>
+     <button class="btn-save" @click="saveExpense">Save Expense</button>
     </div>
   </div>
 </div>
@@ -133,15 +218,118 @@ import Sidebar from '../components/Sidebar.vue'
 export default {
   components: { Sidebar },
 
-  data() {
-    return {
-      isMobile: false,
-      isSidebarVisible: true,
-          showExpenseModal: false
+ data() {
+  return {
+    isMobile: false,
+    isSidebarVisible: true,
+    showExpenseModal: false,
+
+    allExpenses: [],   // 🔹 master list
+    expenses: [],      // 🔹 filtered list
+
+    selectedCategory: '',
+
+    summary: {
+      total: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0
+    },
+
+    expenseForm: {
+      title: '',
+      amount: '',
+      category: '',
+      remarks: ''
     }
-  },
+  }
+},
+
 
   methods: {
+    filterByCategory(category) {
+  // Toggle behavior
+  if (this.selectedCategory === category) {
+    this.selectedCategory = ''
+    this.expenses = this.allExpenses
+    return
+  }
+
+  this.selectedCategory = category
+
+  this.expenses = this.allExpenses.filter(
+    expense => expense.category === category
+  )
+},
+    formatDate(date) {
+  return new Date(date).toLocaleDateString('en-IN')
+},
+
+editExpense(expense) {
+  this.expenseForm = { ...expense }
+  this.showExpenseModal = true
+},
+
+async deleteExpense(id) {
+  if (!confirm('Delete this expense?')) return
+
+  const token = localStorage.getItem('token')
+
+  await fetch(
+    `https://employees.archenterprises.co.in/api/api/office-expenses/${id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+
+  this.fetchExpenses()
+},
+
+async saveExpense() {
+  const token = localStorage.getItem('token')
+  const url = this.expenseForm.id
+    ? `https://employees.archenterprises.co.in/api/api/office-expenses/${this.expenseForm.id}`
+    : `https://employees.archenterprises.co.in/api/api/office-expenses`
+
+  const method = this.expenseForm.id ? 'PUT' : 'POST'
+
+  await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(this.expenseForm)
+  })
+
+  this.closeExpenseModal()
+  this.expenseForm = { title:'', amount:'', category:'', remarks:'' }
+  this.fetchExpenses()
+},
+
+
+ async fetchExpenses() {
+  const token = localStorage.getItem('token')
+
+  const res = await fetch(
+    'https://employees.archenterprises.co.in/api/api/office-expenses',
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+
+  const data = await res.json()
+
+  this.allExpenses = data.expenses
+  this.expenses = data.expenses   // initially show all
+  this.summary = data.summary
+},
+
      openExpenseModal() {
     this.showExpenseModal = true
   },
@@ -160,9 +348,10 @@ export default {
   },
 
   mounted() {
+    
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
-
+ this.fetchExpenses()
     const token = localStorage.getItem('token')
     if (!token) {
       this.$router.push('/auth')
@@ -177,7 +366,21 @@ export default {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.category-card.active {
+  background: var(--primary);
+  color: #fff;
+  transform: translateY(-5px);
+}
 
+h2 {
+  margin-bottom: 30px;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 21px;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 8px;
+  text-transform: uppercase;
+}
 /* ===== EXISTING STYLES ===== */
 .layout {
   display: flex;
@@ -416,4 +619,95 @@ export default {
     letter-spacing: 1px;
 
 }
+.expense-table-box {
+  margin-top: 25px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.expense-table-box h3 {
+  margin-bottom: 15px;
+  color: #034081;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.expense-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.expense-table th,
+.expense-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  text-align-last: center;
+}
+
+.expense-table th {
+  background: #f5f8ff;
+  color: #034081;
+  font-weight: 600;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+}
+
+/* STATUS BADGES */
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.status-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* ACTION BUTTONS */
+.action-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-edit,
+.btn-delete {
+  border: none;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background: #e3f2fd;
+  color: #0d6efd;
+}
+
+.btn-delete {
+  background: #fdecea;
+  color: #dc3545;
+}
+
 </style>

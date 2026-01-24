@@ -24,55 +24,76 @@ export default {
 
   data() {
     return {
+      
       unreadMentionsCount: 0,
       poller: null,
-        latestMessage: ''
+        latestMessage: '',
+         // 🔔 sound-related
+      audio: null,
+      userInteracted: false,
+      lastUnreadCount: 0
     }
   },
 
   methods: {
-    async handleNotificationClick() {
-    try {
-      // 1️⃣ Mark notifications as read in backend
-      await axios.post("/api/mentions/mark-as-read")
+async handleNotificationClick() {
+      try {
+        await axios.post("/api/mentions/mark-as-read")
 
-      // 2️⃣ Reset UI immediately
-      this.unreadMentionsCount = 0
-      this.latestMessage = ''
-    } catch (err) {
-      console.error("Failed to mark notifications as read", err)
-    }
+        // Reset UI
+        this.unreadMentionsCount = 0
+        this.latestMessage = ''
+        this.lastUnreadCount = 0
+      } catch (err) {
+        console.error("Failed to mark notifications as read", err)
+      }
 
-    // 3️⃣ Redirect to help page
-    this.$router.push("/employee/help")
-  },
-   async fetchNotifications() {
-  try {
-    // Fetch unread count
-    const resCount = await axios.get("/api/mentions/unread-count")
-    this.unreadMentionsCount = resCount.data.count ?? 0
+      this.$router.push("/employee/help")
+    },
 
-    // Fetch latest notification
-    const resNotif = await axios.get("/api/notifications")
+    enableSound() {
+      this.userInteracted = true
+    },
 
-    // ✅ IMPORTANT CHECK
-   if (this.unreadMentionsCount > 0 && resNotif.data.length) {
-  const data = JSON.parse(resNotif.data[0].data)
+    playSound() {
+      if (this.userInteracted && this.audio) {
+        this.audio.currentTime = 0
+        this.audio.play().catch(() => {})
+      }
+    },
 
-  const username = data.mentioned_user ?? 'Greetings!'
-//   const message = data.message ?? 'You are mentioned in comment'
-  const message = 'You are mentioned in comment'
+    async fetchNotifications() {
+      try {
+        // 1️⃣ Fetch unread count
+        const resCount = await axios.get("/api/mentions/unread-count")
+        const newCount = resCount.data.count ?? 0
 
-  // ✅ final formatted message
-  this.latestMessage = `${username}, ${message}.`
-} else {
-  this.latestMessage = ''
-}
+        // 🔥 Play sound ONLY if count increased
+        if (newCount > this.lastUnreadCount) {
+          this.playSound()
+        }
 
-  } catch (err) {
-    console.error("Notification fetch failed", err)
-  }
-},
+        this.lastUnreadCount = newCount
+        this.unreadMentionsCount = newCount
+
+        // 2️⃣ Fetch latest notification
+        const resNotif = await axios.get("/api/notifications")
+
+        if (newCount > 0 && resNotif.data.length) {
+          const data = JSON.parse(resNotif.data[0].data)
+
+          const username = data.mentioned_user ?? 'Greetings!'
+          const message = 'You are mentioned in comment'
+
+          this.latestMessage = `${username}, ${message}.`
+        } else {
+          this.latestMessage = ''
+        }
+
+      } catch (err) {
+        console.error("Notification fetch failed", err)
+      }
+    },
 
     async fetchUnreadMentions() {
       try {
@@ -88,14 +109,18 @@ export default {
   },
 
 mounted() {
+   // 🔊 prepare audio
+    this.audio = new Audio('https://employees.archenterprises.co.in/sounds/notification.mp3')
+       // unlock sound after first click anywhere
+    window.addEventListener('click', this.enableSound, { once: true })
   // Initial fetch
   this.fetchNotifications()
 
   // Poll every 30s
-  this.poller = setInterval(() => {
-    this.fetchNotifications()
-    this.fetchUnreadMentions()
-  }, 30000)
+this.poller = setInterval(() => {
+  this.fetchNotifications()
+}, 5000)
+
 },
 
   beforeUnmount() {

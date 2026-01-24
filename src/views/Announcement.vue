@@ -339,6 +339,7 @@ button[disabled] {
   font-size: 28px;
   color: var(--text);
   margin-bottom: 25px;
+  text-transform: uppercase;
 }
 
 .announcement-form {
