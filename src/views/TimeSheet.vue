@@ -22,7 +22,7 @@
        <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-  <h2>Title</h2>
+  <h2>Time Sheet</h2>
   
 <div v-if="loadingLeaves" class="text-center my-4">
   <div class="spinner-border text-primary" role="status">

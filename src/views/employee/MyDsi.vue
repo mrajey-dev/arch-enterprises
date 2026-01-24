@@ -1129,7 +1129,7 @@ h2 {
 }
 
 .add-btn {
-  background: #92bbbf;
+  background: var(--text);
   color: white;
   padding: 10px;
   border-radius: 8px;
@@ -1372,7 +1372,7 @@ h2 {
 }
 
 .view-all-btn {
-  background: linear-gradient(135deg, var(--primary), #3c6769);
+  background: linear-gradient(135deg, var(--primary), var(--primary));
   color: #fff;
   border: none;
   padding: 10px 18px;
@@ -1390,7 +1390,7 @@ h2 {
 .view-all-btn:hover {
   transform: translateY(-3px) scale(1.05);
   box-shadow: 0 10px 28px rgba(79, 70, 229, 0.55);
- background: linear-gradient(135deg, #3c6769, var(--primary));
+ background: linear-gradient(135deg, var(--primary), var(--primary));
 }
 
 .view-all-btn:active {
@@ -1432,7 +1432,7 @@ h2 {
 
 .dsi-popup-header {
   padding: 16px 22px;
-  background: linear-gradient(135deg, #5f9e9f, #02032f);
+  background: linear-gradient(135deg, var(--primary), var(--primary));
   color: white;
   display: flex;
   justify-content: space-between;

@@ -2,6 +2,18 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AuthForm from '../views/AuthForm.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Employee from '../views/ManageEmp.vue'
+import WorkFlow from '../views/WorkFlow.vue'
+import ExpenseManage from '../views/ExpenseManage.vue'
+import TimeSheet from '../views/TimeSheet.vue'
+import ResourceBooking from '../views/ResourceBooking.vue'
+import RequestDesk from '../views/RequestDesk.vue'
+import RecruitmentSection from '../views/RecruitmentSection.vue'
+
+
+
+
+
+
 import Settings from '../views/Settings.vue'
 import LeaveApplications from '../views/LeaveApplications.vue'
 import ApprovedLeaves from '../views/ApprovedLeaves.vue'
@@ -67,6 +79,18 @@ const routes = [
   { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, meta: { hideBell: true }
    },
   { path: '/employees', name: 'ManageEmp', component: Employee, meta: { hideBell: true } },
+  { path: '/workflow', name: 'WorkFlow', component: WorkFlow, meta: { hideBell: true } },
+  { path: '/ExpenseManage', name: 'ExpenseManage', component: ExpenseManage, meta: { hideBell: true } },
+  { path: '/TimeSheet', name: 'TimeSheet', component: TimeSheet, meta: { hideBell: true } },
+  { path: '/ResourceBooking', name: 'ResourceBooking', component: ResourceBooking, meta: { hideBell: true } },
+  { path: '/RequestDesk', name: 'RequestDesk', component: RequestDesk, meta: { hideBell: true } },
+  { path: '/RecruitmentSection', name: 'RecruitmentSection', component: RecruitmentSection, meta: { hideBell: true } },
+
+
+
+
+
+
   { path: '/settings', name: 'Settings', component: Settings, meta: { hideBell: true } },
 
   { path: '/leaveapplications', name: 'LeaveApplications', component: LeaveApplications, meta: { hideBell: true } },

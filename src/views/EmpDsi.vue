@@ -770,7 +770,7 @@ h2 {
 }
 
 .add-btn {
-  background: #92bbbf;
+  background: var(--text);
   color: white;
   padding: 10px;
   border-radius: 8px;

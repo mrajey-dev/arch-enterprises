@@ -1,27 +1,4 @@
 <template>
-<div
-  class="theme-switcher slide-in"
-  v-if="!isQuotationPage"
->
-  <label class="theme-label">🎨 Theme</label>
-
-  <select @change="changeTheme" class="theme-select">
-    <option value="default">⚪ Default</option>
-    <option value="blue">🟦 Blue</option>
-    <option value="green">🟩 Green</option>
-    <!-- <option value="dark">🌙 Dark</option> -->
-    <option value="orange">🟧 Orange</option>
-    <option value="red">🟥 Red</option>
-    <!-- <option value="amber">🟨 Yellow</option> -->
-    <option value="teal">🟦 Teal</option>
-    <option value="purple">🟥 Purple</option>
-    <!-- <option value="pink">🌸 Pink</option> -->
-  </select>
-</div>
-
-
-
-
   <div class="app-layout">
    <!-- 🔔 Global Notification Bell -->
     <NotificationBell v-if="showBell"/>
@@ -150,7 +127,7 @@ export default {
 
 [data-theme="teal"] {
   --primary: #08a594;
-  --sidebar: #0081734f;
+  --sidebar: #a5d5cf;
   --card: #08a594;
   --text: #134e4a;
   --text-white: #ffffff;
@@ -165,7 +142,7 @@ export default {
 }
 [data-theme="purple"] {
   --primary: #8d004e;
-  --sidebar: #8d004e2e;
+  --sidebar: #edd2e1 ;
   --card: #8d004e;
   --text: #580433;
   --text-white: #ffffff;

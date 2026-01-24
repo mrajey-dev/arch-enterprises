@@ -10,7 +10,7 @@
     <!-- LEFT SIDE : COMPANY INFORMATION -->
   <div class="company-info-box">
   <div class="company-left">
-    <img src="https://archenterprises.co.in/ajay/ajay.png" 
+    <img src="https://archenterprises.co.in/ajay/ajay1.png" 
          alt="Company Logo" 
          class="company-logo" />
   </div>

@@ -66,7 +66,7 @@
               <!-- Right -->
               <div class="profile-right">
            <div class="profile-row">
-  <label>Name *</label>
+  <label>Name </label>
   <input
     v-model="form.name"
     @input="validateName"
@@ -91,7 +91,7 @@
                 </div>
 
 <div class="profile-row">
-  <label>Mobile *</label>
+  <label>Mobile </label>
   <input
     ref="mobileInput"
     :value="formattedMobile"
@@ -109,7 +109,7 @@
 
 
 <div class="profile-row">
-  <label>Gender *</label>
+  <label>Gender </label>
   <select v-model="form.gender">
     <option value="" disabled>Select gender</option>
     <option value="Male">Male</option>
@@ -121,7 +121,7 @@
   </select>
 </div>
 <div class="profile-row">
-  <label>Address *</label>
+  <label>Address </label>
   <input
     v-model="form.address"
     maxlength="250"
@@ -136,7 +136,7 @@
   </small>
 
 <div class="profile-row">
-  <label>City *</label>
+  <label>City </label>
   <input
     v-model="form.city"
     @input="validateCity"
@@ -152,7 +152,7 @@
 
 
                <div class="profile-row">
-  <label>Blood Group *</label>
+  <label>Blood Group </label>
   <select v-model="form.bloodgroup">
     <option value="" disabled>Select blood group</option>
     <option value="A+">A+</option>
@@ -555,7 +555,7 @@ font-family: cursive;
   flex-direction: column;
   gap: 30px;
   padding: 40px 30px;
-  background: linear-gradient(135deg,  var(--sidebar), var(--sidebar));
+  /* background: linear-gradient(135deg,  var(--sidebar), var(--sidebar)); */
   border-radius: 20px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
@@ -714,7 +714,7 @@ font-family: cursive;
   padding: 12px 15px;
   color: var(--text);
   border-radius: 12px;
-  border: 1px solid #dce3e8;
+  border: 1px solid var(--primary);
   font-size: 14px;
   transition: all 0.2s ease;
   background: #fff;

@@ -972,7 +972,7 @@ font-family: cursive;
   width: 100%;
   margin: -1px auto;
   padding: 25px;
-  background: linear-gradient(135deg, #f5f7fa, var(--text)) ;
+  /* background: linear-gradient(135deg, #f5f7fa, var(--text)) ; */
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0);
   border-radius: 16px;
 }

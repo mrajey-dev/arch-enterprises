@@ -21,6 +21,7 @@
               <th> Quote Date </th>
               <th> Party Name </th>
               <th> Engine Serial Number </th>
+                <th> Engine Model Number </th>
               <th class="description-col"> Brief Description of Goods </th>
               <th> Initial Value (Non-Taxable) </th>
               <th> Disc.(%) </th>
@@ -41,14 +42,23 @@
               }"
             >
               <td>{{ index + 1 }}</td>
-             <td>
-  Quotation-{{ q.id }}-{{ formatCompanyName(q.company_name) }}
+<td>
+  <span
+    class="quotation-link"
+    @click="openQuotation(q)"
+  >
+    Quotation-{{ q.id }}-{{ formatCompanyName(q.company_name) }}
+  </span>
 </td>
+
+
 
              <td>{{ formatDate(q.created_at) }}</td>
 
               <td>{{ q.company_name }}</td>
               <td>{{ q.engine_serial }}</td>
+              <td>{{ q.model_no }}</td>
+
 <td class="description-col" style="font-size: 10px;">
   <ul :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 3 }">
     <li 
@@ -155,6 +165,13 @@ filteredAndSortedQuotations() {
 },
 
   methods: {
+ openQuotation(q) {
+    // 1️⃣ Store quotation id (this is how quotation.vue works)
+    localStorage.setItem("selectedQuotationId", q.id);
+
+    // 2️⃣ Open SAME quotation page
+    window.open("/quotation", "_blank");
+  },
      toggleSeeMore(quotationId) {
     this.expandedQuotations = {
       ...this.expandedQuotations,
@@ -518,5 +535,16 @@ fetchQuotations() {
   overflow: hidden;
 }
 
+
+.quotation-link {
+  cursor: pointer;
+  color: #034081;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.quotation-link:hover {
+  color: #0b5ed7;
+}
 
 </style>

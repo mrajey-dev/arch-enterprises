@@ -120,6 +120,23 @@
           <li @click="logout" class="danger-bg">
             <i class="fas fa-sign-out-alt"></i> Logout
           </li>
+           <li class="theme-switcher">
+      <label class="theme-label">🎨 Theme</label>
+
+      <select
+        class="theme-select"
+        @change="changeTheme"
+        :value="currentTheme"
+      >
+        <option value="default">⚪ Default</option>
+        <option value="blue">🟦 Blue</option>
+        <option value="green">🟩 Green</option>
+        <option value="orange">🟧 Orange</option>
+        <option value="red">🟥 Red</option>
+        <option value="teal">🟦 Teal</option>
+        <option value="purple">🟥 Purple</option>
+      </select>
+    </li>
         </ul>
       </div>
     </aside>
@@ -174,6 +191,7 @@ export default {
   components: { ChangePasswordForm },
   data() {
     return {
+       currentTheme: localStorage.getItem("theme") || "default",
       searchQuery: "",
       results: [],
       showPopup: false,
@@ -204,6 +222,18 @@ export default {
     },
   },
   methods: {
+     changeTheme(e) {
+      const theme = e.target.value
+      this.currentTheme = theme
+
+      document.documentElement.classList.add("theme-transition")
+      document.documentElement.setAttribute("data-theme", theme)
+      localStorage.setItem("theme", theme)
+
+      setTimeout(() => {
+        document.documentElement.classList.remove("theme-transition")
+      }, 400)
+    },
     handleSearch() {
       if (this.searchQuery.length < 1) {
         this.results = [];
@@ -301,6 +331,7 @@ if (response.data && response.data.photo_url) {
   },
 
 async mounted() {
+  
   const token = localStorage.getItem("token");
   if (!token) {
     this.$router.push("/auth");
@@ -316,6 +347,10 @@ async mounted() {
     } catch {
       this.username = "Unknown";
     }
+       document.documentElement.setAttribute(
+      "data-theme",
+      this.currentTheme
+    )
   }
 
   try {
@@ -789,4 +824,11 @@ async mounted() {
 }
 
 
+.sidebar .theme-switcher {
+  position: inherit;
+  /* margin: 16px; */
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  /* padding: 10px 12px; */
+}
 </style>

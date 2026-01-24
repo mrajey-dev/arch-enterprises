@@ -53,17 +53,38 @@
         </ul>
       </li>
 
-      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('employees')">
-        <i class="fas fa-users"></i> Manage Employees
-      </li>
+      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('workflow')">
+  <i class="fas fa-tasks"></i> Work Flow
+</li>
+
+<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('expensemanage')">
+  <i class="fas fa-money-bill-wave"></i> Expense
+</li>
+
+<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('resourcebooking')">
+  <i class="fas fa-book"></i> Resource Booking
+</li>
+
+<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('requestdesk')">
+  <i class="fas fa-headset"></i> Request Desk
+</li>
+
+<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('recruitmentsection')">
+  <i class="fas fa-user-tie"></i> Recruitment
+</li>
+
+
+        <!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('timesheet')">
+       <i class="fas fa-users"></i> Time Sheet
+     </li> -->
 
       <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('manageleavetype')">
         <i class="fas fa-sliders-h"></i> Manage Leave Type
       </li>
 
-      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('workreport')">
+      <!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('workreport')">
         <i class="fas fa-clipboard-list"></i> Work Report & Task
-      </li>
+      </li> -->
  <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('empdsi')">
             <i class="fas fa-tasks"></i> View DSI
           </li>
@@ -75,6 +96,23 @@
       <li @click="logout" class="danger-bg">
         <i class="fas fa-sign-out-alt"></i> Logout
       </li>
+       <li class="theme-switcher">
+      <label class="theme-label">🎨 Theme</label>
+
+      <select
+        class="theme-select"
+        @change="changeTheme"
+        :value="currentTheme"
+      >
+        <option value="default">⚪ Default</option>
+        <option value="blue">🟦 Blue</option>
+        <option value="green">🟩 Green</option>
+        <option value="orange">🟧 Orange</option>
+        <option value="red">🟥 Red</option>
+        <option value="teal">🟦 Teal</option>
+        <option value="purple">🟥 Purple</option>
+      </select>
+    </li>
     </ul>
   </div>
 </aside>
@@ -399,6 +437,7 @@ import axios from 'axios'
 export default {
   data() {
     return {
+      currentTheme: localStorage.getItem("theme") || "default",
        adminEmail: '',
          adminName: '',
         searchQuery: "",
@@ -462,6 +501,18 @@ computed: {
 
 
   methods: {
+     changeTheme(e) {
+      const theme = e.target.value
+      this.currentTheme = theme
+
+      document.documentElement.classList.add("theme-transition")
+      document.documentElement.setAttribute("data-theme", theme)
+      localStorage.setItem("theme", theme)
+
+      setTimeout(() => {
+        document.documentElement.classList.remove("theme-transition")
+      }, 400)
+    },
 
 async fetchAdmin() {
   try {
@@ -927,6 +978,10 @@ calculatePerformance() {
 
   },
   mounted() {
+    document.documentElement.setAttribute(
+      "data-theme",
+      this.currentTheme
+    ),
       this.fetchAdmin();
     const token = localStorage.getItem('token');
     if (!token) {
@@ -2052,4 +2107,12 @@ calculatePerformance() {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+.sidebar .theme-switcher {
+  position: inherit;
+  /* margin: 16px; */
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
 </style>
