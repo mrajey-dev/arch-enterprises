@@ -148,26 +148,8 @@
   </div>
 </div>
 
-
-
-
-
-
-   
-<!-- Approved Leaves -->
-<!-- <div class="dashboard-card clickable-card" @click="goTo('employee/approvedleavesemp')" style="cursor:pointer;">
-  <img src="https://www.pngplay.com/wp-content/uploads/2/Approved-Transparent-Background.png" alt="Approved Leaves" />
-  <div>
-    <p class="label">Approved Leaves</p>
-    <h3 class="value" id="approvedLeaves"></h3>
   </div>
-</div> -->
-
-
-
-
-
-  </div>
+  <EmployeeProfiles />
 <DataChart />
 </section>
 
@@ -194,10 +176,12 @@
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue';
 import DataChart from './components/DataChart.vue';
+import EmployeeProfiles from './components/EmployeeProfiles.vue';
+
 
 export default {
   name: 'Dashboard',
-  components: { Sidebar, DataChart },
+  components: { Sidebar, DataChart, EmployeeProfiles },
   data() {
     return {
       showDownloadMenu: false,

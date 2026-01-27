@@ -2,35 +2,35 @@
   <div class="layout">
     <!-- Header -->
     <header class="header">
-    <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
+      <div class="head-title">
+        <a href="https://employees.archenterprises.co.in/">
+          <img
+            src="https://archenterprises.co.in/ajay/ajay.png"
+            style="height:65px;border-radius:9px"
+          />
+        </a>
+        Arch 360
       </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
+
+      <i class="fas fa-bars mobile-menu-icon"
+         v-if="isMobile"
+         @click="toggleSidebar"></i>
     </header>
 
-    <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div v-if="!isMobile || !isSidebarVisible" class="content profile-card">
 
-   <button class="edit-btn" @click="editMode = true" :disabled="editMode">
-  <i class="fas fa-user-edit"></i>
-  Edit Profile
-</button>
-    <!-- PROFILE -->
+        <button class="edit-btn" @click="editMode = true" :disabled="editMode">
+          <i class="fas fa-user-edit"></i> Edit Profile
+        </button>
+
         <div v-if="user" class="profile-container">
 
           <!-- ================= VIEW MODE ================= -->
           <template v-if="!editMode">
-            <div class="profile-left">
+<div class="profile-left">
               <div class="profile-photo-wrapper">
                 <img
                   v-if="user.profile_photo"
@@ -43,133 +43,121 @@
                 {{ user.department || 'Department Not Assigned' }}
               </p>
             </div>
-
             <div class="profile-right">
-              <div class="profile-row"><span class="label">Handle:</span><span class="value">{{ user.handle }}</span></div>
+              <div class="profile-row"><span>Handle:</span>{{ user.handle }}</div>
+              <div class="profile-row"><span>Email:</span>{{ user.email }}</div>
+              <div class="profile-row"><span>Gender:</span>{{ user.gender }}</div>
+              <div class="profile-row"><span>Mobile:</span>{{ user.mobile }}</div>
+              <div class="profile-row"><span>Address:</span>{{ user.address }}</div>
+              <div class="profile-row"><span>City:</span>{{ user.city }}</div>
+              <div class="profile-row"><span>Blood Group:</span>{{ user.bloodgroup }}</div>
+              <div class="profile-row"><span>DOB:</span>{{ user.dateofbirth }}</div>
 
-              <div class="profile-row"><span class="label">Email:</span><span class="value">{{ user.email }}</span></div>
-              <div class="profile-row"><span class="label">Gender:</span><span class="value">{{ user.gender }}</span></div>
-              <div class="profile-row"><span class="label">Mobile:</span><span class="value">{{ user.mobile }}</span></div>
-              <div class="profile-row"><span class="label">Address:</span><span class="value">{{ user.address }}</span></div>
-              <div class="profile-row"><span class="label">City:</span><span class="value">{{ user.city }}</span></div>
-              <div class="profile-row"><span class="label">Blood Group:</span><span class="value">{{ user.bloodgroup }}</span></div>
-              <div class="profile-row"><span class="label">Date of Birth:</span><span class="value">{{ user.dateofbirth }}</span></div>
+              <div class="profile-row" v-if="user.instagram">
+                <span>Instagram:</span>
+                <a :href="user.instagram" target="_blank">{{ user.instagram }}</a>
+              </div>
+
+              <div class="profile-row" v-if="user.portfolio">
+                <span>Portfolio:</span>
+                <a :href="user.portfolio" target="_blank">{{ user.portfolio }}</a>
+              </div>
+
+              <div class="profile-row" v-if="user.youtube">
+                <span>YouTube:</span>
+                <a :href="user.youtube" target="_blank">{{ user.youtube }}</a>
+              </div>
+
+              <div class="profile-row" v-if="user.linkedin">
+                <span>LinkedIn:</span>
+                <a :href="user.linkedin" target="_blank">{{ user.linkedin }}</a>
+              </div>
             </div>
           </template>
 
           <!-- ================= EDIT MODE ================= -->
           <template v-else>
-            <form class="edit-profile-form" @submit.prevent="updateProfile">
+            <form @submit.prevent="updateProfile" class="edit-profile-form">
 
-            
-
-              <!-- Right -->
               <div class="profile-right">
-           <div class="profile-row">
-  <label>Name </label>
-  <input
-    v-model="form.name"
-    @input="validateName"
-    maxlength="20"
-    placeholder="Enter name"
-    required
-  />
- 
-</div>
- <small v-if="nameError" class="error-text">
-    Name is required
-  </small>
-
-                 <div class="profile-row">
-                  <label>Handle</label>
-                  <input v-model="form.handle" disabled>
+                <div class="profile-row">
+                  <label>Name</label>
+                  <input v-model="form.name" @input="validateName" />
                 </div>
 
                 <div class="profile-row">
                   <label>Email</label>
-                  <input v-model="form.email" disabled >
+                  <input v-model="form.email" disabled />
                 </div>
 
-<div class="profile-row">
-  <label>Mobile </label>
-  <input
-    ref="mobileInput"
-    :value="formattedMobile"
-    @keydown="allowOnlyNumbers"
-    @input="handleMobile"
-    placeholder="+911234567890"
-  />
+                <div class="profile-row">
+                  <label>Mobile</label>
+                  <input :value="formattedMobile"
+                         @input="handleMobile"
+                         @keydown="allowOnlyNumbers" />
+                </div>
 
-</div>
-  <small v-if="mobileError" class="error-text">
-    Mobile number is required
-  </small>
+                <div class="profile-row">
+                  <label>Gender</label>
+                  <select v-model="form.gender">
+                    <option disabled value="">Select</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                  </select>
+                </div>
 
+                <div class="profile-row">
+                  <label>Address</label>
+                  <input v-model="form.address" />
+                </div>
 
+                <div class="profile-row">
+                  <label>City</label>
+                  <input v-model="form.city" />
+                </div>
 
+                <div class="profile-row">
+                  <label>Blood Group</label>
+                  <select v-model="form.bloodgroup">
+                    <option disabled value="">Select</option>
+                    <option>A+</option><option>A-</option>
+                    <option>B+</option><option>B-</option>
+                    <option>AB+</option><option>AB-</option>
+                    <option>O+</option><option>O-</option>
+                  </select>
+                </div>
 
-<div class="profile-row">
-  <label>Gender </label>
-  <select v-model="form.gender">
-    <option value="" disabled>Select gender</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-    <option value="Non-binary">Non-binary</option>
-    <option value="Transgender">Transgender</option>
-    <option value="Prefer not to say">Prefer not to say</option>
-  </select>
-</div>
-<div class="profile-row">
-  <label>Address </label>
-  <input
-    v-model="form.address"
-    maxlength="250"
-    placeholder="Enter address"
-    @input="validateAddress"
-    required
-  />
+                <!-- SOCIAL LINKS -->
+                <div class="profile-row">
+                  <label>Instagram</label>
+                  <input v-model="form.instagram"
+                         placeholder="https://instagram.com/username" />
+                </div>
 
-</div>
-  <small v-if="addressError" class="error-text">
-    Address is required
-  </small>
+                <div class="profile-row">
+                  <label>Portfolio</label>
+                  <input v-model="form.portfolio"
+                         placeholder="https://yourwebsite.com" />
+                </div>
 
-<div class="profile-row">
-  <label>City </label>
-  <input
-    v-model="form.city"
-    @input="validateCity"
-    maxlength="20"
-    placeholder="Enter city"
-    required
-  />
+                <div class="profile-row">
+                  <label>YouTube</label>
+                  <input v-model="form.youtube"
+                         placeholder="https://youtube.com/@channel" />
+                </div>
 
-</div>
-  <small v-if="cityError" class="error-text">
-    City is required
-  </small>
-
-
-               <div class="profile-row">
-  <label>Blood Group </label>
-  <select v-model="form.bloodgroup">
-    <option value="" disabled>Select blood group</option>
-    <option value="A+">A+</option>
-    <option value="A-">A-</option>
-    <option value="B+">B+</option>
-    <option value="B-">B-</option>
-    <option value="AB+">AB+</option>
-    <option value="AB-">AB-</option>
-    <option value="O+">O+</option>
-    <option value="O-">O-</option>
-  </select>
-</div>
-
+                <div class="profile-row">
+                  <label>LinkedIn</label>
+                  <input v-model="form.linkedin"
+                         placeholder="https://linkedin.com/in/username" />
+                </div>
 
                 <div class="profile-actions">
-                  <button type="submit" class="save-btn">💾 Save</button>
-                  <button type="button" class="cancel-btn" @click="cancelEdit">❌ Cancel</button>
+                  <button class="save-btn">💾 Save</button>
+                  <button type="button" class="cancel-btn" @click="cancelEdit">
+                    ❌ Cancel
+                  </button>
                 </div>
               </div>
 
@@ -178,9 +166,7 @@
 
         </div>
 
-        <div v-else class="loading-text">
-          Loading profile...
-        </div>
+        <div v-else>Loading profile...</div>
 
       </div>
     </div>
@@ -196,26 +182,34 @@ export default {
 
   data() {
     return {
-          cityError: false,
-         addressError: false,
-         mobileError: false,
-        nameError: false,
+      cityError: false,
+      addressError: false,
+      mobileError: false,
+      nameError: false,
+
       isMobile: false,
       isSidebarVisible: true,
 
       user: null,
 
-      // edit profile states
       editMode: false,
-      form: { mobile: ''},
+      form: {
+        mobile: '',
+        instagram: '',
+        portfolio: '',
+        youtube: '',
+        linkedin: ''
+      },
+
       previewImage: null
     }
   },
 
   computed: {
-     formattedMobile() {
-      return this.form.mobile ? `+91${this.form.mobile}` : '+91';
-  },
+    formattedMobile() {
+      return this.form.mobile ? `+91${this.form.mobile}` : '+91'
+    },
+
     profileImage() {
       return this.user?.profile_photo
         ? `https://employees.archenterprises.co.in/backend/storage/app/public/${this.user.profile_photo}`
@@ -234,92 +228,52 @@ export default {
   },
 
   methods: {
-     validateAddress() {
-    // Prevent only-spaces input
-    this.form.address = this.form.address.replace(/\s+/g, ' ').trimStart();
+    /* ================= VALIDATIONS ================= */
 
-    // Required check
-    this.addressError = this.form.address.trim() === '';
-  },
-allowOnlyNumbers(e) {
-    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
-    if (allowedKeys.includes(e.key)) return;
-    if (!/^\d$/.test(e.key)) e.preventDefault();
-  },
+    validateAddress() {
+      this.form.address = this.form.address.replace(/\s+/g, ' ').trimStart()
+      this.addressError = this.form.address.trim() === ''
+    },
 
+    validateCity() {
+      this.form.city = this.form.city
+        .replace(/[^a-zA-Z\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trimStart()
 
- handleMobile(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.startsWith('91')) value = value.slice(2);
-    this.form.mobile = value.slice(0, 10);
+      this.cityError = this.form.city.trim() === ''
+    },
 
-    // Live validation
-    this.mobileError = this.form.mobile.length !== 10;
-  },
+    validateName() {
+      this.form.name = this.form.name
+        .replace(/[^a-zA-Z\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trimStart()
 
-submitForm() {
-  // Mobile
-  if (!this.form.mobile || this.form.mobile.length !== 10) {
-    this.mobileError = true
-    this.$refs.mobileInput.focus()
-    return
-  } else {
-    this.mobileError = false
-  }
+      this.nameError = this.form.name.trim() === ''
+    },
 
-  // Name
-  if (!this.form.name || this.form.name.trim() === '') {
-    this.nameError = true
-    this.$refs.nameInput.focus()
-    return
-  } else {
-    this.nameError = false
-  }
+    allowOnlyNumbers(e) {
+      const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab']
+      if (allowedKeys.includes(e.key)) return
+      if (!/^\d$/.test(e.key)) e.preventDefault()
+    },
 
-  // City
-  if (!this.form.city || this.form.city.trim() === '') {
-    this.cityError = true
-    this.$refs.cityInput.focus()
-    return
-  } else {
-    this.cityError = false
-  }
+    handleMobile(e) {
+      let value = e.target.value.replace(/\D/g, '')
+      if (value.startsWith('91')) value = value.slice(2)
+      this.form.mobile = value.slice(0, 10)
+      this.mobileError = this.form.mobile.length !== 10
+    },
 
-  // Address
-  if (!this.form.address || this.form.address.trim() === '') {
-    this.addressError = true
-    this.$refs.addressInput.focus()
-    return
-  } else {
-    this.addressError = false
-  }
+    /* ================= HELPERS ================= */
 
-  // All good → call API
-  this.updateProfile()
-},
+    normalizeUrl(url) {
+      if (!url) return ''
+      return url.startsWith('http') ? url : `https://${url}`
+    },
 
-validateCity() {
-    // Allow only letters and spaces
-    this.form.city = this.form.city
-      .replace(/[^a-zA-Z\s]/g, '')
-      .replace(/\s+/g, ' ')
-      .trimStart();
-
-    // Required check
-    this.cityError = this.form.city.trim() === '';
-  },
-
-  validateName() {
-    this.form.name = this.form.name
-      .replace(/[^a-zA-Z\s]/g, '')
-      .replace(/\s+/g, ' ')
-      .trimStart();
-
-    // Empty check
-    this.nameError = this.form.name.trim() === '';
-  },
-
-
+    /* ================= LAYOUT ================= */
 
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
@@ -329,6 +283,8 @@ validateCity() {
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible
     },
+
+    /* ================= API ================= */
 
     async fetchUserProfile() {
       try {
@@ -340,8 +296,15 @@ validateCity() {
 
         this.user = res.data.data
 
-        // preload form for edit mode
-        this.form = { ...this.user }
+        // preload all fields (including social)
+        this.form = {
+          ...this.user,
+          instagram: this.user.instagram || '',
+          portfolio: this.user.portfolio || '',
+          youtube: this.user.youtube || '',
+          linkedin: this.user.linkedin || ''
+        }
+
       } catch (err) {
         console.error('Error fetching profile:', err)
       }
@@ -363,6 +326,12 @@ validateCity() {
 
     async updateProfile() {
       try {
+        // normalize social URLs
+        this.form.instagram = this.normalizeUrl(this.form.instagram)
+        this.form.portfolio = this.normalizeUrl(this.form.portfolio)
+        this.form.youtube = this.normalizeUrl(this.form.youtube)
+        this.form.linkedin = this.normalizeUrl(this.form.linkedin)
+
         const formData = new FormData()
 
         Object.keys(this.form).forEach(key => {
@@ -381,6 +350,7 @@ validateCity() {
         this.editMode = false
         this.previewImage = null
         this.fetchUserProfile()
+
       } catch (err) {
         console.error('Profile update failed:', err)
       }
@@ -388,6 +358,7 @@ validateCity() {
   }
 }
 </script>
+
 
 
 <style scoped>

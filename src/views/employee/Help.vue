@@ -29,24 +29,36 @@
           <h2>Problem Capturing & RCA</h2>
 
           <!-- Ask Question -->
-          <div class="ask-box">
-            <textarea
-              v-model="newQuestion"
-              placeholder="Type..."
-              maxlength="500"
-              @input="onMentionInput($event, 'question')"
-              @keydown="onMentionKeydown"
-            />
+        <div class="ask-box">
+  <div class="wa-input">
+    <!-- Text -->
+    <textarea
+      v-model="newQuestion"
+      placeholder="Type a problem..."
+      maxlength="500"
+      @input="onMentionInput($event, 'question')"
+      @keydown="onMentionKeydown"
+    ></textarea>
 
-            <input
-              type="file"
-              accept="image/*"
-              ref="questionImageInput"
-              @change="handleQuestionImage"
-            />
+    <!-- Attachment icon -->
+    <label class="attach-icon">
+      <i class="fas fa-paperclip"></i>
+      <input
+        type="file"
+        accept="image/*"
+        ref="questionImageInput"
+        @change="handleQuestionImage"
+        hidden
+      />
+    </label>
 
-            <button @click="addQuestion">Post</button>
-          </div>
+    <!-- Send -->
+    <button class="send-btn" @click="addQuestion">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+</div>
+
 
           <p v-if="questionError" class="error-text">
             {{ questionError }}
@@ -58,9 +70,17 @@
             v-for="q in questions"
             :key="q.id"
           >
-            <div class="question-header">
-              <h5>{{ capitalizeHandle(q.user?.handle) || 'ADMIN' }}</h5>
-              <span class="date">{{ formatDateTime(q.created_at) }}</span>
+           <div class="question-header">
+  <div class="qa-user">
+    <div class="avatar">
+      {{ capitalizeHandle(q.user?.handle || 'A')[0] }}
+    </div>
+    <div>
+      <h5>{{ capitalizeHandle(q.user?.handle) || 'ADMIN' }}</h5>
+      <span class="date">{{ formatDateTime(q.created_at) }}</span>
+    </div>
+  </div>
+
 
               <div class="qa-actions">
                 <template v-if="canModify(q) && q.answers.length === 0">
@@ -104,8 +124,16 @@
                   :key="a.id"
                 >
                   <div class="answer-header">
-                    <h5>{{ capitalizeHandle(a.user?.handle) || 'ADMIN' }}</h5>
-                    <span class="date">{{ formatDateTime(a.created_at) }}</span>
+  <div class="qa-user">
+    <div class="avatar small">
+      {{ capitalizeHandle(a.user?.handle || 'A')[0] }}
+    </div>
+    <div>
+      <h5>{{ capitalizeHandle(a.user?.handle) || 'ADMIN' }}</h5>
+      <span class="date">{{ formatDateTime(a.created_at) }}</span>
+    </div>
+  </div>
+
 
                     <div class="qa-actions" v-if="canModify(a)">
                       <i class="fas fa-edit" @click="editAnswer(a)"></i>
@@ -133,21 +161,33 @@
                 </div>
 
                 <!-- Add Answer -->
-                <div class="reply-box">
-                  <input
-                    v-model="q.replyText"
-                    placeholder="Type..."
-                    @input="onMentionInput($event, q)"
-                    @keydown="onMentionKeydown"
-                  />
+               <div class="reply-box" style="color: gray;">
+  <div class="wa-input">
+    <input
+      v-model="q.replyText"
+      placeholder="Type a reply..."
+      @input="onMentionInput($event, q)"
+      @keydown="onMentionKeydown"
+    />
 
-                  <input
-                    type="file"
-                    accept="image/*"
-                    @change="handleAnswerImage($event, q)"
-                  />
-                  <button @click="addAnswer(q)">Send</button>
-                </div>
+    <!-- Attachment icon -->
+    <label class="attach-icon">
+      <i class="fas fa-paperclip"></i>
+      <input
+        type="file"
+        accept="image/*"
+        @change="handleAnswerImage($event, q)"
+        hidden
+      />
+    </label>
+
+    <!-- Send -->
+    <button class="send-btn" @click="addAnswer(q)">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+</div>
+
 
                 <p v-if="answerError[q.id]" class="error-text">
                   {{ answerError[q.id] }}
@@ -1106,7 +1146,7 @@ h2 {
 }
 
 .ask-box button {
-  background: #ffffff94;
+  /* background: #ffffff94; */
   color: white;
   padding: 10px 16px;
   border-radius: 6px;
@@ -1169,7 +1209,7 @@ h2 {
 
 .qa-image {
   margin-top: 8px;
-  max-width: 260px;
+  max-width: 90px;
   border-radius: 6px;
   /* border: 1px solid #ddd; */
 }
@@ -1406,5 +1446,142 @@ textarea {
   cursor: pointer;
 }
 
+
+/* WhatsApp style input container */
+.wa-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border-radius: 25px;
+  /* padding: 1px 12px; */
+  border: 1px solid #ddd;
+}
+
+/* Textarea & input */
+.wa-input textarea,
+.wa-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+  background: transparent;
+  color: #333;
+}
+
+/* Attachment icon */
+.attach-icon {
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--primary);
+}
+
+.attach-icon:hover {
+  color: #2f6f71;
+}
+
+/* Send button */
+.send-btn {
+  background: var(--primary);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-btn:hover {
+  background: #2f6f71;
+}
+
+/* ===== RCA Chat UI Upgrade ===== */
+
+.qa-board {
+  max-width: 900px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.question-card {
+  background: var(--sidebar);
+  border-radius: 16px;
+  padding: 18px 20px;
+  border-left: 4px solid var(--primary);
+  /* box-shadow: 0 8px 25px rgba(0,0,0,0.06); */
+}
+
+.answer-box {
+  background: #ffffff;
+  padding: 12px 16px;
+  border-radius: 14px;
+  margin: 10px 0;
+  max-width: 92%;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  border: 1px solid #eef2f7;
+}
+
+.answer-box:nth-child(even) {
+  margin-left: auto;
+  background: #f0f9ff;
+}
+
+.qa-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar.small {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+}
+
+.reply-box {
+  position: sticky;
+  bottom: 0;
+  /* background: white; */
+  padding: 10px 0;
+  z-index: 5;
+}
+
+.qa-image {
+  margin-top: 8px;
+  max-width: 140px;
+  border-radius: 10px;
+  cursor: zoom-in;
+  transition: transform 0.2s ease;
+}
+
+.qa-image:hover {
+  transform: scale(1.05);
+}
+
+.question-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.question-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
 
 </style>

@@ -1,13 +1,60 @@
 <template>
-  <div class="charts-container">
-    <!-- 🟩 Task Completion Chart -->
-    <div class="chart-box">
-      <h3>📊 Task Completion</h3>
-      <canvas ref="taskChart"></canvas>
-    </div>
+ <div class="charts-container">
+  <!-- 🟩 Task Completion Chart -->
+  <div class="chart-box">
+    <h3>📊 Task Data</h3>
+    <canvas ref="taskChart"></canvas>
+  </div>
 
-    <!-- 🎂 Birthday Reminder Section -->
-    <div class="chart-box birthday-box">
+  <!-- 📈 Monthly Services Done Chart (NEW) -->
+  <div class="chart-box">
+    <h3>📈 Monthly Services Data</h3>
+    <canvas ref="serviceChart"></canvas>
+  </div>
+
+  
+  <!-- <div class="performance-toggle">
+  <button
+    :class="{ active: activeView === 'monthly' }"
+    @click="activeView = 'monthly'"
+  >
+    Monthly
+  </button>
+
+  <button
+    :class="{ active: activeView === 'quarterly' }"
+    @click="activeView = 'quarterly'"
+  >
+    Quarterly
+  </button>
+
+  <button
+    :class="{ active: activeView === 'yearly' }"
+    @click="activeView = 'yearly'"
+  >
+    Yearly
+  </button>
+</div> -->
+
+<!-- <br>
+  <div class="chart-box" v-if="activeView === 'monthly'">
+  <h3>📅 Monthly Performance</h3>
+  <canvas ref="monthlyChart"></canvas>
+</div> -->
+
+<!-- <div class="chart-box" v-if="activeView === 'quarterly'">
+  <h3>📊 Quarterly Performance</h3>
+  <canvas ref="quarterlyChart"></canvas>
+</div>
+
+<div class="chart-box" v-if="activeView === 'yearly'">
+  <h3>🏆 Yearly Performance</h3>
+  <canvas ref="yearlyChart"></canvas>
+</div> -->
+
+<!-- </div> -->
+<!-- 🎂 Birthday Reminder Section -->
+ <div class="chart-box birthday-box">
       <h3>🎉 Birthdays Reminder</h3>
 
       <div v-if="birthdayList.length > 0" class="birthday-grid">
@@ -40,7 +87,8 @@
         <p>No birthdays this month 🎈</p>
       </div>
     </div>
-  </div>
+</div>
+
 </template>
 
 <script>
@@ -53,16 +101,186 @@ export default {
   name: 'DataChart',
   data() {
     return {
+        activeView: 'monthly', // default
+      monthlyChart: null,
+quarterlyChart: null,
+yearlyChart: null,
+monthlyData: {},
+quarterlyData: {},
+yearlyData: {},
+
       taskChartInstance: null,
+        serviceChartInstance: null,
       currentMonthName: '',
       birthdayList: []
     };
   },
   mounted() {
     this.fetchTasks();
+     this.createServiceChart();
     this.fetchBirthdays();
+    this.fetchPerformance();
   },
+  watch: {
+  activeView() {
+    this.$nextTick(() => {
+      if (this.activeView === 'monthly') {
+        this.createMonthlyChart(this.monthlyData);
+      }
+      if (this.activeView === 'quarterly') {
+        this.createQuarterlyChart(this.quarterlyData);
+      }
+      if (this.activeView === 'yearly') {
+        this.createYearlyChart(this.yearlyData);
+      }
+    });
+  }
+},
+
   methods: {
+async fetchPerformance() {
+  const res = await axios.get('/api/tasks');
+  const tasks = res.data;
+
+  const monthly = {};
+  const quarterly = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+  const yearly = {};
+
+  tasks.forEach(task => {
+    if (task.status.toLowerCase() !== 'completed') return;
+
+    const date = new Date(task.created_at);
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+    const m = date.getMonth() + 1;
+
+    // Monthly
+    monthly[month] = (monthly[month] || 0) + 1;
+
+    // Quarterly
+    if (m <= 3) quarterly.Q1++;
+    else if (m <= 6) quarterly.Q2++;
+    else if (m <= 9) quarterly.Q3++;
+    else quarterly.Q4++;
+
+    // Yearly
+    yearly[year] = (yearly[year] || 0) + 1;
+  });
+
+  // 🔥 STORE DATA
+  this.monthlyData = monthly;
+  this.quarterlyData = quarterly;
+  this.yearlyData = yearly;
+
+  // 🔥 DRAW DEFAULT VIEW ONLY
+  this.createMonthlyChart(monthly);
+},
+createMonthlyChart(data) {
+  if (this.monthlyChart) this.monthlyChart.destroy();
+
+  this.monthlyChart = new Chart(this.$refs.monthlyChart, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(data),
+      datasets: [{
+        label: 'Completed Tasks',
+        data: Object.values(data),
+        backgroundColor: '#42a5f5'
+      }]
+    },
+    options: { responsive: true }
+  });
+},  
+createQuarterlyChart(data) {
+  if (this.quarterlyChart) this.quarterlyChart.destroy();
+
+  this.quarterlyChart = new Chart(this.$refs.quarterlyChart, {
+    type: 'line',
+    data: {
+      labels: Object.keys(data),
+      datasets: [{
+        label: 'Quarterly Performance',
+        data: Object.values(data),
+        borderColor: '#66bb6a',
+        tension: 0.4,
+        fill: true
+      }]
+    }
+  });
+}
+,
+createYearlyChart(data) {
+  if (this.yearlyChart) this.yearlyChart.destroy();
+
+  this.yearlyChart = new Chart(this.$refs.yearlyChart, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(data),
+      datasets: [{
+        label: 'Yearly Performance',
+        data: Object.values(data),
+        backgroundColor: '#ff7043'
+      }]
+    }
+  });
+}
+,
+
+createServiceChart() {
+  if (this.serviceChartInstance) this.serviceChartInstance.destroy();
+
+  // 🔒 STATIC MONTHLY SERVICE DATA
+  const serviceData = [
+    { month: 'Jan', done: 14, pending: 6 },
+    { month: 'Feb', done: 18, pending: 4 },
+    { month: 'Mar', done: 22, pending: 8 },
+    { month: 'Apr', done: 19, pending: 5 },
+    { month: 'May', done: 27, pending: 7 },
+    { month: 'Jun', done: 24, pending: 3 }
+  ];
+
+  this.serviceChartInstance = new Chart(this.$refs.serviceChart, {
+    type: 'line', // 👉 keep line (or change to 'bar' if you want)
+    data: {
+      labels: serviceData.map(item => item.month),
+      datasets: [
+        {
+          label: 'Services Done',
+          data: serviceData.map(item => item.done),
+          borderColor: '#1976d2',
+          backgroundColor: 'rgba(25,118,210,0.15)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5
+        },
+        {
+          label: 'Pending Services',
+          data: serviceData.map(item => item.pending),
+          borderColor: '#f44336',
+          backgroundColor: 'rgba(244,67,54,0.15)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+},
+
     // 🟩 Fetch Task Data and Create Task Chart
     async fetchTasks() {
       try {
@@ -285,4 +503,27 @@ export default {
 .no-birthday p {
   font-size: 14px;
 }
+.performance-toggle {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.performance-toggle button {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.performance-toggle button.active {
+  background: #1976d2;
+  color: #fff;
+}
+
 </style>

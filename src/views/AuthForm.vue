@@ -1,107 +1,154 @@
 <template>
-  <div class="auth-container">
-    <div class="card">
-    <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay1.png" style="height: 65px;  border-radius: 9px;" alt="Logo">
-</a>
+  <div class="login-wrapper">
+    <div class="login-card animate-card">
 
-
-      <h2>{{ isEmployeeLogin ? 'Employee Login' : 'Admin Login' }}</h2>
-
-      <form @submit.prevent="handleLogin" class="form">
-        <input type="text" v-model="loginForm.email" required placeholder="Username or Email" />
-        <div class="password-wrapper">
-          <input
-            :type="showPassword ? 'text' : 'password'"
-            v-model="loginForm.password"
-            required
-            placeholder="Password"
-          />
-          <i
-            class="toggle-password fas"
-            :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"
-            @click="togglePasswordVisibility"
-          ></i>
+      <!-- LEFT PANEL -->
+      <div class="login-left animate-left">
+        <div class="welcome-content">
+          <h1>WELCOME</h1>
+          <h3>Arch 360 Portal</h3>
+          <p>
+            Secure employee & admin access for HR and CRM management.
+            Please sign in to continue.
+          </p>
         </div>
 
-        <button type="submit" class="btn btn-primary" :disabled="isLoggingIn">
-          <span v-if="isLoggingIn">Logging in...</span>
-          <span v-else>Login</span>
-        </button>
-      </form>
+        <!-- decorative circles -->
+        <span class="circle c1"></span>
+        <span class="circle c2"></span>
+        <span class="circle c3"></span>
+      </div>
 
-      <p class="forgot-password" @click="openForgotPasswordModal">Forgot Password?</p>
+      <!-- RIGHT PANEL -->
+      <div class="login-right animate-right">
+        <a href="https://employees.archenterprises.co.in/">
+          <img
+            src="https://archenterprises.co.in/ajay/ajay1.png"
+            class="logo"
+            alt="Logo"
+          />
+        </a>
 
-      <p v-if="error" class="error-message">{{ error }}</p>
+        <h2>{{ isEmployeeLogin ? 'Employee Login' : 'Admin Login' }}</h2>
+        <div v-if="!isEmployeeLogin" class="role-badges">
+  <span class="badge hr">HR</span>
+  <span class="badge crm">CRM</span>
+</div>
 
-      <p class="or-text">— SWITCH —</p>
+        <p class="sub-text">
+          {{ isEmployeeLogin ? 'Employee / Staff Access' : 'HR / CRM Admin Access' }}
+        </p>
 
-      <button class="btn btn-success" @click="toggleLoginType">
-        {{ isEmployeeLogin ? 'Admin Login' : 'Employee Login' }}
-      </button>
+        <form @submit.prevent="handleLogin" class="form">
+          <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input
+              type="text"
+              v-model="loginForm.email"
+              required
+              placeholder="Username or Email"
+            />
+          </div>
+
+          <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="loginForm.password"
+              required
+              placeholder="Password"
+            />
+            <i
+              class="fas toggle-eye"
+              :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"
+              @click="togglePasswordVisibility"
+            ></i>
+          </div>
+
+          <button class="btn-primary" type="submit" :disabled="isLoggingIn">
+            <span v-if="isLoggingIn">
+              <i class="fas fa-spinner fa-spin"></i> Logging in
+            </span>
+            <span v-else>Sign In</span>
+          </button>
+        </form>
+
+        <p class="forgot" @click="openForgotPasswordModal">
+          Forgot Password?
+        </p>
+
+        <p v-if="error" class="error-message">{{ error }}</p>
+
+        <div class="switch">
+          <span>— SWITCH —</span>
+          <button class="btn-switch" @click="toggleLoginType">
+            {{ isEmployeeLogin ? 'Admin Login' : 'Employee Login' }}
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Step 1: Enter Email Modal -->
+    <!-- 🔐 FORGOT PASSWORD MODALS (UNCHANGED LOGIC) -->
     <div v-if="showForgotPasswordModal" class="modal-backdrop">
       <div class="modal">
         <h3>Forgot Password</h3>
-        <p>Enter your email and we'll send you an OTP to reset your password.</p>
-        <input type="email" v-model="forgotEmail" placeholder=" Enter your email" />
+        <input type="email" v-model="forgotEmail" placeholder="Enter email" />
 
         <p v-if="forgotError" class="error-message">{{ forgotError }}</p>
         <p v-if="forgotSuccess" class="success-message">{{ forgotSuccess }}</p>
 
         <div class="modal-buttons">
-         <button class="btn btn-primary" @click="sendResetLink" :disabled="isSendingOtp">
-  <span v-if="isSendingOtp">
-    <i class="fas fa-spinner fa-spin"></i> Sending...
-  </span>
-  <span v-else>Send OTP</span>
-</button>
-          <button class="btn btn-danger" @click="closeForgotPasswordModal">Back to Login</button>
+          <button class="btn-primary" @click="sendResetLink" :disabled="isSendingOtp">
+            <span v-if="isSendingOtp">
+              <i class="fas fa-spinner fa-spin"></i> Sending
+            </span>
+            <span v-else>Send OTP</span>
+          </button>
+          <button class="btn-danger" @click="closeForgotPasswordModal">
+            Back
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Step 2: Enter OTP Modal -->
     <div v-if="showOtpModal" class="modal-backdrop">
       <div class="modal">
         <h3>Enter OTP</h3>
-        <p>Please enter the OTP sent to your email.</p>
-        <input type="text" v-model="enteredOtp" placeholder=" OTP" />
-
+        <input type="text" v-model="enteredOtp" placeholder="OTP" />
         <p v-if="otpError" class="error-message">{{ otpError }}</p>
 
         <div class="modal-buttons">
-          <button class="btn btn-primary" @click="verifyOtp">Verify OTP</button>
-          <button class="btn btn-danger" @click="closeOtpModal">Back</button>
+          <button class="btn-primary" @click="verifyOtp">Verify</button>
+          <button class="btn-danger" @click="closeOtpModal">Back</button>
         </div>
       </div>
     </div>
 
-    <!-- Step 3: Reset Password Modal -->
     <div v-if="showResetPasswordModal" class="modal-backdrop">
       <div class="modal">
         <h3>Reset Password</h3>
-        <input type="password" v-model="newPassword" placeholder=" New Password" />
-        <input type="password" v-model="confirmPassword" placeholder=" Confirm Password" />
+        <input type="password" v-model="newPassword" placeholder="New Password" />
+        <input type="password" v-model="confirmPassword" placeholder="Confirm Password" />
 
         <p v-if="resetError" class="error-message">{{ resetError }}</p>
         <p v-if="resetSuccess" class="success-message">{{ resetSuccess }}</p>
 
         <div class="modal-buttons">
-          <button class="btn btn-primary" @click="resetPassword" :disabled="isResettingPassword">
-  <span v-if="isResettingPassword">
-    <i class="fas fa-spinner fa-spin"></i> Updating...
-  </span>
-  <span v-else>Update Password</span>
-</button>
-          <button class="btn btn-danger" @click="closeResetPasswordModal">Back</button>
+          <button class="btn-primary" @click="resetPassword" :disabled="isResettingPassword">
+            <span v-if="isResettingPassword">
+              <i class="fas fa-spinner fa-spin"></i> Updating
+            </span>
+            <span v-else>Update</span>
+          </button>
+          <button class="btn-danger" @click="closeResetPasswordModal">
+            Back
+          </button>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <script>
 import axios from 'axios';
@@ -384,253 +431,379 @@ const response = await axios.post(url, {
 
 
 <style scoped>
-
-.modal input {
-  padding: 14px 0px;
-  margin: 8px 0;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  width: 100%;
-  transition: 0.3s;
-  background-color: #fefefe;
-}
-
-.modal input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-.success-message {
-  color: #28a745;
-  font-weight: 600;
-  margin-top: 12px;
-  animation: fadeIn 0.5s ease;
-}
-
-.error-message {
-  color: #dc3545;
-  font-weight: 600;
-  margin-top: 12px;
-  animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.modal-buttons .btn {
-  min-width: 120px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-}
-
-.forgot-password {
-  margin-top: 10px;
-  color: var(--text);
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.success-message {
-  margin-top: 10px;
-  color: #28a745;
-  font-weight: 500;
-}
-.password-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-password {
-  position: absolute;
-  right: 12px;
-  cursor: pointer;
-  color: #888;
-  font-size: 16px;
-}
-
-.login-logo {
-  width: 120px;
-  margin-bottom: -12px;
-  animation: pulseLogo 2s infinite;
-}
-
-.error-message {
-  margin-top: 10px;
-  color: #dc3545;
-  font-weight: 500;
-}
-
-.auth-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--primary);
+.login-wrapper {
   min-height: 100vh;
-  width: 100%;
-  padding: 0;
+  background: linear-gradient(135deg, #0b5ed7, #06357a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.login-card {
+  width: 1100px;
+  max-width: 95%;
+  height: 620px;
+  background: #fff;
+  border-radius: 22px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+}
 
+/* LEFT */
+.login-left {
+  flex: 1;
+  background: linear-gradient(135deg, #0d6efd, #084298);
+  color: #fff;
+  position: relative;
+  padding: 60px;
+  overflow: hidden;
+}
+
+.welcome-content {
+  position: relative;
+  z-index: 2;
+}
+
+.login-left h1 {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.login-left h3 {
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.login-left p {
+  margin-top: 20px;
+  line-height: 1.6;
+  opacity: 0.85;
+  max-width: 320px;
+}
+
+/* circles */
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  animation: float 6s ease-in-out infinite;
+}
+
+.c1 { width: 180px; height: 180px; bottom: -40px; left: 40px; }
+.c2 { width: 120px; height: 120px; top: 80px; right: 60px; animation-delay: 2s; }
+.c3 { width: 90px; height: 90px; bottom: 120px; right: 120px; animation-delay: 4s; }
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+/* RIGHT */
+.login-right {
+  flex: 1;
+  padding: 55px 60px;
+  text-align: center;
+}
 
 .logo {
-  width: 140px;
+  height: 60px;
+  margin-bottom: 20px;
+}
+
+.login-right h2 {
+  font-size: 26px;
+  margin-bottom: 5px;
+}
+
+.sub-text {
+  color: #777;
+  font-size: 14px;
   margin-bottom: 30px;
-  animation: pulseLogo 2s infinite;
-}
-
-@keyframes pulseLogo {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.card {
-  background: #ffffffa8;
-  padding: 35px 30px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  width: 80%;
-  max-width: 420px;
-  text-align: center;
-  transition: 0.3s ease;
-}
-
-.card:hover {
-  transform: scale(1.01);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-}
-
-h2 {
-  margin-bottom: 25px;
-  color: var(--text);
-  font-weight: 700;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
-input {
-  padding: 12px 15px;
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
+.input-group {
+  position: relative;
+}
+
+.input-group i {
+     position: absolute;
+    display: flex;
+    top: 50%;
+    transform: translateY(-50%);
+    left: -30px;
+    color: #999;
+    justify-content: flex-end;
+}
+
+.toggle-eye {
+  right: 14px;
+  left: auto;
+  cursor: pointer;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px 42px;
+  margin-left: -42px;
+  border-radius: 10px;
+  border: 1.5px solid #ddd;
+  font-size: 15px;
   transition: 0.3s;
-  background-color: #f9f9f9;
 }
 
-input:hover {
-  background-color: #fff;
-  border-color: var(--primary);
-}
-
-input:focus {
-  border-color: var(--primary);
+.input-group input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
 }
 
-.or-text {
-  margin: 20px 0 10px;
-  color: #888;
-  font-size: 14px;
-}
-
-.btn {
-  padding: 12px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
+/* buttons */
+.btn-primary {
+  margin-top: 10px;
+  padding: 14px;
+  background: #0d6efd;
+  color: #fff;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
+  border: none;
+  transition: 0.3s;
 }
 
 .btn-primary:hover {
-  background-color: var(--text);
+  background: #084298;
+  transform: translateY(-1px);
 }
 
-.btn-success {
-  background-color: var(--text);
-  color: white;
+.forgot {
+  margin-top: 14px;
+  color: #0d6efd;
+  cursor: pointer;
+  font-size: 14px;
 }
 
-.btn-success:hover {
-  background-color: #06163b;
+.switch {
+  margin-top: 30px;
 }
 
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
+.switch span {
+  display: block;
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 10px;
 }
 
-.btn-danger:hover {
-  background-color: #b52a37;
+.btn-switch {
+  background: #06163b;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }
 
-/* Modal styles */
+/* modal */
 .modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  inset: 0;
+  background: rgba(0,0,0,0.45);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 999;
-  backdrop-filter: blur(5px);
 }
 
 .modal {
   background: #fff;
-  padding: 30px 25px;
+  padding: 30px;
   border-radius: 14px;
-  max-width: 420px;
   width: 90%;
-  text-align: center;
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
-  animation: slideIn 0.3s ease-out;
+  max-width: 420px;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.modal input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
 .modal-buttons {
   display: flex;
+  gap: 10px;
   justify-content: center;
-  gap: 12px;
   margin-top: 20px;
 }
+
+.btn-danger {
+  background: #dc3545;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  border: none;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-top: 10px;
+}
+
+.success-message {
+  color: #28a745;
+  margin-top: 10px;
+}
+/* ===================== */
+/* MOBILE RESPONSIVENESS */
+/* ===================== */
+
+@media (max-width: 900px) {
+  .login-card {
+    flex-direction: column;
+    height: auto;
+    border-radius: 18px;
+  }
+
+  .login-left {
+    padding: 40px 30px;
+    text-align: center;
+  }
+
+  .login-left p {
+    max-width: 100%;
+  }
+
+  .circle {
+    display: none; /* cleaner on mobile */
+  }
+
+  .login-right {
+    padding: 40px 30px;
+  }
+  .input-group i{
+
+      position: absolute;
+    display: flex;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 5px;
+    color: #999;
+    justify-content: flex-end;
+}
+.input-group input{
+  width: 78%;
+        /* padding: 14px 98px; */
+        margin-left: -14px;
+        border-radius: 10px;
+        border: 1.5px solid #ddd;
+        font-size: 15px;
+        transition: .3s;
+}
+}
+
+@media (max-width: 480px) {
+  .login-left h1 {
+    font-size: 30px;
+  }
+
+  .login-right h2 {
+    font-size: 22px;
+  }
+
+  .logo {
+    height: 52px;
+  }
+
+  .btn-primary {
+    padding: 13px;
+    font-size: 15px;
+  }
+}
+
+/* ===================== */
+/* PAGE LOAD ANIMATIONS  */
+/* ===================== */
+
+.animate-card {
+  animation: scaleFade 0.6s ease forwards;
+}
+
+.animate-left {
+  animation: slideLeft 0.7s ease forwards;
+}
+
+.animate-right {
+  animation: slideRight 0.7s ease forwards;
+}
+
+@keyframes scaleFade {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===================== */
+/* ROLE BADGES           */
+/* ===================== */
+
+.role-badges {
+  margin: 10px 0 18px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.badge {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.badge.hr {
+  background: rgba(13,110,253,0.15);
+  color: #0d6efd;
+}
+
+.badge.crm {
+  background: rgba(25,135,84,0.15);
+  color: #198754;
+}
+
 </style>

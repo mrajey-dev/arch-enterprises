@@ -129,11 +129,21 @@
 
 
   
-      <!-- Reason (full row) -->
-      <div class="form-group full-width">
-        <label for="reason">Reason</label>
-        <textarea v-model="form.reason" id="reason" rows="4"></textarea>
-      </div>
+     <div class="form-group full-width">
+  <label for="reason">
+    Reason
+    <span class="char-count">{{ form.reason.length }}/250</span>
+  </label>
+
+  <textarea
+    id="reason"
+    v-model="form.reason"
+    rows="4"
+    maxlength="250"
+    placeholder="Enter reason"
+  ></textarea>
+</div>
+
 
       <!-- File Upload -->
       <!-- File Upload  ⬅︎ tweak #1: dynamic required -->
@@ -234,6 +244,11 @@ submitSuccessMsg: '',        // success message
 
   /* watchers ------------------------------------------- */
  watch: {
+   'form.reason'(val) {
+    if (val.length > 250) {
+      this.form.reason = val.slice(0, 250);
+    }
+  },
   'form.fromDate': 'checkLeaveBalance',
   'form.toDate': 'checkLeaveBalance',
   'form.leaveType': 'checkLeaveBalance',
@@ -704,6 +719,12 @@ async submitForm() {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+.char-count {
+  float: right;
+  font-size: 12px;
+  color: #777;
+}
+
 .head-title{
       color: white;
     display: flex;

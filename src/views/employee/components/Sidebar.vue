@@ -24,9 +24,9 @@
       style="display: none"
     />
     <!-- Camera Icon -->
-    <div class="camera-icon">
+    <!-- <div class="camera-icon">
       <i class="fas fa-camera"></i>
-    </div>
+    </div> -->
   </label>
 
 </div>

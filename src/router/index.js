@@ -73,11 +73,18 @@ import MyProfile from '../views/employee/MyProfile.vue'
 
 
 const routes = [
-  { path: '/', component: AuthForm, meta: { hideBell: true } },
-  { path: '/auth', component: AuthForm, meta: { hideBell: true } },
+  { path: '/', component: AuthForm, meta: { hideBell: true, hideHelp: true } },
+  { path: '/auth', component: AuthForm, meta: { hideBell: true, hideHelp: true } },
 
-  { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true }, meta: { hideBell: true }
-   },
+  {
+  path: '/dashboard',
+  component: Dashboard,
+  meta: {
+    requiresAuth: true,
+    hideBell: true
+  }
+},
+
   { path: '/employees', name: 'ManageEmp', component: Employee, meta: { hideBell: true } },
   { path: '/workflow', name: 'WorkFlow', component: WorkFlow, meta: { hideBell: true } },
   { path: '/ExpenseManage', name: 'ExpenseManage', component: ExpenseManage, meta: { hideBell: true } },
@@ -106,8 +113,9 @@ const routes = [
     path: '/quotation',
     name: 'Quotation',
     component: Quotation,
-    meta: { hideBell: true }
+    meta: { hideBell: true,hideHelp: true }
   },
+
 
   {
   path: '/employee/quotations',
