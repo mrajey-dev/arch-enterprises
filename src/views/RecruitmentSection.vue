@@ -32,19 +32,35 @@
         <!-- Recruitment Cards -->
         <div class="recruitment-cards">
           <div class="candidate-card" v-for="candidate in candidates" :key="candidate.id">
-            <div class="candidate-header">
-              <h3>{{ candidate.name }}</h3>
-              <span :class="['status', candidate.status.toLowerCase().replace(' ', '-')]">
-                {{ candidate.status }}
-              </span>
-            </div>
-            <p><strong>Position:</strong> {{ candidate.position }}</p>
-            <p><strong>Email:</strong> {{ candidate.email }}</p>
-            <p><strong>Phone:</strong> {{ candidate.phone }}</p>
-            <div class="card-footer">
-              <button @click="viewProfile(candidate.id)">View Profile</button>
-            </div>
-          </div>
+<div class="candidate-header">
+  <h3>{{ candidate.name }}</h3>
+
+  <select
+  class="status-select"
+  :class="candidate.status.toLowerCase().replace(' ', '-')"
+  v-model="candidate.status"
+  @change="updateStatus(candidate)"
+>
+
+    <option value="Pending">Pending</option>
+    <option value="Follow Up">Follow Up</option>
+    <option value="Successful">Successful</option>
+  </select>
+</div>
+
+
+  <p><strong>Position:</strong> {{ candidate.position }}</p>
+  <p><strong>Email:</strong> {{ candidate.email }}</p>
+  <p><strong>Phone:</strong> {{ candidate.phone }}</p>
+  <p><strong>Message:</strong> {{ candidate.message }}</p>
+
+  <p class="date">
+    <strong>Applied On:</strong>
+    {{ new Date(candidate.created_at).toLocaleDateString() }}
+  </p>
+
+</div>
+
         </div>
       </section>
     </div>
@@ -52,6 +68,7 @@
 </template>
 
 <script>
+  import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
 
 export default {
@@ -62,16 +79,48 @@ export default {
       isMobile: false,
       isSidebarVisible: true,
       loadingLeaves: false,
-      candidates: [
-        { id: 1, name: 'Ajay Sharma', position: 'Frontend Developer', email: 'ajay@example.com', phone: '+91 9876543210', status: 'Pending' },
-        { id: 2, name: 'Riya Singh', position: 'Backend Developer', email: 'riya@example.com', phone: '+91 9123456789', status: 'Approved' },
-        { id: 3, name: 'Vikram Patel', position: 'UI/UX Designer', email: 'vikram@example.com', phone: '+91 9988776655', status: 'Follow Up' },
-        { id: 4, name: 'Neha Joshi', position: 'QA Engineer', email: 'neha@example.com', phone: '+91 9871234567', status: 'Rejected' }
-      ]
+       candidates: [],
     }
   },
 
   methods: {
+    async updateStatus(candidate) {
+  try {
+    const token = localStorage.getItem('token')
+
+    await axios.patch(
+      `/api/recruitment/${candidate.id}/status`,
+      { status: candidate.status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+  } catch (error) {
+    console.error(error)
+    alert('Failed to update status')
+  }
+},
+
+    async fetchCandidates() {
+    this.loadingLeaves = true
+    try {
+      const token = localStorage.getItem('token')
+
+      const res = await axios.get('/api/recruitment', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      this.candidates = res.data.data
+    } catch (error) {
+      console.error(error)
+    } finally {
+      this.loadingLeaves = false
+    }
+  },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -85,9 +134,9 @@ export default {
       this.$router.push(`/${route}`)
     },
 
-    viewProfile(id) {
-      alert(`View profile for candidate ID: ${id}`)
-    }
+   viewProfile(id) {
+    this.$router.push(`/recruitment/${id}`)
+  }
   },
 
   mounted() {
@@ -98,6 +147,7 @@ export default {
     if (!token) {
       this.$router.push('/auth')
     }
+      this.fetchCandidates()
   },
 
   beforeUnmount() {
@@ -277,4 +327,27 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+.status-select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.status-select.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-select.follow-up {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-select.successful {
+  background: #d4edda;
+  color: #155724;
+}
+
 </style>
