@@ -145,7 +145,10 @@
             style="flex: 1 1 220px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative;"
           >
             <h4 style="font-size: 14px; margin-bottom: 8px;">{{ chartData.title }}</h4>
-            <canvas :id="chartData.canvasId" style="width: 100%; height: 180px;"></canvas>
+          <div class="pie-chart-wrapper">
+  <canvas :id="chartData.canvasId"></canvas>
+</div>
+
             <div class="task-details" style="margin-top: 8px;">
               <div
                 v-for="(value, label) in chartData.tasks"
@@ -168,11 +171,10 @@
   >
     <h3>Revenue {{ financialYear }}</h3>
 
+<div class="bar-chart-wrapper">
+  <canvas id="monthlyRevenueBarChart"></canvas>
+</div>
 
-    <canvas
-      id="monthlyRevenueBarChart"
-      style="max-width: 100%; height: 90px;"
-    ></canvas>
   </div>
 </div>
 
@@ -498,13 +500,22 @@ async generateMonthlyRevenue() {
           ]
         },
         options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 50000 } },
-            x: { ticks: { color: 'var(--text)' } }
-          },
-          plugins: { legend: { display: false } }
-        }
+  responsive: true,
+  maintainAspectRatio: false, // 🔥 prevents zoom resize
+  scales: {
+    y: {
+      beginAtZero: true,
+      ticks: { stepSize: 50000 }
+    },
+    x: {
+      ticks: { color: 'var(--text)' }
+    }
+  },
+  plugins: {
+    legend: { display: false }
+  }
+}
+
       })
     },
 
@@ -578,11 +589,12 @@ async generateMonthlyRevenue() {
                 }
               ]
             },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { position: 'bottom' }
-              },
+           options: {
+  responsive: true,
+  maintainAspectRatio: false, // 🔥 important
+  plugins: {
+    legend: { position: 'bottom' }
+  },
               // ✅ ADD CLICK EVENT HERE
     onClick: (event, elements) => {
       if (elements.length > 0) {
@@ -2252,6 +2264,35 @@ h2 {
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
+}
+
+.pie-chart-wrapper {
+  width: 220px;
+  height: 180px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.pie-chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.bar-chart-wrapper {
+  width: 100%;
+  height: 260px;      /* fixed height */
+  position: relative;
+}
+
+.bar-chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .bar-chart-wrapper {
+    height: 200px;
+  }
 }
 
 </style>

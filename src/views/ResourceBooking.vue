@@ -21,7 +21,9 @@
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
         <h2>Resource Booking</h2>
-
+ <button class="btn-add" @click="showAddModal = true">
+    <i class="fas fa-plus"></i> Add New Resource
+  </button>
         <!-- Loading Spinner -->
         <div v-if="loadingResources" class="text-center my-4">
           <div class="spinner-border text-primary" role="status">
@@ -63,28 +65,96 @@
           </div>
         </div>
       </section>
+      <!-- Add Resource Modal -->
+<div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
+  <div class="modal">
+    <h3>Add New Resource</h3>
+
+    <div class="form-group">
+      <label>Resource Name</label>
+      <input v-model="newResource.name" type="text" />
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea v-model="newResource.description"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Status</label>
+      <select v-model="newResource.available">
+        <option :value="1">Available</option>
+        <option :value="0">Booked</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-book" @click="addResource">Save</button>
+      <button class="btn-close" @click="showAddModal = false">Cancel</button>
+    </div>
+  </div>
+</div>
+
     </div>
   </div>
 </template>
 
 <script>
+  import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
 
 export default {
   components: { Sidebar },
 
   data() {
-    return {
-      isMobile: false,
-      isSidebarVisible: true,
-      loadingResources: true,
-      resources: [],
-      showModal: false,
-      bookedResourceName: ''
+  return {
+    isMobile: false,
+    isSidebarVisible: true,
+    loadingResources: true,
+    resources: [],
+
+    showModal: false,
+    bookedResourceName: '',
+
+    // 🔹 ADD THESE
+    showAddModal: false,
+    newResource: {
+      name: '',
+      description: '',
+      available: 1
     }
-  },
+  }
+},
+
 
   methods: {
+ addResource() {
+  if (!this.newResource.name || !this.newResource.description) {
+    alert('All fields are required')
+    return
+  }
+
+  axios.post('/api/resource-booking', {
+    name: this.newResource.name,
+    description: this.newResource.description
+  })
+  .then(() => {
+    this.showAddModal = false
+
+    this.newResource = {
+      name: '',
+      description: '',
+      available: 1
+    }
+
+    alert('Resource booking request submitted')
+  })
+  .catch(() => {
+    alert('Failed to submit request')
+  })
+},
+
+
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -330,4 +400,51 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.btn-add {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-add i {
+  margin-right: 6px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 7px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 </style>

@@ -1,139 +1,110 @@
 
-
 <template>
   <div class="layout">
     <!-- Header -->
-          <header class="header">
-      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
+    <header class="header">
+      <div class="head-title">
+        <a href="https://employees.archenterprises.co.in/">
+          <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px; border-radius: 9px;" alt="Logo" />
+        </a>
+        Arch 360
       </div>
       <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
     </header>
 
     <!-- Main Content -->
     <div class="main-content">
-       <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-   <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-  <h2>Request Desk</h2>
+      <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
+        <h2>Request Desk</h2>
 
-  <div v-if="loadingRequests" class="text-center my-4">
-    <div class="spinner-border text-primary" role="status">
-      <span class="sr-only">Loading...</span>
-    </div>
-    <p>Loading requests...</p>
-  </div>
+        <div v-if="loadingRequests" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+          <p>Loading requests...</p>
+        </div>
 
-  <!-- Request Tabs -->
-  <div v-else>
-    <div class="request-tabs">
-      <button
-        :class="{ active: activeTab === 'employee' }"
-        @click="activeTab = 'employee'"
-      >
-        Employee Requests
-      </button>
-      <button
-        :class="{ active: activeTab === 'office' }"
-        @click="activeTab = 'office'"
-      >
-        Office Requests
-      </button>
-    </div>
+        <div v-else class="request-table">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Employee Name</th>
+                <th>Request Title</th>
+                 <th>Description</th> 
+                
+                <th>Date Submitted</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(request, index) in employeeRequests" :key="request.id">
+  <td>{{ index + 1 }}</td>
+  <td>{{ request.user_name || 'Me' }}</td> <!-- or just 'Me' if employee_name is not returned -->
+  <td>{{ request.request_type }}</td>
+  <td>{{ request.description }}</td>
+  <td>{{ formatDate(request.created_at) }}</td>
+  <td>
+    <select 
+      v-model="request.status"
+      @change="changeStatus(request)"
+      class="status-dropdown"
+    >
+      <option value="Pending">Pending</option>
+      <option value="Approved">Approved</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Completed">Completed</option>
+    </select>
+  </td>
+</tr>
 
-    <!-- Employee Requests Table -->
-    <div v-if="activeTab === 'employee'" class="request-table">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Request Title</th>
-            <th>Employee Name</th>
-            <th>Date Submitted</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(request, index) in employeeRequests" :key="request.id">
-            <td>{{ index + 1 }}</td>
-            <td>{{ request.title }}</td>
-            <td>{{ request.employee_name }}</td>
-            <td>{{ formatDate(request.date) }}</td>
-            <td>
-              <span :class="`status ${request.status.toLowerCase()}`">
-                {{ request.status }}
-              </span>
-            </td>
-          </tr>
-          <tr v-if="employeeRequests.length === 0">
-            <td colspan="5" class="text-center">No requests found</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Office Requests Table -->
-    <div v-if="activeTab === 'office'" class="request-table">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Request Title</th>
-            <th>Department</th>
-            <th>Date Submitted</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(request, index) in officeRequests" :key="request.id">
-            <td>{{ index + 1 }}</td>
-            <td>{{ request.title }}</td>
-            <td>{{ request.department }}</td>
-            <td>{{ formatDate(request.date) }}</td>
-            <td>
-              <span :class="`status ${request.status.toLowerCase()}`">
-                {{ request.status }}
-              </span>
-            </td>
-          </tr>
-          <tr v-if="officeRequests.length === 0">
-            <td colspan="5" class="text-center">No requests found</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-
+              <tr v-if="employeeRequests.length === 0">
+                <td colspan="5" class="text-center">No requests found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
 
 export default {
   components: { Sidebar },
   data() {
-    
     return {
       isMobile: false,
       isSidebarVisible: true,
-      activeTab: 'employee',  // Default tab
       loadingRequests: true,
       employeeRequests: [],
-      officeRequests: [],
     }
   },
   methods: {
+    changeStatus(request) {
+  const token = localStorage.getItem('token');
+
+  axios.patch(`/api/requests/${request.id}/status`, {
+    status: request.status
+  }, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  .then(res => {
+    console.log(res.data.message)
+    // Optionally show success toast
+  })
+  .catch(err => {
+    console.error('Failed to update status:', err)
+    // Optionally reset dropdown to previous status
+    this.fetchRequests()
+  })
+},
+
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -146,43 +117,33 @@ export default {
       return date.toLocaleDateString()
     },
     fetchRequests() {
-      // Simulated API call, replace with your actual API
-      setTimeout(() => {
-       this.employeeRequests = [
-  { id: 1, title: 'Software Installation', employee_name: 'Rohit', date: '2026-01-18', status: 'Pending' },
-  { id: 2, title: 'VPN Access Request', employee_name: 'Priya', date: '2026-01-17', status: 'Completed' },
-  { id: 3, title: 'Work From Home Request', employee_name: 'Suresh', date: '2026-01-16', status: 'Rejected' },
-  { id: 4, title: 'Monitor Replacement', employee_name: 'Anjali', date: '2026-01-15', status: 'Pending' },
-  { id: 5, title: 'Team Meeting Request', employee_name: 'Vikram', date: '2026-01-14', status: 'Approved' },
-  { id: 6, title: 'Email Access Issue', employee_name: 'Kavita', date: '2026-01-13', status: 'Completed' },
-]
+      this.loadingRequests = true
+      const token = localStorage.getItem('token')
 
-       this.officeRequests = [
-  { id: 1, title: 'Stationery Order', department: 'HR', date: '2026-01-21', status: 'Pending' },
-  { id: 2, title: 'Projector Repair', department: 'IT', date: '2026-01-19', status: 'Completed' },
-  { id: 3, title: 'Air Conditioner Service', department: 'Facilities', date: '2026-01-18', status: 'Pending' },
-  { id: 4, title: 'Printer Toner Refill', department: 'Finance', date: '2026-01-17', status: 'Completed' },
-  { id: 5, title: 'Coffee Machine Maintenance', department: 'Admin', date: '2026-01-16', status: 'Pending' },
-  { id: 6, title: 'Office Chairs Replacement', department: 'Facilities', date: '2026-01-15', status: 'Approved' },
-  { id: 7, title: 'Fire Drill Schedule', department: 'Safety', date: '2026-01-14', status: 'Completed' },
-  { id: 8, title: 'Stationery Order', department: 'Marketing', date: '2026-01-13', status: 'Rejected' },
-]
-
+      axios.get('/api/requests/employee', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => {
+          console.log('API response:', res.data); // <-- Add this
+        this.employeeRequests = res.data
+      })
+      .catch(err => {
+        console.error('Employee requests error:', err)
+      })
+      .finally(() => {
         this.loadingRequests = false
-      }, 1000)
+      })
     }
   },
   mounted() {
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
-
-    this.fetchRequests() // Load requests
+    this.fetchRequests()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile)
   }
 }
-
 </script>
 
 
@@ -346,5 +307,14 @@ h2 {
 .status.approved { background-color: #4caf50; color: #fff; }
 .status.completed { background-color: #2196f3; color: #fff; }
 .status.rejected { background-color: #f44336; color: #fff; }
+
+.status-dropdown {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-weight: 600;
+  background-color: #fff;
+  cursor: pointer;
+}
 
 </style>

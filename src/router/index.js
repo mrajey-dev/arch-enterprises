@@ -41,6 +41,9 @@ import AmcRecord from '../views/employee/AmcRecord.vue'
 
 import ViewAllPo from '../views/employee/ViewAllPo.vue'
 import EmpWorkReport from '../views/employee/EmpWorkReport.vue'
+import RequestDeskemp from '../views/employee/Request.vue'
+import ResourceBookingEmp from '../views/employee/ResourceBooking.vue'
+
 
 
 import AssignTask from '../views/AssignTask.vue'
@@ -148,6 +151,8 @@ const routes = [
   { path: '/employee/report', name: 'Report', component: Report },
   { path: '/employee/customerregistrations', name: 'CustomerRegistrations', component: CustomerRegistrations },
   { path: '/employee/visitschedule', name: 'VisitSchedule', component: VisitSchedule },
+{ path: '/employee/Request', name: 'RequestDeskemp', component: RequestDeskemp },
+{ path: '/employee/Resourcebooking', name: 'ResourceBookingEmp', component: ResourceBookingEmp  },
 
   // 🔔 Bell hidden here also
   { 

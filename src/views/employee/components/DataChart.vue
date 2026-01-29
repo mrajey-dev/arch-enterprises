@@ -1,10 +1,12 @@
 <template>
  <div class="charts-container">
   <!-- 🟩 Task Completion Chart -->
-  <div class="chart-box">
-    <h3>📊 Task Data</h3>
+ <div class="chart-box">
+  <h3>📊 Task Data</h3>
+  <div class="chart-wrapper">
     <canvas ref="taskChart"></canvas>
   </div>
+</div>
 
   <!-- 📈 Monthly Services Done Chart (NEW) -->
   <div class="chart-box">
@@ -101,6 +103,11 @@ export default {
   name: 'DataChart',
   data() {
     return {
+      options: {
+  responsive: true,
+  maintainAspectRatio: false, // 🔥 THIS IS THE KEY
+},
+
         activeView: 'monthly', // default
       monthlyChart: null,
 quarterlyChart: null,
@@ -310,28 +317,28 @@ createServiceChart() {
       if (this.taskChartInstance) this.taskChartInstance.destroy();
 
       this.taskChartInstance = new Chart(this.$refs.taskChart, {
-        type: 'bar',
-        data: {
-          labels: ['Completed', 'In Progress', 'Pending'],
-          datasets: [
-            {
-              label: 'Tasks',
-              data: [
-                statusCounts.completed,
-                statusCounts['in progress'],
-                statusCounts.pending
-              ],
-              backgroundColor: ['#4caf50', '#ff9800', '#f44336']
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false }
-          }
-        }
-      });
+  type: 'bar',
+  data: {
+    labels: ['Completed', 'In Progress', 'Pending'],
+    datasets: [{
+      label: 'Tasks',
+      data: [
+        statusCounts.completed,
+        statusCounts['in progress'],
+        statusCounts.pending
+      ],
+      backgroundColor: ['#4caf50', '#ff9800', '#f44336']
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    }
+  }
+});
+
     },
 
     // 🎂 Fetch Birthday List
@@ -524,6 +531,17 @@ createServiceChart() {
 .performance-toggle button.active {
   background: #1976d2;
   color: #fff;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 280px; /* 👈 CONTROL HEIGHT HERE */
+  width: 100%;
+}
+
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 </style>

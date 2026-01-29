@@ -83,6 +83,7 @@ export default {
 
   data() {
     return {
+      
        helpOpen: false,
        userInput: '',
     messages: [
@@ -477,7 +478,7 @@ sendMessage() {
 
 
 [data-theme="blue"] {
-  --primary: #034081;
+  --primary: #180552;
   --sidebar: #b4ccf9;
   --card: #034081;
   --text: #042345;
@@ -554,7 +555,7 @@ sendMessage() {
 }
 
 .theme-switcher {
-  position: fixed;
+  position: static;
   top: 12px;
   right: 12px;
   z-index: 9999;
@@ -577,7 +578,7 @@ sendMessage() {
 
 .theme-select {
   appearance: none;
-  padding: 6px 28px 6px 12px;
+  padding: 6px 3px 6px 2px;
   font-size: 13px;
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.15);
@@ -623,7 +624,7 @@ sendMessage() {
 
 /* Theme switcher container */
 .theme-switcher {
-  position: fixed;
+  position: static;
   top: 28px;
     right: 54px;
   z-index: 9999;
@@ -647,7 +648,7 @@ sendMessage() {
 /* Select */
 .theme-select {
   appearance: none;
-  padding: 7px 32px 7px 12px;
+  padding: 7px 3px 7px 2px;
   font-size: 13px;
   font-weight: 500;
   border-radius: 12px;

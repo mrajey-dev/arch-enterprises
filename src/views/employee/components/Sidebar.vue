@@ -1,7 +1,18 @@
 <template>
   <div class="layout">
     <!-- Sidebar -->
-    <aside class="sidebar">
+   <aside
+  class="sidebar"
+  :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
+>
+
+
+<button class="sidebar-toggles" @click="toggleSidebar">
+  <span class="toggle-icon" style="color: white; float: right;">{{ isCollapsed ? '⫸' : '⫷' }}</span>
+</button>
+
+
+
       <!-- Profile Section -->
       <div class="profile-section">
         <!-- Profile Picture with Camera Icon -->
@@ -38,90 +49,96 @@
       <!-- Scrollable Menu Section -->
       <div class="menu-scroll">
         <!-- Universal Search -->
- <div class="search-bar desktop-only">
-      <input
+ <!-- <div class="search-bar desktop-only">
+     <span> <input
         type="text"
         placeholder="Search..."
         v-model="searchQuery"
         @input="handleSearch"
-      />
+      /></span>
       <i class="fas fa-search"></i>
-    </div>
+    </div> -->
         <ul class="sidebar-menu">
           <li @click="goTo('employee/dashboard')">
-            <i class="fas fa-tachometer-alt"></i> Dashboard
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
           </li>
  <li @click="goTo('employee/help')">
-            <i class="fas fa-comments" aria-hidden="true"></i> Chat
+            <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
           </li>
           <!-- Leave Dropdown -->
           <li class="dropdown-wrapper">
             <div @click="toggleLeaveDropdown">
-              <i class="fas fa-calendar-alt"></i> Leave
+              <i class="fas fa-calendar-alt"></i><span> Leave</span>
               <i class="fas fa-caret-down"></i>
             </div>
             <ul v-if="leaveDropdownOpen" class="dropdown-menu">
               <li @click="goTo('employee/leaveapplicationsemp')">
-                <i class="fas fa-list"></i> All Leaves
+                <i class="fas fa-list"></i> <span>All Leaves</span>
               </li>
               <li @click="goTo('employee/approvedleavesemp')">
-                <i class="fas fa-check-circle"></i> Approved Leaves
+                <i class="fas fa-check-circle"></i> <span>Approved Leaves</span>
               </li>
               <li @click="goTo('employee/rejectedleavesemp')">
-                <i class="fas fa-times-circle"></i> Rejected Leaves
+                <i class="fas fa-times-circle"></i> <span>Rejected Leaves</span>
               </li>
               <li @click="goTo('employee/pendingleaves')">
-                <i class="fas fa-hourglass-half"></i> Pending Leaves
+                <i class="fas fa-hourglass-half"></i><span> Pending Leaves</span>
               </li>
             </ul>
           </li>
 
           <li @click="goTo('employee/applyleave')">
-            <i class="fas fa-plane-departure"></i> Apply for Leave
+            <i class="fas fa-plane-departure"></i><span> Apply for Leave </span>
           </li>
           <li
   v-if="user.department && allowedVisitDepartments.includes(user.department.toLowerCase())"
   @click="goTo('employee/visitschedule')"
 >
-  <i class="fas fa-chart-bar"></i> Visit Schedule
+  <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
 </li>
  <li 
   class="desktop-only"
   @click="goTo('employee/visitschedule')"
 >
-  <i class="fas fa-chart-bar"></i> Visit Schedule
+  <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
 </li>
 
  <li 
   class="mobile-only"
   @click="goTo('employee/Customerregistrations')"
 >
-  <i class="fas fa-user-friends"></i> Customers & PO
+  <i class="fas fa-user-friends"></i><span> Customers & PO</span>
 </li>
 
 
           <li @click="goTo('employee/viewAnnouncement')">
-            <i class="fas fa-bullhorn"></i> Announcement
+            <i class="fas fa-bullhorn"></i><span> Announcement</span>
+          </li>
+          <li @click="goTo('employee/request')">
+            <i class="fa fa-check-square-o"></i><span> Request Desk</span>
+          </li>
+           <li @click="goTo('employee/resourcebooking')">
+            <i class="fa fa-check-square-o"></i><span> Resource Booking</span>
           </li>
           
           <li @click="goTo('employee/viewkra')">
-            <i class="fas fa-tasks"></i> View KRA
+            <i class="fas fa-tasks"></i> <span>View KRA</span>
           </li>
            <li @click="goTo('employee/mydsi')">
-            <i class="fas fa-tasks"></i> DSI
+            <i class="fas fa-tasks"></i><span> DSI</span>
           </li>
           
           <li @click="goTo('employee/myprofile')">
-            <i class="fa-solid fa-user"></i> My Profile
+            <i class="fa-solid fa-user"></i><span> My Profile</span>
           </li>
           <li @click="showChangePassword = true">
-            <i class="fas fa-key"></i> Change Password
+            <i class="fas fa-key"></i> <span>Change Password</span>
           </li>
           <li @click="logout" class="danger-bg">
-            <i class="fas fa-sign-out-alt"></i> Logout
+            <i class="fas fa-sign-out-alt"></i><span> Logout</span>
           </li>
            <li class="theme-switcher">
-      <label class="theme-label">🎨 Theme</label>
+      <label class="theme-label"><span>🎨 Theme</span></label>
 
       <select
         class="theme-select"
@@ -140,7 +157,12 @@
         </ul>
       </div>
     </aside>
-
+<!-- MOBILE OVERLAY -->
+<div
+  v-if="isMobileOpen"
+  class="mobile-overlay"
+  @click="isMobileOpen = false"
+></div>
     <!-- Main Content -->
     <main class="main-content">
       <router-view></router-view>
@@ -191,6 +213,8 @@ export default {
   components: { ChangePasswordForm },
   data() {
     return {
+       isMobileOpen: false,
+       isCollapsed: false,
        currentTheme: localStorage.getItem("theme") || "default",
       searchQuery: "",
       results: [],
@@ -222,6 +246,14 @@ export default {
     },
   },
   methods: {
+    toggleSidebar() {
+    if (window.innerWidth <= 768) {
+      this.isMobileOpen = !this.isMobileOpen;
+    } else {
+      this.isCollapsed = !this.isCollapsed;
+    }
+  },
+
      changeTheme(e) {
       const theme = e.target.value
       this.currentTheme = theme
@@ -255,9 +287,13 @@ export default {
     toggleLeaveDropdown() {
       this.leaveDropdownOpen = !this.leaveDropdownOpen;
     },
-    goTo(route) {
-      this.$router.push(`/${route}`);
-    },
+  goTo(route) {
+  this.$router.push(`/${route}`);
+
+  if (window.innerWidth <= 768) {
+    this.isMobileOpen = false;
+  }
+},
 
     logout() {
       const token = localStorage.getItem("token");
@@ -396,439 +432,311 @@ async mounted() {
 
 
 <style scoped>
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css");
-
-.mobile-menu-icon {
-  font-size: 20px;
-  cursor: pointer;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-.mobile-menu-icon:hover {
-  color: #ffdd57;
-  transform: scale(1.2);
-}
-.mobile-menu-icon {
-  font-size: 22px;
-  cursor: pointer;
-  color: var(--text);
-}
-.profile-pic-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.profile-pic {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #c3e0e5;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-
-.profile-pic:hover {
-  transform: scale(1.05);
-}
-
-/* Camera Icon Overlay */
-.camera-icon {
- position: absolute;
-    bottom: 10px;
-    right: 4px;
-    background-color: var(--primary);
-    color: #ffffff;
-    border-radius: 73%;
-    padding: 4px;
-    font-size: 12px;
-    /* top: 61px; */
-    background-position: center;
-    width: 16px;
-    border: 1px solid white;
-    cursor: pointer;
-}
-
-
+/* Layout */
 .layout {
   display: flex;
-  min-height: 100vh;
-  flex-direction: row;
-  
+   min-height: 100vh;
+   position: sticky;
+  background: #f4f6fb;
 }
 
+/* Sidebar */
 .sidebar {
- position: fixed;
-    top: 124px;
-    left: 13px;
-    width: 318px;
-    height: 79vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--sidebar);
-    border-radius: 21px;
-    color: var(--text);
-    font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
-    /* z-index: 2000; */
+  width: 260px;
+  background: linear-gradient(180deg, var(--primary), #020617);
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
 
+  /* 👇 STICKY SIDEBAR */
+  position: sticky;
+  top: 0;
+  height: 81vh;
+
+  transition: width 0.35s ease;
+  box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  z-index: 100;
 }
 
 
+/* Collapsed sidebar */
+.sidebar.collapsed {
+  width: 80px;
+}
+
+/* Profile Section */
 .profile-section {
+  padding: 20px;
   text-align: center;
-  padding: 12px 10px 15px;
-  background-color: var(--primary)a6;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.profile-pic-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 
 .profile-pic {
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #ffffff;
-  margin-bottom: 8px;
+  border: 3px solid #38bdf8;
   cursor: pointer;
-  transition: transform 0.3s ease;
-}
-.profile-pic:hover {
-  transform: scale(1.05);
 }
 
 .sidebar-title {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* Hide title when collapsed */
+.sidebar.collapsed .sidebar-title {
+  display: none;
+}
+
+.menu-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+    max-height: calc(100vh - 180px);
+}
+
+/* Scrollbar */
+.menu-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.menu-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+}
+
+/* Menu */
 .sidebar-menu {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+.sidebar-menu li {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.25s ease, padding 0.3s ease;
+  border-radius: 8px;
+  margin: 4px 10px;
+      flex-wrap: wrap;
+}
 
-
-.sidebar-menu i {
-  min-width: 18px;
+.sidebar-menu li i {
+  min-width: 20px;
   text-align: center;
+  font-size: 16px;
+}
+
+/* Hover */
+.sidebar-menu li:hover {
+  background: rgba(56, 189, 248, 0.15);
+}
+
+/* Active / Danger */
+.danger-bg {
+  color: #fca5a5;
+}
+.danger-bg:hover {
+  background: rgba(248, 113, 113, 0.15);
+}
+.dropdown-wrapper > div {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
 }
 
 .dropdown-menu {
-  position: relative;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 5px 0;
-  margin: 5px 0 10px 0;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  margin-top: 6px;
+  padding-left: 10px;
 }
 
 .dropdown-menu li {
-  padding: 10px 15px;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: background 0.2s, transform 0.2s ease;
+  font-size: 13px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
 }
-
-.dropdown-menu li:hover {
-  color: var(--text);
-  transform: translateX(5px);
-}
-
-.danger-bg {
-  background-color: var(--text) !important;
-  color: white !important;
-}
-
-.main-content {
-  margin-left: 250px;
-  flex: 1;
-  padding: 20px;
-  min-height: 100vh;
-  overflow-y: auto;
-}
-@media (max-width: 768px) {
-  .profile-section{
-    /* margin-top: 22%!important; */
-    background: linear-gradient(135deg, var(--primary), var(--primary)) !important;
-  }
-  .profile-pic{
-    margin-top: 100%!important;
-  }
-  .sidebar {
-    width: 100vw;
-    height: 100vh;
-    top: 0;
-    left: 0;
-    border-radius: 0;
-    position: fixed;
-    /* z-index: 2000; */
-  }
-
-  .layout {
-    flex-direction: column;
-  }
-
-  .main-content {
-    margin-left: 0;
-    display: none; /* hide content when sidebar is open */
-  }
-  .modal{
-    width: 73%;
-  }
-}
-.menu-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 18px 16px;
-}
-
-/* Stylish scrollbar */
-.menu-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.menu-scroll::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 10px;
-}
-.menu-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.sidebar-menu li {
-  /* display: flex; */
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-  padding: 10px 18px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
-  transition: all 0.25s ease;
-  cursor: pointer;
-}
-
-.sidebar-menu li:hover {
-  background: #ffffff;
-  transform: translateX(6px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-  }
-
-  .layout {
-    flex-direction: column;
-  }
-
-  .main-content {
-    margin-left: 0;
-    display: none; /* hide content when sidebar open */
-  }
-
-  .sidebar-menu li {
-    font-size: 15px;
-    padding: 12px 20px;
-  }
-}
-.profile-section {
-      border-radius: 20px;
-  text-align: center;
-  padding: 18px 10px;
-  background: var(--primary);
-  color: #fff;
-}
-
-.sidebar-title {
-  font-size: 17px;
-  font-weight: 600;
-}
-
 .search-bar {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background: #f4f4f4;
-  border-radius: 8px;
-  margin: 10px;
+  padding: 10px 16px;
+  position: relative;
 }
 
 .search-bar input {
-  flex: 1;
+  width: 100%;
+  padding: 8px 34px 8px 12px;
+  border-radius: 8px;
   border: none;
   outline: none;
-  padding: 6px 8px;
-  border-radius: 4px;
+  background: #020617;
+  color: #fff;
+  font-size: 13px;
 }
 
 .search-bar i {
-  margin-left: 8px;
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
 }
-
-.search-results {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  background: white;
-  max-height: 200px;
-  overflow-y: auto;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.search-results li {
-  padding: 6px 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.search-results li:hover {
-  background: #f0f0f0;
-}
-
-/* Backdrop */
-.popup-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
-
-/* Popup Container */
-.popup {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px 25px;
-  width: 90%;
- max-width: 709px;
-    max-height: 88vh;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  position: relative;
-  animation: slideUp 0.3s ease;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Table scroll container */
-.table-container {
-  overflow-y: auto;
-  flex: 1; /* fills remaining height */
-  margin-bottom: 15px;
-}
-
-/* Heading */
-.popup h3 {
-  margin-bottom: 15px;
-  font-size: 1.5rem;
-  color: var(--text);
-}
-
-/* Table */
-.results-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.results-table th,
-.results-table td {
-  padding: 10px 12px;
-  text-align: left;
-}
-
-.results-table th {
-  background-color: #f5f5f5;
-  color: var(--text);
-  font-weight: 600;
-  border-bottom: 2px solid #eee;
-}
-
-.results-table tbody tr {
-  border-bottom: 1px solid #eee;
-  transition: background 0.3s ease;
-}
-
-.results-table tbody tr:hover {
-  background-color: #f0f8ff;
-}
-
-/* No results text */
-.no-results {
-  color: #888;
-  font-size: 1rem;
-  margin-bottom: 10px;
-}
-
-/* Close Button */
-.close-btn {
-      background-color: var(--primary);
-    color: var(--text);
-  padding: 10px 25px;
+.sidebar-toggle {
+  position: absolute;
+  top: -9px;
+  right: -15px;
+  background: #38bdf8;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  color: #020617;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
-
-.close-btn:hover {
-  background-color: #75b4b4;
-  transform: scale(1.05);
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-/* Show by default (desktop) */
-.desktop-only {
-  display: list-item;
-}
-
-/* Hide on mobile */
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-}
-/* Hide by default (desktop & laptop) */
-.mobile-only {
+.sidebar.collapsed .sidebar-menu li span{
   display: none;
 }
 
-/* Show only on mobile */
+.sidebar.collapsed .sidebar-menu li {
+  justify-content: center;
+  padding: 14px;
+}
+/* COLLAPSED SIDEBAR */
+.sidebar.collapsed .sidebar-menu li {
+  justify-content: center;
+  padding: 14px;
+}
+
+/* Hide text only */
+.sidebar.collapsed .sidebar-menu li span {
+  display: none;
+}
+
+/* Hide caret arrow only */
+.sidebar.collapsed .fa-caret-down {
+  display: none;
+}
+
+/* Make dropdown container behave like normal item */
+.sidebar.collapsed .dropdown-wrapper > div {
+  justify-content: center;
+}
+
+/* Ensure icons stay visible */
+.sidebar.collapsed .sidebar-menu li i {
+  display: inline-block;
+}
+
+/* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 768px) {
-  .mobile-only {
-    display: list-item;
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    height: 100vh;
+    width: 260px;
+    z-index: 1001;
+    transition: left 0.35s ease;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
+  }
+
+  /* Disable collapse mode on mobile */
+  .sidebar.collapsed {
+    width: 260px;
+  }
+
+  /* Always show text on mobile */
+  .sidebar-menu li span {
+    display: inline !important;
+  }
+
+  .fa-caret-down {
+    display: inline !important;
+  }
+
+  /* Overlay */
+  .mobile-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+  }
+
+  /* Toggle button reposition */
+  .sidebar-toggle {
+    top: 15px;
+    right: 15px;
+    z-index: 1100;
+  }
+
+  /* Main content full width */
+  .layout {
+    flex-direction: column;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
   }
 }
 
+.sidebar-toggle {
+  position: absolute;
+  top: -9px;
+  right: -15px;
+  width: 30px;
+  height: 30px;
+  background: #38bdf8;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  z-index: 1100;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
 
-.sidebar .theme-switcher {
-  position: inherit;
-  /* margin: 16px; */
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 14px;
-  /* padding: 10px 12px; */
+.sidebar-toggle span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  margin: 3px 0;
+  background: #020617;
+  border-radius: 1px;
+  transition: all 0.4s ease;
+}
+
+/* Animate hamburger to X */
+.sidebar-toggle .bar1.active {
+  transform: rotate(45deg) translate(4px, 4px);
+}
+.sidebar-toggle .bar2.active {
+  opacity: 0;
+}
+.sidebar-toggle .bar3.active {
+  transform: rotate(-45deg) translate(4px, -4px);
+}
+
+.sidebar-toggles{
+  background-color: black;
 }
 </style>

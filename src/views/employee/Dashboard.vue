@@ -32,6 +32,8 @@
 >
 
 
+
+
  <div class="dashboard-row">
     <!-- Modal -->
     <div class="modal-overlay" v-if="showModal">
@@ -89,6 +91,7 @@
   <div>
     <p class="label">My Tasks</p>
     <h3 class="value" id="leavesType"></h3>
+     <div class="progress"><span style="width:56%"></span></div>
   </div>
 </div>  
 
@@ -100,6 +103,7 @@
   <div>
     <p class="label">Attendance</p>
     <h3 class="value" id="approvedLeaves"></h3>
+      <div class="progress green"><span style="width:78%"></span></div>
   </div>
 </div>
 
@@ -1658,5 +1662,94 @@ h2 {
 }
 
   
+
+/* KPI GRID */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  gap: 15px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  color:#fff;
+}
+
+.blue { background:#4f6ef7 }
+.orange { background:#f59e0b }
+.green { background:#22c55e }
+.red { background:#ef4444 }
+
+.progress {
+  height:6px;
+  background:#e5e7eb;
+  border-radius:6px;
+  margin-top:6px;
+}
+.progress span {
+  display:block;
+  height:100%;
+  background:#4f6ef7;
+  border-radius:6px;
+}
+.progress.orange span { background:#f59e0b }
+.progress.green span { background:#22c55e }
+.progress.red span { background:#ef4444 }
+
+/* SPLIT DASHBOARD */
+.dashboard-split {
+  display:grid;
+  grid-template-columns: 2fr 1fr;
+  gap:20px;
+  margin-top:20px;
+}
+
+.chart-card,
+.sales-card {
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 8px 20px rgba(0,0,0,.06);
+}
+
+.sales-card {
+  background:#3b5bdb;
+  color:#fff;
+}
+
+.sales-card ul {
+  list-style:none;
+  padding:0;
+  margin-top:15px;
+}
+.sales-card li {
+  display:flex;
+  justify-content:space-between;
+  padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.2);
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .dashboard-split{
+    grid-template-columns:1fr;
+  }
+}
 
 </style>
