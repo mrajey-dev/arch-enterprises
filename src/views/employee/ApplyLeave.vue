@@ -129,10 +129,12 @@
 
 
   
-     <div class="form-group full-width">
+    <div class="form-group full-width">
   <label for="reason">
     Reason
     <span class="char-count">{{ form.reason.length }}/250</span>
+    <small v-if="isCasualLeave">(optional)</small>
+    <small v-else class="required">*</small>
   </label>
 
   <textarea
@@ -141,8 +143,10 @@
     rows="4"
     maxlength="250"
     placeholder="Enter reason"
+    :required="!isCasualLeave"
   ></textarea>
 </div>
+
 
 
       <!-- File Upload -->
@@ -265,6 +269,9 @@ computed: {
 
   isHalfDay() {
     return (this.form.leaveType || '').toLowerCase() === 'half day';
+  },
+   isCasualLeave() {
+    return (this.form.leaveType || '').toLowerCase().includes('casual');
   }
 },
 
@@ -662,6 +669,12 @@ async submitForm() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
     }
+// Reason validation (optional only for Casual Leave)
+if (!this.isCasualLeave && !this.form.reason.trim()) {
+  this.submitError = 'Reason is required for this leave type.';
+  alert(this.submitError);
+  return;
+}
 
     await this.sendAdminNotification(data.leave_id);
     this.submitSuccessMsg = '✅ Leave request submitted successfully!';

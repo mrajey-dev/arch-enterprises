@@ -6380,11 +6380,11 @@ background-color: #6f256f;
 
 /* Individual Buttons Design */
 .btn-view-po {
-  background-color: #0275d8;
+  background-color: var(--text);
 }
 
 .btn-view-po:hover {
-  background-color: #025fae;
+  background-color: var(--primary);
 }
 
 .btn-edit {

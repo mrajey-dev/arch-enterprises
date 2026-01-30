@@ -109,10 +109,10 @@
  <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('empdsi')">
             <i class="fas fa-tasks"></i> <span>View DSI</span>
           </li>
-           
+<!--            
       <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="showPerformanceModal = true">
         <i class="fas fa-chart-line"></i><span> Performance</span>
-      </li>
+      </li> -->
 
       <li @click="logout" class="danger-bg">
         <i class="fas fa-sign-out-alt"></i><span> Logout</span>
