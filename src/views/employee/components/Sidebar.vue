@@ -118,7 +118,7 @@
             <i class="fa fa-check-square-o"></i><span> Request Desk</span>
           </li>
            <li @click="goTo('employee/resourcebooking')">
-            <i class="fa fa-check-square-o"></i><span> Resource Booking</span>
+            <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
           </li>
           
           <li @click="goTo('employee/viewkra')">

@@ -20,10 +20,10 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <h2>Resource Booking</h2>
- <button class="btn-add" @click="showAddModal = true">
+        <h2>Resource Booking  <button class="btn-add" @click="showAddModal = true">
     <i class="fas fa-plus"></i> Add New Resource
-  </button>
+  </button></h2>
+
         <!-- Loading Spinner -->
         <div v-if="loadingResources" class="text-center my-4">
           <div class="spinner-border text-primary" role="status">
@@ -32,29 +32,37 @@
           <p>Loading resources...</p>
         </div>
 
-        <!-- Resource Cards -->
-        <div v-else class="resources-grid">
-          <div v-for="resource in resources" :key="resource.id" class="resource-card">
-            <div class="resource-header">
-              <h3>{{ resource.name }}</h3>
-              <span
-                class="status-badge"
-                :class="resource.available ? 'available' : 'booked'"
-              >
-                {{ resource.available ? 'Available' : 'Booked' }}
-              </span>
-            </div>
-            <p>{{ resource.description }}</p>
 
-            <button
-              :disabled="!resource.available"
-              class="btn-book"
-              @click="bookResource(resource.id)"
-            >
-              Book Now
-            </button>
-          </div>
-        </div>
+
+        <!-- Resource Cards -->
+       <div v-else class="resources-grid">
+  <div
+    v-for="resource in resources"
+    :key="resource.id"
+    class="resource-card"
+  >
+    <div class="resource-header">
+      <h3>{{ resource.resource_type }}</h3>
+
+      <span
+        class="status-badge"
+        :class="resource.status === 'booked' ? 'booked' : 'available'"
+      >
+        {{ resource.status }}
+      </span>
+    </div>
+
+    <p><strong>Booked By:</strong> {{ resource.user?.name || 'N/A' }}</p>
+    <p><strong>From:</strong> {{ formatDate(resource.from_date) }}</p>
+    <p><strong>To:</strong> {{ formatDate(resource.to_date) }}</p>
+    <p><strong>Purpose:</strong> {{ resource.purpose }}</p>
+
+    <button class="btn-book" disabled>
+      Already Booked
+    </button>
+  </div>
+</div>
+
 
         <!-- Booking Confirmation Modal -->
         <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
@@ -128,6 +136,9 @@ export default {
 
 
   methods: {
+     formatDate(date) {
+    return new Date(date).toLocaleString()
+  },
  addResource() {
   if (!this.newResource.name || !this.newResource.description) {
     alert('All fields are required')
@@ -173,24 +184,25 @@ export default {
       }
     },
 
-    fetchResources() {
-      // Simulate API call (replace with real API later)
-      setTimeout(() => {
-        this.resources = [
-  { id: 1, name: 'Meeting Room A', description: 'Seats 10 people', available: true },
-  { id: 2, name: 'Meeting Room B', description: 'Seats 20 people', available: true },
-  { id: 3, name: 'Conference Room C', description: 'Seats 30 people with projector', available: false },
-  { id: 4, name: 'Meeting Room D', description: 'Seats 8 people', available: true },
+   fetchResources() {
+  this.loadingResources = true
 
-  { id: 5, name: 'Whiteboard', description: 'Magnetic whiteboard with markers', available: true },
-  { id: 6, name: 'Video Conferencing Kit', description: 'Zoom Room Kit', available: false },
-  { id: 7, name: 'Company Car', description: 'Toyota Innova Crysta', available: true },
-  { id: 8, name: 'Projector Screen', description: '120-inch retractable screen', available: true },
-];
-
-        this.loadingResources = false
-      }, 1000)
+  axios.get('/api/resource-bookings', {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
     }
+  })
+  .then(res => {
+    this.resources = res.data
+    this.loadingResources = false
+  })
+  .catch(err => {
+    console.error(err)
+    this.loadingResources = false
+    alert('Failed to load resources')
+  })
+}
+
   },
 
   mounted() {
@@ -282,12 +294,15 @@ export default {
 }
 
 h2 {
-  margin-bottom: 30px;
-  font-weight: 800;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-  text-transform: uppercase;
+      margin-bottom: 30px;
+    font-weight: 800;
+    display: flex;
+    font-size: 21px;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 8px;
+    text-transform: uppercase;
+    justify-content: space-between;
+    align-items: center;
 }
 
 /* Resources Grid */
@@ -445,6 +460,95 @@ h2 {
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+/* Resource Card */
+.resource-card {
+  background: linear-gradient(145deg, #f9f9f9, #e6f0ff);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.resource-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: rgba(255,255,255,0.1);
+  transform: rotate(25deg);
+  pointer-events: none;
+}
+
+.resource-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+/* Resource Header */
+.resource-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0d3b66;
+}
+
+.status-badge {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 50px;
+  color: white;
+  text-transform: uppercase;
+}
+
+.status-badge.available {
+  background: #28a745;
+  box-shadow: 0 3px 6px rgba(40,167,69,0.3);
+}
+
+.status-badge.booked {
+  background: #dc3545;
+  box-shadow: 0 3px 6px rgba(220,53,69,0.3);
+}
+
+/* Buttons */
+.btn-book {
+  background: #0d3b66;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 12px;
+  width: 100%;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-book:hover:not(:disabled) {
+  background: #07407c;
+  transform: scale(1.05);
+}
+
+.btn-book:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Text Styling */
+.resource-card p {
+  font-size: 14px;
+  margin: 6px 0;
+  color: #333;
+}
+
+.resource-card p strong {
+  color: #0d3b66;
 }
 
 </style>

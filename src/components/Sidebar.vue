@@ -74,7 +74,7 @@
 </li>
 
 <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('resourcebooking')">
-  <i class="fas fa-book"></i> <span>Resource Booking</span>
+  <i class="fa-solid fa-calendar"></i><span>Resource Booking</span>
 </li>
 
 <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('requestdesk')">

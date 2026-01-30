@@ -32,19 +32,27 @@
       <div class="form-group">
         <label>Resource Type</label>
         <select v-model="form.resource_type">
-          <option disabled value="">Select Resource</option>
-          <option>Meeting Room</option>
-          <option>Projector</option>
-          <option>Vehicle</option>
-          <option>Laptop</option>
-        </select>
+  <option disabled value="">Select Resource</option>
+
+  <option
+    v-for="resource in resources"
+    :key="resource.id"
+    :value="resource.name"
+  >
+    {{ resource.name }}
+  </option>
+</select>
+
       </div>
 
-      <div class="form-group">
+      <!-- <div class="form-group">
         <label>Resource Name</label>
         <input type="text" v-model="form.resource_name" placeholder="Ex: Conference Room A" />
+      </div> -->
+  <div class="form-group full">
+        <label>Purpose</label>
+        <textarea v-model="form.purpose" rows="3" placeholder="Reason for booking"></textarea>
       </div>
-
       <div class="form-group">
         <label>From Date</label>
         <input type="datetime-local" v-model="form.from_date" />
@@ -55,10 +63,7 @@
         <input type="datetime-local" v-model="form.to_date" />
       </div>
 
-      <div class="form-group full">
-        <label>Purpose</label>
-        <textarea v-model="form.purpose" rows="3" placeholder="Reason for booking"></textarea>
-      </div>
+    
     </div>
 
     <button class="btn-primary" @click="submitBooking">
@@ -73,7 +78,7 @@
     <table>
       <thead>
         <tr>
-          <th>Resource</th>
+          <!-- <th>Resource</th> -->
           <th>Type</th>
           <th>From</th>
           <th>To</th>
@@ -83,7 +88,7 @@
       </thead>
       <tbody>
         <tr v-for="b in bookings" :key="b.id">
-          <td>{{ b.resource_name }}</td>
+          <!-- <td>{{ b.resource_name }}</td> -->
           <td>{{ b.resource_type }}</td>
          <td>
   <div class="date-block">
@@ -136,7 +141,10 @@ export default {
     return {
       isMobile: false,
       isSidebarVisible: true,
-
+ resources: [],
+      form: {
+        resource_type: ""
+      },
       bookings: [],
       editId: null,
       loading: false,
@@ -152,6 +160,15 @@ export default {
   },
 
   methods: {
+     fetchResources() {
+      axios.get("/api/resources")
+        .then(response => {
+          this.resources = response.data;
+        })
+        .catch(error => {
+          console.error("Error fetching resources:", error);
+        });
+    },
     formatDate(datetime) {
     return new Date(datetime).toLocaleDateString('en-GB', {
       day: '2-digit',
@@ -238,6 +255,7 @@ export default {
   },
 
   mounted() {
+     this.fetchResources();
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
 
