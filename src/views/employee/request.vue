@@ -453,7 +453,7 @@ deleteRequest(id) {
 /* Content */
 .content {
   flex: 1;
-  background-color: var(--sidebar);
+  background-color: #a5d5cf33;
   padding: 30px 40px;
   border-radius: 15px;
   overflow-x: auto;

@@ -2397,10 +2397,16 @@
 
     <div class="form-row">
       <!-- PO Number -->
-      <div class="input-group">
-        <label>PO Number</label>
-        <input type="text" v-model="amcDetails.PONumber" />
-      </div>
+       <div class="input-group">
+  <label>PO Number</label>
+  <input 
+    type="text" 
+    v-model="amcDetails.PONumber" 
+    maxlength="250" 
+    placeholder="Enter PO Number"
+  />
+</div>
+>
 
       <!-- Type of AMC -->
       <div class="input-group">
@@ -6227,7 +6233,7 @@ background-color: #6f256f;
   text-align: center;
   /* border-left: ridge; */
   white-space: nowrap;
-  width: max-content!important;
+  /* width: max-content!important; */
   font-size: 16px;
   border-radius: 6px;
 }
@@ -6536,7 +6542,7 @@ width: 81%;
 
 /* SECTIONS */
 .quotation-section-card {
-  background: var(--sidebar);
+  background: white;
   padding: 15px 20px;
   border-radius: 10px;
   display: flex;
@@ -6981,7 +6987,7 @@ input, select, textarea {
 }
 
 .modal-card {
-  background: var(--sidebar)!important;
+  background: white!important;
   padding: 20px;
   width: 450px;
   max-height: 90vh;
@@ -7921,14 +7927,14 @@ margin-left: 8px;
 .styled-table td {
  text-align: left;
     font-weight: 600 !important;
-    border: 1px solid #ffffff;
-    color: var(--text);
-    background-color: var(--sidebar);
+    border: 1px solid #000000;
+    color: rgb(0, 0, 0);
+    /* background-color: var(--sidebar); */
     padding: 6px 20px;
 }
 
 .styled-table thead {
-  background-color: var(--text);
+  background-color: #adb3b2;
   color: #ffffff;
   /* font-weight: bold; */
 }
@@ -8532,7 +8538,7 @@ textarea {
 /* Content Section */
 .content {
   flex: 1;
-  background-color: var(--sidebar);
+  background-color: #a5d5cf33;
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -8941,7 +8947,7 @@ h2 {
    SECTION CARDS
 ================================ */
 .quotation-section-card {
-  background: var(--sidebar);
+  background: white;
   margin: 0px;
   padding: 17px;
   border-radius: 16px;
@@ -9696,6 +9702,17 @@ justify-self: center;
   color: var(--text);
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: #00000059!important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px); /* Safari support */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
 
 
 </style>

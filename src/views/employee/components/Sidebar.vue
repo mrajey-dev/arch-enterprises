@@ -1,10 +1,13 @@
 <template>
   <div class="layout">
     <!-- Sidebar -->
-   <aside
+<aside
   class="sidebar"
   :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
+  @mouseenter="handleMouseEnter"
+  @mouseleave="handleMouseLeave"
 >
+
 
 
 <button class="sidebar-toggles" @click="toggleSidebar">
@@ -214,7 +217,7 @@ export default {
   data() {
     return {
        isMobileOpen: false,
-       isCollapsed: false,
+       isCollapsed: true,
        currentTheme: localStorage.getItem("theme") || "default",
       searchQuery: "",
       results: [],
@@ -246,11 +249,20 @@ export default {
     },
   },
   methods: {
+     handleMouseEnter() {
+    if (window.innerWidth > 768) {
+      this.isCollapsed = false;
+    }
+  },
+  handleMouseLeave() {
+    if (window.innerWidth > 768) {
+      this.isCollapsed = true;
+    }
+  },
     toggleSidebar() {
+    // ONLY for mobile
     if (window.innerWidth <= 768) {
       this.isMobileOpen = !this.isMobileOpen;
-    } else {
-      this.isCollapsed = !this.isCollapsed;
     }
   },
 
@@ -739,4 +751,28 @@ async mounted() {
 .sidebar-toggles{
   background-color: black;
 }
+/* Desktop hide */
+.mobile-only {
+  display: none;
+}
+
+/* Mobile show */
+@media (max-width: 768px) {
+  .mobile-only {
+    display: flex; /* flex to align icon + text correctly */
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.sidebar-menu li span,
+.sidebar-title {
+  transition: opacity 0.25s ease;
+}
+
+.sidebar.collapsed .sidebar-menu li span,
+.sidebar.collapsed .sidebar-title {
+  opacity: 0;
+}
+
 </style>

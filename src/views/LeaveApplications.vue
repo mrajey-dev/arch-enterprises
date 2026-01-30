@@ -1011,7 +1011,7 @@ font-family: cursive;
 /* Content Section */
 .content {
   flex: 1;
-  background-color: var(--sidebar);
+  background-color: #a5d5cf33;
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
