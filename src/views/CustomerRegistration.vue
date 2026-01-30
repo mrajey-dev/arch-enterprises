@@ -552,10 +552,36 @@
 
 
     <!-- TERMS & CONDITIONS -->
-    <div class="quotation-section-card">
-      <h3 class="quotation-section-title">📜 Terms & Conditions</h3>
-      <textarea v-model="form.terms_conditions" rows="6"></textarea>
-    </div>
+   <div class="quotation-section-card">
+  <h3 class="quotation-section-title">📜 Terms & Conditions</h3>
+
+  <div class="terms-buttons">
+    <button
+      type="button"
+      class="btn"
+      :class="{ active: selectedTerms === 'regular' }"
+      @click="setRegularTerms"
+    >
+      Regular
+    </button>
+
+    <button
+      type="button"
+      class="btn"
+      :class="{ active: selectedTerms === 'amc' }"
+      @click="setAmcTerms"
+    >
+      AMC
+    </button>
+  </div>
+
+  <textarea
+    v-model="form.terms_conditions"
+    rows="12"
+    placeholder="Terms & Conditions will appear here..."
+  ></textarea>
+</div>
+
 
     <!-- SUBMIT -->
    <button class="quotation-submit-btn" @click="submitQuotation">
@@ -2844,6 +2870,7 @@
     },
     data() {
       return {
+         selectedTerms: 'regular',
         loading: false,
          filterMonth: '',
         filterYear: '',
@@ -3166,6 +3193,7 @@ PODate: "",
       }
     },
     mounted() {
+        this.setRegularTerms();
        console.table(this.filteredVisits.map(v => ({
     id: v.id,
     company: v.company_name,
@@ -3622,6 +3650,43 @@ filterCompany(newCompany) {
 
 
  methods: {
+  setRegularTerms() {
+      this.selectedTerms = 'regular';
+      this.form.terms_conditions = `1 Parts are ordered as per your specific order. Once delivered the same can not be returned.
+2 Quantities mentioned are as per your requirement.
+3 All warranties as per manufacturer's warranty terms and conditions.
+4 Offer validity : 30 Days from date of quotation.
+5 Payment Terms: 100% Advance.
+6 DELIVERY: EXW, Freight Extra.
+7 Lead Time: Ready Stock.`;
+    },
+
+    setAmcTerms() {
+      this.selectedTerms = 'amc';
+      this.form.terms_conditions = `1 Payment Terms: Immediate against Invoice submission.
+2 Inclusions: Service Engineer's travelling, accomodation, local conveyance, etc inclusive in the offer above.
+3 AMC Period: AMC offer is valid for 1 years from APRIL 2026 to MARCH 2027.
+4 Scope of Work: our scope of work will be limited to Clarke Fire Engine and associated controller.
+5 Maintenance Visits: We offer 4 service visits per engine per year. Each Visit will be scheduled quarterly starting from APRIL 2026 to MARCH 2027
+   i. Pre B-check service visit: Out of the 3 service calls, one of the services visit will be pre B-check service visit. In this service we will identify the engine health and recommend if any more parts are required to be replaced.
+   ii. One B-Check Service per engine: One of the services visit will be B-check service. You will have to procure B-check spares separately from us.
+   iii. Preventive Maintenance Visit per engine: Other visits will be routine maintenance service as per NFPA 25 guidelines.
+6 Break-down visits: Two break-down visits per engine during the contract period. Limited to 1 man-day.
+7 Extra Service Calls: Rs. 22,000/- per visit for Pune sites.
+8 Parts Replacement: Spare parts cost extra.
+9 Record Keeping: Maintenance and failure records shall be maintained.
+10 Tools: Special tools by us, general tools by customer.
+11 Periodic Operation: Equipment must be operated periodically as per O&M guidelines.
+12 Trained Operator: Operator must be trained as per OEM guidelines.
+13 Site Reporting: 24 Hrs response time for Pune.
+14 Raw Labour: To be provided by customer.
+15 Failure Investigation: Failed parts to be provided for investigation.
+16 Submission of Reports: Within 7 days of service visit.
+17 Termination of Contract: 1 month prior notice by either party.
+18 Confidentiality: All technical and commercial information shall be confidential.
+19 Offer Validity: 30 days from date of issue.
+20 Payment terms:`;
+    },
   handleClick() {
       this.loading = true;
 
@@ -4225,13 +4290,7 @@ async openQuotationlist(cust) {
     model_no: "",
     delivery: "",
     payment_terms: "",
-    terms_conditions: `1 Parts are ordered as per your specific order. Once delivered the same can not be returned.
-2 Quantities mentioned are as per your requirement.
-3 All warranties as per manufacturer's warranty terms and conditions.
-4 Offer validity : 30 Days from date of quotation.
-5 Payment Terms: 100% Advance.
-6 DELIVERY: EXW, Freight Extra.
-7 Lead Time: Ready Stock.`,
+    terms_conditions: '',
   };
   this.statusForm = {
       tracking_id: '',
@@ -9712,6 +9771,26 @@ justify-self: center;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+}
+
+.terms-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.terms-buttons .btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background: #f5f5f5;
+}
+
+.terms-buttons .btn.active {
+  background: #222;
+  color: #fff;
+  border-color: #222;
 }
 
 
