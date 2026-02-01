@@ -279,8 +279,8 @@ faqMap: {
     selectedHelp: null,
       idleTimer: null,
       warningTimer: null,
-      idleTimeLimit: 30 * 60 * 1000,   // 30 minutes
-    warningTime: (30 * 60 - 10) * 1000, // 29 min 50 sec
+      idleTimeLimit: 60 * 60 * 1000,   // 30 minutes
+    warningTime: (60 * 60 - 10) * 1000, // 29 min 50 sec
 
       showWarning: false,
       countdown: 10,

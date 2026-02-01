@@ -45,19 +45,44 @@
     <option value="Pending">Pending</option>
     <option value="Follow Up">Follow Up</option>
     <option value="Successful">Successful</option>
+    <option value="Rejected">Rejected</option>
   </select>
 </div>
 
 
-  <p><strong>Position:</strong> {{ candidate.position }}</p>
+  <p><strong>Job Title:</strong> {{ candidate.job_title }}</p>
   <p><strong>Email:</strong> {{ candidate.email }}</p>
   <p><strong>Phone:</strong> {{ candidate.phone }}</p>
-  <p><strong>Message:</strong> {{ candidate.message }}</p>
-
-  <p class="date">
+  <p
+  class="message"
+  :class="{ collapsed: !candidate.expanded }"
+>
+  <strong>Message:</strong>
+  {{ candidate.message }}
+</p>
+ <p class="date">
     <strong>Applied On:</strong>
     {{ new Date(candidate.created_at).toLocaleDateString() }}
   </p>
+<button
+  v-if="candidate.resume"
+  class="view-cv-btn"
+  @click="viewCV(candidate.resume)"
+>
+  📄 View CV
+</button>
+
+
+
+
+ 
+<button
+  v-if="candidate.message && candidate.message.length > 150"
+  class="show-more-btn"
+  @click="candidate.expanded = !candidate.expanded"
+>
+  {{ candidate.expanded ? '▲ Show less' : '▼ Show more' }}
+</button>
 
 </div>
 
@@ -84,6 +109,11 @@ export default {
   },
 
   methods: {
+  viewCV(path) {
+  const RESUME_BASE_URL = 'https://it.archenterprises.co.in'
+  window.open(`${RESUME_BASE_URL}/${path}`, '_blank')
+},
+
     async updateStatus(candidate) {
   try {
     const token = localStorage.getItem('token')
@@ -103,24 +133,29 @@ export default {
   }
 },
 
-    async fetchCandidates() {
-    this.loadingLeaves = true
-    try {
-      const token = localStorage.getItem('token')
+ async fetchCandidates() {
+  this.loadingLeaves = true
+  try {
+    const token = localStorage.getItem('token')
 
-      const res = await axios.get('/api/recruitment', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+    const res = await axios.get('/api/recruitment', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
 
-      this.candidates = res.data.data
-    } catch (error) {
-      console.error(error)
-    } finally {
-      this.loadingLeaves = false
-    }
-  },
+    // 👇 add expanded flag per card
+    this.candidates = res.data.data.map(candidate => ({
+      ...candidate,
+      expanded: false
+    }))
+  } catch (error) {
+    console.error(error)
+  } finally {
+    this.loadingLeaves = false
+  }
+},
+
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -348,6 +383,207 @@ h2 {
 .status-select.successful {
   background: #d4edda;
   color: #155724;
+}
+
+.message {
+  margin-top: 8px;
+  line-height: 1.5;
+  transition: max-height 0.3s ease;
+}
+
+.message.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;   /* number of lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.show-more-btn {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.show-more-btn:hover {
+  text-decoration: none;
+}
+
+.view-cv-btn {
+  margin-top: 10px;
+  background: #eef2ff;
+  color: #3730a3;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.view-cv-btn:hover {
+  background: #e0e7ff;
+}
+
+.show-more-btn {
+  width: -webkit-fill-available;
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    place-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #000000, #000000);
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .25s ease;
+    box-shadow: 0 4px 10px #00000014;
+     text-decoration: none;
+}
+
+.show-more-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+/* Grid layout */
+.recruitment-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Card */
+.candidate-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.candidate-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+/* Header */
+.candidate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.candidate-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Job title */
+.candidate-card p strong {
+  color: #555;
+}
+
+.candidate-card p {
+  font-size: 14px;
+  margin: 6px 0;
+  color: #444;
+}
+
+/* Status select */
+.status-select {
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Status colors */
+.status-select.pending {
+  background: #f0ad4e;
+}
+
+.status-select.follow-up {
+  background: #5bc0de;
+}
+
+.status-select.successful {
+  background: #5cb85c;
+}
+
+/* Message */
+.message {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555;
+}
+
+.message.collapsed {
+  max-height: 45px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Show more */
+.show-more-btn {
+  background: none;
+  border: none;
+  color: #0d6efd;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 4px;
+  padding: 0;
+}
+
+/* CV Button */
+.view-cv-btn {
+  margin-top: 10px;
+  background: #0d6efd;
+  color: #fff;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.view-cv-btn:hover {
+  background: #0b5ed7;
+}
+
+/* Footer info */
+.date {
+  font-size: 12px;
+  color: #777;
+  margin-top: 10px;
+}
+
+.status-select.rejected {
+  background: #dc3545; /* red */
+  color: #ffffff;
 }
 
 </style>
