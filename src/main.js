@@ -18,5 +18,16 @@ axios.interceptors.request.use(
   },
   error => Promise.reject(error)
 )
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token')
+      router.push('/auth')
+    }
+    return Promise.reject(error)
+  }
+)
 
 createApp(App).use(router).mount('#app')

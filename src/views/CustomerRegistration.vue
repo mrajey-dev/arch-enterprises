@@ -43,7 +43,7 @@
  <div class="button-row" style="display: flex; gap: 10px;">
   <button class="assign-btn" @click="openAssignPoForm">
     <!-- View & Assign PO in {{ currentMonth }} 2025 -->
-     Manage PO
+     Manage Purchase Order
   </button>
  <button class="assign-btn" @click="showViewAllQuotationPopup=true">
   View All Quotations
@@ -603,7 +603,7 @@
         ⬅ Back
       </button>
     </div>
-    <!-- Close button --><h2> Manage PO & Visits</h2>
+    <!-- Close button --><h2> Manage Purchase Order & Visits</h2>
   
     <!-- Center Buttons Row -->
 <div
@@ -2243,7 +2243,7 @@
     <div class="modal-buttons"> 
       <button
         class="btn btn-success"
-        style="background-color: var(--text);"
+        style="background-color: #d0d0d0;"
         :disabled="isSavingServiceSupply"
         @click="saveServiceSupply"
       >
@@ -2313,12 +2313,12 @@
     <div class="modal-buttons">
       <!-- <button class="btn btn-success" @click="saveSupplyDetails">Save</button> -->
            <button 
-  class="btn btn-success" style="background-color: var(--text);"
+  class="btn btn-success" style="background-color: #d0d0d0;"
   :disabled="isSavingSupply"
   @click="saveSupplyDetails"
 >
   <span v-if="isSavingSupply" class="loader"></span>
-  <span v-else>Save Supply</span>
+  <span v-else>Save</span>
 </button>
       <button class="btn btn-secondary" @click="closeSupplyModal">Cancel</button>
     </div>
@@ -2373,11 +2373,19 @@
     </div>
 
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Copy</label>
-        <input type="file" @change="handlePoFile" />
-      </div>
-    </div>
+  <div class="input-group full-width">
+    <label>PO Copy</label>
+    <input
+      type="file"
+      @change="handlePoFile"
+      accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+    />
+    <small style="color:#666; text-align: left;">
+      Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX
+    </small>
+  </div>
+</div>
+
 
     <div class="form-row">
       <div class="input-group full-width">
@@ -2394,12 +2402,12 @@
     <div class="modal-buttons">
       <!-- <button class="btn btn-success" @click="saveServiceDetails">Save</button> -->
          <button 
-  class="btn btn-success" style="background-color: var(--text);"
+  class="btn btn-success" style="background-color: #d0d0d0;"
   :disabled="isSavingService"
   @click="saveServiceDetails"
 >
   <span v-if="isSavingService" class="loader"></span>
-  <span v-else>Save Service</span>
+  <span v-else>Save</span>
 </button>
       <button class="btn btn-secondary" @click="closeServiceModal">Cancel</button>
     </div>
@@ -2432,7 +2440,6 @@
     placeholder="Enter PO Number"
   />
 </div>
->
 
       <!-- Type of AMC -->
       <div class="input-group">
@@ -2503,7 +2510,7 @@
 
     <div class="modal-buttons">
       <button 
-  class="btn btn-success" style="background-color: var(--text);"
+  class="btn btn-success" style="background-color: #d0d0d0;"
   :disabled="isSavingAmc"
   @click="saveAmcDetails"
 >
@@ -3650,6 +3657,27 @@ filterCompany(newCompany) {
 
 
  methods: {
+  handlePoFile(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const allowedTypes = [
+    'image/png',
+    'image/jpeg',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ]
+
+  if (!allowedTypes.includes(file.type)) {
+    alert('Invalid file type. Please upload PNG, JPG, JPEG, PDF, DOC, or DOCX.')
+    event.target.value = ''
+    return
+  }
+
+  this.serviceDetails.poFile = file
+},
+
   setRegularTerms() {
       this.selectedTerms = 'regular';
       this.form.terms_conditions = `1 Parts are ordered as per your specific order. Once delivered the same can not be returned.
@@ -7614,7 +7642,7 @@ textarea:focus {
 }
 
 .modal-title {
-  font-size: 26px !important;
+  font-size: 21px !important;
   font-weight: 800 !important;
   margin-bottom: 18px!important;
   text-transform: uppercase!important;
@@ -8765,9 +8793,10 @@ h2 {
 .input-group input,
 .input-group select,
 .input-group textarea {
-  padding: 5px 18px;
+  /* padding: 5px 18px; */
   border: 2px solid #ced4da;
-  border-radius: 12px;
+  /* border-radius: 12px; */
+  width: 207px;
   font-size: 1rem;
   font-weight: 500;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;

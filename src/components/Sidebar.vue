@@ -43,12 +43,16 @@
 <li @click="goTo('rcahelp')">
             <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
           </li>
+                <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('ScheduleMeeting')">
+  <i class="fas fa-headset"></i> <span>Schedule Meeting</span>
+</li>
       <!-- Leaves Dropdown -->
       <li class="dropdown" v-if="adminName && adminName.toLowerCase() !== 'crm'">
         <div class="" @click="toggleDropdown">
           <i class="fas fa-calendar-alt"></i> <span>Leaves</span>
           <i class="fas fa-caret-down" style="margin-left:auto;"></i>
         </div>
+  
         <ul v-if="dropdownOpen" class="dropdown-menu">
           <li @click="goTo('leaveapplications')">
             <i class="fas fa-list"></i><span> All Leaves</span>

@@ -563,15 +563,33 @@ async rejectLeave(leave) {
   },
 
   mounted() {
+    const token = localStorage.getItem('token')
+    const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
+
+    // Redirect to auth if no token
+    if (!token) {
+      this.$router.push('/auth')
+      return
+    }
+
     this.fetchLeaves()
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
-    const token = localStorage.getItem('token')
-    if (!token) {
-      this.$router.push('/auth')
-    } else {
-      this.fetchUsers()
+
+    
+    // Save logged in user's name for fallback use
+    if (storedUser && storedUser.name) this.loggedInUserName = storedUser.name
+
+    // Role-based access: employees should not access this admin page
+    const role = (storedUser && storedUser.role) ? String(storedUser.role).toLowerCase() : null
+    if (role === 'employee' || role === 'staff') {
+      // Redirect employees to their dashboard
+      this.$router.push('/employee/dashboard')
+      return
     }
+
+    // For admin / hr / crm etc. fetch users for admin screens
+    this.fetchUsers()
   },
 }
 </script>

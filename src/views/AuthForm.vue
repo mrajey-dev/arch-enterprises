@@ -58,11 +58,11 @@
               required
               placeholder="Password"
             />
-            <i
+            <!-- <i
               class="fas toggle-eye"
               :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"
               @click="togglePasswordVisibility"
-            ></i>
+            ></i> -->
           </div>
 
           <button class="btn-primary" type="submit" :disabled="isLoggingIn">
@@ -184,14 +184,29 @@ isResettingPassword: false,
     };
   },
 
-  created() {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (token && user) {
-      if (user.role === 'admin') this.$router.push('/dashboard');
-      else this.$router.push('/employee/dashboard');
+ created() {
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user'));
+  const savedTab = localStorage.getItem('authTab');
+
+  if (token && user) {
+    // User already logged in — redirect based on role
+    if (user.role === 'admin') {
+      this.$router.push('/dashboard');
+    } else {
+      this.$router.push('/employee/dashboard');
     }
-  },
+    return; // stop further setup
+  }
+
+  // Restore the last-selected tab (employee/admin) if present
+  if (savedTab) {
+    this.isEmployeeLogin = savedTab === 'employee';
+  } else if (user) {
+    this.isEmployeeLogin = user.role !== 'admin';
+  }
+}
+,
 
   methods: {
     togglePasswordVisibility() {
@@ -214,6 +229,8 @@ isResettingPassword: false,
 
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        // Persist which tab was used to log in so we can reopen same tab later
+        localStorage.setItem('authTab', this.isEmployeeLogin ? 'employee' : 'admin');
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
         if (this.isEmployeeLogin) this.$router.push('/employee/dashboard');
@@ -237,6 +254,8 @@ isResettingPassword: false,
 
     toggleLoginType() {
       this.isEmployeeLogin = !this.isEmployeeLogin;
+      // persist selected tab so next visit opens same tab
+      localStorage.setItem('authTab', this.isEmployeeLogin ? 'employee' : 'admin')
     },
 
     openForgotPasswordModal() {
