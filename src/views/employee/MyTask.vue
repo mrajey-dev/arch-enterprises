@@ -217,6 +217,29 @@
           {{ selectedTask.description }}
         </p>
       </div>
+<!-- Comments Section (Only for Assigned Tasks) -->
+<div
+  class="info-block"
+  v-if="selectedTask.priority === 'Task Assigned'"
+>
+  <span class="label">💬 Comment</span>
+
+  <textarea
+    v-model="selectedTask.comment"
+    placeholder="Add your comment here..."
+    rows="3"
+    maxlength="500"
+    class="comment-box"
+  ></textarea>
+
+  <button
+    class="btn-primary"
+    style="margin-top: 8px;"
+    @click="saveTaskComment"
+  >
+    Save Comment
+  </button>
+</div>
 
       <div class="info-block" v-if="selectedTask.modules">
         <span class="label">🧩 Modules</span>
@@ -475,6 +498,33 @@ watch: {
 
 
   methods: {
+    async saveTaskComment() {
+  if (!this.selectedTask?.id) return;
+
+  try {
+    await axios.put(
+      `https://employees.archenterprises.co.in/api/api/tasks/${this.selectedTask.id}`,
+      {
+        comment: this.selectedTask.comment
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
+    );
+
+    // Sync comment back to task list
+    const task = this.tasks.find(t => t.id === this.selectedTask.id);
+    if (task) task.comment = this.selectedTask.comment;
+
+    alert('Comment saved successfully ✅');
+  } catch (err) {
+    console.error('Failed to save comment', err);
+    alert('Failed to save comment ❌');
+  }
+},
+
     formatDate(date) {
   if (!date) return '—';
   return new Date(date).toLocaleDateString('en-IN', {
@@ -711,6 +761,7 @@ async fetchTasks() {
         deadline: task.deadline_date,
         priority: task.priority,
         description: task.description,
+        comment: task.comment,
         status: task.status,
         completedAt: task.completed_at,
         createdAt: task.created_at,
@@ -1985,9 +2036,13 @@ h2 {
 }
 
 .btn-primary {
+  padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
   background-color: var(--primary);
   color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+  /* box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4); */
 }
 
 .btn-primary:hover {
@@ -2182,6 +2237,14 @@ h2 {
 
 .btn-secondary {
   background: #ddd;
+}
+
+.comment-box {
+  width: 100%;
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  resize: none;
 }
 
 </style>

@@ -1,10 +1,13 @@
 <template>
   <div class="layout">
     <!-- Sidebar -->
-     <aside
+    <aside
   class="sidebar"
   :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
+  @mouseenter="handleMouseEnter"
+  @mouseleave="handleMouseLeave"
 >
+
 
 
 <button class="sidebar-toggles" @click="toggleSidebar">
@@ -40,6 +43,9 @@
       <li @click="goTo('dashboard')">
         <i class="fas fa-tachometer-alt"></i>  <span>Dashboard</span>
       </li>
+      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('archcalendar')">
+  <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
+</li>
 <li @click="goTo('rcahelp')">
             <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
           </li>
@@ -68,7 +74,7 @@
           </li>
         </ul>
       </li>
-
+  
       <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('workflow')">
   <i class="fas fa-tasks"></i> <span>Work Flow</span>
 </li>
@@ -469,7 +475,7 @@ export default {
   data() {
     return {
       isMobileOpen: false,
-       isCollapsed: false,
+       isCollapsed: true,
       currentTheme: localStorage.getItem("theme") || "default",
        adminEmail: '',
          adminName: '',
@@ -555,11 +561,21 @@ computed: {
 
 
   methods: {
-     toggleSidebar() {
+  handleMouseEnter() {
+    if (window.innerWidth > 768) {
+      this.isCollapsed = false; // expand on hover
+    }
+  },
+  handleMouseLeave() {
+    if (window.innerWidth > 768) {
+      this.isCollapsed = true; // shrink back
+    }
+  },
+
+  toggleSidebar() {
+    // keep mobile toggle working
     if (window.innerWidth <= 768) {
       this.isMobileOpen = !this.isMobileOpen;
-    } else {
-      this.isCollapsed = !this.isCollapsed;
     }
   },
      changeTheme(e) {
@@ -1372,6 +1388,14 @@ calculatePerformance() {
   transition: width 0.35s ease;
   box-shadow: 4px 0 12px rgba(0,0,0,0.15);
   z-index: 100;
+}
+
+.sidebar {
+  transition: width 0.35s ease, box-shadow 0.3s ease;
+}
+
+.sidebar:not(.collapsed) {
+  box-shadow: 8px 0 18px rgba(0,0,0,0.25);
 }
 
 </style>

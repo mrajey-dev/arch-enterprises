@@ -65,6 +65,9 @@
           <li @click="goTo('employee/dashboard')">
             <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
           </li>
+           <li @click="goTo('employee/archcalendar')">
+  <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
+</li>
  <li @click="goTo('employee/help')">
             <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
           </li>
@@ -106,12 +109,12 @@
   <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
 </li>
 
- <li 
+ <!-- <li 
   class="mobile-only"
   @click="goTo('employee/Customerregistrations')"
 >
   <i class="fas fa-user-friends"></i><span> Customers & PO</span>
-</li>
+</li> -->
 
 
           <li @click="goTo('employee/viewAnnouncement')">

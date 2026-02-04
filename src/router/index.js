@@ -25,6 +25,7 @@ import CustomerRegistration from '../views/CustomerRegistration.vue'
 import Quotation from '../views/quotation.vue'
 import EmpDsi from '../views/EmpDsi.vue'
 import RCAhelp from '../views/RCAhelp.vue'
+import ArchCalendar from '../views/ArchCalendar.vue'
 
 
 
@@ -44,7 +45,7 @@ import ViewAllPo from '../views/employee/ViewAllPo.vue'
 import EmpWorkReport from '../views/employee/EmpWorkReport.vue'
 import RequestDeskemp from '../views/employee/Request.vue'
 import ResourceBookingEmp from '../views/employee/ResourceBooking.vue'
-
+import ArchCalendarEmp from '../views/employee/ArchCalendarEmp.vue'
 
 
 import AssignTask from '../views/AssignTask.vue'
@@ -104,7 +105,7 @@ const routes = [
   { path: '/ResourceBooking', name: 'ResourceBooking', component: ResourceBooking, meta: {requiresAuth: true, adminOnly:true,  hideBell: true } },
   { path: '/RequestDesk', name: 'RequestDesk', component: RequestDesk, meta: { requiresAuth: true, adminOnly:true, hideBell: true } },
   { path: '/RecruitmentSection', name: 'RecruitmentSection', component: RecruitmentSection, meta: { requiresAuth: true, adminOnly:true, hideBell: true } },
-
+  { path: '/ArchCalendar', name: 'ArchCalendar', component: ArchCalendar, meta: { requiresAuth: true, hideBell: true } },
 
 
 
@@ -161,7 +162,7 @@ const routes = [
   { path: '/employee/leaveapplicationsemp', name: 'LeaveApplicationsEmp', component: LeaveApplicationsEmp, meta: { requiresAuth: true } },
   { path: '/employee/pendingleaves', name: 'PendingLeavesEmp', component: PendingLeavesEmp, meta: { requiresAuth: true } },
   { path: '/employee/empattendance', name: 'empattendance', component: EmpAttendance, meta: { requiresAuth: true } },
-
+  { path: '/employee/archcalendar', name: 'ArchCalendarEmp', component: ArchCalendarEmp, meta: { requiresAuth: true } },
   { path: '/employee/viewkra', name: 'ViewKra', component: ViewKra, meta: { requiresAuth: true } },  // Add this line
   { path: '/employee/report', name: 'Report', component: Report, meta: { requiresAuth: true } },
   { path: '/employee/customerregistrations', name: 'CustomerRegistrations', component: CustomerRegistrations, meta: { requiresAuth: true } },

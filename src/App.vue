@@ -455,10 +455,10 @@ sendMessage() {
 
 /* ===== DEFAULT THEME (Blue) ===== */
 :root {
-  --primary: #518587;
-  --sidebar: #add7d9;
-  --card: #ffffff;
-  --text: #0d5a5d;
+ --primary: #08a594;
+  --sidebar: #a5d5cf;
+  --card: #08a594;
+  --text: #134e4a;
   --text-white: #ffffff;
 
 }
@@ -518,13 +518,13 @@ sendMessage() {
   --text-white: #ffffff;
 }
 
-[data-theme="teal"] {
+/* [data-theme="teal"] {
   --primary: #08a594;
   --sidebar: #a5d5cf;
   --card: #08a594;
   --text: #134e4a;
   --text-white: #ffffff;
-}
+} */
 
 [data-theme="pink"] {
   --primary: #ec4899;

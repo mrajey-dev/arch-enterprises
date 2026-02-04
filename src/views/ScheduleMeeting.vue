@@ -1652,4 +1652,12 @@ input:checked + .slider {
   transform: translateY(-1px);
 }
 
+.form-control[type="date"],
+.form-control[type="time"] {
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  background: white !important;
+  cursor: pointer;
+}
+
 </style>

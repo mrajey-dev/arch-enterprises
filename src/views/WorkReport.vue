@@ -99,6 +99,9 @@
   <p><strong>Assigned To:</strong> {{ report.username || 'Unknown' }}</p>
   <p><strong>Department:</strong> {{ report.department }}</p>
   <p class="summary"><strong>Summary:</strong> {{ report.summary }}</p>
+  <p><strong>Comments:</strong> {{ report.comment }}</p>
+
+  
  <button class="edit-task-btn" @click.stop="editTask(report)">
       <i class="fas fa-edit"></i> Edit
     </button>
@@ -305,6 +308,7 @@ editTaskId: null,
             department: task.user?.department || 'Unknown',
             status: task.status || 'Unknown',
             summary: task.description || 'No summary provided.',
+            comment: task.comment || '',
             modules: task.modules || 'N/A',
             completed_at: task.completed_at || 'Not completed',
               priority: task.priority || '',

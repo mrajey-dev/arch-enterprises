@@ -2060,12 +2060,19 @@
           <option value="B-Check / Maintenance">B-Check / Maintenance</option>
         </select>
       </div>
-    </div>
+    </div> 
  <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Attachment</label>
-        <input type="file" @change="handleServiceSupplyFile" />
-      </div>
+         <div class="input-group full-width">
+    <label>PO Copy</label>
+    <input
+      type="file"
+      @change="handleServiceSupplyFile"
+      accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+    />
+    <small style="color:#666; text-align: left;">
+      Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX
+    </small>
+  </div>
     </div>
 
     <!-- BUTTONS -->
@@ -2101,12 +2108,21 @@
       </div>
     </div>
 
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Number</label>
-        <input type="text" v-model="supplyDetails.poNumber" />
-      </div>
-    </div>
+ <div class="form-row">
+  <div class="input-group full-width">
+    <label>PO Number</label>
+    <input
+      type="text"
+      v-model="supplyDetails.poNumber"
+      @blur="checkPoNumber"
+    />
+
+    <small v-if="poError" class="error-text">
+      {{ poError }}
+    </small>
+  </div>
+</div>
+
 
     <div class="form-row">
       <div class="input-group full-width">
@@ -2122,10 +2138,17 @@
       </div>
     </div>
  <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO File Attachment</label>
-       <input type="file" @change="handleSupplyFileUpload" />
-      </div>
+         <div class="input-group full-width">
+    <label>PO Copy</label>
+    <input
+      type="file"
+      @change="handleSupplyFileUpload"
+      accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+    />
+    <small style="color:#666; text-align: left;">
+      Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX
+    </small>
+  </div>
     </div>
     <div class="form-row">
       <div class="input-group full-width">
@@ -2332,10 +2355,18 @@
 
     <!-- PO File -->
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO File Attachment</label>
-        <input type="file" @change="handlePoFileUpload" />
-      </div>
+         <div class="input-group full-width">
+    <label>PO Copy</label>
+    <input
+      type="file"
+      @change="handlePoFileUpload"
+      accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+    />
+    <small style="color:#666; text-align: left;">
+      Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX
+    </small>
+  </div>
+
     </div>
 
     <div class="modal-buttons">
@@ -2707,6 +2738,8 @@
     },
     data() {
       return {
+        poError: null,
+    poExists: false,
          selectedTerms: 'regular',
          loading: false,
          
@@ -3315,6 +3348,27 @@ filterCompany(newCompany) {
 
 
  methods: {
+  async checkPoNumber() {
+    this.poError = null
+    this.poExists = false
+
+    if (!this.supplyDetails.poNumber) return
+
+    try {
+      const res = await axios.get('/api/check-po-number', {
+        params: {
+          po_number: this.supplyDetails.poNumber
+        }
+      })
+
+      if (res.data.exists) {
+        this.poError = 'PO Number already exists'
+        this.poExists = true
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  },
   handlePoFile(event) {
   const file = event.target.files[0]
   if (!file) return
@@ -5010,6 +5064,10 @@ closeServiceSupplyModal(){
     alert("Please fill required fields");
     return;
   }
+  if (this.poExists) {
+      this.poError = 'Please enter a unique PO Number'
+      return
+    }
 
   this.isSavingSupply = true; // 🔄 start loader
 
@@ -9362,6 +9420,13 @@ justify-self: center;
   background: #222;
   color: #fff;
   border-color: #222;
+}
+
+.error-text {
+  color: #e63946;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
 }
 
 </style>
