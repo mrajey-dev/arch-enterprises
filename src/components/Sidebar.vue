@@ -79,13 +79,13 @@
   <i class="fas fa-tasks"></i> <span>Work Flow</span>
 </li>
 
-<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('expensemanage')">
+<!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('expensemanage')">
   <i class="fas fa-money-bill-wave"></i> <span>Expense</span>
-</li>
+</li> -->
 
-<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('resourcebooking')">
+<!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('resourcebooking')">
   <i class="fa-solid fa-calendar"></i><span>Resource Booking</span>
-</li>
+</li> -->
 
 <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('requestdesk')">
   <i class="fas fa-headset"></i> <span>Request Desk</span>

@@ -30,15 +30,18 @@
  <div class="dashboard-slider-container">
     
 <div v-if="showSkeleton" class="dashboard-slider skeleton-wrapper">
-  <div
-    v-for="n in 6"
-    :key="n"
-    class="dashboard-card skeleton-card"
-  >
+ <div
+  v-for="n in skeletonCount"
+  :key="n"
+  class="dashboard-card skeleton-card"
+  :class="{ 'crm-skeleton': currentUserName === 'crm' }"
+>
+
     <div class="skeleton-label"></div>
     <div class="skeleton-text"></div>
   </div>
 </div>
+
 
     <!-- Scrollable Card Section -->
     <div v-else class="dashboard-slider" ref="slider">
@@ -77,7 +80,7 @@
         </div>
       </div>
 
-      <div 
+        <div 
   class="dashboard-card clickable-card leavetype" 
   v-if="currentUserName !== 'crm'" 
   @click="goTo('workreport')"
@@ -85,6 +88,27 @@
   <div>
     <p class="label label-cust">Work Report & Tasks 📄</p>
     <p class="tagline">Employees Tasks Management</p>
+  </div>
+</div>
+  <div 
+  class="dashboard-card clickable-card leavetype" 
+  v-if="currentUserName !== 'crm'" 
+  @click="goTo('expensemanage')"
+>
+  <div>
+    <p class="label label-cust">Expense Management 💵</p>
+    <p class="tagline">Manage offline expenses</p>
+  </div>
+</div>
+
+      <div 
+  class="dashboard-card clickable-card leavetype" 
+  v-if="currentUserName !== 'crm'" 
+  @click="goTo('resourcebooking')"
+>
+  <div>
+    <p class="label label-cust">Resource Booking 📅</p>
+    <p class="tagline">Book meeting rooms and resources</p>
   </div>
 </div>
 
@@ -164,19 +188,38 @@
         </div>
 
        <!-- Monthly Revenue Row -->
-<div class="monthly-revenue-row" style="margin-top: 30px;" v-if="currentUserName !== 'crm'">
-  <div
-    class="bar-chart-container"
-    style="width: 100%; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
-  >
-    <h3>Revenue {{ financialYear }}</h3>
+<div class="monthly-revenue-row" v-if="currentUserName !== 'crm'">
+  <div class="revenue-card">
 
-<div class="bar-chart-wrapper">
-  <canvas id="monthlyRevenueBarChart"></canvas>
-</div>
+    <!-- Header -->
+    <div class="revenue-header">
+      <div>
+        <h3>Revenue Overview</h3>
+        <p>Financial Year {{ financialYear }} (Apr – Mar)</p>
+      </div>
+
+      <!-- Summary Tags -->
+      <div class="revenue-tags">
+        <span class="tag primary">
+          💰 Total ₹ {{ totalRevenueFY.toLocaleString() }}
+        </span>
+        <span class="tag success">
+          📈 Avg ₹ {{ avgRevenueFY.toLocaleString() }}
+        </span>
+        <span class="tag info">
+          ⭐ Best {{ bestMonthFY.name }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="bar-chart-wrapper">
+      <canvas id="monthlyRevenueBarChart"></canvas>
+    </div>
 
   </div>
 </div>
+
 
 
 
@@ -284,6 +327,36 @@ export default {
     }
   },
   computed: {
+    totalRevenueFY() {
+  return Object.values(this.monthlyRevenueData)
+    .reduce((a, b) => a + b, 0)
+},
+
+avgRevenueFY() {
+  const values = Object.values(this.monthlyRevenueData)
+  return values.length
+    ? Math.round(this.totalRevenueFY / values.length)
+    : 0
+},
+
+bestMonthFY() {
+  let max = 0
+  let name = '-'
+  Object.entries(this.monthlyRevenueData).forEach(([month, value]) => {
+    if (value > max) {
+      max = value
+      name = month
+    }
+  })
+  return { name, value: max }
+},
+
+    skeletonCount() {
+  if (this.currentUserName === 'crm') return 4
+  if (this.currentUserName === 'hr') return 8
+  return 8 // default for others (admin, manager, etc.)
+},
+
     selectedMonthName() {
     return `${this.months[this.selectedMonth]} ${this.selectedYear}`
   },
@@ -454,19 +527,23 @@ async generateMonthlyRevenue() {
       'https://employees.archenterprises.co.in/api/api/graph/monthly-revenue'
     )
 
-    const data = response.data || []
+    const apiData = response.data || []
+
+    // Financial Year order (Apr → Mar)
+    const fyMonths = [
+      'April','May','June','July','August','September',
+      'October','November','December','January','February','March'
+    ]
+
     this.monthlyRevenueData = {}
 
-    // Months Jan–Dec
-    this.months.forEach((monthName, index) => {
-      const found = data.find(
-        d => Number(d.month) === index + 1
-      )
+    fyMonths.forEach(monthName => {
+      const monthIndex = this.months.indexOf(monthName) + 1
+      const found = apiData.find(d => Number(d.month) === monthIndex)
       this.monthlyRevenueData[monthName] =
         found ? Number(found.total_revenue) : 0
     })
 
-    // ✅ Draw chart AFTER data is ready
     this.$nextTick(() => {
       this.renderRevenueBarChart()
     })
@@ -478,46 +555,56 @@ async generateMonthlyRevenue() {
 
 
 
-    renderRevenueBarChart() {
-      const ctx = document.getElementById('monthlyRevenueBarChart')
-      if (!ctx) return
-      if (this.chartRevenueInstance) this.chartRevenueInstance.destroy()
 
-      const months = Object.keys(this.monthlyRevenueData)
-      const revenueValues = Object.values(this.monthlyRevenueData)
+   renderRevenueBarChart() {
+  const ctx = document.getElementById('monthlyRevenueBarChart')
+  if (!ctx) return
+  if (this.chartRevenueInstance) this.chartRevenueInstance.destroy()
 
-      this.chartRevenueInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: months,
-          datasets: [
-            {
-              label: 'Revenue (₹)',
-              data: revenueValues,
-              backgroundColor: '#4ECDC4',
-              borderRadius: 10
-            }
-          ]
+  this.chartRevenueInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(this.monthlyRevenueData),
+      datasets: [
+        {
+          label: 'Revenue (₹)',
+          data: Object.values(this.monthlyRevenueData),
+          backgroundColor: 'rgba(78, 205, 196, 0.85)',
+          hoverBackgroundColor: 'rgba(78, 205, 196, 1)',
+          borderRadius: 12,
+          barThickness: 30
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: 10 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ₹ ${ctx.raw.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 12 } }
         },
-        options: {
-  responsive: true,
-  maintainAspectRatio: false, // 🔥 prevents zoom resize
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: { stepSize: 50000 }
-    },
-    x: {
-      ticks: { color: 'var(--text)' }
+        y: {
+          beginAtZero: true,
+          grid: { color: '#eee' },
+          ticks: {
+            callback: value => `₹ ${value / 1000}k`
+          }
+        }
+      }
     }
-  },
-  plugins: {
-    legend: { display: false }
-  }
-}
+  })
+},
 
-      })
-    },
 
     updatePieCharts() {
       this.pieChartsData = [
@@ -720,7 +807,7 @@ font-family: cursive;
   flex-shrink: 0;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0);
   padding: 20px;
   cursor: pointer;
   transition: transform 0.3s;
@@ -1013,7 +1100,7 @@ font-family: cursive;
   overflow: hidden;
   border: none !important;
   border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0);
   text-align: center;
   padding: 20px 10px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1081,7 +1168,7 @@ font-family: cursive;
   overflow: hidden;
   border: none !important;
   border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1098,22 +1185,22 @@ font-family: cursive;
 
 /* Each color variant */
 .temp::after {
-  background-color: #001bff; /* Yellow */
+  background-color: var(--primary); /* Yellow */
 }
 .Leaves::after {
-  background-color: #ff0000; /* Red */
+  background-color: var(--primary); /* Red */
 }
 .attendance::after {
-  background-color: #035858; /* Blue */
+  background-color: var(--primary); /* Blue */
 }
 .dept::after {
-  background-color: #34ba00; /* Green */
+  background-color: var(--primary); /* Green */
 }
 .leavetype::after {
-  background-color: #ff00d1; /* Pink */
+  background-color: var(--primary); /* Pink */
 }
 .announcement::after {
-  background-color: #ff9100; /* Yellowish */
+  background-color: var(--primary); /* Yellowish */
 }
 
 /* Make content appear above the colored background */
@@ -1628,7 +1715,7 @@ background-color: #ffffff !important;
   font-size: 21px;
   font-weight: 500;
   margin-bottom: 5px;
-  color: #001bff;
+  color: var(--text);
 }
 
 .label-dept {
@@ -1636,7 +1723,7 @@ background-color: #ffffff !important;
   font-size: 21px;
   font-weight: 500;
   margin-bottom: 5px;
-  color: #1f6a02;
+  color: var(--text);
 }
 .label-ann {
   left: 40px;
@@ -1644,7 +1731,7 @@ background-color: #ffffff !important;
   font-weight: 500;
   margin-bottom: 5px;
 
-  color: #cc7605;
+  color: var(--text);
 }
 
 .label-att {
@@ -1652,21 +1739,21 @@ background-color: #ffffff !important;
   font-size: 21px;
   font-weight: 500;
   margin-bottom: 5px;
-  color: #035858;
+  color: var(--text);
 }
 .label-leave {
   left: 34px;
   font-size: 21px;
   font-weight: 500;
   margin-bottom: 5px;
-  color: #a20606;
+  color: var(--text);
 }
 .label-cust {
       left: 43px;
   font-size: 21px;
   font-weight: 500;
   margin-bottom: 5px;
-  color: #660c56;
+  color: var(--text);
 }
 
 
@@ -1711,7 +1798,7 @@ background-color: #ffffff !important;
   .dashboard-card .value {
     font-size: 22px;
     font-weight: 800;
-    color: #003b84;
+    color: var(--primary);
   }
   .content{
     display: contents;
@@ -1810,7 +1897,7 @@ background-color: #ffffff !important;
 /* Content Section */
 .content {
   flex: 1;
-  background-color: var(--sidebar);
+  /* background-color: var(--sidebar); */
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
@@ -2144,6 +2231,7 @@ h2 {
   /* flex-flow: wrap; */
   display: flex;
   gap: 16px;
+  flex-flow: wrap;
   overflow-x: auto;          /* ✅ enable horizontal scroll */
   overflow-y: hidden;
   padding: 10px 4px 14px;
@@ -2171,7 +2259,7 @@ h2 {
   min-width: 220px;          /* ✅ forces horizontal scroll */
   flex-shrink: 0;            /* ✅ prevent wrapping */
   height: 120px;
-  border-radius: 14px;
+  border-radius: 2px;
   padding: 16px;
   cursor: pointer;
   display: flex;
@@ -2293,6 +2381,54 @@ h2 {
   .bar-chart-wrapper {
     height: 200px;
   }
+}
+
+.revenue-card {
+  background: #fff;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.revenue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.revenue-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.revenue-header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #777;
+}
+
+.revenue-tags {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tag.primary { background: #e6fffa; color: #0d9488; }
+.tag.success { background: #ecfdf5; color: #047857; }
+.tag.info    { background: #eef2ff; color: #4338ca; }
+
+.bar-chart-wrapper {
+  height: 320px;
 }
 
 </style>
