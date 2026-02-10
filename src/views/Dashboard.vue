@@ -187,18 +187,26 @@
           </div>
         </div>
 
-       <!-- Monthly Revenue Row -->
+<!-- Monthly Revenue Section -->
 <div class="monthly-revenue-row" v-if="currentUserName !== 'crm'">
   <div class="revenue-card">
 
     <!-- Header -->
     <div class="revenue-header">
-      <div>
+      <div class="revenue-title">
         <h3>Revenue Overview</h3>
         <p>Financial Year {{ financialYear }} (Apr – Mar)</p>
       </div>
+<div class="target-input">
+  <label>🎯 Yearly Target (₹)</label>
+  <input
+    type="number"
+    v-model.number="yearlyTarget"
+    placeholder="Enter yearly target"
+    min="0"
+  />
+</div>
 
-      <!-- Summary Tags -->
       <div class="revenue-tags">
         <span class="tag primary">
           💰 Total ₹ {{ totalRevenueFY.toLocaleString() }}
@@ -212,9 +220,52 @@
       </div>
     </div>
 
-    <!-- Chart -->
+    <!-- KPI Cards -->
+    <div class="revenue-kpis">
+      <div class="kpi success">
+        <h4>₹ {{ totalRevenueFY.toLocaleString() }}</h4>
+        <p>Total Revenue</p>
+      </div>
+
+      <div class="kpi info">
+        <h4>₹ {{ yearlyTarget.toLocaleString() }}</h4>
+        <p>Yearly Target</p>
+      </div>
+
+      <div class="kpi warning">
+        <h4>{{ overallAchievement }}%</h4>
+        <p>Achievement</p>
+      </div>
+    </div>
+
+    <!-- Quarter Analytics -->
+    <div class="quarter-grid">
+      <div
+        v-for="q in ['Q1','Q2','Q3','Q4']"
+        :key="q"
+        class="quarter-card"
+        :class="quarterAnalytics[q].percent >= 100 ? 'success' : 'danger'"
+      >
+        <h4>{{ q }}</h4>
+        <p>₹ {{ quarterAnalytics[q].revenue.toLocaleString() }}</p>
+        <small>
+          Target ₹ {{ quarterAnalytics[q].target.toLocaleString() }}
+          · {{ quarterAnalytics[q].percent }}%
+        </small>
+      </div>
+    </div>
+
+    <!-- Monthly Revenue vs Target -->
     <div class="bar-chart-wrapper">
       <canvas id="monthlyRevenueBarChart"></canvas>
+    </div>
+
+    <!-- Cumulative Chart -->
+    <div class="analytics-card">
+      <h4>📈 Cumulative Revenue vs Target</h4>
+      <div class="chart-height">
+        <canvas id="cumulativeChart"></canvas>
+      </div>
     </div>
 
   </div>
@@ -283,6 +334,10 @@ export default {
   components: { Sidebar },
   data() {
     return {
+      chartRevenueInstance: null,
+cumulativeChartInstance: null,
+      yearlyTarget: 77000000, // 7.7 CR
+
        showSkeleton: true,
       showLoader: true,
        currentUserName: '', 
@@ -326,7 +381,95 @@ export default {
       birthdays: [] 
     }
   },
+watch: {
+  yearlyTarget(val) {
+    localStorage.setItem('yearlyTarget', val)
+    this.$nextTick(() => {
+      this.renderRevenueBarChart()
+      this.renderCumulativeChart()
+    })
+  }
+},
+
   computed: {
+    quarterAnalytics() {
+  const quarters = {
+    Q1: ['April','May','June'],
+    Q2: ['July','August','September'],
+    Q3: ['October','November','December'],
+    Q4: ['January','February','March']
+  }
+
+  const result = {}
+
+  Object.entries(quarters).forEach(([q, months]) => {
+    const revenue = months.reduce(
+      (sum, m) => sum + (this.monthlyRevenueData[m] || 0),
+      0
+    )
+
+    const target = months.reduce(
+      (sum, m) => sum + (this.monthlyTargetData[m] || 0),
+      0
+    )
+
+    result[q] = {
+      revenue,
+      target,
+      percent: target ? Math.round((revenue / target) * 100) : 0
+    }
+  })
+
+  return result
+},
+
+    cumulativeAnalytics() {
+  let cumRevenue = 0
+  let cumTarget = 0
+
+  return Object.keys(this.monthlyRevenueData).map(month => {
+    cumRevenue += this.monthlyRevenueData[month] || 0
+    cumTarget += this.monthlyTargetData[month] || 0
+
+    return {
+      month,
+      cumRevenue,
+      cumTarget
+    }
+  })
+},
+
+monthlyTargetData() {
+  const targets = {}
+  const equalMonthlyTarget = Math.round(this.yearlyTarget / 12)
+
+  const monthsFY = [
+    'April','May','June','July','August','September',
+    'October','November','December','January','February','March'
+  ]
+
+  monthsFY.forEach(month => {
+    targets[month] = equalMonthlyTarget
+  })
+
+  return targets
+},
+
+
+achievementData() {
+  return Object.keys(this.monthlyRevenueData).map(month => {
+    const revenue = this.monthlyRevenueData[month] || 0
+    const target = this.monthlyTargetData[month] || 0
+    const percent = target ? Math.round((revenue / target) * 100) : 0
+    return { month, revenue, target, percent }
+  })
+},
+
+overallAchievement() {
+  const totalRevenue = this.totalRevenueFY
+  return Math.round((totalRevenue / this.yearlyTarget) * 100)
+},
+
     totalRevenueFY() {
   return Object.values(this.monthlyRevenueData)
     .reduce((a, b) => a + b, 0)
@@ -357,9 +500,6 @@ bestMonthFY() {
   return 8 // default for others (admin, manager, etc.)
 },
 
-    selectedMonthName() {
-    return `${this.months[this.selectedMonth]} ${this.selectedYear}`
-  },
 
   financialYear() {
     const today = new Date()
@@ -378,6 +518,56 @@ bestMonthFY() {
     }
   },
   methods: {
+    renderCumulativeChart() {
+  const ctx = document.getElementById('cumulativeChart')
+  if (!ctx) return
+  if (this.cumulativeChartInstance)
+    this.cumulativeChartInstance.destroy()
+
+  this.cumulativeChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: this.cumulativeAnalytics.map(d => d.month),
+      datasets: [
+        {
+          label: 'Cumulative Target',
+          data: this.cumulativeAnalytics.map(d => d.cumTarget),
+          borderColor: '#94a3b8',
+          borderDash: [6, 6],
+          tension: 0.4
+        },
+        {
+          label: 'Cumulative Revenue',
+          data: this.cumulativeAnalytics.map(d => d.cumRevenue),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,0.15)',
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ₹ ${ctx.raw.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: v => `₹ ${v / 10000000} Cr`
+          }
+        }
+      }
+    }
+  })
+},
+
     async fetchAllTimePieData() {
   try {
     const [
@@ -477,9 +667,6 @@ bestMonthFY() {
     this.tasksRecorder.pendingVisits = getData(visitRes, 'pending')
     this.tasksRecorder.completedVisits = getData(visitRes, 'completed')
 
-    this.generateMonthlyRevenue()
-    // this.updatePieCharts()
-    this.renderRevenueBarChart()
 
     this.currentMonth = `${this.months[this.selectedMonth]} ${this.selectedYear}`
   } catch (err) {
@@ -546,6 +733,7 @@ async generateMonthlyRevenue() {
 
     this.$nextTick(() => {
       this.renderRevenueBarChart()
+       this.renderCumulativeChart()
     })
 
   } catch (err) {
@@ -555,55 +743,66 @@ async generateMonthlyRevenue() {
 
 
 
+renderRevenueBarChart() {
+  if (!this.monthlyRevenueData || !Object.keys(this.monthlyRevenueData).length) {
+    return
+  }
 
-   renderRevenueBarChart() {
   const ctx = document.getElementById('monthlyRevenueBarChart')
   if (!ctx) return
   if (this.chartRevenueInstance) this.chartRevenueInstance.destroy()
 
+  const labels = [
+    'April','May','June','July','August','September',
+    'October','November','December','January','February','March'
+  ]
+
   this.chartRevenueInstance = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: Object.keys(this.monthlyRevenueData),
+      labels,
       datasets: [
         {
-          label: 'Revenue (₹)',
-          data: Object.values(this.monthlyRevenueData),
-          backgroundColor: 'rgba(78, 205, 196, 0.85)',
-          hoverBackgroundColor: 'rgba(78, 205, 196, 1)',
-          borderRadius: 12,
-          barThickness: 30
+          label: 'Target',
+          data: labels.map(m => this.monthlyTargetData[m] || 0),
+          backgroundColor: 'rgba(203, 213, 225, 0.7)',
+          borderRadius: 10
+        },
+        {
+          label: 'Revenue',
+          data: labels.map(m => this.monthlyRevenueData[m] || 0),
+          backgroundColor: labels.map(m =>
+            (this.monthlyRevenueData[m] || 0) >= (this.monthlyTargetData[m] || 0)
+              ? 'rgba(34,197,94,0.9)'   // 🟢 Achieved
+              : 'rgba(239,68,68,0.9)'  // 🔴 Missed
+          ),
+          borderRadius: 12
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: 10 },
       plugins: {
-        legend: { display: false },
+        legend: { position: 'top' },
         tooltip: {
           callbacks: {
-            label: ctx => ` ₹ ${ctx.raw.toLocaleString()}`
+            label: ctx => `₹ ${ctx.raw.toLocaleString()}`
           }
         }
       },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 12 } }
-        },
         y: {
           beginAtZero: true,
-          grid: { color: '#eee' },
           ticks: {
-            callback: value => `₹ ${value / 1000}k`
+            callback: v => `₹ ${v / 100000} L`
           }
         }
       }
     }
   })
 },
+
 
 
     updatePieCharts() {
@@ -759,6 +958,10 @@ async generateMonthlyRevenue() {
     this.currentUserName = res.data.name.toLowerCase() // store name in lowercase
   })
   .catch(err => console.error('Error fetching admin info:', err))
+const savedTarget = localStorage.getItem('yearlyTarget')
+if (savedTarget) {
+  this.yearlyTarget = Number(savedTarget)
+}
 
   this.generateMonthlyRevenue()
   this.$nextTick(() => {
@@ -1162,16 +1365,6 @@ font-family: cursive;
   box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
-.dashboard-card {
-  position: relative;
-  background-color: #ffffff !important;
-  overflow: hidden;
-  border: none !important;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
 .dashboard-card::after {
   content: "";
   position: absolute;
@@ -1256,16 +1449,7 @@ font-family: cursive;
   gap: 20px;
   margin-bottom: 30px;
 }
-.dashboard-card {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  /* box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05); */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+
 .dashboard-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -2429,6 +2613,308 @@ h2 {
 
 .bar-chart-wrapper {
   height: 320px;
+}
+.revenue-kpis {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0 20px;
+}
+
+.kpi {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.kpi h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.kpi p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #555;
+}
+
+.kpi.success { background: #ecfdf5; color: #047857; }
+.kpi.info { background: #eef2ff; color: #3730a3; }
+.kpi.warning { background: #fff7ed; color: #9a3412; }
+.quarter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.quarter-card {
+  padding: 16px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.quarter-card h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.quarter-card p {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 6px 0;
+}
+
+.quarter-card small {
+  font-size: 12px;
+}
+
+.quarter-card.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.quarter-card.danger {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* Target Input Wrapper */
+.target-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 260px;
+  margin-top: 6px;
+}
+
+/* Label */
+.target-input label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155; /* slate-700 */
+  letter-spacing: 0.2px;
+}
+
+/* Input Field */
+.target-input input {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1; /* slate-300 */
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a; /* slate-900 */
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+/* Focus State */
+.target-input input:focus {
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Placeholder */
+.target-input input::placeholder {
+  color: #94a3b8; /* slate-400 */
+  font-weight: 400;
+}
+
+/* Helper Text */
+.target-input small {
+  font-size: 11.5px;
+  color: #64748b; /* slate-500 */
+  line-height: 1.4;
+}
+
+/* Responsive (mobile) */
+@media (max-width: 768px) {
+  .target-input {
+    max-width: 100%;
+  }
+}
+:root {
+  --bg-card: #ffffff;
+  --bg-soft: #f8fafc;
+  --border: #e5e7eb;
+
+  --primary: #2563eb;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #0ea5e9;
+
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+.monthly-revenue-row {
+  margin: 24px 0;
+}
+
+.revenue-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.revenue-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+
+.revenue-title h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.revenue-title p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.target-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.target-input label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.target-input input {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.target-input input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.revenue-tags {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.tag {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  font-weight: 500;
+  background: var(--bg-soft);
+  color: var(--text-main);
+}
+
+.tag.primary { color: var(--primary); }
+.tag.success { color: var(--success); }
+.tag.info { color: var(--info); }
+.revenue-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.kpi {
+  background: var(--bg-soft);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+}
+
+.kpi h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.kpi p {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.kpi.success h4 { color: var(--success); }
+.kpi.info h4 { color: var(--info); }
+.kpi.warning h4 { color: var(--warning); }
+.quarter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin-bottom: 30px;
+}
+
+.quarter-card {
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--bg-soft);
+  text-align: center;
+}
+
+.quarter-card h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.quarter-card p {
+  margin: 6px 0;
+  font-weight: 600;
+}
+
+.quarter-card small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.quarter-card.success p { color: var(--success); }
+.quarter-card.danger p { color: var(--danger); }
+.bar-chart-wrapper,
+.analytics-card {
+  background: var(--bg-soft);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.analytics-card h4 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.chart-height {
+  height: 280px;
+}
+@media (max-width: 768px) {
+  .revenue-header {
+    grid-template-columns: 1fr;
+  }
+
+  .target-input {
+    width: 100%;
+  }
 }
 
 </style>
