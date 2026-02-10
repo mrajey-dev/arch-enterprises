@@ -87,6 +87,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   name: "AnnouncementBoard",
@@ -142,7 +148,7 @@ export default {
       this.fetchAnnouncements();
     } catch (error) {
       console.error('❌ Failed to delete announcement:', error);
-      alert('Delete failed!');
+      toastSuccess('Delete failed!');
     }
   },
     checkIfMobile() {
@@ -197,7 +203,7 @@ async addAnnouncement() {
 
   } catch (error) {
     console.error('❌ Error:', error.response?.data || error.message);
-    alert('Failed: ' + (error.response?.data?.message || 'Unknown'));
+    toastSuccess('Failed: ' + (error.response?.data?.message || 'Unknown'));
   } finally {
     this.isLoading = false; // 🔴 STOP loader (always runs)
   }

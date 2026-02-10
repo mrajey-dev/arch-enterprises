@@ -125,6 +125,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 const api = axios.create({
   baseURL: 'https://employees.archenterprises.co.in/api',
@@ -205,7 +211,7 @@ export default {
         this.resetForm()
         this.fetchBookings()
       } catch (e) {
-        alert(e.response?.data?.message || 'Something went wrong')
+        toastSuccess(e.response?.data?.message || 'Something went wrong')
       } finally {
         this.loading = false
       }
@@ -229,7 +235,7 @@ export default {
         await api.delete(`/api/resource-bookings/${id}`)
         this.fetchBookings()
       } catch (e) {
-        alert(e.response?.data?.message || 'Delete failed')
+        toastSuccess(e.response?.data?.message || 'Delete failed')
       }
     },
 

@@ -347,7 +347,12 @@
 <script>
 import axios from 'axios';
 import Sidebar from '../components/Sidebar.vue';
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   components: {
     Sidebar
@@ -418,10 +423,10 @@ window.addEventListener('resize', this.checkIfMobile);
     this.selectedDepartmentKRAs = this.selectedDepartmentKRAs.filter(
       kra => kra.id !== kraId
     );
-    alert("KRA deleted successfully!");
+    toastSuccess("KRA deleted successfully!");
   } catch (error) {
     console.error(error);
-    alert("Unable to delete KRA. Please try again.");
+    toastWarning("unable to delete KRA. Please try again.");
   }
 },
 
@@ -532,7 +537,7 @@ validateStep() {
     this.showKRAsModal = true;
   } catch (error) {
     console.error('Failed to load KRAs:', error);
-    alert('Unable to load KRAs for this department.');
+    toastSuccess('Unable to load KRAs for this department.');
   }
 },
 
@@ -564,13 +569,13 @@ saveKRA() {
     : axios.post('https://employees.archenterprises.co.in/api/api/kras', payload);
 
   request.then(response => {
-    alert(`KRA ${this.isEditMode ? 'updated' : 'saved'} successfully!`);
+    toastSuccess(`KRA ${this.isEditMode ? 'updated' : 'saved'} successfully!`);
     this.resetForm();
     this.closeKRAModal();
     this.fetchDepartments(); // refresh department data
   }).catch(error => {
     console.error('Save error:', error);
-    alert('Duplicate Entry of KRA Name.');
+    toastSuccess('Duplicate Entry of KRA Name.');
   });
 },
 
@@ -652,12 +657,12 @@ saveKRA() {
     async submitDepartment() {
       try {
         const response = await axios.post('https://employees.archenterprises.co.in/api/api/departments', this.departmentForm);
-        alert('Department saved successfully!');
+        toastSuccess('Department saved successfully!');
         this.closeDepartmentForm();
         this.fetchDepartments();
       } catch (error) {
         console.error('Failed to save department:', error);
-        alert('Something went wrong while saving the department.');
+        toastSuccess('Something went wrong while saving the department.');
       }
     },
 

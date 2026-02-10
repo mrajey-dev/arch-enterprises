@@ -326,7 +326,12 @@ import Sidebar from '../components/Sidebar.vue'
 import Chart from "chart.js/auto";
 import { onMounted, ref } from "vue";
 // Chart.register(...registerables)
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   

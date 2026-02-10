@@ -127,22 +127,22 @@
       <li @click="logout" class="danger-bg">
         <i class="fas fa-sign-out-alt"></i><span> Logout</span>
       </li>
-       <li class="theme-switcher">
-      <label class="theme-label"><span>🎨 Theme</span></label>
+       <li>
+      <!-- <label class="theme-label"><span>🎨 Theme</span></label> -->
 
       <select
         class="theme-select"
         @change="changeTheme"
         :value="currentTheme"
       >
-        <option value="default">⚪ Default</option>
-        <option value="blue">🟦 Blue</option>
-        <option value="green">🟩 Green</option>
-        <option value="orange">🟧 Orange</option>
-        <option value="red">🟥 Red</option>
-        <option value="teal">🟦 Teal</option>
-        <option value="purple">🟥 Purple</option>
-      </select>
+        <option value="default">⚪</option>
+        <option value="blue">🟦</option>
+        <option value="green">🟩</option>
+        <option value="orange">🟧</option>
+        <option value="red">🟥</option>
+        <option value="teal">🟦</option>
+        <option value="purple">🟥</option>
+      </select><span> Theme</span>
     </li>
     </ul>
   </div>
@@ -470,6 +470,12 @@
 
 <script>
 import axios from 'axios'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   data() {
@@ -645,7 +651,7 @@ async fetchAdmin() {
     // 🔹 Submit the selected access to backend
  async submitAccessChange() {
     if (!this.selectedUserForAccess || !this.selectedAccessType) {
-      alert("Please select both user and access type!");
+      toastWarning("please select both user and access type!");
       return;
     }
 
@@ -669,14 +675,14 @@ async fetchAdmin() {
         uploaded_by: selectedUser?.name || "Unknown User",
       });
 
-      alert(
+      toastSuccess(
         `✅ Access granted to ${selectedUser.name} for file "${this.selectedFileForAccess.filename}"`
       );
 
       this.closeAccessModal();
     } catch (error) {
       console.error("Error saving access:", error);
-      alert("❌ Failed to update access or uploaded_by field.");
+      toastSuccess("❌ Failed to update access or uploaded_by field.");
     } finally {
       this.accessLoading = false;
     }
@@ -694,11 +700,11 @@ async fetchAdmin() {
 
     if (response.data.success) {
       this.vaultFiles = this.vaultFiles.filter(f => f.id !== fileId);
-      alert("File deleted successfully!");
+      toastSuccess("File deleted successfully!");
     }
   } catch (error) {
     console.error("Delete failed:", error);
-    alert("Failed to delete file. Please try again.");
+    toastError("Failed to delete file. Please try again.");
   }
 },
 async updateAccess(file) {
@@ -716,13 +722,13 @@ async updateAccess(file) {
     );
 
     if (response.data.success) {
-      alert(`Access for ${file.filename} updated to ${file.access}`);
+      toastSuccess(`Access for ${file.filename} updated to ${file.access}`);
     } else {
-      alert(response.data.message);
+      toastSuccess(response.data.message);
     }
   } catch (error) {
     console.error("Access update failed:", error);
-    alert("Failed to update file access.");
+    toastError("Failed to update file access.");
   }
 },
 
@@ -730,7 +736,7 @@ async updateAccess(file) {
 
     async verifyVaultOtp() {
   if (!this.vaultOtp) {
-    alert("Please enter the OTP.");
+    toastWarning("please enter the OTP.");
     return;
   }
 
@@ -748,15 +754,15 @@ async updateAccess(file) {
       this.vaultToken = response.data.token;
       localStorage.setItem("vault_token", this.vaultToken);
 
-      alert("✅ OTP verified successfully!");
+      toastSuccess("✅ OTP verified successfully!");
       this.showVaultOtp = false;
       this.showVaultModal = true;
     } else {
-      alert(response.data.message || "Invalid OTP. Please try again.");
+      toastSuccess(response.data.message || "Invalid OTP. Please try again.");
     }
   } catch (error) {
     console.error("OTP verification error:", error);
-    alert(error.response?.data?.message || "OTP verification failed.");
+    toastSuccess(error.response?.data?.message || "OTP verification failed.");
   } finally {
     this.verifyingOtp = false;
   }
@@ -773,7 +779,7 @@ cancelVaultOtp() {
 
 async submitVaultLogin() {
   if (!this.vaultLogin.email || !this.vaultLogin.password) {
-    alert("Please enter both email and password.");
+    toastWarning("please enter both email and password.");
     return;
   }
 
@@ -789,15 +795,15 @@ async submitVaultLogin() {
     );
 
     if (response.data.success) {
-      alert("✅ OTP sent to your email. Please verify.");
+      toastSuccess("✅ OTP sent to your email. Please verify.");
       this.showVaultLogin = false;
       this.showVaultOtp = true;
     } else {
-      alert(response.data.message || "Login failed.");
+      toastSuccess(response.data.message || "Login failed.");
     }
   } catch (error) {
     console.error("Login error:", error);
-    alert(error.response?.data?.message || "Login failed. Please try again.");
+    toastSuccess(error.response?.data?.message || "Login failed. Please try again.");
   } finally {
     this.loadingVaultLogin = false;
   }
@@ -809,7 +815,7 @@ async submitVaultLogin() {
 
 async uploadFile() {
   if (!this.selectedFile) {
-    alert("Please select a file first!");
+    toastWarning("please select a file first!");
     return;
   }
 
@@ -840,12 +846,12 @@ async uploadFile() {
       // Push to vaultFiles array so table updates immediately
       this.vaultFiles.push(uploadedFile);
 
-      alert("File uploaded successfully!");
+      toastSuccess("File uploaded successfully!");
       this.selectedFile = null;
     }
   } catch (error) {
     console.error("Upload failed:", error);
-    alert("File upload failed. Please try again.");
+    toastSuccess("File upload failed. Please try again.");
   } finally {
     this.uploading = false;
   }
@@ -948,16 +954,16 @@ async fetchVaultFiles() {
 
 
 
-    alert('Performance review saved and attendance updated!');
+    toastSuccess('Performance review saved and attendance updated!');
     this.showPerformanceModal = false;
     this.resetFields();
   } catch (error) {
   if (error.response && error.response.status === 422) {
     console.error('Validation failed:', error.response.data);
-    alert('Validation failed: ' + JSON.stringify(error.response.data.errors, null, 2));
+    toastSuccess('Validation failed: ' + JSON.stringify(error.response.data.errors, null, 2));
   } else {
     // console.error('Error saving performance review:', error);
-    alert('Performance review saved and attendance updated!');
+    toastSuccess('Performance review saved and attendance updated!');
   }
 }
 

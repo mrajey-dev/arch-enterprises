@@ -380,7 +380,12 @@
       import axios from 'axios'
       import Sidebar from '../components/Sidebar.vue'
       import { Chart, PieController, ArcElement, Tooltip, Legend } from 'chart.js';
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
       Chart.register(PieController, ArcElement, Tooltip, Legend);
 
       export default {
@@ -540,11 +545,11 @@
       });
 
       user.status = newStatus; // update instantly in frontend
-      alert(`User is now ${newStatus}!`);
+      toastSuccess(`User is now ${newStatus}!`);
 
     } catch (error) {
       console.error(error);
-      alert("Failed to update status");
+      toastError("Failed to update status");
     }
   },
 
@@ -557,10 +562,10 @@
       });
 
       user.active = newStatus; // instantly update UI
-      alert(`User is now ${newStatus}!`);
+      toastSuccess(`User is now ${newStatus}!`);
     } catch (error) {
       console.error(error);
-      alert("Failed to update user status");
+      toastError("Failed to update user status");
     }
   },
           validateName() {
@@ -609,7 +614,7 @@
 },
           sendWelcomeEmail(user) {
   if (!user.email) {
-    alert("User email not found.");
+    toastSuccess("User email not found.");
     return;
   }
 
@@ -622,11 +627,11 @@
     }
   })
   .then(() => {
-    alert(`Welcome email sent to ${user.email}`);
+    toastSuccess(`Welcome email sent to ${user.email}`);
   })
   .catch(err => {
     console.error('Error sending email:', err);
-    alert('Failed to send welcome email.');
+    toastSuccess('Failed to send welcome email.');
   });
 },
 
@@ -634,7 +639,7 @@
   const file = event.target.files[0];
 
   if (!this.selectedDocumentType || !file) {
-    alert('Please select both a document type and a file.');
+    toastSuccess('Please select both a document type and a file.');
     return;
   }
 
@@ -665,7 +670,7 @@
   })
   .catch(err => {
     console.error('Upload error:', err.response?.data || err);
-    alert('Upload failed: ' + (err.response?.data?.message || 'Unexpected error'));
+    toastSuccess('Upload failed: ' + (err.response?.data?.message || 'Unexpected error'));
   });
 },
 
@@ -752,7 +757,7 @@
 
           assignKRA() {
             if (this.selectedKRAs.length === 0) {
-              alert('Please select at least one KRA.');
+              toastSuccess('Please select at least one KRA.');
               return;
             }
 
@@ -761,7 +766,7 @@
               kra_ids: this.selectedKRAs,
             })
               .then(() => {
-    alert('KRA(s) assigned successfully!');
+    toastSuccess('KRA(s) assigned successfully!');
     this.showKRAPopup = false;
     this.selectedKRAs = [];
 
@@ -800,13 +805,13 @@
           },
 async handleRegister() {
   if (this.nameError) {
-    alert("Invalid name format!");
+    toastWarning("invalid name format!");
     return;
   }
 
   // Check if at least one document is uploaded (only for new registration)
   if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
-    alert("Please upload at least one document.");
+    toastWarning("please upload at least one document.");
     return;
   }
 
@@ -822,7 +827,7 @@ async handleRegister() {
   if (!this.isEditMode) {
     const exists = await this.checkEmailExists();
     if (exists) {
-      alert("❌ Email is already registered! Please use another email.");
+      toastSuccess("❌ Email is already registered! Please use another email.");
       return; // Stop registration
     }
   }
@@ -853,7 +858,7 @@ async handleRegister() {
           keyResponsibility: this.registerForm.keyResponsibility
         }
       );
-      alert("User updated successfully!");
+      toastSuccess("User updated successfully!");
     } else {
       // New registration
       await axios.post(
@@ -884,10 +889,10 @@ async handleRegister() {
         console.log("Welcome email sent successfully!");
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError.response?.data || emailError.message);
-        alert("User registered but email could not be sent.");
+        toastSuccess("User registered but email could not be sent.");
       }
 
-      alert("Registration successful!");
+      toastSuccess("Registration successful!");
     }
 
     this.showRegister = false;
@@ -895,7 +900,7 @@ async handleRegister() {
     this.fetchUsers();
   } catch (error) {
     console.error("Register/Update error:", error.response?.data || error.message);
-    alert("Registration failed.");
+    toastSuccess("Registration failed.");
   } finally {
     this.loading = false;
   }
@@ -908,19 +913,19 @@ validateForm() {
 
   // Employee ID required & numeric (only in register mode)
   if (!this.isEditMode && (!/^[0-9]+$/.test(form.empId))) {
-    alert("Employee ID must contain numbers only!");
+    toastSuccess("Employee ID must contain numbers only!");
     return false;
   }
 
   // Full Name – alphabets only
   if (!/^[A-Za-z ]+$/.test(form.username.trim())) {
-    alert("Full Name should contain alphabets only!");
+    toastSuccess("Full Name should contain alphabets only!");
     return false;
   }
 
   // Handle validation
 if (!/^[A-Za-z0-9_]+$/.test(form.handle.trim())) {
-  alert("Handle can only contain letters, numbers, and underscores!");
+  toastSuccess("Handle can only contain letters, numbers, and underscores!");
   return false;
 }
 
@@ -929,7 +934,7 @@ if (!/^[A-Za-z0-9_]+$/.test(form.handle.trim())) {
 
   // Salary check
   if (form.keyResponsibility && isNaN(form.keyResponsibility)) {
-    alert("Salary must be numeric!");
+    toastSuccess("Salary must be numeric!");
     return false;
   }
 
@@ -940,13 +945,13 @@ if (!/^[A-Za-z0-9_]+$/.test(form.handle.trim())) {
 
   // Mobile number validation
   if (!/^[0-9]{10}$/.test(form.mobile)) {
-    alert("Contact Number must be exactly 10 digits!");
+    toastSuccess("Contact Number must be exactly 10 digits!");
     return false;
   }
 
   // Secondary Contact optional but validate if entered
   if (form.secondaryContact && !/^[0-9]{10}$/.test(form.secondaryContact)) {
-    alert("Secondary Contact Number must be exactly 10 digits!");
+    toastSuccess("Secondary Contact Number must be exactly 10 digits!");
     return false;
   }
 
@@ -963,13 +968,13 @@ async checkEmailUnique(email) {
 
       const data = await res.json();
       if (data.exists) {
-        alert("This email is already registered!");
+        toastSuccess("This email is already registered!");
         return false;
       }
 
       return true;
     } catch (error) {
-      alert("Unable to verify email right now!");
+      toastWarning("unable to verify email right now!");
       return false;
     }
   },

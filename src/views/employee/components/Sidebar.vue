@@ -143,22 +143,20 @@
           <li @click="logout" class="danger-bg">
             <i class="fas fa-sign-out-alt"></i><span> Logout</span>
           </li>
-           <li class="theme-switcher">
-      <label class="theme-label"><span>🎨 Theme</span></label>
-
-      <select
+           <li>
+     <select
         class="theme-select"
         @change="changeTheme"
         :value="currentTheme"
       >
-        <option value="default">⚪ Default</option>
-        <option value="blue">🟦 Blue</option>
-        <option value="green">🟩 Green</option>
-        <option value="orange">🟧 Orange</option>
-        <option value="red">🟥 Red</option>
-        <option value="teal">🟦 Teal</option>
-        <option value="purple">🟥 Purple</option>
-      </select>
+        <option value="default">⚪</option>
+        <option value="blue">🟦</option>
+        <option value="green">🟩</option>
+        <option value="orange">🟧</option>
+        <option value="red">🟥</option>
+        <option value="teal">🟦</option>
+        <option value="purple">🟥</option>
+      </select><span> Theme</span>
     </li>
         </ul>
       </div>
@@ -214,6 +212,12 @@
 <script>
 import axios from "axios";
 import ChangePasswordForm from "./ChangePasswordForm.vue";
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   components: { ChangePasswordForm },
@@ -332,7 +336,7 @@ export default {
 
       const maxSizeMB = 5;
       if (file.size > maxSizeMB * 1024 * 1024) {
-        alert(`Please choose an image smaller than ${maxSizeMB} MB.`);
+        toastSuccess(`Please choose an image smaller than ${maxSizeMB} MB.`);
         return;
       }
 
@@ -376,7 +380,7 @@ if (response.data && response.data.photo_url) {
 
       } catch (err) {
         console.error("Upload failed:", err);
-        alert("Failed to upload image. Please try again.");
+        toastError("Failed to upload image. Please try again.");
       }
     },
   },

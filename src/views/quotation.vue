@@ -421,6 +421,12 @@
 
 
 <script>
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   data() {
     return {
@@ -576,7 +582,7 @@ columnTotals() {
 
     } catch (err) {
       console.error("Login error:", err);
-      alert("Invalid login credentials");
+      toastWarning("invalid login credentials");
     }
   },
 
@@ -910,7 +916,7 @@ if (Array.isArray(data.items)) {
     },
 
     saveQuotation() {
-      alert("Quotation Saved Successfully!");
+      toastSuccess("Quotation Saved Successfully!");
     },
 
 printQuotation() {

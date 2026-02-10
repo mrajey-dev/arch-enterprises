@@ -286,7 +286,12 @@
 <script>  
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   components: {
     Sidebar
@@ -430,7 +435,7 @@ async submitMarkedAttendance() {
     !this.markAttendance.status ||
     !this.markAttendance.date
   ) {
-    alert('Please fill all required fields');
+    toastSuccess('Please fill all required fields');
     return;
   }
 
@@ -448,7 +453,7 @@ async submitMarkedAttendance() {
       payload
     );
 
-    alert('Attendance saved successfully');
+    toastSuccess('Attendance saved successfully');
 
     this.showMarkAttendancePopup = false;
 
@@ -464,7 +469,7 @@ async submitMarkedAttendance() {
 
   } catch (error) {
     console.error('Error saving attendance:', error);
-    alert('Failed to save attendance');
+    toastSuccess('Failed to save attendance');
   }
 },
 
@@ -567,7 +572,7 @@ getCurrentQuarterMonths() {
   },
   addHoliday() {
     if (!this.newHoliday.date || !this.newHoliday.title) {
-      alert("Both title and date are required");
+      toastSuccess("Both title and date are required");
       return;
     }
     axios.post('https://employees.archenterprises.co.in/api/api/holidays', this.newHoliday)

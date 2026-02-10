@@ -576,19 +576,6 @@ sendMessage() {
   white-space: nowrap;
 }
 
-.theme-select {
-  appearance: none;
-  padding: 6px 3px 6px 2px;
-  font-size: 13px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background: white;
-  color: var(--text);
-  cursor: pointer;
-  outline: none;
-  transition: all 0.25s ease;
-}
-
 /* Arrow */
 .theme-select {
   background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
@@ -652,12 +639,14 @@ sendMessage() {
   font-size: 13px;
   font-weight: 500;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  background: white;
+  border: 1px solid rgba(61, 29, 29, 0);
+  background: rgba(255, 255, 255, 0);
   color: var(--text);
   cursor: pointer;
   outline: none;
   transition: all 0.3s ease;
+    border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(81, 133, 135, 0.25);
 }
 
 /* Dropdown arrow */

@@ -304,6 +304,12 @@
 <script>
 import Sidebar from './components/Sidebar.vue'
 import axios from 'axios'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   name: "ViewDsi",
@@ -355,10 +361,10 @@ export default {
     // Remove from list (reactive)
     this.dsiList.splice(index, 1);
 
-    alert('DSI deleted successfully');
+    toastSuccess('DSI deleted successfully');
   } catch (error) {
     console.error(error);
-    alert('Failed to delete DSI');
+    toastSuccess('Failed to delete DSI');
   }
 },
     async openAllDsiPopup() {
@@ -371,7 +377,7 @@ export default {
       const res = await axios.get('/api/dsis/all');
       this.dsiList = res.data;
     } catch (e) {
-      alert('Failed to load DSI');
+      toastSuccess('Failed to load DSI');
     }
   },
 
@@ -458,10 +464,10 @@ async addDSI() {
       afterImageFile: null
     }
 
-    alert('DSI added successfully!')
+    toastSuccess('DSI added successfully!')
   } catch (error) {
     console.error(error)
-    alert('All Fields Required.')
+    toastSuccess('All Fields Required.')
   } finally {
     this.isSubmitting = false     // ✅ stop loader (always)
   }

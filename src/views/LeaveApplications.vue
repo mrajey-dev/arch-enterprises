@@ -130,7 +130,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   components: { Sidebar },
   data() {
@@ -257,11 +262,11 @@ export default {
     }
 
     await this.fetchLeaves();
-    alert(`Leave approved successfully! (${totalDays} day(s) counted)`);
+    toastSuccess(`Leave approved successfully! (${totalDays} day(s) counted)`);
 
   } catch (error) {
     console.error('❌ Approve leave failed:', error);
-    alert('Could not approve leave – check console/network tab.');
+    toastSuccess('Could not approve leave – check console/network tab.');
   } finally {
     this.busyLeave = { id: null, action: null };
   }
@@ -315,7 +320,7 @@ async rejectLeave(leave) {
 
   } catch (e) {
     console.error('Reject failed:', e);
-    alert('Could not reject leave – try again.');
+    toastSuccess('Could not reject leave – try again.');
   } finally {
     this.busyLeave = { id: null, action: null };
   }
@@ -373,7 +378,7 @@ async rejectLeave(leave) {
 
   } catch (e) {
     console.error('Reject failed:', e);
-    alert('Could not reject leave – try again.');
+    toastSuccess('Could not reject leave – try again.');
   } finally {
     this.busyLeave = { id: null, action: null };
   }
@@ -392,7 +397,7 @@ async rejectLeave(leave) {
         console.log('Fetched leaveRequests sample:', JSON.parse(JSON.stringify(this.leaveRequests[0])))
       } catch (error) {
         console.error('Failed to fetch leave requests:', error)
-        alert('Error loading leave requests.')
+        toastSuccess('Error loading leave requests.')
       } finally {
         this.loadingLeaves = false
       }
@@ -411,7 +416,7 @@ async rejectLeave(leave) {
         this.typedDocuments[this.selectedDocumentType] = file
         this.registerForm.documents = Object.values(this.typedDocuments)
       } else {
-        alert('Please select a document type before uploading.')
+        toastSuccess('Please select a document type before uploading.')
       }
     },
     togglePasswordVisibility() {
@@ -466,7 +471,7 @@ async rejectLeave(leave) {
           },
         })
 
-        alert(
+        toastSuccess(
           this.isEditMode
             ? 'User updated successfully!'
             : 'Registration successful!'
@@ -481,9 +486,9 @@ async rejectLeave(leave) {
           error.response.data &&
           error.response.data.message
         ) {
-          alert(`Operation failed: ${error.response.data.message}`)
+          toastSuccess(`Operation failed: ${error.response.data.message}`)
         } else {
-          alert('Operation failed due to network or server error.')
+          toastSuccess('Operation failed due to network or server error.')
         }
       }
     },
@@ -540,9 +545,9 @@ async rejectLeave(leave) {
             }
           )
           this.fetchUsers()
-          alert('User deleted successfully!')
+          toastSuccess('User deleted successfully!')
         } catch (error) {
-          alert('Failed to delete user.')
+          toastSuccess('Failed to delete user.')
           console.error(error)
         }
       }

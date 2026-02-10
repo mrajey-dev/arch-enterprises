@@ -31,7 +31,12 @@
 
 <script>
 import axios from '@/axios'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   data() {
     return {
@@ -82,7 +87,7 @@ export default {
   methods: {
     joinMeeting() {
       // Placeholder for real video integration
-      alert(`Joining meeting: ${this.meeting.title}`)
+      toastSuccess(`Joining meeting: ${this.meeting.title}`)
     }
   }
 }

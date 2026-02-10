@@ -110,7 +110,12 @@
 <script>
   import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   components: { Sidebar },
 
@@ -141,7 +146,7 @@ export default {
   },
  addResource() {
   if (!this.newResource.name || !this.newResource.description) {
-    alert('All fields are required')
+    toastSuccess('All fields are required')
     return
   }
 
@@ -158,10 +163,10 @@ export default {
       available: 1
     }
 
-    alert('Resource booking request submitted')
+    toastSuccess('Resource booking request submitted')
   })
   .catch(() => {
-    alert('Failed to submit request')
+    toastSuccess('Failed to submit request')
   })
 },
 
@@ -199,7 +204,7 @@ export default {
   .catch(err => {
     console.error(err)
     this.loadingResources = false
-    alert('Failed to load resources')
+    toastSuccess('Failed to load resources')
   })
 }
 

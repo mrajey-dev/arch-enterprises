@@ -115,19 +115,32 @@
         </td>
 
         <!-- View -->
-        <td data-label="View Report: ">
+<td data-label="View Report: ">
   <div v-if="item.report_paths && item.report_paths.length">
-    <button
+    <div
       v-for="(path, rIndex) in item.report_paths"
       :key="rIndex"
-      class="view-report-btn"
-      @click="viewReport(path)"
+      class="report-row"
     >
-      Report {{ rIndex + 1 }}
-    </button>
+      <button
+        class="view-report-btn"
+        @click="viewReport(path)"
+      >
+        Report {{ rIndex + 1 }}
+      </button>
+
+      <!-- ❌ Delete -->
+      <button
+        class="delete-report-btn"
+        @click="deleteReport(item, path, rIndex)"
+      >
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
   </div>
   <span v-else>No Report</span>
 </td>
+
 
       </tr>
     </tbody>
@@ -142,6 +155,12 @@
 <script>
 import axios from "axios";
 import Sidebar from "./components/Sidebar.vue";
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   components: { Sidebar },
@@ -263,6 +282,27 @@ export default {
   },
   },
   methods: {
+    async deleteReport(item, reportPath, index) {
+  const ok = window.confirm("Delete this report permanently?");
+  if (!ok) return;
+
+  try {
+    await axios.post("/api/delete-report", {
+      id: item.id,
+      report_path: reportPath,
+      type: item.visitType === "AMC" ? "amc" : "service"
+    });
+
+    // 🔥 Remove from UI instantly
+    item.report_paths.splice(index, 1);
+
+    toastSuccess("Report deleted successfully");
+  } catch (error) {
+    console.error("Delete report failed", error.response?.data || error);
+    toastError("Failed to delete report");
+  }
+},
+
 async onStatusChange(event, item) {
   const oldStatus = item.status;
   const newStatus = event.target.value;
@@ -521,11 +561,11 @@ async updateServiceVisitDate(service) {
 
     // Optional feedback
     this.$nextTick(() => {
-      alert(`Visit date updated for ${service.company_name}`);
+      toastSuccess(`Visit date updated for ${service.company_name}`);
     });
   } catch (error) {
     console.error("❌ Error updating service visit date:", error.response?.data || error);
-    alert("Failed to update service visit date. Check API endpoint or field name.");
+    toastError("Failed to update service visit date. Check API endpoint or field name.");
   }
 }
 
@@ -1467,6 +1507,26 @@ h2 {
   font-size: 22px;
   color: white;
   cursor: pointer;
+}
+
+.report-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.delete-report-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.delete-report-btn:hover {
+  background: #fecaca;
 }
 
 </style>

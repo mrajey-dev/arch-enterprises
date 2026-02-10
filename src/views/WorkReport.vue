@@ -244,7 +244,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   components: { Sidebar },
   data() {
@@ -370,12 +375,12 @@ deleteTask(id) {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
       .then(() => {
-        alert('Task deleted successfully!')
+        toastSuccess('Task deleted successfully!')
         this.fetchReports()
       })
       .catch(err => {
         console.error('Error deleting task:', err)
-        alert('Failed to delete task!')
+        toastSuccess('Failed to delete task!')
       })
   }
 },
@@ -424,7 +429,7 @@ deleteTask(id) {
 
    assignTask() {
   if (!this.newTask.title || !this.newTask.user_id || !this.newTask.due_date) {
-    alert("Please fill all required fields!")
+    toastWarning("please fill all required fields!")
     return
   }
 
@@ -438,7 +443,7 @@ deleteTask(id) {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   })
     .then(() => {
-      alert(this.isEditTaskMode ? "Task updated successfully!" : "Task assigned successfully!")
+      toastSuccess(this.isEditTaskMode ? "Task updated successfully!" : "Task assigned successfully!")
       this.fetchReports()
       this.closeAssignTaskModal()
       this.isEditTaskMode = false
@@ -446,7 +451,7 @@ deleteTask(id) {
     })
     .catch(err => {
       console.error(err)
-      alert("Error saving task!")
+      toastError("error saving task!")
     })
 },
 

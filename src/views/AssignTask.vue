@@ -128,6 +128,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 
 export default {
@@ -213,13 +219,13 @@ assignTask() {
       }
     )
     .then((res) => {
-      alert('Task assigned successfully!')
+      toastSuccess('Task assigned successfully!')
       this.tasks.push({ ...this.newTask, status: 'Pending' })
       this.newTask = { title: '', employee: '', dueDate: '', status: '' }
     })
     .catch((err) => {
       console.error(err)
-      alert('Error assigning task')
+      toastSuccess('Error assigning task')
     })
 },
 

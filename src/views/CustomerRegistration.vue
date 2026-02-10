@@ -392,13 +392,18 @@
         </div>
         <div class="quotation-form-group">
   <label>Created By</label>
+ 
   <input
     type="text"
     v-model="form.created_by"
     disabled
     class="readonly-field"
   />
+   <div class="error-message">
+    ⚠ Verify the “Created By” name. If it is incorrect, refresh the page and try again.
+  </div>
 </div>
+ 
 
 
         <div class="quotation-form-group">
@@ -431,8 +436,7 @@
       </div>
     </div>
 
-    <!-- ITEMS -->
-  <!-- ITEMS -->
+
 <!-- ITEMS -->
 <div class="quotation-section-card">
   <h3 class="quotation-section-title">📦 Item Details</h3>
@@ -1315,7 +1319,9 @@
     <tr>
       <th>Company</th>
       <th>PO Number</th>
-      <!-- <th>Dipatched Date</th> -->
+      <th>Dipatched Date</th>
+       <th>Tracking ID</th>
+    <th>Courier Name</th>
       <!-- <th>Current Status</th> -->
       <th>Action</th>
     </tr>
@@ -1328,7 +1334,15 @@
 
       <td>{{ supply.company_name }}</td>
       <td>{{ supply.po_number }}</td>
-      <!-- <td>{{ supply.date }}</td> -->
+      <td>{{ supply.closed_date ? supply.closed_date: '-'}}</td>
+       <td>
+      {{ supply.tracking_id ? supply.tracking_id : '-' }}
+    </td>
+
+    <!-- Courier Name -->
+    <td>
+      {{ supply.courier_name ? supply.courier_name : '-' }}
+    </td>
 
       <!-- <td>
         {{ supply.material_status || 'Awaiting Dispatch' }}
@@ -1337,21 +1351,16 @@
 
 
   <!-- Status Change Dropdown -->
-  <select
+<select
   :value="supply.material_status || 'Awaiting Dispatch'"
   @change="handleStatusChange(supply, $event.target.value)"
 >
-  <!-- Default when no status -->
   <option value="Awaiting Dispatch" disabled>
     Awaiting Dispatch
   </option>
 
-  <!-- Dispatched -->
-  <option value="Dispatched">
-    Dispatched
-  </option>
+  <option value="Dispatched">Dispatched</option>
 
-  <!-- Delivered only after dispatched -->
   <option
     v-if="supply.material_status === 'Dispatched'"
     value="Delivered"
@@ -1380,6 +1389,31 @@
   </div>
 </div>
 
+<!-- DELIVERED DATE POPUP -->
+<div v-if="showDeliveredDatePopup" class="modal-backdrop">
+  <div class="modal-card small">
+    <h3>Material Delivered</h3>
+
+    <div class="form-group">
+      <label>Select material delivered date <span style="color:red">*</span></label>
+      <input
+        type="date"
+        v-model="deliveredDate"
+        required
+        class="filter-input"
+      />
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px">
+      <button class="btn btn-secondary" @click="confirmDelivered">
+        Save
+      </button>
+      <button class="btn btn-success" @click="closeDeliveredPopup">
+        Cancle
+      </button>
+    </div>
+  </div>
+</div>
 
 
 <!-- STATUS POPUP -->
@@ -2565,10 +2599,10 @@
       <th>Company</th>
       <!-- <th>PO Number</th> -->
       <th>PO Date</th>
-      <!-- <th>Status</th> -->
+      <th>Dipatched Date</th>
       <th>Tracking ID</th>
       <th>Courier Name</th>
-      <th>Closed Date</th>
+      <th>Material Delivered Date</th>
     </tr>
   </thead>
 
@@ -2579,10 +2613,13 @@
       <td>{{ supply.company_name }}</td>
       <!-- <td>{{ supply.po_number }}</td> -->
       <td>{{ supply.date }}</td>
-      <!-- <td>{{ supply.material_status }}</td> -->
+     <td>{{ supply.closed_date || '-' }}</td>
       <td>{{ supply.tracking_id || '-' }}</td>
       <td>{{ supply.courier_name || '-' }}</td>
-      <td>{{ supply.closed_date || '-' }}</td>
+        <td>
+  {{ supply.material_delivered_date ? supply.material_delivered_date.split('T')[0] : '-' }}
+</td>
+
     </tr>
   </tbody>
 
@@ -2869,6 +2906,12 @@
   import axios from 'axios'
   import Sidebar from '../components/Sidebar.vue'
   import _ from 'lodash';
+  import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 
   export default {
@@ -2877,6 +2920,8 @@
     },
     data() {
       return {
+        showDeliveredDatePopup: false,
+    deliveredDate: '',
          selectedTerms: 'regular',
         loading: false,
          filterMonth: '',
@@ -3670,7 +3715,7 @@ filterCompany(newCompany) {
   ]
 
   if (!allowedTypes.includes(file.type)) {
-    alert('Invalid file type. Please upload PNG, JPG, JPEG, PDF, DOC, or DOCX.')
+    toastSuccess('Invalid file type. Please upload PNG, JPG, JPEG, PDF, DOC, or DOCX.')
     event.target.value = ''
     return
   }
@@ -3740,7 +3785,7 @@ filterCompany(newCompany) {
   },
   updateShippingAddress() {
     if (!this.form.company_name || !this.form.shipping_address) {
-      alert("⚠ Please select company and enter shipping address");
+      toastWarning("⚠ Please select company and enter shipping address");
       return;
     }
 
@@ -3749,10 +3794,10 @@ filterCompany(newCompany) {
       shipping_address: this.form.shipping_address
     })
     .then(() => {
-      this.$toast?.success("✅ Shipping address updated successfully");
+      this.$toast?.success("Shipping address updated successfully");
     })
     .catch(() => {
-      alert("❌ Failed to update shipping address");
+      toastError("Failed to update shipping address");
     });
   },
   fetchVisitStatuses() {
@@ -3869,29 +3914,47 @@ updateAmcVisitDate(visit) {
     this.filters.search = ''
     this.filters.month = ''
   },
- handleStatusChange(supply, status) {
-
+async handleStatusChange(supply, status) {
+  // 🔔 Open popup for Dispatched (keep as-is)
   if (status === 'Dispatched') {
-    // 🔔 Open popup only for Dispatched
     this.openStatusPopup(supply, status)
+    return
   }
 
+  // 📦 Delivered → open delivered date popup (NO direct DB update)
   if (status === 'Delivered') {
-    // ✅ Direct DB update
-    this.updateMaterialStatus(supply, 'Delivered')
-      .then(() => {
-
-        // ✅ Success alert
-        alert('Material status updated to Delivered successfully.')
-
-        // 🔄 Refresh page
-        window.location.reload()
-      })
-      .catch(() => {
-        alert('Failed to update material status.')
-      })
+    this.selectedSupply = supply
+    this.deliveredDate = ''
+    this.showDeliveredDatePopup = true
+    return
   }
 },
+async confirmDelivered() {
+  if (!this.deliveredDate) {
+    toastError('Please select material delivered date')
+    return
+  }
+
+  try {
+    await axios.post('https://employees.archenterprises.co.in/api/api/material_delivered', {
+      id: this.selectedSupply.id,
+      material_delivered_date: this.deliveredDate
+    })
+
+    toastSuccess('Material marked as Delivered successfully.')
+
+    this.showDeliveredDatePopup = false
+    this.selectedSupply = null
+
+  } catch (error) {
+    toastError('Failed to update material status.')
+  }
+},
+ closeDeliveredPopup() {
+    this.showDeliveredDatePopup = false
+    this.selectedSupply = null
+  },
+
 
 // UPDATE MATERIAL STATUS
   // -----------------------------
@@ -3905,10 +3968,10 @@ updateAmcVisitDate(visit) {
       // Update UI instantly
       supply.material_status = status;
 
-      alert("Material status updated successfully.");
+      toastSuccess("Material status updated successfully.");
     } catch (err) {
       console.error(err);
-      alert("Failed to update status");
+      toastError("Failed to update status");
       throw err;
     }
   },
@@ -3932,7 +3995,7 @@ async reopenPo(poId) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to reopen PO");
 
-    alert(data.message);
+    toastSuccess(data.message);
 
     // ✅ STEP 1: Get full PO object BEFORE removing
     const reopenedPo = this.closedPoList.find(po => po.id === poId);
@@ -3961,7 +4024,7 @@ async reopenPo(poId) {
 
   } catch (error) {
     console.error(error);
-    alert(error.message || "Failed to reopen PO");
+    toastSuccess(error.message || "Failed to reopen PO");
   }
 },
 
@@ -4210,7 +4273,7 @@ fetchReports() {
 
     } catch (err) {
       console.error("Login error:", err);
-      alert("Invalid login credentials");
+      toastWarning("invalid login credentials");
     }
   },
   async getLoggedInUser() {
@@ -4265,10 +4328,10 @@ async openQuotationlist(cust) {
       this.selectedSupply.material_status = this.selectedStatus;
 
       this.closePopup();
-      alert("Status updated successfully.");
+      toastSuccess("Status updated successfully");
     } catch (err) {
       console.error(err);
-      alert("Failed to update status");
+      toastError("Failed to update status");
     }
   },
 
@@ -4300,9 +4363,50 @@ async openQuotationlist(cust) {
   formatNumber(num) {
     return "AEC" + num.toString().padStart(3, "0");
   },
- refreshForm() {
-  window.location.reload();
+refreshForm() {
+  const company = this.form.company_name;
+  const createdBy = this.form.created_by;
+
+  this.isEdit = false;
+  this.selectedTerms = 'regular';
+
+  this.form = {
+    id: null,
+
+    // KEEP THESE
+    company_name: company,
+    created_by: createdBy,
+
+    // RESET BASIC INFO
+    shipping_address: '',
+    nature_of_sale: '',
+    currency: '',
+    recommended_by: '',
+    customer_reference: '',
+
+    // RESET ENGINE & TERMS
+    engine_serial: '',
+    model_no: '',
+  
+
+    // RESET ITEMS (start fresh)
+    items: [
+      {
+        description: '',
+        hsn: '',
+        qty: '',
+        uom: '',
+        rate: '',
+        discount: 0,
+        cgst_rate: '',
+        sgst_rate: '',
+        igst_rate: ''
+      }
+    ],
+
+  };
 },
+
 
   resetForm() {
   this.isEdit = false;
@@ -4361,7 +4465,7 @@ async editQuotation(quotation) {
 
   } catch (error) {
     console.error(error);
-    alert("Failed to load quotation data");
+    toastError("Failed to load quotation data");
   }
 },
 
@@ -4383,14 +4487,14 @@ async editQuotation(quotation) {
 
     axios.delete(`/api/quotations/${id}`)
       .then(() => {
-        alert("Quotation deleted successfully!");
+        toastSuccess("Quotation deleted successfully!");
 
         // Remove from UI immediately
         this.quotationList = this.quotationList.filter(q => q.id !== id);
       })
       .catch(err => {
         console.error(err);
-        alert("Error deleting quotation");
+        toastError("error deleting quotation");
       });
   },
   updateServiceDate(po) {
@@ -4398,7 +4502,7 @@ async editQuotation(quotation) {
       service_date: po.service_date
     })
     .then(() => {
-      alert("Service Date Updated Successfully!");
+      toastSuccess("Service Date Updated Successfully!");
     })
     .catch(error => {
       console.error("Error updating service date:", error);
@@ -4416,7 +4520,7 @@ async editQuotation(quotation) {
       visit_date: this.visitDate
     });
 
-    alert('Visit added successfully!');
+    toastSuccess('Visit added successfully!');
     this.showAddVisitModal = false;
 
     // Optional: update local selectedPo to show immediately
@@ -4424,7 +4528,7 @@ async editQuotation(quotation) {
 
   } catch (error) {
     console.error(error);
-    alert('Failed to add visit.');
+    toastSuccess('Failed to add visit.');
   }
 },
     addVisit(po) {
@@ -4436,7 +4540,7 @@ async editQuotation(quotation) {
 addItem() {
   // 1️⃣ Validate Nature of Sale
   if (!this.form.nature_of_sale) {
-    alert("⚠ Please select Nature of Sale before adding items.");
+    toastWarning("⚠ Please select Nature of Sale before adding items.");
     return;
   }
 
@@ -4450,7 +4554,7 @@ addItem() {
       !lastItem.uom ||
       !lastItem.rate
     ) {
-      alert(
+      toastSuccess(
         "⚠ Please fill all required fields (*) in the current item before adding a new one."
       );
       return;
@@ -4528,13 +4632,13 @@ openViewQuotationPopup(companyName) {
 submitQuotation() {
   // 1️⃣ Check Nature of Sale
   if (!this.form.nature_of_sale) {
-    alert("⚠ Please select Nature of Sale before saving the quotation.");
+    toastWarning("⚠ Please select Nature of Sale before saving the quotation.");
     return;
   }
 
   // 2️⃣ Check if at least one item is added
   if (!this.form.items || this.form.items.length === 0) {
-    alert("⚠ Please add at least one item before saving the quotation.");
+    toastWarning("⚠ Please add at least one item before saving the quotation.");
     return;
   }
 
@@ -4542,38 +4646,48 @@ submitQuotation() {
   for (let i = 0; i < this.form.items.length; i++) {
     const item = this.form.items[i];
     if (!item.description || !item.hsn || !item.qty || !item.uom || !item.rate) {
-      alert(`⚠ Please fill all required fields (*)`);
+      toastWarning("⚠ Please fill all required fields (*)");
       return;
     }
   }
 
-  // ✅ Proceed with API call
-  const url = this.isEdit 
-    ? `/api/quotations/${this.form.id}`   // UPDATE URL
-    : `/api/quotations`;                  // CREATE URL
+  // 🔹 store company before reset
+  const selectedCompany = this.form.company_name;
+
+  const url = this.isEdit
+    ? `/api/quotations/${this.form.id}`
+    : `/api/quotations`;
 
   const method = this.isEdit ? 'put' : 'post';
 
   axios[method](url, this.form)
-    .then(async res => {
-      alert(this.isEdit ? "Quotation Updated Successfully!" : "Quotation Saved Successfully!");
+    .then(async () => {
+      toastSuccess(this.isEdit 
+        ? "Quotation Updated Successfully!" 
+        : "Quotation Saved Successfully!"
+      );
 
+      // close quotation form
       this.showQuotation = false;
-      this.resetForm();
 
-      // Refresh the list
+      // refresh quotations
       await this.fetchQuotations();
 
-      // If it was a NEW quotation, open All Quotations popup for the selected company
-      if (!this.isEdit) {
-        this.filterCompany = this.form.company_name; // set company filter
-      }
+      // set filter
+      this.filterCompany = selectedCompany;
+
+      // ✅ OPEN VIEW QUOTATIONS POPUP
+      this.showViewQuotationPopup = true;
+
+      // reset AFTER popup opens
+      this.resetForm();
     })
     .catch(err => {
       console.error(err);
-      alert("Error saving quotation");
+      toastError("error saving quotation");
     });
 },
+
 
 
 
@@ -4624,7 +4738,7 @@ submitQuotation() {
     },
 
     saveQuotation() {
-      alert("Quotation saved successfully!");
+      toastSuccess("Quotation saved successfully!");
       // You can add axios POST here
     },
     openAssignedVisits() {
@@ -4721,10 +4835,10 @@ openSupplyPopup() {
         this.selectedPo = { ...this.selectedPo, status: "Closed" };
       }
 
-      alert("PO closed successfully.");
+      toastSuccess("PO closed successfully.");
     } catch (error) {
       console.error("Error closing PO:", error);
-      alert("Failed to close PO. Please try again.");
+      toastError("Failed to close PO. Please try again.");
     }
   },
 
@@ -4744,7 +4858,7 @@ async confirmSupplyClose() {
     });
 
     if (!res.data?.status) {
-      alert(res.data?.message || "Failed to close Supply PO");
+      toastSuccess(res.data?.message || "Failed to close Supply PO");
       return;
     }
 
@@ -4771,11 +4885,11 @@ async confirmSupplyClose() {
       this.closedPoList.unshift(closedPo);
     }
 
-    alert("Supply PO closed successfully");
+    toastSuccess("Supply PO closed successfully");
 
   } catch (error) {
     console.error(error.response || error);
-    alert(error.response?.data?.message || "Failed to close Supply PO");
+    toastSuccess(error.response?.data?.message || "Failed to close Supply PO");
   }
 },
 
@@ -4828,10 +4942,10 @@ async confirmSupplyClose() {
       this.servicePoList = this.servicePoList.filter(po => po.id !== poId);
       if (this.selectedPo && this.selectedPo.id === poId) this.selectedPo = null;
 
-      alert("PO deleted successfully.");
+      toastSuccess("PO deleted successfully.");
     } catch (error) {
       console.error("Error deleting PO:", error);
-      alert("Failed to delete PO. Please try again.");
+      toastError("Failed to delete PO. Please try again.");
     }
   },
 updateStatus(id, materialStatus) {
@@ -4853,7 +4967,7 @@ updateStatus(id, materialStatus) {
     .catch((error) => {
       if (error.response) {
         console.error("Error inserting/updating supply record:", error.response.data);
-        alert(`Server error: ${JSON.stringify(error.response.data)}`);
+        toastSuccess(`Server error: ${JSON.stringify(error.response.data)}`);
       } else {
         console.error("Request failed:", error);
       }
@@ -4878,7 +4992,7 @@ async fetchVisitOrders() {
 
 assignVisit(visit) {
   // if (!visit.visit_date) {
-  //   alert('Please select visit date first');
+  //   toastSuccess('Please select visit date first');
   //   return;
   // }
 
@@ -4924,7 +5038,7 @@ assignVisit(visit) {
           id: service.id,
           assign_to: service.assign_to
         })
-        alert('Service assigned successfully!')
+        toastSuccess('Service assigned successfully!')
       } catch (err) {
         console.error('Error assigning service:', err)
       }
@@ -5051,7 +5165,7 @@ assignVisit(visit) {
   },
  async viewCustomerPo() {
   if (!this.selectedPo) {
-    alert("No PO selected");
+    toastWarning("no PO selected");
     return;
   }
 
@@ -5074,7 +5188,7 @@ assignVisit(visit) {
     }
   }
 
-  alert("PO file not found in PDF or Image format");
+  toastSuccess("PO file not found in PDF or Image format");
 },
 
 
@@ -5088,12 +5202,12 @@ assignVisit(visit) {
           if (pos.length > 0) {
             this.openPoDetails(pos[0]); // open first matching PO
           } else {
-            alert("No PO found for this company and type.");
+            toastWarning("no PO found for this company and type.");
           }
         })
         .catch(err => {
           console.error(err);
-          alert("Failed to fetch PO details.");
+          toastError("Failed to fetch PO details.");
         });
     },
 
@@ -5105,7 +5219,7 @@ assignVisit(visit) {
   },
 async saveAmcDetails() {
   if (!this.amcDetails.PONumber || !this.amcDetails.PODate) {
-    alert("Please fill required fields");
+    toastWarning("please fill required fields");
     return;
   }
 
@@ -5145,12 +5259,16 @@ async saveAmcDetails() {
       }
     });
 
-    alert('AMC PO saved successfully');
-    window.location.reload();
+toastSuccess('AMC PO saved successfully');
+
+setTimeout(() => {
+  window.location.reload();
+}, 2000); // 2000 ms = 2 seconds
+
 
   } catch (error) {
     console.error(error);
-    alert('Error saving AMC PO ❌');
+    toastError('Error saving AMC PO details. Please try again.');
   } finally {
     this.isSavingAmc = false; // ✅ stop loader ALWAYS
   }
@@ -5167,7 +5285,7 @@ async saveAmcDetails() {
       })
       .catch(err => {
         console.error(err);
-        alert('Failed to fetch PO details');
+        toastSuccess('Failed to fetch PO details');
       });
   },
 
@@ -5177,17 +5295,17 @@ async saveAmcDetails() {
     // ✅ Header Button (Close Selected PO)
     async closeSelectedPo() {
       if (!this.selectedPoId) {
-        alert('Please select a PO first.')
+        toastSuccess('Please select a PO first.')
         return
       }
       try {
         await axios.post(`/api/update-po-status`, { id: this.selectedPoId, status: 'closed' })
-        alert('Selected PO closed!')
+        toastSuccess('Selected PO closed!')
         this.showClosedPoModal = true
         this.showviewPoModal = false
       } catch (error) {
         console.error(error)
-        alert('Failed to close selected PO.')
+        toastSuccess('Failed to close selected PO.')
       }
     },
   
@@ -5202,7 +5320,7 @@ async saveAmcDetails() {
         })
         .catch(err => {
           console.error(err);
-          alert("Failed to fetch PO numbers");
+          toastError("Failed to fetch PO numbers");
         });
     },
     
@@ -5217,7 +5335,7 @@ async saveAmcDetails() {
         })
         .catch(err => {
           console.error(err);
-          alert("Failed to fetch PO numbers");
+          toastError("Failed to fetch PO numbers");
         });
     },
     openPoModal(companyName) {
@@ -5231,7 +5349,7 @@ async saveAmcDetails() {
       })
       .catch(err => {
         console.error(err);
-        alert("Failed to fetch PO numbers");
+        toastError("Failed to fetch PO numbers");
       });
   },
     // Handle PO type selection
@@ -5290,7 +5408,7 @@ closeServiceSupplyModal(){
     // Save PO type selection
     savePo() {
       if (!this.poType) {
-        alert("Please select PO type");
+        toastWarning("please select PO type");
         return;
       }
       console.log("Saving PO:", {
@@ -5303,7 +5421,7 @@ closeServiceSupplyModal(){
     saveServiceSupply() {
   // Basic validation (common required fields)
   if (!this.serviceSupply.poNumber || !this.serviceSupply.date) {
-    alert("Please fill required fields");
+    toastWarning("please fill required fields");
     return;
   }
 
@@ -5348,12 +5466,15 @@ closeServiceSupplyModal(){
       },
     })
     .then(() => {
-      alert("Service + Supply PO saved successfully");
-      window.location.reload();
+      toastSuccess("Service + Supply PO saved successfully");
+  setTimeout(() => {
+  window.location.reload();
+}, 2000); // 2000 ms = 2 seconds
+
     })
     .catch((err) => {
       console.error("Save error:", err.response?.data || err);
-      alert("Failed to save Service + Supply PO");
+      toastError("Failed to save Service + Supply PO");
     })
     .finally(() => {
       this.isSavingServiceSupply = false; // ✅ stop loader ALWAYS
@@ -5363,7 +5484,7 @@ closeServiceSupplyModal(){
 
   saveSupplyDetails() {
   if (!this.supplyDetails.poNumber || !this.supplyDetails.date) {
-    alert("Please fill required fields");
+    toastWarning("please fill required fields");
     return;
   }
 
@@ -5390,12 +5511,15 @@ closeServiceSupplyModal(){
     }
   })
   .then(() => {
-    alert('Supply PO saved successfully');
-    window.location.reload();
+    toastSuccess('Supply PO saved successfully');
+setTimeout(() => {
+  window.location.reload();
+}, 2000); // 2000 ms = 2 seconds
+
   })
   .catch(err => {
     console.error('Save error:', err.response?.data || err);
-    alert('Failed to save Supply PO');
+    toastSuccess('Failed to save Supply PO');
   })
   .finally(() => {
     this.isSavingSupply = false; // ✅ stop loader ALWAYS
@@ -5406,7 +5530,7 @@ closeServiceSupplyModal(){
 
  saveServiceDetails() {
   if (!this.serviceDetails.poNumber || !this.serviceDetails.date) {
-    alert("Please fill required fields");
+    toastWarning("please fill required fields");
     return;
   }
 
@@ -5434,12 +5558,15 @@ closeServiceSupplyModal(){
     }
   })
   .then(() => {
-    alert('Service PO saved successfully');
-    window.location.reload();
+    toastSuccess('Service PO saved successfully');
+   setTimeout(() => {
+  window.location.reload();
+}, 2000); // 2000 ms = 2 seconds
+
   })
   .catch(err => {
     console.error('Save error:', err.response?.data || err);
-    alert('Failed to save Service PO');
+    toastSuccess('Failed to save Service PO');
   })
   .finally(() => {
     this.isSavingService = false; // ✅ stop loader ALWAYS
@@ -5484,7 +5611,7 @@ closeServiceSupplyModal(){
     })
     .catch(err => {
       console.error('Fetch error:', err);
-      alert('Failed to load customers.');
+      toastSuccess('Failed to load customers.');
     })
     .finally(() => {
       this.isLoadingCustomers = false; // ✅ stop loader
@@ -5547,7 +5674,7 @@ closeServiceSupplyModal(){
     })
     .catch(err => {
       console.error('Failed to fetch customer details:', err);
-      alert('Failed to load customer details.');
+      toastSuccess('Failed to load customer details.');
     });
   },
 
@@ -5560,12 +5687,14 @@ closeServiceSupplyModal(){
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(() => {
-        alert('Customer deleted!');
-        window.location.reload();
+        toastSuccess('Customer deleted!');
+       setTimeout(() => {
+          window.location.reload();
+        }, 2000); // 2000 ms = 2 seconds
       })
       .catch(err => {
         console.error(err);
-        alert('Failed to delete customer.');
+        toastError('Failed to delete customer.');
       });
     },
 
@@ -5576,7 +5705,7 @@ closeServiceSupplyModal(){
 
     closeCustomerModal() {
       this.showCustomerModal = false;
-        window.location.reload();
+        // window.location.reload();
     },
 
     // Equipment handling
@@ -5610,11 +5739,13 @@ closeServiceSupplyModal(){
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(() => {
-      alert(this.editingCustomerId ? 'Customer updated!' : 'Customer registered!');
-      window.location.reload();
+      toastSuccess(this.editingCustomerId ? 'Customer updated!' : 'Customer registered!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000); // 2000 ms = 2 seconds
     })
     .catch(() => {
-      alert('Failed to save customer.');
+      toastError('Failed to save customer.');
     });
   },
 
@@ -9613,7 +9744,7 @@ justify-self: center;
 .modal-card {
   background: #fff;
   width: 90%;
-  max-width: 1100px;
+  max-width: 1285px;
 
   /* 🔽 Scroll settings */
   max-height: 90vh;
@@ -9676,7 +9807,7 @@ justify-self: center;
 }
 
 .error-message {
-  color: var(--text);
+  color: #ee0000;
   font-size: 0.8rem;
   margin-top: 2px;
 }

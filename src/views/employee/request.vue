@@ -110,6 +110,12 @@
 import Sidebar from './components/Sidebar.vue'
 import Chart from 'chart.js/auto'
 import axios from "axios";
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   components: { Sidebar },
@@ -179,7 +185,7 @@ fetchStats() {
 
 submitRequest() {
   if (!this.form.request_type || !this.form.description) {
-    alert('Fill all fields')
+    toastSuccess('Fill all fields')
     return
   }
 
@@ -207,7 +213,7 @@ submitRequest() {
     this.fetchStats()
   })
   .catch(() => {
-    alert('Failed to save request')
+    toastSuccess('Failed to save request')
   })
   .finally(() => {
     this.isSubmitting = false  // stop loader
@@ -246,7 +252,7 @@ deleteRequest(id) {
     this.fetchStats()
   })
   .catch(() => {
-    alert('Failed to delete request')
+    toastSuccess('Failed to delete request')
   })
 },
 

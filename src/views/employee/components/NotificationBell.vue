@@ -18,9 +18,16 @@
 
 <script>
 import axios from "axios"
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   name: "NotificationBell",
+  
 
   data() {
     return {

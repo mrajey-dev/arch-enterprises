@@ -355,6 +355,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 
 export default {
@@ -518,10 +524,10 @@ watch: {
     const task = this.tasks.find(t => t.id === this.selectedTask.id);
     if (task) task.comment = this.selectedTask.comment;
 
-    alert('Comment saved successfully ✅');
+    toastSuccess('Comment saved successfully ✅');
   } catch (err) {
     console.error('Failed to save comment', err);
-    alert('Failed to save comment ❌');
+    toastSuccess('Failed to save comment ❌');
   }
 },
 
@@ -731,7 +737,7 @@ this.currentUser.username = response.data.name;
 
   } catch (error) {
     console.error('Failed to fetch current user:', error);
-    alert('Could not fetch logged-in user info.');
+    toastSuccess('Could not fetch logged-in user info.');
   }
 },
 
@@ -781,7 +787,7 @@ this.upcomingTasks = this.tasks.filter(task => {
 
   } catch (error) {
     console.error('Failed to fetch tasks:', error);
-    alert('Could not load tasks');
+    toastSuccess('Could not load tasks');
   }
 },
 
@@ -794,11 +800,11 @@ this.upcomingTasks = this.tasks.filter(task => {
     axios.delete(`https://employees.archenterprises.co.in/api/api/tasks/${task.id}`)
       .then(() => {
         this.tasks = this.tasks.filter(t => t.id !== task.id);
-        // alert('Task deleted successfully!');
+        // toastSuccess('Task deleted successfully!');
       })
       .catch(error => {
         console.error('Error deleting task:', error);
-        alert('Failed to delete task.');
+        toastSuccess('Failed to delete task.');
       });
   }
 },
@@ -818,7 +824,7 @@ async updateTaskStatus(task) {
   }
 
   if (!task.id) {
-    alert('Task has no id, cannot update. Please refresh the page.');
+    toastSuccess('Task has no id, cannot update. Please refresh the page.');
     return;
   }
 
@@ -832,7 +838,7 @@ async updateTaskStatus(task) {
     task.status = oldStatus;
     task.completedAt = oldCompletedAt;
     console.error('Failed to update task status', error);
-    alert('Failed to update task status on server. Changes reverted.');
+    toastSuccess('Failed to update task status on server. Changes reverted.');
   }
 },
 
@@ -888,7 +894,7 @@ submitTask() {
     })
     .catch(error => {
       console.error('Error saving task:', error);
-      alert('Failed to save task.');
+      toastSuccess('Failed to save task.');
     });
 },
 
@@ -904,7 +910,7 @@ submitTask() {
     this.typedDocuments[this.selectedDocumentType] = file;
     this.registerForm.documents = Object.values(this.typedDocuments); // update form data
   } else {
-    alert('Please select a document type before uploading.');
+    toastSuccess('Please select a document type before uploading.');
   }
 },
 
@@ -964,16 +970,16 @@ generatePassword() {
           }
         })
 
-        alert(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
+        toastSuccess(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
         this.showRegister = false
         this.resetForm()
         this.fetchUsers()
       } catch (error) {
         console.error('Register error:', error)
         if (error.response && error.response.data && error.response.data.message) {
-          alert(`Operation failed: ${error.response.data.message}`)
+          toastSuccess(`Operation failed: ${error.response.data.message}`)
         } else {
-          alert('Operation failed due to network or server error.')
+          toastSuccess('Operation failed due to network or server error.')
         }
       }
     },
@@ -1010,7 +1016,7 @@ generatePassword() {
         })
         this.users = response.data
       } catch (error) {
-        alert('Failed to fetch users')
+        toastSuccess('Failed to fetch users')
         console.error(error)
       }
     },
@@ -1045,9 +1051,9 @@ generatePassword() {
             }
           })
           this.fetchUsers()
-          alert('User deleted successfully!')
+          toastSuccess('User deleted successfully!')
         } catch (error) {
-          alert('Failed to delete user.')
+          toastSuccess('Failed to delete user.')
           console.error(error)
         }
       }

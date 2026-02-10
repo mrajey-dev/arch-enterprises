@@ -18,7 +18,12 @@
 
 <script>
 import axios from 'axios'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   data() {
     return { meeting: null }
@@ -33,7 +38,7 @@ export default {
       const res = await axios.get(`/api/meetings/${this.$route.params.id}`)
       this.meeting = res.data.data
     } catch {
-      alert('Meeting not found or expired')
+      toastSuccess('Meeting not found or expired')
       this.$router.push('/')
     }
   }

@@ -95,7 +95,12 @@
 <script>
   import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   components: { Sidebar },
 
@@ -129,7 +134,7 @@ export default {
     )
   } catch (error) {
     console.error(error)
-    alert('Failed to update status')
+    toastSuccess('Failed to update status')
   }
 },
 

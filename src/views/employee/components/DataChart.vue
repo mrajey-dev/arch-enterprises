@@ -96,7 +96,12 @@
 <script>
 import { Chart, registerables } from 'chart.js';
 import axios from 'axios';
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 Chart.register(...registerables);
 
 export default {

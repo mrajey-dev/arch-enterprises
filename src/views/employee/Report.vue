@@ -68,6 +68,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   components: { Sidebar },

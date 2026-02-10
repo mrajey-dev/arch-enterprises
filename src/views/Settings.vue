@@ -36,7 +36,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
     components: {
@@ -108,16 +113,16 @@ export default {
           }
         })
 
-        alert(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
+        toastSuccess(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
         this.showRegister = false
         this.resetForm()
         this.fetchUsers()
       } catch (error) {
         console.error('Register error:', error)
         if (error.response && error.response.data && error.response.data.message) {
-          alert(`Operation failed: ${error.response.data.message}`)
+          toastSuccess(`Operation failed: ${error.response.data.message}`)
         } else {
-          alert('Operation failed due to network or server error.')
+          toastSuccess('Operation failed due to network or server error.')
         }
       }
     },
@@ -153,7 +158,7 @@ export default {
         })
         this.users = response.data
       } catch (error) {
-        alert('Failed to fetch users')
+        toastSuccess('Failed to fetch users')
         console.error(error)
       }
     },
@@ -188,9 +193,9 @@ export default {
             }
           })
           this.fetchUsers()
-          alert('User deleted successfully!')
+          toastSuccess('User deleted successfully!')
         } catch (error) {
-          alert('Failed to delete user.')
+          toastSuccess('Failed to delete user.')
           console.error(error)
         }
       }

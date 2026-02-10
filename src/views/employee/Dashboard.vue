@@ -181,6 +181,12 @@ import axios from 'axios'
 import Sidebar from './components/Sidebar.vue';
 import DataChart from './components/DataChart.vue';
 import EmployeeProfiles from './components/EmployeeProfiles.vue';
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 
 export default {
@@ -306,7 +312,7 @@ export default {
         this.users = response.data;
       } catch (err) {
         console.error('fetchUsers error:', err);
-        alert('Failed to fetch users');
+        toastSuccess('Failed to fetch users');
       }
     },
 
@@ -412,12 +418,12 @@ export default {
           headers: { ...this.getAuthHeaders(), 'Content-Type': 'multipart/form-data' }
         });
 
-        alert('Report submitted successfully!');
+        toastSuccess('Report submitted successfully!');
         this.showModal = false;
         this.report = { date: '', name: this.report.name || '', status: '', department: '', summary: '', file: null };
       } catch (error) {
         console.error('Failed to submit report:', error);
-        alert('Failed to submit report');
+        toastSuccess('Failed to submit report');
       }
     },
 
@@ -477,16 +483,16 @@ export default {
           headers: { ...this.getAuthHeaders(), 'Content-Type': 'multipart/form-data' }
         });
 
-        alert(this.isEditMode ? 'User updated successfully!' : 'Registration successful!');
+        toastSuccess(this.isEditMode ? 'User updated successfully!' : 'Registration successful!');
         this.showRegister = false;
         this.resetForm();
         await this.fetchUsers();
       } catch (error) {
         console.error('Register error:', error);
         if (error.response && error.response.data && error.response.data.message) {
-          alert(`Operation failed: ${error.response.data.message}`);
+          toastSuccess(`Operation failed: ${error.response.data.message}`);
         } else {
-          alert('Operation failed due to network or server error.');
+          toastSuccess('Operation failed due to network or server error.');
         }
       }
     },
@@ -518,10 +524,10 @@ export default {
           headers: this.getAuthHeaders()
         });
         await this.fetchUsers();
-        alert('User deleted successfully!');
+        toastSuccess('User deleted successfully!');
       } catch (error) {
         console.error('deleteUser error:', error);
-        alert('Failed to delete user.');
+        toastSuccess('Failed to delete user.');
       }
     },
 

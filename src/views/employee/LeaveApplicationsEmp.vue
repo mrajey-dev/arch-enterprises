@@ -94,6 +94,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 
 export default {
@@ -156,11 +162,11 @@ typedDocuments: {},
         },
       }
     );
-    alert('Status updated successfully!');
+    toastSuccess('Status updated successfully!');
     this.fetchLeaves(); // Refresh list
   } catch (error) {
     console.error('Status update failed', error);
-    alert('Could not update status – please try again.');
+    toastSuccess('Could not update status – please try again.');
   }
 },
 
@@ -187,7 +193,7 @@ rejectLeave(leave)  { this.updateLeaveStatus(leave.id, 'Rejected'); },
     }
   } catch (error) {
     console.error('Failed to fetch leave requests:', error);
-    alert('Error loading leave requests.');
+    toastSuccess('Error loading leave requests.');
   }
 },
 
@@ -211,7 +217,7 @@ rejectLeave(leave)  { this.updateLeaveStatus(leave.id, 'Rejected'); },
     this.typedDocuments[this.selectedDocumentType] = file;
     this.registerForm.documents = Object.values(this.typedDocuments); // update form data
   } else {
-    alert('Please select a document type before uploading.');
+    toastSuccess('Please select a document type before uploading.');
   }
 },
 
@@ -271,16 +277,16 @@ generatePassword() {
           }
         })
 
-        alert(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
+        toastSuccess(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
         this.showRegister = false
         this.resetForm()
         this.fetchUsers()
       } catch (error) {
         console.error('Register error:', error)
         if (error.response && error.response.data && error.response.data.message) {
-          alert(`Operation failed: ${error.response.data.message}`)
+          toastSuccess(`Operation failed: ${error.response.data.message}`)
         } else {
-          alert('Operation failed due to network or server error.')
+          toastSuccess('Operation failed due to network or server error.')
         }
       }
     },
@@ -317,7 +323,7 @@ generatePassword() {
         })
         this.users = response.data
       } catch (error) {
-        alert('Failed to fetch users')
+        toastSuccess('Failed to fetch users')
         console.error(error)
       }
     },
@@ -352,9 +358,9 @@ generatePassword() {
             }
           })
           this.fetchUsers()
-          alert('User deleted successfully!')
+          toastSuccess('User deleted successfully!')
         } catch (error) {
-          alert('Failed to delete user.')
+          toastSuccess('Failed to delete user.')
           console.error(error)
         }
       }

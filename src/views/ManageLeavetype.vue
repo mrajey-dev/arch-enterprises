@@ -143,7 +143,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
     components: {
@@ -216,7 +221,7 @@ async submitLeaveType() {
           description: this.leaveForm.description
         }
       )
-      alert('Leave type updated successfully!')
+      toastSuccess('Leave type updated successfully!')
     } else {
       await axios.post(
         'https://employees.archenterprises.co.in/api/api/leave-types',
@@ -226,7 +231,7 @@ async submitLeaveType() {
           description: this.leaveForm.description
         }
       )
-      alert('Leave type created successfully!')
+      toastSuccess('Leave type created successfully!')
     }
 
     this.fetchLeaveTypes()
@@ -234,13 +239,13 @@ async submitLeaveType() {
   } catch (error) {
     if (error.response?.status === 422) {
       const errors = error.response.data.errors
-      alert(
+      toastSuccess(
         errors.leave_name?.[0] ||
         errors.total_leaves?.[0] ||
         'Validation error'
       )
     } else {
-      alert('Server error')
+      toastSuccess('Server error')
     }
   } finally {
     this.isSaving = false
@@ -265,9 +270,9 @@ async submitLeaveType() {
       `https://employees.archenterprises.co.in/api/api/leave-types/${id}`
     )
     this.fetchLeaveTypes()
-    alert('Leave type deleted!')
+    toastSuccess('Leave type deleted!')
   } catch (error) {
-    alert('This leave type is already used and cannot be deleted.')
+    toastSuccess('This leave type is already used and cannot be deleted.')
   } finally {
     this.deletingId = null
   }

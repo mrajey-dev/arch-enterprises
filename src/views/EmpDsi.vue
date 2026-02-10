@@ -111,7 +111,12 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import axios from 'axios'
-
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 export default {
   name: "ViewDsi",
   components: {
@@ -146,7 +151,7 @@ export default {
         const res = await axios.get('/api/dsis/all');
         this.dsiList = res.data;
       } catch (e) {
-        alert('Failed to load DSI');
+        toastSuccess('Failed to load DSI');
       }
     },
 
@@ -188,7 +193,7 @@ export default {
         const index = this.dsiList.findIndex(item => item.id === dsiId);
         if (index !== -1) this.dsiList[index].status = status;
       } catch (error) {
-        alert('Failed to update status');
+        toastSuccess('Failed to update status');
       }
     }
   }

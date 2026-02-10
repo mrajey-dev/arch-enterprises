@@ -193,6 +193,12 @@
 <script>
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue'
+import {
+  toastSuccess,
+  toastError,
+  toastWarning,
+  toastInfo
+} from "@/utils/toast.js";
 
 export default {
   components: { Sidebar },
@@ -532,7 +538,7 @@ async fetchLeaveBalanceFromDB() {
 
   } catch (e) {
     console.error('Fetch leave types failed:', e)
-    alert('Could not load leave types.')
+    toastSuccess('Could not load leave types.')
   }
 },
 
@@ -564,7 +570,7 @@ async fetchUserInfo() {
     await this.fetchLeaveBalanceFromDB();      // Fetch leave totals (dynamic)
   } catch (e) {
     console.error('User info error:', e);
-    alert('Failed to fetch user details — please log in again.');
+    toastSuccess('Failed to fetch user details — please log in again.');
     this.$router.push('/auth');
   }
 },
@@ -625,13 +631,13 @@ async submitForm() {
     const overlapMsg = this.findOverlapMessage();
     if (overlapMsg) {
       this.submitError = overlapMsg;
-      alert(this.submitError);
+      toastSuccess(this.submitError);
       return; // stop submission
     }
 
     await this.checkLeaveBalance(); // only check balance for full day
     if (this.submitError) {
-      alert(this.submitError);
+      toastSuccess(this.submitError);
       return;
     }
   }
@@ -672,7 +678,7 @@ async submitForm() {
 // Reason validation (optional only for Casual Leave)
 if (!this.isCasualLeave && !this.form.reason.trim()) {
   this.submitError = 'Reason is required for this leave type.';
-  alert(this.submitError);
+  toastSuccess(this.submitError);
   return;
 }
 
