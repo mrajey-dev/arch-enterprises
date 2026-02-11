@@ -91,13 +91,11 @@
   @click="openTaskPopup(task)"
 >
 
-            <div class="task-header">
+            <div class="task-header"> 
            <span class="task-date">
   <i> Deadline:</i>
   {{
-    task.isVisit
-      ? task.deadline
-      : task.dueDate
+    formatDate(task.isVisit ? task.deadline : task.dueDate)
   }}
 </span>
 
@@ -531,14 +529,15 @@ watch: {
   }
 },
 
-    formatDate(date) {
+formatDate(date) {
   if (!date) return '—';
   return new Date(date).toLocaleDateString('en-IN', {
     day: '2-digit',
-    month: 'short',
+    month: '2-digit',
     year: 'numeric'
   });
 },
+
 
     openTaskPopup(task) {
   this.selectedTask = { ...task }; // clone to avoid mutation

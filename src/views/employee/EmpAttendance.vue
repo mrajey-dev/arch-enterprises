@@ -33,7 +33,7 @@
 
           <!-- Attendance Table -->
           <div v-if="viewMode === 'day'" class="attendance-table">
-            <h5 class="mb-4"> <br>&nbsp; Date: {{ currentDate }}</h5>
+            <h5 class="mb-4"> <br>&nbsp; Date: {{ formatDate(currentDate) }}</h5>
 
             <table class="attendance-table table table-bordered">
               <thead class="thead-light">
@@ -357,6 +357,16 @@
 
 
       methods: {
+   formatDate(date) {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+},
+
+
 
 async handleAutoStatusAfter5PM() {
   const now = new Date();
@@ -911,14 +921,6 @@ fetchTodayStatus() {
     localStorage.setItem(key, JSON.stringify(user));
   },
 
-
-
-
-
-        formatDate(date) {
-          const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }
-          return date.toLocaleDateString(undefined, options)
-        },
 
       getCurrentTime() {
       const now = new Date()

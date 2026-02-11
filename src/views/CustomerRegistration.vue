@@ -756,7 +756,7 @@
 </td>
 
 
-        <td>{{ new Date(item.updated_at).toLocaleString() }}</td>
+        <td>{{ formatDate(item.updated_at) }}</td>
 
         <td>
   <div v-if="item.report_path">
@@ -1880,10 +1880,10 @@
           <th>PO Number</th>
           <td>{{ selectedPo.po_number }}</td>
         </tr>
- <tr>
+ <!-- <tr>
           <th>PO Value</th>
           <td>{{ selectedPo.value_of_po }}</td>
-        </tr>
+        </tr> -->
 
         <!-- AMC Specific -->
 <template v-if="selectedPo.po_type === 'AMC'">
@@ -1897,11 +1897,11 @@
   </tr>
   <tr>
     <th>Start Period</th>
-    <td>{{ selectedPo.start_period }}</td>
+    <td>{{ formatDate(selectedPo.start_period) }}</td>
   </tr>
   <tr>
     <th>End Period</th>
-    <td>{{ selectedPo.end_period }}</td>
+    <td>{{ formatDate(selectedPo.end_period) }}</td>
   </tr>
  
 
@@ -1909,7 +1909,7 @@
 <tr v-for="visit in filledVisits" :key="visit.number">
   <th>Visit {{ visit.number }}</th>
   <td>
-    {{ visit.date }}
+    {{ formatDate(visit.date) }}
 
     <!-- Completed -->
     <span v-if="getVisitStatus(visit.date) === 'Completed'"
@@ -1932,7 +1932,7 @@
 <template v-if="selectedPo.po_type === 'Service+Supply'">
    <tr>
           <th>PO Date</th>
-          <td>{{ selectedPo.date }}</td>
+          <td>{{ formatDate(selectedPo.date) }}</td>
         </tr>
         <tr>
           <th>Type Of Service</th>
@@ -1965,7 +1965,7 @@
           </tr>
           <tr>
             <th>Date</th>
-            <td>{{ selectedPo.date }}</td>
+            <td>{{ formatDate(selectedPo.date) }}</td>
           </tr>
           <tr>
   <th>Service Date</th>
@@ -1994,7 +1994,7 @@
           </tr>
           <tr>
             <th>Date</th>
-            <td>{{ selectedPo.date }}</td>
+            <td>{{ formatDate(selectedPo.date) }}</td>
           </tr>
           <tr>
             <th>Tracking Id</th>
@@ -3706,6 +3706,15 @@ filterCompany(newCompany) {
 
 
  methods: {
+  formatDate(date) {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+},
+
    blockNegative(event) {
     if (event.key === '-' || event.key === 'e') {
       event.preventDefault();
@@ -4230,9 +4239,7 @@ fetchReports() {
     if (!date) return ''
     return new Date(date).toISOString().split('T')[0]
   },
-  formatDate(date) {
-    return new Date(date).toLocaleDateString('en-IN');
-  },
+
  searchByEngine: _.debounce(function() { // use lodash debounce for efficiency
     if (!this.engineSearch) {
       this.fetchQuotations(); // reset if input empty
