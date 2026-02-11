@@ -2222,21 +2222,21 @@
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>PO Number</label>
+        <label>PO Number <font color="red">*</font></label>
         <input type="text" v-model="serviceSupply.poNumber" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>PO Recive Date</label>
+        <label>PO Recive Date <font color="red">*</font></label>
         <input type="date" v-model="serviceSupply.date" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Total PO Value</label>
+        <label>Value Of PO <font color="red">*</font></label>
         <input type="number" v-model="serviceSupply.totalValue" />
       </div>
     </div>
@@ -2257,7 +2257,7 @@
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Type of Service</label>
+        <label>Type of Service <font color="red">*</font></label>
         <select v-model="serviceSupply.serviceType">
           <option value="">Select Service</option>
           <option value="Breakdown">Breakdown</option>
@@ -2268,7 +2268,7 @@
     </div>
  <div class="form-row">
       <div class="input-group full-width">
-        <label>PO Attachment</label>
+        <label>PO File</label>
         <input type="file" @change="handleServiceSupplyFile" />
       </div>
     </div>
@@ -2308,27 +2308,28 @@
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>PO Number</label>
+        <label>PO Number <font color="red">*</font></label>
         <input type="text" v-model="supplyDetails.poNumber" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label> PO Date</label>
+        <label> PO Date <font color="red">*</font></label>
         <input type="date" v-model="supplyDetails.date" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Value of PO</label>
-        <input type="number" v-model="supplyDetails.value" />
+        <label>Value of PO <font color="red">*</font></label>
+        <input type="number" v-model="supplyDetails.value"  min="0"
+    @keydown="blockNegative" />
       </div>
     </div>
  <div class="form-row">
       <div class="input-group full-width">
-        <label>PO File Attachment</label>
+        <label>PO File</label>
        <input type="file" @change="handleSupplyFileUpload" />
       </div>
     </div>
@@ -2375,21 +2376,21 @@
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>PO Number</label>
+        <label>PO Number <font color="red">*</font></label>
         <input type="text" v-model="serviceDetails.poNumber" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>PO Date</label>
+        <label>PO Date <font color="red">*</font></label>
         <input type="date" v-model="serviceDetails.date" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Type of Service</label>
+        <label>Type of Service <font color="red">*</font></label>
         <select v-model="serviceDetails.serviceType">
           <option value="">Select Service</option>
           <option value="Breakdown">Breakdown</option>
@@ -2401,14 +2402,15 @@
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Value of PO</label>
-        <input type="number" v-model="serviceDetails.poValue" />
+        <label>Value of PO <font color="red">*</font></label>
+        <input type="number" v-model="serviceDetails.poValue"  min="0"
+    @keydown="blockNegative"/>
       </div>
     </div>
 
     <div class="form-row">
   <div class="input-group full-width">
-    <label>PO Copy</label>
+    <label>PO File</label>
     <input
       type="file"
       @change="handlePoFile"
@@ -2466,7 +2468,7 @@
     <div class="form-row">
       <!-- PO Number -->
        <div class="input-group">
-  <label>PO Number</label>
+  <label>PO Number <font color="red">*</font></label>
   <input 
     type="text" 
     v-model="amcDetails.PONumber" 
@@ -2477,7 +2479,7 @@
 
       <!-- Type of AMC -->
       <div class="input-group">
-        <label>Type of AMC</label>
+        <label>Type of AMC <font color="red">*</font></label>
         <select v-model="amcDetails.type">
           <option value="">Select Type</option>
           <option value="Comprehensive">Comprehensive</option>
@@ -2489,34 +2491,36 @@
     <!-- NEW: PO Date & Value of PO -->
     <div class="form-row">
       <div class="input-group">
-        <label>PO Date</label>
+        <label>PO Date <font color="red">*</font></label>
         <input type="date" v-model="amcDetails.PODate" />
       </div>
 
       <div class="input-group">
-        <label>Value of PO</label>
-        <input type="number" v-model="amcDetails.value_of_po" placeholder="Enter Amount" />
+        <label>Value of PO <font color="red">*</font></label>
+        <input type="number" v-model="amcDetails.value_of_po"  min="0"
+    @keydown="blockNegative" placeholder="Enter Amount" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="input-group">
-        <label>Start Period</label>
+        <label>Start Period <font color="red">*</font></label>
         <input type="date" v-model="amcDetails.start_period" />
       </div>
 
       <div class="input-group">
-        <label>End Period</label>
+        <label>End Period <font color="red">*</font></label>
         <input type="date" v-model="amcDetails.end_period" />
       </div>
     </div>
 
     <!-- No. of Visits -->
     <div class="input-group">
-      <label>No. of Visits</label>
+      <label>No. of Visits <font color="red">*</font></label>
       <input 
         type="number" 
-        v-model.number="amcDetails.visits" 
+        v-model.number="amcDetails.visits"
+    @keydown="blockNegative"
         min="1" 
         @input="generateVisitDates" 
       />
@@ -2537,7 +2541,7 @@
     <!-- PO File -->
     <div class="form-row">
       <div class="input-group full-width">
-        <label>PO File Attachment</label>
+        <label>PO File</label>
         <input type="file" @change="handlePoFileUpload" />
       </div>
     </div>
@@ -3702,6 +3706,11 @@ filterCompany(newCompany) {
 
 
  methods: {
+   blockNegative(event) {
+    if (event.key === '-' || event.key === 'e') {
+      event.preventDefault();
+    }
+  },
   handlePoFile(event) {
   const file = event.target.files[0]
   if (!file) return
@@ -5267,11 +5276,26 @@ setTimeout(() => {
 
 
   } catch (error) {
-    console.error(error);
-    toastError('Error saving AMC PO details. Please try again.');
-  } finally {
-    this.isSavingAmc = false; // ✅ stop loader ALWAYS
+
+  if (error.response && error.response.status === 422) {
+
+    const errors = error.response.data.errors;
+
+    // 🔥 Duplicate PO number
+    if (errors && errors.po_number) {
+      toastWarning(errors.po_number[0]);
+    } else {
+      toastWarning("Validation error");
+    }
+
+  } else {
+    toastError('Error saving AMC PO');
   }
+
+} finally {
+  this.isSavingAmc = false;
+}
+
 }
 
 ,
@@ -5458,27 +5482,42 @@ closeServiceSupplyModal(){
     formData.append("po_file", this.serviceSupply.file);
   }
 
-  axios
-    .post("/api/add_po", formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    .then(() => {
-      toastSuccess("Service + Supply PO saved successfully");
-  setTimeout(() => {
-  window.location.reload();
-}, 2000); // 2000 ms = 2 seconds
+ axios
+  .post("/api/add_po", formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data",
+    },
+  })
+  .then(() => {
+    toastSuccess("Service + Supply PO saved successfully");
 
-    })
-    .catch((err) => {
-      console.error("Save error:", err.response?.data || err);
+    setTimeout(() => {
+     this.serviceSupply = {};
+    }, 2000);
+  })
+  .catch((err) => {
+
+    if (err.response && err.response.status === 422) {
+
+      const errors = err.response.data.errors;
+
+      // 🔥 If PO already exists
+      if (errors && errors.po_number) {
+        toastWarning(errors.po_number[0]); 
+      } else {
+        toastWarning("Validation error");
+      }
+
+    } else {
       toastError("Failed to save Service + Supply PO");
-    })
-    .finally(() => {
-      this.isSavingServiceSupply = false; // ✅ stop loader ALWAYS
-    });
+    }
+
+  })
+  .finally(() => {
+    this.isSavingServiceSupply = false;
+  });
+
 },
 
 
@@ -5517,10 +5556,25 @@ setTimeout(() => {
 }, 2000); // 2000 ms = 2 seconds
 
   })
-  .catch(err => {
-    console.error('Save error:', err.response?.data || err);
-    toastSuccess('Failed to save Supply PO');
-  })
+.catch(err => {
+
+  if (err.response && err.response.status === 422) {
+
+    // Laravel validation error format
+    const errors = err.response.data.errors;
+
+    if (errors && errors.po_number) {
+      toastWarning(errors.po_number[0]);   // 👈 shows "This PO Number already exists."
+    } else {
+      toastWarning(err.response.data.message || 'Validation error');
+    }
+
+  } else {
+    toastError('Failed to save Supply PO');
+  }
+
+})
+
   .finally(() => {
     this.isSavingSupply = false; // ✅ stop loader ALWAYS
   });
@@ -5564,10 +5618,25 @@ setTimeout(() => {
 }, 2000); // 2000 ms = 2 seconds
 
   })
-  .catch(err => {
-    console.error('Save error:', err.response?.data || err);
-    toastSuccess('Failed to save Service PO');
-  })
+ .catch(err => {
+
+  if (err.response && err.response.status === 422) {
+
+    const errors = err.response.data.errors;
+
+    // 🔥 Duplicate PO number
+    if (errors && errors.po_number) {
+      toastWarning(errors.po_number[0]);
+    } else {
+      toastWarning("Validation error");
+    }
+
+  } else {
+    toastError('Failed to save Service PO');
+  }
+
+})
+
   .finally(() => {
     this.isSavingService = false; // ✅ stop loader ALWAYS
   });
