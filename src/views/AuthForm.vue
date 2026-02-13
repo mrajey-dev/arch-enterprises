@@ -234,6 +234,7 @@ isResettingPassword: false,
         }, { withCredentials: true });
 
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('loginTime', Date.now())
         localStorage.setItem('user', JSON.stringify(response.data.user));
         // Persist which tab was used to log in so we can reopen same tab later
         localStorage.setItem('authTab', this.isEmployeeLogin ? 'employee' : 'admin');

@@ -279,13 +279,14 @@ faqMap: {
     selectedHelp: null,
       idleTimer: null,
       warningTimer: null,
-      idleTimeLimit: 60 * 60 * 1000,   // 30 minutes
-    warningTime: (60 * 60 - 10) * 1000, // 29 min 50 sec
+      idleTimeLimit: 3 * 60 * 60 * 1000,   // 3 hours
+warningTime: (3 * 60 * 60 - 10) * 1000, // 10 seconds before 3 hours
+
 
       showWarning: false,
       countdown: 10,
       countdownInterval: null,
-    }
+    } 
   },
 
   computed: {
@@ -298,6 +299,7 @@ faqMap: {
   },
 
   mounted() {
+     this.checkSessionExpiry() 
     this.startIdleTimers()
 
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
@@ -316,6 +318,21 @@ faqMap: {
   },
 
   methods: {
+    checkSessionExpiry() {
+  const loginTime = localStorage.getItem('loginTime')
+
+  if (!loginTime) return
+
+  const now = Date.now()
+  const diff = now - parseInt(loginTime)
+
+  const threeHours = 3 * 60 * 60 * 1000
+
+  if (diff > threeHours) {
+    this.logoutUser()
+  }
+},
+
     sendQuickQuestion(question) {
     this.userInput = question
     this.sendMessage()

@@ -475,6 +475,9 @@
         <input
           v-model="item.qty"
           type="number"
+          min="0"
+    @keydown="preventMinus"
+    @input="validateQty(item)"
           :class="{ 'input-error': !item.qty }"
         />
         <span v-if="!item.qty" class="error-message">Required</span>
@@ -501,33 +504,50 @@
         <input
           v-model="item.rate"
           type="number"
+          min="0"
+    @keydown="preventMinus"
+    @input="validateQty(item)"
           :class="{ 'input-error': !item.rate }"
         />
         <span v-if="!item.rate" class="error-message">Required</span>
       </div>
 
       <!-- DISCOUNT -->
-      <div class="quotation-form-group">
-        <label>Disc. (%)</label>
-        <input v-model="item.discount" type="number" />
-      </div>
+  <div class="quotation-form-group">
+  <label>Disc. (%)</label>
+  <input
+    v-model.number="item.discount"
+    type="number"
+    min="0"
+    max="100"
+    @keydown="preventInvalidKeys"
+    @input="validateDiscount(item)"
+  />
+</div>
+
 
       <!-- GST SECTION (ITEM LEVEL) -->
       <template v-if="form.nature_of_sale === 'Intrastate'">
         <div class="quotation-form-group">
           <label>CGST (%)</label>
-          <input v-model="item.cgst_rate" type="number" />
+          <input v-model="item.cgst_rate" type="number" min="0"
+    @keydown="preventMinus"
+    @input="validateQty(item)"/>
         </div>
         <div class="quotation-form-group">
           <label>SGST (%)</label>
-          <input v-model="item.sgst_rate" type="number" />
+          <input v-model="item.sgst_rate" type="number" min="0"
+    @keydown="preventMinus"
+    @input="validateQty(item)"/>
         </div>
       </template>
 
       <template v-if="form.nature_of_sale === 'Interstate'">
         <div class="quotation-form-group">
           <label>IGST (%)</label>
-          <input v-model="item.igst_rate" type="number" />
+          <input v-model="item.igst_rate" type="number" min="0"
+    @keydown="preventMinus"
+    @input="validateQty(item)"/>
         </div>
       </template>
 
@@ -540,7 +560,8 @@
 <div class="quotation-form-group">
   <label>Item Total</label>
   <div class="readonly-field" style="font-weight: 700;">
-    {{ (item.qty * item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+    {{ calculateItemTotal(item).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+
   </div>
 </div>
     </div>
@@ -552,7 +573,7 @@
 
 
     <!-- TERMS & CONDITIONS -->
-  <div class="quotation-section-card">
+ <div class="quotation-section-card">
   <h3 class="quotation-section-title">📜 Terms & Conditions</h3>
 
   <div class="terms-buttons">
@@ -573,13 +594,28 @@
     >
       AMC
     </button>
+
+    <button
+      type="button"
+      class="btn"
+      :class="{ active: selectedTerms === 'newengine' }"
+      @click="setNewEngineTerms"
+    >
+      New Engine Sales
+    </button>
   </div>
 
   <textarea
     v-model="form.terms_conditions"
     rows="12"
+    maxlength="5000"
     placeholder="Terms & Conditions will appear here..."
   ></textarea>
+
+  <!-- Character Counter -->
+  <div class="char-count">
+    {{ form.terms_conditions ? form.terms_conditions.length : 0 }} / 5000 characters
+  </div>
 </div>
 
 
@@ -3399,6 +3435,61 @@ filterCompany(newCompany) {
 
 
  methods: {
+  calculateItemTotal(item) {
+    const qty = Number(item.qty) || 0;
+    const rate = Number(item.rate) || 0;
+    const discount = Number(item.discount) || 0;
+
+    // 1️⃣ Basic Amount
+    let amount = qty * rate;
+
+    // 2️⃣ Apply Discount
+    if (discount > 0) {
+      amount -= (amount * discount) / 100;
+    }
+
+    // 3️⃣ Apply GST Based on Nature of Sale
+    if (this.form.nature_of_sale === 'Intrastate') {
+      const cgst = Number(item.cgst_rate) || 0;
+      const sgst = Number(item.sgst_rate) || 0;
+      const totalGst = cgst + sgst;
+      amount += (amount * totalGst) / 100;
+    }
+
+    if (this.form.nature_of_sale === 'Interstate') {
+      const igst = Number(item.igst_rate) || 0;
+      amount += (amount * igst) / 100;
+    }
+
+    // 4️⃣ Export → No GST
+    return amount;
+  },
+  preventInvalidKeys(e) {
+    // Prevent minus and scientific notation
+    if (e.key === '-' || e.key === 'e') {
+      e.preventDefault();
+    }
+  },
+
+  validateDiscount(item) {
+    if (item.discount < 0) {
+      item.discount = 0;
+    }
+    if (item.discount > 100) {
+      item.discount = 100;
+    }
+  },
+   preventMinus(e) {
+    if (e.key === '-' || e.key === 'e') {
+      e.preventDefault();
+    }
+  },
+
+  validateQty(item) {
+    if (item.qty < 0) {
+      item.qty = 0;
+    }
+  },
    blockNegative(event) {
     if (event.key === '-' || event.key === 'e') {
       event.preventDefault();
@@ -3445,43 +3536,60 @@ filterCompany(newCompany) {
 
   this.serviceDetails.poFile = file
 },
-
+setNewEngineTerms() {
+      this.selectedTerms = 'newengine';
+      this.form.terms_conditions = `1) Parts are ordered as per your specific order. Once delivered, the same cannot be returned.
+2) Quantities mentioned are as per your requirement.
+3) All warranties are as per the manufacturer's warranty terms and conditions.
+4) Offer validity: 30 days from the date of quotation.
+5) Payment Terms: 100% advance.
+6) Delivery: EXW, freight extra.
+7) Lead Time: 8–10 weeks from the date of advance payment receipt.
+8) Loading, unloading, plumbing, and fabrication at site will be in the customer's scope.
+9) The customer has to provide a chain pulley/lifting arrangement and two laborers to assist our team.
+10) We will carry all the basic tools and tackles with us, but in case of urgency, if any extra tools are required, the customer has to provide support.
+11) Any civil, plumbing, fabrication, or electrical activities, if required, will be under the customer's scope.
+12) After work completion, we will conduct trial testing of the machine as per OEM guidelines and prepare the final commissioning report.
+13) The new engine will have an OEM warranty of 12 months from the date of installation or 18 months from the date of supply, whichever comes earlier.
+14) The cost of ancillaries, apart from the above-mentioned scope, if required, will have to be procured separately.
+`;
+    },
   setRegularTerms() {
       this.selectedTerms = 'regular';
-      this.form.terms_conditions = `1 Parts are ordered as per your specific order. Once delivered the same can not be returned.
-2 Quantities mentioned are as per your requirement.
-3 All warranties as per manufacturer's warranty terms and conditions.
-4 Offer validity : 30 Days from date of quotation.
-5 Payment Terms: 100% Advance.
-6 DELIVERY: EXW, Freight Extra.
-7 Lead Time: Ready Stock.`;
+      this.form.terms_conditions = `1) Parts are ordered as per your specific order. Once delivered, the same cannot be returned.
+2) Quantities mentioned are as per your requirement.
+3) All warranties are as per the manufacturer's warranty terms and conditions.
+4) Offer validity: 30 days from the date of quotation.
+5) Payment Terms: 100% advance.
+6) Delivery: EXW, freight extra.
+7) Lead Time: Ready stock.`;
     },
 
     setAmcTerms() {
       this.selectedTerms = 'amc';
-      this.form.terms_conditions = `1 Payment Terms: Immediate against Invoice submission.
-2 Inclusions: Service Engineer's travelling, accomodation, local conveyance, etc inclusive in the offer above.
-3 AMC Period: AMC offer is valid for 1 years from APRIL 2026 to MARCH 2027.
-4 Scope of Work: our scope of work will be limited to Clarke Fire Engine and associated controller.
-5 Maintenance Visits: We offer 4 service visits per engine per year. Each Visit will be scheduled quarterly starting from APRIL 2026 to MARCH 2027
-   i. Pre B-check service visit: Out of the 3 service calls, one of the services visit will be pre B-check service visit. In this service we will identify the engine health and recommend if any more parts are required to be replaced.
-   ii. One B-Check Service per engine: One of the services visit will be B-check service. You will have to procure B-check spares separately from us.
-   iii. Preventive Maintenance Visit per engine: Other visits will be routine maintenance service as per NFPA 25 guidelines.
-6 Break-down visits: Two break-down visits per engine during the contract period. Limited to 1 man-day.
-7 Extra Service Calls: Rs. 22,000/- per visit for Pune sites.
-8 Parts Replacement: Spare parts cost extra.
-9 Record Keeping: Maintenance and failure records shall be maintained.
-10 Tools: Special tools by us, general tools by customer.
-11 Periodic Operation: Equipment must be operated periodically as per O&M guidelines.
-12 Trained Operator: Operator must be trained as per OEM guidelines.
-13 Site Reporting: 24 Hrs response time for Pune.
-14 Raw Labour: To be provided by customer.
-15 Failure Investigation: Failed parts to be provided for investigation.
-16 Submission of Reports: Within 7 days of service visit.
-17 Termination of Contract: 1 month prior notice by either party.
-18 Confidentiality: All technical and commercial information shall be confidential.
-19 Offer Validity: 30 days from date of issue.
-20 Payment terms:`;
+      this.form.terms_conditions = `1) Payment Terms: Immediate against invoice submission.
+2) Inclusions: Service Engineer’s travelling, accommodation, local conveyance, etc., are included in the above offer.
+3) AMC Period: The AMC offer is valid for 1 year from April 2026 to March 2027.
+4) Scope of Work: Our scope of work will be limited to the Clarke Fire Engine and associated controller.
+5) Maintenance Visits: We offer 4 service visits per engine per year. Each visit will be scheduled quarterly, starting from April 2026 to March 2027.
+   i) Pre B-Check Service Visit: Out of the 4 service visits, one visit will be a Pre B-Check service. During this service, we will assess the engine health and recommend if any parts need to be replaced.
+   ii) One B-Check Service per Engine: One of the service visits will be a B-Check service. B-Check spares will have to be procured separately from us.
+   iii) Preventive Maintenance Visit per Engine: The remaining visits will be routine maintenance services as per NFPA 25 guidelines.
+6) Breakdown Visits: Two breakdown visits per engine during the contract period, limited to 1 man-day per visit.
+7) Extra Service Calls: Rs. 22,000/- per visit for Pune sites.
+8) Parts Replacement: Spare parts cost extra.
+9) Record Keeping: Maintenance and failure records shall be maintained.
+10) Tools: Special tools will be provided by us; general tools to be provided by the customer.
+11) Periodic Operation: Equipment must be operated periodically as per O&M guidelines.
+12) Trained Operator: The operator must be trained as per OEM guidelines.
+13) Site Reporting: 24 hours response time for Pune.
+14) Raw Labour: To be provided by the customer.
+15) Failure Investigation: Failed parts must be provided for investigation.
+16) Submission of Reports: Within 7 days of the service visit.
+17) Termination of Contract: 1 month prior written notice by either party.
+18) Confidentiality: All technical and commercial information shall be treated as confidential.
+19) Offer Validity: 30 days from the date of issue.
+20) Payment Terms: (To be specified)`;
     },
    handleClick() {
       this.loading = true;
