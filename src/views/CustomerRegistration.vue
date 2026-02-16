@@ -1941,7 +1941,10 @@
     <td>{{ formatDate(selectedPo.end_period) }}</td>
   </tr>
  
-
+  <tr>
+          <th>Value Of PO</th>
+          <td>{{ selectedPo.value_of_po }}</td>
+        </tr>
  <!-- Visits (only show if not null/empty) -->
 <tr v-for="visit in filledVisits" :key="visit.number">
   <th>Visit {{ visit.number }}</th>
@@ -2069,6 +2072,20 @@
 
   </div>
 </div>
+<!-- Extra Visits -->
+<tr 
+  v-for="extra in selectedPo?.extra_visits || []" 
+  :key="'extra-' + extra.id"
+>
+
+  <th>Extra Visit</th>
+  <td>
+    {{ formatDate(extra.visit_date) }}
+    <span style="color:red; margin-left:6px;">
+      Extra Visit
+    </span>
+  </td>
+</tr>
 
 <!-- Add Visit Modal -->
 <div v-if="showAddVisitModal" class="visit-modal-overlay">
