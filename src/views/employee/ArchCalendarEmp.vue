@@ -222,12 +222,49 @@
           <span class="value">{{ selectedMeeting.description }}</span>
         </div>
 
-        <div class="info-item" v-if="selectedMeeting.guests?.length">
-          <span class="label">Guests</span>
-          <ul class="guest-list">
-            <li v-for="(g, i) in selectedMeeting.guests" :key="i">{{ g }}</li>
-          </ul>
-        </div>
+        <div class="info-item full-width">
+  <span class="label">Meeting Topics</span>
+
+  <QuillEditor
+    v-model:content="meetingTopics"
+    contentType="html"
+    theme="snow"
+    :toolbar="toolbarOptions"
+    style="height: 220px"
+  />
+
+  <button class="btn-save-topics" @click="saveTopics">
+    Save Topics
+  </button>
+</div>
+         <div class="info-item" v-if="selectedMeeting.guests?.length">
+  <span class="label">Guests</span>
+
+  <ul class="guest-list">
+    <li
+      v-for="(g, i) in displayedGuests"
+      :key="i"
+    >
+      {{ g }}
+    </li>
+  </ul>
+
+  <!-- Show button only if more than 2 guests -->
+  <button
+    v-if="selectedMeeting.guests.length > 2"
+    class="show-btn"
+    @click="showAllGuests = !showAllGuests"
+  >
+    {{ showAllGuests ? "Show Less" : "Show All" }}
+  </button>
+</div>
+
+
+
+
+
+
+    
 
         <div class="info-item" v-if="selectedMeeting.meeting_link">
   <span class="label">Meeting Link</span>
@@ -319,6 +356,9 @@
 
 <script>
 import Sidebar from './components/Sidebar.vue'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import DOMPurify from 'dompurify'
 import {
   toastSuccess,
   toastError,
@@ -327,10 +367,22 @@ import {
 } from "@/utils/toast.js";
 
 export default {
-  components: { Sidebar },
+  components: { Sidebar,  QuillEditor },
 
 data() {
   return {
+      showAllGuests: false,
+    meetingTopics: '',
+    toolbarOptions: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ header: [1, 2, 3, false] }],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ align: [] }],
+      [{ color: [] }, { background: [] }],
+      [{ font: [] }],
+      [{ size: ['small', false, 'large', 'huge'] }],
+      ['clean']
+    ],
     showViewModal: false,
 viewEvent: {},
     editingId: null,
@@ -377,12 +429,22 @@ viewEvent: {},
 
 
   computed: {
+     displayedGuests() {
+    if (!this.selectedMeeting?.guests) return [];
+
+    return this.showAllGuests
+      ? this.selectedMeeting.guests
+      : this.selectedMeeting.guests.slice(0, 2);
+  },
     currentMonthYear() {
       return this.currentDate.toLocaleDateString('en-US', {
         month: 'long',
         year: 'numeric'
       })
     },
+    sanitizedTopics() {
+    return DOMPurify.sanitize(this.selectedMeeting.topics || '')
+  },
 
     calendarDates() {
       const year = this.currentDate.getFullYear()
@@ -739,7 +801,7 @@ handleEventClick(event) {
     console.error(e)
   }
 },
-    async openMeeting(event) {
+async openMeeting(event) {
   try {
     const res = await fetch(
       `https://employees.archenterprises.co.in/api/api/meetings/${event.id}`,
@@ -751,10 +813,54 @@ handleEventClick(event) {
     )
 
     const result = await res.json()
+
     this.selectedMeeting = result.data
+
+  console.log("FULL API RESPONSE:", result)
+console.log("RESULT.DATA:", result.data)
+console.log("ID FIELD:", result.data?.id)
+console.log("MEETING_ID FIELD:", result.data?.meeting_id)
+
+    this.meetingTopics = this.selectedMeeting.topics || ''
     this.showMeetingModal = true
+
   } catch (err) {
     console.error('Failed to fetch meeting', err)
+  }
+},
+
+
+async saveTopics() {
+
+  console.log("Saving Meeting:", this.selectedMeeting)
+
+  const meetingId = this.selectedMeeting.id
+
+  if (!meetingId) {
+    toastError("Meeting ID not found")
+    return
+  }
+
+  try {
+    await fetch(
+      `https://employees.archenterprises.co.in/api/api/meetings/${meetingId}/topics`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          topics: this.meetingTopics
+        })
+      }
+    )
+
+    this.selectedMeeting.topics = this.meetingTopics
+    toastSuccess('Topics saved successfully')
+
+  } catch (e) {
+    console.error('Failed to save topics', e)
   }
 },
 
@@ -1018,7 +1124,7 @@ h2 {
 
 .modal-card.small {
   background: #fff;
-  width: 420px;
+  width: 80%;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.2);
@@ -1132,6 +1238,8 @@ h2 {
 /* Body */
 .modal-body {
   padding: 22px;
+    max-height: 70vh;
+  overflow-y: auto;
 }
 
 /* Info grid */
@@ -1405,6 +1513,283 @@ h2 {
 
 .event-actions span:hover {
   text-decoration: underline;
+}
+
+.topics-textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.btn-save-topics {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: var(--text);
+  color: white;
+  cursor: pointer;
+}
+
+.btn-save-topics:hover {
+  background: var(--primary);
+}
+.topics-display {
+  white-space: pre-line;
+}
+.topics-display {
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.topics-display ul,
+.topics-display ol {
+  padding-left: 20px;
+}
+/* Topics Display Box */
+.topics-display {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* Scrollbar Styling */
+.topics-display::-webkit-scrollbar {
+  width: 6px;
+}
+
+.topics-display::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Proper spacing for rich text */
+.topics-display p {
+  margin: 6px 0;
+}
+
+.topics-display ul,
+.topics-display ol {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+
+.topics-display h1,
+.topics-display h2,
+.topics-display h3 {
+  margin: 8px 0;
+  font-weight: 600;
+}
+.show-btn {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.show-btn:hover {
+  text-decoration: underline;
+}
+/* Backdrop */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* Card */
+.modal-card.professional {
+  max-width: 95%;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: fadeInScale 0.25s ease;
+}
+
+/* Header */
+.modal-header {
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.online {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.offline {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Body */
+.modal-body {
+  padding: 20px;
+}
+
+.info-grid.single {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-item.full-width {
+  margin-top: 10px;
+}
+
+/* Labels */
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.value {
+  font-size: 14px;
+  color: #111827;
+}
+
+/* Quill Editor */
+.ql-container {
+  border-radius: 10px;
+}
+
+.btn-save-topics {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-save-topics:hover {
+  background: #4338ca;
+}
+
+/* Guests */
+.guest-list {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.guest-list li {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+.show-btn {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Join Button */
+.join-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #10b981;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.join-btn:hover {
+  background: #059669;
+}
+
+/* Footer */
+.modal-footer {
+  padding: 15px 20px;
+  background: #f9fafb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-close {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-close:hover {
+  background: #d1d5db;
+}
+
+/* Animation */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 </style>
