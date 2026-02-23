@@ -53,7 +53,8 @@
             <!-- Optional Edit/Delete -->
             <div class="card-actions">
               <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
-                <i class="fas fa-edit"></i> Edit
+                    <i class="fa fa-edit" style="font-size:13px"></i>
+Edit
               </button>
               <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
                 <i class="fas fa-trash"></i> Delete

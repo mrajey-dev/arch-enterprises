@@ -1,19 +1,5 @@
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-   <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -43,17 +29,17 @@
  <div class="button-row" style="display: flex; gap: 10px;">
   <button class="assign-btn" @click="openAssignPoForm">
     <!-- View & Assign PO in {{ currentMonth }} 2025 -->
-     Manage Purchase Order
+    <i class="fa fa-tasks" style="font-size:13px"></i> Manage Purchase Order
   </button>
  <button class="assign-btn" @click="showViewAllQuotationPopup=true">
-  View All Quotations
+ <i class='fas fa-file-invoice' style='font-size:13px'></i> View All Quotations
 </button>
 
    <button class="assign-btn "@click="goTo('employee/followup')">
-    Follow Up
+    <i class="fa fa-volume-control-phone" style="font-size:13px"></i> Follow Up
   </button>
    <button class="assign-btn "@click="goTo('employee/amcrecord')">
-    AMC Record Data
+    <i class="fa fa-file-o" style="font-size:13px"></i> AMC Record Data
   </button>
    <!-- <button class="assign-btn "@click="goTo('employee/viewallpo')">
     Purchase Order
@@ -74,13 +60,13 @@
 <div v-if="showQuotation" class="quotation-backdrop">
   <div class="quotation-modal">
 <div class="quotation-header">
-     <h2 style="color: white;">{{ isEdit ? "✏ Edit Quotation" : "✨ Create New Quotation" }}</h2>
+     <h2 style="color: white;">{{ isEdit ? " Edit Quotation" : "Create New Quotation" }}</h2>
    <div class="quotation-header-actions">
         <button
   class="quotation-btn-secondary"
   @click="openViewQuotationPopup(form.company_name)"
 >
-  📄 View Quotations
+  <i class='fas fa-file-invoice' style='font-size:13px'></i> View Quotations
 </button>
 
        <button class="btn btn-dark" @click="showQuotation = false; refreshForm();">
@@ -99,7 +85,7 @@
 
     <!-- HEADER -->
     <div class="quotation-header">
-      <h2 style="color:white;">📊 Quotation & Order Sheet</h2>
+      <h2 style="color:white;"><i class='fas fa-file-invoice' style='font-size:13px'></i> Quotation & Order Sheet</h2>
       <button class="quotation-btn-close" @click="$router.back()">⬅ Back</button>
     </div>
 
@@ -226,8 +212,8 @@
     style="padding:4px 10px; font-size:12px;"
     @click="handleClick"
   >
-    <span v-if="loading">⏳ Updating...</span>
-    <span v-else>🔄 Update Address</span>
+    <span v-if="loading"> Updating...</span>
+    <span v-else><i class="fa fa-refresh fa-spin" style="font-size:11px"></i> Update Address</span>
   </button>
 </div>
 
@@ -626,7 +612,7 @@
 
     <!-- SUBMIT -->
    <button class="quotation-submit-btn" @click="submitQuotation">
-  {{ isEdit ? "💾 Update Quotation" : "💾 Save Quotation" }}
+ <i class="fa fa-save" style="font-size:15px"></i>  {{ isEdit ? " Update Quotation" : " Save Quotation" }}
 </button>
 
   </div>
@@ -654,20 +640,22 @@
    
     @click="openVisitPopup"
   >
-    AMC
+    <i class="fa fa-calendar" style="font-size:13px"></i> AMC
+ 
   </button>
 
   <button class="service-ord"
    
     @click="openServicePopup"
   >
-    Service Orders
+     <i class="fa fa-wrench" style="font-size:13px"></i> Service Orders
+  
   </button>
 
   <button class="material-del"
     @click="openSupplyPopup"
   >
-    Material Supply
+     <i class='fas fa-dolly' style='font-size:13px'></i>  Material Supply
   </button>
 </div>
 
@@ -718,7 +706,7 @@
   <button class="tooltip-btn btn-view-po"
     data-tooltip="View Purchase Order"
     @click="openviewPoModal(cust.company_name)">
-    View PO
+   <i class="fa fa-eye" style="font-size:13px"></i> View PO
   </button>
 
 <button
@@ -726,7 +714,7 @@
   data-tooltip="Create Quotation"
   @click="openQuotationlist(cust)"
 >
-  Quotation
+ <i class="fa fa-file-text-o" style="font-size:13px;"></i> Quotation
 </button>
 
 <button
@@ -734,7 +722,7 @@
   data-tooltip="View Report"
   @click="openWelcomeModal(cust.company_name)"
 >
-  Reports
+<i class='fas fa-file-invoice' style='font-size:13px'></i> Reports
 </button>
 
 
@@ -804,7 +792,7 @@
       @click="openReport(path)"
       style="margin-right:5px;"
     >
-      Report {{ idx + 1 }}
+    <i class='fas fa-file-invoice' style='font-size:13px'></i> Report {{ idx + 1 }}
     </button>
   </div>
 
@@ -881,7 +869,7 @@
      <button class="amc-ord"
   @click="openAssignedVisits"
 >
-  Completed Visits
+  <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Visits
 </button>
 
     </div>
@@ -1094,7 +1082,7 @@
       <button class="service-ord"
   @click="openAssignedServicePopup"
 >
-  Completed Services
+ <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Services
 </button>
 
       </div>
@@ -1321,7 +1309,8 @@
       <button class="material-del"
   @click="openDeliveredPopup"
 >
-  Material Delivered
+   <i class="fa fa-check-square-o" style="font-size:13px"></i> Material Delivered
+
 </button>
 
       </div>
@@ -1443,10 +1432,10 @@
 
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px">
       <button class="btn btn-secondary" @click="confirmDelivered">
-        Save
+      <i class="fa fa-save" style="font-size:13px"></i>   Save
       </button>
       <button class="btn btn-success" @click="closeDeliveredPopup">
-        Cancle
+        <i class="fa fa-close" style="font-size:13px"></i> Cancle
       </button>
     </div>
   </div>
@@ -1459,7 +1448,7 @@
 
     <!-- HEADER -->
     <div class="modal-header-supply">
-      <h3 class="modal-title-supply">Update Supply Status</h3>
+      <h3 class="modal-title-supply"><i class="fa fa-save" style="font-size:13px"></i> Update Supply Status</h3>
       <button class="close-btn-supply" @click="closePopup">&times;</button>
     </div>
 
@@ -1690,7 +1679,8 @@
     <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
 
     <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
-      <i class="fas fa-edit"></i> Edit
+          <i class="fa fa-edit" style="font-size:13px"></i>
+ Edit
     </button>
 
     <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
@@ -1765,7 +1755,8 @@
   <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
 
   <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
-    <i class="fas fa-edit"></i> Edit
+        <i class="fa fa-edit" style="font-size:13px"></i>
+Edit
   </button>
 
   <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
@@ -1803,8 +1794,8 @@
           {{ po.po_number }} - {{ po.po_type  }}
         </div>
         <div class="po-actions">
-          <button class="btn btn-closedpo btn-sm" @click.stop="handleClosePo(po)">Close PO</button>
-          <button class="btn btn-danger" @click.stop="deletePo(po.id)">Delete PO</button>
+          <button class="btn btn-closedpo btn-sm" @click.stop="handleClosePo(po)"><i class="fa fa-check-square-o" style="font-size:13px;"></i> Close PO</button>
+          <button class="btn btn-danger" @click.stop="deletePo(po.id)"><i class="fa fa-trash-o" style="font-size:13px"></i> Delete PO</button>
         </div>
       </li>
     </ul>
@@ -2062,7 +2053,7 @@
     v-if="selectedPo && selectedPo.po_type === 'AMC'" 
     @click="addVisit(selectedPo)"
   >
-    Add Visit
+    Add/Update Visit
   </button>
 
   <button class="btn btn-danger" @click="showPoDetailsModal = false">⬅ Back</button>
@@ -2090,7 +2081,7 @@
 <!-- Add Visit Modal -->
 <div v-if="showAddVisitModal" class="visit-modal-overlay">
   <div class="visit-modal-box">
-    <h3 class="visit-modal-title">Add Visit</h3>
+    <h3 class="visit-modal-title">Add/Update Visit</h3>
 
     <div class="visit-modal-group">
       <label class="visit-modal-label">Select Visit</label>
@@ -2107,10 +2098,10 @@
 
     <div class="visit-modal-actions">
       <button class="visit-btn-success" @click="saveVisit" :disabled="!selectedVisit || !visitDate">
-        Save
+      <i class="fa fa-save" style="font-size:13px"></i>  Save
       </button>
       <button class="visit-btn-close" @click="showAddVisitModal = false">
-        Close
+       <i class="fa fa-close" style="font-size:13px"></i> Close
       </button>
     </div>
   </div>
@@ -2211,12 +2202,12 @@
       </div>
     </div>
 
-    <div class="modal-buttons">
+    <div class="modal-buttons">.
   <button
     class="btn btn-primary"
     @click="openPoModal"
   >
-    Add PO
+  <i class="fa fa-plus" style="font-size:15px"></i>  Add PO
   </button>
 
  
@@ -2227,7 +2218,7 @@
     class="btn btn-secondary"
     @click="closeDetailsModal"
   >
-    Close
+   <i class="fa fa-close" style="font-size:15px"></i> Close
   </button>
 </div>
 
@@ -2255,7 +2246,7 @@
 
     <div class="modal-buttons">
       
-      <button class="btn btn-secondary" @click="closePoModal">Close</button>
+      <button class="btn btn-secondary" @click="closePoModal"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
     </div>
   </div>
 </div>
@@ -2336,11 +2327,11 @@
         @click="saveServiceSupply"
       >
         <span v-if="isSavingServiceSupply" class="loader"></span>
-        <span v-else>Save</span>
+        <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
       </button>
 
       <button class="btn btn-secondary" @click="closeServiceSupplyModal">
-        Cancel
+       <i class="fa fa-close" style="font-size:13px"></i> Cancel
       </button>
     </div>
   </div>
@@ -2407,9 +2398,9 @@
   @click="saveSupplyDetails"
 >
   <span v-if="isSavingSupply" class="loader"></span>
-  <span v-else>Save</span>
+  <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
 </button>
-      <button class="btn btn-secondary" @click="closeSupplyModal">Cancel</button>
+      <button class="btn btn-secondary" @click="closeSupplyModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
     </div>
   </div>
 </div>
@@ -2497,9 +2488,9 @@
   @click="saveServiceDetails"
 >
   <span v-if="isSavingService" class="loader"></span>
-  <span v-else>Save</span>
+  <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
 </button>
-      <button class="btn btn-secondary" @click="closeServiceModal">Cancel</button>
+      <button class="btn btn-secondary" @click="closeServiceModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
     </div>
   </div>
 </div>
@@ -2607,10 +2598,10 @@
   @click="saveAmcDetails"
 >
   <span v-if="isSavingAmc" class="loader"></span>
-  <span v-else>Save</span>
+  <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
 </button>
 
-      <button class="btn btn-secondary" @click="closeAmcModal">Cancel</button>
+      <button class="btn btn-secondary" @click="closeAmcModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
     </div>
   </div>
 </div>
@@ -2940,7 +2931,7 @@
       </div>
 
       <div class="crm-modal-actions">
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">Click To Submit</button>
         <!-- <button type="button" class="btn btn-secondary" @click="closeCustomerModal">Cancel</button> -->
       </div>
 
@@ -3104,7 +3095,6 @@ isSavingServiceSupply: false,
        showVisitPopup: false,
 showServicePopup: false,
 showSupplyPopup: false,
-    deliveredSupplies: [],
      showSupplyMaterialModal: false,
          supplies: [],
         showCompletedOrders: false,
@@ -3327,7 +3317,7 @@ PODate: "",
   window.addEventListener('resize', this.checkIfMobile);
   const quotationId = localStorage.getItem("selectedQuotationId");
   if (quotationId) {
-    this.fetchQuotation(quotationId);
+    this.fetchQuotations(quotationId);
   }
 
     },
@@ -6737,9 +6727,11 @@ background-color: #6f256f;
   padding: 7px 0px;
   border-radius: 6px;
   font-size: 13px;
-  width: 76px;
+  width: 97px;
   cursor: pointer;
-  font-weight: 600;
+  letter-spacing: 1px;
+font-size: 11px;
+  font-weight: 500;
   transition: 0.3s;
   color: #fff;
 }
@@ -6864,7 +6856,7 @@ background-color: #6f256f;
 }
 
 .visit-btn-close {
-  background: var(--sidebar);
+  background: var(--primary);
   border: none;
   padding: 10px 18px;
   color: white;
@@ -8061,8 +8053,8 @@ textarea:focus {
 
 .po-actions button {
   margin-left: 8px;
-  font-size: 13px;
-  padding: 4px 8px;
+ font-size: 11px;
+    padding: 7px 13px;
   background: #df0909;
     color: white;
 }
@@ -8216,16 +8208,6 @@ margin-left: 8px;
   border: none;
   cursor: pointer;
   font-weight: 500;
-}
-
-.btn-primary {
-  background-color: #3498db;
-  color: #fff;
-}
-
-
-.btn-primary:hover {
-  background-color: #2980b9;
 }
 
 .btn-secondary {
@@ -8783,7 +8765,7 @@ textarea {
 
 .modal-buttons .btn {
   font-size: 16px;
-  width: 156px;
+  width: 100%;
 }
 
 .mobile-menu-icon {
@@ -9167,7 +9149,6 @@ h2 {
 .btn {
   /* flex: 1; */
   padding: 14px 15px;
-  font-weight: 700;
   font-size: 0.8rem;
   border-radius: 4px;
   border: none;
@@ -9524,7 +9505,6 @@ h2 {
   padding: 14px;
   border-radius: 14px;
   font-size: 1rem;
-  font-weight: 800;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -9650,7 +9630,7 @@ h2 {
 /* Action Buttons */
 .quotation-edit-btn,
 .quotation-delete-btn {
-  width: 34%;
+  width: auto;
   margin-left: 7px;
   border: none;
   padding: 8px 12px;
@@ -9696,10 +9676,7 @@ h2 {
   .user-table td a{
     font-size: 12px;
 }
-.btn-view-po{
-  font-size: 10px;
-  width: 58px;
-}
+
 /* Hide Sr.No column */
   .user-table th:nth-child(1),
   .user-table td:nth-child(1) {
@@ -9762,11 +9739,11 @@ justify-content: center;
   font-size: 16px;
 }
 .quotation-edit-btn{
-  width: 23%;
+  width: auto;
   font-size: 10px;
 }
 .quotation-delete-btn{
-   width: 25%;
+   width: auto;
   font-size: 10px;
 }
 .modal-card p{

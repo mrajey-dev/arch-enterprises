@@ -2,21 +2,6 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-          <header class="header">
-      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
-
     <!-- Main Content -->
     <div class="main-content">
        <Sidebar v-if="!isMobile || isSidebarVisible" />
@@ -67,7 +52,7 @@
     </div>
 
     <button class="btn-primary" @click="submitBooking">
-      {{ editId ? 'Update Booking' : 'Book Resource' }}
+    <i class="fa fa-save" style="font-size:13px"></i>  {{ editId ? 'Update Booking' : 'Book Resource' }}
     </button>
   </div>
 
@@ -105,6 +90,7 @@
 </td>
           <td>{{ b.purpose }}</td>
           <td class="actions">
+    <i class="fa fa-edit" style="font-size:13px"></i>
             <button class="edit" @click="editBooking(b)">Edit</button>
             <button class="delete" @click="deleteBooking(b.id)">Delete</button>
           </td>

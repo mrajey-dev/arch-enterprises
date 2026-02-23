@@ -1,19 +1,5 @@
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-      <div class="head-title">
-        <a href="https://employees.archenterprises.co.in/">
-          <img
-            src="https://archenterprises.co.in/ajay/ajay.png"
-            style="height: 65px; border-radius: 9px;"
-            alt="Logo"
-          />
-        </a>
-        Arch 360
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -69,7 +55,7 @@
           <div class="modal">
             <h3>Resource Booked Successfully!</h3>
             <p>You have booked <strong>{{ bookedResourceName }}</strong>.</p>
-            <button class="btn-close" @click="showModal = false">Close</button>
+            <button class="btn-close" @click="showModal = false"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
           </div>
         </div>
       </section>
@@ -97,8 +83,8 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn-book" @click="addResource">Save</button>
-      <button class="btn-close" @click="showAddModal = false">Cancel</button>
+      <button class="btn-book" @click="addResource"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
+      <button class="btn-close" @click="showAddModal = false"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
     </div>
   </div>
 </div>

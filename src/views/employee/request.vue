@@ -1,16 +1,7 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-      <div class="head-title">
-        <a href="https://employees.archenterprises.co.in/">
-          <img src="https://archenterprises.co.in/ajay/ajay.png" style="height:65px;border-radius:9px;" />
-        </a>
-        Arch 360
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
+
 
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
@@ -45,7 +36,7 @@
     <i class="fas fa-spinner fa-spin"></i> Processing...
   </span>
   <span v-else>
-    {{ editingId ? 'Update Request' : 'Submit Request' }}
+  <i class="fa fa-save" style="font-size:13px"></i>  {{ editingId ? 'Update Request' : 'Submit Request' }}
   </span>
 </button>
 

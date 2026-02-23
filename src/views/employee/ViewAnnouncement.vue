@@ -1,23 +1,13 @@
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-    <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
     <!-- Main Content -->
     <div class="main-content">
-      <Sidebar v-if="!isMobile || isSidebarVisible" />
+    <div v-show="!isMobile || isSidebarVisible">
+  <Sidebar />
+</div>
+
+
 
       <div class="announcement-board" v-if="!isMobile || !isSidebarVisible">
         <h2><i class="fa-solid fa-bullhorn"></i> Announcements</h2>
@@ -70,10 +60,14 @@ export default {
     setInterval(this.fetchAnnouncements, 300000); // every 5 min
   },
   methods: {
-    checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
-      this.isSidebarVisible = !this.isMobile;
-    },
+checkIfMobile() {
+  this.isMobile = window.innerWidth <= 768;
+
+  if (!this.isMobile) {
+    this.isSidebarVisible = true;
+  }
+},
+
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
     },

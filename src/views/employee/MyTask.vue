@@ -2,20 +2,6 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-  <header class="header">
- <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
 
     <!-- Main Content -->
@@ -80,7 +66,7 @@
     <option>In Progress</option>
     <option>Completed</option>
   </select>
-  <button @click="clearFilters">Reset</button>
+  <button @click="clearFilters"><i class="fa fa-refresh fa-spin" style="font-size:13px"></i> Reset</button>
 </div>
         <div class="task-grid">
           <div
@@ -152,6 +138,7 @@
   @click.stop="openEditTaskModal(task)"
   v-if="task.priority !== 'Task Assigned'"
 >
+    <i class="fa fa-edit" style="font-size:13px"></i>
   Edit
 </button>
 
@@ -160,7 +147,7 @@
   @click.stop="deleteTask(task)"
   v-if="task.priority !== 'Task Assigned'"
 >
-  Delete
+  <i class="fa fa-trash-o" style="font-size:13px"></i> Delete
 </button>
 
 
@@ -190,7 +177,7 @@
 
     <!-- Header -->
     <div class="task-popup-header">
-      <h3>📌 {{ selectedTask.title }}</h3>
+      <h3>Title -  {{ selectedTask.title }}</h3>
       <span
         class="status-badge"
         :class="formatStatus(selectedTask.status)"
@@ -203,14 +190,14 @@
     <div class="task-popup-body">
 
       <div class="info-row">
-        <span class="label">📅 Due Date</span>
+        <span class="label"><i class='far fa-calendar-alt' style='font-size:13px'></i> Due Date</span>
         <span class="value">
           {{ formatDate(selectedTask.dueDate) }}
         </span>
       </div>
 
       <div class="info-block" v-if="selectedTask.description">
-        <span class="label">📝 Description</span>
+        <span class="label"><i class="fa fa-file-text" style="font-size:13px"></i> Description</span>
         <p class="text">
           {{ selectedTask.description }}
         </p>
@@ -220,7 +207,7 @@
   class="info-block"
   v-if="selectedTask.priority === 'Task Assigned'"
 >
-  <span class="label">💬 Comment</span>
+  <span class="label"><i class="fa fa-comments-o" style="font-size:13px"></i> Comment</span>
 
   <textarea
     v-model="selectedTask.comment"
@@ -235,19 +222,19 @@
     style="margin-top: 8px;"
     @click="saveTaskComment"
   >
-    Save Comment
+   <i class="fa fa-save" style="font-size:13px"></i>  Save Comment
   </button>
 </div>
 
       <div class="info-block" v-if="selectedTask.modules">
-        <span class="label">🧩 Modules</span>
+        <span class="label">Modules</span>
         <p class="text">
           {{ selectedTask.modules }}
         </p>
       </div>
 
       <div class="info-row">
-        <span class="label">⏳ Completed On</span>
+        <span class="label"><i class="fa fa-check-square-o" style="font-size:13px"></i> Completed On</span>
         <span class="value">
           {{ formatDate(selectedTask.completedAt) }}
         </span>
@@ -258,7 +245,7 @@
     <!-- Footer -->
     <div class="modal-actions">
       <button class="btn-secondary" @click="closeTaskPopup">
-        Close
+       <i class="fa fa-close" style="font-size:13px"></i> Close
       </button>
     </div>
 
@@ -337,8 +324,8 @@
 
       <!-- Actions -->
       <div class="modal-actions">
-        <button type="submit">Save</button>
-        <button type="button" @click="showAddTaskForm = false">Cancel</button>
+        <button type="submit"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
+        <button type="button" @click="showAddTaskForm = false"> <i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
       </div>
     </form>
   </div>
@@ -522,10 +509,10 @@ watch: {
     const task = this.tasks.find(t => t.id === this.selectedTask.id);
     if (task) task.comment = this.selectedTask.comment;
 
-    toastSuccess('Comment saved successfully ✅');
+    toastSuccess('Comment saved successfully ');
   } catch (err) {
     console.error('Failed to save comment', err);
-    toastSuccess('Failed to save comment ❌');
+    toastSuccess('Failed to save comment ');
   }
 },
 
@@ -1254,6 +1241,11 @@ font-family: cursive;
   margin-left: 7px;
 }
 
+.edit-btn:hover{
+  background-color: var(--text);
+
+}
+
 .delete-btn {
   background-color: #f44336;
   color: white;
@@ -1262,14 +1254,11 @@ font-family: cursive;
   border-radius: 4px;
   cursor: pointer;
 }
+.delete-btn:hover{
+  background-color: #a10f05;
+}
 
-/* .edit-btn{
-  background-color: transparent!important ;
-      border: white;
-    margin-left: 7%;
-    cursor: pointer;
-        font-size: 15px;
-} */
+
 .show-more-container {
   text-align: center;
   margin-top: 16px;
@@ -1427,14 +1416,6 @@ font-family: cursive;
   align-items: center;
 }
 
-/* .delete-btn {
-  margin-left: 26px;
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  var(--text);
-} */
 
 .task-status-dropdown {
   width: 43%;
@@ -1524,7 +1505,7 @@ font-family: cursive;
 }
 
 .modal-actions button[type="button"]:hover {
-  background-color: #d5d5d5;
+  background-color:var(--primary);
 }
 
 @keyframes fadeIn {
@@ -1582,6 +1563,7 @@ font-family: cursive;
   display: flex;
   justify-content: space-between;
   margin-top: 12px;
+  gap: 7px;
 }
 .modal-actions button {
   padding: 8px 16px;
@@ -1592,10 +1574,12 @@ font-family: cursive;
 .modal-actions button:first-child {
   background-color: var(--primary);
   color: white;
+  width: 100%;
 }
 .modal-actions button:last-child {
  background-color: var(--text);
     box-shadow: 0 6px 15px var(--text)00;
+    width: 100%;
 
 }
 
@@ -2055,16 +2039,6 @@ h2 {
   box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
-}
-
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
-}
 
 /* Fade Transition */
 .fade-enter-active, .fade-leave-active {
@@ -2211,6 +2185,7 @@ h2 {
 
 .task-popup-body {
   font-size: 0.95rem;
+      margin-bottom: 36px;
 }
 
 .info-row {
@@ -2240,9 +2215,6 @@ h2 {
   white-space: pre-wrap;
 }
 
-.btn-secondary {
-  background: #ddd;
-}
 
 .comment-box {
   width: 100%;

@@ -137,14 +137,7 @@ this.poller = setInterval(() => {
 </script>
 
 <style scoped>
-.notification-bell-wrapper {
-  position: fixed;
-  top: 42px;
-  right: 20px;
-  z-index: 9999;
-  font-size: 22px;
-  cursor: pointer;
-}
+
 
 .fa-bell {
   color: white;
@@ -161,8 +154,8 @@ this.poller = setInterval(() => {
   border-radius: 50%;
 }
 .notification-bell-wrapper {
-  position: fixed;
-  top: 42px;
+  position: absolute;
+  top: 20px;
   right: 20px;
   z-index: 9999;
   font-size: 22px;

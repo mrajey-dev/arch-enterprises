@@ -2,18 +2,6 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-
-      <div class="header-left">
-   <a href="https://employees.archenterprises.co.in/">
-  <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 65px;  border-radius: 9px;" alt="Logo">
-</a>
-
-    <!-- <h1 class="company-name">ARCH ENTERPRISES</h1> -->
-  </div>
-     <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
     <!-- Main Content -->
     <div class="main-content">

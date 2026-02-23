@@ -1,6 +1,11 @@
 <template>
+  <div class="sidebar-root">
   <div class="layout">
-    <!-- Sidebar -->
+ <!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" @click="isMobileOpen = true">
+  ☰
+</button>
+
 <aside
   class="sidebar"
   :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
@@ -9,10 +14,6 @@
 >
 
 
-
-<button class="sidebar-toggles" @click="toggleSidebar">
-  <span class="toggle-icon" style="color: white; float: right;">{{ isCollapsed ? '⫸' : '⫷' }}</span>
-</button>
 
 
 
@@ -206,6 +207,7 @@
     <button class="close-btn" @click="closePopup">Close</button>
   </div>
 </div>
+ </div>
 </template>
 
 
@@ -454,7 +456,7 @@ async mounted() {
 /* Layout */
 .layout {
   display: flex;
-   min-height: 100vh;
+   /* min-height: 100vh; */
    position: sticky;
   background: #f4f6fb;
 }
@@ -469,7 +471,7 @@ async mounted() {
 
   /* 👇 STICKY SIDEBAR */
   position: sticky;
-  top: 0;
+  top: 100px;
   height: 81vh;
 
   transition: width 0.35s ease;
@@ -545,6 +547,7 @@ async mounted() {
   padding: 12px 18px;
   display: flex;
   align-items: center;
+  background-color: #05010100;
   gap: 14px;
   font-size: 14px;
   cursor: pointer;
@@ -552,6 +555,7 @@ async mounted() {
   border-radius: 8px;
   margin: 4px 10px;
       flex-wrap: wrap;
+        transition: all 0.75s ease;
 }
 
 .sidebar-menu li i {
@@ -665,7 +669,7 @@ async mounted() {
   .sidebar {
     position: fixed;
     top: 0;
-    left: -100%;
+  left: -260px;
     height: 100vh;
     width: 260px;
     z-index: 1001;
@@ -755,9 +759,6 @@ async mounted() {
   transform: rotate(-45deg) translate(4px, -4px);
 }
 
-.sidebar-toggles{
-  background-color: black;
-}
 /* Desktop hide */
 .mobile-only {
   display: none;
@@ -780,6 +781,27 @@ async mounted() {
 .sidebar.collapsed .sidebar-menu li span,
 .sidebar.collapsed .sidebar-title {
   opacity: 0;
+}
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1102;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Show only on mobile */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
 }
 
 </style>

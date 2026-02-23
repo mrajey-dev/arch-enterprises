@@ -1,24 +1,6 @@
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-      <div class="head-title">
-        <a href="https://employees.archenterprises.co.in/">
-          <img
-            src="https://archenterprises.co.in/ajay/ajay.png"
-            style="height: 65px;  border-radius: 9px;"
-            alt="Logo"
-          />
-        </a>
-        Arch 360
-      </div>
 
-      <i
-        class="fas fa-bars mobile-menu-icon"
-        v-if="isMobile"
-        @click="toggleSidebar"
-      ></i>
-    </header>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -104,7 +86,7 @@
             <div v-else>
               <textarea v-model="q.editText"></textarea>
               <button @click="updateQuestion(q)">Save</button>
-              <button @click="cancelEditQuestion(q)">Cancel</button>
+              <button @click="cancelEditQuestion(q)"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
             </div>
 
             <!-- ✅ NEW: QUESTION IMAGE -->
@@ -147,8 +129,8 @@
 
                   <div v-else>
                     <textarea v-model="a.editText"></textarea>
-                    <button @click="updateAnswer(a)">Save</button>
-                    <button @click="cancelEditAnswer(a)">Cancel</button>
+                    <button @click="updateAnswer(a)"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
+                    <button @click="cancelEditAnswer(a)"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
                   </div>
 
                   <!-- ✅ FIXED: ANSWER IMAGE (click to open) -->

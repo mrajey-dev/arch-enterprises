@@ -79,8 +79,12 @@
   <i class="fas fa-tasks"></i> <span>Work Flow</span>
 </li>
 
-<!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('expensemanage')">
-  <i class="fas fa-money-bill-wave"></i> <span>Expense</span>
+<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('offerletter')">
+  <i class="	far fa-file-alt"></i> <span>Offer Letter</span>
+</li>
+
+<!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('joiningletter')">
+  <i class="fas fa-money-bill-wave"></i> <span>Joining Letter</span>
 </li> -->
 
 <!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('resourcebooking')">
@@ -1167,12 +1171,14 @@ calculatePerformance() {
   display: flex;
   align-items: center;
   gap: 14px;
+  background-color: #02061700!important;
   font-size: 14px;
   cursor: pointer;
   transition: background 0.25s ease, padding 0.3s ease;
   border-radius: 8px;
   margin: 4px 10px;
       flex-wrap: wrap;
+     transition: all 0.75s ease;
 }
 
 .sidebar-menu li i {
@@ -1388,7 +1394,7 @@ calculatePerformance() {
 
   /* ✅ STICKY SIDEBAR */
   position: sticky;
-  top: 0;
+   top: 100px;
   height: 81vh;
 
   transition: width 0.35s ease;

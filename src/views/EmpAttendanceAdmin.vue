@@ -2,20 +2,6 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-   <header class="header">
-      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -137,10 +123,10 @@
 
     <div class="popup-footer">
       <button class="btn-cancel" @click="showMarkAttendancePopup = false">
-        Cancel
+      <i class="fa fa-close" style="font-size:13px"></i>  Cancel
       </button>
       <button class="btn-save" @click="submitMarkedAttendance">
-        ✔ Save Attendance
+        <i class="fa fa-save" style="font-size:13px"></i> Save Attendance
       </button>
     </div>
 
@@ -206,7 +192,7 @@
 </div>
 <div v-if="!scoreSaved">
   <button @click="updateQuarterlyScore" class="btn btn-success" style="position: absolute; top: 13px; width: 83px; right: 61px; padding: 7px 0;font-size: 13px; border-radius: 9px;">
-    Save Score
+   <i class="fa fa-save" style="font-size:13px"></i> Save Score
   </button> 
 </div>
 <div v-else style="position: absolute; top: 17px; right: 61px; font-size: 20px; color: green;">

@@ -2,20 +2,6 @@
 
               <template>
                 <div class="layout">
-                  <!-- Header -->
-                  <header class="header">
-     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
                   <!-- Registration / Edit Modal -->
                   <transition name="fade">
@@ -237,7 +223,7 @@
   </span>
 </button>
 
-                            <button type="button" class="btn btn-secondary" @click="closeRegisterForm()">Cancel</button>
+                            <button type="button" class="btn btn-secondary" @click="closeRegisterForm()"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
                           </div>
                         </form>
                       </div>
@@ -340,7 +326,7 @@
                     <div class="modal-buttons">
                       <button class="btn btn-primary" @click="assignKRA">Assign</button>
                         <button class="btn btn-performance" @click="showPerformance = true">View Assigned KRAs</button>
-                      <button class="btn btn-secondary" @click="cancelKRA">Cancel</button>
+                      <button class="btn btn-secondary" @click="cancelKRA"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
                 
 
                     </div>

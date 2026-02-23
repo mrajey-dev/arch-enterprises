@@ -2,20 +2,7 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-          <header class="header">
-      <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
+
 
     <!-- Main Content -->
     <div class="main-content">
@@ -96,7 +83,7 @@
         ></textarea>
 
         <button class="btn-save" @click="saveCalendarData">
-          Save Changes
+         <i class="fa fa-save" style="font-size:13px"></i>  Save Changes
         </button>
       </div>
 
@@ -146,7 +133,7 @@
     v-if="isCustomEvent(event)"
     class="event-actions"
   >
-    ✏️
+    <i class="fa fa-edit" style="font-size:13px"></i>
     <span @click.stop="editCustomEvent(event)">Edit</span>
     |
     🗑️
@@ -178,15 +165,37 @@
         <span class="label">Description</span>
         <p class="value">{{ viewEvent.description }}</p>
       </div>
+             <div class="info-item" v-if="selectedMeeting.guests?.length">
+  <span class="label">Guests</span>
+
+  <ul class="guest-list">
+    <li
+      v-for="(g, i) in displayedGuests"
+      :key="i"
+    >
+      {{ g }}
+    </li>
+  </ul>
+
+  <!-- Show button only if more than 2 guests -->
+  <button
+    v-if="selectedMeeting.guests.length > 2"
+    class="show-btn"
+    @click="showAllGuests = !showAllGuests"
+  >
+    {{ showAllGuests ? "Show Less" : "Show All" }}
+  </button>
+</div>
     </div>
 
     <div class="modal-footer">
-      <button class="btn-close" @click="showViewModal=false">Close</button>
+      <button class="btn-close" @click="showViewModal=false"> <i class="fa fa-close" style="font-size:13px"></i> Close</button>
     </div>
 
   </div>
 </div>
 
+  
 
   <!-- Interview Popup -->
 <div v-if="showMeetingModal" class="modal-backdrop" @click.self="closeMeeting">
@@ -221,43 +230,47 @@
           <span class="label">Description</span>
           <span class="value">{{ selectedMeeting.description }}</span>
         </div>
+         <span class="label">Meeting Topics</span>
+ <button class="btn-edit-topics" @click="enableTopicEdit">
+      <i class="fa fa-edit" style="font-size:13px"></i> Edit Topics
+    </button>
+<div class="info-item full-width">
+ 
 
-        <div class="info-item full-width">
-  <span class="label">Meeting Topics</span>
+  <!-- READ MODE -->
+  <div v-if="!isEditingTopics" class="topics-view">
+    <div
+      v-if="selectedMeeting.topics"
+      v-html="sanitizedTopics"
+      class="topics-content"
+    ></div>
+    <p v-else class="no-topics">No topics added.</p>
 
-  <QuillEditor
-    v-model:content="meetingTopics"
-    contentType="html"
-    theme="snow"
-    :toolbar="toolbarOptions"
-    style="height: 220px"
-  />
+   
+  </div>
 
-  <button class="btn-save-topics" @click="saveTopics">
-    Save Topics
-  </button>
+  <!-- EDIT MODE -->
+  <div v-else class="topics-edit fade-in">
+    <QuillEditor
+      v-model:content="meetingTopics"
+      contentType="html"
+      theme="snow"
+      :toolbar="toolbarOptions"
+      style="height: 220px"
+    />
+
+    <div class="topic-actions">
+      <button class="btn-save-topics" @click="saveTopics">
+        <i class="fa fa-save" style="font-size:13px"></i> Save
+      </button>
+
+      <button class="btn-cancel-topics" @click="cancelTopicEdit">
+       <i class="fa fa-close" style="font-size:13px"></i> Cancel
+      </button>
+    </div>
+  </div>
 </div>
-         <div class="info-item" v-if="selectedMeeting.guests?.length">
-  <span class="label">Guests</span>
 
-  <ul class="guest-list">
-    <li
-      v-for="(g, i) in displayedGuests"
-      :key="i"
-    >
-      {{ g }}
-    </li>
-  </ul>
-
-  <!-- Show button only if more than 2 guests -->
-  <button
-    v-if="selectedMeeting.guests.length > 2"
-    class="show-btn"
-    @click="showAllGuests = !showAllGuests"
-  >
-    {{ showAllGuests ? "Show Less" : "Show All" }}
-  </button>
-</div>
 
 
 
@@ -285,7 +298,7 @@
 
     <!-- Footer -->
     <div class="modal-footer">
-      <button class="btn-close" @click="closeMeeting">Close</button>
+      <button class="btn-close" @click="closeMeeting"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
     </div>
 
   </div>
@@ -338,7 +351,7 @@
     <!-- Footer -->
     <div class="modal-footer">
       <button class="btn-close" @click="showServiceModal=false">
-        Close
+       <i class="fa fa-close" style="font-size:13px"></i> Close
       </button>
     </div>
 
@@ -371,6 +384,7 @@ export default {
 
 data() {
   return {
+     isEditingTopics: false, 
       showAllGuests: false,
     meetingTopics: '',
     toolbarOptions: [
@@ -507,6 +521,15 @@ viewEvent: {},
   },
 
   methods: {
+    enableTopicEdit() {
+  this.meetingTopics = this.selectedMeeting.topics || ''
+  this.isEditingTopics = true
+},
+
+cancelTopicEdit() {
+  this.isEditingTopics = false
+},
+
 isCustomEvent(event) {
   return event.type === 'note'
 },
@@ -867,8 +890,9 @@ async saveTopics() {
 closeMeeting() {
   this.showMeetingModal = false
   this.selectedMeeting = {}
-}
-,
+  this.isEditingTopics = false   // 👈 reset
+},
+
     async fetchMeetings() {
     try {
       const res = await fetch('https://employees.archenterprises.co.in/api/api/meetings/interviews', {
@@ -1668,6 +1692,8 @@ h2 {
 
 .info-grid.single {
   display: flex;
+      padding: 25px;
+
   flex-direction: column;
   gap: 18px;
 }
@@ -1676,10 +1702,17 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 6px;
+      padding: 6px;
+    border-bottom-style: inset;
 }
 
 .info-item.full-width {
   margin-top: 10px;
+  border: ridge;
+    padding: 12px;
+        max-height: 340px;
+            overflow: auto;
+
 }
 
 /* Labels */
@@ -1770,14 +1803,14 @@ h2 {
   padding: 8px 14px;
   border-radius: 8px;
   border: none;
-  background: #e5e7eb;
+  background: var(--text);
   font-size: 13px;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
 .btn-close:hover {
-  background: #d1d5db;
+  background: var(--text);
 }
 
 /* Animation */
@@ -1790,6 +1823,57 @@ h2 {
     opacity: 1;
     transform: scale(1);
   }
+}
+.btn-edit-topics {
+  margin-top: 14px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+      width: 156px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-edit-topics:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-edit-topics:active {
+  transform: scale(0.97);
+}
+
+.btn-cancel-topics {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.btn-cancel-topics:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+.btn-cancel-topics:active {
+  transform: scale(0.97);
+}
+
+.btn-cancel-topics:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.3);
 }
 
 </style>

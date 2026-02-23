@@ -1,11 +1,7 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-      <img src="https://archenterprises.co.in/ajay/ajay.png" style="height: 70px;">
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
+
 
     <!-- Main Content -->
     <div class="main-content">

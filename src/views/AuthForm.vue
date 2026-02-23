@@ -50,20 +50,23 @@
             />
           </div>
 
-          <div class="input-group">
-            <i class="fas fa-lock"></i>
-            <input
-              :type="showPassword ? 'text' : 'password'"
-              v-model="loginForm.password"
-              required
-              placeholder="Password"
-            />
-            <!-- <i
-              class="fas toggle-eye"
-              :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"
-              @click="togglePasswordVisibility"
-            ></i> -->
-          </div>
+        <div class="input-group password-group">
+  <i class="fas fa-lock input-icon"></i>
+
+  <input
+    :type="showPassword ? 'text' : 'password'"
+    v-model="loginForm.password"
+    required
+    placeholder="Password"
+  />
+
+  <i
+    class="fas toggle-eye"
+    :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"
+    @click="togglePasswordVisibility"
+  ></i>
+</div>
+
 
           <button class="btn-primary" type="submit" :disabled="isLoggingIn">
             <span v-if="isLoggingIn">
@@ -138,7 +141,7 @@
             <span v-if="isResettingPassword">
               <i class="fas fa-spinner fa-spin"></i> Updating
             </span>
-            <span v-else>Update</span>
+            <span v-else><i class="fa fa-save" style="font-size:13px"></i> Update</span>
           </button>
           <button class="btn-danger" @click="closeResetPasswordModal">
             Back
@@ -223,7 +226,7 @@ isResettingPassword: false,
       this.isLoggingIn = true;
       this.error = '';
       try {
-        await axios.get('https://employees.archenterprises.co.in/api/sanctum/csrf-cookie', { withCredentials: true });
+        // await axios.get('https://employees.archenterprises.co.in/api/sanctum/csrf-cookie', { withCredentials: true });
         const url = this.isEmployeeLogin
           ? 'https://employees.archenterprises.co.in/api/api/login'
           : 'https://employees.archenterprises.co.in/api/api/admin-login';
@@ -231,7 +234,10 @@ isResettingPassword: false,
         const response = await axios.post(url, {
           email: this.loginForm.email,
           password: this.loginForm.password
-        }, { withCredentials: true });
+        },
+        //  { withCredentials: true }
+        
+        );
 
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('loginTime', Date.now())
@@ -555,41 +561,16 @@ const response = await axios.post(url, {
   gap: 18px;
 }
 
-.input-group {
-  position: relative;
-}
-
 .input-group i {
      position: absolute;
     display: flex;
     top: 50%;
     transform: translateY(-50%);
-    left: -30px;
     color: #999;
     justify-content: flex-end;
 }
 
-.toggle-eye {
-  right: 14px;
-  left: auto;
-  cursor: pointer;
-}
 
-.input-group input {
-  width: 100%;
-  padding: 14px 42px;
-  margin-left: -42px;
-  border-radius: 10px;
-  border: 1.5px solid #ddd;
-  font-size: 15px;
-  transition: 0.3s;
-}
-
-.input-group input:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
-  outline: none;
-}
 
 /* buttons */
 .btn-primary {
@@ -830,6 +811,49 @@ const response = await axios.post(url, {
 .badge.crm {
   background: rgba(25,135,84,0.15);
   color: #198754;
+}
+.input-group {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px 44px 14px 42px; /* left for lock, right for eye */
+  border-radius: 10px;
+  border: 1.5px solid #ddd;
+  font-size: 15px;
+  transition: 0.3s;
+}
+
+.input-group input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+  outline: none;
+}
+
+/* Eye Icon */
+.toggle-eye {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #999;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.toggle-eye:hover {
+  color: #0d6efd;
 }
 
 </style>

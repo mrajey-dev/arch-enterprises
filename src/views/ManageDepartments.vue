@@ -2,20 +2,7 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
+
 
 <transition name="fade">
   <div class="modal-backdrop" v-if="showKRAModal" @click.self="closeKRAModal()">
@@ -100,7 +87,7 @@
       placeholder="Enter KPI name"
       :class="{ 'input-error': kpiError }"
     />
-    <button @click="addKpi" type="button">Save</button>
+    <button @click="addKpi" type="button"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
   </div>
 
   <!-- Error -->
@@ -158,10 +145,10 @@
     @click="saveKRA"
     class="btn btn-primary"
   >
-    Save
+  <i class="fa fa-save" style="font-size:13px"></i>  Save
   </button>
 
-  <button @click="closeKRAModal" class="btn btn-danger">Cancel</button>
+  <button @click="closeKRAModal" class="btn btn-danger"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
 </div>
 
     </div>
@@ -188,10 +175,10 @@
 
         <div class="modal-buttons">
           <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> Save Department
+           <i class="fa fa-save" style="font-size:13px"></i> Save Department
           </button>
           <button type="button" class="btn btn-secondary" @click="closeDepartmentForm()">
-            Cancel
+           <i class="fa fa-close" style="font-size:13px"></i> Cancel
           </button>
         </div>
       </form>
@@ -273,7 +260,7 @@
       </div>
 
       <div class="modal-buttons">
-        <button @click="showKRAsModal = false" class="btn btn-danger">Close</button>
+        <button @click="showKRAsModal = false" class="btn btn-danger"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
       </div>
     </div>
   </div>

@@ -1,21 +1,6 @@
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-      <div class="head-title">
-        <a href="https://employees.archenterprises.co.in/">
-          <img
-            src="https://archenterprises.co.in/ajay/ajay.png"
-            style="height:65px;border-radius:9px"
-          />
-        </a>
-        Arch 360
-      </div>
 
-      <i class="fas fa-bars mobile-menu-icon"
-         v-if="isMobile"
-         @click="toggleSidebar"></i>
-    </header>
 
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
@@ -23,7 +8,8 @@
       <div v-if="!isMobile || !isSidebarVisible" class="content profile-card">
 
         <button class="edit-btn" @click="editMode = true" :disabled="editMode">
-          <i class="fas fa-user-edit"></i> Edit Profile
+              <i class="fa fa-edit" style="font-size:13px"></i>
+Edit Profile
         </button>
 
         <div v-if="user" class="profile-container">
@@ -154,9 +140,9 @@
                 </div>
 
                 <div class="profile-actions">
-                  <button class="save-btn">💾 Save</button>
+                  <button class="save-btn"><i class="fa fa-save" style="font-size:13px"></i>  Save</button>
                   <button type="button" class="cancel-btn" @click="cancelEdit">
-                    ❌ Cancel
+                    <i class="fa fa-close" style="font-size:13px"></i> Cancel
                   </button>
                 </div>
               </div>

@@ -2,6 +2,24 @@
   <div class="app-layout">
     <!-- 🔔 Global Notification Bell -->
     <NotificationBell v-if="showBell" />
+    <!-- 🌐 Global Top Bar -->
+<div v-if="showHeader" class="global-topbar">
+
+ <div 
+  v-if="showMenuIcon"
+  class="menu-icon" 
+  @click="toggleSidebar"
+>
+
+    <i class="fas fa-bars"></i>
+  </div>
+<div class="app-title">
+  <img src="./assets/logo.png" alt="Arch Logo" class="app-logo" />
+  <span>Arch 360</span>
+</div>
+
+</div>
+
     <router-view />
     <!-- ⚠️ Idle Warning Modal -->
 <div v-if="showWarning" class="idle-modal">
@@ -15,15 +33,13 @@
   </div>
 </div>
 
-  <!-- 🆘 Help Support Widget -->
-<div class="help-widget">
-  <!-- Floating Button -->
+<!-- <div class="help-widget">
+
   <div class="help-button" @click="toggleHelp">
     <i class="fas fa-question"></i>
     <span v-if="!helpOpen">Help</span>
   </div>
 
-<!-- 🤖 Chatbot Panel -->
 <transition name="help-slide">
   <div v-if="helpOpen" class="help-panel">
     <div class="help-header">
@@ -31,7 +47,6 @@
       <i class="fas fa-times" @click="toggleHelp"></i>
     </div>
 
-    <!-- Chat Messages -->
     <div class="chat-body" ref="chatBody">
       <div
         v-for="(msg, index) in messages"
@@ -41,19 +56,6 @@
         {{ msg.text }}
       </div>
     </div>
-
-    <!-- Quick Questions -->
-    <!-- <div class="quick-questions">
-      <span
-        v-for="(q, i) in quickQuestions"
-        :key="i"
-        @click="sendQuickQuestion(q.question)"
-      >
-        {{ q.question }}
-      </span>
-    </div> -->
-
-    <!-- Input -->
     <div class="chat-input">
       <input
         type="text"
@@ -66,7 +68,117 @@
   </div>
 </transition>
 
+</div> -->
+
+<!-- Overlay -->
+<div v-if="sidebarOpen" class="sidebar-overlay" @click="toggleSidebar"></div>
+
+<!-- Sidebar -->
+<transition name="slide-sidebar">
+  <div v-if="sidebarOpen" class="global-sidebar">
+
+    <!-- 🔒 Close Button -->
+    <!-- <div class="sidebar-close" @click="toggleSidebar">
+⪡
+    </div> -->
+
+    <!-- 👤 User Section -->
+    <!-- 👤 User Section -->
+<div class="sidebar-user">
+  <img
+    :src="user.profile_photo 
+      ? `https://employees.archenterprises.co.in/backend/public/storage/${user.profile_photo}` 
+      : 'https://i.pravatar.cc/100'"
+    alt="User"
+    class="user-avatar"
+  />
+
+  <div class="user-name">{{ user.name }}</div>
+  <div class="user-role">{{ user.department }}</div>
 </div>
+
+
+    <div class="sidebar-divider"></div>
+
+    <!-- 📂 Menu -->
+   <ul class="sidebar-menu">
+
+  <!-- 📊 Dashboard -->
+  <li @click="goTo('employee/dashboard')">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+          </li>
+
+<li @click="goTo('employee/help')">
+            <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
+          </li>
+
+  <!-- 🌴 Leaves Dropdown -->
+  <li class="has-submenu">
+    <div class="submenu-title" @click="toggleLeaves">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Leaves </span>
+     &nbsp;&nbsp;&nbsp; <i class="fa fa-caret-down" :class="{ rotate: leavesOpen }"></i>
+    </div>
+
+    <ul v-if="leavesOpen" class="submenu">
+      <li @click="$router.push('leaveapplicationsemp'); toggleSidebar()">
+         <i class="fas fa-list"></i>  All Leaves
+      </li>
+      <li @click="$router.push('approvedleavesemp'); toggleSidebar()">
+         <i class="fas fa-check-circle"></i>  Approved
+      </li>
+      <li @click="$router.push('rejectedleavesemp'); toggleSidebar()">
+          <i class="fas fa-times-circle"></i> Rejected
+      </li>
+        <li @click="goTo('pendingleaves')">
+               <i class="fas fa-hourglass-half"> </i>Pending Leaves
+              </li>
+      
+    </ul>
+  </li>
+  <li @click="goTo('employee/applyleave')">
+            <i class="fas fa-plane-departure"></i><span> Apply for Leave </span>
+          </li>
+        <li
+  @click="goTo('employee/visitschedule')"
+>
+  <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
+</li>
+
+    <li @click="goTo('employee/viewAnnouncement')">
+            <i class="fas fa-bullhorn"></i><span> Announcement</span>
+          </li>
+          <li @click="goTo('employee/request')">
+            <i class="fa fa-check-square-o"></i><span> Request Desk</span>
+          </li>
+           <li @click="goTo('employee/resourcebooking')">
+            <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
+          </li>
+
+   <li @click="goTo('employee/viewkra')">
+            <i class="fas fa-tasks"></i> <span>View KRA</span>
+          </li>
+           <li @click="goTo('employee/mydsi')">
+            <i class="fas fa-tasks"></i><span> DSI</span>
+          </li>
+          
+          <li @click="goTo('employee/myprofile')">
+            <i class="fa-solid fa-user"></i><span> My Profile</span>
+          </li>
+
+
+ <li @click="logout" class="danger-bg">
+            <i class="fas fa-sign-out-alt"></i><span> Logout</span>
+          </li>
+
+</ul>
+
+
+  </div>
+</transition>
+
+
+
 
 </div>
 
@@ -83,7 +195,14 @@ export default {
 
   data() {
     return {
-      
+      leavesOpen: false,
+     user: {
+  name: '',
+  department: '',
+  profile_photo: ''
+},
+
+      sidebarOpen: false,
        helpOpen: false,
        userInput: '',
     messages: [
@@ -296,28 +415,77 @@ warningTime: (3 * 60 * 60 - 10) * 1000, // 10 seconds before 3 hours
     showBell() {
       return !this.$route.meta?.hideBell
     },
+      showMenuIcon() {
+    return !this.$route.meta?.hideMenu
   },
-
-  mounted() {
-     this.checkSessionExpiry() 
-    this.startIdleTimers()
-
-    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
-    events.forEach(event =>
-      window.addEventListener(event, this.resetIdleTimers)
-    )
+    showHeader() {
+    return !this.$route.meta?.hideHeader
+  }
   },
+mounted() {
+  this.loadUser()
+  this.checkSessionExpiry()
+  this.startIdleTimers()
 
-  beforeUnmount() {
-    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
-    events.forEach(event =>
-      window.removeEventListener(event, this.resetIdleTimers)
-    )
+  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+  events.forEach(event => {
+    window.addEventListener(event, this.resetIdleTimers)
+  })
 
-    this.clearAllTimers()
-  },
+  window.addEventListener('keydown', this.handleEscape)
+},
+
+
+
+beforeUnmount() {
+  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+  events.forEach(event => {
+    window.removeEventListener(event, this.resetIdleTimers)
+  })
+
+  window.removeEventListener('keydown', this.handleEscape)
+
+  this.clearAllTimers()
+},
+
 
   methods: {
+ goTo(route) {
+  this.$router.push(`/${route}`)
+  this.sidebarOpen = false   // 👈 always close sidebar after navigation
+},
+    toggleLeaves() {
+  this.leavesOpen = !this.leavesOpen
+},
+
+    handleEscape(e) {
+  if (e.key === 'Escape' && this.sidebarOpen) {
+    this.sidebarOpen = false
+  }
+},
+
+    loadUser() {
+  const storedUser = localStorage.getItem('user')
+
+  if (storedUser) {
+    const parsedUser = JSON.parse(storedUser)
+
+    this.user.name = parsedUser.name || ''
+    this.user.department = parsedUser.department || ''
+    this.user.profile_photo = parsedUser.profile_photo || ''
+  }
+},
+
+toggleSidebar() {
+  this.sidebarOpen = !this.sidebarOpen
+
+  if (this.sidebarOpen) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+},
+
     checkSessionExpiry() {
   const loginTime = localStorage.getItem('loginTime')
 
@@ -329,7 +497,7 @@ warningTime: (3 * 60 * 60 - 10) * 1000, // 10 seconds before 3 hours
   const threeHours = 3 * 60 * 60 * 1000
 
   if (diff > threeHours) {
-    this.logoutUser()
+    this.logout()
   }
 },
 
@@ -394,7 +562,7 @@ sendMessage() {
 
       // Final logout timer
       this.idleTimer = setTimeout(() => {
-        this.logoutUser()
+        this.logout()
       }, this.idleTimeLimit)
     },
 
@@ -423,14 +591,28 @@ sendMessage() {
     stayLoggedIn() {
       this.resetIdleTimers()
     },
+logout() {
+  if (this.sidebarOpen) {
+    this.toggleSidebar()
+  }
 
-    logoutUser() {
-      axios.post('/logout').finally(() => {
-        localStorage.clear()
-        sessionStorage.clear()
-        window.location.href = '/auth'
-      })
-    },
+  const token = localStorage.getItem("token");
+
+  axios
+    .post(
+      "https://employees.archenterprises.co.in/api/api/logout",
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    .finally(() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      this.$router.push("/auth");
+    });
+}
+
+
+
   },
 }
 </script>
@@ -693,23 +875,7 @@ body,
 .header {
   transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
 }
- @media (max-width: 768px) {
-  .theme-switcher{
-       top: 38px;
-        right: 74px;
-        padding: 2px 1px;
 
-  }
-  .theme-label{
-        font-size: 8px;
-  }
-  .theme-select{
-        font-size: 9px;
-  }
-  .fa-bell:before {
-    margin-right: 16px!important;
-  }
-}
 
 /* 🆘 Help Widget */
 .help-widget {
@@ -820,12 +986,7 @@ body,
 }
 
 /* Mobile */
-@media (max-width: 768px) {
-  .help-panel {
-    width: 90vw;
-    right: -10px;
-  }
-}
+
 
 /* 🤖 Chatbot */
 .chat-body {
@@ -894,13 +1055,365 @@ body,
   color: #fff;
   cursor: pointer;
 }
+/* 🌐 Modern Global Topbar */
+.global-topbar {
+    height: 83px;
+    background: linear-gradient(135deg, var(--primary), #000000);
+    color: var(--text-white);
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(6px);
+    justify-content: flex-start;
+    gap: 16px;
+}
+
+/* Menu Icon */
+.menu-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.menu-icon i {
+  font-size: 18px;
+}
+
+.menu-icon:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+/* App Title */
+.app-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+/* Optional Right Side Area */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+
+/* 📂 Professional Sidebar */
+.global-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 320px;
+  box-sizing: border-box;
+  height: 100dvh;
+  background: linear-gradient(180deg, var(--primary), #020617);
+  color: white;
+  box-shadow: 10px 0 35px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+
+/* Sidebar Header */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.sidebar-header i {
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* Sidebar Menu */
+.global-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.global-sidebar li {
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  color: white;
+}
+
+.global-sidebar li:hover {
+  background: var(--primary);
+  color: #fff;
+  transform: translateX(4px);
+}
+.slide-sidebar-enter-active,
+.slide-sidebar-leave-active {
+  transition: transform 0.3s ease-in-out;
+}
+
+.slide-sidebar-enter-from,
+.slide-sidebar-leave-to {
+  transform: translateX(-100%);
+}
+
+.slide-sidebar-enter-to,
+.slide-sidebar-leave-from {
+  transform: translateX(0);
+}
+
+
+/* 👤 User Section */
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 18px;
+}
+
+.user-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.user-role {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Divider */
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+  margin: 10px 0 20px;
+}
+
+/* 📂 Menu */
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.sidebar-menu li {
+  display: flex;
+  /* align-items: center; */
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background-color: #f8f8f80d;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.75s ease;
+}
+
+.sidebar-menu li i {
+  font-size: 16px;
+  width: 22px;
+}
+
+/* Hover Effect */
+.sidebar-menu li:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateX(6px);
+}
+
+/* Active Route Highlight */
+.sidebar-menu li.router-link-active {
+  background: rgba(255,255,255,0.25);
+}
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  transition: opacity 0.3s ease;
+}
+
+
+/* Close Button */
+.sidebar-close {
+  position: absolute;
+      top: 11px;
+    right: -5px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  /* background: rgba(255,255,255,0.2); */
+  transition: all 0.25s ease;
+}
+
+.sidebar-close i {
+  font-size: 16px;
+  color: #fff;
+}
+
+.sidebar-close:hover {
+  /* background: rgba(255,255,255,0.35); */
+  transform: rotate(90deg);
+}
+/* 👤 Centered User Section */
+.sidebar-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+      background-color: #00000030;
+      border-radius: 15px;
+    padding: 10px;
+}
+
+.user-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50px;
+  object-fit: cover;
+  border: 3px solid rgba(255,255,255,0.4);
+  margin-bottom: 12px;
+}
+
+.user-name {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.user-role {
+  font-size: 13px;
+  opacity: 0.9;
+}
+.has-submenu {
+  flex-direction: column;
+}
+
+.submenu-title {
+  display: flex;
+  /* justify-content: space-between; */
+  align-items: center;
+  cursor: pointer;
+}
+
+.submenu {
+  list-style: none;
+  padding-left: 25px;
+  margin-top: 5px;
+}
+
+.submenu li {
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+ 
+}
+
+
+.arrow {
+  transition: transform 0.3s ease;
+}
+
+.arrow.rotate {
+  transform: rotate(180deg);
+}
+
+.menu-icon {
+  display: none;
+}
+@media (max-width: 768px) {
+
+  .menu-icon {
+    display: flex;
+  }
+  .app-logo {
+  height: 32px!important;
+  width: auto;
+  object-fit: contain;
+}
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px!important;
+  font-weight: 600;
+  color: #fff;
+}
+
+}
+@media (max-width: 768px) {
+
+  .global-topbar {
+    height: 56px;
+    padding: 0 14px;
+  }
+
+  .app-title {
+    font-size: 15px;
+  }
+
+  .menu-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;   /* prevents pushing layout */
+  }
+
+  .menu-icon i {
+    font-size: 16px;
+  }
+
+}
+
+
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;   /* 🔥 prevents horizontal scroll */
+  width: 100%;
+}
+.app-layout {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.app-logo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+}
 
 </style>
-
-
-<!-- <style>
-.app-layout {
-  padding: 0px;
-  font-family: Arial, sans-serif;
-}
-</style> -->

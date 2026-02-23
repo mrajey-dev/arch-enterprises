@@ -1,19 +1,5 @@
 <template>
   <div class="layout">
-    <!-- Header -->
-    <header class="header">
-   <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -43,13 +29,13 @@
  <div class="button-row" style="display: flex; gap: 10px;">
   <button class="assign-btn" @click="openAssignPoForm">
     <!-- View & Assign PO in {{ currentMonth }} 2025 -->
-     Manage Purchase Order
+    <i class="fa fa-tasks" style="font-size:13px"></i> Manage Purchase Order
   </button>
    <button class="assign-btn "@click="goTo('employee/followup')">
-    Follow Up
+    <i class="fa fa-volume-control-phone" style="font-size:13px"></i> Follow Up
   </button>
    <button class="assign-btn "@click="goTo('employee/amcrecord')">
-    AMC Record Data
+   <i class="fa fa-file-o" style="font-size:13px"></i> AMC Record Data
   </button>
    <!-- <button class="assign-btn "@click="goTo('employee/viewallpo')">
     Purchase Order
@@ -70,7 +56,7 @@
 <div v-if="showQuotation" class="quotation-backdrop">
   <div class="quotation-modal">
 <div class="quotation-header">
-     <h2 style="color: white;">{{ isEdit ? "✏ Edit Quotation" : "✨ Create New Quotation" }}</h2>
+     <h2 style="color: white;"> {{ isEdit ? "Edit Quotation" : "Create New Quotation" }}</h2>
    <div class="quotation-header-actions">
         <button
   class="quotation-btn-secondary"
@@ -222,8 +208,8 @@
     style="padding:4px 10px; font-size:12px;"
     @click="handleClick"
   >
-    <span v-if="loading">⏳ Updating...</span>
-    <span v-else>🔄 Update Address</span>
+    <span v-if="loading">Updating...</span>
+    <span v-else><i class="fa fa-refresh fa-spin" style="font-size:11px"></i> Update Address</span>
   </button>
 </div>
 
@@ -621,7 +607,7 @@
 
     <!-- SUBMIT -->
    <button class="quotation-submit-btn" @click="submitQuotation">
-  {{ isEdit ? "💾 Update Quotation" : "💾 Save Quotation" }}
+ <i class="fa fa-save" style="font-size:15px"></i>  {{ isEdit ? " Update Quotation" : " Save Quotation" }}
 </button>
 
   </div>
@@ -649,20 +635,20 @@
    
     @click="openVisitPopup"
   >
-    AMC
+   <i class="fa fa-calendar" style="font-size:13px"></i> AMC
   </button>
 
   <button class="service-ord"
    
     @click="openServicePopup"
   >
-    Service Orders
+   <i class="fa fa-wrench" style="font-size:13px"></i> Service Orders
   </button>
 
   <button class="material-del"
     @click="openSupplyPopup"
   >
-    Material Supply
+  <i class='fas fa-dolly' style='font-size:13px'></i>  Material Supply
   </button>
 </div>
 
@@ -713,7 +699,7 @@
   <button class="tooltip-btn btn-view-po"
     data-tooltip="View Purchase Order"
     @click="openviewPoModal(cust.company_name)">
-    View PO
+   <i class="fa fa-eye" style="font-size:13px"></i> View PO
   </button>
 
 <button
@@ -721,7 +707,7 @@
   data-tooltip="Create Quotation"
   @click="openQuotationlist(cust)"
 >
-  Quotation
+  <i class='fas fa-file-invoice' style='font-size:13px'></i> Quotation
 </button>
 
 <button
@@ -729,7 +715,7 @@
   data-tooltip="View Report"
   @click="openWelcomeModal(cust.company_name)"
 >
-  Reports
+ <i class='fas fa-file-invoice' style='font-size:13px'></i> Reports
 </button>
 
 
@@ -799,7 +785,7 @@
       @click="openReport(path)"
       style="margin-right:5px;"
     >
-      Report {{ idx + 1 }}
+     <i class='fas fa-file-invoice' style='font-size:13px'></i> Report {{ idx + 1 }}
     </button>
   </div>
 
@@ -876,7 +862,7 @@
      <button class="amc-ord"
   @click="openAssignedVisits"
 >
-  Completed Visits
+ <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Visits
 </button>
 
     </div>
@@ -1089,7 +1075,7 @@
       <button class="service-ord"
   @click="openAssignedServicePopup"
 >
-  Completed Services
+   <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Services
 </button>
 
       </div>
@@ -1316,7 +1302,7 @@
       <button class="material-del"
   @click="openDeliveredPopup"
 >
-  Material Delivered
+  <i class="fa fa-check-square-o" style="font-size:13px"></i> Material Delivered
 </button>
 
       </div>
@@ -1439,10 +1425,10 @@
 
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px">
       <button class="btn btn-secondary" @click="confirmDelivered">
-        Save
+       <i class="fa fa-save" style="font-size:13px"></i>  Save
       </button>
       <button class="btn btn-success" @click="closeDeliveredPopup">
-        Cancle
+        <i class="fa fa-close" style="font-size:13px"></i> Cancle
       </button>
     </div>
   </div>
@@ -1593,7 +1579,8 @@
   <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
 
   <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
-    <i class="fas fa-edit"></i> Edit
+       <i class="fa fa-edit" style="font-size:13px"></i>
+ Edit
   </button>
 
   <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
@@ -1631,8 +1618,8 @@
           {{ po.po_number }} - {{ po.po_type  }}
         </div>
         <div class="po-actions">
-          <button class="btn btn-closedpo btn-sm" @click.stop="handleClosePo(po)">Close PO</button>
-          <button class="btn btn-danger" @click.stop="deletePo(po.id)">Delete PO</button>
+          <button class="btn btn-closedpo btn-sm" @click.stop="handleClosePo(po)"><i class="fa fa-check-square-o" style="font-size:13px;"></i> Close PO</button>
+          <button class="btn btn-danger" @click.stop="deletePo(po.id)"><i class="fa fa-trash-o" style="font-size:13px"></i> Delete PO</button>
         </div>
       </li>
     </ul>
@@ -1887,7 +1874,7 @@
     v-if="selectedPo && selectedPo.po_type === 'AMC'" 
     @click="addVisit(selectedPo)"
   >
-    Add Visit
+    Add/Update Visit
   </button>
 
   <button class="btn btn-danger" @click="showPoDetailsModal = false">⬅ Back</button>
@@ -1915,7 +1902,7 @@
 <!-- Add Visit Modal -->
 <div v-if="showAddVisitModal" class="visit-modal-overlay">
   <div class="visit-modal-box">
-    <h3 class="visit-modal-title">Add Visit</h3>
+    <h3 class="visit-modal-title">Add/Update Visit</h3>
 
     <div class="visit-modal-group">
       <label class="visit-modal-label">Select Visit</label>
@@ -1932,10 +1919,10 @@
 
     <div class="visit-modal-actions">
       <button class="visit-btn-success" @click="saveVisit" :disabled="!selectedVisit || !visitDate">
-        Save
+       <i class="fa fa-save" style="font-size:13px"></i>  Save
       </button>
       <button class="visit-btn-close" @click="showAddVisitModal = false">
-        Close
+        <i class="fa fa-close" style="font-size:13px"></i> Close
       </button>
     </div>
   </div>
@@ -2041,7 +2028,7 @@
     class="btn btn-primary"
     @click="openPoModal"
   >
-    Add PO
+    <i class="fa fa-plus" style="font-size:15px"></i>  Add PO
   </button>
 
  
@@ -2052,7 +2039,7 @@
     class="btn btn-secondary"
     @click="closeDetailsModal"
   >
-    Close
+     <i class="fa fa-close" style="font-size:15px"></i> Close
   </button>
 </div>
 
@@ -2080,7 +2067,7 @@
 
     <div class="modal-buttons">
       
-      <button class="btn btn-secondary" @click="closePoModal">Close</button>
+      <button class="btn btn-secondary" @click="closePoModal"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
     </div>
   </div>
 </div>
@@ -2169,11 +2156,11 @@
         @click="saveServiceSupply"
       >
         <span v-if="isSavingServiceSupply" class="loader"></span>
-        <span v-else>Save</span>
+        <span v-else><i class="fa fa-save" style="font-size:13px"></i>  Save</span>
       </button>
 
       <button class="btn btn-secondary" @click="closeServiceSupplyModal">
-        Cancel
+        <i class="fa fa-close" style="font-size:13px"></i> Cancel
       </button>
     </div>
   </div>
@@ -2256,9 +2243,9 @@
   @click="saveSupplyDetails"
 >
   <span v-if="isSavingSupply" class="loader"></span>
-  <span v-else>Save</span>
+  <span v-else><i class="fa fa-save" style="font-size:13px"></i>  Save</span>
 </button>
-      <button class="btn btn-secondary" @click="closeSupplyModal">Cancel</button>
+      <button class="btn btn-secondary" @click="closeSupplyModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
     </div>
   </div>
 </div>
@@ -2346,9 +2333,9 @@
   @click="saveServiceDetails"
 >
   <span v-if="isSavingService" class="loader"></span>
-  <span v-else>Save</span>
+  <span v-else><i class="fa fa-save" style="font-size:13px"></i>  Save</span>
 </button>
-      <button class="btn btn-secondary" @click="closeServiceModal">Cancel</button>
+      <button class="btn btn-secondary" @click="closeServiceModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
     </div>
   </div>
 </div>
@@ -2465,10 +2452,10 @@
   @click="saveAmcDetails"
 >
   <span v-if="isSavingAmc" class="loader"></span>
-  <span v-else>Save</span>
+  <span v-else><i class="fa fa-save" style="font-size:13px"></i>  Save</span>
 </button>
 
-      <button class="btn btn-secondary" @click="closeAmcModal">Cancel</button>
+      <button class="btn btn-secondary" @click="closeAmcModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
     </div>
   </div>
 </div>
@@ -2799,7 +2786,7 @@
       </div>
 
       <div class="crm-modal-actions">
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">Click To Submit</button>
         <!-- <button type="button" class="btn btn-secondary" @click="closeCustomerModal">Cancel</button> -->
       </div>
 
@@ -2836,619 +2823,534 @@
       Sidebar
     },
     data() {
-      return {
-         showDeliveredDatePopup: false,
-    deliveredDate: '',
-        poError: null,
-    poExists: false,
-         selectedTerms: 'regular',
-         loading: false,
-         
-        filledVisits: [],
-        visitStatusList: [],
-        completedVisitDates: [],
-        visit_assign: [],
-        showServiceSupplyModal: false,
-        serviceSupply: {
-  poNumber: "",
-  date: "",
-  totalValue: "",
-  file: null,
+    return {
+  showDeliveredDatePopup: false,
+  deliveredDate: '',
+  poError: null,
+  poExists: false,
+  selectedTerms: 'regular',
+  loading: false,
 
-  // Supply only
-  recommendedBy: "",
+  filledVisits: [],
+  visitStatusList: [],
+  completedVisitDates: [],
+  visit_assign: [],
 
-  // Service only
-  serviceType: "",
-},
-isSavingServiceSupply: false,
-        isSavingAmc: false, // 👈 loader state
-         isSavingSupply: false,
-         isSavingService:false,
-        deliveredFilters: {
-      search: '',
-      month: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
-        supplyFilters: {
-      search: '',
-      month: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
-        assignedServiceFilters: {
-      search: '',
-      month: '',
-      status: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
-        serviceFilters: {
-      search: '',
-      month: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
-        completedFilters: {
-      search: '',
-      month: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],filters: {
-  search: '',
-  month: new Date().getMonth() + 1 
-},
+  showServiceSupplyModal: false,
+  serviceSupply: {
+    poNumber: "",
+    date: "",
+    totalValue: "",
+    file: null,
+    recommendedBy: "",
+    serviceType: "",
+  },
 
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
-  
-        emailError: '',
-         quotationLoading: false ,
-         serviceReports: [],
-          visitReports: [],
-        showWelcomeModal: false,
-         showFollowUpPopup: false, 
-         reports: [],
-         followUpQuotations: [],
-      engineSearch: '',
-        isLoadingCustomers: true,
-         isLoadingReports: false,
-        currentCompany: '',
-         statusForm: {
-      tracking_id: '',
-      courier_name: '',
-      date: new Date().toISOString().substr(0, 10)
-    },
-            showStatusPopup: false,
-    selectedSupply: null,
-    selectedStatus: '',
-        selectedVisit: '',
-        showAddVisitModal: false,
-        visitDate: '',
-        quotationList: [],  
-         showViewQuotationPopup: false,
-    filterCompany: "",
-    allQuotations: [],      
-    quotations: [],
-         showQuotation: false,
-        showQuoteModal: false,
-        showVisitsPopup: false,
-    assignedVisits: [],
-         showDeliveredPopup: false,
-    deliveredSupplies: [],
-         showAssignedServicePopup: false,
-    assignedServiceList: [],
-       showVisitPopup: false,
-showServicePopup: false,
-showSupplyPopup: false,
-    deliveredSupplies: [],
-     showSupplyMaterialModal: false,
-         supplies: [],
-        showCompletedOrders: false,
+  isSavingServiceSupply: false,
+  isSavingAmc: false,
+  isSavingSupply: false,
+  isSavingService: false,
+
+  // ✅ Single months array (kept only once)
+  months: [
+    'January', 'February', 'March', 'April',
+    'May', 'June', 'July', 'August',
+    'September', 'October', 'November', 'December'
+  ],
+
+  deliveredFilters: { search: '', month: '' },
+  supplyFilters: { search: '', month: '' },
+  assignedServiceFilters: { search: '', month: '', status: '' },
+  serviceFilters: { search: '', month: '' },
+  completedFilters: { search: '', month: '' },
+
+  filters: {
+    search: '',
+    month: new Date().getMonth() + 1
+  },
+
+  emailError: '',
+  quotationLoading: false,
+  serviceReports: [],
+  visitReports: [],
+  reports: [],
+  followUpQuotations: [],
+  quotationList: [],
+  allQuotations: [],
+  quotations: [],
+
+  showWelcomeModal: false,
+  showFollowUpPopup: false,
+  showViewQuotationPopup: false,
+  showQuotation: false,
+  showQuoteModal: false,
+
+  engineSearch: '',
+  isLoadingCustomers: true,
+  isLoadingReports: false,
+  currentCompany: '',
+
+  statusForm: {
+    tracking_id: '',
+    courier_name: '',
+    date: new Date().toISOString().substr(0, 10)
+  },
+
+  showStatusPopup: false,
+  selectedSupply: null,
+  selectedStatus: '',
+  selectedVisit: '',
+  visitDate: '',
+
+  showAddVisitModal: false,
+  showVisitsPopup: false,
+  showDeliveredPopup: false,
+  showAssignedServicePopup: false,
+  showVisitPopup: false,
+  showServicePopup: false,
+  showSupplyPopup: false,
+  showSupplyMaterialModal: false,
+  showServiceModal: false,
+  showSupplyModal: false,
+  showAmcModal: false,
+  showCompletedOrders: false,
+  showAssignPoModal: false,
+  showPoDetailsModal: false,
+  showviewPoModal: false,
+  showSupplyCloseModal: false,
+  showClosedPoModal: false,
+  showPoModal: false,
+  showDetailsModal: false,
+  showCustomerModal: false,
+
+  assignedVisits: [],
+  deliveredSupplies: [],
+  assignedServiceList: [],
+  supplies: [],
   servicePoList: [],
-      selectedPoId: null,
-      showviewPoModal: false,
-      showSupplyCloseModal: false,
-    showClosedPoModal: false,
-     closedPoList: [],
-    poList: [],
-          service_assign: [],
-        currentMonth: new Date().toLocaleString('default', { month: 'long' }),
-       
-        showAssignPoModal: false,
-        companies: [],
-        employees: [],
-      
-        poData: {
-          po_type: '',
-          company_name: '',
-          po_number: '',
-          files: []
-        },
-          showPoDetailsModal: false,
-        supplyCloseData: {
-        tracking_id: '',
-        courier_name: '',
-        date: new Date().toISOString().split('T')[0] // current date by default
-      },
-          selectedPo: null, // Store the clicked PO
-        showSupplyModal: false,
-    selectedCompany: '',
-      selectedPoNumber: '',
-      supplyDetails: {
-        poNumber: '',
-        date: '',
-        value: '',
-        recommendedBy: ''
-      },
-        showServiceModal: false,
-        
-        
-        serviceDetails: {
-          poNumber: '',
-          serviceType: '',
-          poValue: '',
-          poCopy: null,
-          assignTo: ''
-        },
-        showAmcModal: false,
-      poType: "",
-    amcDetails: {
-      assigned_employee: '',
+  closedPoList: [],
+  poList: [],
+  service_assign: [],
+  companies: [],
+  employees: [],
+  users: [],
+  customers: [],
+
+  selectedPoId: null,
+  selectedPo: null,
+  selectedCompany: '',
+  selectedPoNumber: '',
+  selectedCustomer: {},
+  editingCustomerId: null,
+
+  currentMonth: new Date().toLocaleString('default', { month: 'long' }),
+
+  poData: {
+    po_type: '',
+    company_name: '',
+    po_number: '',
+    files: []
+  },
+
+  supplyCloseData: {
+    tracking_id: '',
+    courier_name: '',
+    date: new Date().toISOString().split('T')[0]
+  },
+
+  supplyDetails: {
+    poNumber: '',
+    date: '',
+    value: '',
+    recommendedBy: ''
+  },
+
+  serviceDetails: {
+    poNumber: '',
+    serviceType: '',
+    poValue: '',
+    poCopy: null,
+    assignTo: ''
+  },
+
+  poType: "",
+  amcDetails: {
+    assigned_employee: '',
     PONumber: '',
     type: '',
     visits: '',
     start_period: '',
     end_period: '',
-PODate: "",        
-  value_of_po: "",   
+    PODate: "",
+    value_of_po: "",
     company_name: '',
     po_file: null
   },
-  visitDates: [], // NEW for dynamically created visit schedule
-      users: [], // This will store all employees from backend
 
-        
-          showPoModal: false,
-        searchFocused: false,
-        searchQuery: '',
-          showDetailsModal: false,
-  selectedCustomer: {},
-          customers: [],
-  editingCustomerId: null, // to differentiate edit vs new
+  visitDates: [],
 
-        customer: {
-        company_name: '',
-         billing_address: '',
-  shipping_address: '',
-        contact_person: '',
-        contact_number: '',
-        secondary_contact_number: '',
-        customer_number: '',
-        email: '',
-        gst_number: '',
-        pan_number: '',
-        vendor_number: '',
-      equipment_details: {
-          Engine: [{ make: '', model_no: '', serial_no: '' }],
-          Pump: [{ make: '', model_no: '', serial_no: '' }],
-          Controller: [{ make: '', model_no: '', serial_no: '' }],
-          Motor: [{ make: '', model_no: '', serial_no: '' }],
-          JockeyPump: [{ make: '', model_no: '', serial_no: '' }]
-        }
-      
-    },
-    showCustomerModal: false,
-      
-      
-
-        isMobile: false,
+  isMobile: false,
   isSidebarVisible: true,
+  searchFocused: false,
+  searchQuery: '',
 
-      form: {
-        nature_of_sale: "",
-        company_name: "",
-          shipping_address: '',
-        engine_serial: "",
-        model_no: "",
-        payment_terms: "100% Advance",
-        delivery: 'EX Works, Freight Prepaid',
+  customer: {
+    company_name: '',
+    billing_address: '',
+    shipping_address: '',
+    contact_person: '',
+    contact_number: '',
+    secondary_contact_number: '',
+    customer_number: '',
+    email: '',
+    gst_number: '',
+    pan_number: '',
+    vendor_number: '',
+    equipment_details: {
+      Engine: [{ make: '', model_no: '', serial_no: '' }],
+      Pump: [{ make: '', model_no: '', serial_no: '' }],
+      Controller: [{ make: '', model_no: '', serial_no: '' }],
+      Motor: [{ make: '', model_no: '', serial_no: '' }],
+      JockeyPump: [{ make: '', model_no: '', serial_no: '' }]
+    }
+  },
+
+  form: {
+    nature_of_sale: "",
+    company_name: "",
+    shipping_address: '',
+    engine_serial: "",
+    model_no: "",
+    payment_terms: "100% Advance",
+    delivery: 'EX Works, Freight Prepaid',
+    description: "",
+    hsn_code: "",
+    qty: "",
+    uom: "",
+    rate: "",
+    discount: "",
+    cgst: "",
+    sgst: "",
+    igst: "",
+    quote_no: "",
+    quote_code: "",
+    date: "",
+    currency: "",
+    customer_ref: "",
+    recommended_by: "",
+    created_by: 'Admin',
+    terms_conditions: '',
+    customer_reference: "",
+
+    bill_to: {
+      company: "",
+      address: "",
+      state: "",
+      state_code: "",
+      gst: "",
+      contact: "",
+      phone: "",
+    },
+
+    ship_to: {
+      company: "",
+      address: "",
+      state: "",
+      state_code: "",
+      gst: "",
+      contact: "",
+      phone: "",
+    },
+
+    items: [
+      {
+        sr: 1,
         description: "",
-        hsn_code: "",
-        qty: "",
+        hsn: "",
+        qty: 0,
         uom: "",
-        rate: "",
-        discount: "",
-        cgst: "",
-        sgst: "",
-        igst: "",
-        quote_no: "",
-        quote_code: "",
-        date: "",
-         currency: "",
-        customer_ref: "",
-        recommended_by: "",
-        created_by: 'Admin',
-        terms_conditions: '',
-         customer_reference: "",
-         recommended_by: "",
-        
+        rate: 0,
+        total: 0,
+        discount: 0,
+        taxable: 0,
+        cgst_rate: 0,
+        cgst_amt: 0,
+        sgst_rate: 0,
+        sgst_amt: 0,
+        igst_rate: 18,
+        igst_amt: 0,
+        line_total: 0,
+      }
+    ],
 
-        bill_to: {
-          company: "",
-          address: "",
-          state: "",
-          state_code: "",
-          gst: "",
-          contact: "",
-          phone: "",
-        },
+    subtotal: 0,
+    tax_total: 0,
+    grand_total: 0,
+    amount_words: "",
 
-        ship_to: {
-          company: "",
-          address: "",
-          state: "",
-          state_code: "",
-          gst: "",
-          contact: "",
-          phone: "",
-        },
-
-        items: [
-          {
-            sr: 1,
-            description: "",
-            hsn: "",
-            qty: 0,
-            uom: "",
-            rate: 0,
-            total: 0,
-            discount: 0,
-            taxable: 0,
-            cgst_rate: 0,
-            cgst_amt: 0,
-            sgst_rate: 0,
-            sgst_amt: 0,
-            igst_rate: 18,
-            igst_amt: 0,
-            line_total: 0,
-          }
-        ],
-
-        subtotal: 0,
-        tax_total: 0,
-        grand_total: 0,
-        amount_words:
-          "",
-
-        terms: `1. Parts are ordered as per your specific order. Once delivered the same can not be returned.
+    terms: `1. Parts are ordered as per your specific order. Once delivered the same can not be returned.
 2. Quantities mentioned are as per your requirement.
 3. All warranties as per manufacturer's warranty terms and conditions.
 4. Offer validity : 30 Days from date of quotation.
 5. Payment Terms: 100% Advance.
 6. DELIVERY: EXW, Freight Extra.
 7. Lead Time: Ready Stock.`,
-        declaration:
-          `I/we certify that our registration certificate under the GST Act is correct.`,
-      }
-      }
-    },
-    mounted() {
-        this.setRegularTerms();
-       console.table(this.filteredVisits.map(v => ({
-    id: v.id,
-    company: v.company_name,
-    date: v.visit_date
-  })))
-   this.fetchVisitStatuses();
-   this.fetchCompletedVisits();
-       this.getLoggedInUser();
-      const date = new Date();
-      this.currentMonth = date.toLocaleString('default', { month: 'long' });
-       this.fetchCurrentMonthVisits();
-      this.fetchSupplies();
-      this.fetchServiceOrders()
-    this.fetchEmployees()
-     this.fetchVisitOrders();
-        this.fetchCompanies();
-        this.fetchServicePoList();
-      this.fetchUsers();
-    this.fetchCustomers(); // fetch on load
-      this.checkIfMobile();
-  window.addEventListener('resize', this.checkIfMobile);
-  const quotationId = localStorage.getItem("selectedQuotationId");
-  if (quotationId) {
-    this.fetchQuotation(quotationId);
+
+    declaration: `I/we certify that our registration certificate under the GST Act is correct.`,
   }
+}
 
     },
-  computed: {
-    filteredDeliveredSupplies() {
-    return this.deliveredSupplies.filter(supply => {
+   async mounted() {
+  try {
+    this.setRegularTerms();
 
-      // 🔍 Search filter (Company / PO)
-      const search = this.deliveredFilters.search.toLowerCase()
-      if (search) {
-        const company = supply.company_name?.toLowerCase() || ''
-        const po = supply.po_number?.toLowerCase() || ''
-        if (!company.includes(search) && !po.includes(search)) {
-          return false
-        }
-      }
+    // Set current month
+    const date = new Date();
+    this.currentMonth = date.toLocaleString('default', { month: 'long' });
 
-      // 📅 Month filter (Closed Date)
-      if (this.deliveredFilters.month && supply.closed_date) {
-        const month = new Date(supply.closed_date).getMonth() + 1
-        if (month !== this.deliveredFilters.month) return false
-      }
+    // Load base data in parallel (faster)
+    await Promise.all([
+      this.fetchEmployees(),
+      this.fetchCompanies(),
+      this.fetchUsers(),
+      this.fetchCustomers(),
+      this.fetchSupplies(),
+      this.fetchServiceOrders(),
+      this.fetchVisitOrders(),
+      this.fetchServicePoList(),
+      this.fetchVisitStatuses(),
+      this.fetchCompletedVisits(),
+      this.fetchCurrentMonthVisits(),
+      this.getLoggedInUser()
+    ]);
 
-      return true
-    })
+    // Load quotation if exists
+    const quotationId = localStorage.getItem("selectedQuotationId");
+    if (quotationId) {
+      await this.fetchQuotations(quotationId);
+    }
+
+    // Mobile detection
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
+
+  } catch (error) {
+    console.error("Mounted initialization error:", error);
   }
-,
-    filteredSupplies() {
-    return this.supplies.filter(supply => {
+},
+beforeUnmount() {
+  window.removeEventListener('resize', this.checkIfMobile);
+},
 
-      // 🔍 Search filter (Company / PO)
-      const search = this.supplyFilters.search.toLowerCase()
-      if (search) {
-        const company = supply.company_name?.toLowerCase() || ''
-        const po = supply.po_number?.toLowerCase() || ''
-        if (!company.includes(search) && !po.includes(search)) {
-          return false
-        }
-      }
+ computed: {
 
-      // 📅 Month filter (Dispatch Date)
-      if (this.supplyFilters.month && supply.date) {
-        const month = new Date(supply.date).getMonth() + 1
-        if (month !== this.supplyFilters.month) return false
-      }
+  filteredDeliveredSupplies() {
+    return this.applyCommonFilters(
+      this.deliveredSupplies,
+      this.deliveredFilters,
+      'closed_date'
+    )
+  },
 
-      return true
-    })
+  filteredSupplies() {
+    return this.applyCommonFilters(
+      this.supplies,
+      this.supplyFilters,
+      'date'
+    )
+  },
+
+  filteredAssignedServiceList() {
+    return this.applyCommonFilters(
+      this.assignedServiceList,
+      this.assignedServiceFilters,
+      'visit_date',
+      item => !this.assignedServiceFilters.status ||
+              item.status === this.assignedServiceFilters.status
+    )
+  },
+
+  filteredCompletedVisits() {
+    return this.applyCommonFilters(
+      this.completedVisits,
+      this.completedFilters,
+      'visit_date'
+    )
+  },
+
+  filteredVisits() {
+    return this.applyCommonFilters(
+      this.visit_assign,
+      this.filters,
+      'visit_date',
+      visit => visit.status !== 'Completed'
+    )
+  },
+
+  filteredServicePoList() {
+    return this.applyCommonFilters(
+      this.servicePoList,
+      this.serviceFilters,
+      'service_date'
+    )
+  },
+
+  filteredClosedPoList() {
+    return this.closedPoList.filter(
+      po => po.company_name === this.selectedCompany
+    )
+  },
+
+  filteredPoList() {
+    return this.poList.filter(
+      po => !po.status || po.status.toLowerCase() !== 'closed'
+    )
+  },
+
+  completedVisits() {
+    return this.assignedVisits.filter(
+      v => v.status === 'Completed'
+    )
+  },
+
+  allReports() {
+    return [
+      ...this.serviceReports.map(r => ({ ...r, type: "Service" })),
+      ...this.visitReports.map(r => ({ ...r, type: "Visit" }))
+    ].sort((a, b) =>
+      new Date(b.updated_at) - new Date(a.updated_at)
+    )
+  },
+
+  financialYear() {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = today.getMonth() + 1
+
+    return month >= 4
+      ? `${year}-${(year + 1).toString().slice(-2)}`
+      : `${year - 1}-${year.toString().slice(-2)}`
+  },
+
+  quotePrefix() {
+    const year = new Date().getFullYear()
+    const nextYearShort = (year + 1).toString().slice(-2)
+    return `AE/QUOTE/${year}-${nextYearShort}/`
+  },
+
+  filteredCustomers() {
+    if (!this.searchQuery) {
+      return [...this.customers].sort((a, b) =>
+        a.company_name.localeCompare(b.company_name)
+      )
+    }
+
+    const query = this.searchQuery.toLowerCase()
+
+    return this.customers
+      .filter(cust =>
+        cust.customer_number?.toLowerCase().includes(query) ||
+        cust.company_name?.toLowerCase().includes(query)
+      )
+      .sort((a, b) =>
+        a.company_name.localeCompare(b.company_name)
+      )
+  },
+
+  filledVisits() {
+    if (!this.selectedPo) return []
+
+    const isValidDate = val => {
+      if (!val) return false
+      const s = String(val).trim()
+      if (!s || s === "0000-00-00") return false
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return true
+      return !isNaN(Date.parse(s))
+    }
+
+    return Array.from({ length: 12 }, (_, i) => i + 1)
+      .filter(i => isValidDate(this.selectedPo[`visit${i}`]))
+      .map(i => ({
+        number: i,
+        date: this.selectedPo[`visit${i}`]
+      }))
   }
-,
-    filteredAssignedServiceList() {
-    return this.assignedServiceList.filter(item => {
+},
 
-      // 🔍 Search (company / PO)
-      const search = this.assignedServiceFilters.search.toLowerCase()
-      if (search) {
+watch: {
+
+  // 🔹 Visit Modal
+  showVisitPopup: {
+    handler(val) {
+      if (val) this.loadVisitAssign()
+    }
+  },
+
+  // 🔹 Welcome Modal
+  showWelcomeModal: {
+    handler(val) {
+      if (!val) return
+      this.fetchServiceReports()
+      this.fetchVisitReports()
+    }
+  },
+
+  // 🔹 Filter company change
+  filterCompany(newCompany) {
+    if (!newCompany || !this.showViewQuotationPopup) return
+    this.fetchQuotationsById(newCompany)
+  },
+
+  // 🔹 Completed Orders Modal
+  showCompletedOrders: {
+    handler(val) {
+      if (val) this.fetchCompletedServices()
+    }
+  },
+
+  // 🔹 Closed PO Modal
+  showClosedPoModal: {
+    handler(val) {
+      if (val) this.fetchClosedPOs()
+    }
+  }
+
+},
+
+  
+
+
+ methods: {
+
+  applyCommonFilters(list, filters, dateField = null, extraFilter = null) {
+    return list.filter(item => {
+
+      // 🔍 Search filter
+      if (filters?.search) {
+        const search = filters.search.toLowerCase()
         const company = item.company_name?.toLowerCase() || ''
         const po = item.po_number?.toLowerCase() || ''
+
         if (!company.includes(search) && !po.includes(search)) {
           return false
         }
       }
 
-      // 📅 Month filter (Visit Date)
-      if (this.assignedServiceFilters.month && item.visit_date) {
-        const visitMonth =
-          new Date(item.visit_date).getMonth() + 1
-        if (visitMonth !== this.assignedServiceFilters.month) return false
+      // 📅 Month filter
+      if (filters?.month && dateField && item[dateField]) {
+        const month = new Date(item[dateField]).getMonth() + 1
+        if (month !== filters.month) return false
       }
 
-      // 📌 Status filter
-      if (
-        this.assignedServiceFilters.status &&
-        item.status !== this.assignedServiceFilters.status
-      ) {
+      // 🧩 Extra custom filter (optional)
+      if (extraFilter && !extraFilter(item)) {
         return false
       }
 
       return true
     })
-  }
-,
-    filteredCompletedVisits() {
-    return this.completedVisits.filter(row => {
-
-      // 🔍 Search (company / PO)
-      const search = this.completedFilters.search.toLowerCase()
-      if (search) {
-        const company = row.company_name?.toLowerCase() || ''
-        const po = row.po_number?.toLowerCase() || ''
-        if (!company.includes(search) && !po.includes(search)) {
-          return false
-        }
-      }
-
-      // 📅 Month filter
-      if (this.completedFilters.month && row.visit_date) {
-        const visitMonth = new Date(row.visit_date).getMonth() + 1
-        if (visitMonth !== this.completedFilters.month) return false
-      }
-
-      return true
-    })
   },
-    allReports() {
-    return [
-      ...this.serviceReports.map(r => ({
-        ...r,
-        type: "Service"
-      })),
-      ...this.visitReports.map(r => ({
-        ...r,
-        type: "Visit"
-      }))
-    ].sort(
-      (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
-    );
-  },
-     financialYear() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1; // Jan = 1
-
-    // Financial year starts in April
-    return month >= 4
-      ? `${year}-${(year + 1).toString().slice(-2)}`
-      : `${year - 1}-${year.toString().slice(-2)}`;
-  },
-     completedVisits() {
-    return this.assignedVisits.filter(v => v.status === 'Completed');
-  },
-    quotePrefix() {
-  const year = new Date().getFullYear();  
-  const nextYearShort = (year + 1).toString().slice(-2); 
-  return `AE/QUOTE/${year}-${nextYearShort}/`;
-},
-     filteredClosedPoList() {
-    // Filter closed POs for the current company
-    return this.closedPoList.filter(
-      po => po.company_name === this.selectedCompany
-    );
-  },
-  filteredVisits() {
-    return this.visit_assign.filter(visit => {
-
-      // ❌ Hide completed
-      if (visit.status === 'Completed') return false
-
-      // 🔍 Search filter
-      const search = this.filters.search.toLowerCase()
-      if (search) {
-        const company = visit.company_name?.toLowerCase() || ''
-        const po = visit.po_number?.toLowerCase() || ''
-        if (!company.includes(search) && !po.includes(search)) {
-          return false
-        }
-      }
-
-      // 📅 Month filter
-    if (this.filters.month !== null && visit.visit_date) {
-        const visitMonth = new Date(visit.visit_date).getMonth() + 1
-        if (visitMonth !== this.filters.month) return false
-      }
-
-      return true
-    })
-  },
-   filteredServicePoList() {
-    return this.servicePoList.filter(order => {
-
-      // 🔍 Search filter (company / PO)
-      const search = this.serviceFilters.search.toLowerCase()
-      if (search) {
-        const company = order.company_name?.toLowerCase() || ''
-        const po = order.po_number?.toLowerCase() || ''
-        if (!company.includes(search) && !po.includes(search)) {
-          return false
-        }
-      }
-
-      // 📅 Month filter (Service Date)
-      if (this.serviceFilters.month && order.service_date) {
-        const serviceMonth =
-          new Date(order.service_date).getMonth() + 1
-        if (serviceMonth !== this.serviceFilters.month) return false
-      }
-
-      return true
-    })
-  },
-   filteredPoList() {
-    // Show only POs that are not closed
-    return this.poList.filter(po => !po.status || po.status.toLowerCase() !== 'closed');
-  },
-    filledVisits() {
-      if (!this.selectedPo) return [];
-
-      const isValidDate = (val) => {
-        if (!val) return false;
-        const s = String(val).trim();
-        if (!s || s === "0000-00-00") return false;  // skip empty & placeholder
-        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return true; // YYYY-MM-DD pattern
-        return !isNaN(Date.parse(s)); // fallback parse
-      };
-
-      const visits = [];
-      for (let i = 1; i <= 12; i++) {
-        const key = `visit${i}`;
-        if (isValidDate(this.selectedPo[key])) {
-          visits.push({
-            number: i,
-            date: this.selectedPo[key]
-          });
-        }
-      }
-      return visits;
-    },
-
-   filteredCustomers() {
-  let result;
-
-  if (!this.searchQuery) {
-    result = this.customers;
-  } else {
-    const query = this.searchQuery.toLowerCase();
-    result = this.customers.filter(cust =>
-      (cust.customer_number && cust.customer_number.toLowerCase().includes(query)) ||
-      (cust.company_name && cust.company_name.toLowerCase().includes(query))
-    );
-  }
-
-  // Sort alphabetically by company_name
-  return result.sort((a, b) => a.company_name.localeCompare(b.company_name));
-}
-
-  },
-watch: {
-  showVisitPopup(val) {
-    if (val) this.loadVisitAssign(); // fetch data when modal opens
-  },
-
-  showWelcomeModal(val) {
-    if (val) {
-      this.fetchServiceReports();
-       this.fetchVisitReports();
-    }
-  },
-
-filterCompany(newCompany) {
-  if (!this.showViewQuotationPopup) return;
-
-  if (newCompany) {
-    this.fetchQuotationsById(newCompany);
-  }
-},
-  showCompletedOrders(newVal) {
-      if (newVal) {
-        this.fetchCompletedServices();
-      }
-    },
-    // Whenever modal is opened, fetch data
-    showClosedPoModal(newVal) {
-      if (newVal) {
-        this.fetchClosedPOs();
-      }
-    },
-  },
-  
-
-
- methods: {
   calculateItemTotal(item) {
     const qty = Number(item.qty) || 0;
     const rate = Number(item.rate) || 0;
@@ -5707,24 +5609,7 @@ closeServiceSupplyModal(){
     }
  
   },
-   async loadShippingAddress() {
-    if (!this.form.company_id) return;
-
-    try {
-      const res = await axios.get(
-        `/api/customers/${this.form.company_id}`
-      );
-
-      // ✅ Only autofill when creating new quotation
-      if (!this.isEdit) {
-        this.form.shipping_address =
-          res.data.shipping_address || res.data.address || "";
-      }
-
-    } catch (err) {
-      console.error("Shipping address load failed", err);
-    }
-  },
+   
 
 
   }
@@ -6435,9 +6320,11 @@ background-color: #6f256f;
   padding: 7px 0px;
   border-radius: 6px;
   font-size: 13px;
-  width: 76px;
+  width: 97px;
+    letter-spacing: 1px;
+font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 600;
   transition: 0.3s;
   color: #fff;
 }
@@ -6562,7 +6449,7 @@ background-color: #6f256f;
 }
 
 .visit-btn-close {
-  background: var(--sidebar);
+  background: var(--primary);
   border: none;
   padding: 10px 18px;
   color: white;
@@ -7759,8 +7646,8 @@ textarea:focus {
 
 .po-actions button {
   margin-left: 8px;
-  font-size: 13px;
-  padding: 4px 8px;
+ font-size: 11px;
+    padding: 7px 13px;
   background: #df0909;
     color: white;
 }
@@ -7916,15 +7803,6 @@ margin-left: 8px;
   font-weight: 500;
 }
 
-.btn-primary {
-  background-color: #3498db;
-  color: #fff;
-}
-
-
-.btn-primary:hover {
-  background-color: #2980b9;
-}
 
 .btn-secondary {
   background-color: #bdc3c7;
@@ -8481,7 +8359,7 @@ textarea {
 
 .modal-buttons .btn {
   font-size: 16px;
-  width: 156px;
+  width: 100%;
 }
 
 .mobile-menu-icon {
@@ -8865,7 +8743,6 @@ h2 {
 .btn {
   /* flex: 1; */
   padding: 14px 15px;
-  font-weight: 700;
   font-size: 0.8rem;
   border-radius: 4px;
   border: none;
@@ -8875,36 +8752,30 @@ h2 {
 }
 
 .btn-primary {
-  background-color: var(--text);
+  background-color: var(--primary);
   color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 .btn-warning {
     background-color: #c25151 !important;
     color: #fff;
-    box-shadow: 0 6px 15px #d19898 !important;
 }
 
 .btn-warning:hover {
     background-color: #842323 !important;
     color: #fff;
-    box-shadow: 0 6px 15px #c49797 !important;
 }
 
 .btn-primary:hover {
   background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
 }
 
 .btn-secondary {
   background-color: var(--text);
   color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
 }
 
 .btn-secondary:hover {
   background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
 /* Fade Transition */
@@ -8956,7 +8827,6 @@ h2 {
 
 .btn-primary.attractive-btn:hover {
   background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
 }
 
 .btn-danger.attractive-btn {
@@ -9222,7 +9092,6 @@ h2 {
   padding: 14px;
   border-radius: 14px;
   font-size: 1rem;
-  font-weight: 800;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -9348,7 +9217,7 @@ h2 {
 /* Action Buttons */
 .quotation-edit-btn,
 .quotation-delete-btn {
-  width: 34%;
+  width: auto;
   margin-left: 7px;
   border: none;
   padding: 8px 12px;
@@ -9394,10 +9263,7 @@ h2 {
   .user-table td a{
     font-size: 12px;
 }
-.btn-view-po{
-  font-size: 10px;
-  width: 58px;
-}
+
 /* Hide Sr.No column */
   .user-table th:nth-child(1),
   .user-table td:nth-child(1) {
@@ -9460,11 +9326,11 @@ justify-content: center;
   font-size: 16px;
 }
 .quotation-edit-btn{
-  width: 23%;
+  width: auto;
   font-size: 10px;
 }
 .quotation-delete-btn{
-   width: 25%;
+   width: auto;
   font-size: 10px;
 }
 .modal-card p{

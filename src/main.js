@@ -5,7 +5,7 @@ import axios from 'axios'
 
 // Base API URL
 axios.defaults.baseURL = 'https://employees.archenterprises.co.in/api'
-axios.defaults.withCredentials = true
+// axios.defaults.withCredentials = true
 
 // ✅ ALWAYS attach token before every request
 axios.interceptors.request.use(

@@ -1,20 +1,7 @@
 
 <template>
   <div class="layout">
-    <!-- Header -->
-      <header class="header">
-     <div class="head-title"><a href="https://employees.archenterprises.co.in/">
-        <img
-          src="https://archenterprises.co.in/ajay/ajay.png"
-          style="height: 65px;  border-radius: 9px;"
-          alt="Logo"
-        />
-         </a>
-         Arch 360
-     
-      </div>
-      <i class="fas fa-bars mobile-menu-icon" @click="toggleSidebar" v-if="isMobile"></i>
-    </header>
+
 
 
     <!-- Main Content -->
@@ -103,7 +90,8 @@
 
   
  <button class="edit-task-btn" @click.stop="editTask(report)">
-      <i class="fas fa-edit"></i> Edit
+          <i class="fa fa-edit" style="font-size:13px"></i>
+ Edit
     </button>
      <button class="delete-task-btn" @click.stop="deleteTask(report.id)">
       <i class="fas fa-trash-alt"></i> Delete
@@ -152,7 +140,7 @@
 
         <div class="modal-buttons">
           <button class="btn btn-primary" @click="closeModal">
-            <i class="fas fa-times-circle"></i>&nbsp;Close
+            <i class="fas fa-times-circle"></i>&nbsp;<i class="fa fa-close" style="font-size:13px"></i> Close
           </button>
         </div>
       </div>
@@ -232,7 +220,7 @@
               <i class="fas fa-check-circle"></i> Assign
             </button>
             <button class="btn btn-secondary" @click="closeAssignTaskModal">
-              <i class="fas fa-times-circle"></i> Cancel
+            <i class="fa fa-close" style="font-size:13px"></i> Cancel
             </button>
           </div>
         </div>

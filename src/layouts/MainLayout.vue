@@ -93,7 +93,7 @@
 
             <div class="modal-buttons">
               <button type="submit" class="btn btn-primary">
-                {{ isEditMode ? 'Update' : 'Register' }}
+               <i class="fa fa-save" style="font-size:13px"></i> {{ isEditMode ? 'Update' : 'Register' }}
               </button>
               <button type="button" class="btn btn-secondary" @click="closeRegisterForm()">Cancel</button>
             </div>

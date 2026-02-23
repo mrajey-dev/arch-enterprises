@@ -211,7 +211,7 @@ computed: {
     }).then(() => {
       console.log("Invoice saved ✔");
     }).catch(() => {
-      console.error("Invoice save failed ❌");
+      console.error("Invoice save failed ");
     });
   },
     getAssignedUser(row, visitNo) {
