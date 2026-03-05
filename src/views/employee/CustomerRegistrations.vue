@@ -37,6 +37,10 @@
    <button class="assign-btn "@click="goTo('employee/amcrecord')">
    <i class="fa fa-file-o" style="font-size:13px"></i> AMC Record Data
   </button>
+ <button class="assign-btn" @click="showEmailModal = true">
+  <i class="fa fa-envelope" style="font-size:13px"></i>
+  Customer Emails
+</button>
    <!-- <button class="assign-btn "@click="goTo('employee/viewallpo')">
     Purchase Order
   </button> -->
@@ -380,9 +384,9 @@
     disabled
     class="readonly-field"
   />
-   <div class="error-message">
+   <!-- <div class="error-message">
     ⚠ Verify the “Created By” name. If it is incorrect, refresh the page and try again.
-  </div>
+  </div> -->
 </div>
  
 
@@ -396,10 +400,10 @@
 
     <!-- ENGINE & TERMS -->
     <div class="quotation-section-card">
-      <h3 class="quotation-section-title">⚙️ Engine & Terms</h3>
+      <h3 class="quotation-section-title"> Equipments & Terms</h3>
       <div class="quotation-grid">
         <div class="quotation-form-group">
-          <label>Engine Serial No</label>
+          <label>Equipment Serial No</label>
           <input v-model="form.engine_serial" type="text" />
         </div>
         <div class="quotation-form-group">
@@ -614,7 +618,67 @@
 </div>
 
 
+<!-- PROFESSIONAL EMAIL MODAL -->
+<div v-if="showEmailModal" class="email-overlay">
+  <div class="email-modal">
 
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h3>Customer Email List</h3>
+
+    </div>
+
+    <!-- BODY -->
+    <div class="modal-body">
+
+      <div class="customer-row">
+        <input type="checkbox" @change="toggleAll($event)" />
+      <span> All</span>
+      </div>
+
+      <div
+        v-for="customer in customers"
+        :key="customer.id"
+        class="customer-row"
+      >
+        <input
+          type="checkbox"
+          :value="customer.email"
+          v-model="selectedEmails"
+        />
+        <span>{{ customer.email }}</span>
+      </div>
+
+    </div>
+
+    <!-- FIXED FOOTER -->
+    <div class="modal-footer">
+
+      <span class="selected-count">
+        {{ selectedEmails.length }} Selected
+      </span>
+
+      <div class="action-buttons">
+        <button
+          class="copy-btn"
+          :disabled="selectedEmails.length === 0"
+          @click="copyEmails"
+        >
+          <i class="fa fa-copy"></i> Copy Emails
+        </button>
+
+        <button
+          class="close-btn"
+          @click="showEmailModal = false"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
 
 <!-- Popup Modal -->
 <div v-if="showAssignPoModal" class="modal-backdrop">
@@ -2824,6 +2888,8 @@
     },
     data() {
     return {
+    showEmailModal: false,
+      selectedEmails: [],
   showDeliveredDatePopup: false,
   deliveredDate: '',
   poError: null,
@@ -3038,7 +3104,7 @@
     currency: "",
     customer_ref: "",
     recommended_by: "",
-    created_by: 'Admin',
+    created_by: JSON.parse(localStorage.getItem("user"))?.name || '',
     terms_conditions: '',
     customer_reference: "",
 
@@ -3144,6 +3210,9 @@ beforeUnmount() {
 },
 
  computed: {
+   hasSelection() {
+      return this.selectedEmails.length > 0;
+    },
 
   filteredDeliveredSupplies() {
     return this.applyCommonFilters(
@@ -3279,6 +3348,11 @@ beforeUnmount() {
 },
 
 watch: {
+   showEmailModal(val) {
+      if (val) {
+        this.fetchCustomers();
+      }
+    },
 
   // 🔹 Visit Modal
   showVisitPopup: {
@@ -3317,11 +3391,19 @@ watch: {
   }
 
 },
-
-  
-
-
  methods: {
+   toggleAll(event) {
+    if (event.target.checked) {
+      this.selectedEmails = this.customers.map(c => c.email);
+    } else {
+      this.selectedEmails = [];
+    }
+  },
+   copyEmails() {
+      const emails = this.selectedEmails.join(", ");
+      navigator.clipboard.writeText(emails);
+      toastSuccess("Emails copied successfully!");
+    },
 
   applyCommonFilters(list, filters, dateField = null, extraFilter = null) {
     return list.filter(item => {
@@ -3770,7 +3852,7 @@ async reopenPo(poId) {
 
 validateEmail() {
     const emailPattern =
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|co\.in|in|edu|gov|io)$/;
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|co\.in|in|edu|gov|io|mg)$/;
 
     if (!this.customer.email) {
       this.emailError = '';
@@ -9623,5 +9705,133 @@ justify-self: center;
   margin-top: 4px;
   display: block;
 }
+/* Overlay */
+.email-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
+/* Modal */
+.email-modal {
+  width: 500px;
+  max-height: 80vh;
+  background: #ffffff;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+/* Header */
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+      font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.close-icon {
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Body */
+.modal-body {
+  padding: 15px 20px;
+  overflow-y: auto;
+  justify-items: left;
+  flex: 1;
+}
+
+.customer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f3f3;
+  font-size: 14px;
+}
+
+.select-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+/* Footer */
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fafafa;
+  position: sticky;
+  bottom: 0;
+}
+
+.selected-count {
+  font-size: 13px;
+  color: #555;
+}
+
+/* Buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.copy-btn {
+  background: #1f7ae0;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.copy-btn:disabled {
+  background: #b5c7e6;
+  cursor: not-allowed;
+}
+
+.close-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 </style>

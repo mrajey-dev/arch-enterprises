@@ -398,8 +398,8 @@ faqMap: {
     selectedHelp: null,
       idleTimer: null,
       warningTimer: null,
-      idleTimeLimit: 3 * 60 * 60 * 1000,   // 3 hours
-warningTime: (3 * 60 * 60 - 10) * 1000, // 10 seconds before 3 hours
+      idleTimeLimit: 9 * 60 * 60 * 1000,   // 9 hours
+warningTime: (9 * 60 * 60 - 10) * 1000, // 10 seconds before 9 hours
 
 
       showWarning: false,

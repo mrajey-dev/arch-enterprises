@@ -21,7 +21,7 @@
           </div>
 
           <div class="form-group">
-            <label>Salary (CTC)</label>
+            <label>Stipend (During probation period)/Month</label>
             <input v-model="form.salary" type="text" placeholder="Enter annual salary" />
           </div>
 

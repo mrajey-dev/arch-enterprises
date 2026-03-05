@@ -166,12 +166,12 @@
 <!-- NEW ROW BELOW BOTH SECTIONS -->
 <div class="two-column-row">
   <div class="row-field half">
-    <label>Engine Serial No.</label>
+    <label>Equipments Serial No.</label>
     <div class="static-field">{{ form.engine_serial }}</div>
   </div>
 
   <div class="row-field half">
-    <label>Model No.</label>
+    <label>Equipments Model No.</label>
     <div class="static-field">{{ form.model_no }}</div>
   </div>
 </div>
@@ -1007,7 +1007,7 @@ printQuotation() {
 }
 
 .row-field label {
-  width: 72px;        /* fixed width for labels */
+  width: 88px;        /* fixed width for labels */
   font-weight: bold;
 }
 

@@ -27,10 +27,18 @@
           </div>
 
           <div class="form-group">
-            <label>Salary (CTC)</label>
-            <input v-model="form.salary" type="text" placeholder="Enter annual salary" />
+             <label>Stipend (During probation period per month)</label>
+            <input v-model="form.salary" type="text" placeholder="Enter salary" />
           </div>
-
+<div class="form-group">
+  <label>Probation Period</label>
+  <select v-model="form.probationPeriod">
+    <option disabled value="">Select probation period</option>
+    <option value="3 Months">3 Months</option>
+    <option value="6 Months">6 Months</option>
+    <option value="1 Year">1 Year</option>
+  </select>
+</div>
           <div class="form-group">
             <label>Joining Date</label>
             <input v-model="form.joiningDate" type="date" />
@@ -94,8 +102,11 @@
     </p>
 
     <p>
-      Your annual Cost to Company (CTC) shall be
-      <strong>₹{{ form.salary }}</strong>.
+      You will be placed on probation for a period of <strong>{{ form.probationPeriod }}</strong>.
+During this probation period, you will receive a stipend of <strong>₹{{ form.salary }}</strong> per month.
+Upon successful completion of the probation period, management reserves the right to revise your salary based on your performance.
+
+      
     </p>
 
     <p>
@@ -128,7 +139,7 @@
     <!-- <p>For Arch Enterprises</p> -->
 
     <!-- HR Signature Image -->
-      <img :src="signature" class="hr-signature" />
+  
 
 
     <div class="sign-line"></div>
@@ -246,6 +257,7 @@ export default {
  data() {
   return {
     editingId: null,
+      probationPeriod: '',
     logo: logoImage,
     signature: signatureImage,
     isMobile: false,
@@ -280,7 +292,8 @@ computed: {
     position: offer.position,
     salary: offer.salary,
     joiningDate: offer.joining_date,
-    type: offer.work_type
+    type: offer.work_type,
+    probationPeriod: offer.probation_period,
   }
 
   this.editingId = offer.id   // track editing record
@@ -360,7 +373,7 @@ goToOfferList() {
     },
 
 async generatePDF() {
-  if (!this.form.name || !this.form.position || !this.form.salary) {
+  if (!this.form.name || !this.form.position || !this.form.salary || !this.form.probationPeriod) {
     toastWarning("Please fill all required fields")
     return
   }
