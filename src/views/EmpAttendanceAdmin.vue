@@ -88,18 +88,50 @@
       </div>
 
       <!-- Status -->
-      <div class="field">
-        <label>Status</label>
-        <select v-model="markAttendance.status" :class="markAttendance.status">
-          <option value="">Select Status</option>
-          <option>Present</option>
-          <option>Traveling</option>
-          <option>OnSite</option>
-          <option>HalfDay</option>
-          <option>Leave</option>
-          <option>Absent</option>
-        </select>
-      </div>
+      <!-- Status -->
+<div class="field">
+  <label>Status</label>
+  <select v-model="markAttendance.status" :class="markAttendance.status">
+    <option value="">Select Status</option>
+    <option>Present</option>
+    <option>Traveling</option>
+    <option>OnSite</option>
+    <option>HalfDay</option>
+    <option>Leave</option>
+    <option>Absent</option>
+  </select>
+</div>
+
+<!-- OnSite Field -->
+<div class="field" v-if="markAttendance.status === 'OnSite'">
+  <label>Site Name</label>
+  <input
+    type="text"
+    v-model="markAttendance.site_name"
+    placeholder="Enter Site Name"
+  />
+</div>
+
+<!-- Traveling Fields -->
+<div class="two-col" v-if="markAttendance.status === 'Traveling'">
+  <div class="field">
+    <label>Travel From</label>
+    <input
+      type="text"
+      v-model="markAttendance.travel_from"
+      placeholder="Enter Travel From"
+    />
+  </div>
+
+  <div class="field">
+    <label>Travel To</label>
+    <input
+      type="text"
+      v-model="markAttendance.travel_to"
+      placeholder="Enter Travel To"
+    />
+  </div>
+</div>
 
       <!-- Date & Time -->
       <div class="two-col">
@@ -290,7 +322,10 @@ markAttendance: {
   employee: '',
   status: '',
   date: '',
-  time: ''
+  time: '',
+   site_name: "",
+      travel_from: "",
+      travel_to: ""
 },
 today: '',
       showMarkAttendancePopup: false,
@@ -430,10 +465,14 @@ async submitMarkedAttendance() {
       name: this.markAttendance.employee,
       status: this.markAttendance.status,
       clock_in: this.markAttendance.time || null,
-      date: this.markAttendance.date
+      date: this.markAttendance.date,
+
+      // NEW FIELDS
+      site_name: this.markAttendance.site_name || null,
+      travel_from: this.markAttendance.travel_from || null,
+      travel_to: this.markAttendance.travel_to || null
     };
 
-    // 🔥 SINGLE API CALL (backend handles update or insert)
     await axios.post(
       'https://employees.archenterprises.co.in/api/api/attendance/store-or-update',
       payload
@@ -448,10 +487,13 @@ async submitMarkedAttendance() {
       employee: '',
       status: '',
       date: '',
-      time: ''
+      time: '',
+      site_name: '',
+      travel_from: '',
+      travel_to: ''
     };
 
-    this.fetchAttendance(); // refresh table
+    this.fetchAttendance();
 
   } catch (error) {
     console.error('Error saving attendance:', error);

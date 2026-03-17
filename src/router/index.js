@@ -9,6 +9,7 @@ import ResourceBooking from '../views/ResourceBooking.vue'
 import RequestDesk from '../views/RequestDesk.vue'
 import RecruitmentSection from '../views/RecruitmentSection.vue'
 import ScheduleMeeting from '../views/ScheduleMeeting.vue'
+import SupplyItems from '../views/SupplyItems.vue';
 
 
 
@@ -65,7 +66,7 @@ import CustomerRegistrations from '../views/employee/CustomerRegistrations.vue'
 import VisitSchedule from '../views/employee/VisitSchedule.vue'
 import MyDsi from '../views/employee/MyDsi.vue'
 import Help from '../views/employee/Help.vue'
-
+import QuotationReport from '../views/QuotationReport.vue';
 
 
 import MyProfile from '../views/employee/MyProfile.vue'
@@ -111,7 +112,7 @@ const routes = [
 
   {path: '/OfferLetter', name: 'OfferLetter', component: OfferLetter, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
   {path: '/JoiningLetter', name: 'JoiningLetter', component: JoiningLetter, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
-
+{path: '/SupplyItems', name: 'SupplyItems', component: SupplyItems, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
 {
   path: '/OfferLetterList',
   name: 'OfferLetterList',
@@ -202,6 +203,9 @@ const routes = [
   { path: '/employee/help', name: 'Help', component: Help, meta: { requiresAuth: true } },
   { path: '/employee/empworkreport', name: 'EmpWorkReport', component: EmpWorkReport, meta: { requiresAuth: true } },
   { path: '/employee/myprofile', name: 'MyProfile', component: MyProfile },
+  {
+  path: '/quotation-report', name: 'QuotationReport', component: QuotationReport, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, hideHeader: true }
+}
 ]
 
 

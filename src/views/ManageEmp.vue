@@ -600,7 +600,7 @@ import {
 },
           sendWelcomeEmail(user) {
   if (!user.email) {
-    toastSuccess("User email not found.");
+    toastWarning("User email not found.");
     return;
   }
 
@@ -617,7 +617,7 @@ import {
   })
   .catch(err => {
     console.error('Error sending email:', err);
-    toastSuccess('Failed to send welcome email.');
+    toastError('Failed to send welcome email.');
   });
 },
 
@@ -625,7 +625,7 @@ import {
   const file = event.target.files[0];
 
   if (!this.selectedDocumentType || !file) {
-    toastSuccess('Please select both a document type and a file.');
+    toastWarning('Please select both a document type and a file.');
     return;
   }
 
@@ -656,7 +656,7 @@ import {
   })
   .catch(err => {
     console.error('Upload error:', err.response?.data || err);
-    toastSuccess('Upload failed: ' + (err.response?.data?.message || 'Unexpected error'));
+    toastError('Upload failed: ' + (err.response?.data?.message || 'Unexpected error'));
   });
 },
 
@@ -743,7 +743,7 @@ import {
 
           assignKRA() {
             if (this.selectedKRAs.length === 0) {
-              toastSuccess('Please select at least one KRA.');
+              toastWarning('Please select at least one KRA.');
               return;
             }
 
@@ -813,7 +813,7 @@ async handleRegister() {
   if (!this.isEditMode) {
     const exists = await this.checkEmailExists();
     if (exists) {
-      toastSuccess("❌ Email is already registered! Please use another email.");
+      toastWarning("❌ Email is already registered! Please use another email.");
       return; // Stop registration
     }
   }
@@ -875,7 +875,7 @@ async handleRegister() {
         console.log("Welcome email sent successfully!");
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError.response?.data || emailError.message);
-        toastSuccess("User registered but email could not be sent.");
+        toastWarning("User registered but email could not be sent.");
       }
 
       toastSuccess("Registration successful!");
@@ -886,7 +886,7 @@ async handleRegister() {
     this.fetchUsers();
   } catch (error) {
     console.error("Register/Update error:", error.response?.data || error.message);
-    toastSuccess("Registration failed.");
+    toastError("Registration failed.");
   } finally {
     this.loading = false;
   }
@@ -899,19 +899,19 @@ validateForm() {
 
   // Employee ID required & numeric (only in register mode)
   if (!this.isEditMode && (!/^[0-9]+$/.test(form.empId))) {
-    toastSuccess("Employee ID must contain numbers only!");
+    toastWarning("Employee ID must contain numbers only!");
     return false;
   }
 
   // Full Name – alphabets only
   if (!/^[A-Za-z ]+$/.test(form.username.trim())) {
-    toastSuccess("Full Name should contain alphabets only!");
+    toastWarning("Full Name should contain alphabets only!");
     return false;
   }
 
   // Handle validation
 if (!/^[A-Za-z0-9_]+$/.test(form.handle.trim())) {
-  toastSuccess("Handle can only contain letters, numbers, and underscores!");
+  toastWarning("Handle can only contain letters, numbers, and underscores!");
   return false;
 }
 
@@ -920,7 +920,7 @@ if (!/^[A-Za-z0-9_]+$/.test(form.handle.trim())) {
 
   // Salary check
   if (form.keyResponsibility && isNaN(form.keyResponsibility)) {
-    toastSuccess("Salary must be numeric!");
+    toastWarning("Salary must be numeric!");
     return false;
   }
 
@@ -931,13 +931,13 @@ if (!/^[A-Za-z0-9_]+$/.test(form.handle.trim())) {
 
   // Mobile number validation
   if (!/^[0-9]{10}$/.test(form.mobile)) {
-    toastSuccess("Contact Number must be exactly 10 digits!");
+    toastError("Contact Number must be exactly 10 digits!");
     return false;
   }
 
   // Secondary Contact optional but validate if entered
   if (form.secondaryContact && !/^[0-9]{10}$/.test(form.secondaryContact)) {
-    toastSuccess("Secondary Contact Number must be exactly 10 digits!");
+    toastError("Secondary Contact Number must be exactly 10 digits!");
     return false;
   }
 
@@ -954,7 +954,7 @@ async checkEmailUnique(email) {
 
       const data = await res.json();
       if (data.exists) {
-        toastSuccess("This email is already registered!");
+        toastWarning("This email is already registered!");
         return false;
       }
 

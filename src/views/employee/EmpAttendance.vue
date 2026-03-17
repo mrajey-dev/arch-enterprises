@@ -36,60 +36,47 @@
               <tbody>
                 <tr>
   
-  <td data-label="Punch In"><br>
-  <select
-    v-model="user.status"
-    @change="updateStatus"
-    :disabled="user.statusLocked"
-    class="status-select"
-  >
-    <option disabled value="">🔽 Select</option>
-    <option
-      v-for="status in availableStatuses"
-      :key="status"
-      :value="status"
+<td data-label="Punch In" class="status-cell">
+  <div class="status-dropdown">
+
+
+    <select
+      v-model="user.status"
+      @change="updateStatus"
+      class="status-select"
     >
-      {{ getStatusLabel(status) }}
-    </option>
-  </select>
+      <option disabled value="">Select Status</option>
+
+      <option
+        v-for="status in availableStatuses"
+        :key="status"
+        :value="status"
+      >
+        {{ getStatusLabel(status) }}
+      </option>
+
+    </select>
+
+  </div>
 </td>
 
 
 
 
                 <td data-label="Clock In">
-    <!-- Absent -->
-    <!-- <span v-if="user.status === 'Absent'" class="text-danger font-weight-bold">Absent</span> -->
+ 
 
-    <!-- On Site -->
-    <!-- <input
-      v-else-if="user.status === 'On Site'"
-      type="text"
-      v-model="user.siteName"
-      class="form-control form-control-sm"
-      placeholder="Enter site name"
-      :disabled="user.statusLocked"
-      @blur="lockIfOnSiteWithValue"
-    /> -->
-
-
-    <!-- Site Traveling -->
     
   <!-- Site Traveling: Show Time Picker with "From:" label -->
   <div v-if="user.status === 'Traveling'">
     <label class="mb-0"><strong>-</strong></label>
-  <!-- <input
-    type="time"
-    v-model="user.travelFrom"
-    class="form-control form-control-sm mt-1"
-    :disabled="user.statusLocked"
-  /> -->
+
 
   </div>
 
 
   <!-- Half Day -->
-  <!-- Half Day -->
+
   <span v-else-if="user.status === 'HalfDay'">
     {{ user.clockIn }}
   </span>
@@ -111,13 +98,7 @@
     <!-- Site Traveling: Show Time Picker -->
     <div v-if="user.status === 'Traveling'">
       <label class="mb-0"><strong>-</strong></label>
-      <!-- <input
-      type="time"
-      v-model="user.travelTo"
-      class="form-control form-control-sm mt-1"
-      :disabled="user.statusLocked"
-      @change="handleTravelToChange(user)"
-    /> -->
+
 
 
     </div>
@@ -234,7 +215,94 @@
 
     
     </div>
-  </template>
+ <!-- OnSite Popup Modal -->
+<div v-if="showOnSitePopup" class="popup-overlay">
+
+  <div class="popup-box">
+
+    <div class="popup-header">
+      <span class="popup-icon">📍</span>
+      <h4>Enter Site Name</h4>
+    </div>
+
+    <p class="popup-subtitle">
+      Please enter the site location for today's onsite work.
+    </p>
+
+    <input
+      type="text"
+      v-model="user.siteName"
+      class="site-input"
+      placeholder="Enter site name"
+      autofocus
+    />
+
+    <div class="popup-buttons">
+
+      <button class="btn-submit" @click="confirmOnSite">
+        ✔ Submit
+      </button>
+
+      <button class="btn-cancel" @click="cancelOnSite">
+        ✖ Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+ 
+<!-- Traveling Popup Modal -->
+<div v-if="showTravelPopup" class="popup-overlay">
+
+  <div class="popup-box">
+
+    <div class="popup-header">
+      <span class="popup-icon">✈️</span>
+      <h4>Travel Details</h4>
+    </div>
+
+    <p class="popup-subtitle">
+      Please enter travel locations.
+    </p>
+
+    <div class="mb-3">
+      <label><b>From Place</b></label>
+      <input
+        type="text"
+        v-model="user.travelFrom"
+        class="site-input"
+        placeholder="Enter starting place"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label><b>To Place</b></label>
+      <input
+        type="text"
+        v-model="user.travelTo"
+        class="site-input"
+        placeholder="Enter destination place"
+      />
+    </div>
+
+    <div class="popup-buttons">
+
+      <button class="btn-submit" @click="confirmTravel">
+        ✔ Submit
+      </button>
+
+      <button class="btn-cancel" @click="cancelTravel">
+        ✖ Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+</template>
 
   <script>
     import axios from 'axios'
@@ -265,6 +333,8 @@
         }
       }
         return {
+          showTravelPopup: false,
+          showOnSitePopup: false,
            lockTimer: null,
   disableStatusSelect: false,
              status: '',
@@ -342,8 +412,23 @@
 
 
 
+methods: {
+confirmOnSite() {
 
-      methods: {
+  if (!this.user.siteName) {
+    alert("Please enter site name");
+    return;
+  }
+
+  this.showOnSitePopup = false;
+
+  this.saveAttendance();
+
+},
+cancelOnSite() {
+  this.showOnSitePopup = false;
+  this.user.status = "";
+},
    formatDate(date) {
   if (!date) return '—';
   return new Date(date).toLocaleDateString('en-IN', {
@@ -499,8 +584,8 @@ fetchTodayStatus() {
         this.user.actualTime = record.actual_time || '';
         
         // ✅ Disable dropdown if a record exists
-        this.disableStatusSelect = true;
-        this.user.statusLocked = true;
+        this.disableStatusSelect = false;
+        this.user.statusLocked = false;
 
         const key = `attendance_${this.currentDate}_${this.user.name}`;
         localStorage.setItem(key, JSON.stringify(this.user));
@@ -919,88 +1004,101 @@ fetchTodayStatus() {
       })
     },
 
-updateStatus() {
-  // If already locked permanently, don't allow further changes
-  if (this.user.permanentlyLocked) return;
-
+    saveAttendance() {
+console.log('Saving attendance with status:', this.user.status); // Debug log
   const now = new Date();
   const formattedTime = this.getCurrentTime();
 
-  // Update punch-in time and reset relevant fields
   this.user.clockIn = formattedTime;
   this.user.clockOut = '';
   this.user.actualTime = '';
-  this.user.statusLocked = false;      // keep enabled initially
-  this.user.permanentlyLocked = false; // allow 30-sec re-selection
 
-  // Time thresholds
-  const earlyThreshold = new Date(now); earlyThreshold.setHours(9, 30, 0, 0);
-  const lateThreshold  = new Date(now); lateThreshold.setHours(10, 0, 0, 0);
-  const halfDayThreshold = new Date(now); halfDayThreshold.setHours(13, 0, 0, 0);
+  const earlyThreshold = new Date(now);
+  earlyThreshold.setHours(9,30,0,0);
 
-  // Status logic
+  const lateThreshold = new Date(now);
+  lateThreshold.setHours(10,0,0,0);
+
+  const halfDayThreshold = new Date(now);
+  halfDayThreshold.setHours(13,0,0,0);
+
   this.user.isEarly = now < earlyThreshold;
   this.user.isLate = now > lateThreshold;
+
   if (now > halfDayThreshold && this.user.status === 'Present') {
     this.user.status = 'HalfDay';
   }
 
   const token = localStorage.getItem('token');
   const today = this.currentDate;
-  const isSunday = new Date(today).getDay() === 0;
 
-  // Save attendance to backend
   axios.post('https://employees.archenterprises.co.in/api/api/attendance/store', {
+
     name: this.user.name,
     status: this.user.status,
     clock_in: this.user.clockIn,
     clock_out: this.user.clockOut,
     required_time: this.user.requiredTime,
     actual_time: this.user.actualTime,
-    site_name: this.user.siteName,
+    site_name: this.user.status === 'OnSite' ? this.user.siteName : null,
     travel_from: this.user.travelFrom,
     travel_to: this.user.travelTo,
     date: today
+
   }, {
     headers: { Authorization: `Bearer ${token}` }
-  }).then(() => {
-    console.log('✅ Attendance inserted');
+  })
 
-    // Increment CL leave if Sunday
-    if (isSunday) {
-      axios.put('https://employees.archenterprises.co.in/api/api/user/update-cl-leave', {
-        name: this.user.name,
-        increment: 1
-      }, { headers: { Authorization: `Bearer ${token}` }})
-      .then(() => {
-        console.log('✅ CL leave incremented for Sunday punch-in');
-        const localUser = JSON.parse(localStorage.getItem('user'));
-        localUser.cl_leave_used = (localUser.cl_leave_used || 0) + 1;
-        localStorage.setItem('user', JSON.stringify(localUser));
-      })
-      .catch(err => console.error('❌ Failed to increment CL leave:', err));
-    }
+  .then(()=>{
+    console.log("✅ Attendance saved");
+  })
 
-  }).catch(err => console.error('❌ Attendance store failed:', err));
+  .catch(err=>{
+    console.error("❌ Attendance save failed",err);
+  });
 
-  // Save locally
-  localStorage.setItem('attendance_' + today + '_' + this.user.name, JSON.stringify(this.user));
+  const key = `attendance_${today}_${this.user.name}`;
+  localStorage.setItem(key, JSON.stringify(this.user));
 
-  // ⏳ Lock dropdown AFTER 30 SECONDS
-  if (this.lockTimer) clearTimeout(this.lockTimer); // reset if user changes again
-  this.lockTimer = setTimeout(() => {
-    this.user.statusLocked = true;
-    this.user.permanentlyLocked = true;
+},
+updateStatus() {
 
-    localStorage.setItem(
-      'attendance_' + today + '_' + this.user.name,
-      JSON.stringify(this.user)
-    );
+  if (this.user.status !== 'OnSite') {
+    this.user.siteName = '';
+  }
 
-    console.log('🔒 Status locked permanently after 30 seconds');
-  }, 30 * 1000); // 30 seconds
+  // OnSite popup
+  if (this.user.status === 'OnSite') {
+    this.showOnSitePopup = true;
+    return;
+  }
+
+  // Traveling popup
+  if (this.user.status === 'Traveling') {
+    this.showTravelPopup = true;
+    return;
+  }
+
+  this.saveAttendance();
+},
+confirmTravel() {
+
+  if (!this.user.travelFrom || !this.user.travelTo) {
+    alert("Please enter both places");
+    return;
+  }
+
+  this.showTravelPopup = false;
+
+  this.saveAttendance(); // save with travel data
 },
 
+cancelTravel() {
+  this.showTravelPopup = false;
+  this.user.status = "";
+  this.user.travelFrom = "";
+  this.user.travelTo = "";
+},
 
 
 
@@ -1083,8 +1181,11 @@ updateStatus() {
   const savedData = localStorage.getItem(key);
 
   if (savedData) {
-    this.user = JSON.parse(savedData);
-  } else {
+  this.user = JSON.parse(savedData);
+
+  // allow change again until timer expires
+  this.user.permanentlyLocked = false;
+} else {
     // If no saved data, fetch from server
     this.fetchTodayStatus();
   }
@@ -2427,4 +2528,178 @@ img {
   cursor: pointer;
 }
 
+/* ===== OnSite Popup ===== */
+
+.popup-overlay{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+.popup-box{
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: popupFade 0.3s ease;
+}
+
+.popup-box h4{
+  font-weight: 600;
+  color: var(--text);
+}
+
+.popup-buttons{
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.popup-buttons .btn{
+  flex: 1;
+}
+
+/* animation */
+@keyframes popupFade{
+  from{
+    transform: scale(0.8);
+    opacity:0;
+  }
+  to{
+    transform: scale(1);
+    opacity:1;
+  }
+}
+/* ===== Popup Overlay ===== */
+
+.popup-overlay{
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.55);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+/* ===== Popup Card ===== */
+
+.popup-box{
+  background:white;
+  width:380px;
+  padding:30px;
+  border-radius:14px;
+  text-align:center;
+  box-shadow:0 15px 40px rgba(0,0,0,0.25);
+  animation:popupFade 0.35s ease;
+}
+
+/* header */
+
+.popup-header{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:5px;
+}
+
+.popup-icon{
+  font-size:20px;
+}
+
+.popup-header h4{
+  font-weight:600;
+  margin:0;
+}
+
+/* subtitle */
+
+.popup-subtitle{
+  font-size:13px;
+  color:#666;
+  margin-bottom:18px;
+}
+
+/* input */
+
+.site-input{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid #ddd;
+  border-radius:6px;
+  font-size:14px;
+  outline:none;
+  transition:0.2s;
+}
+
+.site-input:focus{
+  border-color:#4caf50;
+  box-shadow:0 0 0 2px rgba(76,175,80,0.15);
+}
+
+/* buttons */
+
+.popup-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+
+.btn-submit{
+  flex:1;
+  background:#4caf50;
+  border:none;
+  padding:10px;
+  border-radius:6px;
+  color:white;
+  font-weight:500;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.btn-submit:hover{
+  background:#3d9442;
+}
+
+.btn-cancel{
+  flex:1;
+  background:#f44336;
+  border:none;
+  padding:10px;
+  border-radius:6px;
+  color:white;
+  font-weight:500;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.btn-cancel:hover{
+  background:#d7372c;
+}
+
+/* animation */
+
+@keyframes popupFade{
+  from{
+    transform:scale(0.8);
+    opacity:0;
+  }
+  to{
+    transform:scale(1);
+    opacity:1;
+  }
+}
 </style> 

@@ -1390,7 +1390,7 @@ input:checked + .slider:before {
 }
 
 .header {
-  background: linear-gradient(135deg, var(--primary), #000000);
+  background: var(--primary);
   color: white;
   padding: 12px 30px;
   display: flex;
@@ -1527,7 +1527,7 @@ input:checked + .slider:before {
   text-decoration: underline;
 }
 .guest-avatar {
-  background: linear-gradient(135deg, var(--primary), #000000);
+  background: var(--primary);
   color: #fff;
   font-weight: 600;
 }
@@ -1560,7 +1560,7 @@ input:checked + .slider {
   gap: 24px;
 }
 .header {
-  background: linear-gradient(135deg, var(--primary), #000000);
+  background: var(--primary);
   padding: 14px 36px;
   border-bottom: 1px solid rgba(255,255,255,0.15);
   box-shadow: 0 6px 18px rgba(0,0,0,0.12);
@@ -1588,7 +1588,7 @@ input:checked + .slider {
 }
 
 .tab.active {
-  background: linear-gradient(135deg, var(--primary), #000000);
+  background: var(--primary);
   box-shadow: 0 6px 15px rgba(31,127,111,0.25);
 }
 .form-control {
@@ -1609,7 +1609,7 @@ input:checked + .slider {
   box-shadow: 0 18px 45px rgba(0,0,0,0.12);
 }
 .preview-header {
-  background: linear-gradient(135deg, var(--primary), #000000);
+  background: var(--primary);
   color: white;
   padding: 12px 16px;
   border-radius: 14px;
@@ -1629,7 +1629,7 @@ input:checked + .slider {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), #000000);
+  background: var(--primary);
 }
 
 .btn-primary:hover {

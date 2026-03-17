@@ -44,6 +44,10 @@
   Notes
 </label>
 
+<label>
+  <input type="checkbox" v-model="showFilters.attendance" />
+  Attendance
+</label>
   
 </div>
 <div v-if="showDatePopup" class="modal-backdrop" @click.self="closeDatePopup">
@@ -168,7 +172,7 @@
 
       <div class="info-item" style="margin-top:12px">
         <span class="label">Description</span>
-        <p class="value">{{ viewEvent.description }}</p>
+        <p class="value description-text">{{ viewEvent.description }}</p>
       </div>
                <div class="info-item" v-if="selectedMeeting.guests?.length">
   <span class="label">Guests</span>
@@ -389,6 +393,7 @@ export default {
 
 data() {
   return {
+    attendanceEvents: [],
    isEditingTopics: false, 
       showAllGuests: false,
     meetingTopics: '',
@@ -425,7 +430,8 @@ data() {
   birthdays: true,
   holidays: true,
   events: true,
-  notes: true
+  notes: true,
+  attendance: true
 },
     visitEvents: [],
     events: [],
@@ -497,6 +503,10 @@ sanitizedTopics() {
     ? this.visitEvents.filter(v => v.date === fullDate)
     : []),
 
+     ...(this.showFilters.attendance
+  ? this.attendanceEvents.filter(a => a.date === fullDate)
+  : []),
+
   ...(this.customCalendarEvents.filter(c =>
   c.date === fullDate &&
   (
@@ -525,6 +535,78 @@ sanitizedTopics() {
   },
 
   methods: {
+    openAttendance(event) {
+
+  if (!event) return
+
+  const employeeName = event.name || 'Missing Name'
+  const travelFrom = event.travel_from || '-'
+  const travelTo = event.travel_to || '-'
+  const siteName = event.site_name || '-'
+
+  let description = ''
+
+  if (event.status === 'Traveling') {
+    description = `Employee: ${employeeName}
+Travel From: ${travelFrom}
+Travel To: ${travelTo}`
+  } 
+  else if (event.status === 'OnSite') {
+    description = `Employee: ${employeeName}
+Site: ${siteName}`
+  }
+
+  this.viewEvent = {
+    title: event.title || 'Attendance',
+    description,
+    type: 'attendance',
+    date: event.date
+  }
+
+  this.showViewModal = true
+},
+    async fetchAttendanceCalendar() {
+  try {
+    const res = await fetch(
+      'https://employees.archenterprises.co.in/api/api/attendance/calendar',
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
+    )
+
+    const data = await res.json()
+
+    this.attendanceEvents = data
+      .filter(a => a.status === 'Traveling' || a.status === 'OnSite')
+      .map(a => {
+
+        let title = ''
+
+        if (a.status === 'Traveling') {
+          title = `🚗 ${a.travel_from} → ${a.travel_to}`
+        } else if (a.status === 'OnSite') {
+          title = `📍 ${a.site_name}`
+        }
+
+        return {
+          id: a.id,
+          date: a.date,
+          title: title,
+          name: a.name || a.employee_name || 'missing name',
+          travel_from: a.travel_from,
+          travel_to: a.travel_to,
+          site_name: a.site_name,
+          status: a.status,
+          type: 'attendance'
+        }
+      })
+
+  } catch (e) {
+    console.error('Attendance fetch failed', e)
+  }
+},
     enableTopicEdit() {
   this.meetingTopics = this.selectedMeeting.topics || ''
   this.isEditingTopics = true
@@ -790,6 +872,9 @@ async openVisit(id) {
 
 handleEventClick(event) {
   switch (event.type) {
+    case 'attendance':
+  this.openAttendance(event)
+  break
     case 'service':
       this.openService(event.id)
       break
@@ -978,6 +1063,7 @@ mounted() {
   const token = localStorage.getItem('token')
   if (!token) this.$router.push('/auth')
 
+  this.fetchAttendanceCalendar()
   this.fetchServiceAssignments()
   this.fetchVisitAssignments()
   this.fetchMeetings()
@@ -1908,5 +1994,10 @@ h2 {
   outline: none;
   box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.3);
 }
-
+.description-text {
+  white-space: pre-line;
+} 
+.event.attendance{
+  background:#35ff50;
+}
 </style>

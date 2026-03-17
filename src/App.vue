@@ -139,10 +139,11 @@
   <li @click="goTo('employee/applyleave')">
             <i class="fas fa-plane-departure"></i><span> Apply for Leave </span>
           </li>
-        <li
-  @click="goTo('employee/visitschedule')"
+   <li 
+  class="mobile-only"
+  @click="goTo('employee/Customerregistrations')"
 >
-  <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
+  <i class="fas fa-user-friends"></i><span> CRM</span>
 </li>
 
     <li @click="goTo('employee/viewAnnouncement')">
@@ -1058,7 +1059,7 @@ body,
 /* 🌐 Modern Global Topbar */
 .global-topbar {
     height: 83px;
-    background: linear-gradient(135deg, var(--primary), #000000);
+    background: var(--primary);
     color: var(--text-white);
     display: flex;
     align-items: center;
