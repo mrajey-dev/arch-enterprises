@@ -156,49 +156,113 @@
   </div>
 
   <!-- View Note / Event Popup -->
-<div v-if="showViewModal" class="modal-backdrop" @click.self="showViewModal=false">
+<div v-if="showViewModal" class="modal-backdrop" @click.self="closeViewModal">
   <div class="modal-card small professional">
 
+    <!-- HEADER -->
     <div class="modal-header">
-      <h3 class="modal-title">{{ viewEvent.title }}</h3>
-      <span class="status-badge">{{ viewEvent.type }}</span>
+      <h3 class="modal-title">
+        {{ isEditingView ? 'Edit ' + viewEvent.type : viewEvent.title }}
+      </h3>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="status-badge">{{ viewEvent.type }}</span>
+
+        <!-- ✏️ EDIT ICON -->
+        <i 
+          v-if="isCustomEvent(viewEvent) && !isEditingView"
+          class="fa fa-edit"
+          style="cursor:pointer; font-size:16px;"
+          @click="startEditFromView"
+        ></i>
+      </div>
     </div>
 
+    <!-- BODY -->
     <div class="modal-body">
-      <div class="info-item">
-        <span class="label">Date</span>
-        <span class="value">{{ viewEvent.date }}</span>
+
+      <!-- ================= VIEW MODE ================= -->
+      <div v-if="!isEditingView">
+
+        <div class="info-item">
+          <span class="label">Date</span>
+          <span class="value">{{ viewEvent.date }}</span>
+        </div>
+
+        <div class="info-item" style="margin-top:12px">
+          <span class="label">Description</span>
+          <p class="value description-text">
+            {{ viewEvent.description || '—' }}
+          </p>
+        </div>
+
+        <!-- Guests (keep as is) -->
+        <div class="info-item" v-if="selectedMeeting.guests?.length">
+          <span class="label">Guests</span>
+
+          <ul class="guest-list">
+            <li v-for="(g, i) in displayedGuests" :key="i">
+              {{ g }}
+            </li>
+          </ul>
+
+          <button
+            v-if="selectedMeeting.guests.length > 2"
+            class="show-btn"
+            @click="showAllGuests = !showAllGuests"
+          >
+            {{ showAllGuests ? "Show Less" : "Show All" }}
+          </button>
+        </div>
+
       </div>
 
-      <div class="info-item" style="margin-top:12px">
-        <span class="label">Description</span>
-        <p class="value description-text">{{ viewEvent.description }}</p>
+      <!-- ================= EDIT MODE ================= -->
+      <div v-else class="fade-in">
+
+        <div class="info-item">
+          <span class="label">Date</span>
+          <span class="value">{{ viewEvent.date }}</span>
+        </div>
+
+        <input
+          v-if="viewEvent.type !== 'note'"
+          v-model="editForm.title"
+          placeholder="Enter title"
+          class="input-field"
+        />
+
+        <textarea
+          v-model="editForm.description"
+          placeholder="Edit description"
+          class="textarea-field"
+        ></textarea>
+
       </div>
-               <div class="info-item" v-if="selectedMeeting.guests?.length">
-  <span class="label">Guests</span>
 
-  <ul class="guest-list">
-    <li
-      v-for="(g, i) in displayedGuests"
-      :key="i"
-    >
-      {{ g }}
-    </li>
-  </ul>
-
-  <!-- Show button only if more than 2 guests -->
-  <button
-    v-if="selectedMeeting.guests.length > 2"
-    class="show-btn"
-    @click="showAllGuests = !showAllGuests"
-  >
-    {{ showAllGuests ? "Show Less" : "Show All" }}
-  </button>
-</div>
     </div>
 
+    <!-- FOOTER -->
     <div class="modal-footer">
-      <button class="btn-close" @click="showViewModal=false"> <i class="fa fa-close" style="font-size:13px"></i> Close</button>
+
+      <!-- VIEW MODE -->
+      <template v-if="!isEditingView">
+        <button class="btn-close" @click="closeViewModal">
+          <i class="fa fa-close" style="font-size:13px"></i> Close
+        </button>
+      </template>
+
+      <!-- EDIT MODE -->
+      <template v-else>
+        <button class="btn-save" @click="updateFromView">
+          <i class="fa fa-save"></i> Save
+        </button>
+
+        <button class="btn-cancel" @click="cancelEditView">
+          <i class="fa fa-close"></i> Cancel
+        </button>
+      </template>
+
     </div>
 
   </div>
@@ -393,6 +457,11 @@ export default {
 
 data() {
   return {
+    isEditingView: false,
+editForm: {
+  title: '',
+  description: ''
+},
     attendanceEvents: [],
    isEditingTopics: false, 
       showAllGuests: false,
@@ -425,13 +494,13 @@ data() {
     birthdayEvents: [],
     showFilters: {
   meetings: true,
-  services: true,
-  visits: true,
+  services: false,
+  visits: false,
   birthdays: true,
   holidays: true,
   events: true,
   notes: true,
-  attendance: true
+  attendance: false
 },
     visitEvents: [],
     events: [],
@@ -535,6 +604,51 @@ sanitizedTopics() {
   },
 
   methods: {
+    closeViewModal() {
+  this.showViewModal = false
+  this.isEditingView = false
+},
+
+startEditFromView() {
+  this.isEditingView = true
+
+  this.editForm = {
+    title: this.viewEvent.title.replace(/^(Public Holiday: |Event: |📝 )/, ''),
+    description: this.viewEvent.description
+  }
+},
+
+cancelEditView() {
+  this.isEditingView = false
+},
+
+async updateFromView() {
+  try {
+    await fetch(
+      `https://employees.archenterprises.co.in/api/api/arch-calendar/${this.viewEvent.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          calendar_date: this.viewEvent.date,
+          type: this.viewEvent.type,
+          title: this.editForm.title,
+          description: this.editForm.description
+        })
+      }
+    )
+
+    this.isEditingView = false
+    this.showVi,ewModal = false
+    this.fetchCustomCalendarData()
+
+  } catch (e) {
+    console.error(e)
+  }
+},
     openAttendance(event) {
 
   if (!event) return
@@ -898,11 +1012,14 @@ handleEventClick(event) {
 
 openViewEvent(event) {
   this.viewEvent = {
+    id: event.id,
     title: event.title,
-    description: event.description || '—',
+    description: event.description || '',
     type: event.type,
     date: event.date
   }
+
+  this.isEditingView = false
   this.showViewModal = true
 }
 ,

@@ -227,9 +227,9 @@
             <option value="Interstate">Interstate</option>
             <option value="Export">Export</option>
           </select>
-           <div v-if="!form.nature_of_sale" class="error-message">
+           <!-- <div v-if="!form.nature_of_sale" class="error-message">
     ⚠ Nature of Sale is required
-  </div>
+  </div> -->
         </div>
 
         <div class="quotation-form-group" v-if="form.nature_of_sale === 'Export'">
@@ -386,9 +386,6 @@
     disabled
     class="readonly-field"
   />
-   <!-- <div class="error-message">
-    ⚠ Verify the “Created By” name. If it is incorrect, refresh the page and try again.
-  </div> -->
 </div>
  
 
@@ -446,20 +443,43 @@
           rows="2"
           :class="{ 'input-error': !item.description }"
         ></textarea>
-        <span v-if="!item.description" class="error-message">Required</span>
+        <!-- <span v-if="!item.description" class="error-message">Required</span> -->
       </div>
 
       <!-- HSN -->
-      <div class="quotation-form-group">
-        <label>HSN / SAC Code *</label>
-        <input
-          v-model="item.hsn"
-          type="number"
-          :class="{ 'input-error': !item.hsn }"
-        />
-        <span v-if="!item.hsn" class="error-message">Required</span>
-      </div>
+<div class="quotation-form-group">
+  <label>HSN / SAC Code *</label>
 
+  <select
+    v-model="item.hsn"
+    :class="{ 'input-error': !item.hsn }"
+  >
+    <option disabled value="">Select HSN Code</option>
+
+    <option
+      v-for="hsn in hsnList"
+      :key="hsn.id"
+      :value="hsn.hsn"
+    >
+      {{ hsn.item_name }} - {{ hsn.hsn }}
+    </option>
+
+    <!-- ✅ Manual option -->
+    <option value="manual">➕ Enter HSN Manually</option>
+  </select>
+
+  <!-- ✅ Show only HSN input -->
+  <div v-if="item.hsn === 'manual'" style="margin-top:8px;">
+    <input
+      v-model="item.manual_hsn"
+      type="number"
+      placeholder="Enter HSN Code"
+      class="form-control"
+    />
+  </div>
+
+  <!-- <span v-if="!item.hsn" class="error-message">Required</span> -->
+</div>
       <!-- QTY -->
       <div class="quotation-form-group">
         <label>QTY *</label>
@@ -471,7 +491,7 @@
     @input="validateQty(item)"
           :class="{ 'input-error': !item.qty }"
         />
-        <span v-if="!item.qty" class="error-message">Required</span>
+        <!-- <span v-if="!item.qty" class="error-message">Required</span> -->
       </div>
 
       <!-- UOM -->
@@ -486,7 +506,7 @@
           <option value="K.G.">K.G.</option>
           <option value="Day">Day</option>
         </select>
-        <span v-if="!item.uom" class="error-message">Required</span>
+        <!-- <span v-if="!item.uom" class="error-message">Required</span> -->
       </div>
 
       <!-- RATE -->
@@ -500,7 +520,7 @@
     @input="validateQty(item)"
           :class="{ 'input-error': !item.rate }"
         />
-        <span v-if="!item.rate" class="error-message">Required</span>
+        <!-- <span v-if="!item.rate" class="error-message">Required</span> -->
       </div>
 
       <!-- DISCOUNT -->
@@ -541,7 +561,6 @@
     @input="validateQty(item)"/>
         </div>
       </template>
-
       <template v-if="form.nature_of_sale === 'Export'">
         <div class="quotation-export-note">
           🌍 GST Not Applicable for Export
@@ -1178,6 +1197,10 @@
   <thead>
     <tr>
       <th>Company Name</th>
+      <th>Quotation Against PO</th>
+      <th>Payment Terms</th>
+      <th>Delivery Terms</th>
+      <th>Delivery Due Date</th>
       <!-- <th>PO Number</th> -->
       <!-- <th>PO Date</th> -->
       <th>Visit Date</th>
@@ -1191,6 +1214,10 @@
   <tbody v-if="filteredServicePoList.length">
     <tr v-for="order in filteredServicePoList" :key="order.id">
       <td>{{ order.company_name }}</td>
+      <td>{{ order.quotation_against_po || '-' }}</td>
+      <td>{{ order.payment_terms || '-' }}</td>
+      <td>{{ order.delivery_terms || '-' }}</td>
+      <td>{{ order.delivery_due_date ? formatDate(order.delivery_due_date) : '-' }}</td>
       <!-- <td>{{ order.po_number }}</td> -->
       <!-- <td>{{ order.date }}</td> -->
 <td>
@@ -1236,7 +1263,7 @@
   <!-- NO DATA MESSAGE -->
   <tbody v-else>
     <tr>
-      <td colspan="7" class="no-data">
+      <td colspan="8" class="no-data">
         No service PO records found
       </td>
     </tr>
@@ -1294,6 +1321,10 @@
   <thead>
     <tr>
       <th>Company Name</th>
+      <th>Quotation Against PO</th>
+      <th>Payment Terms</th>
+      <th>Delivery Terms</th>
+      <th>Delivery Due Date</th>
       <!-- <th>PO Number</th> -->
       <th>Visit Date</th>
       <th>Type</th>
@@ -1308,6 +1339,10 @@
     <tr v-for="item in filteredAssignedServiceList" :key="item.id">
 
       <td>{{ item.company_name }}</td>
+      <td>{{ item.quotation_against_po || '-' }}</td>
+      <td>{{ item.payment_terms || '-' }}</td>
+      <td>{{ item.delivery_terms || '-' }}</td>
+      <td>{{ item.delivery_due_date ? formatDate(item.delivery_due_date) : '-' }}</td>
       <!-- <td>{{ item.po_number }}</td> -->
       <td>{{ item.visit_date }}</td>
       <td>{{ item.type_of_service }}</td>
@@ -1343,7 +1378,7 @@
   <!-- NO DATA MESSAGE -->
   <tbody v-else>
     <tr>
-      <td colspan="7" class="no-data">
+      <td colspan="9" class="no-data">
         No assigned service records found
       </td>
     </tr>
@@ -1406,6 +1441,10 @@
     <tr>
       <th>Company</th>
       <th>PO Number</th>
+      <th>Quotation Against PO</th>
+      <th>Payment Terms</th>
+      <th>Delivery Terms</th>
+      <th>Delivery Due Date</th>
       <th>Dipatched Date</th>
        <th>Tracking ID</th>
     <th>Courier Name</th>
@@ -1421,6 +1460,10 @@
 
       <td>{{ supply.company_name }}</td>
       <td>{{ supply.po_number }}</td>
+      <td>{{ supply.quotation_against_po || '-' }}</td>
+      <td>{{ supply.payment_terms || '-' }}</td>
+      <td>{{ supply.delivery_terms || '-' }}</td>
+      <td>{{ supply.delivery_due_date ? formatDate(supply.delivery_due_date) : '-' }}</td>
       <td>{{ supply.closed_date ? supply.closed_date: '-'}}</td>
        <td>
       {{ supply.tracking_id ? supply.tracking_id : '-' }}
@@ -1464,7 +1507,7 @@
   <!-- NO DATA MESSAGE -->
   <tbody v-else>
     <tr>
-      <td colspan="5" class="no-data">
+      <td colspan="10" class="no-data">
         No supply orders found
       </td>
     </tr>
@@ -1509,7 +1552,7 @@
 
     <!-- HEADER -->
     <div class="modal-header-supply">
-      <h3 class="modal-title-supply"><i class="fa fa-save" style="font-size:13px"></i> Update Supply Status</h3>
+      <h3 class="modal-title-supply"><i class="fa fa-save" style="font-size:20px"></i> Update Supply Status</h3>
       <button class="close-btn-supply" @click="closePopup">&times;</button>
     </div>
 
@@ -2034,6 +2077,24 @@ Edit
           <th>Value Of PO</th>
           <td>{{ selectedPo.value_of_po }}</td>
         </tr>
+         <tr>
+            <th> Quotation Against PO</th>
+             <td>{{ selectedPo.quotation_against_po }}</td>
+          </tr>
+          <tr>
+            <th>Payment Terms</th>
+            <td>{{ selectedPo.payment_terms }}</td>
+          </tr>
+          <tr>
+            <th>Delivery Terms</th>
+            <td>
+              {{ selectedPo.delivery_terms }}
+            </td>
+          </tr>
+          <tr>
+            <th>Delivery due date</th>
+            <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
+          </tr>
         <tr>
           <th>Recommended By</th>
           <td>{{ selectedPo.recommended_by }}</td>
@@ -2079,14 +2140,32 @@ Edit
         </template>
 
         <!-- Supply Specific -->
-        <template v-else-if="selectedPo.po_type === 'Supply'">
+        <template v-else-if="selectedPo.po_type === 'Service+Supply' || selectedPo.po_type === 'Supply'">
           <tr>
             <th>Value of PO</th>
             <td>{{ selectedPo.value_of_po }}</td>
           </tr>
           <tr>
-            <th>Date</th>
+            <th>PO Received Date</th>
             <td>{{ formatDate(selectedPo.date) }}</td>
+          </tr>
+          <tr>
+            <th> Quotation Against PO</th>
+             <td>{{ selectedPo.quotation_against_po }}</td>
+          </tr>
+          <tr>
+            <th>Payment Terms</th>
+            <td>{{ selectedPo.payment_terms }}</td>
+          </tr>
+          <tr>
+            <th>Delivery Terms</th>
+            <td>
+              {{ selectedPo.delivery_terms }}
+            </td>
+          </tr>
+          <tr>
+            <th>Delivery due date</th>
+            <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
           </tr>
           <tr>
             <th>Tracking Id</th>
@@ -2107,7 +2186,13 @@ Edit
    <!-- Buttons -->
 <div class="modal-buttons" style="display: flex; flex-direction: row; gap: 10px; margin-top: 20px;">
   <button class="btn btn-secondary" @click="viewCustomerPo(customer)">View PO</button>
-
+<button 
+  class="btn btn-primary" 
+  v-if="selectedPo && selectedPo.po_type === 'Supply' || selectedPo.po_type === 'Service+Supply'" 
+  @click="goToSupplyItems(selectedPo)"
+>
+  Manage Items
+</button>
   <!-- Conditionally show "Add Visit" button if po_type is AMC -->
   <button 
     class="btn btn-primary" 
@@ -2219,6 +2304,10 @@ Edit
           <td>{{ selectedCustomer.vendor_number }}</td>
         </tr>
         <tr>
+          <th>Office Policy</th>
+          <td>{{ selectedCustomer.office_policy }}</td>
+        </tr>
+        <tr>
           <th>GST Number</th>
           <td>{{ selectedCustomer.gst_number }}</td>
         </tr>
@@ -2289,69 +2378,100 @@ Edit
 
 <!-- Add PO Modal -->
 <div class="modal-backdrop" v-if="showPoModal">
-  <div class="modal-card small">
+  <div class="modal-card small po-modal">
+    <div class="modal-header-icon">
+      <i class="fas fa-plus-circle"></i>
+    </div>
     <h2 class="modal-title">Add Purchase Order</h2>
+    <p class="modal-subtitle">Choose the type of purchase order you want to create</p>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>PO Type</label>
-        <select v-model="poType" @change="handlePoTypeChange">
+        <label>
+          <i class="fas fa-list"></i>
+          PO Type
+        </label>
+        <select v-model="poType" @change="handlePoTypeChange" class="po-type-select">
           <option value="">Select Type</option>
-          <option value="AMC">AMC</option>
-          <option value="Service">Service</option>
-          <option value="Supply">Supply</option>
-           <option value="Service+Supply">Service + Supply</option>
+          <option value="AMC">
+            <i class="fas fa-calendar-alt"></i>
+            AMC (Annual Maintenance Contract)
+          </option>
+          <option value="Service">
+            <i class="fas fa-wrench"></i>
+            Service
+          </option>
+          <option value="Supply">
+            <i class="fas fa-box"></i>
+            Supply
+          </option>
+          <option value="Service+Supply">
+            <i class="fas fa-tools"></i>
+            Service + Supply
+          </option>
         </select>
       </div>
     </div>
 
     <div class="modal-buttons">
-      
-      <button class="btn btn-secondary" @click="closePoModal"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
+      <button class="btn btn-secondary" @click="closePoModal">
+        <i class="fa fa-times"></i>
+        Close
+      </button>
     </div>
   </div>
 </div>
 
 <!-- Service + Supply Modal -->
 <div class="modal-backdrop" v-if="showServiceSupplyModal">
-  <div class="modal-card medium">
-    <h2 class="modal-title" style="font-size: 17px!important;">Service + Supply Purchase Order</h2>
+  <div class="modal-card medium service-supply-modal">
+    <div class="modal-header-icon">
+      <i class="fas fa-tools"></i>
+    </div>
+    <h2 class="modal-title">Service + Supply Purchase Order</h2>
+    <p class="modal-subtitle">Create a comprehensive purchase order combining service and supply requirements</p>
 
     <!-- Company Name -->
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Company Name</label>
-        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
-      </div>
-    </div>
-
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Number <font color="red">*</font></label>
-        <input type="text" v-model="serviceSupply.poNumber" />
+        <label>
+          <i class="fas fa-building"></i>
+          Company Name
+        </label>
+        <div class="readonly-field">{{ selectedCustomer.company_name }}</div>
       </div>
     </div>
 
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Recive Date <font color="red">*</font></label>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-hashtag"></i>
+          PO Number *
+        </label>
+        <input type="text" v-model="serviceSupply.poNumber" placeholder="Enter PO number" />
+      </div>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-calendar"></i>
+          PO Receive Date *
+        </label>
         <input type="date" v-model="serviceSupply.date" />
       </div>
     </div>
 
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>Value Of PO <font color="red">*</font></label>
-        <input type="number" v-model="serviceSupply.totalValue" />
+      <div class="input-group">
+        <label>
+          <i class="fas fa-rupee-sign"></i>
+          Value Of PO *
+        </label>
+        <input type="number" v-model="serviceSupply.totalValue" placeholder="Enter PO value" />
       </div>
-    </div>
-
-   
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>Recommended By</label>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-user"></i>
+          Recommended By
+        </label>
         <select v-model="serviceSupply.recommendedBy">
           <option value="">Select Name</option>
           <option v-for="user in users" :key="user.id" :value="user.name">
@@ -2363,7 +2483,49 @@ Edit
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Type of Service <font color="red">*</font></label>
+        <label>
+          <i class="fas fa-file-invoice"></i>
+          Quotation Against PO
+        </label>
+        <select v-model="supplyDetails.quotationAgainstPo">
+          <option value="">Select Quotation</option>
+          <option v-for="q in quotationsByCompany" :key="q.id" :value="`AE/QUOTE/${getFinancialYear()}/${q.id}`">
+            AE/QUOTE/{{ getFinancialYear() }}/{{ q.id }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group">
+        <label>
+          <i class="fas fa-credit-card"></i>
+          Payment Terms
+        </label>
+        <input type="text" v-model="supplyDetails.paymentTerms" placeholder="e.g., 30 days from invoice" />
+      </div>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-truck"></i>
+          Delivery Terms
+        </label>
+        <input type="text" v-model="supplyDetails.deliveryTerms" placeholder="e.g., FOB, CIF, EXW" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group">
+        <label>
+          <i class="fas fa-calendar-check"></i>
+          Delivery Due Date
+        </label>
+        <input type="date" v-model="supplyDetails.deliveryDueDate" />
+      </div>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-wrench"></i>
+          Type of Service *
+        </label>
         <select v-model="serviceSupply.serviceType">
           <option value="">Select Service</option>
           <option value="Breakdown">Breakdown</option>
@@ -2372,27 +2534,32 @@ Edit
         </select>
       </div>
     </div>
- <div class="form-row">
+
+    <div class="form-row">
       <div class="input-group full-width">
-        <label>PO File</label>
+        <label>
+          <i class="fas fa-file-upload"></i>
+          PO File
+        </label>
         <input type="file" @change="handleServiceSupplyFile" />
       </div>
     </div>
 
     <!-- BUTTONS -->
-    <div class="modal-buttons"> 
+    <div class="modal-buttons">
       <button
         class="btn btn-success"
-        style="background-color: #d0d0d0;"
         :disabled="isSavingServiceSupply"
         @click="saveServiceSupply"
       >
         <span v-if="isSavingServiceSupply" class="loader"></span>
-        <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
+        <i class="fa fa-save"></i>
+        Save
       </button>
 
       <button class="btn btn-secondary" @click="closeServiceSupplyModal">
-       <i class="fa fa-close" style="font-size:13px"></i> Cancel
+        <i class="fa fa-times"></i>
+        Cancel
       </button>
     </div>
   </div>
@@ -2401,47 +2568,54 @@ Edit
 
 <!-- Supply Modal -->
 <div class="modal-backdrop" v-if="showSupplyModal">
-  <div class="modal-card small">
-    <h2 class="modal-title">Supply PO Details</h2>
+  <div class="modal-card medium supply-modal">
+    <div class="modal-header-icon">
+      <i class="fas fa-boxes"></i>
+    </div>
+    <h2 class="modal-title">Supply Purchase Order</h2>
+    <p class="modal-subtitle">Create a purchase order for material supply requirements</p>
 
     <!-- Auto-filled Company Name -->
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Company Name</label>
-        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
+        <label>
+          <i class="fas fa-building"></i>
+          Company Name
+        </label>
+        <div class="readonly-field">{{ selectedCustomer.company_name }}</div>
       </div>
     </div>
 
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Number <font color="red">*</font></label>
-        <input type="text" v-model="supplyDetails.poNumber" />
+      <div class="input-group">
+        <label>
+          <i class="fas fa-hashtag"></i>
+          PO Number *
+        </label>
+        <input type="text" v-model="supplyDetails.poNumber" placeholder="Enter PO number" />
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label> PO Date <font color="red">*</font></label>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-calendar"></i>
+          PO Date *
+        </label>
         <input type="date" v-model="supplyDetails.date" />
       </div>
     </div>
 
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>Value of PO <font color="red">*</font></label>
-        <input type="number" v-model="supplyDetails.value"  min="0"
-    @keydown="blockNegative" />
+      <div class="input-group">
+        <label>
+          <i class="fas fa-rupee-sign"></i>
+          Value of PO *
+        </label>
+        <input type="number" v-model="supplyDetails.value" min="0" @keydown="blockNegative" placeholder="Enter PO value" />
       </div>
-    </div>
- <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO File</label>
-       <input type="file" @change="handleSupplyFileUpload" />
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>Recommended By</label>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-user"></i>
+          Recommended By
+        </label>
         <select v-model="supplyDetails.recommendedBy">
           <option value="">Select Name</option>
           <option v-for="user in users" :key="user.id" :value="user.name">
@@ -2451,17 +2625,73 @@ Edit
       </div>
     </div>
 
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>
+          <i class="fas fa-file-invoice"></i>
+          Quotation Against PO
+        </label>
+        <select v-model="supplyDetails.quotationAgainstPo">
+          <option value="">Select Quotation</option>
+          <option v-for="q in quotationsByCompany" :key="q.id" :value="`AE/QUOTE/${getFinancialYear()}/${q.id}`">
+            AE/QUOTE/{{ getFinancialYear() }}/{{ q.id }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group">
+        <label>
+          <i class="fas fa-credit-card"></i>
+          Payment Terms
+        </label>
+        <input type="text" v-model="supplyDetails.paymentTerms" placeholder="e.g., 30 days from invoice" />
+      </div>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-truck"></i>
+          Delivery Terms
+        </label>
+        <input type="text" v-model="supplyDetails.deliveryTerms" placeholder="e.g., FOB, CIF, EXW" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>
+          <i class="fas fa-calendar-check"></i>
+          Delivery Due Date
+        </label>
+        <input type="date" v-model="supplyDetails.deliveryDueDate" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>
+          <i class="fas fa-file-upload"></i>
+          PO File
+        </label>
+        <input type="file" @change="handleSupplyFileUpload" />
+      </div>
+    </div>
+
     <div class="modal-buttons">
-      <!-- <button class="btn btn-success" @click="saveSupplyDetails">Save</button> -->
-           <button 
-  class="btn btn-success" style="background-color: #d0d0d0;"
-  :disabled="isSavingSupply"
-  @click="saveSupplyDetails"
->
-  <span v-if="isSavingSupply" class="loader"></span>
-  <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
-</button>
-      <button class="btn btn-secondary" @click="closeSupplyModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
+      <button
+        class="btn btn-success"
+        :disabled="isSavingSupply"
+        @click="saveSupplyDetails"
+      >
+        <span v-if="isSavingSupply" class="loader"></span>
+        <i class="fa fa-save"></i>
+        Save
+      </button>
+
+      <button class="btn btn-secondary" @click="closeSupplyModal">
+        <i class="fa fa-times"></i>
+        Cancel
+      </button>
     </div>
   </div>
 </div>
@@ -2469,34 +2699,47 @@ Edit
 
 <!-- Service Details Modal -->
 <div class="modal-backdrop" v-if="showServiceModal">
-  <div class="modal-card medium">
-    <h2 class="modal-title">Service Purchase Order Details</h2>
+  <div class="modal-card medium service-modal">
+    <div class="modal-header-icon">
+      <i class="fas fa-wrench"></i>
+    </div>
+    <h2 class="modal-title">Service Purchase Order</h2>
+    <p class="modal-subtitle">Create a purchase order for service requirements</p>
 
     <!-- Auto-filled Company Name -->
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Company Name</label>
-        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
+        <label>
+          <i class="fas fa-building"></i>
+          Company Name
+        </label>
+        <div class="readonly-field">{{ selectedCustomer.company_name }}</div>
       </div>
     </div>
 
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Number <font color="red">*</font></label>
-        <input type="text" v-model="serviceDetails.poNumber" />
+      <div class="input-group">
+        <label>
+          <i class="fas fa-hashtag"></i>
+          PO Number *
+        </label>
+        <input type="text" v-model="serviceDetails.poNumber" placeholder="Enter PO number" />
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO Date <font color="red">*</font></label>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-calendar"></i>
+          PO Date *
+        </label>
         <input type="date" v-model="serviceDetails.date" />
       </div>
     </div>
 
     <div class="form-row">
-      <div class="input-group full-width">
-        <label>Type of Service <font color="red">*</font></label>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-tools"></i>
+          Type of Service *
+        </label>
         <select v-model="serviceDetails.serviceType">
           <option value="">Select Service</option>
           <option value="Breakdown">Breakdown</option>
@@ -2504,54 +2747,62 @@ Edit
           <option value="B-Check / Maintenance">B-Check / Maintenance</option>
         </select>
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>Value of PO <font color="red">*</font></label>
-        <input type="number" v-model="serviceDetails.poValue"  min="0"
-    @keydown="blockNegative"/>
+      <div class="input-group">
+        <label>
+          <i class="fas fa-rupee-sign"></i>
+          Value of PO *
+        </label>
+        <input type="number" v-model="serviceDetails.poValue" min="0" @keydown="blockNegative" placeholder="Enter PO value" />
       </div>
     </div>
 
     <div class="form-row">
-  <div class="input-group full-width">
-    <label>PO File</label>
-    <input
-      type="file"
-      @change="handlePoFile"
-      accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
-    />
-    <small style="color:#666; text-align: left;">
-      Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX
-    </small>
-  </div>
-</div>
-
+      <div class="input-group full-width">
+        <label>
+          <i class="fas fa-file-upload"></i>
+          PO File
+        </label>
+        <input
+          type="file"
+          @change="handlePoFile"
+          accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+        />
+        <small style="color:#666; text-align: left;">
+          Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX
+        </small>
+      </div>
+    </div>
 
     <div class="form-row">
       <div class="input-group full-width">
-        <label>Assign to Employee</label>
-       <select v-model="serviceDetails.assignTo">
-  <option value="" disabled>Select User</option>
-  <option v-for="user in users" :key="user.id" :value="user.id">
-    {{ user.name }} <!-- This is what the user sees -->
-  </option>
-</select>
+        <label>
+          <i class="fas fa-user"></i>
+          Assign to Employee
+        </label>
+        <select v-model="serviceDetails.assignTo">
+          <option value="" disabled>Select User</option>
+          <option v-for="user in users" :key="user.id" :value="user.id">
+            {{ user.name }}
+          </option>
+        </select>
       </div>
     </div>
 
     <div class="modal-buttons">
-      <!-- <button class="btn btn-success" @click="saveServiceDetails">Save</button> -->
-         <button 
-  class="btn btn-success" style="background-color: #d0d0d0;"
-  :disabled="isSavingService"
-  @click="saveServiceDetails"
->
-  <span v-if="isSavingService" class="loader"></span>
-  <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
-</button>
-      <button class="btn btn-secondary" @click="closeServiceModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
+      <button
+        class="btn btn-success"
+        :disabled="isSavingService"
+        @click="saveServiceDetails"
+      >
+        <span v-if="isSavingService" class="loader"></span>
+        <i class="fa fa-save"></i>
+       Save
+      </button>
+
+      <button class="btn btn-secondary" @click="closeServiceModal">
+        <i class="fa fa-times"></i>
+        Cancel
+      </button>
     </div>
   </div>
 </div>
@@ -2574,7 +2825,7 @@ Edit
     <div class="form-row">
       <!-- PO Number -->
        <div class="input-group">
-  <label>PO Number <font color="red">*</font></label>
+  <label>PO Number *</label>
   <input 
     type="text" 
     v-model="amcDetails.PONumber" 
@@ -2585,7 +2836,7 @@ Edit
 
       <!-- Type of AMC -->
       <div class="input-group">
-        <label>Type of AMC <font color="red">*</font></label>
+        <label>Type of AMC *</label>
         <select v-model="amcDetails.type">
           <option value="">Select Type</option>
           <option value="Comprehensive">Comprehensive</option>
@@ -2597,12 +2848,12 @@ Edit
     <!-- NEW: PO Date & Value of PO -->
     <div class="form-row">
       <div class="input-group">
-        <label>PO Date <font color="red">*</font></label>
+        <label>PO Date *</label>
         <input type="date" v-model="amcDetails.PODate" />
       </div>
 
       <div class="input-group">
-        <label>Value of PO <font color="red">*</font></label>
+        <label>Value of PO *</label>
         <input type="number" v-model="amcDetails.value_of_po"  min="0"
     @keydown="blockNegative" placeholder="Enter Amount" />
       </div>
@@ -2610,19 +2861,19 @@ Edit
 
     <div class="form-row">
       <div class="input-group">
-        <label>Start Period <font color="red">*</font></label>
+        <label>Start Period *</label>
         <input type="date" v-model="amcDetails.start_period" />
       </div>
 
       <div class="input-group">
-        <label>End Period <font color="red">*</font></label>
+        <label>End Period *</label>
         <input type="date" v-model="amcDetails.end_period" />
       </div>
     </div>
 
     <!-- No. of Visits -->
     <div class="input-group">
-      <label>No. of Visits <font color="red">*</font></label>
+      <label>No. of Visits *</label>
       <input 
         type="number" 
         v-model.number="amcDetails.visits"
@@ -2787,9 +3038,9 @@ Edit
     v-model="customer.contact_number"
     @input="customer.contact_number = formatPlusNumber(customer.contact_number)"
     required
-    placeholder="+11234567890"
+    placeholder="+91 1234567890"
     pattern="^\+\d{4,14}$"
-    title="Only numbers allowed, with + at the beginning (e.g. +11234567890)"
+    title="Only numbers allowed, with + at the beginning (e.g. +91 1234567890)"
   >
 </div>
 
@@ -2813,9 +3064,9 @@ Edit
     type="tel"
     v-model="customer.secondary_contact_number"
     @input="customer.secondary_contact_number = formatPlusNumber(customer.secondary_contact_number)"
-    placeholder="+11234567890"
+    placeholder="+91 1234567890"
     pattern="^\+\d{4,14}$"
-    title="Only numbers allowed, with + at the beginning (e.g. +11234567890)"
+    title="Only numbers allowed, with + at the beginning (e.g. +91 1234567890)"
   >
 </div>
 
@@ -2925,6 +3176,14 @@ Edit
           <label>Vendor Number</label>
           <input type="text" v-model="customer.vendor_number">
         </div>
+      <div class="crm-input-group">
+  <label>Office Policy</label>
+  <select v-model="customer.office_policy">
+    <option value="">Select Office Policy</option>
+    <option value="Green Office Policy">Green Office Policy</option>
+    <option value="Paper based office policy">Paper based office policy</option>
+  </select>
+</div>  
       </div>
 
       <h2>Equipment Details</h2>
@@ -3030,6 +3289,8 @@ Edit
     },
     data() {
       return {
+         hsnList: [],
+
         showEmailModal: false,
       selectedEmails: [],
         showDeliveredDatePopup: false,
@@ -3195,7 +3456,11 @@ showSupplyPopup: false,
         poNumber: '',
         date: '',
         value: '',
-        recommendedBy: ''
+        recommendedBy: '',
+        quotationAgainstPo: '',
+        paymentTerms: '',
+        deliveryTerms: '',
+        deliveryDueDate: ''
       },
         showServiceModal: false,
         
@@ -3245,6 +3510,7 @@ PODate: "",
         gst_number: '',
         pan_number: '',
         vendor_number: '',
+        office_policy: '',
       equipment_details: {
           Engine: [{ make: '', model_no: '', serial_no: '' }],
           Pump: [{ make: '', model_no: '', serial_no: '' }],
@@ -3284,7 +3550,7 @@ PODate: "",
          currency: "",
         customer_ref: "",
         recommended_by: "",
-        created_by: 'Admin',
+        created_by:JSON.parse(localStorage.getItem("user"))?.name || '', // This should ideally come from logged-in user data
         terms_conditions: `1 Parts are ordered as per your specific order. Once delivered the same can not be returned.
 2 Quantities mentioned are as per your requirement.
 3 All warranties as per manufacturer's warranty terms and conditions.
@@ -3321,18 +3587,19 @@ PODate: "",
             sr: 1,
             description: "",
             hsn: "",
-            qty: 0,
+             manual_hsn: '',
+            qty: '',
             uom: "",
-            rate: 0,
+            rate: '',
             total: 0,
-            discount: 0,
+            discount: '',
             taxable: 0,
-            cgst_rate: 0,
-            cgst_amt: 0,
-            sgst_rate: 0,
-            sgst_amt: 0,
+            cgst_rate: '',
+            cgst_amt: '',
+            sgst_rate: '',
+            sgst_amt: '',
             igst_rate: 18,
-            igst_amt: 0,
+            igst_amt: '',
             line_total: 0,
           }
         ],
@@ -3362,6 +3629,7 @@ PODate: "",
     company: v.company_name,
     date: v.visit_date
   })))
+    this.fetchHsnCodes();
    this.fetchVisitStatuses();
    this.fetchCompletedVisits();
        this.getLoggedInUser();
@@ -3375,6 +3643,7 @@ PODate: "",
         this.fetchCompanies();
         this.fetchServicePoList();
       this.fetchUsers();
+      this.fetchQuotations();
     this.fetchCustomers(); // fetch on load
       this.checkIfMobile();
   window.addEventListener('resize', this.checkIfMobile);
@@ -3531,27 +3800,41 @@ filteredAllQuotations() {
 
 
 
-    filteredDeliveredSupplies() {
-    return this.deliveredSupplies.filter(supply => {
+ filteredDeliveredSupplies() {
+    let data = [...this.deliveredSupplies];
 
-      // 🔍 Search filter (Company / PO)
-      const search = this.deliveredFilters.search.toLowerCase()
-      if (search) {
-        const company = supply.company_name?.toLowerCase() || ''
-        const po = supply.po_number?.toLowerCase() || ''
-        if (!company.includes(search) && !po.includes(search)) {
-          return false
-        }
-      }
+    // 🔍 Search
+    if (this.deliveredFilters.search) {
+      const search = this.deliveredFilters.search.toLowerCase();
+      data = data.filter(item =>
+        (item.company_name || '').toLowerCase().includes(search) ||
+        (item.po_number || '').toLowerCase().includes(search)
+      );
+    }
 
-      // 📅 Month filter (Closed Date)
-      if (this.deliveredFilters.month && supply.closed_date) {
-        const month = new Date(supply.closed_date).getMonth() + 1
-        if (month !== this.deliveredFilters.month) return false
-      }
+    // 📅 Month filter
+    if (this.deliveredFilters.month) {
+      data = data.filter(item => {
+        if (!item.date) return false;
+        const d = new Date(item.date);
+        return (d.getMonth() + 1) === Number(this.deliveredFilters.month);
+      });
+    }
 
-      return true
-    })
+    // 🔽 FORCE SORT (latest first)
+    return data.slice().sort((a, b) => {
+      const getTime = (val) => {
+        if (!val) return 0;
+
+        // ✅ handle "YYYY-MM-DD" safely
+        return new Date(val.replace(' ', 'T')).getTime() || 0;
+      };
+
+      const dateA = getTime(a.material_delivered_date || a.closed_date || a.date);
+      const dateB = getTime(b.material_delivered_date || b.closed_date || b.date);
+
+      return dateB - dateA;
+    });
   }
 ,
     filteredSupplies() {
@@ -3645,16 +3928,10 @@ filteredAllQuotations() {
       (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
     );
   },
-     financialYear() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1; // Jan = 1
-
-    // Financial year starts in April
-    return month >= 4
-      ? `${year}-${(year + 1).toString().slice(-2)}`
-      : `${year - 1}-${year.toString().slice(-2)}`;
-  },
+financialYear() {
+  const y = new Date().getFullYear();
+  return `${y}-${String(y + 1).slice(-2)}`;
+},
      completedVisits() {
     return this.assignedVisits.filter(v => v.status === 'Completed');
   },
@@ -3760,6 +4037,15 @@ filteredAllQuotations() {
 
   // Sort alphabetically by company_name
   return result.sort((a, b) => a.company_name.localeCompare(b.company_name));
+},
+
+quotationsByCompany() {
+  if (!this.selectedCustomer || !this.selectedCustomer.company_name) {
+    return [];
+  }
+  return this.quotations.filter(q => 
+    q.company_name === this.selectedCustomer.company_name
+  );
 }
 
   },
@@ -3821,6 +4107,34 @@ filterCompany(newCompany) {
 
 
  methods: {
+  async fetchHsnCodes() {
+    try {
+      const res = await axios.get('/api/hsn-codes');
+      this.hsnList = res.data;
+    } catch (error) {
+      console.error(error);
+    }
+  },
+  goToSupplyItems(po) {
+  this.$router.push({ 
+    name: 'SupplyItems', 
+    query: { 
+      po_id: po.id,
+      quotation_id: po.quotation_against_po
+    } 
+  });
+},
+  getFinancialYear() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1; // Jan = 1
+
+    // Financial year starts in April
+    return month >= 4
+      ? `${year}-${(year + 1).toString().slice(-2)}`
+      : `${year - 1}-${year.toString().slice(-2)}`;
+  },
+
   toggleAll(event) {
     if (event.target.checked) {
       this.selectedEmails = this.customers.map(c => c.email);
@@ -4164,6 +4478,20 @@ async confirmDelivered() {
     })
 
     toastSuccess('Material marked as Delivered successfully.')
+
+    // Remove from supplies array
+    this.supplies = this.supplies.filter(supply => supply.id !== this.selectedSupply.id)
+
+    // Add to deliveredSupplies array with the delivered date
+    const deliveredItem = { ...this.selectedSupply, material_delivered_date: this.deliveredDate }
+    this.deliveredSupplies.push(deliveredItem)
+    
+    // Sort by material_delivered_date descending (latest first)
+    this.deliveredSupplies.sort((a, b) => {
+      const dateA = new Date(a.material_delivered_date || a.updated_at || 0)
+      const dateB = new Date(b.material_delivered_date || b.updated_at || 0)
+      return dateB - dateA
+    })
 
     this.showDeliveredDatePopup = false
     this.selectedSupply = null
@@ -4786,16 +5114,16 @@ addItem() {
     sr: this.form.items.length + 1,
     description: "",
     hsn: "",
-    qty: 0,
+    qty: '',
     uom: "",
-    rate: 0,
-    total: 0,
-    discount: 0,
-    taxable: 0,
-    cgst_rate: 0,
-    cgst_amt: 0,
-    sgst_rate: 0,
-    sgst_amt: 0,
+    rate: '',
+    total: '',
+    discount: '',
+    taxable: '',
+    cgst_rate: '',
+    cgst_amt: '',
+    sgst_rate: '',
+    sgst_amt: '',
     igst_rate: 18,
     igst_amt: 0,
     line_total: 0,
@@ -4850,6 +5178,7 @@ openViewQuotationPopup(companyName) {
 
 
 submitQuotation() {
+
   // 1️⃣ Check Nature of Sale
   if (!this.form.nature_of_sale) {
     toastWarning("⚠ Please select Nature of Sale before saving the quotation.");
@@ -4861,6 +5190,17 @@ submitQuotation() {
     toastWarning("⚠ Please add at least one item before saving the quotation.");
     return;
   }
+
+  // 🔥 ✅ ADD THIS BLOCK HERE (IMPORTANT)
+  this.form.items.forEach(item => {
+    if (item.hsn === 'manual') {
+      if (!item.manual_hsn) {
+        toastWarning("⚠ Please enter HSN number");
+        throw new Error('HSN missing'); // stop execution
+      }
+      item.hsn = item.manual_hsn;
+    }
+  });
 
   // 3️⃣ Validate required fields for each item
   for (let i = 0; i < this.form.items.length; i++) {
@@ -4887,19 +5227,10 @@ submitQuotation() {
         : "Quotation Saved Successfully!"
       );
 
-      // close quotation form
       this.showQuotation = false;
-
-      // refresh quotations
       await this.fetchQuotations();
-
-      // set filter
       this.filterCompany = selectedCompany;
-
-      // ✅ OPEN VIEW QUOTATIONS POPUP
       this.showViewQuotationPopup = true;
-
-      // reset AFTER popup opens
       this.resetForm();
     })
     .catch(err => {
@@ -4991,7 +5322,12 @@ fetchCurrentMonthVisits() {
     openDeliveredPopup() {
     axios.get('/api/get-delivered-supplies')
       .then(res => {
-        this.deliveredSupplies = res.data;  // populate table
+        // Sort by material_delivered_date descending (latest first)
+        this.deliveredSupplies = res.data.sort((a, b) => {
+          const dateA = new Date(a.material_delivered_date || a.updated_at || 0)
+          const dateB = new Date(b.material_delivered_date || b.updated_at || 0)
+          return dateB - dateA
+        })
         this.showDeliveredPopup = true;     // show popup
       })
       .catch(err => {
@@ -5408,7 +5744,7 @@ assignVisit(visit) {
     }
   }
 
-  toastSuccess("PO file not found in PDF or Image format");
+  toastSuccess("PO file not found");
 },
 
 
@@ -5654,6 +5990,7 @@ closeServiceSupplyModal(){
     },
 
     saveServiceSupply() {
+   
   // Basic validation (common required fields)
   if (!this.serviceSupply.poNumber || !this.serviceSupply.date) {
     toastWarning("please fill required fields");
@@ -5671,7 +6008,11 @@ closeServiceSupplyModal(){
   formData.append("po_number", this.serviceSupply.poNumber);
   formData.append("date", this.serviceSupply.date);
   formData.append("value_of_po", this.serviceSupply.totalValue || 0);
-
+// ✅ ADD HERE
+formData.append("quotation_against_po", this.supplyDetails.quotationAgainstPo || "");
+formData.append("payment_terms", this.supplyDetails.paymentTerms || "");
+formData.append("delivery_terms", this.supplyDetails.deliveryTerms || "");
+formData.append("delivery_due_date", this.supplyDetails.deliveryDueDate || "");
   // SUPPLY-SPECIFIC
   formData.append(
     "recommended_by",
@@ -5717,7 +6058,8 @@ closeServiceSupplyModal(){
       if (errors && errors.po_number) {
         toastWarning(errors.po_number[0]); 
       } else {
-        toastWarning("Validation error");
+       console.log(err.response.data.errors);
+toastWarning(Object.values(err.response.data.errors)[0][0]);
       }
 
     } else {
@@ -5728,6 +6070,7 @@ closeServiceSupplyModal(){
   .finally(() => {
     this.isSavingServiceSupply = false;
   });
+   console.log([...formData.entries()]);
 
 },
 
@@ -5749,6 +6092,10 @@ closeServiceSupplyModal(){
   formData.append('date', this.supplyDetails.date);
   formData.append('value_of_po', this.supplyDetails.value || 0);
   formData.append('recommended_by', this.supplyDetails.recommendedBy || '');
+  formData.append('quotation_against_po', this.supplyDetails.quotationAgainstPo || '');
+  formData.append('payment_terms', this.supplyDetails.paymentTerms || '');
+  formData.append('delivery_terms', this.supplyDetails.deliveryTerms || '');
+  formData.append('delivery_due_date', this.supplyDetails.deliveryDueDate || '');
 
   if (this.supplyDetails.poFile) {
     formData.append('po_file', this.supplyDetails.poFile);
@@ -5891,7 +6238,7 @@ setTimeout(() => {
     })
     .catch(err => {
       console.error('Fetch error:', err);
-      toastSuccess('Failed to load customers.');
+      toastError('Failed to load customers.');
     })
     .finally(() => {
       this.isLoadingCustomers = false; // ✅ stop loader
@@ -5946,6 +6293,7 @@ setTimeout(() => {
     gst_number: customerData.gst_number || '',
     pan_number: customerData.pan_number || '',
     vendor_number: customerData.vendor_number || '',
+    office_policy: customerData.office_policy || '',
     equipment_details: JSON.parse(JSON.stringify(equipment))
   };
 
@@ -5954,7 +6302,7 @@ setTimeout(() => {
     })
     .catch(err => {
       console.error('Failed to fetch customer details:', err);
-      toastSuccess('Failed to load customer details.');
+      toastError('Failed to load customer details.');
     });
   },
 
@@ -6046,6 +6394,7 @@ setTimeout(() => {
         gst_number: '',
         pan_number: '',
         vendor_number: '',
+        office_policy: '',
         equipment_details: {
           Engine: [{ make: '', model_no: '', serial_no: '' }],
           Pump: [{ make: '', model_no: '', serial_no: '' }],
@@ -6111,10 +6460,10 @@ setTimeout(() => {
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 .save-shipp-address{
-      background-color: var(--text);
+      background-color: #d9e3e3;
     cursor: pointer;
     width: 149px;
-    color: white;
+    color: rgb(42, 41, 41);
     border-radius: 6px;
 }
 .head-title{
@@ -6498,21 +6847,238 @@ width: 100%;
   transform: scale(1.1);
 }
 
+/* Enhanced Modal Styles */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
 }
 
 .modal-card {
-  background: #fff;
-  width: 400px;
-  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  animation: modalSlideIn 0.4s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-30px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--sidebar));
+}
+
+.modal-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--sidebar));
+  color: white;
+  font-size: 20px;
+  margin: 0 auto 15px auto;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.modal-subtitle {
+  font-size: 14px;
+  color: #6c757d;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-group label i {
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
   border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+  transform: translateY(-1px);
+}
+
+.input-group.full-width {
+  flex: 100%;
+}
+
+.readonly-field {
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: not-allowed;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: white;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Specific Modal Types */
+.service-modal .modal-card::before {
+  background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.supply-modal .modal-card::before {
+  background: linear-gradient(90deg, #007bff, #0056b3);
+}
+
+.service-supply-modal .modal-card::before {
+  background: linear-gradient(90deg, #fd7e14, #e8590c);
+}
+
+.po-modal .modal-card::before {
+  background: linear-gradient(90deg, #6f42c1, #5a32a3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-card {
+    width: 95%;
+    margin: 20px;
+    padding: 20px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .form-group {
@@ -8633,51 +9199,389 @@ flex-wrap: wrap;
   flex: 1 1 100%;
 }
 
+/* MODAL BACKDROP - ENHANCED */
 .modal-backdrop {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 1000;
+  animation: modalFadeIn 0.3s ease-out;
 }
 
+/* MODAL CARD - PROFESSIONAL DESIGN */
 .modal-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  width: 600px;
-  animation: fadeInUp 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  padding: 32px;
+  width: 90%;
+  max-width: 650px;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff, #28a745, #ffc107);
+  border-radius: 16px 16px 0 0;
 }
 
 .modal-card.small {
-  width: 400px;
+  max-width: 450px;
+  padding: 28px;
 }
 
+.modal-card.medium {
+  max-width: 550px;
+}
+
+.modal-card.large {
+  /* max-width: 800px; */
+}
+
+/* MODAL TITLE - ELEGANT */
 .modal-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 24px;
+  text-align: center;
+  position: relative;
+  padding-bottom: 12px;
 }
 
+.modal-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* FORM ELEMENTS - MODERN DESIGN */
+.form-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.input-group {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group.full-width {
+  flex: 1 1 100%;
+  min-width: unset;
+}
+
+.input-group label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #495057;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  padding: 14px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #495057;
+  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow:
+    0 0 0 3px rgba(0, 123, 255, 0.1),
+    inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.input-group input:hover,
+.input-group select:hover,
+.input-group textarea:hover {
+  border-color: #ced4da;
+}
+
+.input-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* MODAL BUTTONS - PROFESSIONAL */
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e9ecef;
 }
 
-@keyframes fadeInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d, #545b62);
+  color: white;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #545b62, #3d4142);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #1e7e34, #155724);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #dc3545, #bd2130);
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #bd2130, #921925);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+/* ANIMATIONS */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .modal-card {
+    width: 95%;
+    padding: 24px;
+    margin: 20px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .form-row {
+    gap: 15px;
+  }
+
+  .input-group {
+    min-width: 100%;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+  }
+}
+
+/* LOADING STATES */
+.loader {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* FOCUS STATES FOR ACCESSIBILITY */
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* PLACEHOLDER STYLING */
+.input-group input::placeholder,
+.input-group select::placeholder,
+.input-group textarea::placeholder {
+  color: #adb5bd;
+  opacity: 0.7;
+}
+
+/* PURCHASE ORDER MODAL ENHANCEMENTS */
+.po-modal {
+  text-align: center;
+}
+
+.modal-header-icon {
+  font-size: 48px;
+  color: #007bff;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.modal-subtitle {
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 24px;
+  font-weight: 400;
+}
+
+.po-type-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.input-group label i {
+  margin-right: 8px;
+  color: #007bff;
+  font-size: 14px;
+}
+
+/* ENHANCED BUTTON ICONS */
+.btn i {
+  margin-right: 6px;
+}
+
+/* MODAL CARD VARIATIONS */
+.modal-card.po-modal::before {
+  background: linear-gradient(90deg, #007bff, #28a745, #17a2b8);
+}
+
+/* RESPONSIVE ENHANCEMENTS */
+@media (max-width: 480px) {
+  .modal-card {
+    width: 98%;
+    padding: 20px;
+    margin: 10px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-header-icon {
+    font-size: 36px;
+  }
 }
 
 .search-bar {
   display: flex;
   justify-content: flex-start;
   margin-bottom: 15px;
+  flex-direction: column-reverse;
 }
 
 .search-container {
@@ -8686,6 +9590,8 @@ flex-wrap: wrap;
   display: flex;
   align-items: center;
   width: 220px;
+      width: 85%;
+
   transition: all 0.4s ease;
   background: #fff;
   border-radius: 25px;
@@ -8695,7 +9601,6 @@ flex-wrap: wrap;
 }
 
 .search-container.active {
-  width: 320px;
   border-color: #4a90e2;
   box-shadow: 0 4px 12px rgba(74,144,226,0.3);
 }
@@ -8847,7 +9752,7 @@ textarea {
 }
 
 .modal-buttons .btn {
-  font-size: 16px;
+  font-size: 12px;
   width: 100%;
 }
 
@@ -9625,8 +10530,8 @@ h2 {
 /* Modal Card */
 .modal-card {
   background: linear-gradient(135deg, #ffffff, #f5f7fa);
-  width: 90%;
-  max-width: 900px;
+  width: auto;
+  /* max-width: 900px; */
   max-height: 90vh;
   overflow-y: auto;
   border-radius: 18px;
@@ -9649,7 +10554,7 @@ h2 {
 
 /* Header */
 .modal-card h2 {
-  text-align: center;
+justify-self: anchor-center;
   margin-bottom: 20px;
 
 }
@@ -9783,7 +10688,6 @@ h2 {
   }
   .search-container{
     padding: 0px 9px;
-    width: 88px;
     border-radius: 13px;
 
   }
@@ -9806,9 +10710,7 @@ h2 {
   .closed-po-btn .close-btn{
         font-size: 9px !important;
 }
-.search-container.active{
-  width: 76px;
-}
+
 .quotation-backdrop{
       position-area: center;
 }

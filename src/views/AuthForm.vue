@@ -253,7 +253,7 @@ isResettingPassword: false,
   const message = err.response?.data?.message;
 
   if (err.response?.status === 403) {
-    // ❌ Account inactive
+    //  Account inactive
     this.error = "Your account is inactive. Please contact Admin.";
   } else if (message) {
     this.error = message;

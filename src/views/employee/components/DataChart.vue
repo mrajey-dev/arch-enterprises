@@ -8,11 +8,7 @@
   </div>
 </div>
 
-  <!-- 📈 Monthly Services Done Chart (NEW) -->
-  <div class="chart-box">
-    <h3>📈 Monthly Services Data</h3>
-    <canvas ref="serviceChart"></canvas>
-  </div>
+
 
   
   <!-- <div class="performance-toggle">

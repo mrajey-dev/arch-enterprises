@@ -239,10 +239,28 @@ saveRemark(q) {
       if (!items) return 0;
       return items.reduce((sum, item) => sum + (item.rate || 0) * (item.qty || 0), 0);
     },
-    getDiscountPercent(items) {
-      if (!items) return 0;
-      return items.reduce((sum, item) => sum + (item.discount || 0), 0);
-    },
+  getDiscountPercent(items) {
+  if (!items || !items.length) return 0;
+
+  let totalAmount = 0;
+  let totalDiscountAmount = 0;
+
+  items.forEach(item => {
+    const rate = Number(item.rate || 0);
+    const qty = Number(item.qty || 0);
+    const discount = Number(item.discount || 0);
+
+    const gross = rate * qty;
+    const discountAmount = gross * (discount / 100);
+
+    totalAmount += gross;
+    totalDiscountAmount += discountAmount;
+  });
+
+  if (totalAmount === 0) return 0;
+
+  return ((totalDiscountAmount / totalAmount) * 100).toFixed(2);
+},
 updateQuotationStatus(q) {
   axios.post(`/api/quotations/${q.id}/status`, { 
       quotation_followup_status: q.status, // <-- use column name

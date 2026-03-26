@@ -234,10 +234,10 @@
       </div>
 
       <div class="info-row">
-        <span class="label"><i class="fa fa-check-square-o" style="font-size:13px"></i> Completed On</span>
-        <span class="value">
+        <!-- <span class="label"><i class="fa fa-check-square-o" style="font-size:13px"></i> Completed On</span> -->
+        <!-- <span class="value">
           {{ formatDate(selectedTask.completedAt) }}
-        </span>
+        </span> -->
       </div>
 
     </div>
@@ -360,7 +360,7 @@ selectedTask: null,
       totalFilteredTasks: 0,
       upcomingTasks: [], // tasks with deadline = today+1
     showReminderPopup: false,
-      visibleTaskCount: 6, // initially show 6 tasks
+      visibleTaskCount: 8, // initially show 6 tasks
       filters: {
   date: '',
   month: '',

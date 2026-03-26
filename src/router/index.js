@@ -30,6 +30,8 @@ import ArchCalendar from '../views/ArchCalendar.vue'
 import OfferLetter from '../views/OfferLetter.vue'
 import JoiningLetter from '../views/JoiningLetter.vue'
 import OfferLetterList from '../views/OfferLetterList.vue'
+import PerformancePage from '../views/PerformancePage.vue'
+import EmployeePerformance from '../views/employee/PerformancePage.vue'
 
 
 
@@ -37,7 +39,6 @@ import ManageDepartments from '../views/ManageDepartments.vue'
 import EmployeeDashboard from '../views/employee/Dashboard.vue' 
 // import DailyWorkReport from '../views/employee/DailyWorkReport.vue'
 import MyTask from '../views/employee/MyTask.vue'
-import MyPerformance from '../views/employee/MyPerformance.vue'
 import ApplyLeave from '../views/employee/ApplyLeave.vue'
 
 import Report from '../views/employee/Report.vue'
@@ -120,6 +121,13 @@ const routes = [
   meta: { requiresAuth: true, hideBell: true, hideMenu: true }
 },
 {
+    path: '/performance',
+    name: 'Performance',
+    component: PerformancePage, meta: { requiresAuth: true, hideBell: true, hideMenu: true }
+  },
+  {path: '/employee/performance', name: 'EmployeePerformance', component: PerformancePage, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
+
+{
   path: '/OfferLetter/:id?',
   name: 'OfferLetter',
   component: OfferLetter,
@@ -169,7 +177,7 @@ const routes = [
   // ───── EMPLOYEE SECTION ─────
   { path: '/employee/dashboard', name: 'EmployeeDashboard', component: EmployeeDashboard, meta: { requiresAuth: true } },
   { path: '/employee/mytask', name: 'MyTask', component: MyTask, meta: { requiresAuth: true } },
-  { path: '/employee/myperformance', name: 'MyPerformance', component: MyPerformance, meta: { requiresAuth: true } },
+
   { path: '/employee/applyleave', name: 'ApplyLeave', component: ApplyLeave, meta: { requiresAuth: true } },
   { path: '/employee/viewannouncement', name: 'ViewAnnouncement', component: ViewAnnouncement, meta: { requiresAuth: true } },
 

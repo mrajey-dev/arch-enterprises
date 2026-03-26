@@ -38,10 +38,6 @@
       @change="onProfilePicChange"
       style="display: none"
     />
-    <!-- Camera Icon -->
-    <!-- <div class="camera-icon">
-      <i class="fas fa-camera"></i>
-    </div> -->
   </label>
 
 </div>
@@ -52,16 +48,7 @@
 
       <!-- Scrollable Menu Section -->
       <div class="menu-scroll">
-        <!-- Universal Search -->
- <!-- <div class="search-bar desktop-only">
-     <span> <input
-        type="text"
-        placeholder="Search..."
-        v-model="searchQuery"
-        @input="handleSearch"
-      /></span>
-      <i class="fas fa-search"></i>
-    </div> -->
+      
         <ul class="sidebar-menu">
           <li @click="goTo('employee/dashboard')">
             <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
@@ -110,12 +97,14 @@
   <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
 </li>
 
- <!-- <li 
+<li 
+  v-if="user?.department === 'Management'"
   class="mobile-only"
-  @click="goTo('employee/Customerregistrations')"
+  @click="goTo('employee/performance')"
 >
-  <i class="fas fa-user-friends"></i><span> Customers & PO</span>
-</li> -->
+  <i class="fas fa-chart-line"></i>
+  <span>Performance</span>
+</li>
 
 
           <li @click="goTo('employee/viewAnnouncement')">

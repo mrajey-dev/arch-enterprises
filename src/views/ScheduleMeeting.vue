@@ -58,7 +58,7 @@
 
                 <div class="form-group">
                   <label for="offlineDescription" class="form-label"><i class="fas fa-align-left"></i> Description</label>
-                  <textarea id="offlineDescription" v-model="offlineForm.description" class="form-control textarea" rows="3" maxlength="500" placeholder="Describe the meeting"></textarea>
+                  <textarea id="offlineDescription" v-model="offlineForm.description" class="form-control textarea" rows="3" maxlength="5000" placeholder="Describe the meeting"></textarea>
                 </div>
 
                 <!-- <div class="form-group">

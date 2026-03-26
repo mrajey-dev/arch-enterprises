@@ -422,13 +422,13 @@ viewEvent: {},
     birthdayEvents: [],
     showFilters: {
   meetings: true,
-  services: true,
-  visits: true,
+  services: false,
+  visits: false,
   birthdays: true,
   holidays: true,
   events: true,
   notes: true,
-   attendance: true
+   attendance: false
 },
     visitEvents: [],
     events: [],

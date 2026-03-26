@@ -24,7 +24,7 @@
 
 
 
-      <button class="close-btn" @click="showBalanceModal = false">
+      <button class="close-btn" @click.self="showBalanceModal = false">
        <i class="fa fa-close" style="font-size:13px"></i> Close
       </button>
     </div>
@@ -284,15 +284,20 @@ computed: {
 },
 
 async checkLeaveBalance() {
-  // ✅ Skip leave balance check for Half Day
+  // ✅ Skip leave balance check for Half Day - but check casual for 0.5
   if (this.isHalfDay) {
-    this.submitError = '';       // clear any previous errors
-    this.leaveWarning = '';      // clear warning
+    const casualRemaining = this.baseAllowances.casual - (this.usedLeaves.casual || 0);
+    if (casualRemaining < 0.5) {
+      this.submitError = `❌ You have only ${casualRemaining} casual leave left. Half-day requires 0.5 casual leave.`;
+    } else {
+      this.submitError = '';
+    }
+    this.leaveWarning = '';
     return;
   }
 
   this.submitError = '';
-  this.leaveWarning = ''; // clear previous warning
+  this.leaveWarning = '';
 
   const { fromDate, toDate, leaveType } = this.form;
   if (!fromDate || !toDate || !leaveType) return;
@@ -465,12 +470,19 @@ async fetchLeaveBalanceFromDB() {
       (lv.department || '').trim().toLowerCase() !== this.userDept.trim().toLowerCase()
     ) return;
 
-    const key = map[(lv.leave_type || lv.leaveType || '').toLowerCase()];
-    if (!key) return;
+    const leaveType = (lv.leave_type || lv.leaveType || '').toLowerCase();
+    if (leaveType === 'half day' || lv.half_day) {
+      // Half-day deducts 0.5 from casual
+      used.casual += 0.5;
+      remaining.casual -= 0.5;
+    } else {
+      const key = map[leaveType];
+      if (!key) return;
 
-    const days = this.daysBetween(lv.from_date || lv.fromDate, lv.to_date || lv.toDate);
-    used[key] += days;
-    remaining[key] -= days;
+      const days = this.daysBetween(lv.from_date || lv.fromDate, lv.to_date || lv.toDate);
+      used[key] += days;
+      remaining[key] -= days;
+    }
   });
 
   // Prevent negative leave balance
@@ -613,34 +625,74 @@ isMine(lv) {
 },  
     /* ============== FORM SUBMIT ======================= */
 async submitForm() {
-  // 1️⃣ Skip overlap warning and leave balance for Half Day
-  if (!this.isHalfDay) {
-    const overlapMsg = this.findOverlapMessage();
-    if (overlapMsg) {
-      this.submitError = overlapMsg;
-      toastSuccess(this.submitError);
-      return; // stop submission
-    }
+  // Basic validations
+  if (
+    !this.isHalfDay &&
+    this.form.fromDate &&
+    this.form.toDate &&
+    new Date(this.form.fromDate) > new Date(this.form.toDate)
+  ) {
+    this.submitError = 'From date cannot be after to date.';
+    toastWarning(this.submitError);
+    return;
+  }
 
-    await this.checkLeaveBalance(); // only check balance for full day
-    if (this.submitError) {
-      toastSuccess(this.submitError);
-      return;
-    }
+  // 1️⃣ Check overlap
+  const overlapMsg = this.findOverlapMessage();
+  if (overlapMsg) {
+    this.submitError = overlapMsg;
+    toastWarning(this.submitError);
+    return;
+  }
+
+  // 2️⃣ Check leave balance
+  await this.checkLeaveBalance();
+  if (this.submitError) {
+    toastWarning(this.submitError);
+    return;
+  }
+
+  // 🚨 3️⃣ CHECK LIMIT EXCEEDED
+  let isLimitExceeded = false;
+
+  if (
+    this.usedLeaves.casual > 10 ||
+    this.usedLeaves.pl > 10 ||
+    this.usedLeaves.sick > 10
+  ) {
+    isLimitExceeded = true;
+
+    toastWarning(
+      "⚠️ Your leave limit is exceeded. This will NOT be counted in attendance."
+    );
   }
 
   this.submitLoading = true;
   this.submitSuccessMsg = '';
 
-  // ✅ Half day leaves always have same from/to date
+  // Half day logic
   if (this.isHalfDay) {
     this.form.toDate = this.form.fromDate;
+
+    if (!this.form.timeSlot) {
+      this.submitError = 'Time slot is required for half-day leave.';
+      toastWarning(this.submitError);
+      return;
+    }
   }
 
   try {
     const token = localStorage.getItem('token');
+
     const fd = new FormData();
-    Object.entries(this.form).forEach(([k, v]) => v && fd.append(k, v));
+
+    Object.entries(this.form).forEach(([k, v]) => {
+      if (v) fd.append(k, v);
+    });
+
+    // ✅ IMPORTANT FLAG
+    fd.append('limit_exceeded', isLimitExceeded ? 1 : 0);
+
     if (this.isHalfDay) fd.append('half_day', '1');
 
     const { data } = await axios.post(
@@ -650,26 +702,32 @@ async submitForm() {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
-        }
+        },
       }
     );
 
-    // Update casual leave by 0.5
+    // Half-day casual update
     if (this.isHalfDay) {
       await axios.post(
         'https://employees.archenterprises.co.in/api/api/update-cl-leave',
-        { name: this.form.name, department: this.form.department, increment: 0.5 },
+        {
+          name: this.form.name,
+          department: this.form.department,
+          increment: 0.5,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
     }
-// Reason validation (optional only for Casual Leave)
-if (!this.isCasualLeave && !this.form.reason.trim()) {
-  this.submitError = 'Reason is required for this leave type.';
-  toastSuccess(this.submitError);
-  return;
-}
+
+    // Reason validation
+    if (!this.isCasualLeave && !this.isHalfDay && !this.form.reason.trim()) {
+      this.submitError = 'Reason is required for this leave type.';
+      toastWarning(this.submitError);
+      return;
+    }
 
     await this.sendAdminNotification(data.leave_id);
+
     this.submitSuccessMsg = '✅ Leave request submitted successfully!';
     this.resetForm();
     await this.fetchLeaves();
@@ -701,8 +759,7 @@ if (!this.isCasualLeave && !this.form.reason.trim()) {
   const map = {
     casual: 'Casual Leave',
     sick: 'Sick Leave',
-    pl: 'PL Leave',
-    medical: 'Medical Leave',
+    pl: 'PL Leave'
     // earn: 'Earn Leave'
   }
   return map[k.toLowerCase()] || `${k.charAt(0).toUpperCase()}${k.slice(1)} Leave`
