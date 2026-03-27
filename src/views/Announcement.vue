@@ -319,7 +319,7 @@ button[disabled] {
 .announcement-board {
   flex: 1;
   width: 100%;
-  margin: 0px auto;
+ margin-top: 66px;
   padding: 30px;
   background: #ffffff;
   border-radius: 14px;

@@ -163,6 +163,7 @@ export default {
   flex: 1;
   /* background-color: var(--sidebar); */
   padding: 30px 40px;
+  margin-top: 66px;
   border-radius: 15px;
   overflow-x: auto;
 }

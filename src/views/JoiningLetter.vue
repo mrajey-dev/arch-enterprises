@@ -366,6 +366,7 @@ computed: {
 
 /* Content area */
 .content {
+  margin-top: 66px;
   flex: 1;
 }
 /* ===== OFFER LETTER PROFESSIONAL DESIGN ===== */

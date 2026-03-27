@@ -9,12 +9,6 @@
 >
 
 
-
-<button class="sidebar-toggles" @click="toggleSidebar">
-  <span class="toggle-icon" style="color: white; float: right;">{{ isCollapsed ? '⫸' : '⫷' }}</span>
-</button>
-
-
   <!-- Profile Section -->
   <div class="profile-section">
    <img
@@ -160,7 +154,7 @@
 
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '260px' }">
       <router-view></router-view>
     </main>
 
@@ -485,7 +479,7 @@ export default {
   data() {
     return {
       isMobileOpen: false,
-       isCollapsed: true,
+       isCollapsed: false,
       currentTheme: localStorage.getItem("theme") || "default",
        adminEmail: '',
          adminName: '',
@@ -578,7 +572,7 @@ computed: {
   },
   handleMouseLeave() {
     if (window.innerWidth > 768) {
-      this.isCollapsed = true; // shrink back
+      this.isCollapsed = false; // shrink back
     }
   },
 
@@ -1382,20 +1376,17 @@ calculatePerformance() {
   transform: rotate(-45deg) translate(4px, -4px);
 }
 
-.sidebar-toggles{
-  background-color: black;
-}
 .sidebar { 
   width: 260px;
   background: linear-gradient(180deg, var(--primary), #020617);
   color: #e5e7eb;
   display: flex;
   flex-direction: column;
-
+border-radius: 12px;
   /* ✅ STICKY SIDEBAR */
-  position: sticky;
+  position: fixed;
    top: 100px;
-  height: 81vh;
+  height: 86vh;
 
   transition: width 0.35s ease;
   box-shadow: 4px 0 12px rgba(0,0,0,0.15);

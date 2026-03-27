@@ -501,6 +501,7 @@ addVendorInPopup() {
 .page-bg {
   background: #f4f6f9;
   min-height: 100vh;
+  margin-top: 70px;
   padding: 24px;
 }
 

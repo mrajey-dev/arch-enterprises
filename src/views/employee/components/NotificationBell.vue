@@ -154,7 +154,7 @@ this.poller = setInterval(() => {
   border-radius: 50%;
 }
 .notification-bell-wrapper {
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: 20px;
   z-index: 9999;

@@ -1052,9 +1052,9 @@ font-family: cursive;
 }
 
 .leave-form-wrapper {
+  margin-top: 66px;
   /* max-width: 800px; */
   width: 100%;
-  margin: -1px auto;
   padding: 25px;
   /* background: linear-gradient(135deg, #f5f7fa, var(--text)) ; */
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0);

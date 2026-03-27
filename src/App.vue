@@ -1060,11 +1060,12 @@ body,
 .global-topbar {
     height: 83px;
     background: var(--primary);
+    width: 100%;
     color: var(--text-white);
     display: flex;
     align-items: center;
     padding: 0 22px;
-    position: sticky;
+    position: fixed;
     top: 0;
     z-index: 999;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);

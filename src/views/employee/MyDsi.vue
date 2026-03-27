@@ -1622,6 +1622,8 @@ h2{
     overflow-y: auto;
   }
 }
-
+.announcement-board{
+  margin-top: 66px;
+}
 
 </style>

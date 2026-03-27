@@ -649,6 +649,7 @@ font-family: cursive;
   flex: 1;
   background-color: #a5d5cf33;
   padding: 30px 40px;
+  margin-top: 66px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
   overflow-x: auto;

@@ -575,6 +575,7 @@ async mounted() {
 
 /* Content area */
 .content {
+  margin-top: 66px;
   flex: 1;
 }
 /* ===== OFFER LETTER PROFESSIONAL DESIGN ===== */
@@ -838,7 +839,7 @@ async mounted() {
 
 .modal-container {
   background: #fff;
-  width: 90%;
+  width: 100%;
   max-width: 1000px;
   border-radius: 12px;
   padding: 20px;

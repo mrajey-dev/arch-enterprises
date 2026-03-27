@@ -1491,7 +1491,7 @@ textarea {
 
 .qa-board {
   max-width: 900px;
-  margin: auto;
+  margin-top: 66px;
   display: flex;
   flex-direction: column;
   gap: 18px;

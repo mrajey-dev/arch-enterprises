@@ -146,7 +146,7 @@ font-family: cursive;
 
 .announcement-board {
   width: 100%;
-  margin: 0px auto;
+  margin-top: 66px;
   padding: 30px;
   background: var(--sidebar);
   border-radius: 14px;

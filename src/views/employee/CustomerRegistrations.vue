@@ -46,7 +46,7 @@
   Customer Emails
 </button>
 
-                      <button class="assign-btn tooltip-btn"  data-tooltip="Add new customer" style="font-weight: 800;" @click="openRegisterForm()">✚ NEW</button>
+                      <button class="assign-btn" style="font-weight: 800;" @click="openRegisterForm()">✚ NEW</button>
 
 
   <!-- <button class="view-all-btn" @click="viewAllPo">
@@ -1197,12 +1197,7 @@
   <thead>
     <tr>
       <th>Company Name</th>
-      <th>Quotation Against PO</th>
-      <th>Payment Terms</th>
-      <th>Delivery Terms</th>
-      <th>Delivery Due Date</th>
-      <!-- <th>PO Number</th> -->
-      <!-- <th>PO Date</th> -->
+<th>PO Number</th>
       <th>Visit Date</th>
       <th>Type</th>
       <th>Assign To</th>
@@ -1214,11 +1209,8 @@
   <tbody v-if="filteredServicePoList.length">
     <tr v-for="order in filteredServicePoList" :key="order.id">
       <td>{{ order.company_name }}</td>
-      <td>{{ order.quotation_against_po || '-' }}</td>
-      <td>{{ order.payment_terms || '-' }}</td>
-      <td>{{ order.delivery_terms || '-' }}</td>
-      <td>{{ order.delivery_due_date ? formatDate(order.delivery_due_date) : '-' }}</td>
-      <!-- <td>{{ order.po_number }}</td> -->
+     
+      <td>{{ order.po_number }}</td>
       <!-- <td>{{ order.date }}</td> -->
 <td>
   <input
@@ -1321,11 +1313,8 @@
   <thead>
     <tr>
       <th>Company Name</th>
-      <th>Quotation Against PO</th>
-      <th>Payment Terms</th>
-      <th>Delivery Terms</th>
-      <th>Delivery Due Date</th>
-      <!-- <th>PO Number</th> -->
+     
+      <th>PO Number</th>
       <th>Visit Date</th>
       <th>Type</th>
       <th>Assigned To</th>
@@ -1339,11 +1328,8 @@
     <tr v-for="item in filteredAssignedServiceList" :key="item.id">
 
       <td>{{ item.company_name }}</td>
-      <td>{{ item.quotation_against_po || '-' }}</td>
-      <td>{{ item.payment_terms || '-' }}</td>
-      <td>{{ item.delivery_terms || '-' }}</td>
-      <td>{{ item.delivery_due_date ? formatDate(item.delivery_due_date) : '-' }}</td>
-      <!-- <td>{{ item.po_number }}</td> -->
+    
+      <td>{{ item.po_number }}</td>
       <td>{{ item.visit_date }}</td>
       <td>{{ item.type_of_service }}</td>
       <td>{{ item.assign_to }}</td>
@@ -1441,7 +1427,7 @@
     <tr>
       <th>Company</th>
       <th>PO Number</th>
-      <th>Quotation Against PO</th>
+      <th>Quotation No.</th>
       <th>Payment Terms</th>
       <th>Delivery Terms</th>
       <th>Delivery Due Date</th>
@@ -3594,9 +3580,9 @@ PODate: "",
             total: 0,
             discount: '',
             taxable: 0,
-            cgst_rate: '',
+            cgst_rate: '9',
             cgst_amt: '',
-            sgst_rate: '',
+            sgst_rate: '9',
             sgst_amt: '',
             igst_rate: 18,
             igst_amt: '',
@@ -4952,10 +4938,10 @@ refreshForm() {
         qty: '',
         uom: '',
         rate: '',
-        discount: 0,
-        cgst_rate: '',
-        sgst_rate: '',
-        igst_rate: ''
+        discount: '',
+        cgst_rate: '9',
+        sgst_rate: '9',
+        igst_rate: '9'
       }
     ],
 
@@ -8980,7 +8966,7 @@ margin-left: 8px;
   border-collapse: collapse;
   margin: 0 auto;
   width: 100%;
-  font-size: 15px;
+  font-size: 12px;
   min-width: 500px;
   border: 1px solid #ddd;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -9940,6 +9926,7 @@ textarea {
 /* Content Section */
 .content {
   flex: 1;
+  margin-top: 66px;
   background-color: #a5d5cf33;
   padding: 30px 40px;
   border-radius: 15px;

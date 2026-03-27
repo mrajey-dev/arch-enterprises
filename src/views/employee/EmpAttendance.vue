@@ -2397,6 +2397,7 @@ body {
 /* === CONTAINERS === */
 .container-fluid {
   width: 79%;
+  margin-top: 66px;
   padding-right: 1.5rem;
   border-radius: 16px;
   padding-left: 1.5rem;

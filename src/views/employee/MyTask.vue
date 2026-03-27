@@ -66,7 +66,7 @@
     <option>In Progress</option>
     <option>Completed</option>
   </select>
-  <button @click="clearFilters"><i class="fa fa-refresh fa-spin" style="font-size:13px"></i> Reset</button>
+  <button @click="clearFilters" style="width: 100px;"> View all</button>
 </div>
         <div class="task-grid">
           <div
@@ -360,7 +360,7 @@ selectedTask: null,
       totalFilteredTasks: 0,
       upcomingTasks: [], // tasks with deadline = today+1
     showReminderPopup: false,
-      visibleTaskCount: 8, // initially show 6 tasks
+      visibleTaskCount: 99, // initially show 6 tasks
       filters: {
   date: '',
   month: '',
@@ -593,7 +593,7 @@ async fetchAssignedServices() {
 },
 
     loadMore() {
-    this.visibleTaskCount += 6;
+    this.visibleTaskCount += 99;
   },
 async fetchAssignedVisits() {
   try {
@@ -1592,6 +1592,7 @@ font-family: cursive;
 
 .task-container {
   padding: 30px;
+  margin-top: 66px;
   background: #f4f7fa;
   min-height: 100vh;
   border-radius: 17px;
@@ -2222,6 +2223,26 @@ h2 {
   padding: 10px;
   border: 1px solid #ddd;
   resize: none;
+}
+
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 cards per row */
+  gap: 35px;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .task-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 cards */
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .task-grid {
+    grid-template-columns: 1fr; /* 1 card */
+  }
 }
 
 </style>

@@ -1570,6 +1570,7 @@ input:checked + .slider {
   letter-spacing: 0.6px;
 }
 .schedule-container {
+  margin-top: 66px;
   background: white;
   padding: 28px;
   border-radius: 20px;

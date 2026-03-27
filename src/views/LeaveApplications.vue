@@ -1020,6 +1020,7 @@ font-family: cursive;
 
 /* Content Section */
 .content {
+  margin-top: 66px;
   flex: 1;
   background-color: #a5d5cf33;
   padding: 30px 40px;

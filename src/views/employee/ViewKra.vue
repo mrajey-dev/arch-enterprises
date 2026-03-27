@@ -167,7 +167,7 @@ li {
 
 .announcement-board {
   width: 100%;
-  margin: 0px auto;
+  margin-top: 66px;
   padding: 30px;
   background: #f6f7fb;
   border-radius: 14px;

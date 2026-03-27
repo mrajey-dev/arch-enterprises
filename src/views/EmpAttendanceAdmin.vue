@@ -3075,6 +3075,7 @@ body {
 .container-fluid {
   flex: 1;
   width: 100%;
+  margin-top: 66px;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
   margin-right: auto;

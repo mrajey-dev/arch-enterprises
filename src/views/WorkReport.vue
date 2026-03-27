@@ -10,10 +10,25 @@
 
       <div class="main-content-work-report">
         <div class="report-container">
-          <h2>📝 Work Reports</h2>
- <button class="btn btn-primary attractive-btn" @click="openAssignTaskModal">
-          <i class="fas fa-tasks"></i> Assign Task
-        </button>
+       <div class="header-row">
+  <h2>📝 Work Reports</h2>
+
+  <div class="header-actions">
+    <button 
+      class="btn btn-primary attractive-btn"
+      @click="showAssignedReport = true"
+    >
+     <i class="fa fa-file"></i> Report
+    </button>
+
+    <button 
+      class="btn btn-primary attractive-btn"
+      @click="openAssignTaskModal"
+    >
+      <i class="fas fa-tasks"></i> Assign
+    </button>
+  </div>
+</div>
           <div class="search-group">
             <input
               type="text"
@@ -55,7 +70,7 @@
               </select>
 
               <button class="btn btn-primary attractive-btn" @click="clearFilters">
-                <i class="fas fa-times-circle"></i> Clear Filters
+                <i class="fas fa-times-circle"></i> Clear
               </button>
             </div>
           </div>
@@ -140,7 +155,7 @@
 
         <div class="modal-buttons">
           <button class="btn btn-primary" @click="closeModal">
-            <i class="fas fa-times-circle"></i>&nbsp;<i class="fa fa-close" style="font-size:13px"></i> Close
+            <i class="fas fa-times-circle"></i>&nbsp;<i class="fas fa-times-circle"></i> Close
           </button>
         </div>
       </div>
@@ -220,12 +235,104 @@
               <i class="fas fa-check-circle"></i> Assign
             </button>
             <button class="btn btn-secondary" @click="closeAssignTaskModal">
-            <i class="fa fa-close" style="font-size:13px"></i> Cancel
+            <i class="fas fa-times-circle"></i> Cancel
             </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Assigned Report Modal -->
+<div 
+  class="modal-backdrop" 
+  v-if="showAssignedReport" 
+  @click.self="showAssignedReport = false"
+>
+  <div class="modal-card report-modal">
+
+    <div class="header-row">
+      <h2>Assigned Task Report</h2>
+
+      <button 
+        class="btn btn-secondary"
+        @click="showAssignedReport = false"
+      >
+       <i class="fas fa-times-circle"></i> Close
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+
+      <input 
+        type="text"
+        v-model="reportSearch"
+        placeholder="Search..."
+        class="filter-input"
+      />
+
+      <select v-model="reportFilters.status" class="filter-input">
+        <option value="">All Status</option>
+        <option>Pending</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </select>
+
+      <input 
+        type="date"
+        v-model="reportFilters.date"
+        class="filter-input"
+      />
+
+    </div>
+
+    <!-- Excel Table -->
+    <div class="table-wrapper">
+
+      <table class="excel-table">
+        <thead>
+          <tr>
+              <th>SR No.</th>
+            <th>Task</th>
+            <th>Summary</th>
+            <th>Assigned To</th>
+            <th>Department</th>
+            <th>Due Date</th>
+            <th>Comments</th>
+            <th>Completed at</th>
+            <th>Status</th>
+          
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr 
+    v-for="(task, index) in filteredAssignedReports" 
+    :key="task.id"
+  >
+           <td>{{ index + 1 }}</td>
+            <td>{{ task.name }}</td>
+            <td>{{ task.summary }}</td>
+            <td>{{ task.username }}</td>
+            <td>{{ task.department }}</td>
+            <td>{{ task.date }}</td>
+            <td>{{ task.comment }}</td>
+            <td>{{ task.completed_at }}</td>
+            <td>
+              <span class="status" :class="task.status.toLowerCase()">
+                {{ task.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+</div>
+
   </div>
 </template>
 
@@ -243,12 +350,20 @@ export default {
   data() {
     const today = new Date().toISOString().split('T')[0]
     return {
+      showAssignedReport: false,
+
+reportSearch: '',
+
+reportFilters: {
+  status: '',
+  date: ''
+},
       isEditTaskMode: false,
 editTaskId: null,
       managerName: localStorage.getItem('user_name') || 'Assigned',
       selectedReport: null,
       showAssignTaskModal: false,
-      visibleCount: 6,
+      visibleCount: 99,
       minDate: today,
       filters: { name: '', date: today, month: (new Date().getMonth() + 1).toString(), status: '', search: '' },
       tasks: [],
@@ -274,6 +389,63 @@ editTaskId: null,
     }
   },
   computed: {
+filteredAssignedReports() {
+
+  const today = new Date()
+
+  const lastYear = new Date()
+  lastYear.setFullYear(today.getFullYear() - 1)
+
+  return this.tasks
+    .map(task => {
+
+      const isManagerAssigned =
+        task.assigned_by_manager === true ||
+        (task.assigned_by && task.assigned_by !== task.user_id)
+
+      return {
+        id: task.id,
+        username: task.user?.name || 'Unknown',
+        name: task.title,
+        date: task.due_date,
+        department: task.user?.department || 'Unknown',
+        status: task.status || 'Pending',
+        modules: task.modules || '',
+        comment: task.comment || '-',
+         summary: task.description || '-',
+        completed_at: task.completed_at || 'Not completed',
+        priority: task.priority || '',
+        manager_name: task.manager_name || this.managerName,
+        assigned_by_manager: isManagerAssigned
+      }
+
+    })
+    .filter(task => {
+
+      const taskDate = new Date(task.date)
+
+      // ✅ Last year filter
+      const lastYearMatch = taskDate >= lastYear
+
+      // ✅ Only Assigned Tasks
+      const assignedMatch = task.priority === 'Task Assigned'
+
+      // ✅ Search
+      const search = this.reportSearch.toLowerCase()
+
+      const searchMatch =
+        !search ||
+        task.name.toLowerCase().includes(search) ||
+        task.username.toLowerCase().includes(search) ||
+        task.department.toLowerCase().includes(search)
+
+      const statusMatch =
+        !this.reportFilters.status ||
+        task.status === this.reportFilters.status
+
+      return lastYearMatch && assignedMatch && searchMatch && statusMatch
+    })
+},
     wordCount() {
     if (!this.newTask.title) return 0;
     return this.newTask.title.trim().split(/\s+/).length;
@@ -393,7 +565,7 @@ deleteTask(id) {
 
     openModal(report) { this.selectedReport = report },
     closeModal() { this.selectedReport = null },
-    loadMore() { this.visibleCount += 3 },
+    loadMore() { this.visibleCount += 99 },
     clearFilters() {
       this.filters = { name: '', date: '', month: '', status: '', search: '' }
     },
@@ -491,7 +663,7 @@ font-family: cursive;
 .edit-task-btn{
   background-color: var(--primary);
     color: white;
-    padding: 8px 17px;
+    padding: 5px 12px;
     font-size: 11px;
     border-radius: 5px;
     font-weight: 600;
@@ -500,7 +672,7 @@ font-family: cursive;
 .delete-task-btn{
   background-color: #ff0018;
     color: white;
-    padding: 8px 17px;
+    padding: 5px 12px;
     font-size: 11px;
     border-radius: 5px;
     font-weight: 600;
@@ -575,7 +747,7 @@ font-family: cursive;
 .btn-load-task{
   background-color: var(--text)!important ;
     color: #fff!important;
-   width: 23% !important;
+   width: 84px !important;
     font-size: 0.8rem!important ;
 }
 .report-grid {
@@ -667,9 +839,9 @@ font-family: cursive;
 
 .status {
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: 6px;
   background-color: orange;
-  font-size: 12px;
+  font-size: 9px;
   text-transform: uppercase;
   font-weight: bold;
   color: white;
@@ -687,6 +859,7 @@ font-family: cursive;
   background-color: #dc3545;
 }
 .report-container {
+  margin-top: 66px;
      padding: 30px 40px;
          border-radius: 15px;
   width: 100%;
@@ -735,13 +908,13 @@ font-family: cursive;
 .report-card h3 {
   margin: 0;
     text-transform: uppercase;
-  font-size: 18px;
+  font-size: 13px;
   color: var(--text);
 }
 
 .report-card p {
   margin: 6px 0;
-  font-size: 14px;
+  font-size: 11px;
   color: var(--text);
 }
 
@@ -749,15 +922,6 @@ font-family: cursive;
   margin-top: 10px;
   /* font-style: italic; */
   color: #020840;
-}
-
-.status {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  text-transform: uppercase;
-  font-weight: bold;
-  color: white;
 }
 
 /* ------------------------------------- */
@@ -911,6 +1075,7 @@ font-family: cursive;
 
 /* Content Section */
 .content {
+  margin-top: 66px;
   flex: 1;
   background-color: white;
   padding: 30px 40px;
@@ -1110,7 +1275,7 @@ h2 {
 }
 
 .btn {
-  flex: 1;
+  /* flex: 1; */
   padding: 14px 0;
   font-weight: 700;
   font-size: 1rem;
@@ -1124,6 +1289,8 @@ h2 {
 .btn-primary {
   background-color: var(--primary);
   color: white;
+  width: 92px;
+  font-size: 0.9rem;
   box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
@@ -1135,12 +1302,12 @@ h2 {
 .btn-secondary {
   background-color: var(--text);
   color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+  width: 92px;
+  font-size: 0.9rem;
 }
 
 .btn-secondary:hover {
   background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
 }
 
 /* Fade Transition */
@@ -1215,6 +1382,7 @@ h2 {
 .btn-primary.attractive-btn {
   background-color: var(--text);
   border: none;
+  
   color: white;
 }
 
@@ -1238,4 +1406,54 @@ h2 {
   font-size: 14px;
 }
 
+.header-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
+}
+
+.header-actions{
+display:flex;
+gap:10px;
+}
+
+.report-modal{
+width:95%;
+max-width:1400px;
+}
+
+.table-wrapper{
+overflow:auto;
+margin-top:20px;
+}
+
+.excel-table{
+width:100%;
+border-collapse:collapse;
+font-size:14px;
+}
+
+.excel-table th{
+background:#f1f3f5;
+padding:12px;
+border:1px solid #ddd;
+text-align:left;
+font-weight:700;
+}
+
+.excel-table td{
+padding:10px;
+border:1px solid #ddd;
+}
+
+.excel-table tr:hover{
+background:#f8f9fa;
+}
+
+.excel-table thead{
+position:sticky;
+top:0;
+z-index:10;
+}
 </style>

@@ -515,6 +515,7 @@ font-family: cursive;
 /* Profile Card */
 .profile-card {
   display: flex;
+  margin-top: 78px;
   flex-direction: column;
   gap: 30px;
   padding: 40px 30px;

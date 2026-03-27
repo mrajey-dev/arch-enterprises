@@ -1143,5 +1143,7 @@ h2 {
 .status-text.waiting {
   color: #ffc107; /* yellow */
 }
-
+.announcement-board{
+  margin-top: 66px;
+}
 </style>

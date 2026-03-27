@@ -333,6 +333,7 @@ export default {
 /* Content */
 .content {
   flex: 1;
+  margin-top: 66px;
   background-color: #a5d5cf33;
   padding: 30px 40px;
   border-radius: 15px;

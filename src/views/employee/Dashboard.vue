@@ -1126,14 +1126,6 @@ textarea {
   max-width: 216px;
   flex: 1 1 123px;
 }
-.content{
-    flex: 1;
-    background-color: #f3f9ff;
-    padding: 16px 17px;
-    border-radius: 15px;
-    /* box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08); */
-    overflow-x: auto;
-}
 }
 
 .user-table td .btn-group {
@@ -1248,6 +1240,7 @@ textarea {
   background-color: f0f2f8!important ;
   padding: 30px 40px;
   border-radius: 15px;
+   margin-top: 66px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
   overflow-x: auto;
 }
@@ -1739,5 +1732,4 @@ h2 {
     grid-template-columns:1fr;
   }
 }
-
 </style>

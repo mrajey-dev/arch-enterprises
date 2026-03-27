@@ -158,7 +158,7 @@
   @click="isMobileOpen = false"
 ></div>
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '260px' }">
       <router-view></router-view>
     </main>
 
@@ -215,7 +215,7 @@ export default {
   data() {
     return {
        isMobileOpen: false,
-       isCollapsed: true,
+       isCollapsed: false,
        currentTheme: localStorage.getItem("theme") || "default",
       searchQuery: "",
       results: [],
@@ -254,7 +254,7 @@ export default {
   },
   handleMouseLeave() {
     if (window.innerWidth > 768) {
-      this.isCollapsed = true;
+      this.isCollapsed = false; // Change to 'true' if you want it to collapse on mouse leave
     }
   },
     toggleSidebar() {
@@ -457,11 +457,13 @@ async mounted() {
   color: #e5e7eb;
   display: flex;
   flex-direction: column;
+      border-radius: 12px;
 
-  /* 👇 STICKY SIDEBAR */
-  position: sticky;
-  top: 100px;
-  height: 81vh;
+  /* 👇 FIXED SIDEBAR */
+  position: fixed;
+  top: 95px;
+  left: 22px;
+  height: 86vh;
 
   transition: width 0.35s ease;
   box-shadow: 4px 0 12px rgba(0,0,0,0.15);

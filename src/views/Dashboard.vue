@@ -2073,7 +2073,7 @@ background-color: #ffffff !important;
 /* Content Section */
 .content {
   flex: 1;
-  /* background-color: var(--sidebar); */
+margin-top: 66px;
   padding: 30px 40px;
   border-radius: 15px;
   /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
