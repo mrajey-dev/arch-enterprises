@@ -57,13 +57,163 @@
   
 </div>
 
+<!-- Calculation Sheet Popup -->
+<div v-if="showCalculationModal" class="calculation-modal">
+  <div class="calculation-card">
+
+  <div class="calculation-header">
+  <h3>📊 Calculation Sheet</h3>
+
+  <button 
+    class="calc-close-btn"
+    @click="showCalculationModal = false"
+  >
+    ✕
+  </button>
+</div>
+<div class="calc-actions">
+
+<button @click="addNewRow" class="btn-add">
++ Add Row
+</button>
+
+<button @click="exportExcel" class="btn-export">
+Export Excel
+</button>
+
+<button @click="saveCalculation" class="btn-save">
+Save
+</button>
+
+</div>
+    <table class="calc-table">
+     <thead>
+<tr>
+<th>Local/Import</th>
+<th>Qty</th>
+
+<th v-if="!isLocalMode">USD Rate</th>
+<th v-if="isLocalMode">INR Rate</th>
+
+<th v-if="!isLocalMode">USD → INR</th>
+<th v-if="!isLocalMode">Freight %</th>
+<th v-if="!isLocalMode">Duty %</th>
+
+<th>{{ isLocalMode ? 'Local Transport' : 'Clearance' }}</th>
+
+<th>DDP</th>
+<th>Margin %</th>
+<th>Markup %</th>
+<th>Bank %</th>
+<th>Selling Rate</th>
+<th>Action</th>
+
+</tr>
+</thead>
+<tbody>
+<tr v-for="(row,index) in calculations" :key="index">
+
+<td>
+<select v-model="row.type">
+<option value="Local">Local</option>
+<option value="Import">Import</option>
+</select>
+</td>
+
+<td>
+<input type="number" v-model.number="row.qty">
+</td>
+
+<!-- USD / INR -->
+<td v-if="row.type=='Import'">
+<input type="number" v-model.number="row.usd_rate">
+</td>
+
+<td v-if="row.type=='Local'">
+<input type="number" v-model.number="row.inr_rate">
+</td>
+
+<!-- USD TO INR -->
+<td v-if="row.type=='Import'">
+<input type="number" v-model.number="row.usd_to_inr">
+</td>
+
+<!-- Freight -->
+<td v-if="row.type=='Import'">
+<select v-model.number="row.freight">
+<option v-for="i in percentOptions" :value="i">
+{{i}}%
+</option>
+</select>
+</td>
+
+<!-- Duty -->
+<td v-if="row.type=='Import'">
+<select v-model.number="row.duty">
+<option v-for="i in percentOptions" :value="i">
+{{i}}%
+</option>
+</select>
+</td>
+
+<!-- Clearance / Local Transport -->
+<td>
+<input type="number" v-model.number="row.clearance">
+</td>
+
+<td>
+{{ calculateDDP(row).toFixed(2) }}
+</td>
+
+<td>10%</td>
+
+<td>
+<select v-model.number="row.markup">
+<option v-for="i in percentOptions" :value="i">
+{{i}}%
+</option>
+</select>
+</td>
+
+<td>
+<select v-model.number="row.bank">
+<option v-for="i in percentOptions" :value="i">
+{{i}}%
+</option>
+</select>
+</td>
+
+<td>
+<b>{{ calculateSelling(row).toFixed(2) }}</b>
+</td>
+
+<td>
+<button @click="removeNewRow(index)">❌</button>
+</td>
+
+</tr>
+</tbody>
+
+    </table>
+
+  </div>
+</div>
+
 <!-- Quotation Modal -->
 <div v-if="showQuotation" class="quotation-backdrop">
   <div class="quotation-modal">
 <div class="quotation-header">
      <h2 style="color: white;">{{ isEdit ? " Edit Quotation" : "Create New Quotation" }}</h2>
    <div class="quotation-header-actions">
-        <button
+    
+    <button
+  class="quotation-btn-secondary"
+  @click="openCalculationSheet(form.company_name)"
+>
+  <i class='fas fa-file-invoice' style='font-size:13px'></i> Calculation Sheet
+</button>
+
+    <button
   class="quotation-btn-secondary"
   @click="openViewQuotationPopup(form.company_name)"
 >
@@ -1418,7 +1568,12 @@
       {{ m }}
     </option>
   </select>
-
+<!-- Status Filter -->
+<select v-model="supplyFilters.status" class="filter-select">
+  <option value="">All Status</option>
+  <option value="Awaiting Dispatch">Awaiting Dispatch</option>
+  <option value="Dispatched">Dispatched</option>
+</select>
 
 </div>
 
@@ -1441,7 +1596,11 @@
 
   <!-- DATA ROWS -->
   <tbody v-if="supplies.length">
-   <tr v-for="supply in filteredSupplies" :key="supply.id">
+   <tr 
+  v-for="supply in filteredSupplies" 
+  :key="supply.id"
+  :class="getRowClass(supply)"
+>
 
 
       <td>{{ supply.company_name }}</td>
@@ -1449,7 +1608,14 @@
       <td>{{ supply.quotation_against_po || '-' }}</td>
       <td>{{ supply.payment_terms || '-' }}</td>
       <td>{{ supply.delivery_terms || '-' }}</td>
-      <td>{{ supply.delivery_due_date ? formatDate(supply.delivery_due_date) : '-' }}</td>
+    <td>
+  <input 
+    type="date"
+    v-model="supply.delivery_due_date"
+    @change="updateDeliveryDate(supply)"
+    class="table-date-input"
+  />
+</td>
       <td>{{ supply.closed_date ? supply.closed_date: '-'}}</td>
        <td>
       {{ supply.tracking_id ? supply.tracking_id : '-' }}
@@ -3244,13 +3410,25 @@ Edit
     </form>
   </div>
 </div>
+
+
+
+
+
+
     </div>
+
+
+
+
 </template>
 
   <script>
   import axios from 'axios'
   import Sidebar from '../components/Sidebar.vue'
   import _ from 'lodash';
+  import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
   import {
   toastSuccess,
   toastError,
@@ -3265,8 +3443,24 @@ Edit
     },
     data() {
       return {
+        calculations:[
+this.newRow()
+],
+        showCalculationModal:false,
          hsnList: [],
+         calc:{
+type:"Import",
+qty:1,
+usd_rate:0,
+usd_to_inr:83,
+freight:0,
+duty:0,
+clearance:0,
+markup:0,
+bank:0
+},
 
+percentOptions: Array.from({length:21},(_,i)=> i*5),
         showEmailModal: false,
       selectedEmails: [],
         showDeliveredDatePopup: false,
@@ -3310,7 +3504,8 @@ isSavingServiceSupply: false,
     ],
         supplyFilters: {
       search: '',
-      month: ''
+      month: '',
+        status: ''
     },
     months: [
       'January', 'February', 'March', 'April',
@@ -3599,6 +3794,11 @@ PODate: "",
       }
     },
     mounted() {
+      let saved = localStorage.getItem("quotation_calculation")
+
+if(saved){
+this.calculations = JSON.parse(saved)
+}
         this.setRegularTerms();
        console.table(this.filteredVisits.map(v => ({
     id: v.id,
@@ -3630,6 +3830,51 @@ PODate: "",
 
     },
   computed: {
+isLocalMode(){
+return this.calculations.some(r=>r.type=="Local")
+},
+baseINR(){
+return this.calc.qty * this.calc.usd_to_inr
+},
+
+freightValue(){
+return this.baseINR * this.calc.freight / 100
+},
+
+dutyValue(){
+return this.baseINR * this.calc.duty / 100
+},
+
+marginValue(){
+return this.ddp * 10 / 100
+},
+
+markupValue(){
+return this.ddp * this.calc.markup / 100
+},
+
+bankValue(){
+return this.ddp * this.calc.bank / 100
+},
+
+ddp(){
+return (
+this.baseINR +
+this.freightValue +
+this.dutyValue +
+Number(this.calc.clearance)
+)
+},
+
+sellingRate(){
+return (
+this.ddp +
+this.marginValue +
+this.markupValue +
+this.bankValue
+)
+},
+
      hasSelection() {
       return this.selectedEmails.length > 0;
     },
@@ -3813,29 +4058,25 @@ filteredAllQuotations() {
     });
   }
 ,
-    filteredSupplies() {
-    return this.supplies.filter(supply => {
+  filteredSupplies() {
+  return this.supplies.filter(supply => {
 
-      // 🔍 Search filter (Company / PO)
-      const search = this.supplyFilters.search.toLowerCase()
-      if (search) {
-        const company = supply.company_name?.toLowerCase() || ''
-        const po = supply.po_number?.toLowerCase() || ''
-        if (!company.includes(search) && !po.includes(search)) {
-          return false
-        }
-      }
+    const matchesSearch =
+      !this.supplyFilters.search ||
+      supply.company_name?.toLowerCase().includes(this.supplyFilters.search.toLowerCase()) ||
+      supply.po_number?.toLowerCase().includes(this.supplyFilters.search.toLowerCase())
 
-      // 📅 Month filter (Dispatch Date)
-      if (this.supplyFilters.month && supply.date) {
-        const month = new Date(supply.date).getMonth() + 1
-        if (month !== this.supplyFilters.month) return false
-      }
+    const matchesMonth =
+      !this.supplyFilters.month ||
+      new Date(supply.delivery_due_date).getMonth() + 1 == this.supplyFilters.month
 
-      return true
-    })
-  }
-,
+    const matchesStatus =
+      !this.supplyFilters.status ||
+      (supply.material_status || 'Awaiting Dispatch') === this.supplyFilters.status
+
+    return matchesSearch && matchesMonth && matchesStatus
+  })
+},
     filteredAssignedServiceList() {
     return this.assignedServiceList.filter(item => {
 
@@ -4083,6 +4324,190 @@ filterCompany(newCompany) {
 
 
  methods: {
+getRowClass(supply) {
+
+  const today = new Date()
+  const dueDate = new Date(supply.delivery_due_date)
+
+  const diffTime = dueDate - today
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+
+  // Delivered → Blue
+  if (supply.material_status === 'Delivered') {
+    return 'row-blue'
+  }
+
+  // Dispatched → Green
+  if (supply.material_status === 'Dispatched') {
+    return 'row-green'
+  }
+
+  // Due within 3 days → Yellow
+  if (
+    supply.delivery_due_date &&
+    diffDays <= 3 &&
+    diffDays >= 0 &&
+    supply.material_status !== 'Delivered'
+  ) {
+    return 'row-yellow'
+  }
+
+  // Awaiting Dispatch → Red
+  if (!supply.material_status || supply.material_status === 'Awaiting Dispatch') {
+    return 'row-red'
+  }
+
+  return ''
+},
+  async updateDeliveryDate(supply) {
+  try {
+
+    await axios.post('/api/update-delivery-date', {
+      id: supply.id,
+      delivery_due_date: supply.delivery_due_date
+    });
+
+    this.$toast.success("Delivery date updated successfully");
+
+  } catch (error) {
+    console.error(error);
+    this.$toast.error("Failed to update delivery date");
+  }
+},
+  exportExcel(){
+
+let data = this.calculations.map(r=>({
+
+Type:r.type,
+Qty:r.qty,
+USD_Rate:r.usd_rate,
+USD_INR:r.usd_to_inr,
+Freight:r.freight,
+Duty:r.duty,
+Clearance:r.clearance,
+DDP:this.calculateDDP(r),
+Selling:this.calculateSelling(r)
+
+}))
+
+const ws = XLSX.utils.json_to_sheet(data)
+
+const wb = XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb, ws, "Calculation")
+
+const excelBuffer = XLSX.write(wb,{
+bookType:'xlsx',
+type:'array'
+})
+
+const blob = new Blob([excelBuffer],{
+type:'application/octet-stream'
+})
+
+saveAs(blob,"CalculationSheet.xlsx")
+
+},
+async saveCalculation() {
+
+try {
+
+const payload = this.calculations.map(row => ({
+...row,
+ddp: this.calculateDDP(row),
+selling_rate: this.calculateSelling(row)
+}))
+
+await fetch("https://employees.archenterprises.co.in/api/save-calculation",{
+method:'POST',
+headers:{
+'Content-Type':'application/json'
+},
+body: JSON.stringify({
+calculations: payload
+})
+})
+
+alert("Saved Successfully ✅")
+
+this.showCalculationModal = false
+
+}
+catch(error){
+console.error(error)
+alert("Error Saving")
+}
+
+},
+calculateDDP(row){
+
+if(row.type=="Local"){
+
+return (
+Number(row.qty) * Number(row.inr_rate) +
+Number(row.clearance)
+)
+
+}
+
+let base = Number(row.qty) *  Number(row.usd_to_inr)
+
+let freight = base * Number(row.freight) /100
+
+let duty = base * Number(row.duty) /100
+
+return base + freight + duty + Number(row.clearance)
+
+},
+
+calculateSelling(row){
+
+let ddp = this.calculateDDP(row)
+
+let margin = ddp * 0.1
+
+let afterMargin = ddp + margin
+
+let markup = afterMargin * (row.markup / 100)
+
+let afterMarkup = afterMargin + markup
+
+let bank = afterMarkup * (row.bank / 100)
+
+return afterMarkup + bank
+
+},
+  newRow(){
+return{
+type:"Import",
+qty:1,
+usd_rate:0,
+inr_rate:0,
+usd_to_inr:83,
+freight:0,
+duty:0,
+clearance:0,
+markup:0,
+bank:0
+}
+},
+
+addNewRow(){
+this.calculations.push(this.newRow())
+},
+
+removeNewRow(index){
+this.calculations.splice(index,1)
+},
+
+openCalculationSheet(){
+this.showCalculationModal=true
+},
+
+  openCalculationSheet(company){
+this.showCalculationModal = true
+},
   generateQuotationNumber(q) {
   const year = new Date().getFullYear();
   const nextYear = (year + 1).toString().slice(-2);
@@ -8978,13 +9403,10 @@ margin-left: 8px;
   /* font-weight: bold; */
 }
 
-.styled-table tbody tr:nth-child(even) {
+/* .styled-table tbody tr:nth-child(even) {
   background-color: #f9f9f9;
-}
+} */
 
-.styled-table tbody tr:hover {
-  background-color: #f1f1f1;
-}
 
 .modal-overlay {
   position: fixed;
@@ -11234,5 +11656,139 @@ justify-self: center;
     transform: translateY(0);
     opacity: 1;
   }
+}
+.calculation-modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgb(0 0 0 / 84%);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:10050;
+}
+
+.calculation-card{
+background:white;
+width:95%;
+max-width:1400px;
+padding:20px;
+border-radius:10px;
+overflow:auto;
+max-height:90vh;
+position:relative;
+z-index:10051;
+}
+
+.calc-table{
+width:100%;
+border-collapse:collapse;
+font-size:13px;
+}
+
+.calc-table th{
+background:#f5f7fa;
+padding:10px;
+border:1px solid #ddd;
+}
+
+.calc-table td{
+padding:8px;
+border:1px solid #ddd;
+}
+
+.calc-table input,
+.calc-table select{
+width:100%;
+padding:5px;
+}
+.calc-actions{
+display:flex;
+gap:10px;
+margin-bottom:10px;
+}
+
+.btn-add{
+background:#4caf50;
+color:white;
+padding:6px 12px;
+border:none;
+border-radius:5px;
+}
+
+.btn-export{
+background:#2196f3;
+color:white;
+padding:6px 12px;
+border:none;
+border-radius:5px;
+}
+
+.btn-save{
+background:#ff9800;
+color:white;
+padding:6px 12px;
+border:none;
+border-radius:5px;
+}
+.calculation-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+border-bottom:1px solid #eee;
+padding-bottom:10px;
+margin-bottom:15px;
+}.calc-close-btn{
+background:#ff4d4f;
+color:white;
+border:none;
+width:30px;
+height:30px;
+border-radius:50%;
+cursor:pointer;
+font-size:14px;
+display:flex;
+align-items:center;
+justify-content:center;
+transition:0.3s;
+}
+
+.calc-close-btn:hover{
+background:#d9363e;
+transform:scale(1.05);
+}
+.row-red {
+  background-color: #ffe5e5;
+}
+
+.row-green {
+  background-color: #e6ffe6;
+}
+
+.row-blue {
+  background-color: #e6f0ff;
+}
+
+/* Optional Hover Effect */
+.styled-table tbody tr:hover {
+  transform: scale(1.002);
+  transition: 0.2s;
+}
+.row-red {
+  background: #ffe5e5;
+}
+
+.row-green {
+  background: #e6ffe6;
+}
+
+.row-blue {
+  background: #e6f0ff;
+}
+
+.row-yellow {
+  background: #fffe62;
 }
 </style>
