@@ -345,14 +345,26 @@
 
           currentMonth: today.getMonth(), // 0-indexed
       currentYear: today.getFullYear(),
+      previousMonth: today.getMonth() === 0 ? 11 : today.getMonth() - 1, // 0-indexed
+      previousYear: today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear(),
       monthNames: ['January', 'February', 'March', 'April', 'May', 'June',
                   'July', 'August', 'September', 'October', 'November', 'December'],
 
           weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
           calendarData: this.generateCalendar(),
+          previousCalendarData: this.generateCalendar(),
           viewMode: 'day',
         isEarly: false,
           statusCounts: {
+      Present: 0,
+      'OnSite': 0,
+      'HalfDay': 0,
+      Traveling: 0,
+      Absent: 0,
+      'Leave': 0,
+      Late: 0
+    },
+          previousStatusCounts: {
       Present: 0,
       'OnSite': 0,
       'HalfDay': 0,

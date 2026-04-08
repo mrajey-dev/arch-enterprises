@@ -139,6 +139,24 @@ Edit Profile
                          placeholder="https://linkedin.com/in/username" />
                 </div>
 
+                <!-- CHANGE PASSWORD SECTION -->
+                <div class="password-section">
+                  <h4>Change Password</h4>
+                  <div class="profile-row">
+                    <label>Current Password</label>
+                    <input type="password" v-model="form.current_password" placeholder="Enter current password" />
+                  </div>
+                  <div class="profile-row">
+                    <label>New Password</label>
+                    <input type="password" v-model="form.new_password" placeholder="Enter new password" />
+                  </div>
+                  <div class="profile-row">
+                    <label>Confirm New Password</label>
+                    <input type="password" v-model="form.new_password_confirmation" placeholder="Confirm new password" />
+                  </div>
+                  <p v-if="passwordError" class="error-text">{{ passwordError }}</p>
+                </div>
+
                 <div class="profile-actions">
                   <button class="save-btn"><i class="fa fa-save" style="font-size:13px"></i>  Save</button>
                   <button type="button" class="cancel-btn" @click="cancelEdit">
@@ -190,10 +208,14 @@ export default {
         instagram: '',
         portfolio: '',
         youtube: '',
-        linkedin: ''
+        linkedin: '',
+        current_password: '',
+        new_password: '',
+        new_password_confirmation: ''
       },
 
-      previewImage: null
+      previewImage: null,
+      passwordError: ''
     }
   },
 
@@ -294,7 +316,10 @@ export default {
           instagram: this.user.instagram || '',
           portfolio: this.user.portfolio || '',
           youtube: this.user.youtube || '',
-          linkedin: this.user.linkedin || ''
+          linkedin: this.user.linkedin || '',
+          current_password: '',
+          new_password: '',
+          new_password_confirmation: ''
         }
 
       } catch (err) {
@@ -312,12 +337,32 @@ export default {
 
     cancelEdit() {
       this.editMode = false
-      this.form = { ...this.user }
+      this.form = { 
+        ...this.user,
+        current_password: '',
+        new_password: '',
+        new_password_confirmation: ''
+      }
       this.previewImage = null
+      this.passwordError = ''
     },
 
     async updateProfile() {
       try {
+        this.passwordError = ''
+
+        // Check password change validation
+        if (this.form.new_password || this.form.new_password_confirmation || this.form.current_password) {
+          if (!this.form.current_password || !this.form.new_password || !this.form.new_password_confirmation) {
+            this.passwordError = 'All password fields are required to change password.'
+            return
+          }
+          if (this.form.new_password !== this.form.new_password_confirmation) {
+            this.passwordError = 'New passwords do not match.'
+            return
+          }
+        }
+
         // normalize social URLs
         this.form.instagram = this.normalizeUrl(this.form.instagram)
         this.form.portfolio = this.normalizeUrl(this.form.portfolio)
@@ -326,12 +371,15 @@ export default {
 
         const formData = new FormData()
 
+        // Add profile fields (exclude password fields)
         Object.keys(this.form).forEach(key => {
-          if (this.form[key] !== null && this.form[key] !== undefined) {
+          if (!['current_password', 'new_password', 'new_password_confirmation'].includes(key) && 
+              this.form[key] !== null && this.form[key] !== undefined) {
             formData.append(key, this.form[key])
           }
         })
 
+        // Update profile
         await axios.post('/api/update-profile', formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -339,14 +387,43 @@ export default {
           }
         })
 
+        // Change password if provided
+        if (this.form.current_password && this.form.new_password) {
+          await this.changePassword()
+        }
+
         this.editMode = false
         this.previewImage = null
         this.fetchUserProfile()
+        toastSuccess('Profile updated successfully!')
 
       } catch (err) {
         console.error('Profile update failed:', err)
+        toastError('Failed to update profile')
       }
-    }
+    },
+
+    async changePassword() {
+      try {
+        const passwordData = {
+          current_password: this.form.current_password,
+          new_password: this.form.new_password,
+          new_password_confirmation: this.form.new_password_confirmation
+        }
+
+        await axios.post('/api/change-password', passwordData, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+
+        toastSuccess('Password changed successfully!')
+      } catch (err) {
+        console.error('Password change failed:', err)
+        this.passwordError = err.response?.data?.message || 'Failed to change password.'
+        throw err // Re-throw to prevent profile update success message
+      }
+    },
   }
 }
 </script>
@@ -592,7 +669,7 @@ font-family: cursive;
     border-radius: 12px;
     box-shadow: 0 4px 12px var(--text)0d;
     transition: all .2s ease;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
 }
 
 .profile-row:hover {
@@ -728,6 +805,28 @@ font-family: cursive;
 
 .cancel-btn:hover {
   background: #e4e7eb;
+}
+.password-section {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.password-section h4 {
+  margin: 0 0 15px 0;
+  color: var(--primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.password-section .profile-row {
+  margin-bottom: 15px;
+}
+
+.password-section .profile-row:last-child {
+  margin-bottom: 0;
 }
 .profile-photo-wrapper {
   position: relative;

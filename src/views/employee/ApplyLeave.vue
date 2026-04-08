@@ -360,7 +360,6 @@ async fetchLeaveBalanceFromDB() {
       casual: 7,
       sick: 10,
       pl: 10,
-      medical: 10,
       // earn: this.baseAllowances.earn || 0, // keep existing earn leave
     };
 

@@ -57,145 +57,151 @@
   
 </div>
 
+<!-- Duplicate Quotation - Company Selection Modal -->
+<div v-if="showDuplicateCompanySelection" class="modal-backdrop">
+  <div class="modal-card medium">
+    <div class="modal-header-icon">
+      <i class="fas fa-copy"></i>
+    </div>
+    <h2 class="modal-title">Duplicate Quotation</h2>
+    <p class="modal-subtitle">Select a company to duplicate this quotation to</p>
+
+    <div class="form-row">
+      <div class="input-group full-width">
+        <label>
+          <i class="fas fa-building"></i>
+          Select Company *
+        </label>
+        <select v-model="duplicateCompanySelection" class="po-type-select">
+          <option value="">Select a company</option>
+          <option 
+            v-for="cust in customers" 
+            :key="cust.id" 
+            :value="cust.company_name"
+          >
+            {{ cust.company_name }} ({{ formatNumber(cust.id) }})
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn btn-success" @click="confirmDuplicateWithCompany">
+        <i class="fa fa-copy"></i>
+        Duplicate to Selected Company
+      </button>
+      <button class="btn btn-secondary" @click="closeDuplicateCompanySelection">
+        <i class="fa fa-times"></i>
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
 <!-- Calculation Sheet Popup -->
 <div v-if="showCalculationModal" class="calculation-modal">
   <div class="calculation-card">
-
-  <div class="calculation-header">
-  <h3>📊 Calculation Sheet</h3>
-
-  <button 
-    class="calc-close-btn"
-    @click="showCalculationModal = false"
-  >
-    ✕
-  </button>
-</div>
-<div class="calc-actions">
-
-<button @click="addNewRow" class="btn-add">
-+ Add Row
-</button>
-
-<button @click="exportExcel" class="btn-export">
-Export Excel
-</button>
-
-<button @click="saveCalculation" class="btn-save">
-Save
-</button>
-
-</div>
+    <div class="calculation-header">
+      <h3>📊 Calculation Sheet</h3>
+      <button class="calc-close-btn" @click="showCalculationModal = false">✕</button>
+    </div>
+    
+    <div class="calc-actions">
+      <button @click="addNewRow" class="btn-add">+ Add Row</button>
+      <button @click="exportExcel" class="btn-export">Export Excel</button>
+      <button @click="saveCalculation" class="btn-save">Save & Apply Rate</button>
+    </div>
+    
     <table class="calc-table">
-     <thead>
-<tr>
-<th>Local/Import</th>
-<th>Qty</th>
-
-<th v-if="!isLocalMode">USD Rate</th>
-<th v-if="isLocalMode">INR Rate</th>
-
-<th v-if="!isLocalMode">USD → INR</th>
-<th v-if="!isLocalMode">Freight %</th>
-<th v-if="!isLocalMode">Duty %</th>
-
-<th>{{ isLocalMode ? 'Local Transport' : 'Clearance' }}</th>
-
-<th>DDP</th>
-<th>Margin %</th>
-<th>Markup %</th>
-<th>Bank %</th>
-<th>Selling Rate</th>
-<th>Action</th>
-
-</tr>
-</thead>
-<tbody>
-<tr v-for="(row,index) in calculations" :key="index">
-
-<td>
-<select v-model="row.type">
-<option value="Local">Local</option>
-<option value="Import">Import</option>
-</select>
+      <thead>
+        <tr>
+          <th>Local/Import</th>
+          <th>Qty</th>
+          <th v-if="!isLocalMode">Per Unit Rate</th>
+          <th v-if="isLocalMode">INR Rate</th>
+          <th v-if="!isLocalMode">Currency</th>
+          
+          <th v-if="!isLocalMode">INR Conversion</th>
+          <th v-if="!isLocalMode">Freight %</th>
+          <th v-if="!isLocalMode">Duty %</th>
+          <th>{{ isLocalMode ? 'Local Transport' : 'Clearance' }}</th>
+          <th>DDP</th>
+          <th>Margin %</th>
+          <th>Markup %</th>
+          <th>Bank %</th>
+          <th>Selling Rate</th>
+     
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(row, index) in calculations" :key="index">
+          <td>
+            <select v-model="row.type">
+              <option value="Local">Local</option>
+              <option value="Import">Import</option>
+            </select>
+          </td>
+        <td>
+  <input type="number" :value="1" readonly>
 </td>
-
-<td>
-<input type="number" v-model.number="row.qty">
+          <td v-if="row.type=='Import'">
+            <input type="number" v-model.number="row.usd_rate">
+          </td>
+          <td v-if="row.type=='Local'">
+            <input type="number" v-model.number="row.inr_rate">
+          </td>
+           <td v-if="row.type=='Import'">
+  <select v-model="row.currency">
+    <option value="">Select Currency</option>
+    <option 
+      v-for="currency in currencies" 
+      :key="currency" 
+      :value="currency"
+    >
+      {{ currency }}
+    </option>
+  </select>
 </td>
-
-<!-- USD / INR -->
-<td v-if="row.type=='Import'">
-<input type="number" v-model.number="row.usd_rate">
-</td>
-
-<td v-if="row.type=='Local'">
-<input type="number" v-model.number="row.inr_rate">
-</td>
-
-<!-- USD TO INR -->
-<td v-if="row.type=='Import'">
-<input type="number" v-model.number="row.usd_to_inr">
-</td>
-
-<!-- Freight -->
-<td v-if="row.type=='Import'">
-<select v-model.number="row.freight">
-<option v-for="i in percentOptions" :value="i">
-{{i}}%
-</option>
-</select>
-</td>
-
-<!-- Duty -->
-<td v-if="row.type=='Import'">
-<select v-model.number="row.duty">
-<option v-for="i in percentOptions" :value="i">
-{{i}}%
-</option>
-</select>
-</td>
-
-<!-- Clearance / Local Transport -->
-<td>
-<input type="number" v-model.number="row.clearance">
-</td>
-
-<td>
-{{ calculateDDP(row).toFixed(2) }}
-</td>
-
-<td>10%</td>
-
-<td>
-<select v-model.number="row.markup">
-<option v-for="i in percentOptions" :value="i">
-{{i}}%
-</option>
-</select>
-</td>
-
-<td>
-<select v-model.number="row.bank">
-<option v-for="i in percentOptions" :value="i">
-{{i}}%
-</option>
-</select>
-</td>
-
-<td>
-<b>{{ calculateSelling(row).toFixed(2) }}</b>
-</td>
-
-<td>
-<button @click="removeNewRow(index)">❌</button>
-</td>
-
-</tr>
-</tbody>
-
+          <td v-if="row.type=='Import'">
+            <input type="number" v-model.number="row.usd_to_inr">
+          </td>
+          <td v-if="row.type=='Import'">
+            <select v-model.number="row.freight">
+              <option v-for="i in percentOptions" :value="i">{{ i }}%</option>
+            </select>
+          </td>
+          <td v-if="row.type=='Import'">
+            <select v-model.number="row.duty">
+              <option v-for="i in percentOptions" :value="i">{{ i }}%</option>
+            </select>
+          </td>
+          <td>
+            <input type="number" v-model.number="row.clearance">
+          </td>
+          <td>
+            {{ calculateDDP(row).toFixed(2) }}
+          </td>
+          <td>10%</td>
+          <td>
+            <select v-model.number="row.markup">
+              <option v-for="i in percentOptions" :value="i">{{ i }}%</option>
+            </select>
+          </td>
+          <td>
+            <select v-model.number="row.bank">
+              <option v-for="i in percentOptions" :value="i">{{ i }}%</option>
+            </select>
+          </td>
+          <td>
+            <b>{{ calculateSelling(row).toFixed(2) }}</b>
+          </td>
+         
+          <td>
+            <button @click="removeNewRow(index)">❌</button>
+          </td>
+        </tr>
+      </tbody>
     </table>
-
   </div>
 </div>
 
@@ -205,13 +211,7 @@ Save
 <div class="quotation-header">
      <h2 style="color: white;">{{ isEdit ? " Edit Quotation" : "Create New Quotation" }}</h2>
    <div class="quotation-header-actions">
-    
-    <button
-  class="quotation-btn-secondary"
-  @click="openCalculationSheet(form.company_name)"
->
-  <i class='fas fa-file-invoice' style='font-size:13px'></i> Calculation Sheet
-</button>
+  
 
     <button
   class="quotation-btn-secondary"
@@ -593,55 +593,47 @@ Save
           rows="2"
           :class="{ 'input-error': !item.description }"
         ></textarea>
-        <!-- <span v-if="!item.description" class="error-message">Required</span> -->
       </div>
 
       <!-- HSN -->
-<div class="quotation-form-group">
-  <label>HSN / SAC Code *</label>
+      <div class="quotation-form-group">
+        <label>HSN / SAC Code *</label>
+        <select
+          v-model="item.hsn"
+          :class="{ 'input-error': !item.hsn }"
+        >
+          <option disabled value="">Select HSN Code</option>
+          <option
+            v-for="hsn in hsnList"
+            :key="hsn.id"
+            :value="hsn.hsn"
+          >
+            {{ hsn.item_name }} - {{ hsn.hsn }}
+          </option>
+          <option value="manual">➕ Enter HSN Manually</option>
+        </select>
 
-  <select
-    v-model="item.hsn"
-    :class="{ 'input-error': !item.hsn }"
-  >
-    <option disabled value="">Select HSN Code</option>
-
-    <option
-      v-for="hsn in hsnList"
-      :key="hsn.id"
-      :value="hsn.hsn"
-    >
-      {{ hsn.item_name }} - {{ hsn.hsn }}
-    </option>
-
-    <!-- ✅ Manual option -->
-    <option value="manual">➕ Enter HSN Manually</option>
-  </select>
-
-  <!-- ✅ Show only HSN input -->
-  <div v-if="item.hsn === 'manual'" style="margin-top:8px;">
-    <input
-      v-model="item.manual_hsn"
-      type="number"
-      placeholder="Enter HSN Code"
-      class="form-control"
-    />
-  </div>
-
-  <!-- <span v-if="!item.hsn" class="error-message">Required</span> -->
-</div>
+        <div v-if="item.hsn === 'manual'" style="margin-top:8px;">
+          <input
+            v-model="item.manual_hsn"
+            type="number"
+            placeholder="Enter HSN Code"
+            class="form-control"
+          />
+        </div>
+      </div>
+      
       <!-- QTY -->
       <div class="quotation-form-group">
         <label>QTY *</label>
         <input
           v-model="item.qty"
           type="number"
-           min="0"
-    @keydown="preventMinus"
-    @input="validateQty(item)"
+          min="0"
+          @keydown="preventMinus"
+          @input="validateQty(item)"
           :class="{ 'input-error': !item.qty }"
         />
-        <!-- <span v-if="!item.qty" class="error-message">Required</span> -->
       </div>
 
       <!-- UOM -->
@@ -656,7 +648,6 @@ Save
           <option value="K.G.">K.G.</option>
           <option value="Day">Day</option>
         </select>
-        <!-- <span v-if="!item.uom" class="error-message">Required</span> -->
       </div>
 
       <!-- RATE -->
@@ -665,65 +656,70 @@ Save
         <input
           v-model="item.rate"
           type="number"
-           min="0"
-    @keydown="preventMinus"
-    @input="validateQty(item)"
+          min="0"
+          @keydown="preventMinus"
+          @input="validateQty(item)"
           :class="{ 'input-error': !item.rate }"
         />
-        <!-- <span v-if="!item.rate" class="error-message">Required</span> -->
       </div>
 
       <!-- DISCOUNT -->
-     <div class="quotation-form-group">
-  <label>Disc. (%)</label>
-  <input
-    v-model.number="item.discount"
-    type="number"
-    min="0"
-    max="100"
-    @keydown="preventInvalidKeys"
-    @input="validateDiscount(item)"
-  />
-</div>
-
+      <div class="quotation-form-group">
+        <label>Disc. (%)</label>
+        <input
+          v-model.number="item.discount"
+          type="number"
+          min="0"
+          max="100"
+          @keydown="preventInvalidKeys"
+          @input="validateDiscount(item)"
+        />
+      </div>
 
       <!-- GST SECTION (ITEM LEVEL) -->
       <template v-if="form.nature_of_sale === 'Intrastate'">
         <div class="quotation-form-group">
           <label>CGST (%)</label>
-          <input v-model="item.cgst_rate" type="number"  min="0"
-    @keydown="preventMinus"
-    @input="validateQty(item)"/>
+          <input v-model="item.cgst_rate" type="number" min="0" @keydown="preventMinus" @input="validateQty(item)"/>
         </div>
         <div class="quotation-form-group">
           <label>SGST (%)</label>
-          <input v-model="item.sgst_rate" type="number"  min="0"
-    @keydown="preventMinus"
-    @input="validateQty(item)"/>
+          <input v-model="item.sgst_rate" type="number" min="0" @keydown="preventMinus" @input="validateQty(item)"/>
         </div>
       </template>
 
       <template v-if="form.nature_of_sale === 'Interstate'">
         <div class="quotation-form-group">
           <label>IGST (%)</label>
-          <input v-model="item.igst_rate" type="number"  min="0"
-    @keydown="preventMinus"
-    @input="validateQty(item)"/>
+          <input v-model="item.igst_rate" type="number" min="0" @keydown="preventMinus" @input="validateQty(item)"/>
         </div>
       </template>
+      
       <template v-if="form.nature_of_sale === 'Export'">
         <div class="quotation-export-note">
           🌍 GST Not Applicable for Export
         </div>
       </template>
-<!-- LINE TOTAL -->
-<div class="quotation-form-group">
-  <label>Item Total</label>
-  <div class="readonly-field" style="font-weight: 700;">
-{{ calculateItemTotal(item).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
-
-  </div>
-</div>
+      
+      <!-- LINE TOTAL WITH CALCULATION BUTTON -->
+      <div class="quotation-form-group" style="display: flex; gap: 10px; align-items: flex-end; flex-direction: row;">
+        <div style="flex: 1;">
+          <label>Item Total</label>
+          <div class="readonly-field" style="font-weight: 700;">
+            {{ calculateItemTotal(item).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+          </div>
+        </div>
+        
+        <!-- Calculation Sheet Button for this specific item -->
+        <button 
+          type="button"
+          class="calculation-item-btn"
+          @click="openCalculationSheetForItem(item, index)"
+          style="padding: 6px 12px; font-size: 12px; height: 38px;"
+        >
+          <i class='fas fa-calculator' style='font-size:13px'></i> Calc
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2018,6 +2014,12 @@ Edit
   <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
     <i class="fas fa-trash"></i> Delete
   </button>
+  
+<button class="quotation-duplicate-btn" @click.stop="duplicateQuotation(q)">
+  <i class="fa fa-copy" style="font-size:13px"></i>
+  Duplicate
+</button>
+
 </div>
 
     </div>
@@ -3443,6 +3445,12 @@ import { saveAs } from "file-saver"
     },
     data() {
       return {
+         isDuplicateMode: false,
+        duplicateCompanySelection: null,
+showDuplicateCompanySelection: false,
+duplicateQuotationData: null,
+        currentCalculationItem: null,
+    currentCalculationItemIndex: null,
         calculations:[
 this.newRow()
 ],
@@ -3805,6 +3813,7 @@ this.calculations = JSON.parse(saved)
     company: v.company_name,
     date: v.visit_date
   })))
+    this.getCurrencies() ;
     this.fetchHsnCodes();
    this.fetchVisitStatuses();
    this.fetchCompletedVisits();
@@ -3846,15 +3855,15 @@ return this.baseINR * this.calc.duty / 100
 },
 
 marginValue(){
-return this.ddp * 10 / 100
+return this.ddp/90 * 100
 },
 
 markupValue(){
-return this.ddp * this.calc.markup / 100
+return this.marginValue / 90 * 100
 },
 
 bankValue(){
-return this.ddp * this.calc.bank / 100
+return this.markupValue  / 90 * 100
 },
 
 ddp(){
@@ -4267,6 +4276,37 @@ quotationsByCompany() {
 
   },
 watch: {
+   showDuplicateCompanySelection(newVal) {
+    // If the duplicate modal is closed without selection, clean up
+    if (!newVal && this.duplicateQuotationData && !this.showQuotation) {
+      // Clean up and reset duplicate mode
+      this.isDuplicateMode = false;
+      this.duplicateQuotationData = null;
+      this.duplicateCompanySelection = null;
+    }
+  },
+  
+  showQuotation(newVal) {
+    // When quotation form opens, ensure we have all data
+    if (newVal && this.isEdit === false && this.duplicateQuotationData) {
+      // This ensures the form is properly populated
+      this.$nextTick(() => {
+        // Force recalculation of item totals if needed
+        if (this.form.items && this.form.items.length > 0) {
+          this.form.items.forEach(item => {
+            this.validateQty(item);
+            this.validateDiscount(item);
+          });
+        }
+      });
+    }
+    
+    // Reset duplicate mode when quotation modal is closed
+    if (!newVal && this.isDuplicateMode) {
+      this.isDuplicateMode = false;
+    }
+  },
+
    showEmailModal(val) {
       if (val) {
         this.fetchCustomers();
@@ -4321,9 +4361,409 @@ filterCompany(newCompany) {
     },
   },
   
-
-
  methods: {
+ // Better API with actual rates
+async getCurrencies() {
+  try {
+    // Using exchangerate-api.com (free tier)
+    const response = await axios.get(
+      "https://api.exchangerate-api.com/v4/latest/USD"
+    )
+    
+    this.currencies = Object.keys(response.data.rates)
+    this.exchangeRates = response.data.rates
+    
+    // Update all calculation rows with current rate
+    this.calculations.forEach(row => {
+      if (row.currency && row.currency !== 'USD') {
+        row.usd_to_inr = this.exchangeRates.INR / this.exchangeRates[row.currency]
+      }
+    })
+    
+  } catch (error) {
+    console.error("Currency API Error:", error)
+    // Fallback
+    this.currencies = ['USD', 'EUR', 'GBP', 'INR', 'AED']
+    this.exchangeRates = { USD: 1, INR: 83, EUR: 0.92, GBP: 0.79, AED: 3.67 }
+  }
+},
+
+// Watch for currency changes in calculation rows
+watch: {
+  calculations: {
+    deep: true,
+    handler(rows) {
+      rows.forEach(row => {
+        if (row.type === 'Import' && row.currency && row.currency !== 'USD') {
+          row.usd_to_inr = this.getExchangeRate(row.currency)
+        }
+      })
+    }
+  }
+},
+  // Add this method temporarily to debug
+async testApiQuotation(id) {
+  try {
+    const response = await axios.get(`/api/quotations/${id}`);
+    console.log("API Response for quotation", id, ":", response.data);
+    console.log("Items in API response:", response.data.items);
+    if (typeof response.data.items === "string") {
+      console.log("Parsed items:", JSON.parse(response.data.items));
+    }
+    return response.data;
+  } catch (error) {
+    console.error("API Error:", error);
+  }
+},
+prepareItemsForSubmit() {
+  // Ensure all items have the correct structure before submitting
+  return this.form.items.map(item => ({
+    sr: item.sr,
+    description: item.description,
+    hsn: item.hsn,
+    qty: parseFloat(item.qty) || 0,
+    uom: item.uom,
+    rate: parseFloat(item.rate) || 0,
+    total: parseFloat(item.total) || 0,
+    discount: parseFloat(item.discount) || 0,
+    taxable: parseFloat(item.taxable) || 0,
+    cgst_rate: parseFloat(item.cgst_rate) || 0,
+    cgst_amt: parseFloat(item.cgst_amt) || 0,
+    sgst_rate: parseFloat(item.sgst_rate) || 0,
+    sgst_amt: parseFloat(item.sgst_amt) || 0,
+    igst_rate: parseFloat(item.igst_rate) || 0,
+    igst_amt: parseFloat(item.igst_amt) || 0,
+    line_total: parseFloat(item.line_total) || 0
+  }));
+},
+
+
+async duplicateQuotation(quotation) {
+  try {
+    // Show loading indicator
+    this.quotationLoading = true;
+    
+    // Fetch the COMPLETE quotation data from API
+    const response = await axios.get(`/api/quotations/${quotation.id}`);
+    const fullQuotation = response.data;
+    
+    console.log("Full quotation data fetched:", fullQuotation);
+    console.log("Items from API:", fullQuotation.items);
+    
+    // Store the complete quotation data
+    this.duplicateQuotationData = JSON.parse(JSON.stringify(fullQuotation));
+    
+    // Store the company name from the original quotation
+    this.duplicateCompanySelection = fullQuotation.company_name;
+    
+    // Close the View Quotations popup first
+    this.showViewQuotationPopup = false;
+    this.showViewAllQuotationPopup = false;
+    
+    // IMPORTANT: Make sure the Quotation modal is closed
+    this.showQuotation = false;
+    
+    // Show the company selection modal
+    this.showDuplicateCompanySelection = true;
+    
+    // Set duplicate mode flag
+    this.isDuplicateMode = true;
+    
+  } catch (error) {
+    console.error("Error fetching full quotation:", error);
+    toastError("Failed to load quotation data for duplication");
+  } finally {
+    this.quotationLoading = false;
+  }
+},
+// New method to confirm duplicate with selected company
+async confirmDuplicateWithCompany() {
+  if (!this.duplicateCompanySelection) {
+    toastWarning("⚠ Please select a company");
+    return;
+  }
+  
+  console.log("Starting duplicate process...");
+  console.log("Original data:", this.duplicateQuotationData);
+  
+  // Set duplicate mode flag before anything else
+  this.isDuplicateMode = true;
+  
+  // Close the selection modal first
+  this.showDuplicateCompanySelection = false;
+  
+  // Create a deep copy of the original quotation
+  const newQuotation = JSON.parse(JSON.stringify(this.duplicateQuotationData));
+  
+  console.log("New quotation after copy:", newQuotation);
+  console.log("Items in newQuotation:", newQuotation.items);
+  
+  // Remove ID and timestamps
+  delete newQuotation.id;
+  delete newQuotation.created_at;
+  delete newQuotation.updated_at;
+  delete newQuotation.quote_no;
+  delete newQuotation.quote_code;
+  
+  // Set the selected company
+  newQuotation.company_name = this.duplicateCompanySelection;
+  
+  // Set date to current date
+  newQuotation.date = new Date().toISOString().split('T')[0];
+  newQuotation.created_at = null;
+  newQuotation.updated_at = null;
+  
+  // Clear any status/remarks
+  newQuotation.quotation_followup_status = 'pending';
+  newQuotation.remarks = '';
+  
+  // Set created_by to current user
+  newQuotation.created_by = JSON.parse(localStorage.getItem("user"))?.name || '';
+  
+  // IMPORTANT: Parse items - they might be a string or already parsed
+  let parsedItems = [];
+  
+  // Check if items exist
+  if (newQuotation.items) {
+    console.log("Items type:", typeof newQuotation.items);
+    console.log("Items value:", newQuotation.items);
+    
+    if (typeof newQuotation.items === "string") {
+      try {
+        parsedItems = JSON.parse(newQuotation.items);
+        console.log("Parsed items from string:", parsedItems);
+      } catch(e) {
+        console.error("Error parsing items string:", e);
+        parsedItems = [];
+      }
+    } else if (Array.isArray(newQuotation.items)) {
+      // Already an array, just copy it
+      parsedItems = JSON.parse(JSON.stringify(newQuotation.items));
+      console.log("Copied items array:", parsedItems);
+    } else {
+      console.warn("Items is neither string nor array:", newQuotation.items);
+      parsedItems = [];
+    }
+  } else {
+    console.warn("No items found in quotation data");
+  }
+  
+  // If still no items, try to get from the stored data
+  if (parsedItems.length === 0 && this.duplicateQuotationData.items) {
+    console.log("Trying to get items from duplicateQuotationData");
+    if (typeof this.duplicateQuotationData.items === "string") {
+      try {
+        parsedItems = JSON.parse(this.duplicateQuotationData.items);
+        console.log("Parsed items from duplicateQuotationData:", parsedItems);
+      } catch(e) {
+        console.error("Error parsing items from duplicateQuotationData:", e);
+      }
+    } else if (Array.isArray(this.duplicateQuotationData.items)) {
+      parsedItems = JSON.parse(JSON.stringify(this.duplicateQuotationData.items));
+    }
+  }
+  
+  // Ensure each item has all required fields
+ // Ensure each item has all required fields
+const processedItems = parsedItems.map((item, index) => ({
+  sr: index + 1,
+  description: item.description || "",
+  hsn: item.hsn || "",
+  manual_hsn: item.manual_hsn || '',
+  qty: item.qty || '',
+  uom: item.uom || "",
+  rate: item.rate || '',
+  total: item.total || 0,
+  discount: item.discount || '',
+  taxable: item.taxable || 0,
+  cgst_rate: item.cgst_rate || '9',
+  cgst_amt: item.cgst_amt || '',
+  sgst_rate: item.sgst_rate || '9',
+  sgst_amt: item.sgst_amt || '',
+  igst_rate: item.igst_rate || 18,
+  igst_amt: item.igst_amt || '',
+  line_total: item.line_total || 0,
+  calculation_data: item.calculation_data || null
+}));
+
+// Load the form with ALL duplicated data - items should be an array, not string
+this.form = {
+  id: null,
+  nature_of_sale: newQuotation.nature_of_sale || "",
+  currency: newQuotation.currency || "",
+  company_name: newQuotation.company_name,
+  recommended_by: newQuotation.recommended_by || "",
+  customer_reference: newQuotation.customer_reference || "",
+  engine_serial: newQuotation.engine_serial || "",
+  model_no: newQuotation.model_no || "",
+  delivery: newQuotation.delivery || "",
+  payment_terms: newQuotation.payment_terms || "",
+  terms_conditions: newQuotation.terms_conditions || "",
+  created_by: newQuotation.created_by,
+  shipping_address: newQuotation.shipping_address || newQuotation.material_shipping_address || "",
+  items: processedItems, // ✅ This should be an array, not a string
+  
+  // Reset totals
+  subtotal: 0,
+  tax_total: 0,
+  grand_total: 0,
+  amount_words: "",
+  
+  bill_to: newQuotation.bill_to ? 
+    (typeof newQuotation.bill_to === "string" ? JSON.parse(newQuotation.bill_to) : newQuotation.bill_to) : 
+    { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" },
+  
+  ship_to: newQuotation.ship_to ? 
+    (typeof newQuotation.ship_to === "string" ? JSON.parse(newQuotation.ship_to) : newQuotation.ship_to) : 
+    { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" }
+};
+  console.log("Final form data:", this.form);
+  console.log("Form items count:", this.form.items.length);
+  
+  // ✅ Fetch complete company details
+  await this.fetchCompanyDetailsForDuplicate(this.duplicateCompanySelection);
+  
+  // Set the selected terms based on the copied terms_conditions
+  this.setSelectedTermsFromContent(newQuotation.terms_conditions);
+  
+  // Force recalculation of item totals
+  this.$nextTick(() => {
+    if (this.form.items && this.form.items.length > 0) {
+      this.form.items.forEach(item => {
+        this.validateQty(item);
+        this.validateDiscount(item);
+      });
+    }
+  });
+  
+  // Open the quotation form in create mode
+  this.showQuotation = true;
+  this.isEdit = false;
+  
+  console.log("Quotation modal opened, form items count:", this.form.items.length);
+  
+  // Clear the stored data
+  this.duplicateQuotationData = null;
+  this.duplicateCompanySelection = null;
+  
+  // Reset duplicate mode flag after form is shown
+  setTimeout(() => {
+    this.isDuplicateMode = false;
+    console.log("Duplicate mode reset, final form items:", this.form.items);
+  }, 500);
+  
+  toastSuccess("Quotation duplicated. You can now edit and save it as a new quotation.");
+},
+
+// New method to fetch complete company details
+async fetchCompanyDetailsForDuplicate(companyName) {
+  try {
+    const customer = this.customers.find(c => c.company_name === companyName);
+    if (customer) {
+      const res = await axios.get(`/api/customers/${customer.id}`);
+      
+      // ✅ Only update shipping address if it's empty AND we're not in edit mode
+      if (!this.form.shipping_address && !this.isEdit) {
+        this.form.shipping_address = res.data.shipping_address ?? res.data.address ?? "";
+      }
+      
+      // Store customer data for reference
+      this.selectedCustomer = res.data;
+      
+      console.log("Company details fetched, shipping address:", this.form.shipping_address);
+    }
+  } catch (error) {
+    console.error("Failed to load company details", error);
+    if (!this.form.shipping_address) {
+      this.form.shipping_address = "";
+    }
+  }
+},
+
+// New method to set selected terms based on terms_conditions content
+setSelectedTermsFromContent(termsConditions) {
+  if (!termsConditions) {
+    this.selectedTerms = 'regular';
+    return;
+  }
+  
+  // Check for AMC specific content
+  if (termsConditions.includes("AMC Period") || 
+      termsConditions.includes("Maintenance Visits") ||
+      termsConditions.includes("Breakdown Visits")) {
+    this.selectedTerms = 'amc';
+  } 
+  // Check for New Engine Sales content
+  else if (termsConditions.includes("New Engine Sales") || 
+           termsConditions.includes("OEM warranty") ||
+           termsConditions.includes("commissioning report")) {
+    this.selectedTerms = 'newengine';
+  } 
+  // Default to Regular
+  else {
+    this.selectedTerms = 'regular';
+  }
+},
+// Method to fetch shipping address for selected company
+async fetchSelectedCompanyShippingAddress(companyName) {
+  try {
+    const customer = this.customers.find(c => c.company_name === companyName);
+    if (customer) {
+      const res = await axios.get(`/api/customers/${customer.id}`);
+      this.form.shipping_address = res.data.shipping_address ?? res.data.address ?? "";
+    }
+  } catch (error) {
+    console.error("Failed to load shipping address", error);
+    this.form.shipping_address = "";
+  }
+},
+
+// Close the duplicate company selection modal
+closeDuplicateCompanySelection() {
+  this.showDuplicateCompanySelection = false;
+  this.duplicateQuotationData = null;
+  this.duplicateCompanySelection = null;
+},
+
+  applySellingRateToItem(row, rowIndex) {
+    const sellingRate = this.calculateSelling(row);
+    
+    if (this.currentCalculationItem) {
+      this.currentCalculationItem.rate = sellingRate.toFixed(2);
+      toastSuccess(`Rate updated to ₹${sellingRate.toFixed(2)}`);
+      
+      // Optional: Close modal after applying
+      // this.showCalculationModal = false;
+    } else {
+      toastWarning("No item selected");
+    }
+  },
+ openCalculationSheetForItem(item, itemIndex) {
+  // Store the current item and its index
+  this.currentCalculationItem = item;
+  this.currentCalculationItemIndex = itemIndex;
+  
+  // Populate calculations array from stored data or create new
+  if (item.calculation_data) {
+    try {
+      this.calculations = JSON.parse(item.calculation_data);
+    } catch(e) {
+      this.calculations = [this.newRow()];
+    }
+  } else {
+    const defaultCalc = this.newRow();
+    defaultCalc.qty = item.qty || 1;
+    // If you want to pre-fill rate or other values
+    if (item.rate) {
+      // You might want to reverse-calculate or just leave as is
+      defaultCalc.usd_rate = item.rate;
+    }
+    this.calculations = [defaultCalc];
+  }
+  
+  this.showCalculationModal = true;
+},
+
 getRowClass(supply) {
 
   const today = new Date()
@@ -4410,35 +4850,50 @@ saveAs(blob,"CalculationSheet.xlsx")
 
 },
 async saveCalculation() {
+  try {
+    const payload = this.calculations.map(row => ({
+      ...row,
+      ddp: this.calculateDDP(row),
+      selling_rate: this.calculateSelling(row)
+    }));
 
-try {
+    // Calculate total selling rate for all rows
+    const totalSellingRate = payload.reduce((sum, row) => {
+      return sum + (row.selling_rate * row.qty);
+    }, 0);
 
-const payload = this.calculations.map(row => ({
-...row,
-ddp: this.calculateDDP(row),
-selling_rate: this.calculateSelling(row)
-}))
+    await fetch("https://employees.archenterprises.co.in/api/api/save-calculation", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        quotation_id: this.quotation_id,
+        item_index: this.currentCalculationItemIndex,
+        calculations: payload
+      })
+    });
 
-await fetch("https://employees.archenterprises.co.in/api/save-calculation",{
-method:'POST',
-headers:{
-'Content-Type':'application/json'
-},
-body: JSON.stringify({
-calculations: payload
-})
-})
+    // ✅ AUTO-FILL THE RATE FIELD
+    if (this.currentCalculationItem && this.currentCalculationItemIndex !== null) {
+      // Option 1: Use average selling rate
+      const averageSellingRate = totalSellingRate / payload.length;
+      this.currentCalculationItem.rate = averageSellingRate.toFixed(2);
+      
+      // OR Option 2: Use first row's selling rate
+      // this.currentCalculationItem.rate = payload[0].selling_rate.toFixed(2);
+      
+      // Store calculation data in the current item
+      this.currentCalculationItem.calculation_data = JSON.stringify(payload);
+    }
 
-alert("Saved Successfully ✅")
-
-this.showCalculationModal = false
-
-}
-catch(error){
-console.error(error)
-alert("Error Saving")
-}
-
+    toastSuccess("Calculation saved and rate updated successfully ✅");
+    this.showCalculationModal = false;
+    
+  } catch (error) {
+    console.error(error);
+    toastError("Error Saving Calculation");
+  }
 },
 calculateDDP(row){
 
@@ -4451,7 +4906,7 @@ Number(row.clearance)
 
 }
 
-let base = Number(row.qty) *  Number(row.usd_to_inr)
+let base = Number(row.qty) * Number(row.usd_rate) * Number(row.usd_to_inr)
 
 let freight = base * Number(row.freight) /100
 
@@ -4485,6 +4940,7 @@ qty:1,
 usd_rate:0,
 inr_rate:0,
 usd_to_inr:83,
+  currency: 'USD', 
 freight:0,
 duty:0,
 clearance:0,
@@ -5249,6 +5705,11 @@ fetchReports() {
     }
   },
 async openQuotationlist(cust) {
+  // If we're in duplicate mode, don't open a new quotation
+  if (this.isDuplicateMode) {
+    return;
+  }
+  
   this.showQuotation = true;
   this.isEdit = false;
 
@@ -5292,11 +5753,6 @@ async openQuotationlist(cust) {
   },
 
   closePopup() {
-    this.showStatusPopup = false;
-    this.resetForm();
-  },
-
-  closePopup() {
     this.showStatusPopup = false
     this.resetForm()
     this.refreshForm()
@@ -5320,6 +5776,13 @@ async openQuotationlist(cust) {
     return "AEC" + num.toString().padStart(3, "0");
   },
 refreshForm() {
+  // If we're in duplicate mode, don't reset
+  if (this.isDuplicateMode) {
+    console.log("In duplicate mode, skipping form reset");
+    return;
+  }
+  
+  // Only reset if we're not coming from duplicate and form has items
   const company = this.form.company_name;
   const createdBy = this.form.created_by;
 
@@ -5328,41 +5791,41 @@ refreshForm() {
 
   this.form = {
     id: null,
-
-    // KEEP THESE
     company_name: company,
     created_by: createdBy,
-
-    // RESET BASIC INFO
     shipping_address: '',
     nature_of_sale: '',
     currency: '',
     recommended_by: '',
     customer_reference: '',
-
-    // RESET ENGINE & TERMS
     engine_serial: '',
     model_no: '',
-  
-
-    // RESET ITEMS (start fresh)
+    delivery: '',
+    payment_terms: '',
+    terms_conditions: '',
     items: [
       {
+        sr: 1,
         description: '',
         hsn: '',
+        manual_hsn: '',
         qty: '',
         uom: '',
         rate: '',
+        total: 0,
         discount: '',
+        taxable: 0,
         cgst_rate: '9',
+        cgst_amt: '',
         sgst_rate: '9',
-        igst_rate: '9'
+        sgst_amt: '',
+        igst_rate: 18,
+        igst_amt: '',
+        line_total: 0,
       }
-    ],
-
+    ]
   };
 },
-
 
   resetForm() {
   this.isEdit = false;
@@ -5388,39 +5851,65 @@ refreshForm() {
 },
 
 async editQuotation(quotation) {
+  console.log("Editing quotation:", quotation);
+  
   this.isEdit = true;
   this.showQuotation = true;
   this.showViewQuotationPopup = false;
   this.showViewAllQuotationPopup = false;
 
-
   try {
-    const res = await axios.get(`/api/quotations/${quotation.id}`);
+    // Make sure we have the correct ID
+    const quotationId = quotation.id;
+    if (!quotationId) {
+      toastError("Invalid quotation ID");
+      return;
+    }
+    
+    const res = await axios.get(`/api/quotations/${quotationId}`);
     const fullQuotation = res.data;
-
+    
+    console.log("Full quotation data for edit:", fullQuotation);
+    console.log("Items for edit:", fullQuotation.items);
+    
+    // Parse items if needed
+    let items = [];
+    if (fullQuotation.items) {
+      if (typeof fullQuotation.items === "string") {
+        items = JSON.parse(fullQuotation.items);
+      } else {
+        items = JSON.parse(JSON.stringify(fullQuotation.items));
+      }
+    }
+    
     this.form = {
       id: fullQuotation.id,
-      nature_of_sale: fullQuotation.nature_of_sale,
-      currency: fullQuotation.currency,
+      nature_of_sale: fullQuotation.nature_of_sale || "",
+      currency: fullQuotation.currency || "",
       company_name: fullQuotation.company_name,
-      recommended_by: fullQuotation.recommended_by,
-      customer_reference: fullQuotation.customer_reference,
-      engine_serial: fullQuotation.engine_serial,
-      model_no: fullQuotation.model_no,
-      delivery: fullQuotation.delivery,
-      payment_terms: fullQuotation.payment_terms,
-      terms_conditions: fullQuotation.terms_conditions,
-
-      items:
-        fullQuotation.items
-          ? (typeof fullQuotation.items === "string"
-              ? JSON.parse(fullQuotation.items)
-              : JSON.parse(JSON.stringify(fullQuotation.items)))
-          : []
+      recommended_by: fullQuotation.recommended_by || "",
+      customer_reference: fullQuotation.customer_reference || "",
+      engine_serial: fullQuotation.engine_serial || "",
+      model_no: fullQuotation.model_no || "",
+      delivery: fullQuotation.delivery || "",
+      payment_terms: fullQuotation.payment_terms || "",
+      terms_conditions: fullQuotation.terms_conditions || "",
+      created_by: fullQuotation.created_by || "",
+      shipping_address: fullQuotation.shipping_address || fullQuotation.material_shipping_address || "",
+      items: items,
+      bill_to: fullQuotation.bill_to ? 
+        (typeof fullQuotation.bill_to === "string" ? JSON.parse(fullQuotation.bill_to) : fullQuotation.bill_to) : 
+        { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" },
+      ship_to: fullQuotation.ship_to ? 
+        (typeof fullQuotation.ship_to === "string" ? JSON.parse(fullQuotation.ship_to) : fullQuotation.ship_to) : 
+        { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" }
     };
-
+    
+    console.log("Form loaded for edit:", this.form);
+    console.log("Items loaded:", this.form.items);
+    
   } catch (error) {
-    console.error(error);
+    console.error("Failed to load quotation data:", error);
     toastError("Failed to load quotation data");
   }
 },
@@ -5556,37 +6045,47 @@ removeItem(index) {
   },
 fetchQuotationsById(company) {
   this.quotationLoading = true;
-
-  fetch(`/api/api/quotations/by-company/${company}`)
-    .then(res => res.json())
-    .then(data => {
-      this.quotationList = data;
+  
+  // Make sure we have the company name properly encoded
+  const companyName = encodeURIComponent(company);
+  
+  axios.get(`/api/quotations/by-company/${companyName}`)
+    .then(res => {
+      console.log("Quotations fetched:", res.data);
+      this.quotationList = res.data;
     })
     .catch(err => {
       console.error("Quotation fetch error:", err);
       this.quotationList = [];
+      toastError("Failed to load quotations");
     })
     .finally(() => {
-      this.quotationLoading = false;   // ✅ stop loader
+      this.quotationLoading = false;
     });
 },
 
 openViewQuotationPopup(companyName) {
+  if (!companyName) {
+    toastWarning("No company selected");
+    return;
+  }
+  
+  console.log("Opening view quotation popup for company:", companyName);
+  
   this.currentCompany = companyName;
   this.filterCompany = companyName;
   this.showViewQuotationPopup = true;
-  // this.showViewAllQuotationPopup = true;
-
-
-  this.quotationList = [];          // clear old data
-  this.quotationLoading = true;     // 🔄 start loader
-
+  
+  // Clear old data and show loader
+  this.quotationList = [];
+  this.quotationLoading = true;
+  
+  // Fetch quotations for this company
   this.fetchQuotationsById(companyName);
 },
 
 
 submitQuotation() {
-
   // 1️⃣ Check Nature of Sale
   if (!this.form.nature_of_sale) {
     toastWarning("⚠ Please select Nature of Sale before saving the quotation.");
@@ -5599,18 +6098,18 @@ submitQuotation() {
     return;
   }
 
-  // 🔥 ✅ ADD THIS BLOCK HERE (IMPORTANT)
+  // Process HSN codes
   this.form.items.forEach(item => {
     if (item.hsn === 'manual') {
       if (!item.manual_hsn) {
         toastWarning("⚠ Please enter HSN number");
-        throw new Error('HSN missing'); // stop execution
+        throw new Error('HSN missing');
       }
       item.hsn = item.manual_hsn;
     }
   });
 
-  // 3️⃣ Validate required fields for each item
+  // Validate required fields for each item
   for (let i = 0; i < this.form.items.length; i++) {
     const item = this.form.items[i];
     if (!item.description || !item.hsn || !item.qty || !item.uom || !item.rate) {
@@ -5619,22 +6118,25 @@ submitQuotation() {
     }
   }
 
-  // 🔹 store company before reset
+  // ✅ IMPORTANT: Prepare the data correctly
+  const submissionData = {
+    ...this.form,
+    // Don't stringify items if the backend expects an array
+    // If your backend expects JSON string, make sure to stringify it correctly
+    items: this.form.items, // Send as array, not string
+    bill_to: this.form.bill_to,
+    ship_to: this.form.ship_to,
+    material_shipping_address: this.form.shipping_address
+  };
+
   const selectedCompany = this.form.company_name;
-
-  const url = this.isEdit
-    ? `/api/quotations/${this.form.id}`
-    : `/api/quotations`;
-
+  const url = this.isEdit ? `/api/quotations/${this.form.id}` : `/api/quotations`;
   const method = this.isEdit ? 'put' : 'post';
 
-  axios[method](url, this.form)
+  axios[method](url, submissionData)
     .then(async () => {
-      toastSuccess(this.isEdit 
-        ? "Quotation Updated Successfully!" 
-        : "Quotation Saved Successfully!"
-      );
-
+      toastSuccess(this.isEdit ? "Quotation Updated Successfully!" : "Quotation Saved Successfully!");
+      
       this.showQuotation = false;
       await this.fetchQuotations();
       this.filterCompany = selectedCompany;
@@ -10510,7 +11012,7 @@ h2 {
   /* padding: 5px 18px; */
   border: 2px solid #ced4da;
   /* border-radius: 12px; */
-  width: 207px;
+  width: 100%;
   font-size: 1rem;
   font-weight: 500;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -11790,5 +12292,141 @@ transform:scale(1.05);
 
 .row-yellow {
   background: #fffe62;
+}
+.calculation-item-btn {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.calculation-item-btn:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
+}
+
+.calculation-item-btn:active {
+  transform: translateY(0);
+}
+.quotation-duplicate-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+/* Add these styles if needed */
+.modal-card.medium {
+  max-width: 500px;
+  width: 90%;
+}
+
+.modal-header-icon {
+  text-align: center;
+  font-size: 48px;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.modal-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.po-type-select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+}
+
+.input-group.full-width {
+  width: 100%;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+/* Ensure proper z-index stacking */
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+
+.quotation-backdrop {
+  z-index: 1040 !important;
+}
+
+/* Make sure duplicate modal has higher z-index when active */
+.modal-backdrop:has(.modal-card.medium) {
+  z-index: 1060 !important;
+}
+
+/* Ensure duplicate modal appears above others */
+.showDuplicateCompanySelection .modal-backdrop {
+  z-index: 1060 !important;
+}
+.modal-backdrop {
+  z-index: 1050;
+}
+
+.quotation-backdrop {
+  z-index: 1040;
+}
+
+/* Specific style for duplicate modal */
+.modal-backdrop .modal-card.medium {
+  z-index: 1060;
+  position: relative;
+}
+
+/* Ensure duplicate modal is on top */
+.showDuplicateCompanySelection ~ .quotation-backdrop,
+.showDuplicateCompanySelection + .quotation-backdrop {
+  z-index: 1030;
 }
 </style>

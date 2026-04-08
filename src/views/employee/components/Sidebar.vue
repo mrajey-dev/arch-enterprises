@@ -127,9 +127,7 @@
           <li @click="goTo('employee/myprofile')">
             <i class="fa-solid fa-user"></i><span> My Profile</span>
           </li>
-          <li @click="showChangePassword = true">
-            <i class="fas fa-key"></i> <span>Change Password</span>
-          </li>
+         
           <li @click="logout" class="danger-bg">
             <i class="fas fa-sign-out-alt"></i><span> Logout</span>
           </li>

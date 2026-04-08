@@ -2,187 +2,146 @@
   <div class="app-layout">
     <!-- 🔔 Global Notification Bell -->
     <NotificationBell v-if="showBell" />
+    
     <!-- 🌐 Global Top Bar -->
-<div v-if="showHeader" class="global-topbar">
-
- <div 
-  v-if="showMenuIcon"
-  class="menu-icon" 
-  @click="toggleSidebar"
->
-
-    <i class="fas fa-bars"></i>
-  </div>
-<div class="app-title">
-  <img src="./assets/logo.png" alt="Arch Logo" class="app-logo" />
-  <span>Arch 360</span>
-</div>
-
-</div>
-
-    <router-view />
-    <!-- ⚠️ Idle Warning Modal -->
-<div v-if="showWarning" class="idle-modal">
-  <div class="idle-box">
-    <h3>Session Expiring</h3>
-    <p>
-      You will be logged out in
-      <strong>{{ countdown }}</strong> seconds due to inactivity.
-    </p>
-    <button @click="stayLoggedIn">Stay Logged In</button>
-  </div>
-</div>
-
-<!-- <div class="help-widget">
-
-  <div class="help-button" @click="toggleHelp">
-    <i class="fas fa-question"></i>
-    <span v-if="!helpOpen">Help</span>
-  </div>
-
-<transition name="help-slide">
-  <div v-if="helpOpen" class="help-panel">
-    <div class="help-header">
-      <h4>Arch Support 🤖</h4>
-      <i class="fas fa-times" @click="toggleHelp"></i>
-    </div>
-
-    <div class="chat-body" ref="chatBody">
-      <div
-        v-for="(msg, index) in messages"
-        :key="index"
-        :class="['chat-msg', msg.sender]"
+    <div v-if="showHeader" class="global-topbar">
+      <div 
+        v-if="showMenuIcon"
+        class="menu-icon" 
+        @click="toggleSidebar"
       >
-        {{ msg.text }}
+        <i class="fas fa-bars"></i>
+      </div>
+      <div class="app-title">
+        <img src="./assets/logo.png" alt="Arch Logo" class="app-logo" />
+        <span>Arch 360</span>
       </div>
     </div>
-    <div class="chat-input">
-      <input
-        type="text"
-        v-model="userInput"
-        placeholder="Type your message..."
-        @keyup.enter="sendMessage"
-      />
-      <button @click="sendMessage">➤</button>
+
+    <router-view />
+    
+    <!-- ⚠️ Idle Warning Modal -->
+    <div v-if="showWarning" class="idle-modal">
+      <div class="idle-box">
+        <h3>Session Expiring</h3>
+        <p>
+          You will be logged out in
+          <strong>{{ countdown }}</strong> seconds due to inactivity.
+        </p>
+        <button @click="stayLoggedIn">Stay Logged In</button>
+      </div>
     </div>
-  </div>
-</transition>
 
-</div> -->
+    <!-- 📋 Google Form Popup Modal -->
+    <div v-if="showFormPopup" class="form-popup-overlay">
+      <div class="form-popup-container">
+        <div class="form-popup-header">
+          <h3>📊 Strategic Business Unit Discussion – SBU</h3>
+          <button class="close-popup" @click="closeFormPopup">✕</button>
+        </div>
+        <div class="form-popup-body">
+          <iframe 
+            :src="googleFormUrl" 
+            frameborder="0" 
+            marginheight="0" 
+            marginwidth="0"
+            class="google-form-iframe"
+          >
+            加载中…
+          </iframe>
+        </div>
+        <div class="form-popup-footer">
+          <button class="remind-later" @click="closeFormPopup">Remind Later</button>
+          <button class="submit-form" @click="openFormInNewTab">Open in New Tab</button>
+        </div>
+      </div>
+    </div>
 
-<!-- Overlay -->
-<div v-if="sidebarOpen" class="sidebar-overlay" @click="toggleSidebar"></div>
+    <!-- Overlay -->
+    <div v-if="sidebarOpen" class="sidebar-overlay" @click="toggleSidebar"></div>
 
-<!-- Sidebar -->
-<transition name="slide-sidebar">
-  <div v-if="sidebarOpen" class="global-sidebar">
+    <!-- Sidebar -->
+    <transition name="slide-sidebar">
+      <div v-if="sidebarOpen" class="global-sidebar">
+        <!-- 👤 User Section -->
+        <div class="sidebar-user">
+          <img
+            :src="user.profile_photo 
+              ? `https://employees.archenterprises.co.in/backend/public/storage/${user.profile_photo}` 
+              : 'https://i.pravatar.cc/100'"
+            alt="User"
+            class="user-avatar"
+          />
+          <div class="user-name">{{ user.name }}</div>
+          <div class="user-role">{{ user.department }}</div>
+        </div>
 
-    <!-- 🔒 Close Button -->
-    <!-- <div class="sidebar-close" @click="toggleSidebar">
-⪡
-    </div> -->
+        <div class="sidebar-divider"></div>
 
-    <!-- 👤 User Section -->
-    <!-- 👤 User Section -->
-<div class="sidebar-user">
-  <img
-    :src="user.profile_photo 
-      ? `https://employees.archenterprises.co.in/backend/public/storage/${user.profile_photo}` 
-      : 'https://i.pravatar.cc/100'"
-    alt="User"
-    class="user-avatar"
-  />
-
-  <div class="user-name">{{ user.name }}</div>
-  <div class="user-role">{{ user.department }}</div>
-</div>
-
-
-    <div class="sidebar-divider"></div>
-
-    <!-- 📂 Menu -->
-   <ul class="sidebar-menu">
-
-  <!-- 📊 Dashboard -->
-  <li @click="goTo('employee/dashboard')">
+        <!-- 📂 Menu -->
+        <ul class="sidebar-menu">
+          <!-- 📊 Dashboard -->
+          <li @click="goTo('employee/dashboard')">
             <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
           </li>
 
-<li @click="goTo('employee/help')">
+          <li @click="goTo('employee/help')">
             <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
           </li>
 
-  <!-- 🌴 Leaves Dropdown -->
-  <li class="has-submenu">
-    <div class="submenu-title" @click="toggleLeaves">
-      <i class="fas fa-calendar-alt"></i>
-      <span>Leaves </span>
-     &nbsp;&nbsp;&nbsp; <i class="fa fa-caret-down" :class="{ rotate: leavesOpen }"></i>
-    </div>
-
-    <ul v-if="leavesOpen" class="submenu">
-      <li @click="$router.push('leaveapplicationsemp'); toggleSidebar()">
-         <i class="fas fa-list"></i>  All Leaves
-      </li>
-      <li @click="$router.push('approvedleavesemp'); toggleSidebar()">
-         <i class="fas fa-check-circle"></i>  Approved
-      </li>
-      <li @click="$router.push('rejectedleavesemp'); toggleSidebar()">
-          <i class="fas fa-times-circle"></i> Rejected
-      </li>
-        <li @click="goTo('pendingleaves')">
-               <i class="fas fa-hourglass-half"> </i>Pending Leaves
+          <!-- 🌴 Leaves Dropdown -->
+          <li class="has-submenu">
+            <div class="submenu-title" @click="toggleLeaves">
+              <i class="fas fa-calendar-alt"></i>
+              <span>Leaves </span>
+              &nbsp;&nbsp;&nbsp; <i class="fa fa-caret-down" :class="{ rotate: leavesOpen }"></i>
+            </div>
+            <ul v-if="leavesOpen" class="submenu">
+              <li @click="$router.push('leaveapplicationsemp'); toggleSidebar()">
+                <i class="fas fa-list"></i> All Leaves
               </li>
-      
-    </ul>
-  </li>
-  <li @click="goTo('employee/applyleave')">
+              <li @click="$router.push('approvedleavesemp'); toggleSidebar()">
+                <i class="fas fa-check-circle"></i> Approved
+              </li>
+              <li @click="$router.push('rejectedleavesemp'); toggleSidebar()">
+                <i class="fas fa-times-circle"></i> Rejected
+              </li>
+              <li @click="goTo('pendingleaves')">
+                <i class="fas fa-hourglass-half"></i> Pending Leaves
+              </li>
+            </ul>
+          </li>
+          <li @click="goTo('employee/applyleave')">
             <i class="fas fa-plane-departure"></i><span> Apply for Leave </span>
           </li>
-   <li 
-  class="mobile-only"
-  @click="goTo('employee/Customerregistrations')"
->
-  <i class="fas fa-user-friends"></i><span> CRM</span>
-</li>
-
-    <li @click="goTo('employee/viewAnnouncement')">
+          <li class="mobile-only" @click="goTo('employee/Customerregistrations')">
+            <i class="fas fa-user-friends"></i><span> CRM</span>
+          </li>
+          <li @click="goTo('employee/viewAnnouncement')">
             <i class="fas fa-bullhorn"></i><span> Announcement</span>
           </li>
           <li @click="goTo('employee/request')">
             <i class="fa fa-check-square-o"></i><span> Request Desk</span>
           </li>
-           <li @click="goTo('employee/resourcebooking')">
+          <li @click="goTo('employee/resourcebooking')">
             <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
           </li>
-
-   <li @click="goTo('employee/viewkra')">
+          <li @click="goTo('employee/viewkra')">
             <i class="fas fa-tasks"></i> <span>View KRA</span>
           </li>
-           <li @click="goTo('employee/mydsi')">
+          <li @click="goTo('employee/mydsi')">
             <i class="fas fa-tasks"></i><span> DSI</span>
           </li>
-          
           <li @click="goTo('employee/myprofile')">
             <i class="fa-solid fa-user"></i><span> My Profile</span>
           </li>
-
-
- <li @click="logout" class="danger-bg">
+          <li @click="logout" class="danger-bg">
             <i class="fas fa-sign-out-alt"></i><span> Logout</span>
           </li>
-
-</ul>
-
-
+        </ul>
+      </div>
+    </transition>
   </div>
-</transition>
-
-
-
-
-</div>
-
 </template>
 
 <script>
@@ -197,371 +156,291 @@ export default {
   data() {
     return {
       leavesOpen: false,
-     user: {
-  name: '',
-  department: '',
-  profile_photo: ''
-},
-
+      user: {
+        name: '',
+        department: '',
+        profile_photo: ''
+      },
       sidebarOpen: false,
-       helpOpen: false,
-       userInput: '',
-    messages: [
-      { sender: 'bot', text: 'Hi 👋 I am Arch Support Bot. How can I help you?' },
-    ],
-
-  quickQuestions: [
-  // 👋 Greetings
-  { question: 'Hi' },
-  { question: 'Hello' },
-  { question: 'Hey' },
-  { question: 'Good morning' },
-  { question: 'Good evening' },
-
-  // 📅 Attendance
-  { question: 'How to mark attendance?' },
-  { question: 'What if I forget to punch out?' },
-  { question: 'Why was I marked absent?' },
-  { question: 'Can I edit attendance later?' },
-
-  // ⏱ Office Timing
-  { question: 'What is the office time?' },
-  { question: 'What if I punch in late?' },
-
-  // 🌴 Leave
-  { question: 'How to apply for leave?' },
-  { question: 'How does leave work?' },
-  { question: 'What happens if I have no leave balance?' },
-  { question: 'How are Sundays counted?' },
-
-  // 💰 Salary
-  { question: 'How is salary calculated?' },
-  { question: 'Is salary deducted for absents?' },
-
-  // 📊 Performance
-  { question: 'What is quarterly performance?' },
-  { question: 'How are quarters calculated?' },
-
-  // 🚗 Travel / Visit
-  { question: 'What if I am on travel or onsite?' },
-  { question: 'Where can I see my visits or services?' },
-
-  // 👤 Profile & Account
-  { question: 'How to change my profile details?' },
-  { question: 'How to change password?' },
-  { question: 'How to change theme?' },
-
-  // 🧠 System / Info
-  { question: 'What is your name?' },
-  { question: 'Who are you?' },
-  { question: 'What is RCA?' },
-  { question: 'What is auto logout time?' },
-
-  // 🏢 CRM / Sales
-  { question: 'How to register new customer?' },
-  { question: 'How to add PO?' },
-  { question: 'How to create quotation?' },
-  { question: 'How to view quotation?' },
-
-  // 🆘 Support
-  { question: 'Who to contact for support?' },
-],
-
-
-
-
-faqMap: {
-  // 👋 Greetings
-  'hi': 'Hello 👋 How can I help you today?',
-  'hello': 'Hi there! 😊 Ask me anything about attendance, leave, salary, or system.',
-  'hey': 'Hey! 👋 What would you like to know?',
-  'good morning': 'Good morning ☀️ Wishing you a productive day!',
-  'good evening': 'Good evening 🌙 How can I assist you?',
-
-  // 📅 Attendance
-  'attendance':
-    'Go to Attendance → Select your status → Save. Attendance can be marked only once per day.',
-
-  'mark attendance':
-    'Attendance is allowed only once per day and cannot be edited after saving.',
-
-  'forget punch out':
-    'If you forget to punch out, the system will auto punch-out at 5:30 PM.',
-
-  'marked absent':
-    'You may be marked Absent if no attendance is marked and no leave balance is available.',
-
-  'edit attendance':
-    'No, attendance cannot be edited once saved for the day.',
-
-  // ⏱ Office Time
-  'office time':
-    'Office working hours are 9:30 AM to 5:30 PM.',
-
-  'late punch':
-    'Late punch-ins may affect attendance percentage as per company policy.',
-
-  // 🌴 Leave
-  'apply leave':
-    'Go to Apply for Leave → Select Leave Type → Select date and reason → Submit.',
-
-  'how to apply leave':
-    'You can apply leave from the Leave section by selecting dates and submitting a request.',
-
-  'leave deduct':
-    'Leave is deducted automatically from your balance. If balance is zero, the day is marked Absent.',
-
-  'no leave balance':
-    'If you have no leave balance, the system marks the day as Absent.',
-
-  'sunday':
-    'If attendance is marked on Sunday, 1 Earned Leave is credited.',
-
-  'holiday':
-    'Public holidays are predefined by admin and do not require attendance.',
-
-  // 💰 Salary
-  'salary':
-    'Salary is calculated based on attendance, approved leave, and company rules.',
-
-  'salary deduction':
-    'Absent days may result in salary deduction as per HR policy.',
-
-  // 📊 Performance
-  'performance':
-    'Quarterly performance is calculated using attendance percentage and target completion.',
-
-  'quarter':
-    'Q1: Jan–Mar, Q2: Apr–Jun, Q3: Jul–Sep, Q4: Oct–Dec.',
-
-  // 🚗 Travel / Visit
-  'travel':
-    'If you are on travel or onsite, select Travel/Onsite while marking attendance.',
-
-  'onsite':
-    'Onsite work must be marked using the Onsite option in attendance.',
-
-  'visit':
-    'You can view your visits and services from the Visits or Services section.',
-
-  'services':
-    'All assigned services are visible in the Services module.',
-
-  // 👤 Profile & Account
-  'profile':
-    'Profile details can be updated from Profile → Edit. Some changes need admin approval.',
-
-  'change password':
-    'Go to Settings → Change Password → Save.',
-
-  'change theme':
-    'You can change the theme from Settings → Appearance.',
-
-  // 🧠 System Info
-  'your name':
-    'I am Arch 360 Assistant 🤖, here to help you with the system.',
-
-  'who are you':
-    'I am your virtual assistant for Arch 360.',
-
-  'rca':
-    'RCA stands for Root Cause Analysis. It is used to identify the main reason behind an issue.',
-
-  'auto logout':
-    'The system automatically logs you out after inactivity for security reasons.',
-
-  // 🏢 CRM / Sales
-  'new customer':
-    'Go to Customers → Add New Customer → Fill details → Save.',
-
-  'register customer':
-    'You can register a new customer from the Customers section.',
-
-  'add po':
-    'Go to Purchase Order → Add PO → Enter details → Save.',
-
-  'create quotation':
-    'Go to Quotation → Create → Add items → Generate quotation.',
-
-  'view quotation':
-    'All quotations can be viewed from the Quotation List section.',
-
-  // 🆘 Support
-  'support':
-    'For help, contact HR or email support@archenterprises.co.in.',
-
-  'contact':
-    'You can contact HR or email contact@archenterprises.co.in.',
-},
-
-
-
-    selectedHelp: null,
+      helpOpen: false,
+      userInput: '',
+      messages: [
+        { sender: 'bot', text: 'Hi 👋 I am Arch Support Bot. How can I help you?' },
+      ],
+      quickQuestions: [
+        // 👋 Greetings
+        { question: 'Hi' },
+        { question: 'Hello' },
+        { question: 'Hey' },
+        { question: 'Good morning' },
+        { question: 'Good evening' },
+        // 📅 Attendance
+        { question: 'How to mark attendance?' },
+        { question: 'What if I forget to punch out?' },
+        { question: 'Why was I marked absent?' },
+        { question: 'Can I edit attendance later?' },
+        // ⏱ Office Timing
+        { question: 'What is the office time?' },
+        { question: 'What if I punch in late?' },
+        // 🌴 Leave
+        { question: 'How to apply for leave?' },
+        { question: 'How does leave work?' },
+        { question: 'What happens if I have no leave balance?' },
+        { question: 'How are Sundays counted?' },
+        // 💰 Salary
+        { question: 'How is salary calculated?' },
+        { question: 'Is salary deducted for absents?' },
+        // 📊 Performance
+        { question: 'What is quarterly performance?' },
+        { question: 'How are quarters calculated?' },
+        // 🚗 Travel / Visit
+        { question: 'What if I am on travel or onsite?' },
+        { question: 'Where can I see my visits or services?' },
+        // 👤 Profile & Account
+        { question: 'How to change my profile details?' },
+        { question: 'How to change password?' },
+        { question: 'How to change theme?' },
+        // 🧠 System / Info
+        { question: 'What is your name?' },
+        { question: 'Who are you?' },
+        { question: 'What is RCA?' },
+        { question: 'What is auto logout time?' },
+        // 🏢 CRM / Sales
+        { question: 'How to register new customer?' },
+        { question: 'How to add PO?' },
+        { question: 'How to create quotation?' },
+        { question: 'How to view quotation?' },
+        // 🆘 Support
+        { question: 'Who to contact for support?' },
+      ],
+      faqMap: {
+        // 👋 Greetings
+        'hi': 'Hello 👋 How can I help you today?',
+        'hello': 'Hi there! 😊 Ask me anything about attendance, leave, salary, or system.',
+        'hey': 'Hey! 👋 What would you like to know?',
+        'good morning': 'Good morning ☀️ Wishing you a productive day!',
+        'good evening': 'Good evening 🌙 How can I assist you?',
+        // 📅 Attendance
+        'attendance': 'Go to Attendance → Select your status → Save. Attendance can be marked only once per day.',
+        'mark attendance': 'Attendance is allowed only once per day and cannot be edited after saving.',
+        'forget punch out': 'If you forget to punch out, the system will auto punch-out at 5:30 PM.',
+        'marked absent': 'You may be marked Absent if no attendance is marked and no leave balance is available.',
+        'edit attendance': 'No, attendance cannot be edited once saved for the day.',
+        // ⏱ Office Time
+        'office time': 'Office working hours are 9:30 AM to 5:30 PM.',
+        'late punch': 'Late punch-ins may affect attendance percentage as per company policy.',
+        // 🌴 Leave
+        'apply leave': 'Go to Apply for Leave → Select Leave Type → Select date and reason → Submit.',
+        'how to apply leave': 'You can apply leave from the Leave section by selecting dates and submitting a request.',
+        'leave deduct': 'Leave is deducted automatically from your balance. If balance is zero, the day is marked Absent.',
+        'no leave balance': 'If you have no leave balance, the system marks the day as Absent.',
+        'sunday': 'If attendance is marked on Sunday, 1 Earned Leave is credited.',
+        'holiday': 'Public holidays are predefined by admin and do not require attendance.',
+        // 💰 Salary
+        'salary': 'Salary is calculated based on attendance, approved leave, and company rules.',
+        'salary deduction': 'Absent days may result in salary deduction as per HR policy.',
+        // 📊 Performance
+        'performance': 'Quarterly performance is calculated using attendance percentage and target completion.',
+        'quarter': 'Q1: Jan–Mar, Q2: Apr–Jun, Q3: Jul–Sep, Q4: Oct–Dec.',
+        // 🚗 Travel / Visit
+        'travel': 'If you are on travel or onsite, select Travel/Onsite while marking attendance.',
+        'onsite': 'Onsite work must be marked using the Onsite option in attendance.',
+        'visit': 'You can view your visits and services from the Visits or Services section.',
+        'services': 'All assigned services are visible in the Services module.',
+        // 👤 Profile & Account
+        'profile': 'Profile details can be updated from Profile → Edit. Some changes need admin approval.',
+        'change password': 'Go to Settings → Change Password → Save.',
+        'change theme': 'You can change the theme from Settings → Appearance.',
+        // 🧠 System Info
+        'your name': 'I am Arch 360 Assistant 🤖, here to help you with the system.',
+        'who are you': 'I am your virtual assistant for Arch 360.',
+        'rca': 'RCA stands for Root Cause Analysis. It is used to identify the main reason behind an issue.',
+        'auto logout': 'The system automatically logs you out after inactivity for security reasons.',
+        // 🏢 CRM / Sales
+        'new customer': 'Go to Customers → Add New Customer → Fill details → Save.',
+        'register customer': 'You can register a new customer from the Customers section.',
+        'add po': 'Go to Purchase Order → Add PO → Enter details → Save.',
+        'create quotation': 'Go to Quotation → Create → Add items → Generate quotation.',
+        'view quotation': 'All quotations can be viewed from the Quotation List section.',
+        // 🆘 Support
+        'support': 'For help, contact HR or email support@archenterprises.co.in.',
+        'contact': 'You can contact HR or email contact@archenterprises.co.in.',
+      },
+      selectedHelp: null,
       idleTimer: null,
       warningTimer: null,
       idleTimeLimit: 9 * 60 * 60 * 1000,   // 9 hours
-warningTime: (9 * 60 * 60 - 10) * 1000, // 10 seconds before 9 hours
-
-
+      warningTime: (9 * 60 * 60 - 10) * 1000, // 10 seconds before 9 hours
       showWarning: false,
       countdown: 10,
       countdownInterval: null,
+      // Google Form Popup
+      showFormPopup: false,
+      googleFormUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSfwz35YgfHbSIm3-zapvywqD8pw56fXc-U5EwpCmcG3v3zwrg/viewform?embedded=true'
     } 
   },
 
   computed: {
     showHelpWidget() {
-    return !this.$route.meta?.hideHelp
-  },
+      return !this.$route.meta?.hideHelp
+    },
     showBell() {
       return !this.$route.meta?.hideBell
     },
-      showMenuIcon() {
-    return !this.$route.meta?.hideMenu
-  },
+    showMenuIcon() {
+      return !this.$route.meta?.hideMenu
+    },
     showHeader() {
-    return !this.$route.meta?.hideHeader
-  }
+      return !this.$route.meta?.hideHeader
+    }
   },
-mounted() {
-  this.loadUser()
-  this.checkSessionExpiry()
-  this.startIdleTimers()
 
-  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
-  events.forEach(event => {
-    window.addEventListener(event, this.resetIdleTimers)
-  })
+  mounted() {
+    this.loadUser()
+    this.checkSessionExpiry()
+    this.startIdleTimers()
+    this.checkAndShowFormPopup() // 👈 Show popup on first load
 
-  window.addEventListener('keydown', this.handleEscape)
-},
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+    events.forEach(event => {
+      window.addEventListener(event, this.resetIdleTimers)
+    })
 
+    window.addEventListener('keydown', this.handleEscape)
+  },
 
+  beforeUnmount() {
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+    events.forEach(event => {
+      window.removeEventListener(event, this.resetIdleTimers)
+    })
 
-beforeUnmount() {
-  const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
-  events.forEach(event => {
-    window.removeEventListener(event, this.resetIdleTimers)
-  })
+    window.removeEventListener('keydown', this.handleEscape)
 
-  window.removeEventListener('keydown', this.handleEscape)
-
-  this.clearAllTimers()
-},
-
+    this.clearAllTimers()
+  },
 
   methods: {
- goTo(route) {
-  this.$router.push(`/${route}`)
-  this.sidebarOpen = false   // 👈 always close sidebar after navigation
-},
+    goTo(route) {
+      this.$router.push(`/${route}`)
+      this.sidebarOpen = false
+    },
+    
     toggleLeaves() {
-  this.leavesOpen = !this.leavesOpen
-},
+      this.leavesOpen = !this.leavesOpen
+    },
 
     handleEscape(e) {
-  if (e.key === 'Escape' && this.sidebarOpen) {
-    this.sidebarOpen = false
-  }
-},
+      if (e.key === 'Escape' && this.sidebarOpen) {
+        this.sidebarOpen = false
+      }
+    },
 
     loadUser() {
-  const storedUser = localStorage.getItem('user')
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser)
+        this.user.name = parsedUser.name || ''
+        this.user.department = parsedUser.department || ''
+        this.user.profile_photo = parsedUser.profile_photo || ''
+      }
+    },
 
-  if (storedUser) {
-    const parsedUser = JSON.parse(storedUser)
-
-    this.user.name = parsedUser.name || ''
-    this.user.department = parsedUser.department || ''
-    this.user.profile_photo = parsedUser.profile_photo || ''
-  }
-},
-
-toggleSidebar() {
-  this.sidebarOpen = !this.sidebarOpen
-
-  if (this.sidebarOpen) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-},
+    toggleSidebar() {
+      this.sidebarOpen = !this.sidebarOpen
+      if (this.sidebarOpen) {
+        document.body.style.overflow = 'hidden'
+      } else {
+        document.body.style.overflow = ''
+      }
+    },
 
     checkSessionExpiry() {
-  const loginTime = localStorage.getItem('loginTime')
+      const loginTime = localStorage.getItem('loginTime')
+      if (!loginTime) return
+      const now = Date.now()
+      const diff = now - parseInt(loginTime)
+      const threeHours = 3 * 60 * 60 * 1000
+      if (diff > threeHours) {
+        this.logout()
+      }
+    },
 
-  if (!loginTime) return
+    // 👇 New method to check and show form popup
+    checkAndShowFormPopup() {
+      // Check if user has seen the form before
+      const hasSeenForm = localStorage.getItem('hasSeenSBUForm')
+      
+      // Check if this is the first load of the session
+      const sessionFormShown = sessionStorage.getItem('sessionFormShown')
+      
+      if (!hasSeenForm && !sessionFormShown) {
+        // Show popup after a short delay to allow page to load
+        setTimeout(() => {
+          this.showFormPopup = true
+          sessionStorage.setItem('sessionFormShown', 'true')
+        }, 1000)
+      }
+    },
 
-  const now = Date.now()
-  const diff = now - parseInt(loginTime)
+    closeFormPopup() {
+      this.showFormPopup = false
+      // Optional: Mark as seen permanently if you want
+      // localStorage.setItem('hasSeenSBUForm', 'true')
+    },
 
-  const threeHours = 3 * 60 * 60 * 1000
-
-  if (diff > threeHours) {
-    this.logout()
-  }
-},
+    openFormInNewTab() {
+      window.open('https://docs.google.com/forms/d/e/1FAIpQLSfwz35YgfHbSIm3-zapvywqD8pw56fXc-U5EwpCmcG3v3zwrg/viewform', '_blank')
+    },
 
     sendQuickQuestion(question) {
-    this.userInput = question
-    this.sendMessage()
-  },
-sendMessage() {
-  if (!this.userInput.trim()) return
+      this.userInput = question
+      this.sendMessage()
+    },
+    
+    sendMessage() {
+      if (!this.userInput.trim()) return
+      const rawText = this.userInput
+      const cleanText = rawText.toLowerCase().trim()
+      this.messages.push({ sender: 'user', text: rawText })
+      this.userInput = ''
+      setTimeout(() => {
+        const reply = this.getBotReply(cleanText)
+        this.messages.push({ sender: 'bot', text: reply })
+        this.scrollToBottom()
+      }, 500)
+      this.scrollToBottom()
+    },
 
-  const rawText = this.userInput
-  const cleanText = rawText.toLowerCase().trim()
+    getBotReply(text) {
+      const lower = text.toLowerCase()
+      for (const key in this.faqMap) {
+        if (lower.includes(key)) {
+          return this.faqMap[key]
+        }
+      }
+      return "🤔 I'm not sure about that. Please contact HR or support for help."
+    },
 
-  // show original text in chat
-  this.messages.push({ sender: 'user', text: rawText })
-  this.userInput = ''
+    scrollToBottom() {
+      const el = this.$refs.chatBody
+      if (el) el.scrollTop = el.scrollHeight
+    },
 
-  setTimeout(() => {
-    const reply = this.getBotReply(cleanText) // 👈 normalized text
-    this.messages.push({ sender: 'bot', text: reply })
-    this.scrollToBottom()
-  }, 500)
+    toggleHelp() {
+      this.helpOpen = !this.helpOpen
+      this.selectedHelp = null
+    },
 
-  this.scrollToBottom()
-},
-
-
- getBotReply(text) {
-  const lower = text.toLowerCase()
-
-  // Loop through all FAQ keys
-  for (const key in this.faqMap) {
-    if (lower.includes(key)) {
-      return this.faqMap[key]
-    }
-  }
-
-  // fallback
-  return "🤔 I’m not sure about that. Please contact HR or support for help."
-},
-
-
-  scrollToBottom() {
-    const el = this.$refs.chatBody
-    if (el) el.scrollTop = el.scrollHeight
-  },
-
-     toggleHelp() {
-    this.helpOpen = !this.helpOpen
-    this.selectedHelp = null
-  },
-
-  selectHelp(type) {
-    this.selectedHelp = type
-  },
+    selectHelp(type) {
+      this.selectedHelp = type
+    },
+    
     startIdleTimers() {
-      // Warning popup timer
       this.warningTimer = setTimeout(() => {
         this.showWarning = true
         this.startCountdown()
       }, this.warningTime)
-
-      // Final logout timer
       this.idleTimer = setTimeout(() => {
         this.logout()
       }, this.idleTimeLimit)
@@ -592,34 +471,183 @@ sendMessage() {
     stayLoggedIn() {
       this.resetIdleTimers()
     },
-logout() {
-  if (this.sidebarOpen) {
-    this.toggleSidebar()
-  }
-
-  const token = localStorage.getItem("token");
-
-  axios
-    .post(
-      "https://employees.archenterprises.co.in/api/api/logout",
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    .finally(() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      this.$router.push("/auth");
-    });
-}
-
-
-
+    
+    logout() {
+      if (this.sidebarOpen) {
+        this.toggleSidebar()
+      }
+      const token = localStorage.getItem("token");
+      axios
+        .post(
+          "https://employees.archenterprises.co.in/api/api/logout",
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .finally(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          this.$router.push("/auth");
+        });
+    }
   },
 }
 </script>
 
-
 <style>
+  /* ... (keep all your existing styles) ... */
+  
+  /* 🆕 Google Form Popup Styles */
+  .form-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .form-popup-container {
+    width: 90%;
+    max-width: 800px;
+    height: 85vh;
+    max-height: 700px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .form-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--primary), #0d9488);
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .form-popup-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .close-popup {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .close-popup:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+  }
+
+  .form-popup-body {
+    flex: 1;
+    overflow: hidden;
+    background: #f5f5f5;
+  }
+
+  .google-form-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .form-popup-footer {
+    display: flex;
+    gap: 12px;
+    padding: 12px 20px;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    justify-content: flex-end;
+  }
+
+  .remind-later {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  .remind-later:hover {
+    background: #f3f4f6;
+  }
+
+  .submit-form {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .submit-form:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 640px) {
+    .form-popup-container {
+      width: 95%;
+      height: 90vh;
+    }
+
+    .form-popup-header h3 {
+      font-size: 14px;
+    }
+
+    .form-popup-footer button {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+  }
   .idle-modal {
   position: fixed;
   inset: 0;
