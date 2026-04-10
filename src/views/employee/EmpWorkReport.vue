@@ -859,7 +859,7 @@ font-family: cursive;
   background-color: #dc3545;
 }
 .report-container {
-  margin-top: 66px;
+     
      padding: 30px 40px;
          border-radius: 15px;
   width: 100%;
@@ -1075,7 +1075,7 @@ font-family: cursive;
 
 /* Content Section */
 .content {
-  margin-top: 66px;
+     
   flex: 1;
   background-color: white;
   padding: 30px 40px;

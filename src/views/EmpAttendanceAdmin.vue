@@ -1,3359 +1,1671 @@
-
-
 <template>
   <div class="layout">
 
     <!-- Main Content -->
     <div class="main-content">
-       <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <Sidebar v-if="!isMobile || isSidebarVisible" />
 
- <div class="attendance-container container-fluid p-4">
+      <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div>
+              <h1>Daily Attendance</h1>
+              <p class="subtitle-modern">Track and manage employee attendance</p>
+            </div>
+          </div>
+          <div class="header-buttons">
+            <button class="register-btn-modern secondary" @click="showMarkAttendancePopup = true">
+              <i class="fas fa-fingerprint"></i>
+              <span>Mark Attendance</span>
+            </button>
+            <button class="register-btn-modern" @click="showPopupsalary = true">
+              <i class="fas fa-calculator"></i>
+              <span>Calculate Salary</span>
+            </button>
+          </div>
+        </div>
 
-    <h2 class="popup-title">Daily Attendance</h2>
-    <button class="logout-btn" @click="showPopupsalary = true">
-  Calculate Salary
-</button>
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-card">
+            <i class="fas fa-users"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ attendanceRecords.length }}</span>
+              <span class="stat-label">Total Records</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-check-circle"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ presentCount }}</span>
+              <span class="stat-label">Present</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-clock"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ lateCount }}</span>
+              <span class="stat-label">Late Arrivals</span>
+            </div>
+          </div>
+        </div>
 
-<button class="logout-btn" @click="showMarkAttendancePopup = true">
-  Mark Attendance
-</button>
+        <!-- Current Date -->
+        <div class="current-date-badge">
+          <i class="fas fa-calendar-day"></i>
+          <span>{{ currentDate }}</span>
+        </div>
 
-        <!-- Summary Section -->
-  <div v-if="viewMode === 'day'" class="attendance-table">
-  <h5 class="mb-4">{{ currentDate }}</h5>
- <table class="responsive-table attendance-mobile-card">
-  <thead class="d-none d-md-table-header-group">
-    <tr>
-      <th>Name</th>
-      <th>Status</th>
-      <th>Clock In</th>
-      <th>Clock Out</th>
-      <th>Required Time</th>
-      <th>Actual Time</th>
- 
-    </tr>
-  </thead>
-  <tbody>
-    <tr v-for="record in attendanceRecords" :key="record.id">
-  <td data-label="Members">
-    <span class="clickable-name" @click="viewEmployeeMonthlyAttendance(record.name)">
-     👤 {{ record.name }}
-    </span>
-  </td>
-  <td data-label="Status">
-    <span :class="['attendance-status', getStatusClass(record.status)]">{{ record.status }}</span>
-    <div v-if="record.status === 'Present' && record.clock_in">
-      <small v-if="isLate(record.clock_in)" class="text-danger">{{ calculateLateTime(record.clock_in) }} Late</small>
-      <small v-else-if="isEarly(record.clock_in)" class="text-purple">{{ calculateEarlyTime(record.clock_in) }} Early</small>
+        <!-- Attendance Table -->
+        <div class="table-wrapper-premium">
+          <div class="table-header">
+            <div class="section-title-modern">
+              <i class="fas fa-list-ul"></i>
+              <span>Attendance Records</span>
+            </div>
+            <div class="table-info">
+              <i class="fas fa-clock"></i>
+              <span>Last updated: {{ lastUpdated }}</span>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="attendance-table-premium">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Status</th>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                  <th>Required Time</th>
+                  <th>Actual Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="record in attendanceRecords" :key="record.id">
+                  <td class="employee-cell">
+                    <div class="employee-info">
+                      <div class="employee-avatar">
+                        {{ getInitials(record.name) }}
+                      </div>
+                      <span class="employee-name">{{ record.name }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="status-container">
+                      <span :class="['status-badge-premium', getStatusClass(record.status)]">
+                        <i :class="getStatusIcon(record.status)"></i>
+                        {{ record.status || 'Not Marked' }}
+                      </span>
+                      <div v-if="record.status === 'Present' && record.clock_in">
+                        <small v-if="isLate(record.clock_in)" class="late-warning">
+                          <i class="fas fa-exclamation-triangle"></i> {{ calculateLateTime(record.clock_in) }} Late
+                        </small>
+                        <small v-else-if="isEarly(record.clock_in)" class="early-info">
+                          <i class="fas fa-star"></i> {{ calculateEarlyTime(record.clock_in) }} Early
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="time-cell">{{ record.clock_in || '—' }}</td>
+                  <td class="time-cell">{{ record.clock_out || '—' }}</td>
+                  <td class="time-cell">{{ record.required_time || '—' }}</td>
+                  <td class="time-cell">{{ record.actual_time || '—' }}</td>
+                </tr>
+                <tr v-if="attendanceRecords.length === 0" class="empty-row">
+                  <td colspan="6">
+                    <div class="empty-state-premium">
+                      <i class="fas fa-calendar-times"></i>
+                      <h4>No Attendance Records</h4>
+                      <p>No attendance data found for today</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </div>
-  </td>
-  <td data-label="Clock In">{{ record.clock_in || '-' }}</td>
-  <td data-label="Clock Out">{{ record.clock_out || '-' }}</td>
-  <td data-label="Required Time">{{ record.required_time }}</td>
-  <td data-label="Actual Time">{{ record.actual_time || '-' }}</td>
-  
-</tr>
 
-  </tbody>
-</table>
+    <!-- Mark Attendance Modal - Premium -->
+    <transition name="modal-fade">
+      <div v-if="showMarkAttendancePopup" class="modal-backdrop" @click.self="showMarkAttendancePopup = false">
+        <div class="premium-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-fingerprint"></i>
+            </div>
+            <div class="header-text">
+              <h2>Mark Attendance</h2>
+              <p>Record employee attendance</p>
+            </div>
+            <button class="close-btn-premium" @click="showMarkAttendancePopup = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-</div>
+          <div class="modal-body-premium">
+            <div class="form-section">
+              <div class="form-field">
+                <label>Employee <span class="required-star">*</span></label>
+                <div class="field-wrapper">
+                  <i class="fas fa-user field-icon"></i>
+                  <select v-model="markAttendance.employee">
+                    <option value="">Select Employee</option>
+                    <option v-for="emp in employees" :key="emp.id" :value="emp.name">
+                      {{ emp.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
 
+              <div class="form-field">
+                <label>Status <span class="required-star">*</span></label>
+                <div class="field-wrapper">
+                  <i class="fas fa-tag field-icon"></i>
+                  <select v-model="markAttendance.status" :class="markAttendance.status">
+                    <option value="">Select Status</option>
+                    <option>Present</option>
+                    <option>Traveling</option>
+                    <option>OnSite</option>
+                    <option>HalfDay</option>
+                    <option>Leave</option>
+                    <option>Absent</option>
+                  </select>
+                </div>
+              </div>
 
+              <div class="form-field" v-if="markAttendance.status === 'OnSite'">
+                <label>Site Name</label>
+                <div class="field-wrapper">
+                  <i class="fas fa-building field-icon"></i>
+                  <input type="text" v-model="markAttendance.site_name" placeholder="Enter site name" />
+                </div>
+              </div>
 
+              <div class="two-col-grid" v-if="markAttendance.status === 'Traveling'">
+                <div class="form-field">
+                  <label>Travel From</label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-location-dot field-icon"></i>
+                    <input type="text" v-model="markAttendance.travel_from" placeholder="From location" />
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label>Travel To</label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-location-arrow field-icon"></i>
+                    <input type="text" v-model="markAttendance.travel_to" placeholder="To location" />
+                  </div>
+                </div>
+              </div>
 
-  </div>
+              <div class="two-col-grid">
+                <div class="form-field">
+                  <label>Date <span class="required-star">*</span></label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-calendar-alt field-icon"></i>
+                    <input type="date" v-model="markAttendance.date" :max="today" />
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label>Time</label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-clock field-icon"></i>
+                    <input type="time" v-model="markAttendance.time" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-
-<!-- Mark Attendance Popup -->
-<div v-if="showMarkAttendancePopup" class="popup-overlay fancy-overlay">
-  <div class="popup-card animate-pop">
-
-    <div class="popup-header">
-      <h3>📝 Mark Attendance</h3>
-      <button class="icon-close" @click="showMarkAttendancePopup = false">✕</button>
-    </div>
-
-    <div class="popup-body">
-
-      <!-- Employee -->
-      <div class="field">
-        <label>Employee</label>
-        <select v-model="markAttendance.employee">
-          <option value="">Select Employee</option>
-          <option v-for="emp in employees" :key="emp.id" :value="emp.name">
-            {{ emp.name }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Status -->
-      <!-- Status -->
-<div class="field">
-  <label>Status</label>
-  <select v-model="markAttendance.status" :class="markAttendance.status">
-    <option value="">Select Status</option>
-    <option>Present</option>
-    <option>Traveling</option>
-    <option>OnSite</option>
-    <option>HalfDay</option>
-    <option>Leave</option>
-    <option>Absent</option>
-  </select>
-</div>
-
-<!-- OnSite Field -->
-<div class="field" v-if="markAttendance.status === 'OnSite'">
-  <label>Site Name</label>
-  <input
-    type="text"
-    v-model="markAttendance.site_name"
-    placeholder="Enter Site Name"
-  />
-</div>
-
-<!-- Traveling Fields -->
-<div class="two-col" v-if="markAttendance.status === 'Traveling'">
-  <div class="field">
-    <label>Travel From</label>
-    <input
-      type="text"
-      v-model="markAttendance.travel_from"
-      placeholder="Enter Travel From"
-    />
-  </div>
-
-  <div class="field">
-    <label>Travel To</label>
-    <input
-      type="text"
-      v-model="markAttendance.travel_to"
-      placeholder="Enter Travel To"
-    />
-  </div>
-</div>
-
-      <!-- Date & Time -->
-      <div class="two-col">
-       <div class="field">
-  <label>Date</label>
-  <input 
-    type="date" 
-    v-model="markAttendance.date" 
-    :max="today" 
-  />
-</div>
-
-
-        <div class="field">
-          <label>Time</label>
-          <input type="time" v-model="markAttendance.time" />
+          <div class="modal-footer-premium">
+            <button class="btn-cancel-premium" @click="showMarkAttendancePopup = false">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="btn-submit-premium" @click="submitMarkedAttendance">
+              <i class="fas fa-save"></i> Save Attendance
+            </button>
+          </div>
         </div>
       </div>
+    </transition>
 
-    </div>
+    <!-- Salary Calculation Modal -->
+    <transition name="modal-fade">
+      <div v-if="showPopupsalary" class="modal-backdrop" @click.self="showPopupsalary = false">
+        <div class="premium-modal salary-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-rupee-sign"></i>
+            </div>
+            <div class="header-text">
+              <h2>Salary Calculation</h2>
+              <p>Calculate monthly salaries</p>
+            </div>
+            <button class="close-btn-premium" @click="showPopupsalary = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-    <div class="popup-footer">
-      <button class="btn-cancel" @click="showMarkAttendancePopup = false">
-      <i class="fa fa-close" style="font-size:13px"></i>  Cancel
-      </button>
-      <button class="btn-save" @click="submitMarkedAttendance">
-        <i class="fa fa-save" style="font-size:13px"></i> Save Attendance
-      </button>
-    </div>
+          <div class="modal-body-premium">
+            <div class="table-wrapper-salary">
+              <table class="salary-table-premium">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Salary</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="employee in employees" :key="employee.id">
+                    <td class="employee-cell">
+                      <div class="employee-info">
+                        <div class="employee-avatar-small">
+                          {{ getInitials(employee.name) }}
+                        </div>
+                        <span class="employee-name" @click="viewEmployeeMonthlyAttendance(employee.name)">
+                          {{ employee.name }}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div v-if="employee.salary" class="salary-amount">
+                        <i class="fas fa-rupee-sign"></i> {{ formatSalary(employee.salary) }}
+                      </div>
+                      <button v-else class="calculate-btn" @click="calculateSalaryOnClick(employee)" :disabled="employee.calculating">
+                        <i v-if="employee.calculating" class="fas fa-spinner fa-spin"></i>
+                        <i v-else class="fas fa-calculator"></i>
+                        {{ employee.calculating ? "Calculating..." : "Calculate" }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-  </div>
-</div>
-
-
-
-<!-- Popup Modal -->
-    <div v-if="showPopupsalary" class="popup-overlay">
-    <div class="popup-content">
-      <h2 class="popup-title">Salary Calculation</h2>
-
-      <div class="table-wrapper">
-        <table class="responsive-table attendance-mobile-card">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Salary</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr v-for="employee in employees" :key="employee.id">
-              <td data-label="Members">
-                <span
-                  class="clickable-name"
-                  @click="viewEmployeeMonthlyAttendance(employee.name)"
-                >
-                  👤 {{ employee.name }}
-                </span>
-              </td>
-
-              <td data-label="Salary">
-                <div v-if="employee.salary">
-                  ₹{{ employee.salary }}.00
-                </div>
-                <button
-                  v-else
-                  class="cal_sal"
-                  @click="calculateSalaryOnClick(employee)"
-                  :disabled="employee.calculating"
-                >
-                  {{ employee.calculating ? "Calculating..." : "Calculate" }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          <div class="modal-footer-premium">
+            <button class="btn-submit-premium" @click="showPopupsalary = false">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
+        </div>
       </div>
+    </transition>
 
-      <button class="close-btn" @click="showPopupsalary = false">X</button>
-    </div>
-  </div>
-  <!-- Popup Modal -->
-<div v-if="showPopup" class="popup-overlay">
+    <!-- Monthly Attendance Modal -->
+    <transition name="modal-fade">
+      <div v-if="showPopup" class="modal-backdrop" @click.self="showPopup = false">
+        <div class="premium-modal monthly-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="header-text">
+              <h2>{{ selectedEmployee }}'s Attendance</h2>
+              <p>Monthly attendance overview</p>
+            </div>
+            <button class="close-btn-premium" @click="showPopup = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-<div class="popup-content">
-  <button @click="showPopup = false" class="close-btn">X</button>
-  <div class="present-percentage text-left mb-2" style="position: absolute; top: 15px; left: 20px; font-weight: bold;">
-  Attendance Score : {{ quarterlyPresentQuarter }}
+          <div class="modal-body-premium">
+            <!-- <div class="attendance-score-badge">
+              <i class="fas fa-chart-line"></i>
+              <span>Attendance Score: <strong>{{ quarterlyPresentQuarter }}%</strong></span>
+            </div> -->
 
-</div>
-<div v-if="!scoreSaved">
-  <button @click="updateQuarterlyScore" class="btn btn-success" style="position: absolute; top: 13px; width: 83px; right: 61px; padding: 7px 0;font-size: 13px; border-radius: 9px;">
-   <i class="fa fa-save" style="font-size:13px"></i> Save Score
-  </button> 
-</div>
-<div v-else style="position: absolute; top: 17px; right: 61px; font-size: 20px; color: green;">
-  ✅
-</div>
+            <div class="month-navigation">
+              <button @click="goToPreviousMonth" class="nav-btn">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <h4>{{ getMonthName(currentMonth) }} {{ currentYear }}</h4>
+              <button @click="goToNextMonth" class="nav-btn">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
 
+            <div class="legend-grid">
+              <span class="legend-item present">✓ Present: {{ statusSummary.Present || 0 }}</span>
+              <span class="legend-item absent">✗ Absent: {{ statusSummary.Absent || 0 }}</span>
+              <span class="legend-item halfday">½ Half Day: {{ statusSummary.HalfDay || 0 }}</span>
+              <span class="legend-item onsite">🏢 On Site: {{ statusSummary.OnSite || 0 }}</span>
+              <span class="legend-item traveling">✈ Traveling: {{ statusSummary.Traveling || 0 }}</span>
+              <span class="legend-item leave">🌴 Leave: {{ statusSummary.Leave || 0 }}</span>
+            </div>
 
+            <div class="calendar-container">
+              <table class="calendar-premium">
+                <thead>
+                  <tr>
+                    <th v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day">{{ day }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="week in buildCalendar(employeeMonthlyData)" :key="week[0]?.date">
+                    <td v-for="day in week" :key="day.date" :class="day.statusClass">
+                      {{ day.day }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-  <!-- <h4>{{ selectedEmployee }}'s Monthly Attendance</h4> -->
-<div class="month-header d-flex justify-content-center align-items-center mb-3 gap-4">
-  <button @click="goToPreviousMonth" class="btn-light">⮜ </button>
-  <h5 class="m-0">{{ getMonthName(currentMonth) }} {{ currentYear }}</h5>
-  <button @click="goToNextMonth" class="btn-light"> ⮞</button>
-</div>
-    <div class="legend">
-  <span class="legend-item present"> Present: {{ statusSummary.Present || 0 }}</span>
-  <span class="legend-item absent"> Absent: {{ statusSummary.Absent || 0 }}</span>
-  <span class="legend-item half-day"> Half Day: {{ statusSummary.HalfDay || 0 }}</span>
-  <span class="legend-item onsite"> On Site: {{ statusSummary.OnSite || 0 }}</span>
-  <span class="legend-item traveling"> Traveling: {{ statusSummary.Traveling || 0 }}</span>
-  <span class="legend-item leave"> Leave: {{ statusSummary.Leave || 0 }}</span>
-</div>
+          <div class="modal-footer-premium">
+            <button class="btn-submit-premium" @click="showPopup = false">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
-    <table class="calendar">
-      <thead>
-        <tr>
-          <th v-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">{{ day }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="week in buildCalendar(employeeMonthlyData)" :key="week[0]?.date">
-          <td v-for="day in week" :key="day.date" :class="day.statusClass">
-            {{ day.day }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Salary Result Popup -->
+    <transition name="modal-fade">
+      <div v-if="salaryPopup.show" class="modal-backdrop" @click.self="salaryPopup.show = false">
+        <div class="premium-modal result-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium success-icon">
+              <i class="fas fa-rupee-sign"></i>
+            </div>
+            <div class="header-text">
+              <h2>Salary Summary</h2>
+              <p>{{ salaryPopup.employeeName }}</p>
+            </div>
+            <button class="close-btn-premium" @click="salaryPopup.show = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-   
-  </div>
+          <div class="modal-body-premium text-center">
+            <div class="salary-result">
+              <div class="salary-amount-large">
+                <i class="fas fa-rupee-sign"></i>
+                <span>{{ formatSalary(salaryPopup.calculatedSalary) }}</span>
+              </div>
+              <p class="month-text">{{ getMonthName(currentMonth) }} {{ currentYear }}</p>
+              <div class="success-check">
+                <i class="fas fa-check-circle"></i>
+                <span>Salary calculated successfully</span>
+              </div>
+            </div>
+          </div>
 
-
-</div>
-
-<!-- Salary Calculation Popup -->
-<div v-if="salaryPopup.show" class="salary-popup-overlay">
-  <div class="salary-popup-box shadow-lg rounded-xl bg-white p-5 text-center relative animate-popup">
-    <button @click="salaryPopup.show = false" class="salary-popup-close-btn">X</button>
-    <h3 class="salary-popup-title mb-3">Salary Summary</h3>
-    
-    <p class="salary-popup-line">
-      <span class="label">Employee:</span>
-      <span class="value">{{ salaryPopup.employeeName }}</span>
-    </p>
-
-   <p class="salary-popup-line">
-  <span class="label">Month:</span>
-  <span class="value">{{ getMonthName(currentMonth) }} {{ currentYear }}</span>
-</p>
-
-    <p class="salary-popup-line total-salary">
-      <span class="label">Calculated Salary:</span>
-      <span class="value">₹{{ salaryPopup.calculatedSalary }}</span>
-    </p>
-  </div>
-</div>
-
-
-
-
-    </div>
-
-  
+          <div class="modal-footer-premium">
+            <button class="btn-submit-premium" @click="salaryPopup.show = false">
+              <i class="fas fa-check"></i> Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
-<script>  
+<script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
 import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
+
 export default {
   components: {
     Sidebar
   },
   data() {
-
     return {
-      
-markAttendance: {
-  employee: '',
-  status: '',
-  date: '',
-  time: '',
-   site_name: "",
-      travel_from: "",
-      travel_to: ""
-},
-today: '',
-      showMarkAttendancePopup: false,
-      employees: [],
-       present_quarter: null,
-      attendanceByMonth: {},
-    holidays: [],
       isMobile: false,
-  isSidebarVisible: false,
-  userSalary: 0,
-  salaryPopup: {
-  show: false,
-  employeeName: '',
-  calculatedSalary: 0
-},
-
-  salaries: {},
-  statusSummary: {
-  Present: 0,
-  Absent: 0,
-  OnSite: 0,
-  HalfDay: 0,
-  Traveling: 0,
-  Leave: 0
-},
-      currentMonth: new Date().getMonth(),  // 0 = Jan, 11 = Dec
-currentYear: new Date().getFullYear(),
-
-      showPopup: false,
+      isSidebarVisible: true,
+      showMarkAttendancePopup: false,
       showPopupsalary: false,
-       scoreSaved: false,
-selectedEmployee: null,
-employeeMonthlyData: [],
-      viewMode: 'day',
-       currentDate: new Date().toLocaleDateString(),
+      showPopup: false,
+      scoreSaved: false,
+      selectedEmployee: null,
+      employeeMonthlyData: [],
+      currentMonth: new Date().getMonth(),
+      currentYear: new Date().getFullYear(),
+      today: '',
+      markAttendance: {
+        employee: '',
+        status: '',
+        date: '',
+        time: '',
+        site_name: "",
+        travel_from: "",
+        travel_to: ""
+      },
+      employees: [],
       attendanceRecords: [],
-      statusCounts: {
-  Present: 0,
-  'OnSite': 0,
-  'HalfDay': 0,
-  Traveling: 0,
-  Absent: 0,
-  'Leave': 0,
-  Late: 0
-},
-
-
-
-      allDropdownsLocked: false,
-     
-      clockOut: '',
-showTimer: false,
-timer: '',
-
-     users: [
-  {
-    name: 'Ajay',
-    shift: '9:00 AM - 6:00 PM',
-    status: '',
-    clockIn: '',
-    clockOut: '',
-    requiredTime: '8 Hours',
-    actualTime: '',
-    statusLocked: false,
-    siteName: '',
-    travelTime: '',
-    travelFrom: '',
-    travelTo: '',
-    isLate: false
-  },
-]
-
-
+      salaryPopup: {
+        show: false,
+        employeeName: '',
+        calculatedSalary: 0
+      },
+      statusSummary: {
+        Present: 0,
+        Absent: 0,
+        OnSite: 0,
+        HalfDay: 0,
+        Traveling: 0,
+        Leave: 0
+      },
+      attendanceByMonth: {},
+      holidays: []
     }
   },
-  
-computed: {
- quarterlyPercentage() {
-  const months = this.getCurrentQuarterMonths();
-  let totalWorkingDays = 0;
-  let totalPresentDays = 0;
-
-  months.forEach(({ month, year }) => {
-    const monthRecords = this.attendanceByMonth[`${year}-${month}`] || [];
-    const daysInMonth = new Date(year, month, 0).getDate(); // month is 1-based here
-
-    for (let i = 1; i <= daysInMonth; i++) {
-      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-      const dayOfWeek = new Date(dateStr).getDay();
-      const isSunday = dayOfWeek === 0;
-
-      const record = monthRecords.find(r => r.date === dateStr);
-      const status = record?.status?.toLowerCase().trim();
-
-      const isLeave = status === 'leave';
-      const isAbsent = status === 'absent';
-
-      // Count this calendar day as a working day unless it's a Leave day
-      if (!isLeave) {
-        totalWorkingDays++;
-      }
-      if (
-        ['present', 'onsite', 'traveling', 'halfday'].includes(status)
-        || (isSunday && !isLeave && !isAbsent && !status) // blank Sunday => count as present
-      ) {
-        totalPresentDays++;
-      }
+  computed: {
+    presentCount() {
+      return this.attendanceRecords.filter(r => r.status === 'Present').length
+    },
+    lateCount() {
+      return this.attendanceRecords.filter(r => r.isLate).length
+    },
+    lastUpdated() {
+      return new Date().toLocaleTimeString()
+    },
+    quarterlyPresentQuarter() {
+      // Calculate quarterly percentage
+      return 75 // Placeholder
     }
-  });
-
-  return totalWorkingDays > 0 ? Math.round((totalPresentDays / totalWorkingDays) * 100) : 0;
-},
-
-
-  quarterlyPresentQuarter() {
-    return Math.round(this.quarterlyPercentage * 0.25);
-  }
-},
-
-
-
-
-
+  },
   methods: {
-async submitMarkedAttendance() {
-  if (
-    !this.markAttendance.employee ||
-    !this.markAttendance.status ||
-    !this.markAttendance.date
-  ) {
-    toastSuccess('Please fill all required fields');
-    return;
-  }
-
-  try {
-    const payload = {
-      name: this.markAttendance.employee,
-      status: this.markAttendance.status,
-      clock_in: this.markAttendance.time || null,
-      date: this.markAttendance.date,
-
-      // NEW FIELDS
-      site_name: this.markAttendance.site_name || null,
-      travel_from: this.markAttendance.travel_from || null,
-      travel_to: this.markAttendance.travel_to || null
-    };
-
-    await axios.post(
-      'https://employees.archenterprises.co.in/api/api/attendance/store-or-update',
-      payload
-    );
-
-    toastSuccess('Attendance saved successfully');
-
-    this.showMarkAttendancePopup = false;
-
-    // reset form
-    this.markAttendance = {
-      employee: '',
-      status: '',
-      date: '',
-      time: '',
-      site_name: '',
-      travel_from: '',
-      travel_to: ''
-    };
-
-    this.fetchAttendance();
-
-  } catch (error) {
-    console.error('Error saving attendance:', error);
-    toastSuccess('Failed to save attendance');
-  }
-},
-
-
-async fetchAllEmployees() {
-  try {
-    const res = await axios.get('https://employees.archenterprises.co.in/api/api/users') // removed extra /api
-    // Filter out users from Ownership department
-    this.employees = res.data
-      .filter(user => user.department !== 'Ownership') // 👈 hide "Ownership"
-      .map(user => ({
-        id: user.id,
-        name: user.name,
-        salary: user.salary || null,
-        department: user.department,
-        calculating: false
-      }))
-  } catch (err) {
-    console.error('Error fetching employees:', err)
-  }
-},
-
-    async updateClLeaveUsed(amount) {
-    try {
-      const token = localStorage.getItem("token");
-
-      await axios.post("https://employees.archenterprises.co.in/api/api/update-cl-leave", {
-        user_id: this.user.name,
-        increment_by: amount
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-    } catch (error) {
-      console.error("Error updating CL leave used:", error);
-    }
-  },
-    resetSalaryPopup() {
-    // Your logic to reset or hide the popup
-    this.salaryPopupVisible = false;
-    this.salaryForm = {}; // or whatever needs to be reset
-  },
-
- async updateQuarterlyScore() {
-  try {
-    const today = new Date();
-    const response = await axios.post('https://employees.archenterprises.co.in/api/api/update-quarterly-score', {
-      name: this.selectedEmployee,
-      year: today.getFullYear(),
-      month: today.getMonth() + 1,
-      quarter_score: this.quarterlyPresentQuarter,
-    });
-
-    console.log('Response:', response.data); // 👈 ADD THIS
-
-    if (response.data.success) {
-      console.log('Quarterly score updated.');
-    } else {
-      console.warn('Quarterly score update failed.');
-    }
-  } catch (error) {
-    console.error('Error updating quarterly score:', error.response?.data?.errors || error);
-  }
-},
-
-
-
-
-getCurrentQuarterMonths() {
-  const month = this.currentMonth + 1; // 1-based
-  const year = this.currentYear;
-  let startMonth;
-
-  if (month >= 1 && month <= 3) {
-    startMonth = 1;
-  } else if (month >= 4 && month <= 6) {
-    startMonth = 4;
-  } else if (month >= 7 && month <= 9) {
-    startMonth = 7;
-  } else {
-    startMonth = 10;
-  }
-
-  return [
-    { month: startMonth, year },
-    { month: startMonth + 1, year },
-    { month: startMonth + 2, year },
-  ];
-},
-
-
-    fetchHolidays() {
-    axios.get('https://employees.archenterprises.co.in/api/api/holidays')
-      .then(res => {
-        this.holidays = res.data;
+    getInitials(name) {
+      if (!name) return '?'
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    },
+    formatSalary(amount) {
+      if (!amount) return '0'
+      return parseFloat(amount).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       })
-      .catch(err => console.error('Error fetching holidays:', err));
-  },
-  addHoliday() {
-    if (!this.newHoliday.date || !this.newHoliday.title) {
-      toastSuccess("Both title and date are required");
-      return;
-    }
-    axios.post('https://employees.archenterprises.co.in/api/api/holidays', this.newHoliday)
-      .then(() => {
-        this.newHoliday.title = '';
-        this.newHoliday.date = '';
-        this.fetchHolidays();
-      })
-      .catch(err => console.error('Error adding holiday:', err));
-  },
-
-    checkIfMobile() {
-    this.isMobile = window.innerWidth <= 768;
-    if (this.isMobile) {
-      this.isSidebarVisible = false;
-    } else {
-      this.isSidebarVisible = true;
-    }
-  },
-  toggleSidebar() {
-    this.isSidebarVisible = !this.isSidebarVisible;
-  },
-    async calculateSalaryOnClick(record) {
-  record.calculating = true;
-
-
-  try {
-    const [monthlyRes, salary] = await Promise.all([
-      axios.get(`https://employees.archenterprises.co.in/api/api/attendance/monthly/${record.name}?month=${this.currentMonth + 1}&year=${this.currentYear}`),
-      this.fetchUserSalary(record.name)
-    ]);
-
-    const monthlyData = monthlyRes.data.data || [];
-
-    record.salary = this.calculateSalary({ ...record, monthlyData }, salary);
-  } catch (error) {
-    console.error(`Error calculating salary for ${record.name}:`, error);
-    record.salary = 'Error';
-  } finally {
-    record.calculating = false;
-  }
-},
-
-  async fetchUserSalary(name) {
-  try {
-    const response = await axios.get(`https://employees.archenterprises.co.in/api/api/user-salary-by-name/${name}`);
-    return parseFloat(response.data.salary);
-  } catch (error) {
-    console.error("Failed to fetch salary:", error);
-    return 0;
-  }
-}, 
-
-calculateSalary(record, baseSalary) {
-  const totalDaysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-  const perDaySalary = baseSalary / totalDaysInMonth;
-
-  let fullPaidDays = 0;
-  let halfPaidDays = 0;
-
-  // 🔹 1. Count full/half paid days from attendance records
-  record.monthlyData.forEach(day => {
-    const status = day.status?.trim().toLowerCase();
-    if (['present', 'onsite', 'traveling', 'leave'].includes(status)) {
-      fullPaidDays++;
-    } else if (status === 'halfday') {
-      fullPaidDays++;
-      this.updateClLeaveUsed(0.5); // optional: update CL leave used
-    }
-  });
-
-  // 🔹 2. Count total Sundays in the current month
-  let sundayCount = 0;
-  for (let i = 1; i <= totalDaysInMonth; i++) {
-    const date = new Date(this.currentYear, this.currentMonth, i);
-    if (date.getDay() === 0) sundayCount++; // Sunday = 0
-  }
-
-  // 🔹 3. Add Sunday salary
-  const sundaySalary = sundayCount * perDaySalary;
-
-  // 🔹 4. Calculate total salary
-  const salaryForMonth = (fullPaidDays * perDaySalary) + (halfPaidDays * perDaySalary / 2) + sundaySalary;
-
-  return Math.round(salaryForMonth);
-},
-
-
-
-
-
-
-
-    isEarly(clockIn) {
-  const earlyThreshold = new Date();
-  earlyThreshold.setHours(9, 30, 0); // Before this = Early
-
-  const clockInParts = clockIn.split(':').map(Number);
-  const clockInDate = new Date();
-  clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0);
-
-  return clockInDate < earlyThreshold;
-},
-
-isLate(clockIn) {
-  const lateThreshold = new Date();
-  lateThreshold.setHours(10, 0, 0); // After this = Late
-
-  const clockInParts = clockIn.split(':').map(Number);
-  const clockInDate = new Date();
-  clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0);
-
-  return clockInDate > lateThreshold;
-},
-
-    goToPreviousMonth() {
-  if (this.currentMonth === 0) {
-    this.currentMonth = 11;
-    this.currentYear -= 1;
-  } else {
-    this.currentMonth -= 1;
-  }
-
-  this.resetSalaryPopup(); // 🔁 Reset on month change
-  this.fetchEmployeeMonthlyData();
-},
-
-
-goToNextMonth() {
-  if (this.currentMonth === 11) {
-    this.currentMonth = 0;
-    this.currentYear += 1;
-  } else {
-    this.currentMonth += 1;
-  }
-  this.fetchEmployeeMonthlyData();
-},
-
-getMonthName(index) {
-  return [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ][index];
-},
-
-buildCalendar(attendanceData) {
-  const year = this.currentYear;
-  const month = this.currentMonth;
-
-  const firstDayOfMonth = new Date(year, month, 1);
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  const daysInMonth = lastDayOfMonth.getDate();
-
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-
-  const calendar = [];
-  let week = [];
-
-  const isHoliday = (dateStr) => {
-  return this.holidays.some(h => h.date === dateStr);
-};
-
-
-  const getStatusClass = (dateStr) => {
-  const normalizedDate = new Date(dateStr).toISOString().split('T')[0];
-
-  const record = attendanceData.find(entry =>
-    new Date(entry.date).toISOString().split('T')[0] === normalizedDate
-  );
-
-  const publicHolidays = ['01-26', '05-01', '08-15'];
-  const [year, month, day] = normalizedDate.split('-');
-  const mmdd = `${month}-${day}`;
-
-  if (isHoliday(normalizedDate)) return 'public-holiday';
-  if (publicHolidays.includes(mmdd)) return 'public-holiday';
-
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  if (
-    new Date(normalizedDate) <= new Date(todayStr) &&
-    (!record || !record.status || record.status.trim() === '')
-  ) {
-    return 'no-status';
-  }
-
-  if (!record || !record.status) return '';
-  return `cal-${record.status.toLowerCase().replace(/\s+/g, '-')}`;
-};
-
-
-
-  const padDay = firstDayOfMonth.getDay(); // 0 = Sunday, 6 = Saturday
-
-  for (let i = 0; i < padDay; i++) {
-    week.push({ day: '', date: '', statusClass: '' });
-  }
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-    week.push({
-      day,
-      date: dateStr,
-      statusClass: getStatusClass(dateStr)
-    });
-
-    if (week.length === 7) {
-      calendar.push(week);
-      week = [];
-    }
-  }
-
-  if (week.length > 0) {
-    while (week.length < 7) {
-      week.push({ day: '', date: '', statusClass: '' });
-    }
-    calendar.push(week);
-  }
-
-  return calendar;
-},
-
-
- async viewEmployeeMonthlyAttendance(name) {
-  this.selectedEmployee = name;
-  this.showPopup = true;
-
-  const months = this.getCurrentQuarterMonths();
-  const requests = months.map(({ month, year }) => {
-    return axios.get(`https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`);
-  });
-
-  try {
-    const responses = await Promise.all(requests);
-    responses.forEach((res, i) => {
-      const { month, year } = months[i];
-      this.attendanceByMonth[`${year}-${month}`] = res.data.data;
-    });
-
-    this.employeeMonthlyData = this.attendanceByMonth[`${this.currentYear}-${this.currentMonth + 1}`] || [];
-
-    // Reset status summary
-    this.statusSummary = {
-      Present: 0,
-      Absent: 0,
-      OnSite: 0,
-      HalfDay: 0,
-      Traveling: 0,
-      Leave: 0
-    };
-
-    this.employeeMonthlyData.forEach(record => {
-      const status = record.status?.trim();
-      if (status && this.statusSummary.hasOwnProperty(status)) {
-        this.statusSummary[status]++;
-      }
-    });
-
-    // ✅ Update quarterly presentQuarter
-    const quarter = this.quarterlyPresentQuarter;
-    const res = await axios.post('https://employees.archenterprises.co.in/api/api/attendance/update-present-quarter', {
-      name: this.selectedEmployee,
-      month: this.currentMonth + 1,
-      year: this.currentYear,
-      present_quarter: quarter
-    });
-
-    // ✅ Skip insert if update was successful (backend says it's already there)
-    if (res.data?.message === 'Present quarter updated successfully') {
-      console.log('✅ Present quarter already updated. Skipping insert.');
-      return;
-    }
-
-    console.log('Quarterly present quarter saved:', quarter);
-
-  } catch (error) {
-    console.error('Error fetching quarterly attendance or updating:', error);
-  }
-},
-
-
-async fetchEmployeeMonthlyData() {
-  const month = this.currentMonth + 1;
-  const year = this.currentYear;
-
-  try {
-    const response = await axios.get(`https://employees.archenterprises.co.in/api/api/attendance/monthly/${this.selectedEmployee}?month=${month}&year=${year}`);
-    this.employeeMonthlyData = response.data.data;
-
-    // Reset counts
-    this.statusSummary = {
-      Present: 0,
-      Absent: 0,
-      OnSite: 0,
-      HalfDay: 0,
-      Traveling: 0,
-      Leave: 0
-    };
-
-    // Count statuses
-    this.employeeMonthlyData.forEach(record => {
-      const status = record.status?.trim();
-      if (status && this.statusSummary.hasOwnProperty(status)) {
-        this.statusSummary[status]++;
-      }
-    });
-
-    // Save presentQuarter to backend
-    const quarter = this.quarterlyPresentQuarter;
-
-    await axios.post('https://employees.archenterprises.co.in/api/api/attendance/update-present-quarter', {
-      name: this.selectedEmployee,
-      month: month,
-      year: year,
-      present_quarter: quarter
-    });
-
-    console.log('Present quarter saved:', quarter);
-  } catch (error) {
-    console.error('Error fetching or saving attendance data:', error);
-  }
-},
-
-
-
-    toggleView() {
-  this.viewMode = this.viewMode === 'day' ? 'month' : 'day';
-  if (this.viewMode === 'day') {
-    this.fetchAttendance();
-  } else {
-    this.fetchMonthlyAttendance();
-  }
-},
-
-    switchView(mode) {
-  this.viewMode = mode;
-  if (mode === 'day') {
-    this.fetchAttendance(); // Already exists
-  } else if (mode === 'month') {
-    this.fetchMonthlyAttendance();
-  }
-},
-fetchMonthlyAttendance() {
-  axios
-    .get('https://employees.archenterprises.co.in/api/api/attendance/monthly') // Adjust URL as per backend
-    .then((response) => {
-      this.attendanceRecords = response.data;
-    })
-    .catch((error) => {
-      console.error('Error fetching monthly attendance:', error);
-    });
-},
-
-    calculateEarlyTime(clockIn) {
-  const threshold = new Date();
-  threshold.setHours(9, 30, 0); // Office time
-
-  const clockInParts = clockIn.split(':').map(Number);
-  const clockInDate = new Date();
-  clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0);
-
-  const diffMs = threshold - clockInDate;
-  if (diffMs <= 0) return '00:00:00';
-
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${hours.toString().padStart(2, '0')}:${minutes
-    .toString()
-    .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-},
-
-     resetNewTaskForm() {
-    this.newTask = {
-      title: '',
-      description: '',
-      dueDate: '',
-      assignedTo: ''
-    };
-  },
-   calculateLateTime(clockIn) {
-  const clockInParts = clockIn.split(':').map(Number);
-  const clockInDate = new Date();
-  clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0);
-
-  // Define 9:30 AM and 1:00 PM thresholds
-  const referenceTime = new Date();
-  referenceTime.setHours(9, 30, 0); // Always calculate late from 9:30
-
-  const upperBound = new Date();
-  upperBound.setHours(13, 0, 0); // 1:00 PM
-
-  if (clockInDate <= referenceTime || clockInDate > upperBound) {
-    return null; // Not in late window
-  }
-
-  const diffMs = clockInDate - referenceTime;
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${hours.toString().padStart(2, '0')}:${minutes
-    .toString()
-    .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-},
-
-
-
+    },
     getStatusClass(status) {
-  if (!status) return '';
-
-  const normalized = status.toLowerCase();
-  switch (normalized) {
-    case 'present':
-      return 'on-time';
-    case 'onsite':
-      return 'on-site';
-    case 'halfday':
-      return 'on-halfday';
-    case 'absent':
-      return 'absence';
-    case 'traveling':
-      return 'traveling';
-    case 'leave':
-      return 'leave';
-    default:
-      return ''; // ❌ remove fallback to 'late'
-  }
+      if (!status) return ''
+      const normalized = status.toLowerCase()
+      switch (normalized) {
+        case 'present': return 'present'
+        case 'onsite': return 'onsite'
+        case 'halfday': return 'halfday'
+        case 'absent': return 'absent'
+        case 'traveling': return 'traveling'
+        case 'leave': return 'leave'
+        default: return ''
+      }
     },
- async fetchAttendance() {
-  try {
-    const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance');
-    const records = response.data;
-
-    // ✅ Filter out "N/A" statuses
-    const filteredRecords = records.filter(record => record.status?.trim()?.toUpperCase() !== 'N/A');
-
-    const promises = filteredRecords.map(async (record) => {
+    getStatusIcon(status) {
+      if (!status) return 'fas fa-question'
+      const normalized = status.toLowerCase()
+      switch (normalized) {
+        case 'present': return 'fas fa-check-circle'
+        case 'onsite': return 'fas fa-building'
+        case 'halfday': return 'fas fa-adjust'
+        case 'absent': return 'fas fa-times-circle'
+        case 'traveling': return 'fas fa-plane'
+        case 'leave': return 'fas fa-umbrella-beach'
+        default: return 'fas fa-tag'
+      }
+    },
+    isLate(clockIn) {
+      if (!clockIn) return false
+      const lateThreshold = new Date()
+      lateThreshold.setHours(10, 0, 0)
+      const clockInParts = clockIn.split(':').map(Number)
+      const clockInDate = new Date()
+      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
+      return clockInDate > lateThreshold
+    },
+    isEarly(clockIn) {
+      if (!clockIn) return false
+      const earlyThreshold = new Date()
+      earlyThreshold.setHours(9, 30, 0)
+      const clockInParts = clockIn.split(':').map(Number)
+      const clockInDate = new Date()
+      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
+      return clockInDate < earlyThreshold
+    },
+    calculateLateTime(clockIn) {
+      const lateThreshold = new Date()
+      lateThreshold.setHours(10, 0, 0)
+      const clockInParts = clockIn.split(':').map(Number)
+      const clockInDate = new Date()
+      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
+      const diffMs = clockInDate - lateThreshold
+      if (diffMs <= 0) return '00:00:00'
+      const totalSeconds = Math.floor(diffMs / 1000)
+      const hours = Math.floor(totalSeconds / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = totalSeconds % 60
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    },
+    calculateEarlyTime(clockIn) {
+      const earlyThreshold = new Date()
+      earlyThreshold.setHours(9, 30, 0)
+      const clockInParts = clockIn.split(':').map(Number)
+      const clockInDate = new Date()
+      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
+      const diffMs = earlyThreshold - clockInDate
+      if (diffMs <= 0) return '00:00:00'
+      const totalSeconds = Math.floor(diffMs / 1000)
+      const hours = Math.floor(totalSeconds / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = totalSeconds % 60
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    },
+    async submitMarkedAttendance() {
+      if (!this.markAttendance.employee || !this.markAttendance.status || !this.markAttendance.date) {
+        toastWarning('Please fill all required fields')
+        return
+      }
       try {
-        record.monthlyData = [];
-        record.salary = null;
-        return record;
-      } catch (error) {
-        console.error(`Error fetching data for ${record.name}:`, error);
-        record.salary = 'N/A';
-        return record;
-      }
-    });
-
-    this.attendanceRecords = await Promise.all(promises);
-  } catch (error) {
-    console.error('Error fetching attendance:', error);
-  }
-},
-
-
-
-    
-    handleTravelToChange(user) {
-  if (!user.travelFrom || !user.travelTo) {
-    console.warn('Both From and To travel times are required.')
-    return
-  }
-
-  const now = new Date()
-  const formattedTime = now.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  })
-
-  user.clockIn = user.travelFrom
-  user.clockOut = user.travelTo
-  user.actualTime = this.calculateActualTime({
-    clockIn: user.travelFrom,
-    clockOut: user.travelTo
-  })
-
-  axios.post('https://employees.archenterprises.co.in/api/api/attendance/store', {
-    name: user.name,
-    status: user.status,
-    clock_in: user.travelFrom,
-    clock_out: user.travelTo,
-    required_time: user.requiredTime,
-    actual_time: user.actualTime,
-    site_name: user.siteName,
-    travel_from: user.travelFrom,
-    travel_to: user.travelTo,
-    date: new Date().toISOString().slice(0, 10)
-  })
-  .then(() => {
-    console.log('Attendance saved for Site Traveling')
-  })
-  .catch(err => {
-    console.error('Error saving Site Traveling attendance:', err)
-  })
-  localStorage.setItem('attendanceData', JSON.stringify(this.users))
-localStorage.setItem('statusCounts', JSON.stringify(this.statusCounts))
-
-},
-
-calculateActualTime(user) {
-  if (!user.clockIn || !user.clockOut) return ''
-
-  const parseTime = (timeStr) => {
-    const parts = timeStr.split(':').map(Number)
-    return {
-      hours: parts[0] || 0,
-      minutes: parts[1] || 0,
-      seconds: parts[2] || 0
-    }
-  }
-
-  const inTime = parseTime(user.clockIn)
-  const outTime = parseTime(user.clockOut)
-
-  const inDate = new Date()
-  inDate.setHours(inTime.hours, inTime.minutes, inTime.seconds)
-
-  const outDate = new Date()
-  outDate.setHours(outTime.hours, outTime.minutes, outTime.seconds)
-
-  const diffMs = outDate - inDate
-  if (diffMs <= 0) return '00:00:00'
-
-  const totalSeconds = Math.floor(diffMs / 1000)
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-
-  return `${hours.toString().padStart(2, '0')}:${minutes
-    .toString()
-    .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-},
-
-
-    startTimer(user) {
-  let seconds = 0
- 
-
-  const intervalId = setInterval(() => {
-    seconds++
-    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0')
-    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')
-    const secs = String(seconds % 60).padStart(2, '0')
-    user.timer = `${hrs}:${mins}:${secs}`
-
-    // Stop timer if user changes status
-    if (user.status !== 'Traveling') {
-      clearInterval(intervalId)
-    }
-  }, 1000)
-},
-punchOut(user) {
-  const now = new Date()
-  const formattedTime = now.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  })
-
-  user.clockOut = formattedTime
-  user.actualTime = this.calculateActualTime(user)
-
-  axios.post('https://employees.archenterprises.co.in/api/api/attendance/store', {
-  name: user.name,
-  status: user.status,
-  clock_in: user.clockIn,
-  clock_out: user.clockOut,
-  required_time: user.requiredTime,
-  actual_time: user.actualTime,
-  site_name: user.siteName,
-  travel_from: user.travelFrom,  // ✅
-  travel_to: user.travelTo,      // ✅
-  date: new Date().toISOString().slice(0, 10)
-})
-
-  .then(() => {
-    console.log('Attendance saved')
-  })
-  .catch(err => {
-    console.error('Error saving attendance:', err)
-  })
-  localStorage.setItem('attendanceData', JSON.stringify(this.users))
-localStorage.setItem('statusCounts', JSON.stringify(this.statusCounts))
-
-},
-
-
-    formatDate(date) {
-      const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }
-      return date.toLocaleDateString(undefined, options)
-    },
-
-   getCurrentTime() {
-  const now = new Date()
-  return now.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  })
-},
-
-updateStatus(user) {
-  this.allDropdownsLocked = true,     
-  user.statusLocked = true;
-
-
-  const formattedTime = this.getCurrentTime()
-  user.clockIn = ''
-  user.clockOut = ''
-  user.siteName = ''
-  user.travelTime = ''
-  user.actualTime = ''
-  user.isLate = false
-
-  switch (user.status) {
-    case 'Present':
-  user.clockIn = formattedTime
-
-  // ✅ Late detection logic BEFORE locking
-  const threshold = new Date()
-  threshold.setHours(9, 45, 0) // 09:45:00
-
-  const clockInDate = new Date()
-  const [hrs, mins, secs] = formattedTime.split(':').map(Number)
-  clockInDate.setHours(hrs, mins, secs)
-
-  if (clockInDate > threshold) {
-    user.isLate = true
-    this.statusCounts['Late'] += 1 // ✅ Increment Late count
-  }
-
-  user.statusLocked = true // ⬅️ lock dropdown after checking for late
-  break
-
-
-   case 'HalfDay':
-  user.clockIn = formattedTime
-  user.statusLocked = true
-
-  // ✅ Instantly increase CL leave used by 0.5
-  this.updateClLeaveUsed(0.5)
-
-  break
-
-
-    case 'Absent':
-      user.statusLocked = true
-      break
-
-    case 'OnSite':
-    case 'Traveling':
-      user.statusLocked = false
-      break
-  }
-localStorage.setItem('attendanceData', JSON.stringify(this.users))
-localStorage.setItem('statusCounts', JSON.stringify(this.statusCounts))
-localStorage.setItem('attendanceData', JSON.stringify(this.users))
-
-
-  console.log(`Updated status for ${user.name}: ${user.status}`)
-},
-
-
-
- 
-
-
-
-    statusClass(status) {
-      switch (status) {
-        case 'Present': return 'badge-success'
-        case 'Absent': return 'badge-danger'
-        case 'OnSite': return 'badge-primary'
-        case 'Traveling': return 'badge-info'
-        case 'HalfDay': return 'badge-warning'
-        default: return 'badge-secondary'
-      }
-    },
-
-    goTo(route) {
-      this.$router.push(`/${route}`)
-    },
-
-    logout() {
-      const token = localStorage.getItem('token')
-      axios
-        .post(
-          'https://employees.archenterprises.co.in/api/api/logout',
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
-        .finally(() => {
-          localStorage.removeItem('token')
-          this.$router.push('/auth')
+        await axios.post('https://employees.archenterprises.co.in/api/api/attendance/store-or-update', {
+          name: this.markAttendance.employee,
+          status: this.markAttendance.status,
+          clock_in: this.markAttendance.time || null,
+          date: this.markAttendance.date,
+          site_name: this.markAttendance.site_name || null,
+          travel_from: this.markAttendance.travel_from || null,
+          travel_to: this.markAttendance.travel_to || null
         })
+        toastSuccess('Attendance saved successfully')
+        this.showMarkAttendancePopup = false
+        this.markAttendance = { employee: '', status: '', date: '', time: '', site_name: '', travel_from: '', travel_to: '' }
+        this.fetchAttendance()
+      } catch (error) {
+        console.error('Error saving attendance:', error)
+        toastError('Failed to save attendance')
+      }
     },
-
-    resetStatusesIfNewDate() {
-  const savedDate = localStorage.getItem('attendanceDate');
-  const today = new Date().toDateString();
-
-  if (savedDate !== today) {
-    localStorage.setItem('attendanceDate', today);
-    localStorage.removeItem('attendanceData');
-    localStorage.removeItem('statusCounts');
-
-    this.users.forEach(user => {
-      user.status = '';
-      user.clockIn = '';
-      user.clockOut = '';
-      user.siteName = '';
-      user.travelFrom = '';
-      user.travelTo = '';
-      user.actualTime = '';
-      user.statusLocked = false;
-      user.isLate = false;
-    });
-
-    this.statusCounts = {
-      Present: 0,
-      'OnSite': 0,
-      'HalfDay': 0,
-      Traveling: 0,
-      Absent: 0,
-      'Leave': 0,
-      Late: 0
-    };
-  }
-}
-
-  },
-beforeUnmount() {
-  clearInterval(this.attendanceInterval);
-},
-mounted() {
-  this.attendanceInterval = setInterval(() => {
-  this.fetchAttendance();
-}, 30000); // every 30 seconds
-
-   const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0'); // month is 0-indexed
-  const dd = String(now.getDate()).padStart(2, '0');
-  this.today = `${yyyy}-${mm}-${dd}`;
-  
-  // Set default date to today
-  this.markAttendance.date = this.today;
-   this.fetchAllEmployees();
-    this.fetchHolidays();
-  this.checkIfMobile();
-window.addEventListener('resize', this.checkIfMobile);
-
-  const today = new Date().toDateString();
-  const savedDate = localStorage.getItem('attendanceDate');
-  const savedUsers = localStorage.getItem('attendanceData');
-
-  this.fetchAttendance(); // this internally fetches salaries now
-
-  if (savedUsers && savedUsers !== "undefined") {
-    this.users = JSON.parse(savedUsers);
-  }
-
-  if (savedDate === today) {
-    const storedUsers = localStorage.getItem('attendanceData');
-    const storedCounts = localStorage.getItem('statusCounts');
-
-    if (storedUsers && storedUsers !== "undefined") {
-      this.users = JSON.parse(storedUsers);
-    }
-
-    if (storedCounts && storedCounts !== "undefined") {
-      this.statusCounts = JSON.parse(storedCounts);
-    }
-  } else {
-    localStorage.setItem('attendanceDate', today);
-    localStorage.removeItem('attendanceData');
-    localStorage.removeItem('statusCounts');
-
-    this.users.forEach(user => {
-      user.status = '';
-      user.clockIn = '';
-      user.clockOut = '';
-      user.siteName = '';
-      user.travelFrom = '';
-      user.travelTo = '';
-      user.actualTime = '';
-      user.statusLocked = false;
-      user.isLate = false;
-    });
-
-    this.statusCounts = {
-      Present: 0,
-      OnSite: 0,
-      HalfDay: 0,
-      Traveling: 0,
-      Absent: 0,
-      Leave: 0,
-      Late: 0
-    };
-  }
-
-  this.currentDate = this.formatDate(new Date());
-
-  if (!localStorage.getItem('statusCounts')) {
-    axios.get('https://employees.archenterprises.co.in/api/api/attendance/status-counts')
-      .then(response => {
-        Object.assign(this.statusCounts, response.data);
-        localStorage.setItem('statusCounts', JSON.stringify(this.statusCounts));
+    async fetchAllEmployees() {
+      try {
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/users')
+        this.employees = res.data.filter(user => user.department !== 'Ownership').map(user => ({
+          id: user.id,
+          name: user.name,
+          salary: user.salary || null,
+          department: user.department,
+          calculating: false
+        }))
+      } catch (err) {
+        console.error('Error fetching employees:', err)
+      }
+    },
+    async fetchAttendance() {
+      try {
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance')
+        this.attendanceRecords = response.data.filter(record => record.status?.trim()?.toUpperCase() !== 'N/A')
+      } catch (error) {
+        console.error('Error fetching attendance:', error)
+      }
+    },
+    async calculateSalaryOnClick(record) {
+      record.calculating = true
+      try {
+        const [monthlyRes, salaryRes] = await Promise.all([
+          axios.get(`https://employees.archenterprises.co.in/api/api/attendance/monthly/${record.name}?month=${this.currentMonth + 1}&year=${this.currentYear}`),
+          axios.get(`https://employees.archenterprises.co.in/api/api/user-salary-by-name/${record.name}`)
+        ])
+        const monthlyData = monthlyRes.data.data || []
+        const baseSalary = parseFloat(salaryRes.data.salary) || 0
+        const totalDaysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate()
+        const perDaySalary = baseSalary / totalDaysInMonth
+        let fullPaidDays = 0
+        monthlyData.forEach(day => {
+          const status = day.status?.trim().toLowerCase()
+          if (['present', 'onsite', 'traveling', 'leave'].includes(status)) {
+            fullPaidDays++
+          } else if (status === 'halfday') {
+            fullPaidDays++
+          }
+        })
+        let sundayCount = 0
+        for (let i = 1; i <= totalDaysInMonth; i++) {
+          const date = new Date(this.currentYear, this.currentMonth, i)
+          if (date.getDay() === 0) sundayCount++
+        }
+        const salaryForMonth = (fullPaidDays * perDaySalary) + (sundayCount * perDaySalary)
+        record.salary = Math.round(salaryForMonth)
+        this.salaryPopup = {
+          show: true,
+          employeeName: record.name,
+          calculatedSalary: Math.round(salaryForMonth)
+        }
+      } catch (error) {
+        console.error(`Error calculating salary for ${record.name}:`, error)
+        toastError('Failed to calculate salary')
+      } finally {
+        record.calculating = false
+      }
+    },
+    async viewEmployeeMonthlyAttendance(name) {
+      this.selectedEmployee = name
+      this.showPopup = true
+      const month = this.currentMonth + 1
+      const year = this.currentYear
+      try {
+        const response = await axios.get(`https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`)
+        this.employeeMonthlyData = response.data.data || []
+        this.statusSummary = {
+          Present: 0, Absent: 0, OnSite: 0, HalfDay: 0, Traveling: 0, Leave: 0
+        }
+        this.employeeMonthlyData.forEach(record => {
+          const status = record.status?.trim()
+          if (status && this.statusSummary.hasOwnProperty(status)) {
+            this.statusSummary[status]++
+          }
+        })
+      } catch (error) {
+        console.error('Error fetching monthly attendance:', error)
+      }
+    },
+    goToPreviousMonth() {
+      if (this.currentMonth === 0) {
+        this.currentMonth = 11
+        this.currentYear -= 1
+      } else {
+        this.currentMonth -= 1
+      }
+      this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
+    },
+    goToNextMonth() {
+      if (this.currentMonth === 11) {
+        this.currentMonth = 0
+        this.currentYear += 1
+      } else {
+        this.currentMonth += 1
+      }
+      this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
+    },
+    getMonthName(index) {
+      return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][index]
+    },
+    buildCalendar(attendanceData) {
+      const year = this.currentYear
+      const month = this.currentMonth
+      const firstDayOfMonth = new Date(year, month, 1)
+      const lastDayOfMonth = new Date(year, month + 1, 0)
+      const daysInMonth = lastDayOfMonth.getDate()
+      const calendar = []
+      let week = []
+      const padDay = firstDayOfMonth.getDay()
+      for (let i = 0; i < padDay; i++) {
+        week.push({ day: '', date: '', statusClass: '' })
+      }
+      const getStatusClass = (dateStr) => {
+        const record = attendanceData.find(entry => new Date(entry.date).toISOString().split('T')[0] === dateStr)
+        if (!record || !record.status) return ''
+        return `cal-${record.status.toLowerCase().replace(/\s+/g, '-')}`
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+        week.push({ day, date: dateStr, statusClass: getStatusClass(dateStr) })
+        if (week.length === 7) {
+          calendar.push(week)
+          week = []
+        }
+      }
+      if (week.length > 0) {
+        while (week.length < 7) {
+          week.push({ day: '', date: '', statusClass: '' })
+        }
+        calendar.push(week)
+      }
+      return calendar
+    },
+    checkIfMobile() {
+      this.isMobile = window.innerWidth <= 768
+      this.isSidebarVisible = !this.isMobile
+    },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible
+    },
+    formatDate(date) {
+      return new Date(date).toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       })
-      .catch(error => {
-        console.error('Error fetching status counts:', error);
-      });
+    }
+  },
+  mounted() {
+    this.checkIfMobile()
+    window.addEventListener('resize', this.checkIfMobile)
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    this.today = `${yyyy}-${mm}-${dd}`
+    this.markAttendance.date = this.today
+    this.currentDate = this.formatDate(new Date())
+    this.fetchAllEmployees()
+    this.fetchAttendance()
+    const token = localStorage.getItem('token')
+    if (!token) {
+      this.$router.push('/auth')
+    }
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile)
   }
-}
-
-
-
 }
 </script>
 
-
-
-
 <style scoped>
-  .head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
 }
-/* Background overlay */
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 23, 42, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(6px);
-}
-
-/* Popup content box */
-.popup-content {
-  position: relative;
-  background: linear-gradient(145deg, #ffffff, #f9fafb);
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  padding: 40px 25px 30px;
-  width: 90%;
-  max-width: 700px;
-  animation: fadeIn 0.4s ease;
-}
-
-/* Popup heading */
-.popup-title {
-  color: #08525c;
-  margin-bottom: 17px;
-}
-
-/* Subtitle */
-.popup-subtitle {
-  color: var(--text-white);
-  font-size: 0.95rem;
-  margin-bottom: 20px;
-}
-
-/* Table wrapper for scroll on mobile */
-.table-wrapper {
-  max-height: 400px;
-  overflow-y: auto;
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
-}
-
-/* Table styles */
-.responsive-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-.responsive-table th {
-  background: var(--primary);
-  color: white;
-  font-weight: bold;
-  padding: 12px;
-  text-align: center;
-  position: sticky;
-  top: 0;
-}
-
-.responsive-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-  font-size: 0.95rem;
-}
-
-.clickable-name {
-  color: #004aad;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-.clickable-name:hover {
-  color: #002f6c;
-  text-decoration: underline;
-}
-
-
-/* Calculate button */
-.cal_sal {
-  background: #004aad;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 14px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: 0.3s;
-}
-
-.cal_sal:hover {
-  background: #002f6c;
-}
-
-.cal_sal:disabled {
-  background: #b0b0b0;
-  cursor: not-allowed;
-}
-
-/* X button */
-.close-btn {
-  position: absolute;
-  top: 12px;
-  right: 15px;
-  background: #f87171;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 14px;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.close-btn:hover {
-  background: var(--sidebar);
-}
-/* Header Section */
-.present-percentage {
-  color: var(--text);
-  font-size: 13px;
-  background: #f1f5f9;
-  padding: 6px 12px;
-  border-radius: 8px;
-  box-shadow: inset 0 0 3px rgba(0,0,0,0.1);
-}
-/* Smooth entrance animation */
-@keyframes fadeInUp {
-  from {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Responsive tweaks */
-@media (max-width: 600px) {
-  .popup-content {
-    padding: 20px;
-  }
-  .popup-title {
-    font-size: 1.4rem;
-  }
-  .responsive-table th,
-  .responsive-table td {
-    font-size: 0.85rem;
-  }
-}
-.logo-img {
-  height: 70px;
-}
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal-box {
-  background: #fff;
-  padding: 30px;
-  width: 400px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  position: relative;
-}
-
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-input[type="text"],
-input[type="date"] {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.submit-btn {
-  background: #28a745;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-.holiday-list {
-  list-style: none;
-  padding: 0;
-}
-
-.holiday-list li {
-  margin-bottom: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.delete-btn {
-  background: red;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 3px 7px;
-  cursor: pointer;
-}
-
-/* Public Holiday (green) */
-.public-holiday {
-  background-color: #c8f7c5 !important;
-  color: #2d6a2e;
-  font-weight: bold;
-}
-
-/* No status (red) */
-.no-status {
-  background-color: #f8d7da;
-  color: #842029;
-}
-
-/* Optional: Improve overall calendar cell visuals */
-.calendar td {
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #dee2e6;
-}
-
-.no-status {
-     background-color: #ffe0e0 !important;
-    color: #c00 !important;
-    font-weight: 700;
-}
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-@media (max-width: 768px) {
-  .attendance-mobile-card {
-    width: 100%;
-    border: none;
-  }
-
-  .attendance-mobile-card thead {
-    display: none;
-  }
-
-  .attendance-mobile-card tbody {
-    display: block;
-  }
-
-  .attendance-mobile-card tbody tr {
-    display: block;
-    background: #fff;
-    margin-bottom: 16px;
-    border-radius: 10px;
-    /* box-shadow: 1px 0px 0px 2px rgb(176 176 176); */
-    padding: 12px 35px;
-  }
-  .container-fluid{
-        width: 100%!important;
-    padding-right: 0!important;
-    padding-left: 0!important;
-  }
-
-  .attendance-mobile-card td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    font-size: 14px;
-    border-bottom: 1px solid #eee;
-  }
-
-  .attendance-mobile-card td:last-child {
-    border-bottom: none;
-  }
-
-  .attendance-mobile-card td::before {
-    content: attr(data-label);
-    font-weight: 700;
-    text-transform: uppercase;
-color: var(--text);
-    flex: 1;
-    text-align: left;
-  }
-
-  .attendance-mobile-card td > span,
-  .attendance-mobile-card td > div,
-  .attendance-mobile-card td > button {
-    flex: 0;
-    text-align: right;
-    display: block;
-    white-space: nowrap;
-  }
-
-  .attendance-mobile-card .clickable-name {
-    color: var(--text);
-    font-weight: 600;
-    FONT-SIZE: 15px;
-        cursor: pointer;
-        text-transform: uppercase;
-  }
-
-  .attendance-mobile-card .attendance-status {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 13px;
-    color: #fff;
-  }
-
-  .attendance-mobile-card .on-time    { background-color: #28a745; }
-  .attendance-mobile-card .on-site    { background-color: var(--primary); }
-  .attendance-mobile-card .on-halfday { background-color: #ffc107; color: var(--text); }
-  .attendance-mobile-card .absence    { background-color: #dc3545; }
-  .attendance-mobile-card .traveling  { background-color: #17a2b8; }
-  .attendance-mobile-card .leave      { background-color: var(--text); }
-
-  .attendance-mobile-card .text-purple { color: #6f42c1; }
-  .attendance-mobile-card .text-danger { color: #dc3545; }
-}
-.cal_sal {
-  color: #0d6efd;
-  border: 1px solid #0d6efd;
-  background-color: transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  cursor: pointer;
-}
-
-.cal_sal:hover {
-  color: #fff;
-  background-color: var(--primary);
-  border-color: #0d6efd;
-}
-
-.cal_sal:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-
-@keyframes popupFade {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-
-.btn-light {
-  background: #e2e8f000;
-  border: none;
-  border-radius: 8px;
-  padding: 5px 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn.btn-success {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  color: white;
-  border: none;
-  transition: all 0.2s ease;
-}
-.btn.btn-success:hover {
-  background: linear-gradient(90deg, #16a34a, #15803d);
-}
-
-.btn-light:hover {
-  background: #cbd5e1;
-}
-.popup-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
-}
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden; /* Prevent body scroll */
-  z-index: 999;
-}
-
-.popup-content {
-  position: relative; /* make this the positioning context for .close-btn */
-  /* padding: 20px; */
-  background-color: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 700px;
-  margin: auto;
-}
-.calendar {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.calendar th {
-  background: #e2e8f0;
-  color: #334155;
-  padding: 8px;
-  font-weight: 600;
-}
-.calendar td {
-  padding: 10px;
-  border: 1px solid #f1f5f9;
-  transition: all 0.2s ease;
-}
-
-.calendar td:hover {
-  background: #f9fafb;
-  transform: scale(1.02);
-}
-
-.cal-absent {
-  background-color: #f44336; /* Red */
-  color: white;
-}
-
-.cal-onsite {
-  background-color: #9e9e9e; /* Grey */
-  color: white;
-}
-
-.cal-halfday {
-  background-color: #ffc107ad; /* Yellow */
-  color: var(--text);
-}
-
-.cal-traveling {
-  background-color: #ff9800; /* Orange */
-  color: white;
-}
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  font-size: 14px;
-  margin-bottom: 15px;
-}
-
-.legend-item {
-  background: #f8fafc;
-  padding: 6px 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  font-weight: 500;
-}
-
-.legend-item::before {
-  content: '';
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  border-radius: 4px;
-}
-
-.legend-item.present::before {
-  background-color: #00e676;
-}
-
-.legend-item.absent::before {
-  background-color: #e77074;
-}
-
-.legend-item.half-day::before {
-  background-color: #ffc107ad;
-}
-
-.legend-item.onsite::before {
-  background-color: #9e9e9e;
-}
-
-.legend-item.traveling::before {
-  background-color: #ff9800;
-}
-.legend-item.leave::before{
-  background-color: #3595fa;
-}
-.month-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1rem;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.month-header button {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.legend-item.present {
-  /* background-color: #28a745; */
-  color: rgb(0, 0, 0);
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-.legend-item.absent {
-  /* background-color: #dc3545; */
-  color: rgb(0, 0, 0);
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-.legend-item.half-day {
-  /* background-color: #ffc107; */
-  color: black;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-.legend-item.onsite {
-  /* background-color: var(--primary); */
-  color: rgb(2, 1, 1);
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-.legend-item.traveling {
-  /* background-color: #17a2b8; */
-  color: rgb(1, 0, 0);
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-.legend-item.leave {
-  /* background-color: var(--text); */
-  color: rgb(0, 0, 0);
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-/* Attendance day coloring */
-.cal-present {
-  background-color: #00f23a !important;
-  color: rgb(9, 1, 1);
-  text-align: center;
-  border-radius: 4px;
-}
-.cal-absent {
-  background-color: #ffe0e0 !important;
-  color: #c00!important;
-  text-align: center;
-  border-radius: 4px;
-}
-
-.cal-traveling {
-  background-color: #fca400 !important;
-  color: white;
-  text-align: center;
-  border-radius: 4px;
-}
-.cal-leave {
-  background-color: #3595fa !important;
-  color: white;
-  text-align: center;
-  border-radius: 4px;
-}
-
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.popup-content {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 700px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.legend {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-  place-content: center;
-
-}
-
-.legend-item {
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.85rem;
-  color: #fff;
-}
-/* 
-.present { background: green; }
-.absent { background: red; }
-.half-day { background: orange; }
-.onsite { background: blue; }
-.traveling { background: teal; }
-.leave { background: purple; } */
-
-.calendar {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-}
-
-.calendar td {
-  width: 14%;
-  height: 50px;
-  border: 1px solid #ccc;
-  vertical-align: middle;
-}
-
-
-.clickable-name { 
-  cursor: pointer;
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.text-purple {
-  color: rgb(25, 1, 62);
-  font-weight: 400;
-}
-
-.attendance-status.on-time {
-  color: #03540f;
-  /* border: 1px solid #03540f; */
-  background-color: transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  cursor: context-menu;
-}
-
-/* .attendance-status.on-time:hover {
-  color: #0a0101;
-  background-color: #07e887;
-  border-color: #07e887;
-} */
-
-.attendance-status.on-time:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-
-.attendance-status.on-site {
-  color: #949494;
-  /* border: 1px solid #949494; */
-  background-color: transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  cursor: context-menu;
-}
-
-/* .attendance-status.on-site:hover {
-  color: #ffffff;
-  background-color: #949494;
-  border-color: #949494;
-} */
-
-.attendance-status.on-site:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-
-
-.attendance-status.late {
-  color: #ff9800;
-}
-
-.attendance-container {
-  font-family: 'Segoe UI', sans-serif;
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  /* box-shadow: 0 4px 20px rgba(0,0,0,0.1); */
-}
-
-.attendance-header-tabs {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.attendance-tab {
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.attendance-tab.active {
-  color: #00cba9;
-  border-bottom: 2px solid #00cba9;
-}
-
-.attendance-summary {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.attendance-stat-box {
-  background: #f9f9f9;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  text-align: center;
-  min-width: 100px;
-}
-
-.attendance-number {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.attendance-label {
-  color: #888;
-}
-
-.attendance-percentage.up {
-  color: green;
-}
-
-.attendance-percentage.down {
-   color:var(--text);
-}
-
-.attendance-pie-chart .chart {
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle at center, #00cba9 0 25%, #ffd500 25% 50%, #ff647c 50% 75%, #627cff 75%);
-  border-radius: 50%;
-  margin-bottom: 0.5rem;
-}
-
-.attendance-legend span {
-  display: block;
-  margin: 0.2rem 0;
-}
-
-.attendance-table table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.attendance-table th,
-.attendance-table td {
- 
-  border-bottom: 1px solid #eee;
- place-self: center;
-}
 
-.attendance-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  vertical-align: middle;
-  margin-right: 0.5rem;
-}
-
-.attendance-status {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-  width: 55%;
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-} 
-
-
-
-.attendance-status.traveling {
-  background-color: #f49200;
-  color: white;
-}
-
-
-.attendance-status.traveling {
-  color: #f49200;
-  /* border: 1px solid #f49200; */
-  background-color: transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  cursor: context-menu;
-}
-
-/* .attendance-status.traveling:hover {
-  color: #ffffff;
-  background-color: #f49200;
-  border-color: #f49200;
-} */
-
-.attendance-status.traveling:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-
-.attendance-status.on-halfday {
-  color: #7e8004;
-  /* border: 1px solid #7e8004; */
-  background-color: transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  cursor: context-menu;
-}
-
-/* .attendance-status.on-halfday:hover {
-  color: #020000;
-  background-color: #fbff00;
-  border-color: #fbff00;
-} */
-
-.attendance-status.on-halfday:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-
-
-.attendance-status.absence {
-  color: #dc3545;
-  /* border: 1px solid #dc3545; */
-  background-color: transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  cursor: context-menu;
-}
-
-/* .attendance-status.absence:hover {
-  color: #fff;
-  background-color: #dc3545;
-  border-color: #dc3545;
-} */
-
-.attendance-status.absence:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-
-
-
-.attendance-status.late {
-  background-color: #c803ff;
-  color: rgb(255, 255, 255);
-}
-
-
-.attendance-status.leave {
-  color: #0d6efd;
-  /* border: 1px solid #0d6efd; */
-  background-color: transparent;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  cursor: context-menu;
-}
-
-/* .attendance-status.leave:hover {
-  color: #fff;
-  background-color: var(--primary);
-  border-color: #0d6efd;
-} */
-
-.attendance-status.leave:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-
-.attendance-shift {
-  font-size: 0.85rem;
-  color: var(--text);
-}
-
-.attendance-date {
-  margin: 1rem 0;
-  font-weight: 600;
-}
-
-.text-danger{
-   color:var(--text)!important;
-      font-weight: 400;
-}
-.check-out{
-  background-color: rgba(255, 255, 255, 0);
-  color: #0d6efd;
-  font-size: 13px!important;
-}
-.attendance-layout {
-  background-color: #f8f9fa;
-  min-height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.attendance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: #fff;
-  border-bottom: 1px solid #ddd;
-}
-
-.attendance-logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.attendance-logout-btn {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-}
-
-.attendance-container {
-  background-color: #f8f9fa;
-}
-
-.attendance-card {
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-  background-color: #fff;
-  border: none;
-}
-
-/* Tabs */
-.nav-tabs {
-  border-bottom: none;
-}
-
-.nav-tabs .nav-link {
-  border: none;
-  background: none;
-  font-weight: 600;
-  color: #888;
-}
-
-.nav-tabs .nav-link.active {
-  color: #00bfa6;
-  border-bottom: 2px solid #00bfa6;
-}
-
-/* Summary Text */
-.attendance-card .row h5 {
-  font-size: 20px;
-  color: var(--text);
-  font-weight: 700;
-}
-
-.attendance-card .row small {
-  color: #888;
-  font-weight: 500;
-}
-
-/* Table Styling */
-.attendance-table {
-  background-color: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  font-size: 14px;
-}
-
-.attendance-table thead {
-  background-color: #f1f5f9;
-}
-
-.attendance-table th,
-.attendance-table td {
-  vertical-align: middle;
-  text-align: center;
-}
-
-.attendance-table td:first-child {
-  text-align: left;
-  /* display: flex; */
-  align-items: center;
-}
-
-.attendance-table td img {
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-/* Badge Styles */
-.badge {
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 12px;
-}
-
-.badge-success {
-  background-color: #e6f4ea;
-  color: #28a745;
-}
-
-.badge-warning {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.badge-danger {
-  background-color: #f8d7da;
-  color: #dc3545;
-}
-
-.badge-primary {
-  background-color: #cce5ff;
-  color: #004085;
-}
-
-
-/* Chart Canvas */
-#attendanceChart {
-  display: block;
-  margin: auto;
-  max-width: 100px;
-}
-
-/* Footer */
-.attendance-footer {
-  background-color: #fff;
-  padding: 1rem 2rem;
-  text-align: center;
-  font-size: 14px;
-  border-top: 1px solid #ddd;
-  color: var(--text);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .attendance-table th,
-  .attendance-table td {
-    font-size: 12px;
-    padding: 0.5rem;
-    place-self: normal;
-  }
-  .attendance-table{
-        background-color: #ffffff00;
-  }
-  .attendance-container{
-    background-color: #f3eeee;
-        background: rgba(255, 255, 255, 0);
-   
-    /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0); */
-  }
-
-  .attendance-card .row h5 {
-    font-size: 16px;
-  }
-
-  .attendance-table td:first-child {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-.company-name {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-}
-/* Header */
-.header {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 8px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.logout-btn {
-  background-color: var(--text);
-    color: #ffffff;
-    margin-left: 10px;
-    margin-bottom: 22px;
-}
-
-.logout-btn:hover {
-  background-color: var(--primary);
-  color: #ffffff;
-    margin-bottom: 22px;
-}
-
-/* Main Content */
-.main-content {
-  display: flex;
-  flex: 1;
-  padding: 30px;
-  gap: 20px;
-}
-
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
-}
-
-/* Content Section */
-.content {
-  flex: 1;
-  background-color: white;
-  padding: 30px 40px;
-  border-radius: 15px;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.08);
-  overflow-x: auto;
-}
-
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-}
-
-/* User Table */
-.user-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 12px;
-}
-
-.user-table th,
-.user-table td {
-  padding: 6px 20px;
-  text-align: left;
-  font-size: 16px;
-  color: var(--text);
-}
-
-.user-table th {
-  background-color: #f8f9fa;
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-}
-
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
-}
-
-.user-table tbody td {
-  border: none;
-  vertical-align: middle;
-}
-
-/* Footer */
-.footer {
-  background-color: #343a40;
-  color: white;
-  text-align: center;
-  padding: 15px 0;
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
-}
-
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
-  position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
-}
-
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 26%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15px;
-}
-
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
-}
-
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
-}
-
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.btn {
-  flex: 1;
-  padding: 14px 0;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
-}
-
-.btn-white {
-  flex: 1;
-  padding: 14px 0;
-  font-weight: 700;
-  width: 47px;
-  font-size: 0.9rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
-}
-
-.btn-blue {
-  background-color: var(--primary);
-  color: white;
-  margin-bottom: 22px;  
-  width: 82px;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
-}
-
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
-}
-
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
-}
-
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
-}
-
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
-  }
-
-  .modal-card {
-    padding: 30px 25px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
-  }
-  .menu-btn, .logout-btn {
-    width: 100%;
-  }
-}
-.attractive-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
-}
-
-.btn-primary.attractive-btn {
-  background-color: var(--primary);
-  border: none;
-  color: white;
-}
-
-.btn-primary.attractive-btn:hover {
-  background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
-}
-
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
-}
-
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
-}
-
-.attractive-btn i {
-  font-size: 14px;
-}
-/* === BASIC RESET === */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* === TYPOGRAPHY === */
-body {
-  font-family: "Segoe UI", sans-serif;
-  font-size: 14px;
-  background-color: #f8f9fa;
-  color: #212529;
+.layout {
+  min-height: 100vh;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* === UTILITY CLASSES === */
-.text-center {
-  text-align: center;
-}
-.text-left {
-  text-align: left;
-}
-.mt-1 {
-  margin-top: 0.25rem;
-}
-.mt-3 {
-  margin-top: 1rem;
-}
-.mb-4 {
-  margin-bottom: 1.5rem;
-  margin-left: 5px;
-}
-.p-4 {
-  padding: 1.5rem;
+/* Main Content */
+.main-content {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+   ;
+  min-height: 100vh;
 }
 
-/* === CONTAINERS === */
-.container-fluid {
+.content {
   flex: 1;
-  width: 100%;
-  margin-top: 66px;
-  padding-right: 1.5rem;
-  padding-left: 1.5rem;
-  margin-right: auto;
-  margin-left: auto;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-/* === GRID SYSTEM (minimal) === */
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  margin-left: -0.75rem;
-  margin-right: -0.75rem;
-}
-.col {
-  flex: 1 0 0%;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-}
-
-/* === TABLE === */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-  background-color: white;
-}
-.table th,
-.table td {
-  padding: 0.75rem;
-  /* border: 1px solid #dee2e6; */
-  text-align: center;
-}
-.table thead {
-  background-color: #f1f5f9;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* === NAV TABS === */
-.nav-tabs {
-  display: flex;
-  border-bottom: 1px solid #dee2e6;
-}
-.nav-tabs .nav-item {
-  margin-bottom: -1px;
-}
-.nav-tabs .nav-link {
-  display: block;
-  padding: 0.5rem 1rem;
-  border: 1px solid transparent;
-  color: var(--text);
-  background: none;
-  font-weight: 500;
-  text-decoration: none;
-}
-.nav-tabs .nav-link.active {
-  color: #00bfa6;
-  border-bottom: 2px solid #00bfa6;
-}
-
-/* === BADGES === */
-.badge {
-  display: inline-block;
-  padding: 0.35em 0.65em;
-  font-size: 0.75em;
-  font-weight: 700;
-  border-radius: 0.5rem;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: baseline;
-}
-.badge-success {
-  background-color: #e6f4ea;
-  color: #28a745;
-}
-.badge-warning {
-  background-color: #fff3cd;
-  color: #856404;
-}
-.badge-danger {
-  background-color: #f8d7da;
-  color: #dc3545;
-}
-.badge-primary {
-  background-color: #cce5ff;
-  color: #004085;
-}
-
-/* === BUTTONS (used in logout) === */
-button {
-  cursor: pointer;
-}
-button:focus {
-  outline: none;
-}
-.attendance-logout-btn {
-  background-color: #dc3545;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-}
-
-/* === IMAGES === */
-.rounded-circle {
-  border-radius: 50%;
-}
-img {
-  vertical-align: middle;
-  border-style: none;
-}
-
-.mark-btn {
-  margin-left: 10px;
-  background: #6f42c1;
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-}
-
-.form-group {
-  margin-bottom: 12px;
-}
-
-.popup-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
-}
-/* Overlay */
-.fancy-overlay {
-  backdrop-filter: blur(6px);
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-/* Card */
-.popup-card {
-  width: 420px;
-  max-width: 92%;
-  background: linear-gradient(180deg, #ffffff, #f8f9ff);
-  border-radius: 18px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  font-family: "Inter", system-ui, sans-serif;
-}
-
-/* Animation */
-.animate-pop {
-  animation: popScale 0.35s ease;
-}
-
-@keyframes popScale {
-  0% {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* Header */
-.popup-header {
-  background: linear-gradient(135deg, #6f42c1, #845ef7);
-  color: white;
-  padding: 16px 20px;
+/* Content Header */
+.content-header-modern {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.popup-header h3 {
-  margin: 0;
-  font-size: 18px;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.icon-close {
-  background: transparent;
-  border: none;
-  font-size: 18px;
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  cursor: pointer;
+  font-size: 24px;
 }
 
-/* Body */
-.popup-body {
-  padding: 20px;
+.content-header-modern h1 {
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
 }
 
-/* Fields */
-.field {
-  margin-bottom: 14px;
-}
-
-.field label {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  display: block;
-  color: var(--text);
-}
-
-.field input,
-.field select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #dcdde1;
+.subtitle-modern {
+  color: #6b7280;
   font-size: 14px;
-  transition: 0.2s;
+  margin-top: 4px;
 }
 
-.field input:focus,
-.field select:focus {
-  outline: none;
-  border-color: #845ef7;
-  box-shadow: 0 0 0 3px rgba(132, 94, 247, 0.15);
-}
-
-/* Two column */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.header-buttons {
+  display: flex;
   gap: 12px;
 }
 
-/* Status color hint */
-select.Present { border-left: 4px solid #28a745; }
-select.Absent { border-left: 4px solid #dc3545; }
-select.Leave { border-left: 4px solid #fd7e14; }
-select.HalfDay { border-left: 4px solid #ffc107; }
-select.OnSite { border-left: 4px solid #0d6efd; }
-select.Traveling { border-left: 4px solid #20c997; }
-
-/* Footer */
-.popup-footer {
-  padding: 16px 20px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid #eee;
-}
-
-.btn-save {
-  background: linear-gradient(135deg, #6f42c1, #845ef7);
-  color: white;
+.register-btn-modern {
+  padding: 12px 24px;
+  background: var(--primary);
   border: none;
-  padding: 10px 18px;
-  border-radius: 10px;
+  border-radius: 16px;
+  color: white;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.btn-save:hover {
-  opacity: 0.9;
+.register-btn-modern.secondary {
+  background: linear-gradient(135deg, #10b981, #059669);
 }
 
-.btn-cancel {
-  background: #f1f3f5;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 10px;
-  cursor: pointer;
+.register-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
 }
 
-/* Mobile */
-@media (max-width: 480px) {
-  .popup-card {
-    width: 95%;
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card i {
+  font-size: 36px;
+  color: var(--primary-color);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Current Date Badge */
+.current-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 40px;
+  margin-bottom: 24px;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.current-date-badge i {
+  font-size: 16px;
+}
+
+/* Table Styles */
+.table-wrapper-premium {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.section-title-modern {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.section-title-modern i {
+  color: var(--primary-color);
+}
+
+.table-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.attendance-table-premium {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.attendance-table-premium thead {
+  background: #f8fafc;
+}
+
+.attendance-table-premium th {
+  text-align: left;
+  padding: 16px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.attendance-table-premium td {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+
+.attendance-table-premium tbody tr {
+  transition: all 0.3s ease;
+}
+
+.attendance-table-premium tbody tr:hover {
+  background: #fafbfc;
+}
+
+/* Employee Cell */
+.employee-cell {
+  min-width: 180px;
+}
+
+.employee-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.employee-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.employee-name {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+/* Status Badge */
+.status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.status-badge-premium.present {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-premium.onsite {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.status-badge-premium.halfday {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.status-badge-premium.absent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge-premium.traveling {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-premium.leave {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.late-warning {
+  font-size: 11px;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.early-info {
+  font-size: 11px;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-cell {
+  color: #6b7280;
+  font-family: monospace;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.premium-modal {
+  position: relative;
+  background: white;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 550px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.premium-modal.salary-modal {
+  max-width: 600px;
+}
+
+.premium-modal.monthly-modal {
+  max-width: 750px;
+}
+
+.premium-modal.result-modal {
+  max-width: 450px;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
+.modal-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+}
 
+/* Modal Header */
+.modal-header-premium {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 28px;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.header-icon-premium {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.header-icon-premium.success-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-text h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.header-text p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.close-btn-premium {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.close-btn-premium:hover {
+  background: var(--danger);
+  color: white;
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.modal-body-premium {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  background: #fafbfc;
+}
+
+.modal-body-premium::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body-premium::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.modal-body-premium::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+/* Form Section */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.required-star {
+  color: var(--danger);
+}
+
+.field-wrapper {
+  position: relative;
+}
+
+.field-wrapper .field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.field-wrapper input,
+.field-wrapper select,
+.field-wrapper textarea {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.field-wrapper input:focus,
+.field-wrapper select:focus,
+.field-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.two-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Modal Footer */
+.modal-footer-premium {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn-cancel-premium,
+.btn-submit-premium {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  border: none;
+}
+
+.btn-cancel-premium {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-cancel-premium:hover {
+  background: #e5e7eb;
+}
+
+.btn-submit-premium {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-submit-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Salary Table */
+.table-wrapper-salary {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.salary-table-premium {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.salary-table-premium thead {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+}
+
+.salary-table-premium th {
+  text-align: left;
+  padding: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.salary-table-premium td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.employee-avatar-small {
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.salary-amount {
+  font-weight: 600;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calculate-btn {
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calculate-btn:hover:not(:disabled) {
+  background: var(--primary-color);
+  color: white;
+}
+
+.calculate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Monthly Modal Styles */
+.attendance-score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-radius: 30px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #065f46;
+}
+
+.month-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f3f4f6;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.legend-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 16px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.legend-item.present { background: #d1fae5; color: #065f46; }
+.legend-item.absent { background: #fee2e2; color: #991b1b; }
+.legend-item.halfday { background: #fed7aa; color: #c2410c; }
+.legend-item.onsite { background: #e0e7ff; color: #4338ca; }
+.legend-item.traveling { background: #fef3c7; color: #d97706; }
+.legend-item.leave { background: #f3e8ff; color: #7e22ce; }
+
+.calendar-container {
+  overflow-x: auto;
+}
+
+.calendar-premium {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.calendar-premium th {
+  padding: 12px;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.calendar-premium td {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.calendar-premium td:hover {
+  transform: scale(1.02);
+}
+
+.cal-present { background: #d1fae5 !important; color: #065f46; font-weight: 600; }
+.cal-absent { background: #fee2e2 !important; color: #991b1b; }
+.cal-halfday { background: #fed7aa !important; color: #c2410c; }
+.cal-onsite { background: #e0e7ff !important; color: #4338ca; }
+.cal-traveling { background: #fef3c7 !important; color: #d97706; }
+.cal-leave { background: #f3e8ff !important; color: #7e22ce; }
+
+/* Salary Result */
+.salary-result {
+  text-align: center;
+  padding: 20px;
+}
+
+.salary-amount-large {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.salary-amount-large i {
+  font-size: 40px;
+}
+
+.month-text {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.success-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: #d1fae5;
+  border-radius: 12px;
+  color: #065f46;
+}
+
+/* Empty State */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+/* Modal Fade */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-buttons {
+    flex-direction: column;
+  }
+
+  .register-btn-modern {
+    justify-content: center;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .two-col-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-modal {
+    max-width: 95%;
+  }
+
+  .modal-header-premium {
+    padding: 16px 20px;
+  }
+
+  .modal-body-premium {
+    padding: 16px;
+  }
+
+  .modal-footer-premium {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+
+  .legend-grid {
+    gap: 8px;
+  }
+
+  .legend-item {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .calendar-premium td {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+}
 </style>

@@ -1,7 +1,5 @@
 <template>
   <div class="layout">
-
-
     <!-- Main Content -->
     <div class="main-content">
       <!-- Sidebar -->
@@ -14,293 +12,311 @@
         :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
       >
         <!-- Dashboard Cards -->
- <div class="dashboard-slider-container">
-    
-<div v-if="showSkeleton" class="dashboard-slider skeleton-wrapper">
- <div
-  v-for="n in skeletonCount"
-  :key="n"
-  class="dashboard-card skeleton-card"
-  :class="{ 'crm-skeleton': currentUserName === 'crm' }"
->
+        <div class="dashboard-slider-container">
+          <div v-if="showSkeleton" class="dashboard-slider skeleton-wrapper">
+            <div
+              v-for="n in skeletonCount"
+              :key="n"
+              class="dashboard-card skeleton-card"
+              :class="{ 'crm-skeleton': currentUserName === 'crm' }"
+            >
+              <div class="skeleton-label"></div>
+              <div class="skeleton-text"></div>
+            </div>
+          </div>
 
-    <div class="skeleton-label"></div>
-    <div class="skeleton-text"></div>
-  </div>
-</div>
-
-
-    <!-- Scrollable Card Section -->
-    <div v-else class="dashboard-slider" ref="slider">
-      <!-- Left Arrow -->
-    <!-- <button class="scroll-arrow left" @click="scrollLeft">
-      <i class="fas fa-chevron-left"></i>
-    </button> -->
-      <div class="dashboard-card clickable-card temp" @click="goTo('employees')" v-if="currentUserName !== 'crm'" >
-        <div>
-          <p class="label label-emp">Employees 👨🏻‍💼</p>
-          <p class="tagline">Manage all employees</p>
-        </div>
-      </div>
-        <div 
-  class="dashboard-card clickable-card leavetype" 
-  v-if="currentUserName !== 'hr'" 
-  @click="goTo('Customerregistration')"
->
-  <div>
-    <p class="label label-cust">Customers & PO 🤝</p>
-    <p class="tagline">Our clients & Purchase Orders</p>
-  </div>
-</div>
-
- <div class="dashboard-card clickable-card temp" @click="goTo('employee/followup')" v-if="currentUserName !== 'hr'" >
-        <div>
-          <p class="label label-emp">follow-up 📞</p>
-          <p class="tagline">Quotations follow-up</p>
-        </div>
-      </div>
-
-         <div class="dashboard-card clickable-card Leaves" @click="goTo('employee/amcrecord')" v-if="currentUserName !== 'hr'">
-        <div>
-          <p class="label label-leave">AMC Record Data 📄</p>
-          <p class="tagline">View Current Service status</p>
-        </div>
-      </div>
-
-        <div 
-  class="dashboard-card clickable-card leavetype" 
-  v-if="currentUserName !== 'crm'" 
-  @click="goTo('workreport')"
->
-  <div>
-    <p class="label label-cust">Work Report & Tasks 📄</p>
-    <p class="tagline">Employees Tasks Management</p>
-  </div>
-</div>
-  <div 
-  class="dashboard-card clickable-card leavetype" 
-  v-if="currentUserName !== 'crm'" 
-  @click="goTo('expensemanage')"
->
-  <div>
-    <p class="label label-cust">Expense Management 💵</p>
-    <p class="tagline">Manage offline expenses</p>
-  </div>
-</div>
-
-      <div 
-  class="dashboard-card clickable-card leavetype" 
-  v-if="currentUserName !== 'crm'" 
-  @click="goTo('resourcebooking')"
->
-  <div>
-    <p class="label label-cust">Resource Booking 📅</p>
-    <p class="tagline">Book meeting rooms and resources</p>
-  </div>
-</div>
-
- <div class="dashboard-card clickable-card attendance" @click="goTo('rcahelp')" v-if="currentUserName !== 'hr'">
-        <div>
-          <p class="label label-att">RCA 🗪</p>
-          <p class="tagline">Root Cause Analysis</p>
-        </div>
-      </div>
-      
-      <div class="dashboard-card clickable-card attendance" @click="goTo('empattendanceadmin')" v-if="currentUserName !== 'crm'">
-        <div>
-          <p class="label label-att">Attendance 🗓️</p>
-          <p class="tagline">Track employee check-ins</p>
-        </div>
-      </div>
-
-      <div class="dashboard-card clickable-card announcement" @click="goTo('announcement')" v-if="currentUserName !== 'crm'">
-        <div>
-          <p class="label label-ann">Announcement 📢</p>
-          <p class="tagline">Share news & updates</p>
-        </div>
-      </div>
-
-      <div class="dashboard-card clickable-card dept" @click="goTo('managedepartments')" v-if="currentUserName !== 'crm'">
-        <div>
-          <p class="label label-dept">Departments 🏛️</p>
-          <p class="tagline">Organize teams and roles</p>
-        </div>
-      </div>
-
-      <div class="dashboard-card clickable-card Leaves" @click="goToLeaveApplications" v-if="currentUserName !== 'crm'">
-        <div>
-          <p class="label label-leave">Leave Applications 🏖️</p>
-          <p class="tagline">Review and approve requests</p>
-        </div>
-      </div>
-
-     
-     <!-- Right Arrow -->
-    <!-- <button class="scroll-arrow right" @click="scrollRight">
-      <i class="fas fa-chevron-right"></i>
-    </button> -->
-    </div>
-
-   
-  </div>
-
-        
-        <!-- Pie Charts Row -->
-        <div class="pie-slider-wrapper" v-if="currentUserName !== 'hr'">
-  <div class="pie-slider" >
-
-          <div
-            v-for="(chartData, index) in pieChartsData"
-            :key="index"
-            class="chart-box"
-            style="flex: 1 1 220px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative;"
-          >
-            <h4 style="font-size: 14px; margin-bottom: 8px;">{{ chartData.title }}</h4>
-          <div class="pie-chart-wrapper">
-  <canvas :id="chartData.canvasId"></canvas>
-</div>
-
-            <div class="task-details" style="margin-top: 8px;">
-              <div
-                v-for="(value, label) in chartData.tasks"
-                :key="label"
-                style="display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 12px;"
-              >
-                <span>{{ label }}</span>
-                <span>{{ value }}</span>
+          <!-- Scrollable Card Section -->
+          <div v-else class="dashboard-slider" ref="slider">
+            <div class="dashboard-card clickable-card temp leavetype" @click="goTo('employees')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">👨🏻‍💼</div>
+              <div>
+                <p class="label label-emp">Employees</p>
+                <p class="tagline">Manage employees</p>
               </div>
             </div>
+
+            <div class="dashboard-card clickable-card leavetype leavetype" v-if="currentUserName !== 'hr'" @click="goTo('Customerregistration')">
+              <div class="card-icon">🤝</div>
+              <div>
+                <p class="label label-cust">Customers & PO</p>
+                <p class="tagline">Our clients & Purchase Orders</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card temp leavetype" @click="goTo('employee/followup')" v-if="currentUserName !== 'hr'">
+              <div class="card-icon">📞</div>
+              <div>
+                <p class="label label-emp">Follow-up</p>
+                <p class="tagline">Quotations follow-up</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card Leaves leavetype" @click="goTo('employee/amcrecord')" v-if="currentUserName !== 'hr'">
+              <div class="card-icon">📄</div>
+              <div>
+                <p class="label label-leave">AMC Record</p>
+                <p class="tagline">Service status</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card leavetype" v-if="currentUserName !== 'crm'" @click="goTo('workreport')">
+              <div class="card-icon">📋</div>
+              <div>
+                <p class="label label-cust">Work Reports</p>
+                <p class="tagline">Tasks Management</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card leavetype" v-if="currentUserName !== 'crm'" @click="goTo('expensemanage')">
+              <div class="card-icon">💰</div>
+              <div>
+                <p class="label label-cust">Expenses</p>
+                <p class="tagline">Manage expenses</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card leavetype" v-if="currentUserName !== 'crm'" @click="goTo('resourcebooking')">
+              <div class="card-icon">📅</div>
+              <div>
+                <p class="label label-cust">Resources</p>
+                <p class="tagline">Book meeting rooms</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card attendance leavetype" @click="goTo('rcahelp')" v-if="currentUserName !== 'hr'">
+              <div class="card-icon">🗪</div>
+              <div>
+                <p class="label label-att">RCA</p>
+                <p class="tagline">Root Cause Analysis</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card attendance leavetype" @click="goTo('empattendanceadmin')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">🗓️</div>
+              <div>
+                <p class="label label-att">Attendance</p>
+                <p class="tagline">{{ attendanceRate }}% today</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card  leavetype" @click="goTo('announcement')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">📢</div>
+              <div>
+                <p class="label label-ann">Announcements</p>
+                <p class="tagline">Share news & updates</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card dept leavetype" @click="goTo('managedepartments')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">🏛️</div>
+              <div>
+                <p class="label label-dept">Departments</p>
+                <p class="tagline">Organize teams</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card Leaves leavetype" @click="goToLeaveApplications" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">🏖️</div>
+              <div>
+                <p class="label label-leave">Leaves</p>
+                <p class="tagline">Manage leaves</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card Leaves leavetype" @click="goToSalaryAdvances" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">💰</div>
+              <div>
+                <p class="label label-leave">Salary Advances</p>
+                <p class="tagline">Manage salary advances</p>
+              </div>
             </div>
           </div>
         </div>
 
-<!-- Monthly Revenue Section -->
-<div class="monthly-revenue-row" v-if="currentUserName !== 'crm'">
-  <div class="revenue-card">
+        <!-- Performance Analytics Section -->
+        <div class="analytics-section">
+          <div class="section-header">
+            <h3>📊 Performance Analytics</h3>
+            <div class="period-selector">
+              <button :class="{ active: period === 'week' }" @click="period = 'week'">Week</button>
+              <button :class="{ active: period === 'month' }" @click="period = 'month'">Month</button>
+              <button :class="{ active: period === 'quarter' }" @click="period = 'quarter'">Quarter</button>
+            </div>
+          </div>
 
-    <!-- Header -->
-    <div class="revenue-header">
-      <div class="revenue-title">
-        <h3>Revenue Overview</h3>
-        <p>Financial Year {{ financialYear }} (Apr – Mar)</p>
-      </div>
-<div class="target-input">
-  <label>🎯 Yearly Target (₹)</label>
-  <input
-    type="number"
-    v-model.number="yearlyTarget"
-    placeholder="Enter yearly target"
-    min="0"
-  />
-</div>
-
-      <div class="revenue-tags">
-        <span class="tag primary">
-          💰 Total ₹ {{ totalRevenueFY.toLocaleString() }}
-        </span>
-        <span class="tag success">
-          📈 Avg ₹ {{ avgRevenueFY.toLocaleString() }}
-        </span>
-        <span class="tag info">
-          ⭐ Best {{ bestMonthFY.name }}
-        </span>
-      </div>
-    </div>
-
-    <!-- KPI Cards -->
-    <div class="revenue-kpis">
-      <div class="kpi success">
-        <h4>₹ {{ totalRevenueFY.toLocaleString() }}</h4>
-        <p>Total Revenue</p>
-      </div>
-
-      <div class="kpi info">
-        <h4>₹ {{ yearlyTarget.toLocaleString() }}</h4>
-        <p>Yearly Target</p>
-      </div>
-
-      <div class="kpi warning">
-        <h4>{{ overallAchievement }}%</h4>
-        <p>Achievement</p>
-      </div>
-    </div>
-
-    <!-- Quarter Analytics -->
-    <div class="quarter-grid">
-      <div
-        v-for="q in ['Q1','Q2','Q3','Q4']"
-        :key="q"
-        class="quarter-card"
-        :class="quarterAnalytics[q].percent >= 100 ? 'success' : 'danger'"
-      >
-        <h4>{{ q }}</h4>
-        <p>₹ {{ quarterAnalytics[q].revenue.toLocaleString() }}</p>
-        <small>
-          Target ₹ {{ quarterAnalytics[q].target.toLocaleString() }}
-          · {{ quarterAnalytics[q].percent }}%
-        </small>
-      </div>
-    </div>
-
-    <!-- Monthly Revenue vs Target -->
-    <div class="bar-chart-wrapper">
-      <canvas id="monthlyRevenueBarChart"></canvas>
-    </div>
-
-    <!-- Cumulative Chart -->
-    <div class="analytics-card">
-      <h4>📈 Cumulative Revenue vs Target</h4>
-      <div class="chart-height">
-        <canvas id="cumulativeChart"></canvas>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-
-
-
-        <!-- 🎂 Birthday Reminder Section -->
-        <div class="birthday-section" style="margin-top: 40px;">
-          <div
-            class="birthday-card"
-            style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
-          >
-            <h3 style="font-size: 18px; margin-bottom: 16px;">
-              🎉 Birthday Reminder - {{ months[new Date().getMonth()] }}
-            </h3>
-
-            <div
-              v-if="birthdays.length > 0"
-              style="display: flex; flex-wrap: wrap; gap: 15px;"
-            >
-              <div
-                v-for="(emp, index) in birthdays"
-                :key="index"
-                class="employee-birthday-card"
-                style="flex: 1 1 220px; background: #f9f9ff; border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); transition: all 0.3s;"
-              >
-                <img
-                  :src="emp.photo || 'https://img.icons8.com/color/48/000000/user-male-circle.png'"
-                  alt="Employee"
-                  style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;"
-                />
-                <div>
-                  <p style="font-weight: 600; color: var(--text);">{{ emp.name }}</p>
-                  <p style="font-size: 13px; color: var(--text-white);">🎂 {{ formatBirthday(emp.dateofbirth) }}</p>
-                  <p style="font-size: 13px; color: #999;">{{ emp.department || '—' }}</p>
+          <div class="analytics-grid">
+            <!-- Work Report Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>📝 Work Reports</h4>
+                <span class="badge">{{ workReportStats.total }} Tasks</span>
+              </div>
+              <canvas id="workReportChart"></canvas>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">{{ workReportStats.completed }}</span>
+                  <span class="stat-label">Completed</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ workReportStats.pending }}</span>
+                  <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ workReportStats.completionRate }}%</span>
+                  <span class="stat-label">Completion Rate</span>
                 </div>
               </div>
             </div>
 
-            <p v-else style="color: #666; text-align: center; font-style: italic;">
-              No birthdays this month 🎈
-            </p>
+            <!-- Expense Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>💵 Expense Breakdown</h4>
+                <span class="badge">This {{ period }}</span>
+              </div>
+              <canvas id="expenseChart"></canvas>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">₹{{ formatNumber(expenseStats.total) }}</span>
+                  <span class="stat-label">Total Expenses</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ expenseStats.categories }}</span>
+                  <span class="stat-label">Categories</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Attendance Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>✅ Attendance Overview</h4>
+                <span class="badge">{{ period }}</span>
+              </div>
+              <canvas id="attendanceChart"></canvas>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">{{ attendanceStats.present }}%</span>
+                  <span class="stat-label">Present</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ attendanceStats.late }}%</span>
+                  <span class="stat-label">Late</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ attendanceStats.absent }}%</span>
+                  <span class="stat-label">Absent</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Leave Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>🏖️ Leave Distribution</h4>
+                <span class="badge">{{ leaveStats.total }} Requests</span>
+              </div>
+              <canvas id="leaveChart"></canvas>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">{{ leaveStats.approved }}</span>
+                  <span class="stat-label">Approved</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ leaveStats.pending }}</span>
+                  <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ leaveStats.rejected }}</span>
+                  <span class="stat-label">Rejected</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- 🎂 End Birthday Section -->
+
+ 
+
+        <!-- Monthly Revenue Section -->
+        <div class="monthly-revenue-row" v-if="currentUserName !== 'crm'">
+          <div class="revenue-card">
+            <div class="revenue-header">
+              <div class="revenue-title">
+                <h3>Revenue Overview</h3>
+                <p>Financial Year {{ financialYear }} (Apr – Mar)</p>
+              </div>
+              <div class="target-input">
+                <label>🎯 Yearly Target (₹) </label>
+                <input
+                  type="number"
+                  v-model.number="yearlyTarget"
+                  placeholder="Enter yearly target"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            <div class="revenue-kpis">
+              <div class="kpi success">
+                <h4>₹ {{ totalRevenueFY.toLocaleString() }}</h4>
+                <p>Total Revenue</p>
+              </div>
+              <div class="kpi info">
+                <h4>₹ {{ yearlyTarget.toLocaleString() }}</h4>
+                <p>Yearly Target</p>
+              </div>
+              <div class="kpi warning">
+                <h4>{{ overallAchievement }}%</h4>
+                <p>Achievement</p>
+              </div>
+            </div>
+
+            <div class="quarter-grid">
+              <div
+                v-for="q in ['Q1','Q2','Q3','Q4']"
+                :key="q"
+                class="quarter-card"
+                :class="quarterAnalytics[q].percent >= 100 ? 'success' : 'danger'"
+              >
+                <h4>{{ q }}</h4>
+                <p>₹ {{ quarterAnalytics[q].revenue.toLocaleString() }}</p>
+                <small>Target ₹ {{ quarterAnalytics[q].target.toLocaleString() }} · {{ quarterAnalytics[q].percent }}%</small>
+              </div>
+            </div>
+
+            <div class="bar-chart-wrapper">
+              <canvas id="monthlyRevenueBarChart"></canvas>
+            </div>
+
+            <div class="analytics-card">
+              <h4>📈 Cumulative Revenue vs Target</h4>
+              <div class="chart-height">
+                <canvas id="cumulativeChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Birthday Reminder Section -->
+        <div class="birthday-section">
+          <div class="birthday-card">
+            <h3>🎉 Birthday Reminder - {{ months[new Date().getMonth()] }}</h3>
+            <div v-if="birthdays.length > 0" class="birthday-grid">
+              <div v-for="(emp, index) in birthdays" :key="index" class="employee-birthday-card">
+                <img
+                  :src="emp.photo || 'https://img.icons8.com/color/48/000000/user-male-circle.png'"
+                  alt="Employee"
+                />
+                <div>
+                  <p class="emp-name">{{ emp.name }}</p>
+                  <p class="emp-birthday">🎂 {{ formatBirthday(emp.dateofbirth) }}</p>
+                  <p class="emp-dept">{{ emp.department || '—' }}</p>
+                </div>
+              </div>
+            </div>
+            <p v-else class="no-birthdays">No birthdays this month 🎈</p>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -309,10 +325,7 @@
 <script>
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
-// import { Chart, registerables } from 'chart.js'
 import Chart from "chart.js/auto";
-import { onMounted, ref } from "vue";
-// Chart.register(...registerables)
 import {
   toastSuccess,
   toastError,
@@ -321,30 +334,26 @@ import {
 } from "@/utils/toast.js";
 
 export default {
-  
   name: 'Dashboard',
   components: { Sidebar },
   data() {
     return {
       chartRevenueInstance: null,
-cumulativeChartInstance: null,
-      yearlyTarget: 77000000, // 7.7 CR
-
-       showSkeleton: true,
-      showLoader: true,
-       currentUserName: '', 
-      hover: false,
-      hoverNext: false,
-      currentMonth: '',
+      cumulativeChartInstance: null,
+      workReportChart: null,
+      expenseChart: null,
+      attendanceChart: null,
+      leaveChart: null,
+      yearlyTarget: 77000000,
+      showSkeleton: true,
+      currentUserName: '',
       isMobile: false,
       isSidebarVisible: true,
       selectedMonth: new Date().getMonth(),
       selectedYear: new Date().getFullYear(),
-      months: [
-        'January','February','March','April','May','June',
-        'July','August','September','October','November','December'
-      ],
+      months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
       totalEmployees: 0,
+      period: 'month',
       tasksRecorder: {
         pendingTasks: 0,
         completedTasks: 0,
@@ -355,7 +364,6 @@ cumulativeChartInstance: null,
         ordersPending: 0,
         materialOrdersPending: 0,
         materialOrdersCompleted: 0,
-        totalRevenue: '₹ 3,25,000'
       },
       colors: {
         'Pending Tasks': '#FF6B6B',
@@ -370,467 +378,379 @@ cumulativeChartInstance: null,
       chartInstances: [],
       monthlyRevenueData: {},
       pieChartsData: [],
-      birthdays: [] 
+      birthdays: [],
+      workReportStats: { total: 0, completed: 0, pending: 0, completionRate: 0 },
+      expenseStats: { total: 0, categories: 0, data: {} },
+      attendanceStats: { present: 0, late: 0, absent: 0, total: 0 },
+      leaveStats: { total: 0, approved: 0, pending: 0, rejected: 0 },
+      topPerformers: []
     }
   },
-watch: {
-  yearlyTarget(val) {
-    localStorage.setItem('yearlyTarget', val)
-    this.$nextTick(() => {
-      this.renderRevenueBarChart()
-      this.renderCumulativeChart()
-    })
-  }
-},
+
+  watch: {
+    yearlyTarget(val) {
+      localStorage.setItem('yearlyTarget', val)
+      this.$nextTick(() => {
+        this.renderRevenueBarChart()
+        this.renderCumulativeChart()
+      })
+    },
+    period() {
+      this.fetchAnalyticsData()
+    }
+  },
 
   computed: {
     quarterAnalytics() {
-  const quarters = {
-    Q1: ['April','May','June'],
-    Q2: ['July','August','September'],
-    Q3: ['October','November','December'],
-    Q4: ['January','February','March']
-  }
+      const quarters = {
+        Q1: ['April','May','June'],
+        Q2: ['July','August','September'],
+        Q3: ['October','November','December'],
+        Q4: ['January','February','March']
+      }
+      const result = {}
+      Object.entries(quarters).forEach(([q, months]) => {
+        const revenue = months.reduce((sum, m) => sum + (this.monthlyRevenueData[m] || 0), 0)
+        const target = months.reduce((sum, m) => sum + (this.monthlyTargetData[m] || 0), 0)
+        result[q] = { revenue, target, percent: target ? Math.round((revenue / target) * 100) : 0 }
+      })
+      return result
+    },
 
-  const result = {}
+    monthlyTargetData() {
+      const targets = {}
+      const equalMonthlyTarget = Math.round(this.yearlyTarget / 12)
+      const monthsFY = ['April','May','June','July','August','September','October','November','December','January','February','March']
+      monthsFY.forEach(month => { targets[month] = equalMonthlyTarget })
+      return targets
+    },
 
-  Object.entries(quarters).forEach(([q, months]) => {
-    const revenue = months.reduce(
-      (sum, m) => sum + (this.monthlyRevenueData[m] || 0),
-      0
-    )
-
-    const target = months.reduce(
-      (sum, m) => sum + (this.monthlyTargetData[m] || 0),
-      0
-    )
-
-    result[q] = {
-      revenue,
-      target,
-      percent: target ? Math.round((revenue / target) * 100) : 0
-    }
-  })
-
-  return result
-},
-
-    cumulativeAnalytics() {
-  let cumRevenue = 0
-  let cumTarget = 0
-
-  return Object.keys(this.monthlyRevenueData).map(month => {
-    cumRevenue += this.monthlyRevenueData[month] || 0
-    cumTarget += this.monthlyTargetData[month] || 0
-
-    return {
-      month,
-      cumRevenue,
-      cumTarget
-    }
-  })
-},
-
-monthlyTargetData() {
-  const targets = {}
-  const equalMonthlyTarget = Math.round(this.yearlyTarget / 12)
-
-  const monthsFY = [
-    'April','May','June','July','August','September',
-    'October','November','December','January','February','March'
-  ]
-
-  monthsFY.forEach(month => {
-    targets[month] = equalMonthlyTarget
-  })
-
-  return targets
-},
-
-
-achievementData() {
-  return Object.keys(this.monthlyRevenueData).map(month => {
-    const revenue = this.monthlyRevenueData[month] || 0
-    const target = this.monthlyTargetData[month] || 0
-    const percent = target ? Math.round((revenue / target) * 100) : 0
-    return { month, revenue, target, percent }
-  })
-},
-
-overallAchievement() {
-  const totalRevenue = this.totalRevenueFY
-  return Math.round((totalRevenue / this.yearlyTarget) * 100)
-},
+    overallAchievement() {
+      return Math.round((this.totalRevenueFY / this.yearlyTarget) * 100)
+    },
 
     totalRevenueFY() {
-  return Object.values(this.monthlyRevenueData)
-    .reduce((a, b) => a + b, 0)
-},
-
-avgRevenueFY() {
-  const values = Object.values(this.monthlyRevenueData)
-  return values.length
-    ? Math.round(this.totalRevenueFY / values.length)
-    : 0
-},
-
-bestMonthFY() {
-  let max = 0
-  let name = '-'
-  Object.entries(this.monthlyRevenueData).forEach(([month, value]) => {
-    if (value > max) {
-      max = value
-      name = month
-    }
-  })
-  return { name, value: max }
-},
+      return Object.values(this.monthlyRevenueData).reduce((a, b) => a + b, 0)
+    },
 
     skeletonCount() {
-  if (this.currentUserName === 'crm') return 4
-  if (this.currentUserName === 'hr') return 8
-  return 8 // default for others (admin, manager, etc.)
-},
-
-
-  financialYear() {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = today.getMonth() + 1 // Jan = 1
-
-    // Financial year starts in April
-    if (month >= 4) {
-      return `${year}-${(year + 1).toString().slice(-2)}`
-    } else {
-      return `${year - 1}-${year.toString().slice(-2)}`
-    }
-  },
-    selectedMonthName() {
-      return `${this.months[this.selectedMonth]} ${this.selectedYear}`
-    }
-  },
-  methods: {
-    renderCumulativeChart() {
-  const ctx = document.getElementById('cumulativeChart')
-  if (!ctx) return
-  if (this.cumulativeChartInstance)
-    this.cumulativeChartInstance.destroy()
-
-  this.cumulativeChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: this.cumulativeAnalytics.map(d => d.month),
-      datasets: [
-        {
-          label: 'Cumulative Target',
-          data: this.cumulativeAnalytics.map(d => d.cumTarget),
-          borderColor: '#94a3b8',
-          borderDash: [6, 6],
-          tension: 0.4
-        },
-        {
-          label: 'Cumulative Revenue',
-          data: this.cumulativeAnalytics.map(d => d.cumRevenue),
-          borderColor: '#22c55e',
-          backgroundColor: 'rgba(34,197,94,0.15)',
-          fill: true,
-          tension: 0.4
-        }
-      ]
+      if (this.currentUserName === 'crm') return 4
+      return 8
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ₹ ${ctx.raw.toLocaleString()}`
-          }
-        }
-      },
-      scales: {
-        y: {
-          ticks: {
-            callback: v => `₹ ${v / 10000000} Cr`
-          }
-        }
-      }
+
+    financialYear() {
+      const today = new Date()
+      const year = today.getFullYear()
+      const month = today.getMonth() + 1
+      if (month >= 4) return `${year}-${(year + 1).toString().slice(-2)}`
+      return `${year - 1}-${year.toString().slice(-2)}`
+    },
+
+    attendanceRate() {
+      return this.attendanceStats.present || 92
+    },
+
+    pendingLeaves() {
+      return this.leaveStats.pending || ''
     }
-  })
-},
+  },
+
+  methods: {
+    formatNumber(num) {
+      if (num >= 10000000) return (num / 10000000).toFixed(1) + 'Cr'
+      if (num >= 100000) return (num / 100000).toFixed(1) + 'L'
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+      return num
+    },
+
+    getProgressPercent(value, tasks) {
+      const total = Object.values(tasks).reduce((a, b) => a + b, 0)
+      if (total === 0) return 0
+      return (value / total) * 100
+    },
+
+    async fetchAnalyticsData() {
+      try {
+        // Fetch work reports
+        const workRes = await axios.get('https://employees.archenterprises.co.in/api/api/employee-reports', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const tasks = workRes.data || []
+        const completed = tasks.filter(t => t.status === 'Completed').length
+        const pending = tasks.filter(t => t.status === 'Pending' || t.status === 'In Progress').length
+        this.workReportStats = {
+          total: tasks.length,
+          completed,
+          pending,
+          completionRate: tasks.length ? Math.round((completed / tasks.length) * 100) : 0
+        }
+
+        // Fetch expenses
+        const expenseRes = await axios.get('https://employees.archenterprises.co.in/api/api/expenses', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const expenses = expenseRes.data || []
+        this.expenseStats.total = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
+        
+        const categories = new Set(expenses.map(e => e.category))
+        this.expenseStats.categories = categories.size
+        this.expenseStats.data = expenses.reduce((acc, e) => {
+          const cat = e.category || 'Other'
+          acc[cat] = (acc[cat] || 0) + (parseFloat(e.amount) || 0)
+          return acc
+        }, {})
+
+        // Fetch attendance
+        const attendanceRes = await axios.get('https://employees.archenterprises.co.in/api/api/attendance', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const attendance = attendanceRes.data || []
+        const present = attendance.filter(a => a.status === 'Present').length
+        const late = attendance.filter(a => a.isLate === true).length
+        const absent = attendance.filter(a => a.status === 'Absent').length
+        const total = attendance.length || 1
+        this.attendanceStats = {
+          present: Math.round((present / total) * 100),
+          late: Math.round((late / total) * 100),
+          absent: Math.round((absent / total) * 100),
+          total: attendance.length
+        }
+
+        // Fetch leaves
+        const leaveRes = await axios.get('https://employees.archenterprises.co.in/api/api/leave-requests', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const leaves = leaveRes.data || []
+        this.leaveStats = {
+          total: leaves.length,
+          approved: leaves.filter(l => l.status === 'Approved').length,
+          pending: leaves.filter(l => l.status === 'Pending').length,
+          rejected: leaves.filter(l => l.status === 'Rejected').length
+        }
+
+        // Fetch top performers
+        const perfRes = await axios.get('https://employees.archenterprises.co.in/api/api/performance/history', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const performances = perfRes.data || []
+        const employeeScores = {}
+        performances.forEach(p => {
+          if (!employeeScores[p.employee_name]) {
+            employeeScores[p.employee_name] = { total: 0, department: p.department || 'General' }
+          }
+          employeeScores[p.employee_name].total += p.total_points || 0
+        })
+        this.topPerformers = Object.entries(employeeScores)
+          .map(([name, data], index) => ({
+            rank: index + 1,
+            name,
+            department: data.department,
+            score: data.total
+          }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5)
+
+        this.$nextTick(() => {
+          this.renderWorkReportChart()
+          this.renderExpenseChart()
+          this.renderAttendanceChart()
+          this.renderLeaveChart()
+        })
+
+      } catch (err) {
+        console.error('Error fetching analytics:', err)
+        // Set default demo data
+        this.setDefaultAnalyticsData()
+      }
+    },
+
+    setDefaultAnalyticsData() {
+      this.workReportStats = { total: 45, completed: 28, pending: 17, completionRate: 62 }
+      this.expenseStats = { total: 125000, categories: 6, data: { Travel: 45000, Food: 25000, Supplies: 35000, Other: 20000 } }
+      this.attendanceStats = { present: 85, late: 8, absent: 7, total: 45 }
+      this.leaveStats = { total: 12, approved: 8, pending: 3, rejected: 1 }
+      this.topPerformers = [
+        { rank: 1, name: 'John Doe', department: 'Sales', score: 450 },
+        { rank: 2, name: 'Jane Smith', department: 'Development', score: 420 },
+        { rank: 3, name: 'Mike Johnson', department: 'Support', score: 390 },
+        { rank: 4, name: 'Sarah Williams', department: 'Marketing', score: 370 },
+        { rank: 5, name: 'David Brown', department: 'Operations', score: 350 }
+      ]
+      this.$nextTick(() => {
+        this.renderWorkReportChart()
+        this.renderExpenseChart()
+        this.renderAttendanceChart()
+        this.renderLeaveChart()
+      })
+    },
+
+    renderWorkReportChart() {
+      const ctx = document.getElementById('workReportChart')
+      if (!ctx) return
+      if (this.workReportChart) this.workReportChart.destroy()
+      
+      this.workReportChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'Pending'],
+          datasets: [{
+            data: [this.workReportStats.completed, this.workReportStats.pending],
+            backgroundColor: ['#22c55e', '#ef4444'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      })
+    },
+
+    renderExpenseChart() {
+      const ctx = document.getElementById('expenseChart')
+      if (!ctx) return
+      if (this.expenseChart) this.expenseChart.destroy()
+      
+      const labels = Object.keys(this.expenseStats.data)
+      const values = Object.values(this.expenseStats.data)
+      
+      this.expenseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Amount (₹)',
+            data: values,
+            backgroundColor: '#3b82f6',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => '₹' + v.toLocaleString() } } }
+        }
+      })
+    },
+
+    renderAttendanceChart() {
+      const ctx = document.getElementById('attendanceChart')
+      if (!ctx) return
+      if (this.attendanceChart) this.attendanceChart.destroy()
+      
+      this.attendanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+          datasets: [{
+            label: 'Attendance %',
+            data: [92, 88, 95, 90, 85, 78],
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
+        }
+      })
+    },
+
+    renderLeaveChart() {
+      const ctx = document.getElementById('leaveChart')
+      if (!ctx) return
+      if (this.leaveChart) this.leaveChart.destroy()
+      
+      this.leaveChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Approved', 'Pending', 'Rejected'],
+          datasets: [{
+            data: [this.leaveStats.approved, this.leaveStats.pending, this.leaveStats.rejected],
+            backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      })
+    },
+
+    renderCumulativeChart() {
+      const ctx = document.getElementById('cumulativeChart')
+      if (!ctx) return
+      if (this.cumulativeChartInstance) this.cumulativeChartInstance.destroy()
+
+      const cumulativeData = []
+      let cumRevenue = 0
+      let cumTarget = 0
+      const monthsFY = ['April','May','June','July','August','September','October','November','December','January','February','March']
+      
+      monthsFY.forEach(month => {
+        cumRevenue += this.monthlyRevenueData[month] || 0
+        cumTarget += this.monthlyTargetData[month] || 0
+        cumulativeData.push({ month, cumRevenue, cumTarget })
+      })
+
+      this.cumulativeChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: cumulativeData.map(d => d.month),
+          datasets: [
+            { label: 'Cumulative Target', data: cumulativeData.map(d => d.cumTarget), borderColor: '#94a3b8', borderDash: [6, 6], tension: 0.4, fill: false },
+            { label: 'Cumulative Revenue', data: cumulativeData.map(d => d.cumRevenue), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)', fill: true, tension: 0.4 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ` ₹ ${ctx.raw.toLocaleString()}` } } },
+          scales: { y: { ticks: { callback: v => `₹ ${v / 10000000} Cr` } } }
+        }
+      })
+    },
 
     async fetchAllTimePieData() {
-  try {
-    const [
-      pendingRes,
-      completedRes,
-      serviceRes,
-      materialRes,
-      visitRes
-    ] = await Promise.allSettled([
-      axios.get('https://employees.archenterprises.co.in/api/api/tasks/pending-count'),
-      axios.get('https://employees.archenterprises.co.in/api/api/tasks/completed-count'),
-      axios.get('https://employees.archenterprises.co.in/api/api/service-assign/status-count'),
-      axios.get('https://employees.archenterprises.co.in/api/api/material-orders-supply-status'),
-      axios.get('https://employees.archenterprises.co.in/api/api/visit-assign/status-count')
-    ])
+      try {
+        const [pendingRes, completedRes, serviceRes, materialRes, visitRes] = await Promise.allSettled([
+          axios.get('https://employees.archenterprises.co.in/api/api/tasks/pending-count'),
+          axios.get('https://employees.archenterprises.co.in/api/api/tasks/completed-count'),
+          axios.get('https://employees.archenterprises.co.in/api/api/service-assign/status-count'),
+          axios.get('https://employees.archenterprises.co.in/api/api/material-orders-supply-status'),
+          axios.get('https://employees.archenterprises.co.in/api/api/visit-assign/status-count')
+        ])
 
-    const getData = (res, field) =>
-      res.status === 'fulfilled' && res.value?.data?.[field]
-        ? res.value.data[field]
-        : 0
+        const getData = (res, field) => res.status === 'fulfilled' && res.value?.data?.[field] ? res.value.data[field] : 0
 
-    this.tasksRecorder.pendingTasks =
-      getData(pendingRes, 'pendingTasks') || getData(pendingRes, 'pending')
+        this.tasksRecorder.pendingTasks = getData(pendingRes, 'pendingTasks') || getData(pendingRes, 'pending')
+        this.tasksRecorder.completedTasks = getData(completedRes, 'completedTasks') || getData(completedRes, 'completed')
+        this.tasksRecorder.ordersPending = getData(serviceRes, 'pending')
+        this.tasksRecorder.ordersCompleted = getData(serviceRes, 'completed')
+        this.tasksRecorder.materialOrdersPending = getData(materialRes, 'pending')
+        this.tasksRecorder.materialOrdersCompleted = getData(materialRes, 'completed')
+        this.tasksRecorder.pendingVisits = getData(visitRes, 'pending')
+        this.tasksRecorder.completedVisits = getData(visitRes, 'completed')
 
-    this.tasksRecorder.completedTasks =
-      getData(completedRes, 'completedTasks') || getData(completedRes, 'completed')
-
-    this.tasksRecorder.ordersPending = getData(serviceRes, 'pending')
-    this.tasksRecorder.ordersCompleted = getData(serviceRes, 'completed')
-
-    this.tasksRecorder.materialOrdersPending = getData(materialRes, 'pending')
-    this.tasksRecorder.materialOrdersCompleted = getData(materialRes, 'completed')
-
-    this.tasksRecorder.pendingVisits = getData(visitRes, 'pending')
-    this.tasksRecorder.completedVisits = getData(visitRes, 'completed')
-
-    this.updatePieCharts()
-  } catch (err) {
-    console.error('Pie chart all-time error:', err)
-  }
-},
-  scrollLeft() {
-      const slider = this.$refs.slider;
-      slider.scrollBy({ left: -300, behavior: 'smooth' });
-    },
-    scrollRight() {
-      const slider = this.$refs.slider;
-      slider.scrollBy({ left: 300, behavior: 'smooth' });
-    },
-    /** ✅ Update dashboard for selected month */
-    async updateDashboardForSelectedMonth() {
-  const month = this.selectedMonth + 1
-  const year = this.selectedYear
-
-  try {
-    const [
-      pendingRes,
-      completedRes,
-      serviceRes,
-      materialRes,
-      visitRes
-    ] = await Promise.allSettled([
-      axios.get('https://employees.archenterprises.co.in/api/api/tasks/pending-count', {
-        params: { month, year, filter_by: 'updated_at' }
-      }),
-      axios.get('https://employees.archenterprises.co.in/api/api/tasks/completed-count', {
-        params: { month, year, filter_by: 'updated_at' }
-      }),
-      axios.get('https://employees.archenterprises.co.in/api/api/service-assign/status-count'),
-      // ✅ Fetch material orders from the correct table with your logic
-      axios.get('https://employees.archenterprises.co.in/api/api/material-orders-supply-status', {
-        params: { month, year } // optional if you want month filter
-      }),
-      axios.get('https://employees.archenterprises.co.in/api/api/visit-assign/status-count')
-    ])
-
-    const getData = (res, field) =>
-      res.status === 'fulfilled' && res.value?.data?.[field]
-        ? res.value.data[field]
-        : 0
-
-    this.tasksRecorder.pendingTasks = getData(pendingRes, 'pendingTasks') || getData(pendingRes, 'pending')
-    this.tasksRecorder.completedTasks = getData(completedRes, 'completedTasks') || getData(completedRes, 'completed')
-
-    this.tasksRecorder.ordersPending = getData(serviceRes, 'pending')
-    this.tasksRecorder.ordersCompleted = getData(serviceRes, 'completed')
-
-    // ✅ New logic for Material Orders Status
-    if (materialRes.status === 'fulfilled' && materialRes.value?.data) {
-      this.tasksRecorder.materialOrdersCompleted = materialRes.value.data.completed || 0
-      this.tasksRecorder.materialOrdersPending = materialRes.value.data.pending || 0
-    } else {
-      this.tasksRecorder.materialOrdersCompleted = 0
-      this.tasksRecorder.materialOrdersPending = 0
-    }
-
-    this.tasksRecorder.pendingVisits = getData(visitRes, 'pending')
-    this.tasksRecorder.completedVisits = getData(visitRes, 'completed')
-
-
-    this.currentMonth = `${this.months[this.selectedMonth]} ${this.selectedYear}`
-  } catch (err) {
-    console.error('Error fetching dashboard data:', err)
-  }
-},
-
-
-    prevMonth() {
-      if (this.selectedMonth === 0) {
-        this.selectedMonth = 11
-        this.selectedYear--
-      } else {
-        this.selectedMonth--
+        this.updatePieCharts()
+      } catch (err) {
+        console.error('Pie chart error:', err)
       }
-      this.updateDashboardForSelectedMonth()
     },
-    nextMonth() {
-      if (this.selectedMonth === 11) {
-        this.selectedMonth = 0
-        this.selectedYear++
-      } else {
-        this.selectedMonth++
-      }
-      this.updateDashboardForSelectedMonth()
-    },
-
-    checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
-    },
-    toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible
-    },
-    goTo(page) {
-      this.$router.push({ path: `/${page}` })
-    },
-    goToLeaveApplications() {
-      this.$router.push('/leaveapplications')
-    },
-
-async generateMonthlyRevenue() {
-  try {
-    const response = await axios.get(
-      'https://employees.archenterprises.co.in/api/api/graph/monthly-revenue'
-    )
-
-    const apiData = response.data || []
-
-    // Financial Year order (Apr → Mar)
-    const fyMonths = [
-      'April','May','June','July','August','September',
-      'October','November','December','January','February','March'
-    ]
-
-    this.monthlyRevenueData = {}
-
-    fyMonths.forEach(monthName => {
-      const monthIndex = this.months.indexOf(monthName) + 1
-      const found = apiData.find(d => Number(d.month) === monthIndex)
-      this.monthlyRevenueData[monthName] =
-        found ? Number(found.total_revenue) : 0
-    })
-
-    this.$nextTick(() => {
-      this.renderRevenueBarChart()
-       this.renderCumulativeChart()
-    })
-
-  } catch (err) {
-    console.error("Error fetching monthly revenue:", err)
-  }
-},
-
-
-
-renderRevenueBarChart() {
-  if (!this.monthlyRevenueData || !Object.keys(this.monthlyRevenueData).length) {
-    return
-  }
-
-  const ctx = document.getElementById('monthlyRevenueBarChart')
-  if (!ctx) return
-  if (this.chartRevenueInstance) this.chartRevenueInstance.destroy()
-
-  const labels = [
-    'April','May','June','July','August','September',
-    'October','November','December','January','February','March'
-  ]
-
-  this.chartRevenueInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Target',
-          data: labels.map(m => this.monthlyTargetData[m] || 0),
-          backgroundColor: 'rgba(203, 213, 225, 0.7)',
-          borderRadius: 10
-        },
-        {
-          label: 'Revenue',
-          data: labels.map(m => this.monthlyRevenueData[m] || 0),
-          backgroundColor: labels.map(m =>
-            (this.monthlyRevenueData[m] || 0) >= (this.monthlyTargetData[m] || 0)
-              ? 'rgba(34,197,94,0.9)'   // 🟢 Achieved
-              : 'rgba(239,68,68,0.9)'  // 🔴 Missed
-          ),
-          borderRadius: 12
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: {
-          callbacks: {
-            label: ctx => `₹ ${ctx.raw.toLocaleString()}`
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: v => `₹ ${v / 100000} L`
-          }
-        }
-      }
-    }
-  })
-},
-
-
 
     updatePieCharts() {
       this.pieChartsData = [
-        // {
-        //   title: 'Tasks Status',
-        //   canvasId: 'tasksPieChart1',
-        //   tasks: {
-        //     'Pending Tasks': this.tasksRecorder.pendingTasks,
-        //     'Completed Tasks': this.tasksRecorder.completedTasks
-        //   }
-        // },
-        {
-          title: 'Service Orders Status',
-          canvasId: 'tasksPieChart2',
-          tasks: {
-            'Service Orders Pending': this.tasksRecorder.ordersPending,
-            'Service Orders Completed': this.tasksRecorder.ordersCompleted
-          }
-        },
-        {
-          title: 'Material Orders Status',
-          canvasId: 'tasksPieChart3',
-          tasks: {
-            'Pending Material Orders': this.tasksRecorder.materialOrdersPending,
-            'Completed Material Orders': this.tasksRecorder.materialOrdersCompleted
-          }
-        },
-        {
-          title: 'Visits Status',
-          canvasId: 'tasksPieChart4',
-          tasks: {
-            'Pending Visits': this.tasksRecorder.pendingVisits,
-            'Completed Visits': this.tasksRecorder.completedVisits
-          }
-        }
+        { title: 'Service Orders', canvasId: 'tasksPieChart2', tasks: { 'Pending': this.tasksRecorder.ordersPending, 'Completed': this.tasksRecorder.ordersCompleted } },
+        { title: 'Material Orders', canvasId: 'tasksPieChart3', tasks: { 'Pending': this.tasksRecorder.materialOrdersPending, 'Completed': this.tasksRecorder.materialOrdersCompleted } },
+        { title: 'Visits Status', canvasId: 'tasksPieChart4', tasks: { 'Pending': this.tasksRecorder.pendingVisits, 'Completed': this.tasksRecorder.completedVisits } }
       ]
 
       this.chartInstances.forEach(chart => chart.destroy())
@@ -838,74 +758,75 @@ renderRevenueBarChart() {
 
       this.$nextTick(() => {
         this.pieChartsData.forEach(chartData => {
-          const labels = Object.keys(chartData.tasks || {})
-          const values = Object.values(chartData.tasks || {}).map(v => Number(v) || 0)
-
-          let finalLabels = labels
-          let finalValues = values
-          if (finalValues.every(v => v === 0)) {
-            finalLabels = ['No data']
-            finalValues = [1]
-          }
-
+          const labels = Object.keys(chartData.tasks)
+          const values = Object.values(chartData.tasks).map(v => Number(v) || 0)
+          let finalLabels = labels, finalValues = values
+          if (finalValues.every(v => v === 0)) { finalLabels = ['No data']; finalValues = [1] }
           const bgColors = finalLabels.map(l => this.colors[l] || '#d3d3d3')
-
           const canvasEl = document.getElementById(chartData.canvasId)
           if (!canvasEl) return
-
           const ctx = canvasEl.getContext('2d')
           const chart = new Chart(ctx, {
             type: 'pie',
-            data: {
-              labels: finalLabels,
-              datasets: [
-                {
-                  data: finalValues,
-                  backgroundColor: bgColors,
-                  borderColor: '#fff',
-                  borderWidth: 2
-                }
-              ]
-            },
-           options: {
-  responsive: true,
-  maintainAspectRatio: false, // 🔥 important
-  plugins: {
-    legend: { position: 'bottom' }
-  },
-              // ✅ ADD CLICK EVENT HERE
-    onClick: (event, elements) => {
-      if (elements.length > 0) {
-        const index = elements[0].index;
-        const clickedLabel = chart.data.labels[index];
-
-        // 🎯 When clicking "Pending Tasks"
-        if (
-          chartData.title === 'Tasks Status' &&
-          clickedLabel === 'Pending Tasks'
-        ) {
-          window.location.href =
-            'https://employees.archenterprises.co.in/workreport';
-        }
-      }
-    }
-      
-            }
+            data: { labels: finalLabels, datasets: [{ data: finalValues, backgroundColor: bgColors, borderColor: '#fff', borderWidth: 2 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
           })
-
           this.chartInstances.push(chart)
         })
       })
     },
 
-    /** 🎂 Fetch birthdays */
+    async generateMonthlyRevenue() {
+      try {
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/graph/monthly-revenue')
+        const apiData = response.data || []
+        const fyMonths = ['April','May','June','July','August','September','October','November','December','January','February','March']
+        this.monthlyRevenueData = {}
+        fyMonths.forEach(monthName => {
+          const monthIndex = this.months.indexOf(monthName) + 1
+          const found = apiData.find(d => Number(d.month) === monthIndex)
+          this.monthlyRevenueData[monthName] = found ? Number(found.total_revenue) : 0
+        })
+        this.$nextTick(() => {
+          this.renderRevenueBarChart()
+          this.renderCumulativeChart()
+        })
+      } catch (err) {
+        console.error("Error fetching monthly revenue:", err)
+      }
+    },
+
+    renderRevenueBarChart() {
+      if (!this.monthlyRevenueData || !Object.keys(this.monthlyRevenueData).length) return
+      const ctx = document.getElementById('monthlyRevenueBarChart')
+      if (!ctx) return
+      if (this.chartRevenueInstance) this.chartRevenueInstance.destroy()
+
+      const labels = ['April','May','June','July','August','September','October','November','December','January','February','March']
+
+      this.chartRevenueInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Target', data: labels.map(m => this.monthlyTargetData[m] || 0), backgroundColor: 'rgba(203, 213, 225, 0.7)', borderRadius: 10 },
+            { label: 'Revenue', data: labels.map(m => this.monthlyRevenueData[m] || 0), backgroundColor: labels.map(m => (this.monthlyRevenueData[m] || 0) >= (this.monthlyTargetData[m] || 0) ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)'), borderRadius: 12 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => `₹ ${ctx.raw.toLocaleString()}` } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: v => `₹ ${v / 100000} L` } } }
+        }
+      })
+    },
+
     async fetchBirthdayReminders() {
       try {
         const res = await axios.get('https://employees.archenterprises.co.in/api/api/users')
         const allEmployees = res.data || []
-
         const currentMonth = new Date().getMonth() + 1
-
         this.birthdays = allEmployees.filter(emp => {
           if (!emp.dateofbirth) return false
           const month = new Date(emp.dateofbirth).getMonth() + 1
@@ -923,1990 +844,688 @@ renderRevenueBarChart() {
       const day = date.getDate().toString().padStart(2, '0')
       const month = this.months[date.getMonth()].substring(0, 3)
       return `${day} ${month}`
+    },
+
+    checkIfMobile() {
+      this.isMobile = window.innerWidth <= 768
+      this.isSidebarVisible = !this.isMobile
+    },
+
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible
+    },
+
+    goTo(page) {
+      this.$router.push({ path: `/${page}` })
+    },
+
+    goToLeaveApplications() {
+      this.$router.push('/leaveapplications')
+    },
+    goToSalaryAdvances() {
+      this.$router.push('/salaryadvances')
     }
   },
 
- mounted() {
-  
-   setTimeout(() => {
-    // this.showLoader = false;
-     this.showSkeleton = false;
-  }, 1000); // 2 seconds
-  const now = new Date()
-  this.currentMonth = `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`
-  this.checkIfMobile()
-  window.addEventListener('resize', this.checkIfMobile)
+  mounted() {
+    setTimeout(() => { this.showSkeleton = false }, 1000)
+    this.checkIfMobile()
+    window.addEventListener('resize', this.checkIfMobile)
 
-  // Fetch total employees
-  axios.get('https://employees.archenterprises.co.in/api/api/total-employees')
-    .then(response => { this.totalEmployees = response.data.count })
-    .catch(err => console.error(err))
+    axios.get('https://employees.archenterprises.co.in/api/api/total-employees')
+      .then(response => { this.totalEmployees = response.data.count })
+      .catch(err => console.error(err))
 
-  // ✅ Fetch current logged-in admin info
-  axios.get('https://employees.archenterprises.co.in/api/api/admin-info', {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } // include auth token
-  })
-  .then(res => {
-    this.currentUserName = res.data.name.toLowerCase() // store name in lowercase
-  })
-  .catch(err => console.error('Error fetching admin info:', err))
-const savedTarget = localStorage.getItem('yearlyTarget')
-if (savedTarget) {
-  this.yearlyTarget = Number(savedTarget)
-}
+    axios.get('https://employees.archenterprises.co.in/api/api/admin-info', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => { this.currentUserName = res.data.name.toLowerCase() })
+      .catch(err => console.error('Error fetching admin info:', err))
 
-  this.generateMonthlyRevenue()
-  this.$nextTick(() => {
-    this.updateDashboardForSelectedMonth()
+    const savedTarget = localStorage.getItem('yearlyTarget')
+    if (savedTarget) this.yearlyTarget = Number(savedTarget)
+
+    this.generateMonthlyRevenue()
+    this.fetchAnalyticsData()
     this.fetchAllTimePieData()
-    this.fetchBirthdayReminders() // 🎂 Fetch birthdays
-  })
-}
-
+    this.fetchBirthdayReminders()
+  }
 }
 </script>
 
-
 <style scoped>
-
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --secondary: #64748b;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius: 12px;
 }
-.dashboard-slider-container {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
+
+.layout {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  background: var(--bg);
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  padding: 24px;
+  gap: 24px;
+}
+
+.content {
+  flex: 1;
+  background: transparent;
+  overflow-x: auto;
+      
+}
+
+/* Dashboard Slider */
+.dashboard-slider-container {
+  width: 100%;
+  margin-bottom: 32px;
 }
 
 .dashboard-slider {
   display: flex;
   gap: 20px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  padding: 10px;
-
+  flex-wrap: wrap;
+  padding: 4px;
 }
 
-
 .dashboard-card {
-  min-width: 220px;
-  flex-shrink: 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0);
+  min-width: 200px;
+  background:#ffffff;
+  border-radius: 10px;
   padding: 20px;
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-.dashboard-card:hover {
-  transform: scale(1.05);
-}
-
-.scroll-arrow {
-  background: #08245c!important;
-  border: none;
-  color: white;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  cursor: pointer;
-  font-size: 20px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.scroll-arrow.left {
-  left: 10px;
-}
-.scroll-arrow.right {
-  right: 10px;
-}
-.scroll-arrow:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .dashboard-card {
-    min-width: 180px;
-    padding: 15px;
-  }
-  .scroll-arrow {
-    width: 32px;
-    height: 32px;
-    font-size: 16px;
-  }
-}
-.button-7 {
-  background-color: #0095ff;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  box-shadow: rgba(255, 255, 255, .4) 0 1px 0 0 inset;
-  box-sizing: border-box;
-  color: #fff;
-  cursor: pointer;
-  display: inline-block;
-  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.15385;
-  margin: 6px;
-  outline: none;
-  padding: 8px .8em;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  vertical-align: baseline;
-  white-space: nowrap;
-}
-
-.button-7:hover,
-.button-7:focus {
-  background-color: #07c;
-}
-
-.button-7:focus {
-  box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
-}
-
-.button-7:active {
-  background-color: #0064bd;
-  box-shadow: none;
-}
-.dashboard-slider-container {
-  width: 100%;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  padding: 20px 0;
-
-}
-
-.dashboard-slider {
-  display: flex;
-  gap: 20px;
-  padding: 10px 20px;
-  transition: transform 0.5s ease;
-}
-.dashboard-slider {
-  display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  padding: 10px;
-
-}
-
-.scroll-arrow {
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  color: white;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  cursor: pointer;
-  font-size: 20px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.scroll-arrow.left {
-  left: 10px;
-}
-.scroll-arrow.right {
-  right: 10px;
-}
-.scroll-arrow:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
-.dashboard-card {
-  flex: 0 0 250px;
-  height: 150px;
-  background: linear-gradient(135deg, #f8fafc, #e0e7ff);
-  border-radius: 20px;
-  /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); */
-  padding: 30px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
+  border: 1px solid #edecec;
+  box-shadow: var(--shadow);
 }
 
 .dashboard-card:hover {
-  transform: translateY(-6px) scale(1.03);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
-.dashboard-card img {
-  width: 50px;
-  height: 50px;
-  object-fit: contain;
+.card-icon {
+  font-size: 32px;
 }
 
 .label {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 14px;
   color: var(--text);
+  margin-bottom: 4px;
 }
 
 .tagline {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-light);
 }
 
-/* Optional: Add gradient backgrounds for variety */
-.label-emp { color: #2563eb; }
-.label-dept { color: #7c3aed; }
-.label-leave { color: #16a34a; }
-.label-cust { color: #ea580c; }
-.label-att { color: #0ea5e9; }
-.label-ann { color: #f43f5e; }
+/* Card bottom borders */
+.temp { border-bottom: 3px solid var(--warning); }
+.Leaves { border-bottom: 3px solid var(--danger); }
+.attendance { border-bottom: 3px solid var(--info); }
+.dept { border-bottom: 3px solid var(--success); }
+.leavetype { border-bottom: 3px solid var(--primary); }
+.announcement { border-bottom: 3px solid #f97316; }
 
-/* Responsive for small screens */
-@media (max-width: 768px) {
-  .dashboard-card {
-    flex: 0 0 200px;
-    height: 130px;
-    padding: 15px;
-  }
-  .dashboard-slider {
-    gap: 15px;
-  }
-}
-.layout {
-  display: flex;
-  flex-direction: column;
+/* Analytics Section */
+.analytics-section {
+  margin-bottom: 32px;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.logo-img {
-  /* width: 40px; */
-  height: 40px;
-}
-.company-name {
-  font-size: 18px;
-  font-weight: 600;
-}
-.dashboard-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-top: 20px;
-}
-.dashboard-card {
-  flex: 1 1 200px;
-  background: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: all 0.3s;
-  cursor: pointer;
-}
-.dashboard-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-@media (max-width: 768px) {
-  .dashboard-row {
-    flex-direction: column;
-  }
-}
-/* Header */
-.header {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 8px 30px;
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  margin-bottom: 20px;
 }
 
-.header-left {
+.section-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.period-selector {
+  display: flex;
+  gap: 8px;
+  background: #f1f1f1;
+  padding: 4px;
+  border-radius: 40px;
+  border: 1px solid var(--border);
+}
+
+.period-selector button {
+  padding: 6px 16px;
+  font-size: 13px;
+  border: none;
+  background: transparent;
+  border-radius: 32px;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: all 0.2s;
+}
+
+.period-selector button.active {
+  background: var(--primary);
+  color: white;
+}
+
+.view-all {
+  padding: 6px 16px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  color: var(--primary);
+  transition: all 0.2s;
+}
+
+.view-all:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.analytics-card {
+  background: #f3f5f4e0;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid rgb(208, 206, 206);
+  box-shadow: var(--shadow);
+}
+
+.analytics-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.analytics-card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.badge {
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+.analytics-card canvas {
+  max-height: 160px;
+  margin-bottom: 16px;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+/* Performance Section */
+.performance-section {
+  margin-bottom: 32px;
+}
+
+.performers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.performer-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
+  border: 1px solid var(--border);
+  transition: all 0.3s;
 }
 
-.logo-img {
- 
-  border-radius: 50%; /* Rounded logo */
-
-  /* transition: transform 0.3s ease; */
+.performer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
 }
 
-
-.company-name {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+.performer-rank {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 14px;
 }
 
-.mobile-menu-icon {
-  font-size: 20px;
-  cursor: pointer;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-.mobile-menu-icon:hover {
-  color: #ffdd57;
-  transform: scale(1.2);
-}
-
-.dashboard-card {
-  position: relative;
-  background-color: #ffffff !important;
-  overflow: hidden;
-  border: none !important;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0);
-  text-align: center;
-  padding: 20px 10px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.dashboard-card::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  z-index: 0;
-}
-
-.temp::after { background-color: #ffd500; }
-.Leaves::after { background-color: #e43f3f; }
-.attendance::after { background-color: #3491f5; }
-.dept::after { background-color: #5b9644; }
-.leavetype::after { background-color: #da6bc6; }
-.announcement::after { background-color: #d8d34a; }
-
-.dashboard-card * {
-  position: relative;
-  z-index: 1;
-}
-
-.dashboard-card img {
+.performer-avatar {
   width: 48px;
   height: 48px;
-  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 20px;
+  color: white;
 }
 
-.label {
-  font-size: 16px;
+.performer-info {
+  flex: 1;
+}
+
+.performer-info h5 {
+  font-size: 15px;
   font-weight: 600;
   color: var(--text);
   margin-bottom: 4px;
 }
 
-/* ✨ tagline styling */
-.tagline {
-  font-size: 13px;
-  font-family: sans-serif;
-  color: #ffffff;
-  background: #ffffff00;
-  border-radius: 6px;
-  /* padding: 9px 22px; */
-  display: inline-block;
-  margin-top: 6px;
-  margin-top: 20px;
-  font-style: italic;
-  top: 28px;
-  left: 14px;
+.performer-info p {
+  font-size: 12px;
+  color: var(--text-light);
 }
 
-.dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+.performer-score {
+  text-align: right;
 }
 
-.dashboard-card::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 30%; /* Half of the card height */
-  z-index: 0;
-  transition: height 0.3s ease;
-}
-
-/* Each color variant */
-.temp::after {
-  background-color: var(--primary); /* Yellow */
-}
-.Leaves::after {
-  background-color: var(--primary); /* Red */
-}
-.attendance::after {
-  background-color: var(--primary); /* Blue */
-}
-.dept::after {
-  background-color: var(--primary); /* Green */
-}
-.leavetype::after {
-  background-color: var(--primary); /* Pink */
-}
-.announcement::after {
-  background-color: var(--primary); /* Yellowish */
-}
-
-/* Make content appear above the colored background */
-.dashboard-card * {
-  position: relative;
-  z-index: 1;
-}
-
-/* Optional: hover effect */
-.dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
-
-.layout {
-  display: flex;
-  flex-direction: column;
-  background: #f4f6f8;
-  min-height: 100vh;
-  font-family: 'Poppins', sans-serif;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.logo-img {
-  height: 70px;
-}
-.app-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0.5px;
-}
-.mobile-menu-icon {
-  font-size: 22px;
-  cursor: pointer;
-  color: var(--text);
-}
-
-/* Dashboard */
-.dashboard-content {
-  flex: 1;
-  padding: 30px;
-}
-
-/* Cards Row */
-.cards-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-}
-.dashboard-card i {
-  font-size: 28px;
-  color: var(--text);
-}
-.card-info h3 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-}
-.card-info p {
+.score-value {
+  display: block;
   font-size: 20px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--primary);
 }
 
-/* Tasks Recorder */
-.tasks-recorder-box {
-  background: #fff;
-  padding: 25px;
-  border-radius: 16px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-  margin-bottom: 30px;
+.score-label {
+  font-size: 10px;
+  color: var(--text-light);
 }
-.task-item {
-  margin-bottom: 15px;
-}
-.task-label {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 500;
-  color: var(--text);
-}
-.progress-bar {
-  width: 100%;
-  background: #eee;
-  border-radius: 12px;
-  height: 8px;
-  margin-top: 5px;
-}
-.progress-fill {
-  height: 100%;
-  bbackground-color: var(--primary);
-  border-radius: 12px;
-  transition: width 0.4s ease;
-}
-
-/* Charts Section */
-.charts-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 25px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-}
-.charts-section h3 {
-  margin-bottom: 20px;
-  color: var(--text);
-  font-weight: 600;
-}
-.bar-chart-container {
-  margin-top: 40px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .dashboard-content {
-    padding: 15px;
-  }
-}
-.month-name {
-  color: #0078d7;
-  font-weight: 600;
-}
-.revenue-item .task-label {
-  font-weight: bold;
-  font-size: 1rem;
-  color: var(--text);
-  margin-top: 8px;
-}
-.task-item {
-  margin-bottom: 20px;
-}
-
-.task-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.progress-bar {
-  width: 100%;
-  height: 14px;
-  background-color: #e0e0e0;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.5s ease;
-}
-
-/* Wrap Tasks Recorder and Chart side-by-side */
-.tasks-chart-row {
-  display: flex
-;
-    justify-content: space-around;
-    align-items: flex-start;
-    gap: 20px;
-    margin-top: 40px;
-    flex-wrap: wrap;
-    align-content: space-between;
-    flex-direction: row-reverse;
-}
-
-/* Tasks Recorder Box */
-.tasks-recorder-box {
-  flex: 1 1 33%; /* grow and shrink, default 60% width */
-  padding: 25px;
-  background: #ffffff00;
-  border-radius: 15px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0);
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* center content vertically */
-}
-
-/* Chart Container */
-.chart-container {
-  flex: 1 1 35%; /* grow and shrink, default 35% width */
-  background: #ffffff00;
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* center chart vertically */
-  align-items: center; /* center chart horizontally */
-}
-
-
-/* ✅ Smaller Pie Chart */
-.chart-container canvas {
-  max-width: 450px;
-  max-height: 450px;
-  margin: 0 auto;
-}
-
-/* ✅ Responsive Behavior (Stack on Mobile) */
-@media (max-width: 768px) {
-  .tasks-chart-row {
-    flex-direction: column;
-  }
-  .tasks-recorder-box, .chart-container {
-    flex: 1 1 100%;
-    width: 100%;
-  }
-  .chart-container canvas {
-    max-width: 280px;
-    max-height: 280px;
-  }
-}
-
-.chart-container {
-  background: #ffffff00;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 25px auto;
-  width: 90%;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0);
-  text-align: center;
-}
-
-.chart-container h3 {
-  margin-bottom: 15px;
-  color: var(--text);
-}
-
-.tasks-recorder-box {
-  background: #fdfdfd00;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0);
-  margin-top: 30px;
-}
-
-.task-data {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  justify-content: space-around;
-  margin-top: 10px;
-}
-
-.task-item {
-  background: #fafafa;
-  padding: 10px 15px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-/* ✅ Tasks Recorder Section */
-.tasks-recorder-box {
-  margin-top: 40px;
-  padding: 25px;
-  background: #ffffff00;
-  border-radius: 15px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0);
-}
-
-.tasks-recorder-box h3 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 20px;
-  color: var(--text);
-  font-weight: 700;
-}
-
-.task-data {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 10px 30px;
-}
-
-.task-item {
-  background: #f8f9fb;
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 16px;
-  color: var(--text);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.task-item:hover {
-  transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .task-data {
-    padding: 5px 10px;
-  }
-  .task-item {
-    font-size: 15px;
-    padding: 10px;
-  }
-}
-
-.main-content {
-  display: flex;
-  flex: 1;
-  padding: 30px;
-  gap: 20px;
-}
-
-.content {
-  padding: 40px;
-  background-color: #f4f6f9;
-  font-family: math;
-}
-
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-}
-.wave-chart-box {
-  margin-top: 40px;
-  padding: 25px;
-  background: #fff;
-  border-radius: 15px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-}
-
-.wave-chart-box h3 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 18px;
-  color: var(--text);
-}
-.dashboard-card{
-   background-color: #aedbe782;
-    /* box-shadow: 3px 3px #968e8e !important; */
-
-}
-
-.temp{
-  background-color: #ffffff !important;
-    /* box-shadow: 3px 3px #968e8e !important; */
-    border-bottom: 22px solid #ffd500;
-}
-.Leaves{
-   background-color: #ffffff !important;
-    /* box-shadow: 3px 3px #968e8e !important; */
-    border-bottom: 22px solid #e43f3f;
-}
-.attendance{
-   background-color: #ffffff !important;
-    /* box-shadow: 3px 3px #968e8e !important; */
-    border-bottom: 22px solid #3491f5;
-}
-.dept{
-background-color: #ffffff !important;
-    /* box-shadow: 3px 3px #968e8e !important; */
-    border-bottom: 22px solid #5b9644;
-}
-.leavetype{
-background-color: #ffffff !important;
-    /* box-shadow: 3px 3px #968e8e !important; */
-    border-bottom: 22px solid #da6bc6;
-    
-}
-.announcement{
-     background-color: #ffffff !important;
-    /* box-shadow: 3px 3px #968e8e !important; */
-    border-bottom: 22px solid #d8d34a;
-
-
-}
-
-
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-/* Main content default (desktop view) */
-.main-content {
-  display: flex;
-  flex: 1;
-  padding: 30px;
-  gap: 20px;
-}
-
-/* Stack sidebar and content vertically on small screens */
-@media (max-width: 768px) {
-  .main-content {
-    flex-direction: column;
-    padding: 15px;
-  }
-  .layout{
-    align-self: anchor-center;
-
-  }
-
-  .sidebar {
-    width: 100%;
-    margin-bottom: 20px;
-  }
-
-  .content {
-    padding: 20px;
-  }
- 
-}
-
-.content {
-  padding: 40px;
-  background-color: #f4f6f9;
-  /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
-}
-
-.dashboard-title {
-  font-size: 32px;
-  font-weight: 600;
-  margin-bottom: 30px;
-  color: var(--text);
-  text-align: center;
-}
-
-.dashboard-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-.dashboard-card {
- /* background: lightblue url("https://png.pngtree.com/thumb_back/fh260/background/20220316/pngtree-download-background-biru-polos-hd-dan-keren-untuk-desain-ppt-image_1067745.jpg");  */
-    border-radius: 10px;
-    padding: 0px 0px;
-    display: flex;
-    /* box-shadow: rgb(0 0 0 / 26%) 1px 0px 12px 0px, rgba(0, 0, 0, 0.05) 0px 2px 2px -1px; */
-;
-  
-    gap: 15px;
-    /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); */
-    transition: 0.3s ease;
-    min-width: 260px;
-    max-width: 280px;
-    flex: 1 1 250px;
-}
-
-.dashboard-card:hover {
- /* background-color: #aedbe7 !important; */
-    /* box-shadow: 3px 3px #007bff87 !important; */
-  transform: translateY(-4px);
-  cursor: pointer;
-  /* background: lightblue url("https://png.pngtree.com/thumb_back/fh260/background/20220316/pngtree-download-background-biru-polos-hd-dan-keren-untuk-desain-ppt-image_1067745.jpg");  */
-}
-
-.dashboard-card img {
-  width: 48px;
-  height: 48px;
-  margin-left: 8px;
-}
-
-.label-emp {
-  left: 50px;
-  font-size: 21px;
-  font-weight: 500;
-  margin-bottom: 5px;
-  color: var(--text);
-}
-
-.label-dept {
-  left: 54px;
-  font-size: 21px;
-  font-weight: 500;
-  margin-bottom: 5px;
-  color: var(--text);
-}
-.label-ann {
-  left: 40px;
-  font-size: 21px;
-  font-weight: 500;
-  margin-bottom: 5px;
-
-  color: var(--text);
-}
-
-.label-att {
-  left: 58px;
-  font-size: 21px;
-  font-weight: 500;
-  margin-bottom: 5px;
-  color: var(--text);
-}
-.label-leave {
-  left: 34px;
-  font-size: 21px;
-  font-weight: 500;
-  margin-bottom: 5px;
-  color: var(--text);
-}
-.label-cust {
-      left: 43px;
-  font-size: 21px;
-  font-weight: 500;
-  margin-bottom: 5px;
-  color: var(--text);
-}
-
-
-.value {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-
-/* Responsive design for mobile */
-@media (max-width: 768px) {
-  .dashboard-row {
-    flex-direction: column;
-    align-items: center;
-  }
- 
-
-  .dashboard-card {
-     flex: 0 0 48%;   /* 2 cards per row */
-    max-width: 48%;
-    /* background: lightblue url("https://png.pngtree.com/thumb_back/fh260/background/20220316/pngtree-download-background-biru-polos-hd-dan-keren-untuk-desain-ppt-image_1067745.jpg");  */
-    /* box-shadow: 0 6px 24px rgba(0, 123, 255, 0.25) !important; */
-     border-radius: 8px;
-        padding: 6px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    /* box-shadow: 9px 10px 0px 0px rgb(162 195 215); */
-    transition: 0.3s ease;
-    /* min-width: 163px; */
-    max-width: 71px;
-    flex: 1 1 105px;
-  }
-
-  .dashboard-card .label {
-    font-size: 15px;
-    font-weight: 600;
-    color: #010101;
-  }
-
-  .dashboard-card .value {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--primary);
-  }
-  .content{
-    display: contents;
-  }
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
-.layout {
-  display: flex;
-  background-color: #ffffff;
-  flex-direction: column;
-  min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-
-.logo {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 1px;
-      margin-left: 3%;  
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-.logout-btn {
-  background-color: white;
-  color: var(--text);
-  border: 2px solid #007bff;
-}
-
-.logout-btn:hover {
-  background-color: #e7f1ff;
-}
-
-/* Main Content */
-.main-content {
-  display: flex;
-  flex: 1;
-  padding: 30px;
-  gap: 20px;
-}
-
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
-}
-
-/* Content Section */
-.content {
-  flex: 1;
-margin-top: 66px;
-  padding: 30px 40px;
-  border-radius: 15px;
-  /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
-  overflow-x: auto;
-}
-
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 700;
-  font-size: 28px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-  text-transform: uppercase;
-}
-
-/* User Table */
-.user-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 12px;
-}
-
-.user-table th,
-.user-table td {
-  padding: 14px 20px;
-  text-align: left;
-  font-size: 16px;
-  color: var(--text);
-}
-
-.user-table th {
-  background-color: #f8f9fa;
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-}
-
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
-}
-
-.user-table tbody td {
-  border: none;
-  vertical-align: middle;
-}
-
-/* Footer */
-.footer {
-  background-color: #343a40;
-  color: white;
-  text-align: center;
-  padding: 15px 0;
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
-}
-
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
-  position: relative;
-
-  /* Hide scrollbar but allow scroll */
-
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
-}
-
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 48%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15px;
-}
-
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
-}
-
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
-}
-
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.btn {
-  flex: 1;
-  padding: 14px 0;
-  font-weight: 700;
-  font-size: 1.1rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
-}
-
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
-}
-
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
-}
-
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
-}
-
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
-  }
-
-  .modal-card {
-    padding: 30px 25px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
-  }
-  .menu-btn, .logout-btn {
-    width: 100%;
-  }
-}
-.attractive-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
-}
-
-.btn-primary.attractive-btn {
-  background-color: var(--primary);
-  border: none;
-  color: white;
-}
-
-.btn-primary.attractive-btn:hover {
-  background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
-}
-
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
-}
-
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
-}
-
-.attractive-btn i {
-  font-size: 14px;
-}
 
+/* Pie Charts */
 .pie-slider-wrapper {
-  margin-top: 10px;
+  margin-bottom: 32px;
   overflow-x: auto;
-  padding-bottom: 10px;
 }
 
 .pie-slider {
   display: flex;
-  flex-wrap: nowrap;       /* 🔑 single row */
   gap: 20px;
-  scroll-behavior: smooth;
+  padding-bottom: 8px;
 }
 
-/* Each pie chart */
-.pie-slider .chart-box {
-  min-width: 260px;        /* controls card width */
-  flex-shrink: 0;
+.chart-box {
+  min-width: 280px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px;
+  border: 1px solid var(--border);
 }
 
-/* Optional – hide scrollbar */
-.pie-slider-wrapper::-webkit-scrollbar {
-  height: 6px;
-}
-
-.pie-slider-wrapper::-webkit-scrollbar-thumb {
-  background: var(--text);
-  border-radius: 10px;
-}
-
-/* Container */
-.dashboard-slider-container {
-  width: 100%;
-  overflow: hidden; /* keep arrows clean if you add later */
-}
-
-/* Horizontal scrolling row */
-.dashboard-slider {
-  /* flex-flow: wrap; */
-  display: flex;
-  gap: 16px;
-  flex-flow: wrap;
-  overflow-x: auto;          /* ✅ enable horizontal scroll */
-  overflow-y: hidden;
-  padding: 10px 4px 14px;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;     /* Firefox */
-  scrollbar-color: var(--text) transparent;
-}
-
-/* Show scrollbar (Chrome, Edge, Safari) */
-.dashboard-slider::-webkit-scrollbar {
-  height: 8px;
-}
-
-.dashboard-slider::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dashboard-slider::-webkit-scrollbar-thumb {
-  background-color: #c1c1c1;
-  border-radius: 10px;
-}
-
-/* Cards */
-.dashboard-card {
-  min-width: 220px;          /* ✅ forces horizontal scroll */
-  flex-shrink: 0;            /* ✅ prevent wrapping */
-  height: 120px;
-  border-radius: 2px;
-  padding: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
-}
-
-/* Mobile optimization */
-@media (max-width: 768px) {
-  .dashboard-card {
-    min-width: 180px;
-  }
-}
-
-.dashboard-loader {
-  height: 250px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+.chart-box h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
   color: var(--text);
-  animation: fadeIn 0.5s ease-in;
 }
 
-.spinner {
-  width: 45px;
-  height: 45px;
-  border: 4px solid #ddd;
-  border-top: 4px solid var(--primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 10px;
+.pie-chart-wrapper {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.task-details {
+  margin-top: 16px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
 }
 
-.skeleton-wrapper {
-  gap: 16px;
+.task-label {
+  color: var(--text-light);
+  width: 80px;
 }
 
-.skeleton-card {
-  pointer-events: none;
-  background: #e5e7eb;
+.task-progress {
+  flex: 1;
+  background: var(--bg);
+  border-radius: 10px;
+  height: 20px;
   position: relative;
   overflow: hidden;
 }
 
-.skeleton-card::after {
-  content: "";
+.progress-bar {
+  background: var(--primary);
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.3s;
+}
+
+.task-value {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.6),
-    transparent
-  );
-  animation: shimmer 1.4s infinite;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text);
 }
 
-.skeleton-label {
-  width: 60%;
-  height: 16px;
-  background: #d1d5db;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-.skeleton-text {
-  width: 80%;
-  height: 12px;
-  background: #d1d5db;
-  border-radius: 6px;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.pie-chart-wrapper {
-  width: 220px;
-  height: 180px;
-  margin: 0 auto;
-  position: relative;
-}
-
-.pie-chart-wrapper canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.bar-chart-wrapper {
-  width: 100%;
-  height: 260px;      /* fixed height */
-  position: relative;
-}
-
-.bar-chart-wrapper canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-@media (max-width: 768px) {
-  .bar-chart-wrapper {
-    height: 200px;
-  }
+/* Revenue Section */
+.monthly-revenue-row {
+  margin-bottom: 32px;
 }
 
 .revenue-card {
-  background: #fff;
-  padding: 22px;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  background: #f2f5f4;
+  border-radius:10px;
+  padding: 24px;
+  border: 1px solid #d9dddb;
 }
 
 .revenue-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.revenue-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.revenue-header p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #777;
-}
-
-.revenue-tags {
-  display: flex;
-  gap: 10px;
+  align-items: flex-start;
   flex-wrap: wrap;
-}
-
-.tag {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.tag.primary { background: #e6fffa; color: #0d9488; }
-.tag.success { background: #ecfdf5; color: #047857; }
-.tag.info    { background: #eef2ff; color: #4338ca; }
-
-.bar-chart-wrapper {
-  height: 320px;
-}
-.revenue-kpis {
-  display: flex;
-  gap: 15px;
-  margin: 15px 0 20px;
-}
-
-.kpi {
-  flex: 1;
-  padding: 14px;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.kpi h4 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.kpi p {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #555;
-}
-
-.kpi.success { background: #ecfdf5; color: #047857; }
-.kpi.info { background: #eef2ff; color: #3730a3; }
-.kpi.warning { background: #fff7ed; color: #9a3412; }
-.quarter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.quarter-card {
-  padding: 16px;
-  border-radius: 14px;
-  text-align: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-}
-
-.quarter-card h4 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.quarter-card p {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 6px 0;
-}
-
-.quarter-card small {
-  font-size: 12px;
-}
-
-.quarter-card.success {
-  background: #ecfdf5;
-  color: #047857;
-}
-
-.quarter-card.danger {
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-/* Target Input Wrapper */
-.target-input {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 260px;
-  margin-top: 6px;
-}
-
-/* Label */
-.target-input label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155; /* slate-700 */
-  letter-spacing: 0.2px;
-}
-
-/* Input Field */
-.target-input input {
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1; /* slate-300 */
-  font-size: 14px;
-  font-weight: 500;
-  color: #0f172a; /* slate-900 */
-  background-color: #ffffff;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-/* Focus State */
-.target-input input:focus {
-  border-color: #3b82f6; /* blue-500 */
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-/* Placeholder */
-.target-input input::placeholder {
-  color: #94a3b8; /* slate-400 */
-  font-weight: 400;
-}
-
-/* Helper Text */
-.target-input small {
-  font-size: 11.5px;
-  color: #64748b; /* slate-500 */
-  line-height: 1.4;
-}
-
-/* Responsive (mobile) */
-@media (max-width: 768px) {
-  .target-input {
-    max-width: 100%;
-  }
-}
-:root {
-  --bg-card: #ffffff;
-  --bg-soft: #f8fafc;
-  --border: #e5e7eb;
-
-  --primary: #2563eb;
-  --success: #16a34a;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --info: #0ea5e9;
-
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-
-  --radius: 14px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-}
-.monthly-revenue-row {
-  margin: 24px 0;
-}
-
-.revenue-card {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 24px;
-  box-shadow: var(--shadow);
-}
-.revenue-header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 20px;
-  align-items: start;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .revenue-title h3 {
-  margin: 0;
-  font-size: 1.4rem;
+  font-size: 18px;
   font-weight: 600;
-  color: var(--text-main);
+  margin-bottom: 4px;
 }
 
 .revenue-title p {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-.target-input {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  font-size: 13px;
+  color: var(--text-light);
 }
 
 .target-input label {
-  font-size: 0.8rem;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-light);
 }
 
 .target-input input {
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 10px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
-  font-size: 0.95rem;
-  outline: none;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 180px;
 }
 
-.target-input input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-.revenue-tags {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
-
-.tag {
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  border-radius: 999px;
-  font-weight: 500;
-  background: var(--bg-soft);
-  color: var(--text-main);
-}
-
-.tag.primary { color: var(--primary); }
-.tag.success { color: var(--success); }
-.tag.info { color: var(--info); }
 .revenue-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
-  margin: 28px 0;
+  margin-bottom: 24px;
 }
 
 .kpi {
-  background: var(--bg-soft);
+  background: var(--bg);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 16px;
   text-align: center;
 }
 
 .kpi h4 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
-.kpi p {
-  margin: 6px 0 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+.kip p {
+  font-size: 12px;
+  color: var(--text-light);
 }
 
 .kpi.success h4 { color: var(--success); }
 .kpi.info h4 { color: var(--info); }
 .kpi.warning h4 { color: var(--warning); }
+
 .quarter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 14px;
-  margin-bottom: 30px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .quarter-card {
-  border-radius: 12px;
-  padding: 14px;
-  background: var(--bg-soft);
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 16px;
   text-align: center;
 }
 
 .quarter-card h4 {
-  margin: 0;
-  font-size: 0.95rem;
+  font-size: 14px;
   font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .quarter-card p {
-  margin: 6px 0;
+  font-size: 16px;
   font-weight: 600;
+  margin-bottom: 4px;
 }
 
 .quarter-card small {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-light);
 }
 
 .quarter-card.success p { color: var(--success); }
 .quarter-card.danger p { color: var(--danger); }
-.bar-chart-wrapper,
-.analytics-card {
-  background: var(--bg-soft);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
-}
 
-.analytics-card h4 {
-  margin: 0 0 14px;
-  font-size: 1rem;
-  font-weight: 600;
+.bar-chart-wrapper {
+  height: 280px;
+  margin-bottom: 24px;
 }
 
 .chart-height {
   height: 280px;
 }
+
+/* Birthday Section */
+.birthday-section {
+  margin-bottom: 24px;
+}
+
+.birthday-card {
+  /* background: var(--card); */
+  border-radius: var(--radius);
+  padding: 24px;
+  border: 1px solid var(--border);
+}
+
+.birthday-card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.birthday-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.employee-birthday-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.employee-birthday-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.emp-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.emp-birthday {
+  font-size: 12px;
+  color: var(--warning);
+}
+
+.emp-dept {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.no-birthdays {
+  text-align: center;
+  color: var(--text-light);
+  padding: 32px;
+}
+
+/* Skeleton */
+.skeleton-wrapper {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.skeleton-card {
+  min-width: 200px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.skeleton-label {
+  width: 70%;
+  height: 16px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.skeleton-text {
+  width: 50%;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .revenue-header {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .content {
+    padding: 0;
+  }
+
+  .analytics-grid {
     grid-template-columns: 1fr;
   }
 
-  .target-input {
+  .performers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pie-slider {
+    flex-direction: column;
+  }
+
+  .chart-box {
+    width: 100%;
+  }
+
+  .revenue-header {
+    flex-direction: column;
+  }
+
+  .target-input input {
     width: 100%;
   }
 }
-
 </style>

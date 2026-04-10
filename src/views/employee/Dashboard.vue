@@ -3,58 +3,7 @@
     <!-- Focus Overlay for highlighting SBU button -->
     <div v-if="showFocusOverlay" class="focus-overlay" @click="dismissFocusOverlay"></div>
 
-    <!-- Modern Header -->
-    <header class="modern-header">
-      <div class="header-left">
-        <div class="mobile-menu-icon" @click="toggleSidebar">
-          <i class="fas fa-bars"></i>
-        </div>
-        <div class="logo-section">
-          <img src="https://img.icons8.com/fluency/48/company.png" alt="Logo" class="logo-img" />
-          <span class="logo-text">Arc Enterprises</span>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <div class="user-greeting" v-if="currentUser.name">
-          <i class="fas fa-user-circle"></i>
-          <span>Hi, {{ formatFirstName(currentUser.name) }}</span>
-        </div>
-        <div class="notification-bell-wrapper" @click="toggleNotificationPanel">
-          <i class="fas fa-bell"></i>
-          <span v-if="unreadMentionsCount > 0" class="badge">{{ unreadMentionsCount }}</span>
-          <div v-if="showNotificationPanel" class="notification-dropdown">
-            <div v-for="notif in recentNotifications" :key="notif.id" class="notification-item">
-              <i class="fas fa-at"></i>
-              <span>{{ notif.message }}</span>
-              <small>{{ formatTimeAgo(notif.created_at) }}</small>
-            </div>
-            <div v-if="recentNotifications.length === 0" class="no-notif">No new mentions</div>
-          </div>
-        </div>
-        <div class="download-app">
-          <button @click="toggleDownloadMenu" class="download-btn">
-            <i class="fas fa-download"></i> App
-          </button>
-          <div v-if="showDownloadMenu" class="download-menu">
-            <a href="#" @click.prevent="downloadApk">Android APK</a>
-            <a href="#" @click.prevent="downloadIos">iOS App</a>
-          </div>
-        </div>
-        <button 
-          ref="googleFormBtn"
-          @click="openGoogleForm" 
-          class="google-form-btn"
-          :class="{ 'btn-glowing': showFocusOverlay }"
-        >
-          <i class="fas fa-file-alt"></i> <span>SBU Form</span>
-          <span class="notification-badge" v-if="showFocusOverlay">New</span>
-        </button>
-        <button @click="logout" class="logout-btn-modern">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
-      </div>
-    </header>
+  
 
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
@@ -131,24 +80,7 @@
             </div>
           </div>
 
-          <div 
-            ref="googleFormCard"
-            class="dashboard-card google-form-card" 
-            :class="{ 'card-glowing': showFocusOverlay }"
-            @click="openGoogleForm"
-          >
-            <div class="card-icon google-form-icon">
-              <i class="fab fa-google"></i>
-            </div>
-            <div class="card-info">
-              <p class="label">SBU Discussion</p>
-              <span class="progress-text">Click to submit your feedback</span>
-            </div>
-            <div class="arrow-icon">
-              <i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="pulse-ring" v-if="showFocusOverlay"></div>
-          </div>
+          
         </div>
 
         <!-- Split Section: Chart & Birthday Celebrations -->
@@ -242,7 +174,7 @@
           <div class="recent-leaves-card">
             <div class="card-header">
               <h3><i class="fas fa-umbrella-beach"></i> Recent Leave Applications</h3>
-              <button class="view-all-btn" @click="goTo('employee/leave-applications')">View All</button>
+              <button class="view-all-btn" @click="goTo('employee/leaveapplicationsemp')">View All</button>
             </div>
             <div class="leaves-list">
               <div v-for="leave in recentLeaves" :key="leave.id" class="leave-item">
@@ -1283,7 +1215,7 @@ export default {
 }
 
 .birthday-list::-webkit-scrollbar-thumb {
-  background: #f59e0b;
+  /* background: #f59e0b; */
   border-radius: 4px;
 }
 
@@ -1392,7 +1324,7 @@ export default {
 }
 
 .wish-button:hover {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  /* background: linear-gradient(135deg, #f59e0b, #d97706); */
   color: white;
   transform: scale(1.05);
 }

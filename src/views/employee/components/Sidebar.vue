@@ -70,13 +70,13 @@
                 <i class="fas fa-list"></i> <span>All Leaves</span>
               </li>
               <li @click="goTo('employee/approvedleavesemp')">
-                <i class="fas fa-check-circle"></i> <span>Approved Leaves</span>
+                <i class="fas fa-check-circle"></i> <span>Approved</span>
               </li>
               <li @click="goTo('employee/rejectedleavesemp')">
-                <i class="fas fa-times-circle"></i> <span>Rejected Leaves</span>
+                <i class="fas fa-times-circle"></i> <span>Rejected</span>
               </li>
               <li @click="goTo('employee/pendingleaves')">
-                <i class="fas fa-hourglass-half"></i><span> Pending Leaves</span>
+                <i class="fas fa-hourglass-half"></i><span> Pending</span>
               </li>
             </ul>
           </li>
@@ -451,8 +451,8 @@ async mounted() {
 /* Sidebar */
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, var(--primary), #020617);
-  color: #e5e7eb;
+  /* background: linear-gradient(180deg, var(--primary), #020617); */
+  color: var(--text);
   display: flex;
   flex-direction: column;
       border-radius: 12px;
@@ -560,7 +560,7 @@ async mounted() {
 
 /* Active / Danger */
 .danger-bg {
-  color: #fca5a5;
+  color: #aa0000;
 }
 .danger-bg:hover {
   background: rgba(248, 113, 113, 0.15);

@@ -1081,18 +1081,19 @@ calculatePerformance() {
    min-height: 100vh; 
    position: sticky;
   background: #f4f6fb;
+  border-radius: 15px;
 }
 
 /* Sidebar */
 .sidebar { 
   width: 260px;
-  background: linear-gradient(180deg, var(--primary), #020617);
-  color: #e5e7eb;
+  /* background: linear-gradient(180deg, var(--primary), #020617); */
+  color: #ffffff;
   display: flex;
   height: 100%;
   flex-direction: column;
   transition: width 0.35s ease;
-  box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  /* box-shadow: 4px 0 12px rgba(0,0,0,0.15); */
   position: relative;
 }
 
@@ -1167,6 +1168,7 @@ calculatePerformance() {
   gap: 14px;
   background-color: #02061700!important;
   font-size: 14px;
+  color: var(--text);
   cursor: pointer;
   transition: background 0.25s ease, padding 0.3s ease;
   border-radius: 8px;
@@ -1244,7 +1246,7 @@ calculatePerformance() {
   height: 30px;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  /* box-shadow: 0 4px 10px rgba(0,0,0,0.25); */
 }
 .sidebar.collapsed .sidebar-menu li span{
   display: none;
@@ -1352,7 +1354,7 @@ calculatePerformance() {
   align-items: center;
   padding: 0;
   z-index: 1100;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  /* box-shadow: 0 4px 10px rgba(0,0,0,0.25); */
 }
 
 .sidebar-toggle span {
@@ -1378,7 +1380,7 @@ calculatePerformance() {
 
 .sidebar { 
   width: 260px;
-  background: linear-gradient(180deg, var(--primary), #020617);
+  /* background: linear-gradient(180deg, var(--primary), #020617); */
   color: #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -1389,16 +1391,12 @@ border-radius: 12px;
   height: 86vh;
 
   transition: width 0.35s ease;
-  box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  /* box-shadow: 4px 0 12px rgba(0,0,0,0.15); */
   z-index: 100;
 }
 
 .sidebar {
   transition: width 0.35s ease, box-shadow 0.3s ease;
-}
-
-.sidebar:not(.collapsed) {
-  box-shadow: 8px 0 18px rgba(0,0,0,0.25);
 }
 
 </style>

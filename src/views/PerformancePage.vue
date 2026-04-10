@@ -564,7 +564,6 @@ for (let r of this.rows) {
 </script>
 <style scoped>
 .page {
-  margin-top: 72px;
   padding: 20px;
   background: #f5f7fb;
 }

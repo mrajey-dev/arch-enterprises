@@ -10737,7 +10737,7 @@ textarea {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
+  /* background: #ffffff; */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text);
 }
@@ -10840,7 +10840,7 @@ textarea {
 /* Content Section */
 .content {
   flex: 1;
-  margin-top: 66px;
+     
   background-color: #a5d5cf33;
   padding: 30px 40px;
   border-radius: 15px;

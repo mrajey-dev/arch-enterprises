@@ -1,178 +1,144 @@
 <template>
   <div class="layout">
 
-    
-<!-- ⚡ Modal (shows only when showBalanceModal is true) -->
-<transition name="fade">
-  <div
-    v-if="showBalanceModal"
-    class="modal-overlay"
-    @click.self="showBalanceModal = false"
-  >
-    <div class="modal-content">
-      <h2 class="modal-title">Leave Balance</h2>
+    <!-- Leave Balance Modal -->
+    <transition name="modal-fade">
+      <div v-if="showBalanceModal" class="modal-premium" @click.self="showBalanceModal = false">
+        <div class="modal-premium-container small">
+          <div class="modal-premium-header">
+            <div class="modal-icon">
+              <i class="fas fa-chart-pie"></i>
+            </div>
+            <h2>Leave Balance</h2>
+            <button class="modal-close" @click="showBalanceModal = false">×</button>
+          </div>
+          <div class="modal-premium-body">
+            <div class="balance-list">
+              <div v-for="(total, type) in baseAllowances" :key="type" class="balance-item">
+                <div class="balance-info">
+                  <span class="balance-type">{{ beautify(type) }}</span>
+                  <span class="balance-days">
+                    <span class="used">{{ usedLeaves[type] || 0 }}</span> / 
+                    <span class="total">{{ total }}</span>
+                  </span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: getProgressPercentage(type) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-premium-footer">
+            <button class="btn-primary-modern" @click="showBalanceModal = false">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
-    <ul class="balance-list">
-  <li v-for="(total, type) in baseAllowances" :key="type" class="balance-row">
-    <span class="balance-type">{{ beautify(type) }}</span>
-    <span class="balance-days">
-      {{ usedLeaves[type] }} used /
-      {{ total }}
-    </span>
-  </li>
-</ul>
-
-
-
-      <button class="close-btn" @click.self="showBalanceModal = false">
-       <i class="fa fa-close" style="font-size:13px"></i> Close
-      </button>
-    </div>
-  </div>
-</transition>
     <!-- Main Content -->
     <div class="main-content">
-     
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-   
-     <!-- Leave Form -->
-<div class="leave-form-wrapper" v-if="!isMobile || !isSidebarVisible">
- <button class="leave-balance-btn" @click="showBalanceModal = true">
-    Leave&nbsp;Balance
-  </button>
-  <form @submit.prevent="submitForm" class="leave-form">
+      <!-- Leave Form -->
+      <div class="leave-form-wrapper" v-if="!isMobile || !isSidebarVisible">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div>
+              <h1>Leave Application</h1>
+              <p class="subtitle-modern">Submit your leave request</p>
+            </div>
+          </div>
+          <button class="balance-btn" @click="showBalanceModal = true">
+            <i class="fas fa-chart-line"></i> Leave Balance
+          </button>
+        </div>
 
-    <div class="form-grid">
-      <!-- Name -->
-     <div class="form-group">
-  <label for="name">Name</label>
-  <input v-model="form.name" type="text" id="name" required disabled />
-</div>
+        <form @submit.prevent="submitForm" class="premium-form">
+          <div class="form-grid-premium">
+            <div class="form-field">
+              <label><i class="fas fa-user"></i> Name</label>
+              <input v-model="form.name" type="text" disabled class="readonly-field" />
+            </div>
 
+            <div class="form-field">
+              <label><i class="fas fa-building"></i> Department</label>
+              <input v-model="form.department" type="text" disabled class="readonly-field" />
+            </div>
 
-      <!-- Department -->
-      <div class="form-group">
-        <label for="department">Department</label>
-        <input v-model="form.department" type="text" id="department" required disabled />
+            <div class="form-field">
+              <label><i class="fas fa-tag"></i> Leave Type <span class="required">*</span></label>
+              <select v-model="form.leaveType" required>
+                <option disabled value="">Select leave type</option>
+                <option v-for="type in leaveTypes" :key="type.id" :value="type.leave_name">
+                  {{ type.leave_name }}
+                </option>
+                <option value="Half Day">Half Day</option>
+              </select>
+              <p v-if="leaveWarning" class="warning-text">
+                <i class="fas fa-exclamation-triangle"></i> {{ leaveWarning }}
+              </p>
+            </div>
+
+            <div class="form-field" v-if="isHalfDay">
+              <label><i class="fas fa-clock"></i> Time Slot <span class="required">*</span></label>
+              <select v-model="form.timeSlot" required>
+                <option disabled value="">Select time</option>
+                <option value="9:30 AM - 2:30 PM">9:30 AM - 1:30 PM</option>
+                <option value="2:30 PM - 5:30 PM">1:30 PM - 5:30 PM</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label><i class="fas fa-calendar-day"></i> From Date <span class="required">*</span></label>
+              <input v-model="form.fromDate" type="date" :min="today" required />
+            </div>
+
+            <div class="form-field">
+              <label><i class="fas fa-calendar-day"></i> To Date</label>
+              <input v-model="form.toDate" type="date" :min="form.fromDate || today" :disabled="isHalfDay" :required="!isHalfDay" />
+            </div>
+
+            <div class="form-field full-width">
+              <label>
+                <i class="fas fa-comment"></i> Reason
+                <span class="char-counter">{{ form.reason.length }}/250</span>
+                <small v-if="isCasualLeave" class="optional">(optional)</small>
+                <small v-else class="required-text">*</small>
+              </label>
+              <textarea v-model="form.reason" rows="4" maxlength="250" placeholder="Enter reason for leave" :required="!isCasualLeave"></textarea>
+            </div>
+
+            <div class="form-field full-width">
+              <label><i class="fas fa-paperclip"></i> Attach Document <small class="optional">(optional)</small></label>
+              <input type="file" @change="handleFileUpload" class="file-input" />
+            </div>
+          </div>
+
+          <div v-if="submitError" class="error-alert">
+            <i class="fas fa-times-circle"></i> {{ submitError }}
+          </div>
+
+          <div v-if="submitSuccessMsg" class="success-alert">
+            <i class="fas fa-check-circle"></i> {{ submitSuccessMsg }}
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-submit-premium" :disabled="submitLoading">
+              <span v-if="submitLoading">
+                <i class="fas fa-spinner fa-spin"></i> Submitting...
+              </span>
+              <span v-else>
+                <i class="fas fa-paper-plane"></i> Submit Leave Request
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
-
-     
-
-
-      <!-- Leave Type -->
-<div class="form-group">
-  <label for="leaveType">Leave Type</label>
-  <select v-model="form.leaveType" id="leaveType" required>
-    <option disabled value="">Select leave type</option>
-    <p v-if="overlapWarning" class="warning-text">{{ overlapWarning }}</p>
-
-    <option v-for="type in leaveTypes"
-            :key="type.id"
-            :value="type.leave_name">
-      {{ type.leave_name }}
-    </option>
-    <option value="Half Day">Half Day</option>
-  </select>
-
-  <!-- ⚠️ Instant leave warning -->
-  <p v-if="leaveWarning" class="warning-text">{{ leaveWarning }}</p>
-</div>
-
-<!-- ✅ Time Slot (only for Half Day) -->
-<div class="form-group" v-if="isHalfDay">
-  <label for="timeSlot">Time Slot</label>
-  <select v-model="form.timeSlot" id="timeSlot" required>
-    <option disabled value="">Select time</option>
-    <option value="9:30 AM - 2:30 PM">9:30 AM - 1:30 PM</option>
-    <option value="2:30 PM - 5:30 PM">1:30 PM - 5:30 PM</option>
-  </select>
-</div>
-
-<!-- From Date -->
-<div class="form-group">
-  <label for="fromDate">From Date</label>
-  <input
-    v-model="form.fromDate"
-    type="date"
-    id="fromDate"
-    :min="today"
-    required
-  />
-</div>
-
-<!-- To Date (disabled if Half Day) -->
-<div class="form-group">
-  <label for="toDate">To Date</label>
-  <input
-    v-model="form.toDate"
-    type="date"
-    id="toDate"
-    :min="form.fromDate || today"
-    :disabled="isHalfDay"
-    :required="!isHalfDay"
-  />
-</div>
-
-
-  
-    <div class="form-group full-width">
-  <label for="reason">
-    Reason
-    <span class="char-count">{{ form.reason.length }}/250</span>
-    <small v-if="isCasualLeave">(optional)</small>
-    <small v-else class="required">*</small>
-  </label>
-
-  <textarea
-    id="reason"
-    v-model="form.reason"
-    rows="4"
-    maxlength="250"
-    placeholder="Enter reason"
-    :required="!isCasualLeave"
-  ></textarea>
-</div>
-
-
-
-      <!-- File Upload -->
-      <!-- File Upload  ⬅︎ tweak #1: dynamic required -->
-<div class="form-group full-width">
-  <label for="file">
-  Attach Document <small>(optional)</small>
-</label>
-
-<input
-  type="file"
-  id="file"
-  @change="handleFileUpload"
-/>
-
-</div>
-    </div>
-
-    <!-- Overlap Error -->
-   <!-- Validation Errors -->
-<div v-if="submitError" class="error-msg">{{ submitError }}</div>
-
-
-    <!-- Submit Button -->
- <button
-  type="submit"
-  class="submit-button"
-  :disabled="submitLoading"
->
-  <span v-if="submitLoading" class="btn-loader"></span>
-  <span v-else>Submit Leave Request</span>
-</button>
-
-<div v-if="submitSuccessMsg" class="success-msg">{{ submitSuccessMsg }}</div>
-
-  </form>
-</div>
-
-
     </div>
   </div>
 </template>
@@ -184,7 +150,6 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
 
 export default {
@@ -192,995 +157,913 @@ export default {
 
   data() {
     return {
-       leaveWarning: '',
-      submitLoading: false,        // loader for submit button
-submitSuccessMsg: '',        // success message
-
+      leaveWarning: '',
+      submitLoading: false,
+      submitSuccessMsg: '',
       userName: '',
-    userDept: '',
-      /* yearly allowance -------------------------------- */
+      userDept: '',
       baseAllowances: { casual: 7, sick: 10, pl: 10, medical: 10 },
-
-      /* calculated every time --------------------------- */
-      leaveBalance: { casual: 7, sick: 10, pl: 10, medical: 10},
-      usedLeaves:   { casual: 0,  sick: 0,  pl: 0,  medical: 0},
-
-      /* ui / form state --------------------------------- */
+      leaveBalance: { casual: 7, sick: 10, pl: 10, medical: 10 },
+      usedLeaves: { casual: 0, sick: 0, pl: 0, medical: 0 },
       showBalanceModal: false,
-      leaveRequests   : [],
-      submitError     : '',          // ← ONE place for all form errors
-      isMobile        : false,
+      leaveRequests: [],
+      submitError: '',
+      isMobile: false,
       isSidebarVisible: true,
       form: {
-        leaveType : '',
-        name      : '',
+        leaveType: '',
+        name: '',
         department: '',
-        fromDate  : '',
-        toDate    : '',
-        reason    : '',
-        file      : null,
+        fromDate: '',
+        toDate: '',
+        reason: '',
+        file: null,
+        timeSlot: ''
       },
       leaveTypes: [],
       today: new Date().toISOString().split('T')[0],
-
-      /* fixed‑date Indian national holidays ------------- */
-      holidayMMDD: ['01-26', '08-15', '10-02'], // add more if needed
+      holidayMMDD: ['01-26', '08-15', '10-02'],
     }
   },
 
-  /* life‑cycle ----------------------------------------- */
- async mounted() {
-  this.fetchLeaveTypes();
-  this.fetchUserInfo();
-  await this.fetchLeaveBalanceFromDB(); // ← ensure it’s called here
-  this.fetchLeaves();
-  this.checkIfMobile();
-  window.addEventListener('resize', this.checkIfMobile);
-},
-  beforeDestroy() { clearInterval(this.poll) },
-
-  /* watchers ------------------------------------------- */
- watch: {
-   'form.reason'(val) {
-    if (val.length > 250) {
-      this.form.reason = val.slice(0, 250);
+  computed: {
+    isHalfDay() {
+      return (this.form.leaveType || '').toLowerCase() === 'half day';
+    },
+    isCasualLeave() {
+      return (this.form.leaveType || '').toLowerCase().includes('casual');
+    },
+    overlapWarning() {
+      return this.findOverlapMessage();
     }
   },
-  'form.fromDate': 'checkLeaveBalance',
-  'form.toDate': 'checkLeaveBalance',
-  'form.leaveType': 'checkLeaveBalance',
-  leaveRequests: {
-    handler: 'computeLeaveBalance',
-    deep: true,
-  },
-},
 
-computed: {
-  overlapWarning() {
-    return this.findOverlapMessage();
+  async mounted() {
+    this.fetchLeaveTypes();
+    this.fetchUserInfo();
+    await this.fetchLeaveBalanceFromDB();
+    this.fetchLeaves();
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
   },
 
-  isHalfDay() {
-    return (this.form.leaveType || '').toLowerCase() === 'half day';
+  beforeDestroy() {
+    window.removeEventListener('resize', this.checkIfMobile);
   },
-   isCasualLeave() {
-    return (this.form.leaveType || '').toLowerCase().includes('casual');
-  }
-},
 
+  watch: {
+    'form.reason'(val) {
+      if (val.length > 250) this.form.reason = val.slice(0, 250);
+    },
+    'form.fromDate': 'checkLeaveBalance',
+    'form.toDate': 'checkLeaveBalance',
+    'form.leaveType': 'checkLeaveBalance',
+    leaveRequests: {
+      handler: 'computeLeaveBalance',
+      deep: true,
+    },
+  },
 
-  /* methods -------------------------------------------- */
   methods: {
+    getProgressPercentage(type) {
+      const total = this.baseAllowances[type] || 1;
+      const used = this.usedLeaves[type] || 0;
+      return Math.min((used / total) * 100, 100);
+    },
+
     findOverlapMessage() {
-  if (!this.form.fromDate || !this.form.toDate) return '';
+      if (!this.form.fromDate || !this.form.toDate) return '';
+      const clash = this.leaveRequests.find(lv =>
+        this.isMine(lv) &&
+        new Date(lv.fromDate) <= new Date(this.form.toDate) &&
+        new Date(this.form.fromDate) <= new Date(lv.toDate)
+      );
+      return clash ? `⚠️ You already have a leave from ${clash.fromDate} to ${clash.toDate}` : '';
+    },
 
-  const clash = this.leaveRequests.find(lv => 
-    this.isMine(lv) &&
-    new Date(lv.fromDate) <= new Date(this.form.toDate) &&
-    new Date(this.form.fromDate) <= new Date(lv.toDate)
-  );
+    async checkLeaveBalance() {
+      if (this.isHalfDay) {
+        const casualRemaining = this.baseAllowances.casual - (this.usedLeaves.casual || 0);
+        if (casualRemaining < 0.5) {
+          this.submitError = `❌ You have only ${casualRemaining} casual leave left. Half-day requires 0.5 casual leave.`;
+        } else {
+          this.submitError = '';
+        }
+        this.leaveWarning = '';
+        return;
+      }
 
-  return clash ? `❌ You already have a leave from ${clash.fromDate} to ${clash.toDate}` : '';
-},
-
-async checkLeaveBalance() {
-  // ✅ Skip leave balance check for Half Day - but check casual for 0.5
-  if (this.isHalfDay) {
-    const casualRemaining = this.baseAllowances.casual - (this.usedLeaves.casual || 0);
-    if (casualRemaining < 0.5) {
-      this.submitError = `❌ You have only ${casualRemaining} casual leave left. Half-day requires 0.5 casual leave.`;
-    } else {
       this.submitError = '';
-    }
-    this.leaveWarning = '';
-    return;
-  }
+      this.leaveWarning = '';
 
-  this.submitError = '';
-  this.leaveWarning = '';
+      const { fromDate, toDate, leaveType } = this.form;
+      if (!fromDate || !toDate || !leaveType) return;
 
-  const { fromDate, toDate, leaveType } = this.form;
-  if (!fromDate || !toDate || !leaveType) return;
+      const leaveKey = (leaveType || '').toLowerCase().replace(' leave', '');
+      const validKeys = ['casual', 'sick', 'pl', 'medical'];
+      if (!validKeys.includes(leaveKey)) return;
 
-  const leaveKey = (leaveType || '').toLowerCase().replace(' leave', '');
-  const validKeys = ['casual', 'sick', 'pl', 'medical'];
-  if (!validKeys.includes(leaveKey)) return;
+      const totalSelectedDays = this.daysBetween(fromDate, toDate);
 
-  // ✅ Calculate total selected days
-  const totalSelectedDays = this.daysBetween(fromDate, toDate);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const user = res.data;
 
-  try {
-    const token = localStorage.getItem('token');
-    const res = await axios.get(
-      'https://employees.archenterprises.co.in/api/api/user',
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+        const usedMap = {
+          casual: user.cl_leave_used || 0,
+          pl: user.pl_leave_used || 0,
+          medical: user.m_leave_used || 0,
+          sick: user.sl_leave_used || 0,
+        };
 
-    const user = res.data;
+        const totalAllowed = this.baseAllowances[leaveKey] || 0;
+        const alreadyUsed = usedMap[leaveKey] || 0;
+        const remaining = totalAllowed - alreadyUsed;
 
-    const usedMap = {
-      casual: user.cl_leave_used || 0,
-      pl: user.pl_leave_used || 0,
-      medical: user.m_leave_used || 0,
-      sick: user.sl_leave_used || 0,
-    };
+        this.leaveWarning = `⚠️ You have ${remaining} ${this.beautify(leaveKey)} leave(s) remaining out of ${totalAllowed}.`;
 
-    const totalAllowed = this.baseAllowances[leaveKey] || 0;
-    const alreadyUsed = usedMap[leaveKey] || 0;
-    const remaining = totalAllowed - alreadyUsed;
+        if (totalSelectedDays > remaining) {
+          this.submitError = `❌ You have only ${remaining} ${this.beautify(leaveKey)} left. Please reduce your date range.`;
+        } else {
+          this.submitError = '';
+        }
+      } catch (err) {
+        console.error('Error checking leave balance:', err);
+        this.submitError = 'Unable to verify leave balance. Please try again.';
+      }
+    },
 
-    this.leaveWarning = `⚠️ You have ${remaining} ${this.beautify(leaveKey)} leave(s) remaining out of ${totalAllowed}.`;
+    async fetchLeaveBalanceFromDB() {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const user = res.data;
 
-    if (totalSelectedDays > remaining) {
-      this.submitError = `❌ You have only ${remaining} ${this.beautify(leaveKey)} left. Please reduce your date range.`;
-    } else {
-      this.submitError = '';
-    }
+        const totals = { casual: 7, sick: 10, pl: 10, medical: 10 };
+        const used = {
+          casual: user.cl_leave_used || 0,
+          sick: user.sl_leave_used || 0,
+          pl: user.pl_leave_used || 0,
+          medical: user.m_leave_used || 0,
+        };
 
-  } catch (err) {
-    console.error('Error checking leave balance:', err);
-    this.submitError = 'Unable to verify leave balance. Please try again.';
-  }
-},
+        const remaining = {};
+        for (const key in totals) {
+          remaining[key] = totals[key] - used[key];
+          if (remaining[key] < 0) remaining[key] = 0;
+        }
 
-
-
-async fetchLeaveBalanceFromDB() {
-  try {
-    const token = localStorage.getItem('token');
-    const res = await axios.get(
-      'https://employees.archenterprises.co.in/api/api/user',
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    const user = res.data;
-
-    // ✅ Base total (you can customize or fetch dynamically if needed)
-    const totals = {
-      casual: 7,
-      sick: 10,
-      pl: 10,
-      // earn: this.baseAllowances.earn || 0, // keep existing earn leave
-    };
-
-    // ✅ Used leaves fetched directly from user table
-    const used = {
-      casual: user.cl_leave_used || 0,
-      sick: user.sl_leave_used || 0,
-      pl: user.pl_leave_used || 0,
-      medical: user.m_leave_used || 0,
-      // earn: 0,
-    };
-
-    // ✅ Remaining = Total - Used
-    const remaining = {};
-    for (const key in totals) {
-      remaining[key] = totals[key] - used[key];
-      if (remaining[key] < 0) remaining[key] = 0;
-    }
-
-    // ✅ Update your data properties
-    this.baseAllowances = totals;
-    this.usedLeaves = used;
-    this.leaveBalance = remaining;
-
-  } catch (e) {
-    console.error('Failed to fetch leave balance from users table:', e);
-  }
-},
-
+        this.baseAllowances = totals;
+        this.usedLeaves = used;
+        this.leaveBalance = remaining;
+      } catch (e) {
+        console.error('Failed to fetch leave balance:', e);
+      }
+    },
 
     async fetchEarnLeaveCount() {
-  try {
-    const token = localStorage.getItem('token')
-    const res = await axios.get(
-      `https://employees.archenterprises.co.in/api/api/earn-leave/${this.userName}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    const count = res.data?.count || 0
-    this.baseAllowances.earn = count
-    this.leaveBalance.earn = count
-  } catch (e) {
-    console.error('Failed to fetch Earn Leave count:', e)
-  }
-},
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`https://employees.archenterprises.co.in/api/api/earn-leave/${this.userName}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const count = res.data?.count || 0;
+        this.baseAllowances.earn = count;
+        this.leaveBalance.earn = count;
+      } catch (e) {
+        console.error('Failed to fetch Earn Leave count:', e);
+      }
+    },
 
     async sendAdminNotification(leaveId) {
-  /* Call a protected API that triggers Laravel’s Mail logic */
-  try {
-    const token = localStorage.getItem('token')
-    await axios.post(
-      'https://employees.archenterprises.co.in/api/api/leave-notify',
-      { leave_id: leaveId },                         // pass whichever id you like
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-  } catch (err) {
-    console.error('Admin e‑mail failed:', err)
-    // UI stays silent; log is enough
-  }
-},
+      try {
+        const token = localStorage.getItem('token');
+        await axios.post('https://employees.archenterprises.co.in/api/api/leave-notify',
+          { leave_id: leaveId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (err) {
+        console.error('Admin email failed:', err);
+      }
+    },
 
-    /* ============== GENERAL HELPERS =================== */
     daysBetween(startStr, endStr) {
-    const start = new Date(startStr)
-    const end   = new Date(endStr)
-
-    if (end < start) return 0                    // safeguard
-
-    const diff = Math.floor((end - start) / 86400000) // whole‑day difference
-    return diff === 0 ? 1 : diff                 // same day ⇒ 1
-  },
-    dateToMMDD(dateStr) {
-      const d = new Date(dateStr)
-      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    },
-    /* Sunday or national holiday? ---------------------- */
-    isDisallowed(dateStr) {
-      const d = new Date(dateStr)
-      const isSunday  = d.getDay() === 0
-      const isHoliday = this.holidayMMDD.includes(this.dateToMMDD(dateStr))
-      return isSunday || isHoliday
-    },
-    rangeHasDisallowed(start, end) {
-      for (let cur = new Date(start); cur <= new Date(end); cur.setDate(cur.getDate() + 1)) {
-        if (this.isDisallowed(cur.toISOString().slice(0, 10))) return true
-      }
-      return false
+      const start = new Date(startStr);
+      const end = new Date(endStr);
+      if (end < start) return 0;
+      const diff = Math.floor((end - start) / 86400000);
+      return diff === 0 ? 1 : diff;
     },
 
-    /* ============== BALANCE CALCULATION =============== */
- computeLeaveBalance() {
-  const remaining = { ...this.baseAllowances };
-  const used = { casual: 0, sick: 0, pl: 0, medical: 0};
+    computeLeaveBalance() {
+      const remaining = { ...this.baseAllowances };
+      const used = { casual: 0, sick: 0, pl: 0, medical: 0 };
 
- const map = {
-  'casual leave': 'casual', casual: 'casual',
-  'sick leave': 'sick', sick: 'sick',
-  'pl leave': 'pl', pl: 'pl',
-  'medical leave': 'medical', medical: 'medical',
-  // 'earn leave': 'earn', earn: 'earn',
-};
+      const map = {
+        'casual leave': 'casual', casual: 'casual',
+        'sick leave': 'sick', sick: 'sick',
+        'pl leave': 'pl', pl: 'pl',
+        'medical leave': 'medical', medical: 'medical',
+      };
 
-  this.leaveRequests.forEach(lv => {
-    // ✅ Filter only approved leaves for the logged-in user
-    if (
-      (lv.status || '').toLowerCase().trim() !== 'approved' ||
-      (lv.name || '').trim().toLowerCase() !== this.userName.trim().toLowerCase() ||
-      (lv.department || '').trim().toLowerCase() !== this.userDept.trim().toLowerCase()
-    ) return;
+      this.leaveRequests.forEach(lv => {
+        if ((lv.status || '').toLowerCase().trim() !== 'approved' ||
+            (lv.name || '').trim().toLowerCase() !== this.userName.trim().toLowerCase()) return;
 
-    const leaveType = (lv.leave_type || lv.leaveType || '').toLowerCase();
-    if (leaveType === 'half day' || lv.half_day) {
-      // Half-day deducts 0.5 from casual
-      used.casual += 0.5;
-      remaining.casual -= 0.5;
-    } else {
-      const key = map[leaveType];
-      if (!key) return;
+        const leaveType = (lv.leave_type || lv.leaveType || '').toLowerCase();
+        if (leaveType === 'half day' || lv.half_day) {
+          used.casual += 0.5;
+          remaining.casual -= 0.5;
+        } else {
+          const key = map[leaveType];
+          if (!key) return;
+          const days = this.daysBetween(lv.from_date || lv.fromDate, lv.to_date || lv.toDate);
+          used[key] += days;
+          remaining[key] -= days;
+        }
+      });
 
-      const days = this.daysBetween(lv.from_date || lv.fromDate, lv.to_date || lv.toDate);
-      used[key] += days;
-      remaining[key] -= days;
-    }
-  });
+      Object.keys(remaining).forEach(k => {
+        if (remaining[k] < 0) remaining[k] = 0;
+      });
 
-  // Prevent negative leave balance
-  Object.keys(remaining).forEach(k => {
-    if (remaining[k] < 0) remaining[k] = 0;
-  });
+      this.usedLeaves = used;
+      this.leaveBalance = remaining;
+    },
 
-  this.usedLeaves = used;
-  this.leaveBalance = remaining;
-},
-
-
-    /* ============== DATA FETCHERS ===================== */
     async fetchLeaves() {
-  try {
-    const token = localStorage.getItem('token')
-    const { data } = await axios.get(
-      'https://employees.archenterprises.co.in/api/api/leave-requests',
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-
-    this.leaveRequests = data || []
-
-    /* 🔍 DEBUG: show the first item’s keys */
-    if (this.leaveRequests.length) {
-      console.log('leaveRequests[0] keys →', Object.keys(this.leaveRequests[0]))
-      console.table(this.leaveRequests.slice(0, 5))
-    }
-  } catch (e) {
-    console.error('Failed to load leaves:', e)
-  }
-},
-
-   async fetchLeaveTypes() {
-  try {
-    const token = localStorage.getItem('token')
-    const res = await axios.get('https://employees.archenterprises.co.in/api/api/leave-types', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-
-    this.leaveTypes = res.data || []
-
-    // 👇 Map the leave types into your baseAllowances dynamically
-    const allowances = {}
-    this.leaveTypes.forEach(type => {
-      const key = (type.leave_name || '').toLowerCase().replace(' leave', '')
-      allowances[key] = parseInt(type.total_leaves) || 0
-    })
-
-    this.baseAllowances = allowances
-    this.leaveBalance = { ...allowances }
-
-  } catch (e) {
-    console.error('Fetch leave types failed:', e)
-    toastSuccess('Could not load leave types.')
-  }
-},
-
-async fetchUserInfo() {
-  try {
-    const token = localStorage.getItem('token');
-    const res = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const u = res.data;
-
-    this.form.name = u.name;
-    this.form.department = u.department;
-
-    this.userName = u.name;
-    this.userDept = u.department;
-
-    // ✅ Fetch used leaves from user table
-    this.usedLeaves = {
-      casual: u.cl_leave_used || 0,
-      pl: u.pl_leave_used || 0,
-      medical: u.m_leave_used || 0,
-      sick: u.sl_leave_used || 0,
-      // earn: 0, // will fetch separately below
-    };
-
-    await this.fetchEarnLeaveCount();          // Fetch earn leave (dynamic)
-    await this.fetchLeaveBalanceFromDB();      // Fetch leave totals (dynamic)
-  } catch (e) {
-    console.error('User info error:', e);
-    toastSuccess('Failed to fetch user details — please log in again.');
-    this.$router.push('/auth');
-  }
-},
-
-
-
-
-
-    /* ============== FORM VALIDATION =================== */
-    isOverlapping() {
-      if (!this.form.fromDate || !this.form.toDate) return false
-      const A = new Date(this.form.fromDate), B = new Date(this.form.toDate)
-      return this.leaveRequests.some(lv => {
-        const C = new Date(lv.from_date || lv.fromDate)
-        const D = new Date(lv.to_date   || lv.toDate)
-        return C <= B && A <= D
-      })
-    },
-    /** Return the first leave that overlaps the user’s selected range, or null. */
-findOverlap() {
-  if (!this.form.fromDate || !this.form.toDate) return null
-  const A = new Date(this.form.fromDate)
-  const B = new Date(this.form.toDate)
-
-  return (
-    this.leaveRequests.find(lv => {
-      if (!this.isMine(lv)) return false
-      const C = new Date(lv.fromDate)
-      const D = new Date(lv.toDate)
-      return C <= B && A <= D
-    }) || null
-  )
-},
-
-/* ░░░░░ VALIDATION ░░░░░ */
-
-validateAll() {
-  this.submitError = ''
-
-  /* 1️⃣  Same‑user overlap? */
-  const clash = this.findOverlap()
-  if (clash) {
-    const from = (clash.from_date || clash.fromDate).slice(0, 10)
-    const to   = (clash.to_date   || clash.toDate).slice(0, 10)
-    this.submitError = `You already have a leave from these days.`
-    return
-  }
-
-  
-},
-isMine(lv) {
-  return lv.name === this.userName && lv.department === this.userDept
-},  
-    /* ============== FORM SUBMIT ======================= */
-async submitForm() {
-  // Basic validations
-  if (
-    !this.isHalfDay &&
-    this.form.fromDate &&
-    this.form.toDate &&
-    new Date(this.form.fromDate) > new Date(this.form.toDate)
-  ) {
-    this.submitError = 'From date cannot be after to date.';
-    toastWarning(this.submitError);
-    return;
-  }
-
-  // 1️⃣ Check overlap
-  const overlapMsg = this.findOverlapMessage();
-  if (overlapMsg) {
-    this.submitError = overlapMsg;
-    toastWarning(this.submitError);
-    return;
-  }
-
-  // 2️⃣ Check leave balance
-  await this.checkLeaveBalance();
-  if (this.submitError) {
-    toastWarning(this.submitError);
-    return;
-  }
-
-  // 🚨 3️⃣ CHECK LIMIT EXCEEDED
-  let isLimitExceeded = false;
-
-  if (
-    this.usedLeaves.casual > 10 ||
-    this.usedLeaves.pl > 10 ||
-    this.usedLeaves.sick > 10
-  ) {
-    isLimitExceeded = true;
-
-    toastWarning(
-      "⚠️ Your leave limit is exceeded. This will NOT be counted in attendance."
-    );
-  }
-
-  this.submitLoading = true;
-  this.submitSuccessMsg = '';
-
-  // Half day logic
-  if (this.isHalfDay) {
-    this.form.toDate = this.form.fromDate;
-
-    if (!this.form.timeSlot) {
-      this.submitError = 'Time slot is required for half-day leave.';
-      toastWarning(this.submitError);
-      return;
-    }
-  }
-
-  try {
-    const token = localStorage.getItem('token');
-
-    const fd = new FormData();
-
-    Object.entries(this.form).forEach(([k, v]) => {
-      if (v) fd.append(k, v);
-    });
-
-    // ✅ IMPORTANT FLAG
-    fd.append('limit_exceeded', isLimitExceeded ? 1 : 0);
-
-    if (this.isHalfDay) fd.append('half_day', '1');
-
-    const { data } = await axios.post(
-      'https://employees.archenterprises.co.in/api/api/leave-request',
-      fd,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get('https://employees.archenterprises.co.in/api/api/leave-requests', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.leaveRequests = data || [];
+      } catch (e) {
+        console.error('Failed to load leaves:', e);
       }
-    );
+    },
 
-    // Half-day casual update
-    if (this.isHalfDay) {
-      await axios.post(
-        'https://employees.archenterprises.co.in/api/api/update-cl-leave',
-        {
-          name: this.form.name,
-          department: this.form.department,
-          increment: 0.5,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-    }
+    async fetchLeaveTypes() {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/leave-types', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.leaveTypes = res.data || [];
+        const allowances = {};
+        this.leaveTypes.forEach(type => {
+          const key = (type.leave_name || '').toLowerCase().replace(' leave', '');
+          allowances[key] = parseInt(type.total_leaves) || 0;
+        });
+        this.baseAllowances = allowances;
+        this.leaveBalance = { ...allowances };
+      } catch (e) {
+        console.error('Fetch leave types failed:', e);
+        toastError('Could not load leave types.');
+      }
+    },
 
-    // Reason validation
-    if (!this.isCasualLeave && !this.isHalfDay && !this.form.reason.trim()) {
-      this.submitError = 'Reason is required for this leave type.';
-      toastWarning(this.submitError);
-      return;
-    }
+    async fetchUserInfo() {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const u = res.data;
+        this.form.name = u.name;
+        this.form.department = u.department;
+        this.userName = u.name;
+        this.userDept = u.department;
+        this.usedLeaves = {
+          casual: u.cl_leave_used || 0,
+          pl: u.pl_leave_used || 0,
+          medical: u.m_leave_used || 0,
+          sick: u.sl_leave_used || 0,
+        };
+        await this.fetchEarnLeaveCount();
+        await this.fetchLeaveBalanceFromDB();
+      } catch (e) {
+        console.error('User info error:', e);
+        toastError('Failed to fetch user details — please log in again.');
+        this.$router.push('/auth');
+      }
+    },
 
-    await this.sendAdminNotification(data.leave_id);
+    findOverlap() {
+      if (!this.form.fromDate || !this.form.toDate) return null;
+      const A = new Date(this.form.fromDate);
+      const B = new Date(this.form.toDate);
+      return this.leaveRequests.find(lv => {
+        if (!this.isMine(lv)) return false;
+        const C = new Date(lv.fromDate);
+        const D = new Date(lv.toDate);
+        return C <= B && A <= D;
+      }) || null;
+    },
 
-    this.submitSuccessMsg = '✅ Leave request submitted successfully!';
-    this.resetForm();
-    await this.fetchLeaves();
+    isMine(lv) {
+      return lv.name === this.userName && lv.department === this.userDept;
+    },
 
-  } catch (e) {
-    console.error('Submit error:', e);
-    this.submitError = 'Failed to process leave request.';
-  } finally {
-    this.submitLoading = false;
-  }
-},
+    async submitForm() {
+      if (!this.isHalfDay && this.form.fromDate && this.form.toDate && new Date(this.form.fromDate) > new Date(this.form.toDate)) {
+        this.submitError = 'From date cannot be after to date.';
+        toastWarning(this.submitError);
+        return;
+      }
 
+      const overlapMsg = this.findOverlapMessage();
+      if (overlapMsg) {
+        this.submitError = overlapMsg;
+        toastWarning(this.submitError);
+        return;
+      }
 
+      await this.checkLeaveBalance();
+      if (this.submitError) {
+        toastWarning(this.submitError);
+        return;
+      }
 
+      let isLimitExceeded = false;
+      if (this.usedLeaves.casual > 10 || this.usedLeaves.pl > 10 || this.usedLeaves.sick > 10) {
+        isLimitExceeded = true;
+        toastWarning("⚠️ Your leave limit is exceeded. This will NOT be counted in attendance.");
+      }
 
+      this.submitLoading = true;
+      this.submitSuccessMsg = '';
 
+      if (this.isHalfDay) {
+        this.form.toDate = this.form.fromDate;
+        if (!this.form.timeSlot) {
+          this.submitError = 'Time slot is required for half-day leave.';
+          toastWarning(this.submitError);
+          return;
+        }
+      }
 
-    /* ============== UI HELPERS ======================== */
-    handleFileUpload(e) { this.form.file = e.target.files[0] },
-    resetForm() { Object.assign(this.form, {
-      leaveType:'', fromDate:'', toDate:'', reason:'', file:null,  timeSlot: ''
-    })},
+      try {
+        const token = localStorage.getItem('token');
+        const fd = new FormData();
+        Object.entries(this.form).forEach(([k, v]) => { if (v) fd.append(k, v); });
+        fd.append('limit_exceeded', isLimitExceeded ? 1 : 0);
+        if (this.isHalfDay) fd.append('half_day', '1');
+
+        const { data } = await axios.post('https://employees.archenterprises.co.in/api/api/leave-request', fd, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        });
+
+        if (this.isHalfDay) {
+          await axios.post('https://employees.archenterprises.co.in/api/api/update-cl-leave', {
+            name: this.form.name,
+            department: this.form.department,
+            increment: 0.5,
+          }, { headers: { Authorization: `Bearer ${token}` } });
+        }
+
+        if (!this.isCasualLeave && !this.isHalfDay && !this.form.reason.trim()) {
+          this.submitError = 'Reason is required for this leave type.';
+          toastWarning(this.submitError);
+          return;
+        }
+
+        await this.sendAdminNotification(data.leave_id);
+        this.submitSuccessMsg = '✅ Leave request submitted successfully!';
+        toastSuccess('Leave request submitted successfully!');
+        this.resetForm();
+        await this.fetchLeaves();
+      } catch (e) {
+        console.error('Submit error:', e);
+        this.submitError = 'Failed to process leave request.';
+        toastError('Failed to process leave request.');
+      } finally {
+        this.submitLoading = false;
+      }
+    },
+
+    handleFileUpload(e) { this.form.file = e.target.files[0]; },
+
+    resetForm() {
+      Object.assign(this.form, {
+        leaveType: '', fromDate: '', toDate: '', reason: '', file: null, timeSlot: ''
+      });
+    },
+
     checkIfMobile() {
-      this.isMobile        = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
+      this.isMobile = window.innerWidth <= 768;
+      this.isSidebarVisible = !this.isMobile;
     },
-    toggleSidebar() { this.isSidebarVisible = !this.isSidebarVisible },
-   beautify(k) {
-  const map = {
-    casual: 'Casual Leave',
-    sick: 'Sick Leave',
-    pl: 'PL Leave'
-    // earn: 'Earn Leave'
-  }
-  return map[k.toLowerCase()] || `${k.charAt(0).toUpperCase()}${k.slice(1)} Leave`
-},
 
+    toggleSidebar() { this.isSidebarVisible = !this.isSidebarVisible; },
 
-    /* logout ------------------------------------------- */
+    beautify(k) {
+      const map = {
+        casual: 'Casual Leave',
+        sick: 'Sick Leave',
+        pl: 'PL Leave',
+        medical: 'Medical Leave'
+      };
+      return map[k.toLowerCase()] || `${k.charAt(0).toUpperCase()}${k.slice(1)} Leave`;
+    },
+
     logout() {
-      const token = localStorage.getItem('token')
-      axios.post('https://employees.archenterprises.co.in/api/api/logout', {},
-        { headers: { Authorization: `Bearer ${token}` } })
-      .finally(() => { localStorage.removeItem('token'); this.$router.push('/auth') })
-    },
-  },
+      const token = localStorage.getItem('token');
+      axios.post('https://employees.archenterprises.co.in/api/api/logout', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).finally(() => {
+        localStorage.removeItem('token');
+        this.$router.push('/auth');
+      });
+    }
+  }
 }
 </script>
 
-
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.char-count {
-  float: right;
-  font-size: 12px;
-  color: #777;
+
+/* Premium Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
 }
 
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-@media (max-width: 768px) {
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    display: none;
-    text-decoration: none;
-    align-items: center; width: 100%;
-}
-}
-.warning-text {
-  color: #e67e22;
-  font-weight: 600;
-  margin-top: 4px;
-  font-size: 13px;
-  transition: all 0.3s ease;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-  align-self: center;
-  }
-}
-.success-msg {
-  margin-top: 10px;
-  color: green;
-  font-weight: 500;
-}
-
-.leave-form-wrapper {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0);
-  /* max-width: 800px; */
-  margin: auto;
-}
-
-.leave-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  text-align: center;
-  color: var(--text);
-}
-
-.form-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2rem;
-}
-
-.form-group {
-  flex: 1 1 48%;
-  display: flex;
-  flex-direction: column;
-}
-
-.full-width {
-  flex: 1 1 100%;
-}
-
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: #4f46e5;
-  outline: none;
-}
-
-.submit-button {
-  background-color: var(--primary);
-  color: #fff;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  align-self: flex-end;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.submit-button:hover {
-  background: var(--text);
-}
-
-.error-msg {
-  color: #dc2626;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.error-msg {
-  margin: 0.25rem 0 0.5rem;
-  color: #dc2626;    /* red-600 */
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Button */
-.leave-balance-btn {
- background: var(--text);
-    color: #ffffff;
-    margin-bottom: 17px;
-    padding: 0.55rem 1.25rem;
-    border: 0;
-    border-radius: .5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform .15s ease;
-}
-.leave-balance-btn:hover {
-  transform: translateY(-2px);
-}
-
-/* Fade transition */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* Modal overlay */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 1000;
-}
-
-/* Modal box */
-.modal-content {
-  width: 90%;
-  max-width: 380px;
-  background: #ffffff;
-  border-radius: 1rem;
-  padding: 1.75rem 1.5rem;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-}
-
-/* Heading */
-.modal-title {
-  margin-bottom: 1.1rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  text-align: center;
-}
-
-/* List of balances */
-.balance-list {
-  list-style: none;
-  margin: 0 0 1.5rem;
+* {
+  margin: 0;
   padding: 0;
-}
-.balance-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.45rem 0;
-  border-bottom: 1px dashed #e5e7eb;
-}
-.balance-type {
-  font-weight: 500;
-}
-.balance-days {
-  font-weight: 700;
-  color: #335d5f;
-}
-
-/* Close button */
-.close-btn {
-  display: block;
-  margin: 0.5rem auto 0;
- background: #ff0000;
-    border: 2px solid #ffffff;
-    color: #ffffff;
-  padding: 0.4rem 1.2rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.close-btn:hover {
-  background: #ac0909;
-  color: #fff;
+  box-sizing: border-box;
 }
 
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.header {
-  font-size: 17px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 0 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
+/* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
   gap: 20px;
-}
-
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
+  padding: 20px;
+  min-height: 100vh;
+   ;
 }
 
 .leave-form-wrapper {
-  margin-top: 66px;
-  /* max-width: 800px; */
-  width: 100%;
-  padding: 25px;
-  /* background: linear-gradient(135deg, #f5f7fa, var(--text)) ; */
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0);
-  border-radius: 16px;
-}
-
-.leave-form {
-  width: 100%;
-}
-
-.form-title {
-  text-align: center;
-  font-size: 28px;
-  margin-bottom: 30px;
-  color: var(--text);
-}
-
-.form-row {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: var(--text);
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 12px;
-  font-size: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  transition: all 0.3s ease;
-}
-
-input:hover, select:hover, textarea:hover {
-  border-color: #4caf50;
-  background: #fafff7;
-}
-
-input:focus, select:focus, textarea:focus {
-  border-color: #388e3c;
-  outline: none;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-}
-
-
-
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-}
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-}
-@media (max-width: 768px) {
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-  margin-bottom: 6px;
-      height: 52px;
-}
-}
-
-.logo-img {
-  height: 65px; background-color: white; border-radius: 9px;
-}
-
-.header-title {
   flex: 1;
-  text-align: center;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Content Header */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 0;
-  font-size: 1.3rem;
 }
 
-.mobile-menu-icon {
-  font-size: 22px;
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.balance-btn {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 12px;
   color: white;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.btn-loader {
-  width: 18px;
-  height: 18px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #ffffff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
+.balance-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* Premium Form */
+.premium-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-/* Disabled button look */
-.submit-button:disabled {
-  background-color: #9fbfc1;
+.form-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field.full-width {
+  grid-column: span 2;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-field label i {
+  color: var(--primary-color);
+}
+
+.required {
+  color: var(--danger);
+}
+
+.required-text {
+  color: var(--danger);
+  font-size: 11px;
+}
+
+.optional {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.char-counter {
+  margin-left: auto;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  padding: 12px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.readonly-field {
+  background: #f3f4f6;
   cursor: not-allowed;
 }
 
+.file-input {
+  padding: 10px 0;
+}
+
+.warning-text {
+  font-size: 12px;
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Alerts */
+.error-alert, .success-alert {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-alert {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.success-alert {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-submit-premium {
+  padding: 12px 28px;
+  background: var(--primary);
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.btn-submit-premium:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-submit-premium:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.modal-premium {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: modalBackdropIn 0.3s ease;
+}
+
+@keyframes modalBackdropIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(10px); }
+}
+
+.modal-premium-container {
+  background: white;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 450px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.modal-premium-container.small { max-width: 400px; }
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-premium-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 28px;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.modal-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.modal-premium-header h2 {
+  flex: 1;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.modal-close:hover {
+  /* background: var(--danger); */
+  color: rgb(1, 0, 0);
+  transform: rotate(90deg);
+}
+
+.modal-premium-body {
+  padding: 24px;
+  background: #fafbfc;
+}
+
+.modal-premium-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary-modern {
+  padding: 10px 20px;
+  background: var(--primary);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Balance List */
+.balance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.balance-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balance-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.balance-type {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.balance-days {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.balance-days .used {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.balance-days .total {
+  font-weight: 500;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+/* Modal Fade */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .leave-form-wrapper {
+    padding: 20px;
+  }
+
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .balance-btn {
+    justify-content: center;
+  }
+
+  .form-grid-premium {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field.full-width {
+    grid-column: span 1;
+  }
+
+  .modal-premium-container {
+    max-width: 95%;
+  }
+
+  .modal-premium-header {
+    padding: 16px 20px;
+  }
+
+  .modal-premium-body {
+    padding: 20px;
+  }
+
+  .modal-premium-footer {
+    padding: 16px 20px;
+  }
+}
 </style>

@@ -1,128 +1,193 @@
-
-
 <template>
   <div class="layout">
 
+    <!-- Leave Type Modal - Premium Design -->
+    <transition name="modal-fade">
+      <div class="modal-backdrop" v-if="showLeaveTypeForm" @click.self="closeLeaveTypeForm()">
+        <div class="premium-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="header-text">
+              <h2>{{ editingLeaveId ? 'Edit Leave Type' : 'Add Leave Type' }}</h2>
+              <p>{{ editingLeaveId ? 'Update leave type information' : 'Create a new leave type' }}</p>
+            </div>
+            <button class="close-btn-premium" @click="closeLeaveTypeForm()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-<transition name="fade">
-  <div class="modal-backdrop" v-if="showLeaveTypeForm" @click.self="closeLeaveTypeForm()">
-    <div class="modal-card" @click.stop>
-      <h2 class="modal-title">Add Leave Type</h2>
+          <div class="modal-body-premium">
+            <form @submit.prevent="submitLeaveType">
+              <div class="form-section">
+                <div class="form-field">
+                  <label>Leave Name <span class="required-star">*</span></label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-heading field-icon"></i>
+                    <input
+                      v-model="leaveForm.leaveName"
+                      maxlength="20"
+                      required
+                      @input="allowOnlyText('leaveName')"
+                      placeholder="e.g., Annual Leave, Sick Leave"
+                    />
+                  </div>
+                </div>
 
-      <form @submit.prevent="submitLeaveType" class="attractive-form">
-        <div class="form-row">
-          <div class="input-group">
-  <label><i class="fas fa-heading"></i> Leave Name *</label>
-  <input
-  v-model="leaveForm.leaveName"
-  maxlength="20"
-  required
-  @input="allowOnlyText('leaveName')"
-/>
+                <div class="form-field">
+                  <label>Total Leaves <span class="required-star">*</span></label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-code field-icon"></i>
+                    <input
+                      type="number"
+                      min="0"
+                      v-model="leaveForm.totalLeaves"
+                      placeholder="Enter total leaves"
+                      required
+                    />
+                  </div>
+                </div>
 
-</div>
+                <div class="form-field full-width">
+                  <label>Description</label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-align-left field-icon" style="top: 18px;"></i>
+                    <textarea
+                      v-model="leaveForm.description"
+                      placeholder="Enter description (optional)"
+                      rows="4"
+                      maxlength="50"
+                      @input="allowOnlyText('description')"
+                    ></textarea>
+                  </div>
+                  <div class="char-counter" v-if="leaveForm.description">
+                    {{ leaveForm.description.length }}/50 characters
+                  </div>
+                </div>
+              </div>
 
-
-         <div class="input-group">
-  <label><i class="fas fa-code"></i> Total Leaves *</label>
-  <input
-    type="number"
-    min="0"
-    v-model="leaveForm.totalLeaves"
-    placeholder="Enter Total Leaves"
-    required
-  />
-</div>
-
+              <div class="modal-footer-premium">
+                <button type="button" class="btn-cancel-premium" @click="closeLeaveTypeForm()">
+                  <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="submit" class="btn-submit-premium" :disabled="isSaving">
+                  <span v-if="isSaving">
+                    <i class="fas fa-spinner fa-spin"></i> Saving...
+                  </span>
+                  <span v-else>
+                    <i class="fas fa-save"></i> {{ editingLeaveId ? 'Update' : 'Save' }} Leave Type
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <div class="form-row">
-          <div class="input-group full-width">
-  <label><i class="fas fa-align-left"></i> Description</label>
-   <textarea
-      v-model="leaveForm.description"
-      placeholder="Enter Description (optional)"
-      rows="4"
-      maxlength="50"
-      @input="allowOnlyText('description')"
-    ></textarea>
-</div>
-
-        </div>
-
-        <div class="modal-buttons">
-          <button type="submit" class="btn btn-primary" :disabled="isSaving">
-  <i v-if="!isSaving" class="fas fa-save"></i>
-  <i v-else class="fas fa-spinner fa-spin"></i>
-  {{ isSaving ? 'Saving...' : 'Save Leave Type' }}
-</button>
-
-          <button type="button" class="btn btn-secondary" @click="closeLeaveTypeForm()">
-           <i class="fa fa-close" style="font-size:13px"></i> Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</transition>
+      </div>
+    </transition>
 
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-   <section
-  class="content"
-  :class="{
-    'expanded-content': isMobile && !isSidebarVisible,
-    'hide-on-mobile': isMobile && isSidebarVisible
-  }"
->
-
-  <h2>Manage Leave Type</h2>
-   <button class="logout-btn" @click="startNewLeaveType()">Add Leave Type</button>
- <table class="leave-table">
-  <thead>
-    <tr>
-      <th>Leave Type</th>
-      <th>Description</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr v-for="type in leaveTypes" :key="type.id">
-      <td>{{ type.leave_name }}</td>
-      <td>{{ type.description }}</td>
-      <td>
-        <div class="action-buttons">
-         <button class="btn-edit"
-        :disabled="editingId === type.id"
-        @click="editLeaveType(type)">
-  <i v-if="editingId !== type.id" class="fas fa-edit"></i>
-  <i v-else class="fas fa-spinner fa-spin"></i>
-  {{ editingId === type.id ? 'Opening...' : 'Edit' }}
-</button>
-
-          <button class="btn-delete"
-        :disabled="deletingId === type.id"
-        @click="deleteLeaveType(type.id)">
-  <i v-if="deletingId !== type.id" class="fas fa-trash-alt"></i>
-  <i v-else class="fas fa-spinner fa-spin"></i>
-  {{ deletingId === type.id ? 'Deleting...' : 'Delete' }}
-</button>
-
+      <section class="content" :class="{
+        'expanded-content': isMobile && !isSidebarVisible,
+        'hide-on-mobile': isMobile && isSidebarVisible
+      }">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div>
+              <h1>Leave Type Management</h1>
+              <p class="subtitle-modern">Manage and configure leave policies</p>
+            </div>
+          </div>
+          <button class="register-btn-modern" @click="startNewLeaveType()">
+            <i class="fas fa-plus-circle"></i>
+            <span>Add Leave Type</span>
+          </button>
         </div>
-      </td>
-    </tr>
-  </tbody>
-</table>
 
-</section>
+        <div class="stats-bar">
+          <div class="stat-card">
+            <i class="fas fa-calendar-alt"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ leaveTypes.length }}</span>
+              <span class="stat-label">Leave Types</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-chart-line"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ totalLeaves }}</span>
+              <span class="stat-label">Total Leaves Available</span>
+            </div>
+          </div>
+        </div>
 
+        <div class="table-wrapper-premium">
+          <table class="leave-table-premium">
+            <thead>
+              <tr>
+                <th>Leave Type</th>
+                <th>Total Leaves</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="type in leaveTypes" :key="type.id">
+                <td>
+                  <div class="leave-type-badge">
+                    <i class="fas fa-leaf"></i>
+                    <span>{{ type.leave_name }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="leaves-count">{{ type.total_leaves }} days</span>
+                </td>
+                <td class="description-cell">{{ type.description || '—' }}</td>
+                <td>
+                  <div class="action-group">
+                    <button 
+                      class="action-btn edit" 
+                      :disabled="editingId === type.id"
+                      @click="editLeaveType(type)"
+                      title="Edit Leave Type"
+                    >
+                     Edit <i v-if="editingId !== type.id" class="fas fa-edit"></i>
+                      <i v-else class="fas fa-spinner fa-spin"></i>
+                    </button>
+                    <button 
+                      class="action-btn delete" 
+                      :disabled="deletingId === type.id"
+                      @click="deleteLeaveType(type.id)"
+                      title="Delete Leave Type"
+                    >
+                     Delete <i v-if="deletingId !== type.id" class="fas fa-trash-alt"></i>
+                      <i v-else class="fas fa-spinner fa-spin"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="leaveTypes.length === 0" class="empty-row">
+                <td colspan="4">
+                  <div class="empty-state-premium">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>No Leave Types</h4>
+                    <p>Click "Add Leave Type" to create your first leave policy</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
-
-    <!-- <footer class="footer">
-      &copy; 2025 Arch Enterprises. All rights reserved.
-    </footer> -->
   </div>
 </template>
 
@@ -133,59 +198,62 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
 
 export default {
-    components: {
+  components: {
     Sidebar
   },
   data() {
     return {
       isMobile: false,
-isSidebarVisible: true,
-
+      isSidebarVisible: true,
       leaveTypes: [],
-       editingLeaveId: null,
+      editingLeaveId: null,
       showLeaveTypeForm: false,
-      // 🔹 loaders
-    isSaving: false,
-    deletingId: null,
-    editingId: null,
-    leaveForm: {
-      leaveName: '',
-     totalLeaves: '',
-      description: ''
-    },
-  }
-  },
-  methods: {
-   allowOnlyText(field) {
-  if (!this.leaveForm[field]) return;
-
-  this.leaveForm[field] = this.leaveForm[field].replace(/[^a-zA-Z\s]/g, '');
-},
-
-    checkIfMobile() {
-    this.isMobile = window.innerWidth <= 768;
-    if (this.isMobile) {
-      this.isSidebarVisible = false;
-    } else {
-      this.isSidebarVisible = true;
+      isSaving: false,
+      deletingId: null,
+      editingId: null,
+      leaveForm: {
+        leaveName: '',
+        totalLeaves: '',
+        description: ''
+      },
     }
   },
-  toggleSidebar() {
-    this.isSidebarVisible = !this.isSidebarVisible;
+  computed: {
+    totalLeaves() {
+      return this.leaveTypes.reduce((total, type) => total + (type.total_leaves || 0), 0);
+    }
   },
+  methods: {
+    allowOnlyText(field) {
+      if (!this.leaveForm[field]) return;
+      this.leaveForm[field] = this.leaveForm[field].replace(/[^a-zA-Z\s]/g, '');
+    },
+
+    checkIfMobile() {
+      this.isMobile = window.innerWidth <= 768;
+      if (this.isMobile) {
+        this.isSidebarVisible = false;
+      } else {
+        this.isSidebarVisible = true;
+      }
+    },
+
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible;
+    },
+
     startNewLeaveType() {
-  this.leaveForm = {
-    leaveName: '',
-    totalLeaves: '',
-    description: ''
-  };
-  this.editingLeaveId = null;
-  this.showLeaveTypeForm = true;
-},
+      this.leaveForm = {
+        leaveName: '',
+        totalLeaves: '',
+        description: ''
+      };
+      this.editingLeaveId = null;
+      this.showLeaveTypeForm = true;
+    },
 
     async fetchLeaveTypes() {
       try {
@@ -193,712 +261,772 @@ isSidebarVisible: true,
         this.leaveTypes = response.data;
       } catch (error) {
         console.error("Error fetching leave types:", error);
+        toastError("Failed to load leave types");
       }
     },
-async submitLeaveType() {
-  this.isSaving = true
-  try {
-    if (this.editingLeaveId) {
-      await axios.put(
-        `https://employees.archenterprises.co.in/api/api/leave-types/${this.editingLeaveId}`,
-        {
-          leave_name: this.leaveForm.leaveName,
-          total_leaves: this.leaveForm.totalLeaves,
-          description: this.leaveForm.description
+
+    async submitLeaveType() {
+      if (!this.leaveForm.leaveName.trim()) {
+        toastWarning("Please enter a leave name");
+        return;
+      }
+      if (!this.leaveForm.totalLeaves || this.leaveForm.totalLeaves < 0) {
+        toastWarning("Please enter a valid number of leaves");
+        return;
+      }
+
+      this.isSaving = true;
+      try {
+        if (this.editingLeaveId) {
+          await axios.put(
+            `https://employees.archenterprises.co.in/api/api/leave-types/${this.editingLeaveId}`,
+            {
+              leave_name: this.leaveForm.leaveName,
+              total_leaves: this.leaveForm.totalLeaves,
+              description: this.leaveForm.description
+            }
+          );
+          toastSuccess('Leave type updated successfully!');
+        } else {
+          await axios.post(
+            'https://employees.archenterprises.co.in/api/api/leave-types',
+            {
+              leave_name: this.leaveForm.leaveName,
+              total_leaves: this.leaveForm.totalLeaves,
+              description: this.leaveForm.description
+            }
+          );
+          toastSuccess('Leave type created successfully!');
         }
-      )
-      toastSuccess('Leave type updated successfully!')
-    } else {
-      await axios.post(
-        'https://employees.archenterprises.co.in/api/api/leave-types',
-        {
-          leave_name: this.leaveForm.leaveName,
-          total_leaves: this.leaveForm.totalLeaves,
-          description: this.leaveForm.description
+
+        this.fetchLeaveTypes();
+        this.closeLeaveTypeForm();
+      } catch (error) {
+        if (error.response?.status === 422) {
+          const errors = error.response.data.errors;
+          toastError(
+            errors.leave_name?.[0] ||
+            errors.total_leaves?.[0] ||
+            'Validation error'
+          );
+        } else if (error.response?.data?.message) {
+          toastError(error.response.data.message);
+        } else {
+          toastError('Server error. Please try again.');
         }
-      )
-      toastSuccess('Leave type created successfully!')
-    }
-
-    this.fetchLeaveTypes()
-    this.closeLeaveTypeForm()
-  } catch (error) {
-    if (error.response?.status === 422) {
-      const errors = error.response.data.errors
-      toastSuccess(
-        errors.leave_name?.[0] ||
-        errors.total_leaves?.[0] ||
-        'Validation error'
-      )
-    } else {
-      toastSuccess('Server error')
-    }
-  } finally {
-    this.isSaving = false
-  }
-},
-
-
-  closeLeaveTypeForm() {
-    this.showLeaveTypeForm = false;
-    this.leaveForm = {
-      leaveName: '',
-      totalLeaves: '',
-      description: ''
-    };
-  },
- async deleteLeaveType(id) {
-  if (!confirm('Are you sure you want to delete this leave type?')) return
-
-  this.deletingId = id
-  try {
-    await axios.delete(
-      `https://employees.archenterprises.co.in/api/api/leave-types/${id}`
-    )
-    this.fetchLeaveTypes()
-    toastSuccess('Leave type deleted!')
-  } catch (error) {
-    toastSuccess('This leave type is already used and cannot be deleted.')
-  } finally {
-    this.deletingId = null
-  }
-},
-
-  editLeaveType(type) {
-  this.editingId = type.id
-
-  setTimeout(() => {
-    this.leaveForm.leaveName = type.leave_name
-    this.leaveForm.totalLeaves = type.total_leaves
-    this.leaveForm.description = type.description
-    this.editingLeaveId = type.id
-    this.showLeaveTypeForm = true
-    this.editingId = null
-  }, 300) // small UX delay
-},
-
-   
-       closeLeaveTypeForm() {
-  this.showLeaveTypeForm = false
-  this.leaveForm = {
-    leaveName: '',
-    totalLeaves: '',
-    description: ''
-  }
-  this.editingLeaveId = null
-
-    
-  },
-
-    goTo(route) {
-      this.$router.push(`/${route}`)
+      } finally {
+        this.isSaving = false;
+      }
     },
 
+    closeLeaveTypeForm() {
+      this.showLeaveTypeForm = false;
+      this.leaveForm = {
+        leaveName: '',
+        totalLeaves: '',
+        description: ''
+      };
+      this.editingLeaveId = null;
+    },
 
-   
+    async deleteLeaveType(id) {
+      if (!confirm('Are you sure you want to delete this leave type?')) return;
+
+      this.deletingId = id;
+      try {
+        await axios.delete(`https://employees.archenterprises.co.in/api/api/leave-types/${id}`);
+        this.fetchLeaveTypes();
+        toastSuccess('Leave type deleted successfully!');
+      } catch (error) {
+        if (error.response?.status === 409) {
+          toastError('This leave type is already used and cannot be deleted.');
+        } else {
+          toastError('Failed to delete leave type.');
+        }
+      } finally {
+        this.deletingId = null;
+      }
+    },
+
+    editLeaveType(type) {
+      this.editingId = type.id;
+      setTimeout(() => {
+        this.leaveForm.leaveName = type.leave_name;
+        this.leaveForm.totalLeaves = type.total_leaves;
+        this.leaveForm.description = type.description || '';
+        this.editingLeaveId = type.id;
+        this.showLeaveTypeForm = true;
+        this.editingId = null;
+      }, 300);
+    },
+
     logout() {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('token');
       axios
         .post(
           'https://employees.archenterprises.co.in/api/api/logout',
           {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         )
         .finally(() => {
-          localStorage.removeItem('token')
-          this.$router.push('/auth')
-        })
+          localStorage.removeItem('token');
+          this.$router.push('/auth');
+        });
     }
   },
 
- mounted() {
-  this.checkIfMobile();
-window.addEventListener('resize', this.checkIfMobile);
+  mounted() {
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
 
-  const token = localStorage.getItem('token')
-  if (!token) {
-    this.$router.push('/auth')
-  } else {
-    this.fetchLeaveTypes()
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$router.push('/auth');
+    } else {
+      this.fetchLeaveTypes();
+    }
   }
-}
-
 }
 </script>
 
-
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-.leave-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 6px 9px;
-  font-family: "Poppins", sans-serif;
+
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
 }
 
-.leave-table thead th {
-  background: var(--primary);
-  color: white;
-  text-transform: uppercase;
-  padding: 12px;
-  font-size: 14px;
-  text-align: left;
-      border-top-left-radius: 13px;
-    border-top-right-radius: 13px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.leave-table tbody tr {
-  background: #ffffff;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-  border-radius: 10px;
-}
-
-.leave-table tbody td {
-  padding: 14px;
-  font-size: 15px;
-  color: var(--text);
-}
-
-.leave-table tbody tr:hover {
-  transform: scale(1.01);
-  background: #f3f6ff;
-  transition: 0.2s ease-in-out;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-edit,
-.btn-delete {
-  border: none;
- padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-edit {
-  background: #2563eb;
-  color: #fff;
-}
-
-.btn-edit:hover {
-  background: #1e40af;
-}
-
-.btn-delete {
-  background: #e63946;
-  color: #fff;
-}
-
-.btn-delete:hover {
-  background: #9b2226;
-}
-
-.logo-img {
-  height: 70px;
-}
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-.hide-on-mobile {
-    display: none !important;
-  }
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-.company-name {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-}
-/* Header */
-.header {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 8px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-
-.logout-btn {
-   background-color: var(--text);
-    color: #ffffff;
-    margin-bottom: 22px;
-}
-
-.logout-btn:hover {
- background-color: var(--primary);
-  color: #ffffff;
-    margin-bottom: 22px;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
   gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
+   ;
 }
 
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
+.content {
+  flex: 1;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+/* Content Header */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 20px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 0;
 }
 
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.register-btn-modern {
+  padding: 12px 24px;
+  background: var(--primary);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.register-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
   transition: all 0.3s ease;
 }
 
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 }
 
-/* Content Section */
-.content {
-  flex: 1;
-  margin-top: 66px;
-  background-color: var(--sidebar);
-  padding: 30px 40px;
-  border-radius: 15px;
-  /* box-shadow: 0 5px 30px rgba(255, 255, 255, 0.08); */
+.stat-card i {
+  font-size: 36px;
+  color: var(--primary-color);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Table Styles */
+.table-wrapper-premium {
   overflow-x: auto;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
 }
 
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-}
-
-/* User Table */
-.user-table {
+.leave-table-premium {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 6px 9px;
+  border-collapse: collapse;
 }
 
-.user-table th,
-.user-table td {
-  padding: 14px 20px;
+.leave-table-premium thead {
+  background: #f8fafc;
+}
+
+.leave-table-premium th {
   text-align: left;
-  font-size: 16px;
- 
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.user-table th {
-  background-color: var(--primary);
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
+.leave-table-premium td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+.leave-table-premium tbody tr {
+  transition: all 0.3s ease;
+}
+
+.leave-table-premium tbody tr:hover {
+  background: #fafbfc;
+}
+
+/* Leave Type Badge */
+.leave-type-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leave-type-badge i {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
   border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
-}
-
-.user-table tbody td {
-  border: none;
-  vertical-align: middle;
-}
-
-/* Footer */
-.footer {
-  background-color: #343a40;
-  color: white;
-  text-align: center;
-  padding: 15px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
   font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
 }
 
-/* Modal Backdrop */
+.leave-type-badge span {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+/* Leaves Count */
+.leaves-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #065f46;
+}
+
+/* Description Cell */
+.description-cell {
+  color: #6b7280;
+  font-size: 13px;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Action Group */
+.action-group {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  width: auto;
+  padding: 17px;
+  height: 34px;
+  gap: 8px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.edit {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.action-btn.edit:hover:not(:disabled) {
+  /* background: var(--primary-color); */
+  color: rgb(9, 3, 3);
+  transform: translateY(-2px);
+}
+
+.action-btn.delete {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.action-btn.delete:hover:not(:disabled) {
+  /* background: var(--danger); */
+  color: rgb(0, 0, 0);
+  transform: translateY(-2px);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
+  z-index: 10000;
+  padding: 20px;
 }
 
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 88%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
+.premium-modal {
   position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  background: white;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 550px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-
-@keyframes slideDown {
+@keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-50px);
+    transform: scale(0.95) translateY(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
 }
 
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
+.modal-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
 }
 
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 48%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
+/* Modal Header */
+.modal-header-premium {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 15px;
+  gap: 16px;
+  padding: 24px 28px;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
-}
-
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
-}
-
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
+.header-icon-premium {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-text h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.header-text p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.close-btn-premium {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.close-btn-premium:hover {
+  /* background: var(--danger); */
+  color: rgb(15, 7, 7);
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.modal-body-premium {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  background: #fafbfc;
+}
+
+.modal-body-premium::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body-premium::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.modal-body-premium::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+/* Form Section */
+.form-section {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 
-.btn {
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field.full-width {
+  grid-column: span 2;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.required-star {
+  color: var(--danger);
+}
+
+.field-wrapper {
+  position: relative;
+}
+
+.field-wrapper .field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.field-wrapper textarea + .field-icon {
+  top: 18px;
+  transform: none;
+}
+
+.field-wrapper input,
+.field-wrapper select,
+.field-wrapper textarea {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.field-wrapper textarea {
+  padding-top: 12px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.field-wrapper input:focus,
+.field-wrapper select:focus,
+.field-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.char-counter {
+  font-size: 11px;
+  text-align: right;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Modal Footer */
+.modal-footer-premium {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn-cancel-premium,
+.btn-submit-premium {
   flex: 1;
-  padding: 14px 0;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: 12px;
-  border: none;
+  padding: 12px;
+  border-radius: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  border: none;
 }
 
-.btn-primary {
-  background-color: var(--primary);
+.btn-cancel-premium {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-cancel-premium:hover {
+  background: #e5e7eb;
+}
+
+.btn-submit-premium {
+  background: var(--primary);
   color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
+.btn-submit-premium:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+.btn-submit-premium:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
+/* Empty State */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
 }
 
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
 }
-.fade-enter-from, .fade-leave-to {
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+/* Modal Fade */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
   opacity: 0;
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  
-  .form-row .input-group {
-    flex: 1 1 100%;
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
   }
 
-  .modal-card {
-            padding: 49px 23px;
-        margin-left: -19px;
+  .content {
+    padding: 20px;
   }
-}
 
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
   }
-  .menu-btn, .logout-btn {
+
+  .register-btn-modern {
+    justify-content: center;
+  }
+
+  .stats-bar {
+    flex-direction: column;
+  }
+
+  .stat-card {
     width: 100%;
   }
-}
-.attractive-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
-  width: 0;
+
+  .premium-modal {
+    max-width: 95%;
+  }
+
+  .modal-header-premium {
+    padding: 16px 20px;
+  }
+
+  .modal-body-premium {
+    padding: 16px;
+  }
+
+  .modal-footer-premium {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+
+  .action-group {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
+
+  .leave-table-premium th,
+  .leave-table-premium td {
+    padding: 12px;
+  }
+
+  .description-cell {
+    max-width: 150px;
+  }
 }
 
-.btn-primary.attractive-btn {
-  background-color: var(--primary);
-  border: none;
-  color: white;
-}
-
-.btn-primary.attractive-btn:hover {
-  background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
-}
-
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
-}
-
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
-}
-
-.attractive-btn i {
-  font-size: 14px;
-}
+/* Disabled Button State */
 button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
 }
-
-
 </style>

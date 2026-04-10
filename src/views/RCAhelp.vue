@@ -1,221 +1,239 @@
 <template>
   <div class="layout">
-
-
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="announcement-board" v-if="!isMobile || !isSidebarVisible">
-        <div class="qa-board">
-          <h2>Problem Capturing & RCA</h2>
+        <div class="qa-container">
+          <!-- Header Section -->
+          <div class="qa-header">
+            <div class="header-content">
+              <div class="title-section">
+                <div class="icon-badge">
+                  <i class="fas fa-microscope"></i>
+                </div>
+                <div>
+                  <h1>Root Cause Analysis</h1>
+                  <p>Document, discuss, and resolve technical issues collaboratively</p>
+                </div>
+              </div>
+               
+            </div>
+          </div>
 
-          <!-- Ask Question -->
-        <div class="ask-box">
-  <div class="wa-input">
-    <!-- Text -->
-    <textarea
-      v-model="newQuestion"
-      placeholder="Type a problem..."
-      maxlength="500"
-      @input="onMentionInput($event, 'question')"
-      @keydown="onMentionKeydown"
-    ></textarea>
-
-    <!-- Attachment icon -->
-    <label class="attach-icon">
-      <i class="fas fa-paperclip"></i>
-      <input
-        type="file"
-        accept="image/*"
-        ref="questionImageInput"
-        @change="handleQuestionImage"
-        hidden
-      />
-    </label>
-
-    <!-- Send -->
-    <button class="send-btn" @click="addQuestion">
-      <i class="fas fa-paper-plane"></i>
-    </button>
-  </div>
-</div>
-
-
-          <p v-if="questionError" class="error-text">
-            {{ questionError }}
-          </p>
-
-          <!-- Question List -->
-          <div
-            class="question-card"
-            v-for="q in questions"
-            :key="q.id"
-          >
-           <div class="question-header">
-  <div class="qa-user">
-    <div class="avatar">
-      {{ capitalizeHandle(q.user?.handle || 'A')[0] }}
-    </div>
-    <div>
-      <h5>{{ capitalizeHandle(q.user?.handle) || 'ADMIN' }}</h5>
-      <span class="date">{{ formatDateTime(q.created_at) }}</span>
-    </div>
-  </div>
-
-
-              <div class="qa-actions">
-                <template v-if="canModify(q) && q.answers.length === 0">
-                  <i class="fas fa-edit" @click="editQuestion(q)"></i>
-                  <i class="fas fa-trash" @click="deleteQuestion(q)"></i>
-                </template>
-
-                <i
-                  class="fas"
-                  :class="q.showAnswers ? 'fa-chevron-up' : 'fa-chevron-down'"
-                  @click="toggleAnswers(q)"
-                ></i>
+          <!-- Ask Question Box - Modern Design -->
+          <div class="ask-card">
+            <div class="card-header">
+              <div class="avatar-large" :style="{ backgroundColor: getAvatarColor(authUser.id) }">
+                {{ getUserInitials(authUser.handle) }}
+              </div>
+              <div class="input-wrapper">
+                <textarea
+                  v-model="newQuestion"
+                  placeholder="Describe the problem or incident you're analyzing..."
+                  rows="2"
+                  @input="onMentionInput($event, 'question')"
+                  @keydown="onMentionKeydown"
+                  class="smart-input"
+                ></textarea>
+                <div class="input-actions">
+                  <label class="attach-btn">
+                    <i class="fas fa-image"></i>
+                    <span>Add image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref="questionImageInput"
+                      @change="handleQuestionImage"
+                      hidden
+                    />
+                  </label>
+                  <button class="submit-btn" @click="addQuestion" :disabled="!newQuestion.trim() && !questionImage">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Post Issue</span>
+                  </button>
+                </div>
               </div>
             </div>
+            <p v-if="questionError" class="error-message">{{ questionError }}</p>
+          </div>
 
-            <!-- Question text -->
-            <div v-if="!q.isEditing">
-              <p class="question-text" v-html="highlightMentions(q.question)"></p>
-            </div>
+          <!-- Question List -->
+          <div class="questions-feed">
+            <div
+              class="question-card"
+              v-for="(q, idx) in questions"
+              :key="q.id"
+              :class="{ 'expanded': q.showAnswers }"
+            >
+              <div class="question-header">
+                <div class="user-info">
+                  <div class="avatar" :style="{ backgroundColor: getAvatarColor(q.user_id) }">
+                    {{ capitalizeHandle(q.user?.handle || 'A')[0] }}
+                  </div>
+                  <div class="meta">
+                    <h4>{{ capitalizeHandle(q.user?.handle) || 'Anonymous' }}</h4>
+                    <div class="time-badge">
+                      <i class="far fa-clock"></i>
+                      <span>{{ formatTimeAgo(q.created_at) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="qa-actions">
+                  <button v-if="canModify(q) && q.answers.length === 0" class="icon-btn edit" @click="editQuestion(q)" title="Edit">
+                    <i class="fas fa-pen"></i>
+                  </button>
+                  <button v-if="canModify(q) && q.answers.length === 0" class="icon-btn delete" @click="deleteQuestion(q)" title="Delete">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                  <button class="icon-btn expand" @click="toggleAnswers(q)" :title="q.showAnswers ? 'Hide replies' : 'Show replies'">
+                    <i :class="q.showAnswers ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+                    <span class="reply-count" v-if="q.answers.length > 0">{{ q.answers.length }}</span>
+                  </button>
+                </div>
+              </div>
 
-            <div v-else>
-              <textarea v-model="q.editText"></textarea>
-              <button @click="updateQuestion(q)">Save</button>
-              <button @click="cancelEditQuestion(q)"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
-            </div>
+              <!-- Question Content -->
+              <div class="question-body" v-if="!q.isEditing">
+                <p class="question-text" v-html="highlightMentions(q.question)"></p>
+                <div v-if="q.image_url" class="image-preview" @click="openImage(q.image_url)">
+                  <img :src="q.image_url" alt="Question attachment" />
+                  <div class="image-overlay">
+                    <i class="fas fa-search-plus"></i>
+                  </div>
+                </div>
+              </div>
 
-            <!-- ✅ NEW: QUESTION IMAGE -->
-            <img
-              v-if="q.image_url"
-              :src="q.image_url"
-              class="qa-image"
-              @click="openImage(q.image_url)"
-            />
+              <div class="question-body" v-else>
+                <textarea v-model="q.editText" class="edit-textarea" rows="3"></textarea>
+                <div class="edit-actions">
+                  <button class="save-btn" @click="updateQuestion(q)"><i class="fas fa-check"></i> Save</button>
+                  <button class="cancel-btn" @click="cancelEditQuestion(q)"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+              </div>
 
-            <!-- Answers -->
-            <transition name="slide-fade">
-              <div v-show="q.showAnswers">
-                <div
-                  class="answer-box"
-                  v-for="a in [...q.answers].reverse()"
-                  :key="a.id"
-                >
-                  <div class="answer-header">
-  <div class="qa-user">
-    <div class="avatar small">
-      {{ capitalizeHandle(a.user?.handle || 'A')[0] }}
-    </div>
-    <div>
-      <h5>{{ capitalizeHandle(a.user?.handle) || 'ADMIN' }}</h5>
-      <span class="date">{{ formatDateTime(a.created_at) }}</span>
-    </div>
-  </div>
-
-
-                    <div class="qa-actions" v-if="canModify(a)">
-                      <i class="fas fa-edit" @click="editAnswer(a)"></i>
-                      <i class="fas fa-trash" @click="deleteAnswer(a, q)"></i>
+              <!-- Answers Section -->
+              <transition name="slide-fade">
+                <div v-show="q.showAnswers" class="answers-section">
+                  <div class="answers-timeline">
+                    <div class="timeline-line"></div>
+                    <div
+                      class="answer-item"
+                      v-for="a in [...q.answers].reverse()"
+                      :key="a.id"
+                    >
+                      <div class="answer-avatar">
+                        <div class="avatar small" :style="{ backgroundColor: getAvatarColor(a.user_id) }">
+                          {{ capitalizeHandle(a.user?.handle || 'A')[0] }}
+                        </div>
+                      </div>
+                      <div class="answer-bubble">
+                        <div class="answer-header">
+                          <div class="answerer-info">
+                            <strong>{{ capitalizeHandle(a.user?.handle) || 'Anonymous' }}</strong>
+                            <span class="answer-time">{{ formatTimeAgo(a.created_at) }}</span>
+                          </div>
+                          <div class="answer-actions" v-if="canModify(a)">
+                            <button class="icon-btn small" @click="editAnswer(a)" title="Edit"><i class="fas fa-pen"></i></button>
+                            <button class="icon-btn small" @click="deleteAnswer(a, q)" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                          </div>
+                        </div>
+                        <div v-if="!a.isEditing">
+                          <p v-html="highlightMentions(a.answer)"></p>
+                          <div v-if="a.image_url" class="image-preview small" @click="openImage(a.image_url)">
+                            <img :src="a.image_url" alt="Answer attachment" />
+                          </div>
+                        </div>
+                        <div v-else>
+                          <textarea v-model="a.editText" class="edit-textarea small" rows="2"></textarea>
+                          <div class="edit-actions inline">
+                            <button class="save-btn" @click="updateAnswer(a)"><i class="fas fa-check"></i></button>
+                            <button class="cancel-btn" @click="cancelEditAnswer(a)"><i class="fas fa-times"></i></button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div v-if="!a.isEditing">
-                    <p v-html="highlightMentions(a.answer)"></p>
+                  <!-- Reply Input -->
+                  <div class="reply-input-area">
+                    <div class="avatar small" :style="{ backgroundColor: getAvatarColor(authUser.id) }">
+                      {{ getUserInitials(authUser.handle) }}
+                    </div>
+                    <div class="reply-input-wrapper">
+                      <input
+                        v-model="q.replyText"
+                        placeholder="Write a reply... (use @ to mention someone)"
+                        @input="onMentionInput($event, q)"
+                        @keydown="onMentionKeydown"
+                        class="reply-input"
+                      />
+                      <div class="reply-actions">
+                        <label class="attach-icon">
+                          <i class="fas fa-paperclip"></i>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            @change="handleAnswerImage($event, q)"
+                            hidden
+                          />
+                        </label>
+                        <button class="send-reply" @click="addAnswer(q)" :disabled="!q.replyText.trim() && !q.replyImage">
+                          <i class="fas fa-paper-plane"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  <div v-else>
-                    <textarea v-model="a.editText"></textarea>
-                    <button @click="updateAnswer(a)"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
-                    <button @click="cancelEditAnswer(a)"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
-                  </div>
-
-                  <!-- ✅ FIXED: ANSWER IMAGE (click to open) -->
-                  <img
-                    v-if="a.image_url"
-                    :src="a.image_url"
-                    class="qa-image"
-                    @click="openImage(a.image_url)"
-                  />
+                  <p v-if="answerError[q.id]" class="error-message small">{{ answerError[q.id] }}</p>
                 </div>
-
-                <!-- Add Answer -->
-               <div class="reply-box" style="color: gray;">
-  <div class="wa-input">
-    <input
-      v-model="q.replyText"
-      placeholder="Type a reply..."
-      @input="onMentionInput($event, q)"
-      @keydown="onMentionKeydown"
-    />
-
-    <!-- Attachment icon -->
-    <label class="attach-icon">
-      <i class="fas fa-paperclip"></i>
-      <input
-        type="file"
-        accept="image/*"
-        @change="handleAnswerImage($event, q)"
-        hidden
-      />
-    </label>
-
-    <!-- Send -->
-    <button class="send-btn" @click="addAnswer(q)">
-      <i class="fas fa-paper-plane"></i>
-    </button>
-  </div>
-</div>
-
-
-                <p v-if="answerError[q.id]" class="error-text">
-                  {{ answerError[q.id] }}
-                </p>
-              </div>
-            </transition>
+              </transition>
+            </div>
           </div>
         </div>
 
         <!-- Mention Dropdown -->
         <div
           v-if="showMentionBox"
-          class="mention-box"
+          class="mention-dropdown"
           :style="{ top: mentionPosition.top + 'px', left: mentionPosition.left + 'px' }"
         >
+          <div class="mention-header">
+            <i class="fas fa-at"></i> Mention someone
+          </div>
           <div
             v-for="(user, index) in mentionUsers"
             :key="user.id"
-            class="mention-item"
+            class="mention-option"
             :class="{ active: index === selectedMentionIndex }"
             @click="selectMention(user)"
           >
-            @{{ user.handle }}
+            <div class="mention-avatar" :style="{ backgroundColor: getAvatarColor(user.id) }">
+              {{ (user.handle || 'U')[0].toUpperCase() }}
+            </div>
+            <span>@{{ user.handle }}</span>
+          </div>
+          <div v-if="mentionUsers.length === 0" class="mention-empty">
+            No users found
           </div>
         </div>
 
         <!-- Image Preview Modal -->
         <div v-if="showImageModal" class="image-modal" @click="closeImage">
-          <img :src="previewImage" class="image-full" />
-          <span class="close-btn">✖</span>
+          <div class="modal-content" @click.stop>
+            <img :src="previewImage" class="modal-image" />
+            <button class="modal-close" @click="closeImage"><i class="fas fa-times"></i></button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import axios from 'axios'
-import {
-  toastSuccess,
-  toastError,
-  toastWarning,
-  toastInfo
-} from "@/utils/toast.js";
+
 export default {
   name: 'Help',
 
@@ -225,488 +243,331 @@ export default {
     return {
       autoRefreshTimer: null,
       showImageModal: false,
-previewImage: null,
-       questionError: '',
-    answerError: {},
+      previewImage: null,
+      questionError: '',
+      answerError: {},
       authUser: {
-      id: null,
-      role: null
-    },
+        id: null,
+        role: null,
+        handle: null
+      },
       latestMentionMessage: '',
-       unreadMentionsCount: 0,
-       notifications: [],
-       selectedMentionIndex: 0,
+      unreadMentionsCount: 0,
+      notifications: [],
+      selectedMentionIndex: 0,
       questions: [],
       newQuestion: '',
       questionImage: null,
       isMobile: false,
       isSidebarVisible: true,
-       // ✅ MENTION SYSTEM
-    showMentionBox: false,
-    mentionUsers: [],
-    mentionQuery: '',
-    mentionTarget: null,
-    mentionPosition: { top: 0, left: 0 }
+      showMentionBox: false,
+      mentionUsers: [],
+      mentionQuery: '',
+      mentionTarget: null,
+      mentionPosition: { top: 0, left: 0 }
     }
   },
 
   mounted() {
-      this.fetchQuestions()
-       this.autoRefreshTimer = setInterval(() => {
     this.fetchQuestions()
-  }, 5000)
-     document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') this.closeImage()
-  })
+    this.autoRefreshTimer = setInterval(() => {
+      this.fetchQuestions()
+    }, 5000)
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') this.closeImage()
+    })
     axios.get('/api/user').then(res => {
-    this.authUser.id = res.data.id
-    this.authUser.role = res.data.role
-  })
+      this.authUser.id = res.data.id
+      this.authUser.role = res.data.role
+      this.authUser.handle = res.data.handle
+    })
     document.addEventListener('click', this.closeMentionBox)
-
-   axios.get('/api/mentions/unread-count')
-  .then(res => {
-    console.log(res.data)  // Check if it has { count: number }
-    this.unreadMentionsCount = res.data.count
-  })
-  .catch(err => console.error('Failed to fetch unread mentions', err))
-this.fetchNotifications();
+    axios.get('/api/mentions/unread-count')
+      .then(res => {
+        this.unreadMentionsCount = res.data.count
+      })
+      .catch(err => console.error('Failed to fetch unread mentions', err))
+    this.fetchNotifications();
     this.fetchQuestions()
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
   },
 
   beforeUnmount() {
-   clearInterval(this.autoRefreshTimer)
-
-  document.removeEventListener('click', this.closeMentionBox)
-  window.removeEventListener('resize', this.checkIfMobile)
+    clearInterval(this.autoRefreshTimer)
+    document.removeEventListener('click', this.closeMentionBox)
+    window.removeEventListener('resize', this.checkIfMobile)
   },
 
   methods: {
+    getAvatarColor(id) {
+      const colors = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+      if (!id) return colors[0]
+      return colors[id % colors.length]
+    },
+    getUserInitials(handle) {
+      if (!handle) return 'U'
+      return handle.slice(0, 2).toUpperCase()
+    },
+    formatTimeAgo(date) {
+      if (!date) return ''
+      const now = new Date()
+      const past = new Date(date)
+      const diffMs = now - past
+      const diffMins = Math.floor(diffMs / 60000)
+      const diffHours = Math.floor(diffMins / 60)
+      const diffDays = Math.floor(diffHours / 24)
+      
+      if (diffMins < 1) return 'Just now'
+      if (diffMins < 60) return `${diffMins}m ago`
+      if (diffHours < 24) return `${diffHours}h ago`
+      if (diffDays < 7) return `${diffDays}d ago`
+      return past.toLocaleDateString()
+    },
     openImage(src) {
-  this.previewImage = src
-  this.showImageModal = true
-  document.body.style.overflow = 'hidden'
-},
-
-closeImage() {
-  this.showImageModal = false
-  this.previewImage = null
-  document.body.style.overflow = ''
-},
-
+      this.previewImage = src
+      this.showImageModal = true
+      document.body.style.overflow = 'hidden'
+    },
+    closeImage() {
+      this.showImageModal = false
+      this.previewImage = null
+      document.body.style.overflow = ''
+    },
     canModify(item) {
-  return (
-    item.user_id === this.authUser.id ||
-    this.authUser.role === 'admin'
-  )
-},
+      return item.user_id === this.authUser.id || this.authUser.role === 'admin'
+    },
     editQuestion(q) {
-  q.isEditing = true
-  q.editText = q.question
-},
-
-cancelEditQuestion(q) {
-  q.isEditing = false
-},
-
-updateQuestion(q) {
-  axios.put(`/api/qa/question/${q.id}`, {
-    question: q.editText
-  }).then(() => {
-    q.question = q.editText
-    q.isEditing = false
-  })
-},
-
-deleteQuestion(q) {
-  if (!confirm('Delete this question?')) return
-
-  axios.delete(`/api/qa/question/${q.id}`)
-    .then(() => {
-      this.questions = this.questions.filter(x => x.id !== q.id)
-    })
-},
-editAnswer(a) {
-  a.isEditing = true
-  a.editText = a.answer
-},
-
-cancelEditAnswer(a) {
-  a.isEditing = false
-},
-
-updateAnswer(a) {
-  axios.put(`/api/qa/answer/${a.id}`, {
-    answer: a.editText
-  }).then(() => {
-    a.answer = a.editText
-    a.isEditing = false
-  })
-},
-
-deleteAnswer(a, q) {
-  if (!confirm('Delete this answer?')) return
-
-  axios.delete(`/api/qa/answer/${a.id}`)
-    .then(() => {
-      q.answers = q.answers.filter(x => x.id !== a.id)
-    })
-}
-,
-
+      q.isEditing = true
+      q.editText = q.question
+    },
+    cancelEditQuestion(q) {
+      q.isEditing = false
+    },
+    updateQuestion(q) {
+      axios.put(`/api/qa/question/${q.id}`, {
+        question: q.editText
+      }).then(() => {
+        q.question = q.editText
+        q.isEditing = false
+      })
+    },
+    deleteQuestion(q) {
+      if (!confirm('Delete this question?')) return
+      axios.delete(`/api/qa/question/${q.id}`)
+        .then(() => {
+          this.questions = this.questions.filter(x => x.id !== q.id)
+        })
+    },
+    editAnswer(a) {
+      a.isEditing = true
+      a.editText = a.answer
+    },
+    cancelEditAnswer(a) {
+      a.isEditing = false
+    },
+    updateAnswer(a) {
+      axios.put(`/api/qa/answer/${a.id}`, {
+        answer: a.editText
+      }).then(() => {
+        a.answer = a.editText
+        a.isEditing = false
+      })
+    },
+    deleteAnswer(a, q) {
+      if (!confirm('Delete this answer?')) return
+      axios.delete(`/api/qa/answer/${a.id}`)
+        .then(() => {
+          q.answers = q.answers.filter(x => x.id !== a.id)
+        })
+    },
     capitalizeHandle(handle) {
-  if (!handle) return ''
-  return handle.charAt(0).toUpperCase() + handle.slice(1)
-},
-
+      if (!handle) return ''
+      return handle.charAt(0).toUpperCase() + handle.slice(1)
+    },
     onMentionKeydown(e) {
-  if (!this.showMentionBox || !this.mentionUsers.length) return
-
-  if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    this.selectedMentionIndex =
-      (this.selectedMentionIndex + 1) % this.mentionUsers.length
-  }
-
-  if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    this.selectedMentionIndex =
-      (this.selectedMentionIndex - 1 + this.mentionUsers.length) %
-      this.mentionUsers.length
-  }
-
-  if (e.key === 'Enter') {
-    e.preventDefault()
-    this.selectMention(this.mentionUsers[this.selectedMentionIndex])
-  }
-
-  if (e.key === 'Escape') {
-    this.showMentionBox = false
-  }
-},
-
-onMentionInput(e, target) {
-  const input = e.target
-  const text = input.value
-  const cursorPos = input.selectionStart
-  const beforeCursor = text.slice(0, cursorPos)
-
-  // Match @mention start
-  const match = beforeCursor.match(/@([A-Za-z0-9_]*)$/)
-  if (!match) {
-    this.showMentionBox = false
-    return
-  }
-
-  const query = match[1].trim()
-  this.mentionQuery = query
-  this.mentionTarget = target
-  this.selectedMentionIndex = 0
-  this.setMentionPosition(input)
-
-  // Fetch matching users OR all users if query is empty
-  axios.get('/api/qa/mention-users', { params: { q: query || '' } })
-    .then(res => {
-      this.mentionUsers = res.data
-      this.showMentionBox = res.data.length > 0
-    })
-    .catch(() => {
-      this.showMentionBox = false
-    })
-},
-
-
-     async fetchNotifications() {
-    const res = await axios.get('/api/notifications');
-    this.notifications = res.data;
-
-    // extract latest message
-    if (this.notifications.length) {
-      const data = JSON.parse(this.notifications[0].data);
-      this.latestMentionMessage = data.message ?? '';
-    }
-  },
+      if (!this.showMentionBox || !this.mentionUsers.length) return
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        this.selectedMentionIndex = (this.selectedMentionIndex + 1) % this.mentionUsers.length
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        this.selectedMentionIndex = (this.selectedMentionIndex - 1 + this.mentionUsers.length) % this.mentionUsers.length
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        this.selectMention(this.mentionUsers[this.selectedMentionIndex])
+      }
+      if (e.key === 'Escape') {
+        this.showMentionBox = false
+      }
+    },
+    onMentionInput(e, target) {
+      const input = e.target
+      const text = input.value
+      const cursorPos = input.selectionStart
+      const beforeCursor = text.slice(0, cursorPos)
+      const match = beforeCursor.match(/@([A-Za-z0-9_]*)$/)
+      if (!match) {
+        this.showMentionBox = false
+        return
+      }
+      const query = match[1].trim()
+      this.mentionQuery = query
+      this.mentionTarget = target
+      this.selectedMentionIndex = 0
+      this.setMentionPosition(input)
+      axios.get('/api/qa/mention-users', { params: { q: query || '' } })
+        .then(res => {
+          this.mentionUsers = res.data
+          this.showMentionBox = res.data.length > 0
+        })
+        .catch(() => {
+          this.showMentionBox = false
+        })
+    },
+    async fetchNotifications() {
+      const res = await axios.get('/api/notifications');
+      this.notifications = res.data;
+      if (this.notifications.length) {
+        const data = JSON.parse(this.notifications[0].data);
+        this.latestMentionMessage = data.message ?? '';
+      }
+    },
     closeMentionBox(e) {
-  if (!e.target.closest('.mention-box')) {
-    this.showMentionBox = false
-  }
-},
-
-highlightMentions(text) {
-  if (!text) return ''
-  // Match @handles (alphanumeric + underscores, e.g., @ajay_123)
-  return text.replace(
-    /@([A-Za-z0-9_]+)/g,
-    '<span class="mention-highlight">@$1</span>'
-  )
-},
-
-
-
-
-onMentionKeyup(e, target) {
-  const input = e.target
-  const text = input.value
-  const cursorPos = input.selectionStart
-
-  // Text before cursor
-  const beforeCursor = text.slice(0, cursorPos)
-
-  // Match last @mention (1–5 words, multi-word support)
-  const mentionMatch = beforeCursor.match(/@([A-Za-z]+(?:\s+[A-Za-z]+){0,4})$/)
-  if (!mentionMatch) {
-    this.showMentionBox = false
-    return
-  }
-
-  const query = mentionMatch[1].trim()
-  if (!query) {
-    this.showMentionBox = false
-    return
-  }
-
-  // ✅ Store mention info
-  this.mentionQuery = query
-  this.mentionTarget = target
-  this.selectedMentionIndex = 0
-  this.setMentionPosition(input)
-
-  // Keyboard navigation
-  if (this.showMentionBox && this.mentionUsers.length) {
-    if (e.key === 'ArrowDown') {
-      this.selectedMentionIndex =
-        (this.selectedMentionIndex + 1) % this.mentionUsers.length
-      return
-    }
-
-    if (e.key === 'ArrowUp') {
-      this.selectedMentionIndex =
-        (this.selectedMentionIndex - 1 + this.mentionUsers.length) %
-        this.mentionUsers.length
-      return
-    }
-
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      this.selectMention(this.mentionUsers[this.selectedMentionIndex])
-      return
-    }
-
-    if (e.key === 'Escape') {
+      if (!e.target.closest('.mention-dropdown')) {
+        this.showMentionBox = false
+      }
+    },
+    highlightMentions(text) {
+      if (!text) return ''
+      return text.replace(
+        /@([A-Za-z0-9_]+)/g,
+        '<span class="mention-highlight">@$1</span>'
+      )
+    },
+    selectMention(user) {
+      const isQuestion = this.mentionTarget === 'question'
+      const text = isQuestion ? this.newQuestion : this.mentionTarget.replyText
+      const inputEl = document.activeElement
+      const cursorPos = inputEl.selectionStart
+      const before = text.slice(0, cursorPos)
+      const after = text.slice(cursorPos)
+      const newBefore = before.replace(/@([A-Za-z0-9_]*)$/, `@${user.handle}`)
+      const finalText = newBefore + ' ' + after
+      if (isQuestion) {
+        this.newQuestion = finalText
+      } else {
+        this.mentionTarget.replyText = finalText
+      }
       this.showMentionBox = false
-      return
-    }
-  }
-
-  // Fetch matching users from API
-  axios.get('/api/qa/mention-users', { params: { q: query } })
-    .then(res => {
-      this.mentionUsers = res.data
-      this.showMentionBox = res.data.length > 0
-    })
-    .catch(() => {
-      this.showMentionBox = false
-    })
-},
-
-
-
-
-
-
-selectMention(user) {
-  const isQuestion = this.mentionTarget === 'question'
-  const text = isQuestion ? this.newQuestion : this.mentionTarget.replyText
-  const inputEl = document.activeElement
-  const cursorPos = inputEl.selectionStart
-
-  const before = text.slice(0, cursorPos)
-  const after = text.slice(cursorPos)
-
-  // ✅ replace EXACT same pattern used while typing
-  const newBefore = before.replace(
-    /@([A-Za-z]+(?:\s+[A-Za-z]+){0,4})$/,
-    `@${user.handle}`
-  )
-
-  const finalText = newBefore + ' ' + after
-
-  if (isQuestion) {
-    this.newQuestion = finalText
-  } else {
-    this.mentionTarget.replyText = finalText
-  }
-
-  this.showMentionBox = false
-},
-
-
-
-
-
-
-setMentionPosition(input) {
-  const rect = input.getBoundingClientRect()
-  this.mentionPosition = {
-    top: rect.bottom + window.scrollY,
-    left: rect.left + window.scrollX
-  }
-},
-
-    toggleLike(answer) {
-  axios.post(`/api/qa/answer/${answer.id}/like`)
-    .then(res => {
-      answer.is_liked = res.data.liked;
-      answer.likes_count = res.data.likes_count;
-    })
-},
-
-    /* ===============================
-       FETCH QUESTIONS
-    =============================== */
-fetchQuestions() {
-  axios.get('/api/qa')
-    .then(res => {
-      const currentQuestions = this.questions || []
-
-      this.questions = res.data.map((q, index) => {
-        const oldQ = currentQuestions.find(x => x.id === q.id)
-
-        return {
-          ...q,
-
-          creator_handle: q.creator_handle || q.creator_name,
-
-          // ✅ DEFAULT EXPAND FIRST QUESTION
-          showAnswers: oldQ?.showAnswers ?? (index === 0),
-
-          isEditing: oldQ?.isEditing ?? false,
-          editText: oldQ?.editText ?? q.question,
-          replyText: oldQ?.replyText ?? '',
-          replyImage: null,
-
-          answers: q.answers.map(a => {
-            const oldA = oldQ?.answers?.find(x => x.id === a.id)
-
+    },
+    setMentionPosition(input) {
+      const rect = input.getBoundingClientRect()
+      this.mentionPosition = {
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX
+      }
+    },
+    fetchQuestions() {
+      axios.get('/api/qa')
+        .then(res => {
+          const currentQuestions = this.questions || []
+          this.questions = res.data.map((q, index) => {
+            const oldQ = currentQuestions.find(x => x.id === q.id)
             return {
-              ...a,
-              creator_handle: a.creator_handle || a.creator_name,
-              isEditing: oldA?.isEditing ?? false,
-              editText: oldA?.editText ?? a.answer
+              ...q,
+              creator_handle: q.creator_handle || q.creator_name,
+              showAnswers: oldQ?.showAnswers ?? (index === 0),
+              isEditing: oldQ?.isEditing ?? false,
+              editText: oldQ?.editText ?? q.question,
+              replyText: oldQ?.replyText ?? '',
+              replyImage: null,
+              answers: q.answers.map(a => {
+                const oldA = oldQ?.answers?.find(x => x.id === a.id)
+                return {
+                  ...a,
+                  creator_handle: a.creator_handle || a.creator_name,
+                  isEditing: oldA?.isEditing ?? false,
+                  editText: oldA?.editText ?? a.answer
+                }
+              })
             }
           })
-        }
-      })
-    })
-    .catch(err => console.error(err))
-},
-
-
-
-    /* ===============================
-       POST QUESTION
-    =============================== */
+        })
+        .catch(err => console.error(err))
+    },
     handleQuestionImage(e) {
       this.questionImage = e.target.files[0]
     },
-
- addQuestion() {
-  this.questionError = ''
-
-  // ✅ both empty → error
-  if (!this.newQuestion.trim() && !this.questionImage) {
-    this.questionError = 'Please enter text or upload an image'
-    return
-  }
-
-  const formData = new FormData()
-
-  if (this.newQuestion.trim()) {
-    formData.append('question', this.newQuestion)
-  }
-
-  if (this.questionImage) {
-    formData.append('image', this.questionImage)
-  }
-
-  axios.post('/api/qa/question', formData)
-    .then(() => {
-      this.newQuestion = ''
-      this.questionImage = null
+    addQuestion() {
       this.questionError = ''
-      this.fetchQuestions()
-    })
-},
-
-
-    /* ===============================
-       POST ANSWER
-    =============================== */
+      if (!this.newQuestion.trim() && !this.questionImage) {
+        this.questionError = 'Please enter text or upload an image'
+        return
+      }
+      const formData = new FormData()
+      if (this.newQuestion.trim()) {
+        formData.append('question', this.newQuestion)
+      }
+      if (this.questionImage) {
+        formData.append('image', this.questionImage)
+      }
+      axios.post('/api/qa/question', formData)
+        .then(() => {
+          this.newQuestion = ''
+          this.questionImage = null
+          this.questionError = ''
+          this.fetchQuestions()
+        })
+    },
     handleAnswerImage(e, question) {
       question.replyImage = e.target.files[0]
     },
-
-addAnswer(question) {
-  // clear error
-  this.answerError[question.id] = ''
-
-  // ❌ both empty → error
-  if (!question.replyText.trim() && !question.replyImage) {
-    this.answerError[question.id] = 'Please enter text or upload an image'
-    return
-  }
-
-  const formData = new FormData()
-  formData.append('question_id', question.id)
-
-  if (question.replyText.trim()) {
-    formData.append('answer', question.replyText)
-  }
-
-  if (question.replyImage) {
-    formData.append('image', question.replyImage)
-  }
-
-  axios.post('/api/qa/answer', formData)
-    .then(() => {
-      question.replyText = ''
-      question.replyImage = null
+    addAnswer(question) {
       this.answerError[question.id] = ''
-      this.fetchQuestions()
-    })
-    .catch(err => {
-      console.error('Answer submit failed', err)
-    })
-},
-
-
-    /* ===============================
-       UI HELPERS
-    =============================== */
+      if (!question.replyText.trim() && !question.replyImage) {
+        this.answerError[question.id] = 'Please enter text or upload an image'
+        return
+      }
+      const formData = new FormData()
+      formData.append('question_id', question.id)
+      if (question.replyText.trim()) {
+        formData.append('answer', question.replyText)
+      }
+      if (question.replyImage) {
+        formData.append('image', question.replyImage)
+      }
+      axios.post('/api/qa/answer', formData)
+        .then(() => {
+          question.replyText = ''
+          question.replyImage = null
+          this.answerError[question.id] = ''
+          this.fetchQuestions()
+        })
+        .catch(err => {
+          console.error('Answer submit failed', err)
+        })
+    },
     toggleAnswers(question) {
       question.showAnswers = !question.showAnswers
     },
-
-   formatDateTime(date) {
-  if (!date) return ''
-  return new Date(date).toLocaleString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  })
-},
-
-
+    formatDateTime(date) {
+      if (!date) return ''
+      return new Date(date).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
+    },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
     },
-
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible
     }
@@ -714,698 +575,691 @@ addAnswer(question) {
 }
 </script>
 
-
-
 <style scoped>
+/* Import Font Awesome */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.error-text {
-  color: #e53935;
-  font-size: 12px;
-  margin-top: 4px;
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #818cf8;
+  --bg-light: #f8fafc;
+  --surface: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
 }
 
-.notification-bell-wrapper {
-  position: relative;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.layout {
+  min-height: 100vh;
+  /* background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.main-content {
+ display: flex;
+    flex: 1;
+    padding: 24px;
+    gap: 24px;
+}
+
+.announcement-board {
+  flex: 1;
+  min-width: 0;
+}
+
+/* QA Container */
+.qa-container {
+  max-width: 1000px;
+  margin: 0 auto;
+        
+}
+
+/* Header Section */
+.qa-header {
+  margin-bottom: 32px;
+}
+
+.header-content {
+  display: flex;
+ justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-badge {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.3);
+}
+
+.icon-badge i {
+  font-size: 28px;
+  color: rgb(70, 69, 69);
+}
+
+.title-section h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.title-section p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.stats-badge {
+  background: var(--surface);
+  padding: 12px 20px;
+  border-radius: 16px;
   text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
 }
 
-.notification-short-text {
+.stat-count {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+  line-height: 1;
+}
+
+.stat-label {
   font-size: 12px;
-  color: #666;
-  margin-top: 4px;
-  max-width: 160px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--text-secondary);
 }
 
-.mention-item.active {
-  background: #1976d2;
+/* Ask Card */
+.ask-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.ask-card:focus-within {
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.12);
+  border-color: var(--primary-light);
+}
+
+.card-header {
+  display: flex;
+  gap: 16px;
+}
+
+.avatar-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.input-wrapper {
+  flex: 1;
+}
+
+.smart-input {
+  width: 100%;
+  border: 1px solid rgb(234, 228, 228);
+  border-radius: 16px;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+  background: var(--bg-light);
+}
+
+.smart-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.input-actions {
+  display: flex;
+      justify-content: flex-end;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.attach-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-light);
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.attach-btn:hover {
+  background: var(--border);
+  color: var(--primary);
+}
+
+.submit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: black;
+  border: none;
+  border-radius: 30px;
+  color: white;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 12px;
+  margin-top: 12px;
+  padding-left: 64px;
+}
+
+.error-message.small {
+  padding-left: 0;
+  margin-top: 8px;
+}
+
+/* Questions Feed */
+.questions-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.question-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+}
+
+.question-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.question-card.expanded {
+  border-color: var(--primary-light);
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.08);
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.user-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
   color: white;
 }
 
-.mention-highlight {
-  color: #1976d2;
+.avatar.small {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.meta h4 {
+  font-size: 14px;
   font-weight: 600;
-  background: rgba(25,118,210,0.1);
-  padding: 2px 4px;
-  border-radius: 4px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
-.loader {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #fff;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
+.time-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.time-badge i {
+  font-size: 11px;
 }
 
+.qa-actions {
+  display: flex;
+  gap: 8px;
+}
 
-
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  display: none;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  position: relative;
 }
 
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-.main-content {
-  align-self: center;
+.icon-btn:hover {
+  background: var(--bg-light);
+  color: var(--primary);
+}
+
+.icon-btn.edit:hover {
+  color: var(--warning);
+}
+
+.icon-btn.delete:hover {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.reply-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--primary);
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.question-body {
+  margin-bottom: 16px;
+  padding-left: 52px;
+}
+
+.question-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.image-preview {
+  position: relative;
+  display: inline-block;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  transition: transform 0.2s;
+}
+
+.image-preview.small img {
+  max-width: 120px;
+  max-height: 90px;
+}
+
+.image-preview:hover img {
+  transform: scale(1.02);
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-preview:hover .image-overlay {
+  opacity: 1;
+}
+
+.image-overlay i {
+  color: white;
+  font-size: 24px;
+}
+
+.edit-textarea {
   width: 100%;
-        background-color: #f6f7fb;
-
-}
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 12px;
 }
 
+.edit-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
 
-.card-header {
+.edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.save-btn, .cancel-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn {
+  background: var(--success);
+  border: none;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #0d9488;
+}
+
+.cancel-btn {
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.cancel-btn:hover {
+  background: var(--border);
+}
+
+/* Answers Section */
+.answers-section {
+  margin-top: 20px;
+  padding-left: 52px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+
+.answers-timeline {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.answer-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.answer-avatar {
+  flex-shrink: 0;
+}
+
+.answer-bubble {
+  flex: 1;
+  background: var(--bg-light);
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+
+.answer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
 
-.card-header h3 {
-  font-size: 18px;
-  color: var(--text);
-  margin: 0;
+.answerer-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.card-header .date {
+.answerer-info strong {
   font-size: 13px;
-  color: #888;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.card-message {
-  font-size: 15px;
-  color: var(--text);
-  margin-top: 5px;
-  line-height: 1.5;
+.answer-time {
+  font-size: 11px;
+  color: var(--text-secondary);
 }
-.password-wrapper {
+
+.answer-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-btn.small {
+  width: 28px;
+  height: 28px;
+}
+
+.answer-bubble p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+/* Reply Input */
+.reply-input-area {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.reply-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-light);
+  border-radius: 30px;
+  padding: 4px 12px;
+  border: 1px solid gray;
+  transition: all 0.2s;
+}
+
+.reply-input-wrapper:focus-within {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.reply-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.reply-input:focus {
+  outline: none;
+}
+
+.reply-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
+.attach-icon {
   cursor: pointer;
-  font-size: 14px;
+  color: var(--text-secondary);
+  transition: color 0.2s;
   display: flex;
   align-items: center;
 }
 
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-
-/* Layout */
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-
-/* Header */
-.header {
-  font-size: 17px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 0 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-
-/* Main Content */
-.main-content {
-  display: flex;
-  flex: 1;
-  padding: 30px;
-  gap: 20px;
-}
-
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
-}
-
-/* Content Section */
-.content {
-  flex: 1;
-  background-color: white;
-  padding: 30px 40px;
-  border-radius: 15px;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.08);
-  overflow-x: auto;
-}
-
-h2 {
-      text-transform: uppercase;
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 800;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-}
-
-
-
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
-  position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
-}
-
-
-
-/* Modal Buttons */
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-
-
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
-  }
-
-  .modal-card {
-    padding: 30px 25px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
-    font-size: 17px;
-  }
-  .menu-btn, .logout-btn {
-    width: 100%;
-  }
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-}
-@media (max-width: 768px) {
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-  margin-bottom: 6px;
-      height: 52px;
-}
-}
-
-.logo-img {
-  height: 45px;
-}
-
-.header-title {
-  flex: 1;
-  text-align: center;
-  color: white;
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-.mobile-menu-icon {
-  font-size: 22px;
-  color: white;
-  cursor: pointer;
-}
-
-.dsi-input-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-
-@media (max-width: 768px) {
-  
-}
-
-.qa-board {
-  max-width: 900px;
-  margin: auto;
-}
-
-.ask-box {
-  background: var(--primary);
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-  /* box-shadow: 0 4px 15px rgba(0,0,0,0.05); */
-}
-
-.ask-box input,
-.ask-box textarea {
-  width: 95%;
-  margin-bottom: 10px;
-  background-color: white;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.ask-box button {
-  /* background: #ffffff94; */
-  color: white;
-  padding: 10px 16px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-}
-
-.question-card {
-  background: var(--sidebar);
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  /* box-shadow: 0 6px 18px rgba(0,0,0,0.06); */
-}
-
-.question-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  color: var(--text);
-}
-
-.question-text {
-  font-size: 16px;
-  margin: 15px 0;
-  color: var(--text);
-}
-
-.answer-box {
-  background: #ffffff;
-    padding: 10px 15px;
-    color: var(--text);
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-
-.reply-box {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.reply-box input {
-  flex: 1;
-    padding: 8px;
-    color: #ffffff;
-    background-color: var(--primary);
-    border-radius: 6px;
-    border: 1px solid #ffffff;
-}
-
-.reply-box button {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.qa-image {
-  margin-top: 8px;
-  max-width: 90px;
-  border-radius: 6px;
-  /* border: 1px solid #ddd; */
-}
-
-/* Slide down/up animation for answers */
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.3s ease;
-}
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-}
-.slide-fade-enter-to,
-.slide-fade-leave-from {
-  max-height: 1000px; /* large enough for content */
-  opacity: 1;
-  overflow: hidden;
-}
-h5{
-      color: #32696b;
-}
-p{
-  font-family: math;
-}
-.reply-box input::placeholder {
-  color: white;       /* placeholder text color */
-  opacity: 1;         /* ensure full opacity across browsers */
-}
-.reply-box input {
-  color: white;       /* text color inside input */
-}
-
-/* Mobile adjustments */
-@media (max-width: 768px) {
-  .main-content {
-    flex-direction: column;
-    padding: 15px;
-  }
-
-  /* Sidebar overlay */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 240px;
-    z-index: 1000;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
-
-  .sidebar.show {
-    transform: translateX(0);
-  }
-
-  .announcement-board {
-    width: 100%;
-    padding: 0;
-  }
-
-  .qa-board {
-    max-width: 100%;
-    margin: 0;
-  }
-
-  .ask-box input,
-  .ask-box textarea,
-  .reply-box input {
-    width: 94%;
-  }
-
-  .reply-box {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .reply-box button {
-    width: 21%;
-  }
-
-  .qa-image {
-    max-width: 100%;
-    height: auto;
-  }
-
-  .question-card {
-    padding: 15px;
-  }
-
-  .ask-box {
-    padding: 15px;
-  }
-
-  .header {
-    flex-wrap: wrap;
-    font-size: 16px;
-    padding: 10px 15px;
-  }
-
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-  h2{
-        font-size: 17px;
-    place-self: anchor-center;
-  }
-}
-button{
-
-    border-color: rgba(255, 255, 255, 0)!important;
-}
-.mention-box {
-  position: absolute;
-  background: #fff;
-  border: 1px solid #ddd;
-  width: 220px;
-  max-height: 160px;
-  overflow-y: auto;
-  z-index: 9999;
-  border-radius: 6px;
-}
-
-.mention-item {
-  padding: 8px;
-  cursor: pointer;
-}
-
-.mention-item:hover {
-  background: #f2f2f2;
-}
-
-.notification-bell-wrapper {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-}
-
-.notification-bell-wrapper .badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: red;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 0.7rem;
-}
-:deep(.mention-highlight) {
-  font-weight: 800!important;
-  color: var(--text)!important; /* optional */
-}
-
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-@media (max-width: 768px) {
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    display: none;
-    text-decoration: none;
-    align-items: center; width: 100%;
-}
-}
-.answer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  color: #666;
-}
-
-.question-header .date,
-.answer-header .date {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--text);
-}
-
-.qa-actions {
-  display: flex;
-  margin-left: 15px;
-  gap: 10px;
-  align-items: center;
-}
-
-.qa-actions i {
-  cursor: pointer;
+.attach-icon:hover {
   color: var(--primary);
 }
 
-.qa-actions i:hover {
-  color: #2f6f71;
+.send-reply {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
 }
 
-textarea {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
+.send-reply:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.1);
+  transform: translateX(2px);
 }
+
+.send-reply:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Mention Dropdown */
+.mention-dropdown {
+  position: absolute;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 260px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 1000;
+  border: 1px solid var(--border);
+}
+
+.mention-header {
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-light);
+}
+
+.mention-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mention-option:hover,
+.mention-option.active {
+  background: var(--bg-light);
+}
+
+.mention-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.mention-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Image Modal */
 .image-modal {
   position: fixed;
   inset: 0;
@@ -1414,161 +1268,131 @@ textarea {
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  cursor: zoom-out;
+  cursor: pointer;
 }
 
-.image-full {
-  max-width: 95%;
-  max-height: 95%;
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+.modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  cursor: default;
 }
 
-.close-btn {
+.modal-image {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.modal-close {
   position: absolute;
-  top: 20px;
-  right: 25px;
-  font-size: 28px;
-  color: white;
-  cursor: pointer;
-}
-
-
-/* WhatsApp style input container */
-.wa-input {
+  top: -40px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: white;
-  border-radius: 25px;
-  /* padding: 1px 12px; */
-  border: 1px solid #ddd;
-}
-
-/* Textarea & input */
-.wa-input textarea,
-.wa-input input {
-  flex: 1;
-  border: none;
-  outline: none;
-  resize: none;
-  font-size: 14px;
-  background: transparent;
-  color: #333;
-}
-
-/* Attachment icon */
-.attach-icon {
+  justify-content: center;
+  color: white;
   cursor: pointer;
-  font-size: 18px;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Animations */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Mention Highlight */
+:deep(.mention-highlight) {
+  background: rgba(99, 102, 241, 0.12);
   color: var(--primary);
+  font-weight: 500;
+  padding: 2px 4px;
+  border-radius: 6px;
+  display: inline-block;
 }
 
-.attach-icon:hover {
-  color: #2f6f71;
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 16px;
+    flex-direction: column;
+  }
+  
+  .qa-container {
+    width: 100%;
+  }
+  
+  .title-section h1 {
+    font-size: 22px;
+  }
+  
+  .icon-badge {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .icon-badge i {
+    font-size: 22px;
+  }
+  
+  .question-body {
+    padding-left: 0;
+  }
+  
+  .answers-section {
+    padding-left: 0;
+  }
+  
+  .timeline-line {
+    left: 16px;
+  }
+  
+  .card-header {
+    flex-direction: column;
+  }
+  
+  .avatar-large {
+    align-self: flex-start;
+  }
+  
+  .error-message {
+    padding-left: 0;
+  }
+  
+  .input-actions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .attach-btn {
+    justify-content: center;
+  }
+  
+  .submit-btn {
+    justify-content: center;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
-
-/* Send button */
-.send-btn {
-  background: var(--primary);
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.send-btn:hover {
-  background: #2f6f71;
-}
-
-/* ===== RCA Chat UI Upgrade ===== */
-
-.qa-board {
-  max-width: 900px;
- margin-top: 66px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.question-card {
-  background: var(--sidebar);
-  border-radius: 16px;
-  padding: 18px 20px;
-  border-left: 4px solid var(--primary);
-  /* box-shadow: 0 8px 25px rgba(0,0,0,0.06); */
-}
-
-.answer-box {
-  background: #ffffff;
-  padding: 12px 16px;
-  border-radius: 14px;
-  margin: 10px 0;
-  max-width: 92%;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-  border: 1px solid #eef2f7;
-}
-
-.answer-box:nth-child(even) {
-  margin-left: auto;
-  background: #f0f9ff;
-}
-
-.qa-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar.small {
-  width: 30px;
-  height: 30px;
-  font-size: 13px;
-}
-
-.reply-box {
-  position: sticky;
-  bottom: 0;
-  /* background: white; */
-  padding: 10px 0;
-  z-index: 5;
-}
-
-.qa-image {
-  margin-top: 8px;
-  max-width: 140px;
-  border-radius: 10px;
-  cursor: zoom-in;
-  transition: transform 0.2s ease;
-}
-
-.qa-image:hover {
-  transform: scale(1.05);
-}
-
-.question-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.question-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
 </style>

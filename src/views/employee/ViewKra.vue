@@ -1,38 +1,119 @@
 <template>
   <div class="layout">
 
-
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-      <div class="announcement-board" v-if="!isMobile || !isSidebarVisible">
-        <h2> MY KRA</h2>
-
-        <ul v-if="kras.length">
-          <li v-for="(kra, index) in kras" :key="index">
-            <strong>{{ kra.name }}</strong>
-            <div v-if="kra.tasks && kra.tasks.length">
-              <p><strong>Tasks:</strong></p>
-              <ul>
-                <li v-for="(task, tIndex) in kra.tasks" :key="tIndex">{{ task }}</li>
-              </ul>
+      <div class="kra-board-premium" v-if="!isMobile || !isSidebarVisible">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-tasks"></i>
             </div>
-            <div v-if="kra.kpis && kra.kpis.length">
-              <p><strong>KPIs:</strong></p>
-              <ul>
-                <li v-for="(kpi, kIndex) in kra.kpis" :key="kIndex">{{ kpi }}</li>
-              </ul>
+            <div>
+              <h1>My KRA</h1>
+              <p class="subtitle-modern">Key Responsibility Areas & Performance Indicators</p>
             </div>
-          </li>
-        </ul>
+          </div>
+          <div class="stats-badge-header">
+            <i class="fas fa-chart-line"></i>
+            <span>{{ kras.length }} KRAs Assigned</span>
+          </div>
+        </div>
 
-        <p v-else>No KRAs assigned.</p>
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-card">
+            <i class="fas fa-list-check"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ totalTasks }}</span>
+              <span class="stat-label">Total Tasks</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-chart-simple"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ totalKPIs }}</span>
+              <span class="stat-label">Total KPIs</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KRAs List -->
+        <div class="kras-section">
+          <div class="section-title-modern">
+            <i class="fas fa-list-ul"></i>
+            <span>Key Responsibility Areas</span>
+          </div>
+
+          <div v-if="kras.length" class="kras-grid-premium">
+            <div v-for="(kra, index) in kras" :key="index" class="kra-card-premium">
+              <div class="card-accent"></div>
+              <div class="kra-header">
+                <div class="kra-icon">
+                  <i class="fas fa-bullseye"></i>
+                </div>
+                <h3>{{ kra.name }}</h3>
+              </div>
+
+              <div class="kra-content">
+                <!-- Tasks Section -->
+                <div v-if="kra.tasks && kra.tasks.length" class="info-section">
+                  <div class="section-header">
+                    <i class="fas fa-tasks"></i>
+                    <span>Tasks</span>
+                    <span class="count-badge">{{ kra.tasks.length }}</span>
+                  </div>
+                  <ul class="task-list">
+                    <li v-for="(task, tIndex) in kra.tasks" :key="tIndex">
+                      <i class="fas fa-check-circle"></i>
+                      <span>{{ task }}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- KPIs Section -->
+                <div v-if="kra.kpis && kra.kpis.length" class="info-section">
+                  <div class="section-header">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Key Performance Indicators</span>
+                    <span class="count-badge">{{ kra.kpis.length }}</span>
+                  </div>
+                  <div class="kpi-list">
+                    <div v-for="(kpi, kIndex) in kra.kpis" :key="kIndex" class="kpi-item">
+                      <i class="fas fa-chart-simple"></i>
+                      <span>{{ kpi }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Target Section -->
+                <div v-if="kra.target" class="info-section">
+                  <div class="section-header">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Target</span>
+                  </div>
+                  <div class="target-box">
+                    <i class="fas fa-flag-checkered"></i>
+                    <span>{{ kra.target }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else class="empty-state-premium">
+            <i class="fas fa-tasks"></i>
+            <h4>No KRAs Assigned</h4>
+            <p>No Key Responsibility Areas have been assigned to you yet</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
-
 
 <script>
 import Sidebar from './components/Sidebar.vue'
@@ -41,7 +122,6 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
 
 export default {
@@ -57,688 +137,456 @@ export default {
       kras: []
     }
   },
+  computed: {
+    totalTasks() {
+      return this.kras.reduce((total, kra) => total + (kra.tasks?.length || 0), 0);
+    },
+    totalKPIs() {
+      return this.kras.reduce((total, kra) => total + (kra.kpis?.length || 0), 0);
+    }
+  },
   mounted() {
-    this.checkIfMobile()
-    window.addEventListener('resize', this.checkIfMobile)
-    this.loadKRAs()
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
+    this.loadKRAs();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$router.push('/auth');
+    }
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
   },
   methods: {
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
+      this.isMobile = window.innerWidth <= 768;
+      this.isSidebarVisible = !this.isMobile;
     },
     toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible
+      this.isSidebarVisible = !this.isSidebarVisible;
     },
-  async loadKRAs() {
-  const user = JSON.parse(localStorage.getItem('user'))
-  if (!user || !user.name) return
+    async loadKRAs() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.name) return;
 
-  this.username = user.name  // ✅ Move this after parsing user
+      this.username = user.name;
 
-  try {
-    const res = await axios.get(`https://employees.archenterprises.co.in/api/api/user-kras/username/${user.name}`)
-    this.kras = res.data
-  } catch (error) {
-    console.error('Failed to load KRAs:', error)
-  }
-}
-
-
+      try {
+        const res = await axios.get(`https://employees.archenterprises.co.in/api/api/user-kras/username/${user.name}`);
+        this.kras = res.data;
+      } catch (error) {
+        console.error('Failed to load KRAs:', error);
+        toastError('Failed to load KRAs');
+      }
+    },
+    logout() {
+      const token = localStorage.getItem('token');
+      axios.post('https://employees.archenterprises.co.in/api/logout', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).finally(() => {
+        localStorage.removeItem('token');
+        this.$router.push('/auth');
+      });
+    }
   }
 }
 </script>
 
-
-
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-@media (max-width: 768px) {
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    display: none;
-    text-decoration: none;
-    align-items: center; width: 100%;
-}
-}
-.kra-card {
-  background: #f9f9f9;
-  border: 1px solid #ccc;
-  margin: 10px 0;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.kra-card h3 {
-  margin-bottom: 10px;
-  color: var(--text);
-}
-.kra-card p {
-  margin: 4px 0;
-}
-ul {
-  padding-left: 1.2rem;
-}
-li {
-  margin: 5px 0;
-}
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
+
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
 }
 
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-.main-content {
-  align-self: center;
-  width: 100%;
-        background-color: #f6f7fb;
-
-}
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-.announcement-board {
-  width: 100%;
-  margin-top: 66px;
-  padding: 30px;
-  background: #f6f7fb;
-  border-radius: 14px;
-  /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); */
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.announcement-board h2 {
- text-transform: uppercase;
-    font-size: 23px;
-    color: var(--text);
-    font-weight: 800;
-  margin-bottom: 25px;
-}
-
-.announcement-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 30px;
-}
-
-.announcement-form input,
-.announcement-form textarea {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  transition: all 0.3s ease;
-  font-size: 15px;
-}
-
-.announcement-form input:focus,
-.announcement-form textarea:focus {
-  outline: none;
-  border-color: #4caf50;
-  background: #f4fff4;
-}
-
-.announcement-form button {
-  align-self: flex-end;
-  background: #4caf50;
-  color: white;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 15px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.announcement-form button:hover {
-  background: #388e3c;
-  box-shadow: 0 6px 14px rgba(0, 128, 0, 0.2);
-}
-
-.announcement-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.announcement-card {
-  background: #f9f9f9;
-  border-left: 6px solid #4caf50;
-  border-radius: 10px;
-  padding: 18px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.announcement-card:hover {
-  background: #f1fff1;
-  transform: translateY(-4px);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.card-header h3 {
-  font-size: 18px;
-  color: var(--text);
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.card-header .date {
-  font-size: 13px;
-  color: #888;
-}
-
-.card-message {
-  font-size: 15px;
-  color: var(--text);
-  margin-top: 5px;
-  line-height: 1.5;
-}
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-
-/* Header */
-.header {
-  font-size: 17px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 0 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-.logout-btn {
-  background-color: white;
-  color: #003977;
-  border: 2px solid #007bff;
-}
-
-.logout-btn:hover {
-  background-color: #e7f1ff;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
   gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
+   ;
 }
 
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+.kra-board-premium {
+  flex: 1;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+/* Content Header */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+}
+
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.stats-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 40px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--primary-color);
 }
 
-.sidebar ul {
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card i {
+  font-size: 32px;
+  color: var(--primary-color);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Section Title */
+.section-title-modern {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1a1a2e;
+}
+
+.section-title-modern i {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+/* KRAs Grid */
+.kras-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+}
+
+/* KRA Card */
+.kra-card-premium {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+}
+
+.kra-card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
+}
+
+.card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+}
+
+.kra-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.kra-icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.kra-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.kra-content {
+  padding: 20px;
+}
+
+/* Info Section */
+.info-section {
+  margin-bottom: 20px;
+}
+
+.info-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+}
+
+.section-header i {
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.count-badge {
+  margin-left: auto;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* Task List */
+.task-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
-}
-
-/* Content Section */
-.content {
-  flex: 1;
-  background-color: #a5d5cf33;
-  padding: 30px 40px;
-  border-radius: 15px;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.08);
-  overflow-x: auto;
-}
-
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 700;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-}
-
-/* User Table */
-.user-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 12px;
-}
-
-.user-table th,
-.user-table td {
-  padding: 14px 20px;
-  text-align: left;
-  font-size: 16px;
-  color: var(--text);
-}
-
-.user-table th {
-  background-color: #f8f9fa;
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-}
-
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
-}
-
-.user-table tbody td {
-  border: none;
-  vertical-align: middle;
-}
-
-/* Footer */
-.footer {
-  background-color: #343a40;
-  color: white;
-  text-align: center;
-  padding: 15px 0;
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
-}
-
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
-  position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
-}
-
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 48%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
+.task-list li {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #4b5563;
 }
 
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+.task-list li:last-child {
+  border-bottom: none;
 }
 
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
+.task-list li i {
+  color: var(--success);
+  font-size: 14px;
 }
 
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
+/* KPI List */
+.kpi-list {
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.btn {
-  flex: 1;
-  padding: 14px 0;
-  font-weight: 700;
-  font-size: 0.9rem;
+.kpi-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #d97706;
+}
+
+.kpi-item i {
+  font-size: 12px;
+}
+
+/* Target Box */
+.target-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #f8fafc;
   border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+  font-size: 13px;
+  color: #4b5563;
+  border-left: 3px solid var(--primary-color);
 }
 
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+.target-box i {
+  color: var(--primary-color);
 }
 
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
+/* Empty State */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  background: #fafbfc;
+  border-radius: 20px;
 }
 
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
 }
 
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
 }
 
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+.empty-state-premium p {
+  font-size: 14px;
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
-  }
-
-  .modal-card {
-    padding: 30px 25px;
+@media (max-width: 1024px) {
+  .kras-grid-premium {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   }
 }
 
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
-    font-size: 17px;
-  }
-  .menu-btn, .logout-btn {
-    width: 100%;
-  }
-}
-.attractive-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
-}
-
-.btn-primary.attractive-btn {
-  background-color: var(--primary);
-  border: none;
-  color: white;
-}
-
-.btn-primary.attractive-btn:hover {
-  background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
-}
-
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
-}
-
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
-}
-
-.attractive-btn i {
-  font-size: 14px;
-}
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-}
 @media (max-width: 768px) {
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-  margin-bottom: 6px;
-      height: 52px;
-}
-}
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
+  }
 
-.logo-img {
-  height: 45px;
-}
+  .kra-board-premium {
+    padding: 20px;
+  }
 
-.header-title {
-  flex: 1;
-  text-align: center;
-  color: white;
-  margin: 0;
-  font-size: 1.3rem;
-}
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.mobile-menu-icon {
-  font-size: 22px;
-  color: white;
-  cursor: pointer;
-}
+  .stats-badge-header {
+    align-self: flex-start;
+  }
 
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .kras-grid-premium {
+    grid-template-columns: 1fr;
+  }
+
+  .kra-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .section-header {
+    flex-wrap: wrap;
+  }
+
+  .kpi-list {
+    justify-content: center;
+  }
+}
 </style>

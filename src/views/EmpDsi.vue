@@ -5,94 +5,165 @@
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-      <div class="announcement-board" v-if="!isMobile || !isSidebarVisible">
-        <h2> All Daily Small Improvement (DSI)</h2>
-
-        <div class="dsi-table-wrapper">
-          <table class="dsi-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>User</th>
-                <th>Problem</th>
-                <th>Solution</th>
-                <th>Result</th>
-                <th>Before</th>
-                <th>After</th>
-                <th>Date</th>
-                <th>Actions</th> <!-- NEW -->
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr v-for="(item, i) in dsiList" :key="i">
-                <td>{{ i + 1 }}</td>
-                <td>{{ item.user }}</td>
-                <td>{{ item.problem }}</td>
-                <td>{{ item.solution }}</td>
-                <td>{{ item.result }}</td>
-
-                <td>
-                  <img
-                    v-if="item.beforeImage"
-                    :src="item.beforeImage"
-                    class="dsi-thumb"
-                    @click="openImage(item.beforeImage)"
-                  />
-                </td>
-
-                <td>
-                  <img
-                    v-if="item.afterImage"
-                    :src="item.afterImage"
-                    class="dsi-thumb"
-                    @click="openImage(item.afterImage)"
-                  />
-                </td>
-
-                <td>{{ item.date }}</td>
-
-              <td class="dsi-actions">
-  <button
-    class="approve-btn"
-    @click="updateStatus(item.id, 'Approved')"
-    :disabled="item.status === 'approved' || item.status === 'rejected'"
-  >
-    Approved
-  </button>
-
-  <button
-    class="reject-btn"
-    @click="updateStatus(item.id, 'Rejected')"
-    :disabled="item.status === 'rejected' || item.status === 'approved'"
-  >
-    Rejected
-  </button>
-</td>
-
-
-
-              </tr>
-
-              <tr v-if="!dsiList.length">
-                <td colspan="9" class="no-data">No DSI Found</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- IMAGE MODAL -->
-        <div v-if="previewImage" class="image-backdrop" @click="previewImage = null">
-          <div class="image-modal">
-            <img :src="previewImage" />
+      <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div>
+              <h1>Daily Small Improvement (DSI)</h1>
+              <p class="subtitle-modern">Track and manage improvement suggestions</p>
+            </div>
+          </div>
+          <div class="stats-badge-header">
+            <i class="fas fa-lightbulb"></i>
+            <span>{{ dsiList.length }} Total Improvements</span>
           </div>
         </div>
-      </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-card pending">
+            <i class="fas fa-clock"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ pendingCount }}</span>
+              <span class="stat-label">Pending</span>
+            </div>
+          </div>
+          <div class="stat-card approved">
+            <i class="fas fa-check-circle"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ approvedCount }}</span>
+              <span class="stat-label">Approved</span>
+            </div>
+          </div>
+          <div class="stat-card rejected">
+            <i class="fas fa-times-circle"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ rejectedCount }}</span>
+              <span class="stat-label">Rejected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- DSI Table -->
+        <div class="table-wrapper-premium">
+          <div class="table-header">
+            <div class="section-title-modern">
+              <i class="fas fa-list-ul"></i>
+              <span>Improvement Records</span>
+            </div>
+            <div class="table-info">
+              <i class="fas fa-file-alt"></i>
+              <span>{{ dsiList.length }} records</span>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="dsi-table-premium">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>User</th>
+                  <th>Problem</th>
+                  <th>Solution</th>
+                  <th>Result</th>
+                  <th>Before</th>
+                  <th>After</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, i) in dsiList" :key="item.id">
+                  <td class="serial-number">{{ i + 1 }}</td>
+                  <td class="user-cell">
+                    <div class="user-info">
+                      <div class="user-avatar">
+                        {{ getInitials(item.user) }}
+                      </div>
+                      <span>{{ item.user }}</span>
+                    </div>
+                  </td>
+                  <td class="problem-cell" :title="item.problem">{{ truncateText(item.problem, 50) }}</td>
+                  <td class="solution-cell" :title="item.solution">{{ truncateText(item.solution, 50) }}</td>
+                  <td class="result-cell" :title="item.result">{{ truncateText(item.result, 50) }}</td>
+                  <td class="image-cell">
+                    <img
+                      v-if="item.beforeImage"
+                      :src="item.beforeImage"
+                      class="dsi-thumb-premium"
+                      @click="openImage(item.beforeImage)"
+                    />
+                    <span v-else class="no-image">—</span>
+                  </td>
+                  <td class="image-cell">
+                    <img
+                      v-if="item.afterImage"
+                      :src="item.afterImage"
+                      class="dsi-thumb-premium"
+                      @click="openImage(item.afterImage)"
+                    />
+                    <span v-else class="no-image">—</span>
+                   </td>
+                  <td class="date-cell">
+                    <i class="fas fa-calendar-alt"></i> {{ formatDate(item.date) }}
+                   </td>
+                  <td class="action-cell">
+                    <div class="action-group">
+                      <button
+                        class="action-btn approve"
+                        @click="updateStatus(item.id, 'Approved')"
+                        :disabled="item.status === 'approved' || item.status === 'rejected'"
+                        title="Approve"
+                      >
+                        <i class="fas fa-check-circle"></i>
+                      </button>
+                      <button
+                        class="action-btn reject"
+                        @click="updateStatus(item.id, 'Rejected')"
+                        :disabled="item.status === 'rejected' || item.status === 'approved'"
+                        title="Reject"
+                      >
+                        <i class="fas fa-times-circle"></i>
+                      </button>
+                    </div>
+                    <span v-if="item.status" :class="['status-badge-premium', getStatusClass(item.status)]">
+                      <i :class="getStatusIcon(item.status)"></i>
+                      {{ item.status }}
+                    </span>
+                   </td>
+                 </tr>
+
+                <!-- Empty State -->
+                <tr v-if="dsiList.length === 0" class="empty-row">
+                  <td colspan="9">
+                    <div class="empty-state-premium">
+                      <i class="fas fa-lightbulb"></i>
+                      <h4>No Improvements Found</h4>
+                      <p>No DSI records have been submitted yet</p>
+                    </div>
+                   </td>
+                 </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Image Modal - FIXED POSITIONING -->
+        <div v-if="previewImage" class="image-modal-overlay" @click="previewImage = null">
+          <div class="image-modal-container" @click.stop>
+            <button class="image-modal-close" @click="previewImage = null">
+              <i class="fas fa-times"></i>
+            </button>
+            <img :src="previewImage" alt="Preview" class="image-modal-img" />
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
-
-
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
@@ -100,9 +171,8 @@ import axios from 'axios'
 import {
   toastSuccess,
   toastError,
-  toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
+
 export default {
   name: "ViewDsi",
   components: {
@@ -110,1040 +180,649 @@ export default {
   },
   data() {
     return {
-      username: '',
       isMobile: false,
       isSidebarVisible: true,
-      newDSI: {
-        problem: "",
-        solution: "",
-        result: "",
-        beforeImage: null,
-        afterImage: null,
-        beforeImageFile: null,
-        afterImageFile: null,
-      },
       dsiList: [],
       previewImage: null,
+    }
+  },
+  computed: {
+    pendingCount() {
+      return this.dsiList.filter(item => item.status === 'pending' || !item.status).length
+    },
+    approvedCount() {
+      return this.dsiList.filter(item => item.status === 'approved').length
+    },
+    rejectedCount() {
+      return this.dsiList.filter(item => item.status === 'rejected').length
     }
   },
   mounted() {
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
-    this.fetchAllDSI();
+    this.fetchAllDSI()
+    const token = localStorage.getItem('token')
+    if (!token) {
+      this.$router.push('/auth')
+    }
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile)
   },
   methods: {
+    getInitials(name) {
+      if (!name) return '?'
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    },
+    truncateText(text, length) {
+      if (!text) return '—'
+      return text.length > length ? text.substring(0, length) + '...' : text
+    },
+    formatDate(dateStr) {
+      if (!dateStr) return '—'
+      const date = new Date(dateStr)
+      return date.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    },
+    getStatusClass(status) {
+      const s = (status || '').toLowerCase()
+      if (s === 'approved') return 'approved'
+      if (s === 'rejected') return 'rejected'
+      return 'pending'
+    },
+    getStatusIcon(status) {
+      const s = (status || '').toLowerCase()
+      if (s === 'approved') return 'fas fa-check-circle'
+      if (s === 'rejected') return 'fas fa-times-circle'
+      return 'fas fa-clock'
+    },
+    openImage(img) {
+      this.previewImage = img
+      document.body.style.overflow = 'hidden' // Prevent body scroll when modal is open
+    },
+    closeImageModal() {
+      this.previewImage = null
+      document.body.style.overflow = '' // Restore body scroll
+    },
+    checkIfMobile() {
+      this.isMobile = window.innerWidth <= 768
+      this.isSidebarVisible = !this.isMobile
+    },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible
+    },
     async fetchAllDSI() {
       try {
-        const res = await axios.get('/api/dsis/all');
-        this.dsiList = res.data;
+        const res = await axios.get('/api/dsis/all')
+        this.dsiList = res.data
       } catch (e) {
-        toastSuccess('Failed to load DSI');
+        toastError('Failed to load DSI')
       }
     },
-
-    onImageChange(e, type) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (type === 'before') {
-          this.newDSI.beforeImage = event.target.result;
-          this.newDSI.beforeImageFile = file;
-        } else {
-          this.newDSI.afterImage = event.target.result;
-          this.newDSI.afterImageFile = file;
-        }
-      };
-      reader.readAsDataURL(file);
-    },
-
-    openImage(img) {
-      this.previewImage = img;
-    },
-
-    checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
-      this.isSidebarVisible = !this.isMobile;
-    },
-
-    toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible;
-    },
-
-    // UPDATE STATUS METHOD
     async updateStatus(dsiId, status) {
       try {
-        await axios.put(`/api/dsis/${dsiId}/status`, { status });
-        // Update locally so table updates immediately
-        const index = this.dsiList.findIndex(item => item.id === dsiId);
-        if (index !== -1) this.dsiList[index].status = status;
+        await axios.put(`/api/dsis/${dsiId}/status`, { status: status.toLowerCase() })
+        const index = this.dsiList.findIndex(item => item.id === dsiId)
+        if (index !== -1) this.dsiList[index].status = status.toLowerCase()
+        toastSuccess(`Status updated to ${status}`)
       } catch (error) {
-        toastSuccess('Failed to update status');
+        toastError('Failed to update status')
       }
     }
   }
 }
 </script>
 
-
-
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-.image-upload-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
 }
 
-.image-upload-card {
-  width: 131px;
-    height: 47px;
-  border: 2px dashed #9ca3af;
-  border-radius: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f9fafb;
-  transition: all 0.25s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.image-upload-card:hover {
-  border-color: var(--primary);
-  background: #eef6f6;
-  transform: translateY(-2px);
-}
-
-.upload-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 16px;
-  color: #6b7280;
-  gap: 4px;
-}
-
-.upload-placeholder span {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.upload-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.dsi-thumb {
-  width: 45px;
-  height: 45px;
-  object-fit: cover;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-}
-
-.image-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.image-modal img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 10px;
-  background: #fff;
-  padding: 10px;
-}
-
-.status-btn {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #facc15;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  cursor: not-allowed;
-  white-space: nowrap;
-}
-
-.dsi-section {
-  margin-top: 25px;
-  padding: 20px;
-  background: #f9fafb;
-  border-radius: 12px;
-}
-
-.dsi-input {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.dsi-input input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.dsi-input button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 6px;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-}
-
-.dsi-list {
-  list-style: none;
-  padding: 0;
-}
-
-.dsi-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-.dsi-list small {
-  color: #6b7280;
-  margin-left: 10px;
-}
-
-.delete-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-.main-content {
-  align-self: center;
-  width: 100%;
-        background-color: #f6f7fb;
-
-}
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.card-header h3 {
-  font-size: 18px;
-  color: var(--text);
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.card-header .date {
-  font-size: 13px;
-  color: #888;
-}
-
-.card-message {
-  font-size: 15px;
-  color: var(--text);
-  margin-top: 5px;
-  line-height: 1.5;
-}
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-
-/* Header */
-.header {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 8px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-.logout-btn {
-  background-color: white;
-  color: #003977;
-  border: 2px solid #007bff;
-}
-
-.logout-btn:hover {
-  background-color: #e7f1ff;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
   gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
+   ;
 }
 
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
+.content {
+  flex: 1;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+/* Content Header */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 0;
 }
 
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.stats-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
   transition: all 0.3s ease;
 }
 
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
-/* Content Section */
-.content {
-  flex: 1;
-  background-color: white;
-  padding: 30px 40px;
-  border-radius: 15px;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.08);
-  overflow-x: auto;
+.stat-card.pending {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+.stat-card.pending i { color: #d97706; }
+
+.stat-card.approved {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+}
+.stat-card.approved i { color: #065f46; }
+
+.stat-card.rejected {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+}
+.stat-card.rejected i { color: #991b1b; }
+
+.stat-card i {
+  font-size: 28px;
 }
 
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 700;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-  text-transform: uppercase;
-}
-
-
-/* Footer */
-.footer {
-  background-color: #343a40;
-  color: white;
-  text-align: center;
-  padding: 15px 0;
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
-}
-
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
-  position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
-}
-
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 48%;
+.stat-info {
   display: flex;
   flex-direction: column;
 }
 
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
+.stat-value {
+  font-size: 24px;
   font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15px;
+  color: #1a1a2e;
 }
 
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
 }
 
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
-}
-
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-
-
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
-  }
-
-  .modal-card {
-    padding: 30px 25px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
-    font-size: 17px;
-  }
-  .menu-btn, .logout-btn {
-    width: 100%;
-  }
-}
-.logo-img {
-  height: 45px;
-}
-
-.header-title {
-  flex: 1;
-  text-align: center;
-  color: white;
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-.mobile-menu-icon {
-  font-size: 22px;
-  color: white;
-  cursor: pointer;
-}
-
-.dsi-input-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.dsi-input-grid textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  resize: none;
-}
-
-.add-btn {
-  background: var(--text);
-  color: white;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-.dsi-item p {
-  margin: 4px 0;
-}
-
-
-.dsi-btn-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.status-btn {
-  background: #e5e7eb;
-  color: var(--text);
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px dashed #9ca3af;
-  cursor: not-allowed;
-  font-weight: 500;
-}
-
-
-
-.add-btn:hover {
-  background: #6b969a;
-}
-@media (max-width: 480px) {
-  .dsi-btn-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-.dsi-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.dsi-textarea {
-  flex: 1;
-  min-width: 200px;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  resize: none;
-}
-
-.dsi-btn-row {
-  display: flex;
-  gap: 8px;
-  white-space: nowrap;
-}
-
-.status-btn {
-  background: #e5e7eb;
-  color: var(--text);
-  border: 1px dashed #9ca3af;
-  border-radius: 8px;
-  padding: 8px 12px;
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .dsi-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .dsi-btn-row {
-    justify-content: flex-end;
-  }
-}
-
-
-.dsi-table-wrapper {
-  margin-top: 20px;
-  overflow-x: auto;
-}
-
-.dsi-table {
-  width: 100%;
-  border-collapse: collapse;
+/* Table Styles */
+.table-wrapper-premium {
   background: white;
-  border-radius: 12px;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
   overflow: hidden;
 }
 
-.dsi-table th,
-.dsi-table td {
-  padding: 10px 12px;
-  /* border-left: 1px ridge #6cc4c7; */
-  /* border-bottom: 1px solid #6cc4c7; */
-  text-align: left;
-  vertical-align: top;
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.dsi-table th {
-  background: #f3f4f6;
+.section-title-modern {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 600;
+  color: #1a1a2e;
 }
 
-.no-data {
-  text-align: center;
+.section-title-modern i {
+  color: var(--primary-color);
+}
+
+.table-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
   color: #6b7280;
-  padding: 15px;
 }
 
-.delete-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-.dsi-table-wrapper {
-  margin-top: 25px;
-  background: white;
-  border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+.table-container {
   overflow-x: auto;
 }
 
-.dsi-table {
+.dsi-table-premium {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  min-width: 900px;
+  border-collapse: collapse;
+  min-width: 1100px;
 }
 
-/* Header */
-.dsi-table thead th {
-  background: linear-gradient(135deg, var(--primary), var(--primary));
-  color: white;
-  font-weight: 700;
-  border-left: 1px ridge #6cc4c700;
-  padding: 14px;
-  font-size: 14px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-/* Body rows */
-.dsi-table tbody tr {
-  transition: all 0.25s ease;
-}
-
-.dsi-table tbody tr:nth-child(even) {
+.dsi-table-premium thead {
   background: #f8fafc;
 }
 
-.dsi-table tbody tr:hover {
-  background: #eef6f6;
-  transform: scale(1.005);
+.dsi-table-premium th {
+  text-align: left;
+  padding: 14px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-/* Cells */
-.dsi-table td {
-  padding: 12px 14px;
-  font-size: 14px;
-  color: var(--text);
-  /* border-bottom: 1px solid #e5e7eb; */
+.dsi-table-premium td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
   vertical-align: middle;
 }
 
-/* Serial */
-.sr {
-  font-weight: 700;
-  color: #2563eb;
+.dsi-table-premium tbody tr {
+  transition: all 0.3s ease;
 }
 
-/* Image cell */
-.img-cell {
+.dsi-table-premium tbody tr:hover {
+  background: #fafbfc;
+}
+
+/* Serial Number */
+.serial-number {
+  font-weight: 600;
+  color: #9ca3af;
+  width: 50px;
+}
+
+/* User Cell */
+.user-cell {
+  min-width: 120px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* Text Cells */
+.problem-cell, .solution-cell, .result-cell {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #4b5563;
+}
+
+/* Image Cell */
+.image-cell {
   text-align: center;
+  width: 60px;
 }
 
-/* Thumbnail */
-.dsi-thumb {
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
+.dsi-thumb-premium {
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
   object-fit: cover;
   cursor: pointer;
   border: 2px solid #e5e7eb;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.3s ease;
 }
 
-.dsi-thumb:hover {
-  transform: scale(1.15);
-  box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+.dsi-thumb-premium:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-color);
 }
 
-/* Date */
-.date-cell {
-  white-space: nowrap;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* Status pill */
-.status-pill {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 999px;
+.no-image {
+  color: #9ca3af;
   font-size: 12px;
-  font-weight: 600;
 }
 
-.status-pill.waiting {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
+/* Date Cell */
+.date-cell {
+  font-family: monospace;
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
 }
 
-/* Delete */
-.delete-btn {
-  font-size: 16px;
-  transition: transform 0.2s ease;
+.date-cell i {
+  margin-right: 6px;
+  font-size: 11px;
 }
 
-.delete-btn:hover {
-  transform: scale(1.2);
-}
-@media (max-width: 768px) {
-  .dsi-table {
-    min-width: 1000px;
-  }
+/* Action Cell */
+.action-cell {
+  min-width: 140px;
 }
 
-.dsi-header-actions {
+.action-group {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 15px;
-}
-
-.view-all-btn {
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #fff;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 30px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
   gap: 8px;
-  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
-  transition: all 0.35s ease;
+  margin-bottom: 8px;
 }
 
-.view-all-btn:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.55);
-  background: linear-gradient(135deg, #4338ca, #4f46e5);
-}
-
-.view-all-btn:active {
-  transform: scale(0.96);
-}
-
-.dsi-popup-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(6px);
-  display: flex;
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  z-index: 9999;
 }
 
-.dsi-popup {
-  width: 95%;
-  height: 90%;
-  background: #fff;
-  border-radius: 18px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: popIn 0.3s ease;
+.action-btn.approve {
+  background: #d1fae5;
+  color: var(--success);
 }
 
-@keyframes popIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+.action-btn.approve:hover:not(:disabled) {
+  /* background: var(--success); */
+  color: rgb(12, 5, 5);
+  transform: translateY(-2px);
 }
 
-.dsi-popup-header {
-  padding: 16px 22px;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.action-btn.reject {
+  background: #fee2e2;
+  color: var(--danger);
 }
 
-.close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 18px;
-  padding: 6px 10px;
-  border-radius: 50%;
-  cursor: pointer;
+.action-btn.reject:hover:not(:disabled) {
+  /* background: var(--danger); */
+  color: rgb(0, 0, 0);
+  transform: translateY(-2px);
 }
 
-.dsi-popup-body {
-  padding: 16px;
-  overflow-y: auto;
-}
-.dsi-actions {
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-}
-
-.approve-btn,
-.reject-btn {
-  padding: 6px 14px;
-  font-weight: 500;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s all;
-  color: #fff;
-}
-
-.approve-btn {
-  background-color: #28a745; /* Green */
-}
-
-.approve-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-.reject-btn {
-  background-color: #dc3545; /* Red */
-}
-
-.reject-btn:hover:not(:disabled) {
-  background-color: #c82333;
-}
-
-.approve-btn:disabled,
-.reject-btn:disabled {
-  opacity: 0.6;
+.action-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Status Text */
-.status-text {
-  font-weight: bold;
-  text-transform: capitalize;
+/* Status Badge */
+.status-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-.status-text.approved {
-  color: #28a745;
+.status-badge-premium.approved {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-.status-text.rejected {
-  color: #dc3545;
+.status-badge-premium.rejected {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
-.status-text.waiting {
-  color: #ffc107; /* yellow */
+.status-badge-premium.pending {
+  background: #fef3c7;
+  color: #d97706;
 }
-.announcement-board{
-  margin-top: 66px;
+
+/* ==================== */
+/* IMAGE MODAL - FIXED POSITIONING */
+/* ==================== */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  cursor: pointer;
+}
+
+.image-modal-container {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: modalZoomIn 0.3s ease-out;
+}
+
+@keyframes modalZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.image-modal-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: block;
+  margin: 0 auto;
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -50px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.image-modal-close:hover {
+  /* background: var(--danger); */
+  color: rgb(6, 3, 3);
+  transform: rotate(90deg);
+}
+
+/* Empty State */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .dsi-table-premium th,
+  .dsi-table-premium td {
+    padding: 10px 8px;
+  }
+  
+  .problem-cell, .solution-cell, .result-cell {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stats-badge-header {
+    align-self: flex-start;
+  }
+
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .dsi-table-premium {
+    min-width: 1000px;
+  }
+
+  .action-cell {
+    min-width: 120px;
+  }
+
+  .action-group {
+    justify-content: center;
+  }
+
+  .image-modal-close {
+    top: -40px;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -1,333 +1,384 @@
-
-
 <template>
   <div class="layout">
 
-
-<transition name="fade">
-  <div class="modal-backdrop" v-if="showKRAModal" @click.self="closeKRAModal()">
-    <div class="modal-card" @click.stop>
-      <h2 class="modal-title">
-        {{ getModalTitle }}
-      </h2>
-
-     
-    <div v-if="isEditMode || addKRAModalStep === 1" class="kra-step">
-
-  <label class="kra-title">
-    <i class="fas fa-bullseye"></i> KRA Name *
-  </label>
-  <input
-    v-model="kraForm.name"
-    type="text"
-    class="kra-input"
-    placeholder="Enter your Key Responsibility Area"
-    required
-    :class="{ 'input-error': kraNameError }"
-  />
-  <p v-if="kraNameError" class="error-message">{{ kraNameError }}</p>
-</div>
-
-
-    <div v-if="isEditMode || addKRAModalStep === 2" class="task-step">
-  <label class="task-title">
-    <i class="fas fa-tasks"></i>
-    Define Tasks for KRA
-  </label>
-
-  <!-- Input List -->
-  <div
-    v-for="(task, index) in kraForm.tasks"
-    :key="index"
-    class="task-input-wrapper"
-  >
-    <input
-      v-model="kraForm.tasks[index]"
-      type="text"
-      :placeholder="`Task ${index + 1}`"
-      class="task-input"
-      :class="{ 'input-error': taskError }"
-    />
-    <button
-      v-if="kraForm.tasks.length > 1"
-      type="button"
-      @click="removeTask(index)"
-      class="delete-icon"
-      title="Remove Task"
-    >
-      <i class="fas fa-trash-alt"></i>
-    </button>
-  </div>
-
-  <!-- Error Message -->
-  <p v-if="taskError" class="error-message">{{ taskError }}</p>
-
-  <!-- Add Task Button -->
-  <div class="kpi-step button">
-    <button type="button" @click="kraForm.tasks.push('')" class="kpi-step button">
-      <i class="fas fa-plus-circle"></i> Add Task
-    </button>
-  </div>
-</div>
-
-
-
-
-     <div v-if="isEditMode || addKRAModalStep === 3" class="kpi-step">
-  <label class="kpi-title">
-    <i class="fas fa-chart-line"></i>
-    Enter KPI
-  </label>
-
-  <!-- Input + Add -->
-  <div class="kpi-input-wrapper">
-    <input
-      v-model="newKpi"
-      type="text"
-      placeholder="Enter KPI name"
-      :class="{ 'input-error': kpiError }"
-    />
-    <button @click="addKpi" type="button"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
-  </div>
-
-  <!-- Error -->
-  <p v-if="kpiError" class="error-message">{{ kpiError }}</p>
-
-  <!-- Chips -->
-  <div class="kpi-chip-container">
-    <div
-      class="kpi-chip"
-      v-for="(kpi, index) in kraForm.kpis"
-      :key="index"
-    >
-      <i class="fas fa-trash" @click="removeKpi(index)" title="Remove KPI"></i>
-      <span>{{ kpi }}</span>
-    </div>
-  </div>
-</div>
-
-
-
-
-     <div v-if="isEditMode || addKRAModalStep === 4" class="target-step">
-  <label class="target-title">🎯 Target (Optional)</label>
-  <input
-    v-model="kraForm.target"
-    type="text"
-    placeholder="Enter performance target (e.g., Increase sales by 15%)"
-    class="target-input"
-    :class="{ 'input-error': targetError }"
-  />
-  <p v-if="targetError" class="error-message">{{ targetError }}</p>
-</div>
-
-
-<br>
-      <div class="modal-buttons">
-  <button
-    v-if="!isEditMode && addKRAModalStep > 1"
-    @click="addKRAModalStep--"
-    class="btn btn-secondary"
-  >
-    Previous
-  </button>
-
-  <button
-    v-if="!isEditMode && addKRAModalStep < 4"
-    @click="validateStep"
-    class="btn btn-primary"
-  >
-    Next
-  </button>
-
-  <button
-    v-if="isEditMode || addKRAModalStep === 4"
-    @click="saveKRA"
-    class="btn btn-primary"
-  >
-  <i class="fa fa-save" style="font-size:13px"></i>  Save
-  </button>
-
-  <button @click="closeKRAModal" class="btn btn-danger"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
-</div>
-
-    </div>
-  </div>
-</transition>
-
-<transition name="fade">
-  <div class="modal-backdrop" v-if="showDepartmentForm" @click.self="closeDepartmentForm()">
-    <div class="modal-card" @click.stop>
-      <h2 class="modal-title">Add Department</h2>
-
-      <form @submit.prevent="submitDepartment" class="attractive-form">
-        <div class="form-row">
-          <div class="input-group">
-            <label><i class="fas fa-building"></i> Department Name *</label>
-            <input v-model="departmentForm.name" placeholder="Enter Department Name" required />
+    <!-- KRA Modal - Premium Design -->
+    <transition name="modal-fade">
+      <div class="modal-backdrop" v-if="showKRAModal" @click.self="closeKRAModal()">
+        <div class="premium-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <div class="header-text">
+              <h2>{{ getModalTitle }}</h2>
+              <p>{{ isEditMode ? 'Update KRA information' : 'Create a new Key Responsibility Area' }}</p>
+            </div>
+            <button class="close-btn-premium" @click="closeKRAModal()">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
 
-          <div class="input-group">
-            <label><i class="fas fa-barcode"></i> Department Code *</label>
-            <input v-model="departmentForm.code" placeholder="Enter Department Code" required />
+          <div class="modal-body-premium">
+            <!-- Step 1: KRA Name -->
+            <div v-if="isEditMode || addKRAModalStep === 1" class="form-section">
+              <div class="section-title">
+                <i class="fas fa-bullseye"></i>
+                <span>KRA Name</span>
+              </div>
+              <div class="form-field">
+                <div class="field-wrapper">
+                  <i class="fas fa-tag field-icon"></i>
+                  <input
+                    v-model="kraForm.name"
+                    type="text"
+                    placeholder="Enter Key Responsibility Area name"
+                    :class="{ 'error': kraNameError }"
+                  />
+                </div>
+                <span v-if="kraNameError" class="field-error">
+                  <i class="fas fa-exclamation-circle"></i> {{ kraNameError }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Step 2: Tasks -->
+            <div v-if="isEditMode || addKRAModalStep === 2" class="form-section">
+              <div class="section-title">
+                <i class="fas fa-list-check"></i>
+                <span>Define Tasks</span>
+              </div>
+              <div class="tasks-container">
+                <div v-for="(task, index) in kraForm.tasks" :key="index" class="task-item">
+                  <div class="field-wrapper">
+                    <i class="fas fa-check-circle field-icon"></i>
+                    <input
+                      v-model="kraForm.tasks[index]"
+                      type="text"
+                      :placeholder="`Task ${index + 1}`"
+                      :class="{ 'error': taskError }"
+                    />
+                  </div>
+                  <button v-if="kraForm.tasks.length > 1" type="button" @click="removeTask(index)" class="remove-task-btn">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+                <span v-if="taskError" class="field-error">
+                  <i class="fas fa-exclamation-circle"></i> {{ taskError }}
+                </span>
+                <button type="button" @click="kraForm.tasks.push('')" class="add-btn">
+                  <i class="fas fa-plus-circle"></i> Add Task
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 3: KPIs -->
+            <div v-if="isEditMode || addKRAModalStep === 3" class="form-section">
+              <div class="section-title">
+                <i class="fas fa-chart-line"></i>
+                <span>Key Performance Indicators</span>
+              </div>
+              <div class="kpi-container">
+                <div class="kpi-input-group">
+                  <div class="field-wrapper">
+                    <i class="fas fa-plus-circle field-icon"></i>
+                    <input
+                      v-model="newKpi"
+                      type="text"
+                      placeholder="Enter KPI name"
+                      @keyup.enter="addKpi"
+                    />
+                  </div>
+                  <button @click="addKpi" class="add-kpi-btn">
+                    <i class="fas fa-save"></i> Add KPI
+                  </button>
+                </div>
+                <span v-if="kpiError" class="field-error">
+                  <i class="fas fa-exclamation-circle"></i> {{ kpiError }}
+                </span>
+                <div class="kpi-chips">
+                  <div v-for="(kpi, index) in kraForm.kpis" :key="index" class="kpi-chip">
+                    <span>{{ kpi }}</span>
+                    <i class="fas fa-times" @click="removeKpi(index)"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4: Target -->
+            <div v-if="isEditMode || addKRAModalStep === 4" class="form-section">
+              <div class="section-title">
+                <i class="fas fa-bullseye"></i>
+                <span>Target (Optional)</span>
+              </div>
+              <div class="form-field">
+                <div class="field-wrapper">
+                  <i class="fas fa-flag-checkered field-icon"></i>
+                  <input
+                    v-model="kraForm.target"
+                    type="text"
+                    placeholder="e.g., Increase sales by 15%, Complete 10 projects, etc."
+                    :class="{ 'error': targetError }"
+                  />
+                </div>
+                <span v-if="targetError" class="field-error">
+                  <i class="fas fa-exclamation-circle"></i> {{ targetError }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer-premium">
+            <button v-if="!isEditMode && addKRAModalStep > 1" type="button" class="btn-cancel-premium" @click="addKRAModalStep--">
+              <i class="fas fa-arrow-left"></i> Previous
+            </button>
+            <button v-if="!isEditMode && addKRAModalStep < 4" type="button" class="btn-submit-premium" @click="validateStep">
+              Next <i class="fas fa-arrow-right"></i>
+            </button>
+            <button v-if="isEditMode || addKRAModalStep === 4" type="button" class="btn-submit-premium" @click="saveKRA">
+              <i class="fas fa-save"></i> Save KRA
+            </button>
+            <button type="button" class="btn-cancel-premium" @click="closeKRAModal()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
           </div>
         </div>
+      </div>
+    </transition>
 
-        <div class="modal-buttons">
-          <button type="submit" class="btn btn-primary">
-           <i class="fa fa-save" style="font-size:13px"></i> Save Department
-          </button>
-          <button type="button" class="btn btn-secondary" @click="closeDepartmentForm()">
-           <i class="fa fa-close" style="font-size:13px"></i> Cancel
-          </button>
+    <!-- Department Modal - Premium Design -->
+    <transition name="modal-fade">
+      <div class="modal-backdrop" v-if="showDepartmentForm" @click.self="closeDepartmentForm()">
+        <div class="premium-modal department-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-building"></i>
+            </div>
+            <div class="header-text">
+              <h2>Add Department</h2>
+              <p>Create a new department</p>
+            </div>
+            <button class="close-btn-premium" @click="closeDepartmentForm()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="modal-body-premium">
+            <form @submit.prevent="submitDepartment">
+              <div class="form-section">
+                <div class="form-field">
+                  <label>Department Name <span class="required-star">*</span></label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-building field-icon"></i>
+                    <input v-model="departmentForm.name" placeholder="e.g., Engineering, Marketing" required />
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label>Department Code <span class="required-star">*</span></label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-barcode field-icon"></i>
+                    <input v-model="departmentForm.code" placeholder="e.g., ENG, MKT" required />
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer-premium">
+                <button type="button" class="btn-cancel-premium" @click="closeDepartmentForm()">
+                  <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="submit" class="btn-submit-premium">
+                  <i class="fas fa-save"></i> Save Department
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-</transition>
-
-<transition name="fade">
-  <div class="modal-backdrop" v-if="showKRAsModal" @click.self="showKRAsModal = false">
-    
-    <div class="modal-card" @click.stop>
-      <h2 class="modal-title">KRA for {{ selectedDepartmentName }}</h2>
-
-      <div v-if="selectedDepartmentKRAs.length">
-  <ul class="kra-list">
-    <li v-for="(kra, index) in selectedDepartmentKRAs" :key="kra.id" class="kra-item">
-      <h3
-  class="kra-title-toggle"
-  @click="toggleKRA(index)"
-  :class="{ expanded: expandedKRAIndex === index }"
->
-  {{ kra.name }}
-
-  <!-- Action Buttons Wrapper -->
-  <div class="kra-actions">
-    <!-- Edit KRA Button -->
-    <button
-      class="btn-edit btn-sm btn-warning"
-      @click.stop="editKRA(kra)"
-    >
-      <i class="fas fa-edit"></i>
-    </button>
-
-    <!-- Delete KRA Button -->
-   <button
-      class="btn-delete btn-sm btn-danger"
-      @click.stop="deleteKRA(kra.id)"
-    >
-      <i class="fas fa-trash"></i>
-    </button>
-
-  </div>
-</h3>
-
-
-
-
-
-      <transition name="expand-fade">
-  <div v-if="expandedKRAIndex === index" class="kra-details">
-<!-- Tasks List -->
-<div>
-  <strong>Tasks:</strong>
-  <ul v-if="kra.tasks && kra.tasks.length" class="nested-list">
-    <li v-for="(task, tIndex) in kra.tasks" :key="tIndex">{{ task }}</li>
-  </ul>
-  <p v-else>N/A</p>
-</div>
-
-<!-- KPIs List -->
-<div style="margin-top: 10px;">
-  <strong>KPI:</strong>
-  <ul v-if="kra.kpis && kra.kpis.length" class="nested-list">
-    <li v-for="(kpi, kIndex) in kra.kpis" :key="kIndex"> {{ kpi }}</li>
-  </ul>
-  <p v-else>N/A</p>
-</div>
-
-    <p><strong>Target:</strong> {{ kra.target || 'N/A' }}</p>
-  </div>
-</transition>
-
-    </li>
-  </ul>
-</div>
-
-      <div v-else>
-        <p>No KRAs available for this department.</p>
       </div>
+    </transition>
 
-      <div class="modal-buttons">
-        <button @click="showKRAsModal = false" class="btn btn-danger"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
+    <!-- View KRAs Modal - Premium Design -->
+    <transition name="modal-fade">
+      <div class="modal-backdrop" v-if="showKRAsModal" @click.self="showKRAsModal = false">
+        <div class="premium-modal view-kra-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="header-text">
+              <h2>Key Responsibility Areas</h2>
+              <p>{{ selectedDepartmentName }}</p>
+            </div>
+            <button class="close-btn-premium" @click="showKRAsModal = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="modal-body-premium kra-view-body">
+            <div v-if="selectedDepartmentKRAs.length" class="kra-cards-container">
+              <div v-for="(kra, index) in selectedDepartmentKRAs" :key="kra.id" class="kra-card-item">
+                <div class="kra-card-header" @click="toggleKRA(index)">
+                  <div class="kra-title-section">
+                    <i :class="expandedKRAIndex === index ? 'fas fa-chevron-down' : 'fas fa-chevron-right'"></i>
+                    <h3>{{ kra.name }}</h3>
+                  </div>
+                  <div class="kra-card-actions">
+                    <button class="icon-btn-small edit" @click.stop="editKRA(kra)" title="Edit KRA">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="icon-btn-small delete" @click.stop="deleteKRA(kra.id)" title="Delete KRA">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+                
+                <transition name="expand">
+                  <div v-if="expandedKRAIndex === index" class="kra-card-body">
+                    <div class="info-section">
+                      <div class="info-header">
+                        <i class="fas fa-tasks"></i>
+                        <strong>Tasks</strong>
+                      </div>
+                      <ul class="info-list">
+                        <li v-for="(task, tIndex) in kra.tasks" :key="tIndex">
+                          <i class="fas fa-check-circle"></i> {{ task }}
+                        </li>
+                        <li v-if="!kra.tasks || kra.tasks.length === 0" class="empty-item">No tasks defined</li>
+                      </ul>
+                    </div>
+                    
+                    <div class="info-section">
+                      <div class="info-header">
+                        <i class="fas fa-chart-line"></i>
+                        <strong>KPIs</strong>
+                      </div>
+                      <div class="kpi-badges">
+                        <span v-for="(kpi, kIndex) in kra.kpis" :key="kIndex" class="kpi-badge">
+                          {{ kpi }}
+                        </span>
+                        <span v-if="!kra.kpis || kra.kpis.length === 0" class="empty-item">No KPIs defined</span>
+                      </div>
+                    </div>
+                    
+                    <div class="info-section" v-if="kra.target">
+                      <div class="info-header">
+                        <i class="fas fa-bullseye"></i>
+                        <strong>Target</strong>
+                      </div>
+                      <p class="target-text">{{ kra.target }}</p>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+            </div>
+            
+            <div v-else class="empty-state-premium">
+              <i class="fas fa-inbox"></i>
+              <h4>No KRAs Available</h4>
+              <p>This department doesn't have any KRAs yet.</p>
+            </div>
+          </div>
+
+          <div class="modal-footer-premium">
+            <button type="button" class="btn-submit-premium" @click="showKRAsModal = false">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</transition>
-
-
-
+    </transition>
 
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
- <section class="content" :class="{
-  'expanded-content': isMobile && !visible,
-  'hide-on-mobile': isMobile && visible
-}">
-
-
-  <h2>Manage Departments & KRA</h2>
-  <button class="logout-btn" @click="showDepartmentForm = true">Add Department</button>
-  <table class="styled-table user-table">
-  <thead>
-    <tr>
-      <th>Department Name</th>
-      <th>Department Code</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <tr v-for="dept in departments" :key="dept.id">
-      <td @click="viewDepartmentKRAs(dept)" class="clickable-name">
-        {{ dept.name }}
-      </td>
-      <td>{{ dept.code }}</td>
-
-      <td>
-        <div class="action-buttons">
-         <button
-  class="btn-add tooltip-btn"
-  data-tooltip="Add KRA"
-  @click="addKRA(dept)"
->
-  <i class="fas fa-plus-circle"></i>
-</button>
-
-
-       <button
-  class="btn-delete tooltip-btn"
-  data-tooltip="Delete Department"
-  @click="deleteDepartment(dept.id)"
->
-  <i class="fas fa-trash"></i>
-</button>
-
-
+      <section class="content" :class="{
+        'expanded-content': isMobile && !isSidebarVisible,
+        'hide-on-mobile': isMobile && isSidebarVisible
+      }">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-building"></i>
+            </div>
+            <div>
+              <h1>Departments & KRA</h1>
+              <p class="subtitle-modern">Manage departments and key responsibility areas</p>
+            </div>
+          </div>
+          <button class="register-btn-modern" @click="showDepartmentForm = true">
+            <i class="fas fa-plus-circle"></i>
+            <span>Add Department</span>
+          </button>
         </div>
-      </td>
-    </tr>
-  </tbody>
-</table>
 
-</section>
+        <div class="stats-bar">
+          <div class="stat-card">
+            <i class="fas fa-building"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ departments.length }}</span>
+              <span class="stat-label">Departments</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-tasks"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ totalKRAs }}</span>
+              <span class="stat-label">Total KRAs</span>
+            </div>
+          </div>
+        </div>
 
+        <div class="table-wrapper-premium">
+          <table class="department-table">
+            <thead>
+              <tr>
+                <th>Department Name</th>
+                <th>Department Code</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="dept in departments" :key="dept.id">
+                <td class="department-name" @click="viewDepartmentKRAs(dept)">
+                  <div class="dept-info">
+                    <div class="dept-avatar">
+                      {{ getInitials(dept.name) }}
+                    </div>
+                    <span>{{ dept.name }}</span>
+                  </div>
+                </td>
+                <td><span class="code-badge">{{ dept.code }}</span></td>
+                <td>
+                  <div class="action-group">
+                    <button class="action-btn-primary" @click="addKRA(dept)" title="Add KRA">Add KRAs
+                      <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <button class="action-btn-danger" @click="deleteDepartment(dept.id)" title="Delete Department">Delete 
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="departments.length === 0" class="empty-row">
+                <td colspan="3">
+                  <div class="empty-state-premium">
+                    <i class="fas fa-building"></i>
+                    <h4>No Departments Yet</h4>
+                    <p>Click "Add Department" to create your first department</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
-
-   
   </div>
 </template>
 
@@ -338,39 +389,36 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
+
 export default {
   components: {
     Sidebar
   },
   data() {
     return {
-     existingKRAs: [],
+      existingKRAs: [],
       isMobile: false,
-isSidebarVisible: true,
-
+      isSidebarVisible: true,
       kpiError: '',
-targetError: '',
+      targetError: '',
       taskError: '',
       kraNameError: '',
       expandedKRAIndex: null,
       showKRAsModal: false,
-selectedDepartmentKRAs: [],
-selectedDepartmentName: '',
+      selectedDepartmentKRAs: [],
+      selectedDepartmentName: '',
       kraForm: {
-  id: null,
-  department_id: null,
-  name: '',
-  tasks: [''],
-  kpis: [],
-  target: ''
-},
-kraNameError: "",
+        id: null,
+        department_id: null,
+        name: '',
+        tasks: [''],
+        kpis: [],
+        target: ''
+      },
       newKpi: '',
       showKRAModal: false,
       addKRAModalStep: 1,
-      availableKpis: ['Quality', 'Efficiency', 'Punctuality'],
       departments: [],
       showDepartmentForm: false,
       isEditMode: false,
@@ -381,222 +429,178 @@ kraNameError: "",
       }
     };
   },
+  computed: {
+    getModalTitle() {
+      return this.isEditMode ? 'Edit KRA' : 'Create New KRA';
+    },
+    totalKRAs() {
+      return this.departments.reduce((total, dept) => total + (dept.kras_count || 0), 0);
+    }
+  },
   created() {
     this.fetchDepartments();
   },
-  computed: {
-    getModalTitle() {
-    const base = this.isEditMode ? 'Edit KRA' : 'Add KRA';
-    switch (this.addKRAModalStep) {
-      case 1: return `${base}`;
-      case 2: return `${base}`;
-      case 3: return `${base}`;
-      case 4: return `${base}`;
-      default: return base;
-    }
-  }
-  },
   mounted() {
     this.checkIfMobile();
-window.addEventListener('resize', this.checkIfMobile);
-
+    window.addEventListener('resize', this.checkIfMobile);
   },
   methods: {
-    async deleteKRA(kraId) {
-  if (!confirm("Are you sure you want to delete this KRA?")) return;
-
-  try {
-    await axios.delete(`/api/kras/${kraId}`);
-    this.selectedDepartmentKRAs = this.selectedDepartmentKRAs.filter(
-      kra => kra.id !== kraId
-    );
-    toastSuccess("KRA deleted successfully!");
-  } catch (error) {
-    console.error(error);
-    toastWarning("unable to delete KRA. Please try again.");
-  }
-},
-
-    editKRA(kra) {
-  this.resetForm(); // Reset the form first
-  this.isEditMode = true;
-
-  // Close current modal (KRAs list)
-  this.showKRAsModal = false;
-
-  // Small delay to ensure modal transition completes before opening another
-  setTimeout(() => {
-    this.kraForm = {
-      id: kra.id,
-      department_id: kra.department_id,
-      name: kra.name,
-      tasks: kra.tasks && kra.tasks.length ? [...kra.tasks] : [''],
-      kpis: kra.kpis && kra.kpis.length ? [...kra.kpis] : [],
-      target: kra.target || ''
-    };
-    this.addKRAModalStep = 1;
-    this.showKRAModal = true;
-  }, 300); // 300ms delay for smoother UX
-},
-
-
-
-
+    getInitials(name) {
+      if (!name) return '?';
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    },
     checkIfMobile() {
-    this.isMobile = window.innerWidth <= 768;
-    if (this.isMobile) {
-      this.isSidebarVisible = false;
-    } else {
-      this.isSidebarVisible = true;
-    }
-  },
-  toggleSidebar() {
-    this.isSidebarVisible = !this.isSidebarVisible;
-  },
-validateStep() {
-  // Step 1: KRA Name
-  if (this.addKRAModalStep === 1) {
+      this.isMobile = window.innerWidth <= 768;
+      if (this.isMobile) {
+        this.isSidebarVisible = false;
+      } else {
+        this.isSidebarVisible = true;
+      }
+    },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible;
+    },
+    async deleteKRA(kraId) {
+      if (!confirm("Are you sure you want to delete this KRA?")) return;
+      try {
+        await axios.delete(`https://employees.archenterprises.co.in/api/api/kras/${kraId}`);
+        this.selectedDepartmentKRAs = this.selectedDepartmentKRAs.filter(kra => kra.id !== kraId);
+        toastSuccess("KRA deleted successfully!");
+        this.fetchDepartments();
+      } catch (error) {
+        console.error(error);
+        toastError("Unable to delete KRA. Please try again.");
+      }
+    },
+    editKRA(kra) {
+      this.resetForm();
+      this.isEditMode = true;
+      this.showKRAsModal = false;
+      setTimeout(() => {
+        this.kraForm = {
+          id: kra.id,
+          department_id: kra.department_id,
+          name: kra.name,
+          tasks: kra.tasks && kra.tasks.length ? [...kra.tasks] : [''],
+          kpis: kra.kpis && kra.kpis.length ? [...kra.kpis] : [],
+          target: kra.target || ''
+        };
+        this.addKRAModalStep = 1;
+        this.showKRAModal = true;
+      }, 300);
+    },
+    toggleKRA(index) {
+      this.expandedKRAIndex = this.expandedKRAIndex === index ? null : index;
+    },
+    async viewDepartmentKRAs(dept) {
+      this.selectedDepartmentName = dept.name;
+      try {
+        const response = await axios.get(`https://employees.archenterprises.co.in/api/api/kras/${dept.id}`);
+        this.selectedDepartmentKRAs = response.data.data || [];
+        this.showKRAsModal = true;
+      } catch (error) {
+        console.error('Failed to load KRAs:', error);
+        toastError('Unable to load KRAs for this department.');
+      }
+    },
+    validateStep() {
+      if (this.addKRAModalStep === 1) {
+        if (!this.kraForm.name.trim()) {
+          this.kraNameError = 'KRA Name is required.';
+          return;
+        }
+        if (!this.isEditMode) {
+          const isDuplicate = this.existingKRAs.some(kra =>
+            kra.name.toLowerCase() === this.kraForm.name.trim().toLowerCase()
+          );
+          if (isDuplicate) {
+            this.kraNameError = 'This KRA name already exists.';
+            return;
+          }
+        }
+        this.kraNameError = '';
+      }
 
-    if (!this.kraForm.name.trim()) {
-      this.kraNameError = 'KRA Name is required.';
-      return;
-    }
+      if (this.addKRAModalStep === 2) {
+        const hasEmpty = this.kraForm.tasks.some(task => !task.trim());
+        if (hasEmpty) {
+          this.taskError = 'All tasks must be filled.';
+          return;
+        }
+        this.taskError = '';
+      }
 
-    // 🔍 DUPLICATE CHECK (Only in Add mode)
-    if (!this.isEditMode) {
+      if (this.addKRAModalStep === 3) {
+        if (this.kraForm.kpis.length === 0) {
+          this.kpiError = 'At least one KPI must be added.';
+          return;
+        }
+        this.kpiError = '';
+      }
+
+      this.addKRAModalStep++;
+    },
+    saveKRA() {
       const isDuplicate = this.existingKRAs.some(kra =>
-        kra.name.toLowerCase() === this.kraForm.name.trim().toLowerCase()
+        kra.name.toLowerCase() === this.kraForm.name.trim().toLowerCase() &&
+        (!this.isEditMode || kra.id !== this.kraForm.id)
       );
 
       if (isDuplicate) {
-        this.kraNameError = 'This KRA name already exists.';
+        this.kraNameError = "This KRA name already exists.";
+        this.addKRAModalStep = 1;
         return;
       }
-    }
 
-    this.kraNameError = '';
-  }
+      this.kraNameError = "";
 
-  // Step 2: Tasks
-  if (this.addKRAModalStep === 2) {
-    const hasEmpty = this.kraForm.tasks.some(task => !task.trim());
-    if (hasEmpty) {
-      this.taskError = 'All tasks must be filled.';
-      return;
-    } else {
-      this.taskError = '';
-    }
-  }
+      const payload = {
+        department_id: this.kraForm.department_id,
+        name: this.kraForm.name,
+        tasks: this.kraForm.tasks.filter(t => t.trim()),
+        kpis: this.kraForm.kpis,
+        target: this.kraForm.target
+      };
 
-  // Step 3: KPIs
-  if (this.addKRAModalStep === 3) {
-    if (this.kraForm.kpis.length === 0) {
-      this.kpiError = 'At least one KPI must be added.';
-      return;
-    } else {
-      this.kpiError = '';
-    }
-  }
+      const request = this.isEditMode
+        ? axios.put(`https://employees.archenterprises.co.in/api/api/kras/${this.kraForm.id}`, payload)
+        : axios.post('https://employees.archenterprises.co.in/api/api/kras', payload);
 
-  // Step 4: Target
-  if (this.addKRAModalStep === 4) {
-    if (this.kraForm.target.trim()) { // Optional field logic (your original)
-      this.targetError = 'Target is required.';
-      return;
-    } else {
-      this.targetError = '';
-    }
-  }
-
-  this.addKRAModalStep++;
-},
-
-
-
-    toggleKRA(index) {
-  this.expandedKRAIndex = this.expandedKRAIndex === index ? null : index;
-},
-    async viewDepartmentKRAs(dept) {
-  this.selectedDepartmentName = dept.name;
-  try {
-    const response = await axios.get(`https://employees.archenterprises.co.in/api/api/kras/${dept.id}`);
-    this.selectedDepartmentKRAs = response.data.data; // Adjust based on actual response
-    this.showKRAsModal = true;
-  } catch (error) {
-    console.error('Failed to load KRAs:', error);
-    toastSuccess('Unable to load KRAs for this department.');
-  }
-},
-
-saveKRA() {
-  // 🔍 DUPLICATE CHECK
-  const isDuplicate = this.existingKRAs.some(kra =>
-    kra.name.toLowerCase() === this.kraForm.name.trim().toLowerCase() &&
-    (!this.isEditMode || kra.id !== this.kraForm.id) // allow same name for the record being edited
-  );
-
-  if (isDuplicate) {
-    this.kraNameError = "This KRA name already exists.";
-    this.addKRAModalStep = 1; // jump user back to KRA name step
-    return;
-  }
-
-  this.kraNameError = "";
-
-  const payload = {
-    department_id: this.kraForm.department_id,
-    name: this.kraForm.name,
-    tasks: this.kraForm.tasks,
-    kpis: this.kraForm.kpis,
-    target: this.kraForm.target
-  };
-
-  const request = this.isEditMode
-    ? axios.put(`https://employees.archenterprises.co.in/api/api/kras/${this.kraForm.id}`, payload)
-    : axios.post('https://employees.archenterprises.co.in/api/api/kras', payload);
-
-  request.then(response => {
-    toastSuccess(`KRA ${this.isEditMode ? 'updated' : 'saved'} successfully!`);
-    this.resetForm();
-    this.closeKRAModal();
-    this.fetchDepartments(); // refresh department data
-  }).catch(error => {
-    console.error('Save error:', error);
-    toastSuccess('Duplicate Entry of KRA Name.');
-  });
-},
-
-
+      request.then(() => {
+        toastSuccess(`KRA ${this.isEditMode ? 'updated' : 'saved'} successfully!`);
+        this.resetForm();
+        this.closeKRAModal();
+        this.fetchDepartments();
+      }).catch(error => {
+        console.error('Save error:', error);
+        toastError('Duplicate Entry of KRA Name.');
+      });
+    },
     resetForm() {
-  this.kraForm = {
-    id: null,
-    department_id: null,
-    name: '',
-    tasks: [''],
-    kpis: [],
-    target: ''
-  };
-  this.newKpi = '';
-  this.isEditMode = false;
-},
-
-
+      this.kraForm = {
+        id: null,
+        department_id: null,
+        name: '',
+        tasks: [''],
+        kpis: [],
+        target: ''
+      };
+      this.newKpi = '';
+      this.isEditMode = false;
+    },
     addKpi() {
       const trimmed = this.newKpi.trim();
       if (trimmed && !this.kraForm.kpis.includes(trimmed)) {
         this.kraForm.kpis.push(trimmed);
+        this.newKpi = '';
       }
-      this.newKpi = '';
     },
-
     removeKpi(index) {
       this.kraForm.kpis.splice(index, 1);
     },
-
     removeTask(index) {
       this.kraForm.tasks.splice(index, 1);
     },
-
     addKRA(dept) {
       this.kraForm = {
         department_id: dept.id,
@@ -608,941 +612,800 @@ saveKRA() {
       this.addKRAModalStep = 1;
       this.showKRAModal = true;
     },
-
-   closeKRAModal() {
-  this.resetForm();
-  this.showKRAModal = false;
-  this.isEditMode = false;
-},
-
-
+    closeKRAModal() {
+      this.resetForm();
+      this.showKRAModal = false;
+      this.isEditMode = false;
+    },
     async deleteDepartment(id) {
       if (confirm('Are you sure you want to delete this department?')) {
         try {
           await axios.delete(`https://employees.archenterprises.co.in/api/api/departments/${id}`);
+          toastSuccess('Department deleted successfully!');
           this.fetchDepartments();
         } catch (error) {
           console.error('Error deleting department:', error);
+          toastError('Failed to delete department.');
         }
       }
     },
-
     async fetchDepartments() {
       try {
         const response = await axios.get('https://employees.archenterprises.co.in/api/api/departments');
         this.departments = response.data.data;
+        // Fetch KRAs count for each department
+        for (let dept of this.departments) {
+          const kraResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/kras/${dept.id}`);
+          dept.kras_count = kraResponse.data.data?.length || 0;
+          this.existingKRAs = [...this.existingKRAs, ...(kraResponse.data.data || [])];
+        }
       } catch (error) {
         console.error('Failed to fetch departments:', error);
       }
     },
-
-    editDepartment(dept) {
-      this.departmentForm = { ...dept };
-      this.showDepartmentForm = true;
-    },
-
     async submitDepartment() {
+      if (!this.departmentForm.name || !this.departmentForm.code) {
+        toastWarning('Please fill all required fields');
+        return;
+      }
       try {
-        const response = await axios.post('https://employees.archenterprises.co.in/api/api/departments', this.departmentForm);
+        await axios.post('https://employees.archenterprises.co.in/api/api/departments', this.departmentForm);
         toastSuccess('Department saved successfully!');
         this.closeDepartmentForm();
         this.fetchDepartments();
       } catch (error) {
         console.error('Failed to save department:', error);
-        toastSuccess('Something went wrong while saving the department.');
+        toastError('Something went wrong while saving the department.');
       }
     },
-
     closeDepartmentForm() {
       this.departmentForm = { name: '', code: '', id: null };
       this.showDepartmentForm = false;
-      this.isEditMode = false;
-    },
-
-    logout() {
-      const token = localStorage.getItem('token');
-      axios.post('https://employees.archenterprises.co.in/api/logout', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).finally(() => {
-        localStorage.removeItem('token');
-        this.$router.push('/auth');
-      });
     }
   }
 };
 </script>
 
-
-
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-.tooltip-btn {
-  position: relative;
-}
 
-.tooltip-btn::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 130%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--text);
-  color: #fff;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
 }
 
-.tooltip-btn::before {
-  content: "";
-  position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: var(--text);
-  opacity: 0;
-  transition: 0.2s ease;
-}
-
-.tooltip-btn:hover::after,
-.tooltip-btn:hover::before {
-  opacity: 1;
-}
-
-/* Table Wrapper */
-.styled-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 10px;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* Header Style */
-.styled-table thead tr {
-  /* background: #1b3f44; */
-  color: #ffffff;
-  text-align: center;
-  font-weight: bold;
-}
-
-.styled-table th {
-  padding: 14px;
-  border-radius: 8px;
-  font-size: 15px;
-}
-
-/* Table Row */
-.styled-table tbody tr {
-  background: #ffffff;
-  transition: all 0.3s ease;
-  border-radius: 10px;
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.05);
-}
-
-.styled-table tbody tr:hover {
-  transform: scale(1.02);
-  box-shadow: 0px 6px 18px rgba(0,0,0,0.12);
-}
-
-/* Table Data Cell */
-.styled-table td {
-  padding: 12px;
-  font-size: 14px;
-  color: var(--text);
-  text-align: center;
-}
-
-/* Clickable department name */
-.clickable-name {
-  cursor: pointer;
-  color: #2a8c82;
-  font-weight: 600;
-}
-
-.clickable-name:hover {
-  color: #116e6d;
-  text-decoration: underline;
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.btn-add, .btn-delete {
-  border: none;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 8px;
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: 0.3s ease;
-}
-
-.btn-add {
-  background: #1f9e75;
-  color: #fff;
-}
-
-.btn-add:hover {
-  background: #147a5b;
-  transform: translateY(-2px);
-}
-
-.btn-delete {
-  background: #d9534f;
-  color: #fff;
-}
-
-.btn-delete:hover {
-  background: #b52a27;
-  transform: translateY(-2px);
-}
-
-/* Responsive */
-@media(max-width: 768px) {
-  .styled-table th, .styled-table td {
-    font-size: 12px;
-    padding: 8px;
-  }
-}
-
-.kra-actions {
-  display: inline-flex;
-  gap: 6px;
-  margin-left: 10px;
-}
-
-.btn-delete {
- background: #ff0013;
-    color: white;
-    border: none;
-    padding: 5px 8px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-
-.btn-edit {
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-
-.logo-img {
-  height: 70px;
-}
-.company-name {
-font-size: 21px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
-}
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-.btn-edit{
-  background-color: #009cff !important;
-    color: white;
-        cursor: pointer;
-}
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-.layout{
-    align-self: anchor-center;
-
-  }
-
-  
-
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-.input-error {
-  border-color:var(--text);
-}
-
-.error-message {
-   color:var(--text);
-  font-size: 0.875rem;
-  margin-top: 4px;
-}
-
-
-.nested-list {
-  padding-left: 1.5rem;
-  list-style-type: disc;     /* Use disc for dark round bullets */
-  color: var(--text);                /* Optional: darken text color */
-}
-
-.nested-list li {
-  margin-bottom: 5px;         /* Optional: spacing between list items */
-  /* font-family: 'Roboto', 'Arial', sans-serif; */
-  font-size: 13px;
-}
-
-.expand-fade-enter-active,
-.expand-fade-leave-active {
-  transition: all 1.3s ease;
-  overflow: hidden;
-}
-
-.expand-fade-enter-from,
-.expand-fade-leave-to {
-  opacity: 0;
-  max-height: 0;
-  padding: 0;
+* {
   margin: 0;
-}
-
-.expand-fade-enter-to,
-.expand-fade-leave-from {
-  opacity: 1;
-  max-height: 500px; /* Large enough to accommodate content */
-  padding: 10px 15px;
-  margin-bottom: 10px;
-}
-
-.kra-title-toggle {
-  cursor: pointer;
-  background: #e9ecef;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 5px;
-  transition: background 0.3s;
-}
-.kra-title-toggle:hover {
-  background: #dee2e6;
-}
-.kra-details {
-  padding: 10px 15px;
-  background: #f8f9fa;
-  border-left: 3px solid #007bff;
-  margin-bottom: 10px;
-  border-radius: 5px;
-}
-.expanded {
-  font-weight: bold;
-}
-
-.kra-list {
   padding: 0;
-  list-style-type: none;
-}
-.kra-item {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 10px;
-}
-.kra-item h3 {
-  margin: 0 0 8px;
+  box-sizing: border-box;
 }
 
-.kpi-step {
-  padding: 1rem;
-  background-color: #fff;
-  border-radius: 1rem;
-}
-
-.kpi-step h2 {
-  font-size: 1.75rem;
-  font-weight: bold;
-  color: #1f2937; /* gray-800 */
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.kpi-step .kpi-input-wrapper {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.kpi-step input[type="text"] {
-  flex-grow: 1;
-  padding: 0.5rem 1rem;
-  border: 1px solid #86efac; /* green-300 */
-  border-radius: 9999px;
-  font-size: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: border 0.2s, box-shadow 0.2s;
-}
-
-.kpi-step input[type="text"]:focus {
-  outline: none;
-  border-color: #10b981; /* green-500 */
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
-}
-
-.kpi-step button {
-  background-color: #10b981;
-  color: white;
-  font-weight: 600;
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-}
-
-.kpi-step button:hover {
-  background-color: #059669; /* green-600 */
-  transform: scale(1.03);
-}
-
-.kpi-chip-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.kpi-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #d1fae5; /* green-100 */
-  color: #1f2937; /* gray-800 */
-  padding: 0.35rem 0.75rem;
-  /* border-radius: 9999px; */
-  font-size: 0.875rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.2s;
-}
-
-.kpi-chip:hover {
-  background-color: #bbf7d0; /* green-200 */
-}
-
-.kpi-chip i {
-  font-size: 0.85rem;
-  color: var(--sidebar); /* red-500 */
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.kpi-chip i:hover {
-  color: #b91c1c; /* red-700 */
-}
-
-.kra-step {
-  margin-top: 20px;
-}
-
-.kra-title {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #1f2937;
-  display: block;
-  margin-bottom: 20px;
-}
-
-.kra-title i {
-  color: #2563eb; /* blue tone */
-  margin-right: 10px;
-}
-
-.kra-input {
-  width: 100%;
-  padding: 14px 20px;
-  font-size: 1rem;
-  border: 1px solid #93c5fd;
-  border-radius: 12px;
-  background-color: #fff;
-  color: #1f2937;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: border 0.3s, box-shadow 0.3s;
-}
-
-.kra-input::placeholder {
-  color: #9ca3af;
-}
-
-.kra-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-}
-
-.target-step {
-  margin-top: 20px;
-}
-
-.target-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-  display: block;
-  margin-bottom: 20px;
-}
-
-.target-input {
-  width: 100%;
-  padding: 14px 20px;
-  font-size: 1rem;
-  border: 1px solid #a5b4fc;
-  border-radius: 12px;
-  background-color: #fff;
-  color: #1f2937;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: border 0.3s, box-shadow 0.3s;
-}
-
-.target-input::placeholder {
-  color: #9ca3af;
-}
-
-.target-input:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-.kpi-step {
-  margin-top: 20px;
-}
-
-.kpi-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-  display: block;
-  margin-bottom: 20px;
-}
-
-.kpi-title i {
-  color: #10b981; /* green tone for variety */
-  margin-right: 10px;
-}
-
-.kpi-checkbox-wrapper {
-  margin-bottom: 16px;
-  background-color: #f9f9ff;
-  padding: 14px 18px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: 0.3s ease;
-}
-
-.kpi-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #1f2937;
-  cursor: pointer;
-}
-
-.kpi-checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: #10b981; /* green highlight */
-  cursor: pointer;
-}
-
-.task-step {
-  margin-top: 20px;
-}
-
-.task-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-  display: block;
-  margin-bottom: 20px;
-}
-
-.task-title i {
-  color: #a855f7;
-  margin-right: 10px;
-}
-
-.task-input-wrapper {
-  position: relative;
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.task-input {
-  width: 100%;
-  padding: 14px 20px 14px 18px;
-  padding-right: 45px;
-  font-size: 1rem;
-  border: 1px solid #d8b4fe;
-  border-radius: 12px;
-  background-color: #fff;
-  color: var(--text);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.task-input:focus {
-  outline: none;
-  border-color: #a855f7;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
-}
-
-.delete-icon {
-  position: absolute;
-  top: 50%;
-  right: 14px;
-  transform: translateY(-50%);
-  color: #44b6ef;
-  font-size: 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s, transform 0.2s;
-}
-
-.delete-icon:hover {
-  color: #dc2626;
-  transform: translateY(-50%) scale(1.15);
-}
-
-.add-task-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3);
-}
-
-.kra-step label {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 5px;
-  display: block;
-}
-
-.kra-step input {
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid #60a5fa;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: border 0.3s ease, box-shadow 0.3s ease;
-}
-
-.kra-step input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-}
-
-.modal-backdrop {
-  pointer-events: auto;
-  position: fixed;
-  z-index: 999;
-  background: rgba(0, 0, 0, 0.5);
-}
-body.modal-open {
-  overflow: hidden;
-}
-
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-.company-name {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-}
-/* Header */
-.header {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 8px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-.logout-btn {
-   background-color: var(--text);
-    color: #ffffff;
-    margin-bottom: 22px;
-}
-
-.logout-btn:hover {
- background-color: var(--primary);
-  color: #ffffff;
-    margin-bottom: 22px;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
-  
   gap: 20px;
+   ;
+  padding: 20px;
+  min-height: 100vh;
 }
 
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
+.content {
+  flex: 1;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+/* Content Header */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 0;
 }
 
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.register-btn-modern {
+  padding: 12px 24px;
+  background: var(--primary);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.register-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
   transition: all 0.3s ease;
 }
 
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 }
 
-/* Content Section */
-.content {
-  flex: 1;
-  margin-top: 66px;
-  background-color: var(--sidebar);
-  padding: 30px 40px;
-  border-radius: 15px;
-  /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
+.stat-card i {
+  font-size: 32px;
+  color: var(--primary-color);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Table Styles */
+.table-wrapper-premium {
   overflow-x: auto;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
 }
 
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-}
-
-/* User Table */
-.user-table {
+.department-table {
   width: 100%;
-  border-collapse: separate;
- border-spacing: 6px 9px;
+  border-collapse: collapse;
 }
 
-.user-table th,
-.user-table td {
+.department-table thead {
+  background: #f8fafc;
+}
+
+.department-table th {
   text-align: left;
-  font-size: 16px;
- 
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.user-table th {
-  padding: 11px 20px;
-  background-color: var(--primary);
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
+.department-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
+.department-table tbody tr {
+  transition: all 0.3s ease;
 }
 
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
+.department-table tbody tr:hover {
+  background: #fafbfc;
 }
 
-.user-table tbody td {
-  border: none;
-  vertical-align: middle;
+.department-name {
+  cursor: pointer;
 }
 
-/* Footer */
-.footer {
-  background-color: #343a40;
+.dept-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dept-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  text-align: center;
-  padding: 15px 0;
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
+  font-weight: 600;
+  font-size: 13px;
 }
 
-/* Modal Backdrop */
+.department-name span {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.code-badge {
+  padding: 4px 12px;
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.action-group {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn-primary,
+.action-btn-danger {
+  width: auto;
+  height: 34px;
+  padding: 17px;
+  gap: 8px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn-primary {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.action-btn-primary:hover {
+  /* background: var(--primary-color); */
+  color: rgb(0, 0, 0);
+  transform: translateY(-2px);
+}
+
+.action-btn-danger {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.action-btn-danger:hover {
+  /* background: var(--danger); */
+  color: rgb(196, 9, 9);
+  transform: translateY(-2px);
+}
+
+/* Modal Styles */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
+  z-index: 10000;
+  padding: 20px;
 }
 
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 88%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
+.premium-modal {
   position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  background: white;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 650px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+.premium-modal.department-modal {
+  max-width: 500px;
 }
 
+.premium-modal.view-kra-modal {
+  max-width: 700px;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+}
+
+/* Modal Header */
+.modal-header-premium {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 28px;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.header-icon-premium {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-text h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.header-text p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.close-btn-premium {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.close-btn-premium:hover {
+  color: rgb(16, 4, 4);
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.modal-body-premium {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  background: #fafbfc;
+}
+
+.modal-body-premium::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body-premium::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.modal-body-premium::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+/* Form Sections */
+.form-section {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1a1a2e;
+}
+
+.section-title i {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.required-star {
+  color: var(--danger);
+}
+
+.field-wrapper {
+  position: relative;
+}
+
+.field-wrapper .field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.field-wrapper input,
+.field-wrapper select,
+.field-wrapper textarea {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.field-wrapper input:focus,
+.field-wrapper select:focus,
+.field-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.field-wrapper input.error {
+  border-color: var(--danger);
+}
+
+.field-error {
+  font-size: 11px;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Tasks Container */
+.tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.task-item .field-wrapper {
+  flex: 1;
+}
+
+.remove-task-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #fee2e2;
+  border: none;
+  cursor: pointer;
+  color: var(--danger);
+  transition: all 0.3s ease;
+}
+
+.remove-task-btn:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.add-btn {
+  padding: 10px 16px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+}
+
+.add-btn:hover {
+  background: #e5e7eb;
+}
+
+/* KPI Container */
+.kpi-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kpi-input-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.kpi-input-group .field-wrapper {
+  flex: 1;
+}
+
+.add-kpi-btn {
+  padding: 10px 20px;
+  background: var(--primary);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.add-kpi-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.kpi-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.kpi-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #065f46;
+}
+
+.kpi-chip i {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.kpi-chip i:hover {
+  color: var(--danger);
+}
+
+/* Modal Footer */
+.modal-footer-premium {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn-cancel-premium,
+.btn-submit-premium {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  border: none;
+}
+
+.btn-cancel-premium {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-cancel-premium:hover {
+  background: #e5e7eb;
+}
+
+.btn-submit-premium {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-submit-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* KRA View Cards */
+.kra-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kra-card-item {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.kra-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.kra-card-header:hover {
+  background: #f1f5f9;
+}
+
+.kra-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kra-title-section i {
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.kra-title-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.kra-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn-small.edit {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.icon-btn-small.edit:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.icon-btn-small.delete {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.icon-btn-small.delete:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.kra-card-body {
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+  animation: slideDown 0.3s ease;
+}
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-50px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -1550,193 +1413,192 @@ h2 {
   }
 }
 
-/* Modal Title */
-.modal-title {
-  text-transform: uppercase;
-  font-size: 28px;
-    /* font-weight: 800; */
-    text-align: center;
-    margin-bottom: 35px;
-    color: var(--text);
-    letter-spacing: 1.3px;
-    
+.info-section {
+  margin-bottom: 16px;
 }
 
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
+.info-section:last-child {
+  margin-bottom: 0;
 }
 
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 48%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
+.info-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 15px;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #374151;
+  font-size: 13px;
 }
 
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+.info-header i {
+  color: var(--primary-color);
 }
 
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
+.info-list {
+  list-style: none;
+  padding-left: 24px;
 }
 
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
+.info-list li {
+  padding: 6px 0;
+  font-size: 13px;
+  color: #4b5563;
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  align-items: center;
+  gap: 8px;
 }
 
-.btn {
-  flex: 1;
-  padding: 14px 0;
-  font-weight: 700;
-      background-color: var(--text);
-    color: white;
-  
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+.info-list li i {
+  color: var(--success);
+  font-size: 12px;
 }
 
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+.kpi-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 24px;
 }
 
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
+.kpi-badge {
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #065f46;
 }
 
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+.target-text {
+  padding-left: 24px;
+  font-size: 13px;
+  color: #4b5563;
+  font-style: italic;
 }
 
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
+.empty-item {
+  color: #9ca3af;
+  font-size: 12px;
+  padding: 6px 0;
 }
 
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
 }
-.fade-enter-from, .fade-leave-to {
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+/* Expand Transition */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
+}
+
+/* Modal Fade */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
   opacity: 0;
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
   }
 
-  .modal-card {
-           padding: 49px 23px;
-        margin-left: -19px;
+  .content {
+    padding: 20px;
   }
-}
 
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
   }
-  .menu-btn, .logout-btn {
+
+  .register-btn-modern {
+    justify-content: center;
+  }
+
+  .stats-bar {
+    flex-direction: column;
+  }
+
+  .stat-card {
     width: 100%;
   }
-}
-.attractive-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
 
-  font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
-  width: 0;
-}
+  .premium-modal {
+    max-width: 95%;
+  }
 
-.btn-primary.attractive-btn {
-  background-color: var(--primary);
-  border: none;
-  color: white;
-}
+  .modal-header-premium {
+    padding: 16px 20px;
+  }
 
-.btn-primary.attractive-btn:hover {
-  background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
-}
+  .modal-body-premium {
+    padding: 16px;
+  }
 
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
-}
+  .modal-footer-premium {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
 
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
-}
+  .kpi-input-group {
+    flex-direction: column;
+  }
 
-.attractive-btn i {
-  font-size: 14px;
-}
+  .add-kpi-btn {
+    width: 100%;
+  }
 
+  .action-group {
+    flex-direction: column;
+  }
+
+  .action-btn-primary,
+  .action-btn-danger {
+    width: 100%;
+  }
+
+  .department-table th,
+  .department-table td {
+    padding: 12px;
+  }
+}
 </style>

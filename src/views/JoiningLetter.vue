@@ -366,7 +366,7 @@ computed: {
 
 /* Content area */
 .content {
-  margin-top: 66px;
+     
   flex: 1;
 }
 /* ===== OFFER LETTER PROFESSIONAL DESIGN ===== */
@@ -452,7 +452,7 @@ computed: {
 .signature-section {
   display: flex;
   justify-content: space-between;
-  margin-top: 80px;
+       
 }
 
 .sign-block {

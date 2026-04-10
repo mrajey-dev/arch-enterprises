@@ -1,80 +1,127 @@
-
-
 <template>
   <div class="layout">
 
-
     <!-- Main Content -->
     <div class="main-content">
-       <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-     <section
-  class="content"
-  v-show="!isMobile || !isSidebarVisible"
-  :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
->
+      <section
+        class="content"
+        v-show="!isMobile || !isSidebarVisible"
+        :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
+      >
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div>
+              <h1>Leave Applications</h1>
+              <p class="subtitle-modern">Track and manage your leave requests</p>
+            </div>
+          </div>
+          <div class="stats-badge-header">
+            <i class="fas fa-chart-line"></i>
+            <span>{{ leaveRequests.length }} Applications</span>
+          </div>
+        </div>
 
-  <h2>Leave Applications</h2>
-  <table class="table table-striped table-bordered user-table">
-   <thead class="thead-dark">
-  <tr>
-    <!-- <th>Employee Name</th>
-    <th>Department</th> -->
-    <th>Leave Type</th>
-    <th>Reason</th>
-    <th>From Date</th>
-    <th>To Date</th>
-    <th>Status</th>          <!-- NEW -->
-    <!-- <th>Take Action</th> -->
-  </tr>
-</thead>
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-card pending">
+            <i class="fas fa-clock"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ pendingCount }}</span>
+              <span class="stat-label">Pending</span>
+            </div>
+          </div>
+          <div class="stat-card approved">
+            <i class="fas fa-check-circle"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ approvedCount }}</span>
+              <span class="stat-label">Approved</span>
+            </div>
+          </div>
+          <div class="stat-card rejected">
+            <i class="fas fa-times-circle"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ rejectedCount }}</span>
+              <span class="stat-label">Rejected</span>
+            </div>
+          </div>
+        </div>
 
-<tbody>
-  <tr v-for="leave in leaveRequests" :key="leave.id">
-    <!-- <td>{{ leave.name }}</td>
-    <td>{{ leave.department }}</td> -->
-    <td>{{ leave.leaveType }}</td>
-    <td>{{ leave.reason }}</td>
-    <td>{{ leave.fromDate }}</td>
-    <td>{{ leave.toDate }}</td>
-<td>
-  <span :class="{
-    'badge badge-success': leave.status === 'Approved',
-    'badge badge-danger': leave.status === 'Rejected',
-    'badge badge-secondary': leave.status === 'Pending'
-  }">
-    {{ leave.status }}
-  </span>
-</td>
-      <!-- NEW -->
-    <!-- <td>
-      <div class="btn-group" role="group">
-        <button class="btn btn-sm btn-success attractive-btn"
-                title="Approve"
-                @click="approveLeave(leave)"
-                :disabled="leave.status === 'Approved'">
-          <i class="fas fa-check-circle"></i> Approve
-        </button>
-        <button class="btn btn-sm btn-danger attractive-btn"
-                title="Reject"
-                @click="rejectLeave(leave)"
-                :disabled="leave.status === 'Rejected'">
-          <i class="fas fa-times-circle"></i> Reject
-        </button>
-      </div>
-    </td> -->
-  </tr>
-</tbody>
+        <!-- Leave Table -->
+        <div class="table-wrapper-premium">
+          <div class="table-header">
+            <div class="section-title-modern">
+              <i class="fas fa-list-ul"></i>
+              <span>Leave Requests</span>
+            </div>
+            <div class="table-info">
+              <i class="fas fa-file-alt"></i>
+              <span>{{ leaveRequests.length }} records</span>
+            </div>
+          </div>
 
+          <div class="table-container">
+            <table class="leave-table-premium">
+              <thead>
+                <tr>
+                  <th>Leave Type</th>
+                  <th>Reason</th>
+                  <th>From Date</th>
+                  <th>To Date</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="leave in leaveRequests" :key="leave.id" class="leave-row">
+                  <td class="leave-type-cell">
+                    <span :class="['leave-type-badge', getLeaveTypeClass(leave.leaveType)]">
+                      <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
+                      {{ leave.leaveType }}
+                    </span>
+                  </td>
+                  <td class="reason-cell" :title="leave.reason">
+                    {{ truncateText(leave.reason, 60) }}
+                  </td>
+                  <td class="date-cell">
+                    <i class="fas fa-calendar-day"></i> {{ formatDate(leave.fromDate) }}
+                  </td>
+                  <td class="date-cell">
+                    <i class="fas fa-calendar-day"></i> {{ formatDate(leave.toDate) }}
+                  </td>
+                  <td class="duration-cell">
+                    <span class="duration-badge">
+                      <i class="fas fa-clock"></i> {{ calculateDuration(leave.fromDate, leave.toDate) }} days
+                    </span>
+                  </td>
+                  <td>
+                    <span :class="['status-badge-premium', getStatusClass(leave.status)]">
+                      <i :class="getStatusIcon(leave.status)"></i>
+                      {{ leave.status }}
+                    </span>
+                  </td>
+                </tr>
 
-  </table>
-</section>
-
+                <!-- Empty State -->
+                <tr v-if="leaveRequests.length === 0" class="empty-row">
+                  <td colspan="6">
+                    <div class="empty-state-premium">
+                      <i class="fas fa-calendar-times"></i>
+                      <h4>No Leave Applications</h4>
+                      <p>You haven't submitted any leave requests yet</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <!-- <footer class="footer">
-      &copy; 2025 Arch Enterprises. All rights reserved.
-    </footer> -->
   </div>
 </template>
 
@@ -85,12 +132,10 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
 
-
 export default {
-    components: {
+  components: {
     Sidebar
   },
   data() {
@@ -98,16 +143,16 @@ export default {
       user: null,
       leaveRequests: [],
       isMobile: false,
-isSidebarVisible: true,
+      isSidebarVisible: true,
       selectedDocumentType: '',
-typedDocuments: {},
+      typedDocuments: {},
       showPassword: true,
       users: [],
       showRegister: false,
       isEditMode: false,
-      editingId: null,  // changed from editingEmail to editingId
+      editingId: null,
       registerForm: {
-        id: '',  // include id for edit
+        id: '',
         empId: '',
         username: '',
         email: '',
@@ -122,138 +167,169 @@ typedDocuments: {},
       }
     }
   },
+  computed: {
+    pendingCount() {
+      return this.leaveRequests.filter(l => l.status === 'Pending').length;
+    },
+    approvedCount() {
+      return this.leaveRequests.filter(l => l.status === 'Approved').length;
+    },
+    rejectedCount() {
+      return this.leaveRequests.filter(l => l.status === 'Rejected').length;
+    }
+  },
   methods: {
-    async fetchUserInfo() {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    this.user = response.data;
-    this.fetchLeaves(); // 👈 Fetch leaves *after* user is known
-  } catch (error) {
-    console.error('Error fetching user info:', error);
-    this.$router.push('/auth');
-  }
-},
-
-   async updateLeaveStatus(leaveId, status) {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.patch(
-      `https://employees.archenterprises.co.in/api/api/leave-requests/${leaveId}/status`,
-      { status },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    truncateText(text, length) {
+      if (!text) return '—';
+      return text.length > length ? text.substring(0, length) + '...' : text;
+    },
+    calculateDuration(fromDate, toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      const diffTime = Math.abs(to - from);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return diffDays;
+    },
+    getStatusClass(status) {
+      switch (status) {
+        case 'Approved': return 'approved';
+        case 'Rejected': return 'rejected';
+        default: return 'pending';
       }
-    );
-    toastSuccess('Status updated successfully!');
-    this.fetchLeaves(); // Refresh list
-  } catch (error) {
-    console.error('Status update failed', error);
-    toastSuccess('Could not update status – please try again.');
-  }
-},
-
-approveLeave(leave) { this.updateLeaveStatus(leave.id, 'Approved'); },
-rejectLeave(leave)  { this.updateLeaveStatus(leave.id, 'Rejected'); },
-
-
-   async fetchLeaves() {
-  try {
-    const token = localStorage.getItem('token');
-
-    // 1️⃣  No status param → API returns every leave
-    const { data } = await axios.get('https://employees.archenterprises.co.in/api/api/leave-requests', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    // 2️⃣  Keep only the current user’s leaves (or show all if that’s what you need)
-    if (this.user && this.user.name) {
-      this.leaveRequests = data.filter(
-        leave => leave.name === this.user.name     // ✨ remove status filter
-      );
-    } else {
-      this.leaveRequests = [];
-    }
-  } catch (error) {
-    console.error('Failed to fetch leave requests:', error);
-    toastSuccess('Error loading leave requests.');
-  }
-},
-
-
-
-
+    },
+    getStatusIcon(status) {
+      switch (status) {
+        case 'Approved': return 'fas fa-check-circle';
+        case 'Rejected': return 'fas fa-times-circle';
+        default: return 'fas fa-clock';
+      }
+    },
+    getLeaveTypeClass(leaveType) {
+      const type = (leaveType || '').toLowerCase();
+      if (type.includes('sick')) return 'sick';
+      if (type.includes('casual') || type === 'cl') return 'casual';
+      if (type.includes('pl') || type.includes('privilege') || type.includes('paid')) return 'pl';
+      if (type.includes('half')) return 'halfday';
+      return 'default';
+    },
+    getLeaveTypeIcon(leaveType) {
+      const type = (leaveType || '').toLowerCase();
+      if (type.includes('sick')) return 'fas fa-thermometer-half';
+      if (type.includes('casual') || type === 'cl') return 'fas fa-coffee';
+      if (type.includes('pl') || type.includes('privilege') || type.includes('paid')) return 'fas fa-star';
+      if (type.includes('half')) return 'fas fa-adjust';
+      return 'fas fa-calendar-alt';
+    },
+    formatDate(date) {
+      if (!date) return '—';
+      return new Date(date).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    },
+    async fetchUserInfo() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.user = response.data;
+        this.fetchLeaves();
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+        this.$router.push('/auth');
+      }
+    },
+    async updateLeaveStatus(leaveId, status) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.patch(
+          `https://employees.archenterprises.co.in/api/api/leave-requests/${leaveId}/status`,
+          { status },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toastSuccess('Status updated successfully!');
+        this.fetchLeaves();
+      } catch (error) {
+        console.error('Status update failed', error);
+        toastError('Could not update status – please try again.');
+      }
+    },
+    approveLeave(leave) { this.updateLeaveStatus(leave.id, 'Approved'); },
+    rejectLeave(leave) { this.updateLeaveStatus(leave.id, 'Rejected'); },
+    async fetchLeaves() {
+      try {
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get('https://employees.archenterprises.co.in/api/api/leave-requests', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (this.user && this.user.name) {
+          this.leaveRequests = data.filter(leave => leave.name === this.user.name);
+        } else {
+          this.leaveRequests = [];
+        }
+      } catch (error) {
+        console.error('Failed to fetch leave requests:', error);
+        toastError('Error loading leave requests.');
+      }
+    },
     checkIfMobile() {
-    this.isMobile = window.innerWidth <= 768;
-    if (this.isMobile) {
-      this.isSidebarVisible = false;
-    } else {
-      this.isSidebarVisible = true;
-    }
-  },
-  toggleSidebar() {
-    this.isSidebarVisible = !this.isSidebarVisible;
-  },
+      this.isMobile = window.innerWidth <= 768;
+      if (this.isMobile) {
+        this.isSidebarVisible = false;
+      } else {
+        this.isSidebarVisible = true;
+      }
+    },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible;
+    },
     handleTypedFileUpload(event) {
-  const file = event.target.files[0];
-  if (this.selectedDocumentType && file) {
-    this.typedDocuments[this.selectedDocumentType] = file;
-    this.registerForm.documents = Object.values(this.typedDocuments); // update form data
-  } else {
-    toastSuccess('Please select a document type before uploading.');
-  }
-},
-
+      const file = event.target.files[0];
+      if (this.selectedDocumentType && file) {
+        this.typedDocuments[this.selectedDocumentType] = file;
+        this.registerForm.documents = Object.values(this.typedDocuments);
+      } else {
+        toastWarning('Please select a document type before uploading.');
+      }
+    },
     togglePasswordVisibility() {
-  this.showPassword = !this.showPassword
-},
-
-generatePassword() {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+'
-  let password = ''
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  this.registerForm.password = password
-},
-
+      this.showPassword = !this.showPassword;
+    },
+    generatePassword() {
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
+      let password = '';
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      this.registerForm.password = password;
+    },
     goTo(route) {
-      this.$router.push(`/${route}`)
+      this.$router.push(`/${route}`);
     },
-
     openRegisterForm() {
-      this.resetForm()
-      this.showRegister = true
+      this.resetForm();
+      this.showRegister = true;
     },
-
     closeRegisterForm() {
-      this.showRegister = false
-      this.resetForm()
+      this.showRegister = false;
+      this.resetForm();
     },
-
     async handleRegister() {
       try {
-        const formData = new FormData()
+        const formData = new FormData();
         for (const key in this.registerForm) {
           if (key === 'documents') {
-            this.registerForm.documents.forEach((file) =>
-              formData.append('documents', file)
-            )
+            this.registerForm.documents.forEach((file) => formData.append('documents', file));
           } else {
-            formData.append(key, this.registerForm[key])
+            formData.append(key, this.registerForm[key]);
           }
         }
-
         const url = this.isEditMode
-          ? `https://employees.archenterprises.co.in/api/api/users/${this.editingId}`   // use id here
-          : 'https://employees.archenterprises.co.in/api/api/register'
-
-        const method = this.isEditMode ? 'put' : 'post'
-
+          ? `https://employees.archenterprises.co.in/api/api/users/${this.editingId}`
+          : 'https://employees.archenterprises.co.in/api/api/register';
+        const method = this.isEditMode ? 'put' : 'post';
         await axios({
           method,
           url,
@@ -262,26 +338,23 @@ generatePassword() {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
-        })
-
-        toastSuccess(this.isEditMode ? 'User updated successfully!' : 'Registration successful!')
-        this.showRegister = false
-        this.resetForm()
-        this.fetchUsers()
+        });
+        toastSuccess(this.isEditMode ? 'User updated successfully!' : 'Registration successful!');
+        this.showRegister = false;
+        this.resetForm();
+        this.fetchUsers();
       } catch (error) {
-        console.error('Register error:', error)
+        console.error('Register error:', error);
         if (error.response && error.response.data && error.response.data.message) {
-          toastSuccess(`Operation failed: ${error.response.data.message}`)
+          toastError(`Operation failed: ${error.response.data.message}`);
         } else {
-          toastSuccess('Operation failed due to network or server error.')
+          toastError('Operation failed due to network or server error.');
         }
       }
     },
-
     handleFileUpload(event) {
-      this.registerForm.documents = Array.from(event.target.files)
+      this.registerForm.documents = Array.from(event.target.files);
     },
-
     resetForm() {
       this.registerForm = {
         id: '',
@@ -296,29 +369,25 @@ generatePassword() {
         keyResponsibility: '',
         password: '',
         documents: [],
-        
-      }
-      this.isEditMode = false
-      this.editingId = null
+      };
+      this.isEditMode = false;
+      this.editingId = null;
     },
-
     async fetchUsers() {
       try {
-        const token = localStorage.getItem('token')
+        const token = localStorage.getItem('token');
         const response = await axios.get('https://employees.archenterprises.co.in/api/api/users', {
           headers: { Authorization: `Bearer ${token}` }
-        })
-        this.users = response.data
+        });
+        this.users = response.data;
       } catch (error) {
-        toastSuccess('Failed to fetch users')
-        console.error(error)
+        toastError('Failed to fetch users');
+        console.error(error);
       }
     },
-
     editUser(user) {
-      // Populate form with user data for editing
       this.registerForm = {
-        id: user.id || '',               // assign id here
+        id: user.id || '',
         empId: user.empId || '',
         username: user.username || '',
         email: user.email || '',
@@ -328,696 +397,469 @@ generatePassword() {
         address: user.address || '',
         mobile: user.mobile || '',
         keyResponsibility: user.keyResponsibility || '',
-        password: '', // password not required on edit
+        password: '',
         documents: []
-      }
-      this.isEditMode = true
-      this.editingId = user.id   // set editingId here
-      this.showRegister = true
+      };
+      this.isEditMode = true;
+      this.editingId = user.id;
+      this.showRegister = true;
     },
-
     async deleteUser(id) {
       if (confirm('Are you sure you want to delete this user?')) {
         try {
           await axios.delete(`https://employees.archenterprises.co.in/api/api/users/${encodeURIComponent(id)}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          })
-          this.fetchUsers()
-          toastSuccess('User deleted successfully!')
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+          this.fetchUsers();
+          toastSuccess('User deleted successfully!');
         } catch (error) {
-          toastSuccess('Failed to delete user.')
-          console.error(error)
+          toastError('Failed to delete user.');
+          console.error(error);
         }
       }
     },
-
     logout() {
-      const token = localStorage.getItem('token')
-      axios
-        .post(
-          'https://employees.archenterprises.co.in/api/api/logout',
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
-        .finally(() => {
-          localStorage.removeItem('token')
-          this.$router.push('/auth')
-        })
+      const token = localStorage.getItem('token');
+      axios.post('https://employees.archenterprises.co.in/api/api/logout', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).finally(() => {
+        localStorage.removeItem('token');
+        this.$router.push('/auth');
+      });
     }
   },
-
   mounted() {
-  this.checkIfMobile();
-  window.addEventListener('resize', this.checkIfMobile);
-
-  const token = localStorage.getItem('token');
-  if (!token) {
-    this.$router.push('/auth');
-  } else {
-    this.fetchUsers();
-    this.fetchUserInfo(); // 👈 NEW: Get the current user
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$router.push('/auth');
+    } else {
+      this.fetchUsers();
+      this.fetchUserInfo();
+    }
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
   }
-}
 }
 </script>
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-@media (max-width: 768px) {
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    display: none;
-    text-decoration: none;
-    align-items: center; width: 100%;
-}
-}
-@media (max-width: 768px) {
- .layout {
-    align-self: center;
-}
-}
-.badge {
-  padding: 4px 10px;
-  border-radius: 4px;
-  color: white;
-  font-size: 0.75rem;
-}
-.badge-success { background-color: #28a745; }
-.badge-danger { background-color: #dc3545; }
-.badge-secondary { background-color: var(--text); }
 
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
 }
 
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-
-@media (max-width: 768px) {
-  .main-content {
-    /* flex-direction: column; */
-    padding: 20px 15px;
-  }
-
-  .sidebar {
-    width: 100%;
-    padding: 20px;
-    border-radius: 10px;
-  }
-
-  .content {
-    padding: 20px;
-  }
-
-  .user-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    white-space: normal;
-  }
-
-  .user-table th,
-  .user-table td {
-    font-size: 14px;
-    padding: 10px 12px;
-  }
-
-  .btn-group {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .attractive-btn {
-    font-size: 13px;
-    padding: 5px 12px;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 15px;
-  }
-
-  .logo {
-    font-size: 20px;
-  }
-
-  .logout-btn {
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  h2 {
-    font-size: 18px;
-  }
-
-  .content {
-    padding: 15px;
-  }
-
-  .btn {
-    font-size: 12px;
-    padding: 10px 0;
-  }
-}
-
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-
-/* Header */
-.header {
-  font-size: 17px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 0 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-.logout-btn {
-  background-color: white;
-  color: #003977;
-  border: 2px solid #007bff;
-}
-
-.logout-btn:hover {
-  background-color: #e7f1ff;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
   gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
+   ;
 }
 
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
-}
-
-/* Content Section */
 .content {
   flex: 1;
-  background-color: #a5d5cf33;
-  margin-top: 66px;
-  padding: 30px 40px;
-  border-radius: 15px;
-  /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-top: 0;
   overflow-x: auto;
 }
 
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 800;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-  text-transform: uppercase;
-}
-
-/* User Table */
-.user-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 6px 9px;
-}
-
-.user-table th,
-.user-table td {
-  padding: 11px 20px;
-  text-align: left;
-  font-size: 16px;
-  color: var(--text);
-}
-
-.user-table th {
-  background-color: var(--primary);
-      color: #ffffff;
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-}
-
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
-}
-
-.user-table tbody td {
-  border: none;
-  vertical-align: middle;
-}
-
-/* Footer */
-.footer {
-  background-color: #343a40;
-  color: white;
-  text-align: center;
-  padding: 15px 0;
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
-}
-
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
+/* Content Header */
+.content-header-modern {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
-  position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
-}
-
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
+  margin-bottom: 28px;
   flex-wrap: wrap;
+  gap: 16px;
 }
 
-.form-row .input-group {
-  flex: 1 1 48%;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+}
+
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.stats-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.pending {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+.stat-card.pending i { color: #d97706; }
+
+.stat-card.approved {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+}
+.stat-card.approved i { color: #065f46; }
+
+.stat-card.rejected {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+}
+.stat-card.rejected i { color: #991b1b; }
+
+.stat-card i {
+  font-size: 32px;
+}
+
+.stat-info {
   display: flex;
   flex-direction: column;
 }
 
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
 }
 
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Table Styles */
+.table-wrapper-premium {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.section-title-modern {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
 }
 
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+.section-title-modern i {
+  color: var(--primary-color);
 }
 
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
-}
-
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
+.table-info {
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
 }
 
-.btn {
-  flex: 1;
-  padding: 14px 0;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+.table-container {
+  overflow-x: auto;
 }
 
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+.leave-table-premium {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
+.leave-table-premium thead {
+  background: #f8fafc;
 }
 
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+.leave-table-premium th {
+  text-align: left;
+  padding: 16px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
+.leave-table-premium td {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
 }
 
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+.leave-row {
+  transition: all 0.3s ease;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
-  }
-
-  .modal-card {
-    padding: 30px 25px;
-  }
+.leave-row:hover {
+  background: #fafbfc;
 }
 
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
-    font-size: 17px;
-  }
-  .menu-btn, .logout-btn {
-    width: 100%;
-  }
+/* Leave Type Badge */
+.leave-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
 }
-.attractive-btn {
+
+.leave-type-badge.sick {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.leave-type-badge.casual {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.leave-type-badge.pl {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.leave-type-badge.halfday {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.leave-type-badge.default {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+/* Reason Cell */
+.reason-cell {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #6b7280;
+}
+
+/* Date Cell */
+.date-cell {
+  font-family: monospace;
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.date-cell i {
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+/* Duration Cell */
+.duration-cell {
+  white-space: nowrap;
+}
+
+.duration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+/* Status Badge */
+.status-badge-premium {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
 }
 
-.btn-primary.attractive-btn {
-  background-color: var(--primary);
-  border: none;
-  color: white;
+.status-badge-premium.approved {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-.btn-primary.attractive-btn:hover {
-  background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
+.status-badge-premium.rejected {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
+.status-badge-premium.pending {
+  background: #fef3c7;
+  color: #d97706;
 }
 
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
+/* Empty State */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
 }
 
-.attractive-btn i {
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
   font-size: 14px;
 }
-/* Hide From Date & To Date on mobile */
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .leave-table-premium th,
+  .leave-table-premium td {
+    padding: 12px;
+  }
+  
+  .reason-cell {
+    max-width: 150px;
+  }
+}
+
 @media (max-width: 768px) {
-  .user-table th:nth-child(3),
-  .user-table th:nth-child(4),
-  .user-table td:nth-child(3),
-  .user-table td:nth-child(4) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stats-badge-header {
+    align-self: flex-start;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .leave-table-premium {
+    min-width: 600px;
+  }
+
+  .reason-cell {
+    max-width: 120px;
+  }
+
+  /* Hide From Date & To Date on mobile */
+  .leave-table-premium th:nth-child(3),
+  .leave-table-premium th:nth-child(4),
+  .leave-table-premium td:nth-child(3),
+  .leave-table-premium td:nth-child(4) {
     display: none;
   }
-  .main-content{
-    padding: 0px;
-  }
-  .content {
-    transition: opacity 0.3s ease;
-  }
-  .user-table th{
-    font-size: 13px;
-  }
-  .content{
-    padding: 4px 10px;
-  }
-  h2{
-    font-size: 17px;
-  }
-  .user-table tbody td{
-    font-size: 12px;
-  }
-  .badge{
-        font-size: 11px;
-  }
-}
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-}
-@media (max-width: 768px) {
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 12px 35px;
-  margin-bottom: 6px;
-      height: 52px;
-}
 }
 
-.header-title {
-  flex: 1;
-  text-align: center;
-  color: white;
-  margin: 0;
-  font-size: 1.3rem;
+@media (max-width: 480px) {
+  .leave-table-premium {
+    min-width: 500px;
+  }
 }
-
-.mobile-menu-icon {
-  font-size: 22px;
-  color: white;
-  cursor: pointer;
-}
-
 </style>

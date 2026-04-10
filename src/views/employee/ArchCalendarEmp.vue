@@ -1,374 +1,258 @@
-
-
 <template>
-  <div class="layout">
+  <div class="layout" :class="{ 'focus-overlay-active': showFocusOverlay }">
+    <!-- Focus Overlay for highlighting SBU button -->
+    <div v-if="showFocusOverlay" class="focus-overlay" @click="dismissFocusOverlay"></div>
 
+  
 
     <!-- Main Content -->
     <div class="main-content">
-       <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-    <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-  <!-- <h2>Arch Calendar</h2> -->
-<!-- Calendar Filters -->
-<div class="calendar-filters">
-  <label>
-    <input type="checkbox" v-model="showFilters.meetings" />
-    Meetings
-  </label>
-
-  <label>
-    <input type="checkbox" v-model="showFilters.services" />
-    Services
-  </label>
-
-  <label>
-    <input type="checkbox" v-model="showFilters.visits" />
-    Visits
-  </label>
-  <label>
-  <input type="checkbox" v-model="showFilters.birthdays" />
-  Birthdays
-</label>
-<label>
-  <input type="checkbox" v-model="showFilters.holidays" />
-  Holidays
-</label>
-
-<label>
-  <input type="checkbox" v-model="showFilters.events" />
-  Events
-</label>
-
-<label>
-  <input type="checkbox" v-model="showFilters.notes" />
-  Notes
-</label>
-<label>
-  <input type="checkbox" v-model="showFilters.attendance" />
-  Attendance
-</label>
-
-  
-</div>
-<div v-if="showDatePopup" class="modal-backdrop" @click.self="closeDatePopup">
-  <div class="modal-card calendar-modal">
-
-    <!-- Header -->
-    <div class="modal-header">
-      <h3 class="modal-title">{{ selectedDate }}</h3>
-      <button class="icon-close" @click="closeDatePopup">✕</button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-       <button class="btn note" @click="openForm('note')">
-  📝 Note
-</button>
-
-
-      
-      </div>
-
-      <!-- Form -->
-      <div v-if="formType" class="form-group fade-in">
-        <input
-          v-if="formType !== 'note'"
-          v-model="form.title"
-          placeholder="Enter title"
-        />
-
-        <textarea
-          v-model="form.description"
-          placeholder="Add description"
-        ></textarea>
-
-        <button class="btn-save" @click="saveCalendarData">
-         <i class="fa fa-save" style="font-size:13px"></i>  Save Changes
-        </button>
-      </div>
-
-    </div>
-
-  </div>
-</div>
-
-
-  <!-- Calendar Header -->
-  <div class="calendar-header">
-    <button @click="prevMonth">‹</button>
-    <h3>{{ currentMonthYear }}</h3>
-    <button @click="nextMonth">›</button>
-  </div>
-
-  <!-- Calendar Grid -->
-  <div class="calendar-grid">
-    <div class="day-name" v-for="day in days" :key="day">{{ day }}</div>
-
- <div
-  class="date-cell"
-  v-for="date in calendarDates"
-  :key="date.fullDate"
-  :class="{ today: date.isToday }"
-  @click="openDatePopup(date)"
-  @dragover.prevent
-  @drop="onDrop(date)"
->
-
-
-      <span class="date-number">{{ date.day }}</span>
-
-<div
-  v-for="event in date.events"
-  :key="event.id"
-  class="event"
-  :class="event.type"
-  :draggable="isDraggable(event)"
-  @dragstart="onDragStart(event)"
-  @click.stop="handleEventClick(event)"
->
-  {{ event.title }}
-
-  <!-- Edit / Delete (only custom events) -->
-  <div
-    v-if="isCustomEvent(event)"
-    class="event-actions"
-  >
-    <i class="fa fa-edit" style="font-size:13px"></i>
-    <span @click.stop="editCustomEvent(event)">Edit</span>
-    |
-    🗑️
-    <span @click.stop="deleteCustomEvent(event)">Delete</span>
-  </div>
-</div>
-
-
-
-    </div>
-  </div>
-
-  <!-- View Note / Event Popup -->
-<div v-if="showViewModal" class="modal-backdrop" @click.self="showViewModal=false">
-  <div class="modal-card small professional">
-
-    <div class="modal-header">
-      <h3 class="modal-title">{{ viewEvent.title }}</h3>
-      <span class="status-badge">{{ viewEvent.type }}</span>
-    </div>
-
-    <div class="modal-body">
-      <div class="info-item">
-        <span class="label">Date</span>
-        <span class="value">{{ viewEvent.date }}</span>
-      </div>
-
-      <div class="info-item" style="margin-top:12px">
-        <span class="label">Description</span>
-      <p style="white-space: pre-line">
-  {{ viewEvent.description }}
-</p>
-      </div>
-             <div class="info-item" v-if="selectedMeeting.guests?.length">
-  <span class="label">Guests</span>
-
-  <ul class="guest-list">
-    <li
-      v-for="(g, i) in displayedGuests"
-      :key="i"
-    >
-      {{ g }}
-    </li>
-  </ul>
-
-  <!-- Show button only if more than 2 guests -->
-  <button
-    v-if="selectedMeeting.guests.length > 2"
-    class="show-btn"
-    @click="showAllGuests = !showAllGuests"
-  >
-    {{ showAllGuests ? "Show Less" : "Show All" }}
-  </button>
-</div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-close" @click="showViewModal=false"> <i class="fa fa-close" style="font-size:13px"></i> Close</button>
-    </div>
-
-  </div>
-</div>
-
-  
-
-  <!-- Interview Popup -->
-<div v-if="showMeetingModal" class="modal-backdrop" @click.self="closeMeeting">
-  <div class="modal-card small professional">
-
-    <!-- Header -->
-    <div class="modal-header">
-      <h3 class="modal-title">{{ selectedMeeting.title }}</h3>
-
-      <span class="status-badge"
-            :class="selectedMeeting.type">
-        {{ selectedMeeting.type === 'offline' ? 'Offline' : 'Online' }}
-      </span>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-
-      <div class="info-grid single">
-
-        <div class="info-item">
-          <span class="label">Date</span>
-          <span class="value">{{ selectedMeeting.meeting_date }}</span>
+      <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
+        <!-- Calendar Filters -->
+        <div class="calendar-filters">
+          <label>
+            <input type="checkbox" v-model="showFilters.meetings" />
+            Meetings
+          </label>
+          <label>
+            <input type="checkbox" v-model="showFilters.services" />
+            Services
+          </label>
+          <label>
+            <input type="checkbox" v-model="showFilters.visits" />
+            Visits
+          </label>
+          <label>
+            <input type="checkbox" v-model="showFilters.birthdays" />
+            Birthdays
+          </label>
+          <label>
+            <input type="checkbox" v-model="showFilters.holidays" />
+            Holidays
+          </label>
+          <label>
+            <input type="checkbox" v-model="showFilters.events" />
+            Events
+          </label>
+          <label>
+            <input type="checkbox" v-model="showFilters.notes" />
+            Notes
+          </label>
+          <label>
+            <input type="checkbox" v-model="showFilters.attendance" />
+            Attendance
+          </label>
         </div>
 
-        <div class="info-item">
-          <span class="label">Time</span>
-          <span class="value">{{ selectedMeeting.meeting_time }}</span>
+        <div v-if="showDatePopup" class="modal-backdrop" @click.self="closeDatePopup">
+          <div class="modal-card calendar-modal">
+            <div class="modal-header">
+              <h3 class="modal-title">{{ selectedDate }}</h3>
+              <button class="icon-close" @click="closeDatePopup">✕</button>
+            </div>
+            <div class="modal-body">
+              <div class="action-buttons">
+                <button class="btn note" @click="openForm('note')">📝 Note</button>
+              </div>
+              <div v-if="formType" class="form-group fade-in">
+                <input v-if="formType !== 'note'" v-model="form.title" placeholder="Enter title" />
+                <textarea v-model="form.description" placeholder="Add description"></textarea>
+                <button class="btn-save" @click="saveCalendarData">
+                  <i class="fa fa-save" style="font-size:13px"></i> Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="info-item" v-if="selectedMeeting.description">
-          <span class="label">Description</span>
-          <span class="value">{{ selectedMeeting.description }}</span>
+        <!-- Calendar Header -->
+        <div class="calendar-header">
+          <button @click="prevMonth">‹</button>
+          <h3>{{ currentMonthYear }}</h3>
+          <button @click="nextMonth">›</button>
         </div>
-         <span class="label">Meeting Topics</span>
- <button class="btn-edit-topics" @click="enableTopicEdit">
-      <i class="fa fa-edit" style="font-size:13px"></i> Edit Topics
-    </button>
-<div class="info-item full-width">
- 
 
-  <!-- READ MODE -->
-  <div v-if="!isEditingTopics" class="topics-view">
-    <div
-      v-if="selectedMeeting.topics"
-      v-html="sanitizedTopics"
-      class="topics-content"
-    ></div>
-    <p v-else class="no-topics">No topics added.</p>
+        <!-- Calendar Grid -->
+        <div class="calendar-grid">
+          <div class="day-name" v-for="day in days" :key="day">{{ day }}</div>
 
-   
-  </div>
+          <div
+            class="date-cell"
+            v-for="date in calendarDates"
+            :key="date.fullDate"
+            :class="{ today: date.isToday }"
+            @click="openDatePopup(date)"
+            @dragover.prevent
+            @drop="onDrop(date)"
+          >
+            <span class="date-number">{{ date.day }}</span>
 
-  <!-- EDIT MODE -->
-  <div v-else class="topics-edit fade-in">
-    <QuillEditor
-      v-model:content="meetingTopics"
-      contentType="html"
-      theme="snow"
-      :toolbar="toolbarOptions"
-      style="height: 220px"
-    />
+            <div
+              v-for="event in date.events"
+              :key="event.id"
+              class="event"
+              :class="event.type"
+              :draggable="isDraggable(event)"
+              @dragstart="onDragStart(event)"
+              @click.stop="handleEventClick(event)"
+            >
+              {{ event.title }}
+              <div v-if="isCustomEvent(event)" class="event-actions">
+                <i class="fa fa-edit" style="font-size:13px"></i>
+                <span @click.stop="editCustomEvent(event)">Edit</span>
+                |
+                🗑️
+                <span @click.stop="deleteCustomEvent(event)">Delete</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <div class="topic-actions">
-      <button class="btn-save-topics" @click="saveTopics">
-        <i class="fa fa-save" style="font-size:13px"></i> Save
-      </button>
+        <!-- View Note / Event Popup -->
+        <div v-if="showViewModal" class="modal-backdrop" @click.self="showViewModal=false">
+          <div class="modal-card small professional">
+            <div class="modal-header">
+              <h3 class="modal-title">{{ viewEvent.title }}</h3>
+              <span class="status-badge">{{ viewEvent.type }}</span>
+            </div>
+            <div class="modal-body">
+              <div class="info-item">
+                <span class="label">Date</span>
+                <span class="value">{{ viewEvent.date }}</span>
+              </div>
+              <div class="info-item" style="margin-top:12px">
+                <span class="label">Description</span>
+                <p style="white-space: pre-line">{{ viewEvent.description }}</p>
+              </div>
+              <div class="info-item" v-if="selectedMeeting.guests?.length">
+                <span class="label">Guests</span>
+                <ul class="guest-list">
+                  <li v-for="(g, i) in displayedGuests" :key="i">{{ g }}</li>
+                </ul>
+                <button v-if="selectedMeeting.guests.length > 2" class="show-btn" @click="showAllGuests = !showAllGuests">
+                  {{ showAllGuests ? "Show Less" : "Show All" }}
+                </button>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-close" @click="showViewModal=false"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
+            </div>
+          </div>
+        </div>
 
-      <button class="btn-cancel-topics" @click="cancelTopicEdit">
-       <i class="fa fa-close" style="font-size:13px"></i> Cancel
-      </button>
+        <!-- Interview Popup -->
+        <div v-if="showMeetingModal" class="modal-backdrop" @click.self="closeMeeting">
+          <div class="modal-card small professional">
+            <div class="modal-header">
+              <h3 class="modal-title">{{ selectedMeeting.title }}</h3>
+              <span class="status-badge" :class="selectedMeeting.type">
+                {{ selectedMeeting.type === 'offline' ? 'Offline' : 'Online' }}
+              </span>
+            </div>
+            <div class="modal-body">
+              <div class="info-grid single">
+                <div class="info-item">
+                  <span class="label">Date</span>
+                  <span class="value">{{ selectedMeeting.meeting_date }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Time</span>
+                  <span class="value">{{ selectedMeeting.meeting_time }}</span>
+                </div>
+                <div class="info-item" v-if="selectedMeeting.description">
+                  <span class="label">Description</span>
+                  <span class="value">{{ selectedMeeting.description }}</span>
+                </div>
+                <span class="label">Meeting Topics</span>
+                <button class="btn-edit-topics" @click="enableTopicEdit">
+                  <i class="fa fa-edit" style="font-size:13px"></i> Edit Topics
+                </button>
+                <div class="info-item full-width">
+                  <div v-if="!isEditingTopics" class="topics-view">
+                    <div v-if="selectedMeeting.topics" v-html="sanitizedTopics" class="topics-content"></div>
+                    <p v-else class="no-topics">No topics added.</p>
+                  </div>
+                  <div v-else class="topics-edit fade-in">
+                    <QuillEditor v-model:content="meetingTopics" contentType="html" theme="snow" :toolbar="toolbarOptions" style="height: 220px" />
+                    <div class="topic-actions">
+                      <button class="btn-save-topics" @click="saveTopics"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
+                      <button class="btn-cancel-topics" @click="cancelTopicEdit"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="info-item" v-if="selectedMeeting.meeting_link">
+                  <span class="label">Meeting Link</span>
+                  <a :href="selectedMeeting.meeting_link" target="_blank" class="join-btn">
+                    <i class="fas fa-video"></i> Join Meeting
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-close" @click="closeMeeting"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showServiceModal" class="modal-backdrop" @click.self="showServiceModal=false">
+          <div class="modal-card medium professional">
+            <div class="modal-header">
+              <h3 class="modal-title">{{ selectedService.company_name }}</h3>
+              <span class="status-badge" :class="selectedService.status?.toLowerCase()">
+                {{ selectedService.status }}
+              </span>
+            </div>
+            <div class="modal-body">
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="label">PO Number</span>
+                  <span class="value">{{ selectedService.po_number || '—' }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Visit Date</span>
+                  <span class="value">{{ selectedService.visit_date }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Assigned To</span>
+                  <span class="value">{{ selectedService.assign_to_name }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Service Type</span>
+                  <span class="value">
+                    {{ selectedService.isVisit ? selectedService.service_type : selectedService.type_of_service }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-close" @click="showServiceModal=false"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-  </div>
-</div>
 
-
-
-
-
-
-
-    
-
-        <div class="info-item" v-if="selectedMeeting.meeting_link">
-  <span class="label">Meeting Link</span>
-
-  <a
-    :href="selectedMeeting.meeting_link"
-    target="_blank"
-    class="join-btn"
-  >
-    <i class="fas fa-video"></i>
-    Join Meeting
-  </a>
-</div>
-
-
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="modal-footer">
-      <button class="btn-close" @click="closeMeeting"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
-    </div>
-
-  </div>
-</div>
-
-
-<div v-if="showServiceModal" class="modal-backdrop" @click.self="showServiceModal=false">
-  <div class="modal-card medium professional">
-
-    <!-- Header -->
-    <div class="modal-header">
-      <h3 class="modal-title">{{ selectedService.company_name }}</h3>
-      <span class="status-badge" :class="selectedService.status?.toLowerCase()">
-        {{ selectedService.status }}
-      </span>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="label">PO Number</span>
-          <span class="value">{{ selectedService.po_number || '—' }}</span>
+    <!-- Google Form Popup Modal -->
+    <div class="modal-overlay" v-if="showGoogleFormModal">
+      <div class="modal google-form-modal">
+        <div class="modal-header google-form-header">
+          <h2><i class="fab fa-google"></i> Strategic Business Unit Discussion – SBU</h2>
+          <span class="close-btn" @click="closeGoogleForm">&times;</span>
         </div>
-
-        <div class="info-item">
-          <span class="label">Visit Date</span>
-          <span class="value">{{ selectedService.visit_date }}</span>
+        <div class="google-form-body">
+          <div class="form-info-banner">
+            <i class="fas fa-info-circle"></i>
+            <span>Topic: Strategic Business Proposal Discussion – SBU | Presented by: Prasad Sir</span>
+          </div>
+          <iframe :src="googleFormUrl" frameborder="0" class="google-form-iframe" title="SBU Discussion Form"></iframe>
         </div>
-
-        <div class="info-item">
-          <span class="label">Assigned To</span>
-          <span class="value">{{ selectedService.assign_to_name }}</span>
-        </div>
-
-        <div class="info-item">
-          <span class="label">Service Type</span>
-          <span class="value">
-            {{ selectedService.isVisit
-              ? selectedService.service_type
-              : selectedService.type_of_service
-            }}
-          </span>
+        <div class="google-form-footer">
+          <button @click="closeGoogleForm" class="remind-later-btn"><i class="fas fa-clock"></i> Remind Later</button>
+          <button @click="openFormInNewTab" class="open-new-tab-btn"><i class="fas fa-external-link-alt"></i> Open in New Tab</button>
         </div>
       </div>
-
-    </div>
-
-    <!-- Footer -->
-    <div class="modal-footer">
-      <button class="btn-close" @click="showServiceModal=false">
-       <i class="fa fa-close" style="font-size:13px"></i> Close
-      </button>
-    </div>
-
-  </div>
-</div>
-
-
-
-</section>
-
-
     </div>
   </div>
 </template>
@@ -378,6 +262,7 @@ import Sidebar from './components/Sidebar.vue'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import DOMPurify from 'dompurify'
+import axios from 'axios'
 import {
   toastSuccess,
   toastError,
@@ -386,78 +271,79 @@ import {
 } from "@/utils/toast.js";
 
 export default {
-  components: { Sidebar,  QuillEditor },
+  components: { Sidebar, QuillEditor },
 
-data() {
-  return {
-    attendanceEvents: [],
-     isEditingTopics: false, 
+  data() {
+    return {
+      // Header related data
+      currentUser: {},
+      unreadMentionsCount: 0,
+      showNotificationPanel: false,
+      notifications: [],
+      showDownloadMenu: false,
+      showGoogleFormModal: false,
+      googleFormUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSfwz35YgfHbSIm3-zapvywqD8pw56fXc-U5EwpCmcG3v3zwrg/viewform?embedded=true',
+      showFocusOverlay: false,
+      focusTimer: null,
+      refreshTimer: null,
+
+      // Calendar data
+      attendanceEvents: [],
+      isEditingTopics: false,
       showAllGuests: false,
-    meetingTopics: '',
-    toolbarOptions: [
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ header: [1, 2, 3, false] }],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ align: [] }],
-      [{ color: [] }, { background: [] }],
-      [{ font: [] }],
-      [{ size: ['small', false, 'large', 'huge'] }],
-      ['clean']
-    ],
-    showViewModal: false,
-viewEvent: {},
-    editingId: null,
-    draggedEvent: null,
-    showDatePopup: false,
-    selectedDate: null,
-
-    formType: null,
-    form: {
-      title: '',
-      description: ''
-    },
-
-    customCalendarEvents: [], // 👈 NEW (holidays / notes / events)
-
-    birthdayEvents: [],
-    showFilters: {
-  meetings: true,
-  services: false,
-  visits: false,
-  birthdays: true,
-  holidays: true,
-  events: true,
-  notes: true,
-   attendance: false
-},
-    visitEvents: [],
-    events: [],
-    serviceEvents: [],
-
-    showMeetingModal: false,
-    showServiceModal: false,
-
-    selectedMeeting: {},
-    selectedService: {},
-
-    isMobile: false,
-    isSidebarVisible: true,
-
-    currentDate: new Date(),
-    days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  }
-},
-
-
+      meetingTopics: '',
+      toolbarOptions: [
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ header: [1, 2, 3, false] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ align: [] }],
+        [{ color: [] }, { background: [] }],
+        [{ font: [] }],
+        [{ size: ['small', false, 'large', 'huge'] }],
+        ['clean']
+      ],
+      showViewModal: false,
+      viewEvent: {},
+      editingId: null,
+      draggedEvent: null,
+      showDatePopup: false,
+      selectedDate: null,
+      formType: null,
+      form: {
+        title: '',
+        description: ''
+      },
+      customCalendarEvents: [],
+      birthdayEvents: [],
+      showFilters: {
+        meetings: true,
+        services: false,
+        visits: false,
+        birthdays: true,
+        holidays: true,
+        events: true,
+        notes: true,
+        attendance: false
+      },
+      visitEvents: [],
+      events: [],
+      serviceEvents: [],
+      showMeetingModal: false,
+      showServiceModal: false,
+      selectedMeeting: {},
+      selectedService: {},
+      isMobile: false,
+      isSidebarVisible: true,
+      currentDate: new Date(),
+      days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    }
+  },
 
   computed: {
-     displayedGuests() {
-    if (!this.selectedMeeting?.guests) return [];
-
-    return this.showAllGuests
-      ? this.selectedMeeting.guests
-      : this.selectedMeeting.guests.slice(0, 2);
-  },
+    displayedGuests() {
+      if (!this.selectedMeeting?.guests) return [];
+      return this.showAllGuests ? this.selectedMeeting.guests : this.selectedMeeting.guests.slice(0, 2);
+    },
     currentMonthYear() {
       return this.currentDate.toLocaleDateString('en-US', {
         month: 'long',
@@ -465,16 +351,16 @@ viewEvent: {},
       })
     },
     sanitizedTopics() {
-    return DOMPurify.sanitize(this.selectedMeeting.topics || '')
-  },
-
+      return DOMPurify.sanitize(this.selectedMeeting.topics || '')
+    },
+    recentNotifications() {
+      return this.notifications.slice(0, 4);
+    },
     calendarDates() {
       const year = this.currentDate.getFullYear()
       const month = this.currentDate.getMonth()
-
       const firstDay = new Date(year, month, 1).getDay()
       const totalDays = new Date(year, month + 1, 0).getDate()
-
       const dates = []
 
       for (let i = 0; i < firstDay; i++) {
@@ -488,518 +374,508 @@ viewEvent: {},
           day,
           fullDate,
           isToday: fullDate === new Date().toISOString().split('T')[0],
-   events: [
-  ...(this.showFilters.meetings
-    ? this.events.filter(e => e.date === fullDate)
-    : []),
-
-  ...(this.showFilters.services
-    ? this.serviceEvents.filter(s => s.date === fullDate)
-    : []),
-
-  ...(this.showFilters.visits
-    ? this.visitEvents.filter(v => v.date === fullDate)
-    : []),
-   
-    ...(this.showFilters.attendance
-  ? this.attendanceEvents.filter(a => a.date === fullDate)
-  : []),
-
-  ...(this.customCalendarEvents.filter(c =>
-  c.date === fullDate &&
-  (
-    (c.type === 'holiday' && this.showFilters.holidays) ||
-    (c.type === 'event' && this.showFilters.events) ||
-    (c.type === 'note' && this.showFilters.notes)
-  )
-)),
-
-
-  ...(this.showFilters.birthdays
-    ? this.birthdayEvents.filter(b =>
-        b.month === month + 1 && b.day === day
-      )
-    : [])
-]
-
-
-
-
+          events: [
+            ...(this.showFilters.meetings ? this.events.filter(e => e.date === fullDate) : []),
+            ...(this.showFilters.services ? this.serviceEvents.filter(s => s.date === fullDate) : []),
+            ...(this.showFilters.visits ? this.visitEvents.filter(v => v.date === fullDate) : []),
+            ...(this.showFilters.attendance ? this.attendanceEvents.filter(a => a.date === fullDate) : []),
+            ...(this.customCalendarEvents.filter(c =>
+              c.date === fullDate &&
+              ((c.type === 'holiday' && this.showFilters.holidays) ||
+               (c.type === 'event' && this.showFilters.events) ||
+               (c.type === 'note' && this.showFilters.notes))
+            )),
+            ...(this.showFilters.birthdays ? this.birthdayEvents.filter(b => b.month === month + 1 && b.day === day) : [])
+          ]
         })
       }
-
       return dates
     }
   },
 
   methods: {
-openAttendance(event) {
+    // Header methods
+    getAuthHeaders() {
+      return { Authorization: `Bearer ${localStorage.getItem('token')}` };
+    },
 
-  if (!event) return
-
-  const employeeName = event.name || 'Missing Name'
-  const travelFrom = event.travel_from || '-'
-  const travelTo = event.travel_to || '-'
-  const siteName = event.site_name || '-'
-
-  let description = ''
-
-  if (event.status === 'Traveling') {
-    description = `Employee: ${employeeName}
-Travel From: ${travelFrom}
-Travel To: ${travelTo}`
-  } 
-  else if (event.status === 'OnSite') {
-    description = `Employee: ${employeeName}
-Site: ${siteName}`
-  }
-
-  this.viewEvent = {
-    title: event.title || 'Attendance',
-    description,
-    type: 'attendance',
-    date: event.date
-  }
-
-  this.showViewModal = true
-},
-async fetchAttendanceCalendar() {
-  try {
-    const res = await fetch(
-      'https://employees.archenterprises.co.in/api/api/attendance/calendar',
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+    async fetchCurrentUser() {
+      try {
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
+          headers: this.getAuthHeaders()
+        });
+        this.currentUser = response.data;
+      } catch (err) {
+        console.error('fetchCurrentUser error:', err);
       }
-    )
+    },
 
-    const data = await res.json()
+    async fetchNotifications() {
+      try {
+        const token = localStorage.getItem('token');
+        const [mentionsRes, unreadRes] = await Promise.all([
+          axios.get('https://employees.archenterprises.co.in/api/api/notifications', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get('https://employees.archenterprises.co.in/api/api/mentions/unread-count', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+        this.notifications = mentionsRes.data || [];
+        this.unreadMentionsCount = unreadRes.data?.count || 0;
+      } catch (err) {
+        console.error('Failed to fetch notifications:', err);
+      }
+    },
 
-    this.attendanceEvents = data
-      .filter(a => a.status === 'Traveling' || a.status === 'OnSite')
-      .map(a => {
+    formatFirstName(fullName) {
+      if (!fullName) return '';
+      return fullName.split(' ')[0];
+    },
 
-        let title = ''
+    formatTimeAgo(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    },
 
-        if (a.status === 'Traveling') {
-          title = `🚗 ${a.travel_from} → ${a.travel_to}`
-        } else if (a.status === 'OnSite') {
-          title = `📍 ${a.site_name}`
+    toggleNotificationPanel() {
+      this.showNotificationPanel = !this.showNotificationPanel;
+      if (this.showNotificationPanel) {
+        setTimeout(() => {
+          document.addEventListener('click', this.closeNotificationPanel);
+        }, 100);
+      } else {
+        document.removeEventListener('click', this.closeNotificationPanel);
+      }
+    },
+
+    closeNotificationPanel(e) {
+      if (!this.$el.querySelector('.notification-bell-wrapper')?.contains(e.target)) {
+        this.showNotificationPanel = false;
+        document.removeEventListener('click', this.closeNotificationPanel);
+      }
+    },
+
+    logout() {
+      axios.post('https://employees.archenterprises.co.in/api/api/logout', {}, {
+        headers: this.getAuthHeaders()
+      }).finally(() => {
+        localStorage.removeItem('token');
+        this.$router.push('/auth');
+      });
+    },
+
+    downloadApk() {
+      toastInfo('APK download starting...');
+    },
+    downloadIos() {
+      toastInfo('iOS app coming soon!');
+    },
+    toggleDownloadMenu() {
+      this.showDownloadMenu = !this.showDownloadMenu;
+    },
+
+    openGoogleForm() {
+      this.showGoogleFormModal = true;
+      document.body.style.overflow = 'hidden';
+      if (this.showFocusOverlay) {
+        this.dismissFocusOverlay();
+      }
+    },
+
+    closeGoogleForm() {
+      this.showGoogleFormModal = false;
+      document.body.style.overflow = '';
+    },
+
+    openFormInNewTab() {
+      window.open('https://docs.google.com/forms/d/e/1FAIpQLSfwz35YgfHbSIm3-zapvywqD8pw56fXc-U5EwpCmcG3v3zwrg/viewform', '_blank');
+    },
+
+    showFocusOnSBUButton() {
+      const hasSeenFocus = localStorage.getItem('hasSeenSBUFocus');
+      if (hasSeenFocus) return;
+
+      setTimeout(() => {
+        const btn = this.$refs.googleFormBtn;
+        if (btn) {
+          this.showFocusOverlay = true;
+          this.focusTimer = setTimeout(() => {
+            this.dismissFocusOverlay();
+          }, 10000);
         }
+      }, 1500);
+    },
 
-        return {
-          id: a.id,
-          date: a.date,
-          title: title,
-          name: a.name || a.employee_name || 'Missing Name',
-          travel_from: a.travel_from,
-          travel_to: a.travel_to,
-          site_name: a.site_name,
-          status: a.status,
-          type: 'attendance'
-        }
-      })
+    dismissFocusOverlay() {
+      this.showFocusOverlay = false;
+      if (this.focusTimer) {
+        clearTimeout(this.focusTimer);
+      }
+      localStorage.setItem('hasSeenSBUFocus', 'true');
+    },
 
-  } catch (e) {
-    console.error('Attendance fetch failed', e)
-  }
-},
-    enableTopicEdit() {
-  this.meetingTopics = this.selectedMeeting.topics || ''
-  this.isEditingTopics = true
-},
+    // Calendar methods
+    openAttendance(event) {
+      if (!event) return
+      const employeeName = event.name || 'Missing Name'
+      const travelFrom = event.travel_from || '-'
+      const travelTo = event.travel_to || '-'
+      const siteName = event.site_name || '-'
+      let description = ''
+      if (event.status === 'Traveling') {
+        description = `Employee: ${employeeName}\nTravel From: ${travelFrom}\nTravel To: ${travelTo}`
+      } else if (event.status === 'OnSite') {
+        description = `Employee: ${employeeName}\nSite: ${siteName}`
+      }
+      this.viewEvent = {
+        title: event.title || 'Attendance',
+        description,
+        type: 'attendance',
+        date: event.date
+      }
+      this.showViewModal = true
+    },
 
-cancelTopicEdit() {
-  this.isEditingTopics = false
-},
-
-isCustomEvent(event) {
-  return event.type === 'note'
-},
-
-isDraggable(event) {
-  return event.type === 'note'
-}
-,
-onDragStart(event) {
-  if (!this.isCustomEvent(event)) return
-  this.draggedEvent = event
-},
-
-async onDrop(date) {
-  if (!this.draggedEvent || !date.fullDate) return
-
-  // same date → ignore
-  if (this.draggedEvent.date === date.fullDate) return
-
-  try {
-    await fetch(
-      `https://employees.archenterprises.co.in/api/api/arch-calendar/${this.draggedEvent.id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          calendar_date: date.fullDate
+    async fetchAttendanceCalendar() {
+      try {
+        const res = await fetch('https://employees.archenterprises.co.in/api/api/attendance/calendar', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
+        const data = await res.json()
+        this.attendanceEvents = data
+          .filter(a => a.status === 'Traveling' || a.status === 'OnSite')
+          .map(a => {
+            let title = ''
+            if (a.status === 'Traveling') {
+              title = `🚗 ${a.travel_from} → ${a.travel_to}`
+            } else if (a.status === 'OnSite') {
+              title = `📍 ${a.site_name}`
+            }
+            return {
+              id: a.id,
+              date: a.date,
+              title: title,
+              name: a.name || a.employee_name || 'Missing Name',
+              travel_from: a.travel_from,
+              travel_to: a.travel_to,
+              site_name: a.site_name,
+              status: a.status,
+              type: 'attendance'
+            }
+          })
+      } catch (e) {
+        console.error('Attendance fetch failed', e)
       }
-    )
+    },
 
-    this.draggedEvent = null
-    this.fetchCustomCalendarData()
-  } catch (e) {
-    console.error('Drag update failed', e)
-  }
-},
-editCustomEvent(event) {
-  this.selectedDate = event.date
-  this.formType = event.type
-  this.form = {
-    title: event.rawTitle || event.title.replace(/^(Public Holiday: |Event: |📝 )/, ''),
-    description: event.description || ''
-  }
-  this.editingId = event.id
-  this.showDatePopup = true
-},
+    enableTopicEdit() {
+      this.meetingTopics = this.selectedMeeting.topics || ''
+      this.isEditingTopics = true
+    },
+
+    cancelTopicEdit() {
+      this.isEditingTopics = false
+    },
+
+    isCustomEvent(event) {
+      return event.type === 'note'
+    },
+
+    isDraggable(event) {
+      return event.type === 'note'
+    },
+
+    onDragStart(event) {
+      if (!this.isCustomEvent(event)) return
+      this.draggedEvent = event
+    },
+
+    async onDrop(date) {
+      if (!this.draggedEvent || !date.fullDate) return
+      if (this.draggedEvent.date === date.fullDate) return
+      try {
+        await fetch(`https://employees.archenterprises.co.in/api/api/arch-calendar/${this.draggedEvent.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ calendar_date: date.fullDate })
+        })
+        this.draggedEvent = null
+        this.fetchCustomCalendarData()
+      } catch (e) {
+        console.error('Drag update failed', e)
+      }
+    },
+
+    editCustomEvent(event) {
+      this.selectedDate = event.date
+      this.formType = event.type
+      this.form = {
+        title: event.rawTitle || event.title.replace(/^(Public Holiday: |Event: |📝 )/, ''),
+        description: event.description || ''
+      }
+      this.editingId = event.id
+      this.showDatePopup = true
+    },
 
     openDatePopup(date) {
-  if (!date.fullDate) return
+      if (!date.fullDate) return
+      this.selectedDate = date.fullDate
+      this.showDatePopup = true
+      this.formType = null
+      this.form = { title: '', description: '' }
+    },
 
-  this.selectedDate = date.fullDate
-  this.showDatePopup = true
-  this.formType = null
-  this.form = { title: '', description: '' }
-},
-openForm(type) {
-  this.formType = type
-  this.form = { title: '', description: '' }
-},
-closeDatePopup() {
-  this.showDatePopup = false
-  this.selectedDate = null
-},
-async saveCalendarData() {
-  try {
-    const url = this.editingId
-      ? `https://employees.archenterprises.co.in/api/api/arch-calendar/${this.editingId}`
-      : 'https://employees.archenterprises.co.in/api/api/arch-calendar'
+    openForm(type) {
+      this.formType = type
+      this.form = { title: '', description: '' }
+    },
 
-    const method = this.editingId ? 'PUT' : 'POST'
+    closeDatePopup() {
+      this.showDatePopup = false
+      this.selectedDate = null
+    },
 
-    await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({
-        calendar_date: this.selectedDate,
-        type: this.formType,
-        title: this.form.title,
-        description: this.form.description
+    async saveCalendarData() {
+      try {
+        const url = this.editingId
+          ? `https://employees.archenterprises.co.in/api/api/arch-calendar/${this.editingId}`
+          : 'https://employees.archenterprises.co.in/api/api/arch-calendar'
+        const method = this.editingId ? 'PUT' : 'POST'
+        await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            calendar_date: this.selectedDate,
+            type: this.formType,
+            title: this.form.title,
+            description: this.form.description
+          })
+        })
+        this.editingId = null
+        this.closeDatePopup()
+        this.fetchCustomCalendarData()
+      } catch (e) {
+        console.error('Save failed', e)
+      }
+    },
+
+    async deleteCustomEvent(event) {
+      if (!confirm('Delete this item?')) return
+      try {
+        await fetch(`https://employees.archenterprises.co.in/api/api/arch-calendar/${event.id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        this.fetchCustomCalendarData()
+      } catch (e) {
+        console.error('Delete failed', e)
+      }
+    },
+
+    async fetchCustomCalendarData() {
+      const res = await fetch('https://employees.archenterprises.co.in/api/api/arch-calendar', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
-    })
+      const data = await res.json()
+      this.customCalendarEvents = data.map(d => ({
+        id: d.id,
+        date: d.calendar_date,
+        title: d.type === 'holiday' ? `Public Holiday: ${d.title}` : d.type === 'event' ? `Event: ${d.title}` : d.type === 'note' ? `Note` : '',
+        description: d.description,
+        type: d.type
+      }))
+    },
 
-    this.editingId = null
-    this.closeDatePopup()
-    this.fetchCustomCalendarData()
-  } catch (e) {
-    console.error('Save failed', e)
-  }
-},
-async deleteCustomEvent(event) {
-  if (!confirm('Delete this item?')) return
-
-  try {
-    await fetch(
-      `https://employees.archenterprises.co.in/api/api/arch-calendar/${event.id}`,
-      {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+    async fetchBirthdays() {
+      try {
+        const res = await fetch('https://employees.archenterprises.co.in/api/api/birthdays/calendar', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const data = await res.json()
+        this.birthdayEvents = data.map(b => {
+          const dob = new Date(b.date)
+          return {
+            id: b.id,
+            month: dob.getMonth() + 1,
+            day: dob.getDate(),
+            title: `🎂 ${b.name}`,
+            type: 'birthday'
+          }
+        })
+      } catch (e) {
+        console.error('Birthday fetch failed', e)
       }
-    )
-
-    this.fetchCustomCalendarData()
-  } catch (e) {
-    console.error('Delete failed', e)
-  }
-},
-
-async fetchCustomCalendarData() {
-  const res = await fetch(
-    'https://employees.archenterprises.co.in/api/api/arch-calendar',
-    {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    }
-  )
-
-  const data = await res.json()
-
-  this.customCalendarEvents = data.map(d => ({
-  id: d.id,
-  date: d.calendar_date,
-  title:
-    d.type === 'holiday' ? `Public Holiday: ${d.title}` :
-    d.type === 'event' ? `Event: ${d.title}` :
-    d.type === 'note' ? `Note` : '',
-  description: d.description,
-  type: d.type
-}))
-
-},
-
-
-
-
-
-async fetchBirthdays() {
-  try {
-    const res = await fetch(
-      'https://employees.archenterprises.co.in/api/api/birthdays/calendar',
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
-
-    const data = await res.json()
-
-    this.birthdayEvents = data.map(b => {
-      const dob = new Date(b.date)
-
-      return {
-        id: b.id,
-        month: dob.getMonth() + 1, // 1–12
-        day: dob.getDate(),        // 1–31
-        title: `🎂 ${b.name}`,
-        type: 'birthday'
-      }
-    })
-  } catch (e) {
-    console.error('Birthday fetch failed', e)
-  }
-},
-
+    },
 
     async fetchVisitAssignments() {
-  try {
-    const res = await fetch(
-      'https://employees.archenterprises.co.in/api/api/visit-assign/calendar',
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
-
-    const data = await res.json()
-
-    this.visitEvents = data.map(v => ({
-      id: v.id,
-      date: v.visit_date,
-      title: v.company_name,
-      type: 'visit'
-    }))
-  } catch (e) {
-    console.error(e)
-  }
-}
-,
-async openVisit(id) {
-  try {
-    const res = await fetch(
-      `https://employees.archenterprises.co.in/api/api/visit-assign/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
-
-    const result = await res.json()
-
-    this.selectedService = {
-      ...result.data,
-      isVisit: true   // 👈 flag
-    }
-
-    this.showServiceModal = true
-  } catch (e) {
-    console.error(e)
-  }
-},
-
-handleEventClick(event) {
-  switch (event.type) {
-    case 'attendance':
-  this.openAttendance(event)
-  break
-    case 'service':
-      this.openService(event.id)
-      break
-
-    case 'visit':
-      this.openVisit(event.id)
-      break
-
-    case 'online':
-    case 'offline':
-      this.openMeeting(event)
-      break
-
-    case 'note':
-    case 'event':
-    case 'holiday':
-      this.openViewEvent(event)
-      break
-  }
-},openViewEvent(event) {
-  this.viewEvent = {
-    title: event.title,
-    description: event.description || '—',
-    type: event.type,
-    date: event.date
-  }
-  this.showViewModal = true
-}
-,
-
-
-
-   async openService(id) {
-    const res = await fetch(
-      `https://employees.archenterprises.co.in/api/api/service-assign/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
-
-    const result = await res.json()
-    this.selectedService = result.data
-    this.showServiceModal = true
-  },
-    async fetchServiceAssignments() {
-  try {
-    const res = await fetch(
-      'https://employees.archenterprises.co.in/api/api/service-assign/calendar',
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
-
-    const data = await res.json()
-
-    this.serviceEvents = data.map(s => ({
-      id: s.id,
-      date: s.visit_date,
-      title: s.company_name,
-      type: 'service'
-    }))
-  } catch (e) {
-    console.error(e)
-  }
-},
-async openMeeting(event) {
-  try {
-    const res = await fetch(
-      `https://employees.archenterprises.co.in/api/api/meetings/${event.id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    )
-
-    const result = await res.json()
-
-    this.selectedMeeting = result.data
-
-  console.log("FULL API RESPONSE:", result)
-console.log("RESULT.DATA:", result.data)
-console.log("ID FIELD:", result.data?.id)
-console.log("MEETING_ID FIELD:", result.data?.meeting_id)
-
-    this.meetingTopics = this.selectedMeeting.topics || ''
-    this.showMeetingModal = true
-
-  } catch (err) {
-    console.error('Failed to fetch meeting', err)
-  }
-},
-
-
-async saveTopics() {
-
-  console.log("Saving Meeting:", this.selectedMeeting)
-
-  const meetingId = this.selectedMeeting.id
-
-  if (!meetingId) {
-    toastError("Meeting ID not found")
-    return
-  }
-
-  try {
-    await fetch(
-      `https://employees.archenterprises.co.in/api/api/meetings/${meetingId}/topics`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          topics: this.meetingTopics
+      try {
+        const res = await fetch('https://employees.archenterprises.co.in/api/api/visit-assign/calendar', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
+        const data = await res.json()
+        this.visitEvents = data.map(v => ({
+          id: v.id,
+          date: v.visit_date,
+          title: v.company_name,
+          type: 'visit'
+        }))
+      } catch (e) {
+        console.error(e)
       }
-    )
+    },
 
-    this.selectedMeeting.topics = this.meetingTopics
-    toastSuccess('Topics saved successfully')
+    async openVisit(id) {
+      try {
+        const res = await fetch(`https://employees.archenterprises.co.in/api/api/visit-assign/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const result = await res.json()
+        this.selectedService = {
+          ...result.data,
+          isVisit: true
+        }
+        this.showServiceModal = true
+      } catch (e) {
+        console.error(e)
+      }
+    },
 
-  } catch (e) {
-    console.error('Failed to save topics', e)
-  }
-},
+    handleEventClick(event) {
+      switch (event.type) {
+        case 'attendance':
+          this.openAttendance(event)
+          break
+        case 'service':
+          this.openService(event.id)
+          break
+        case 'visit':
+          this.openVisit(event.id)
+          break
+        case 'online':
+        case 'offline':
+          this.openMeeting(event)
+          break
+        case 'note':
+        case 'event':
+        case 'holiday':
+          this.openViewEvent(event)
+          break
+      }
+    },
 
-closeMeeting() {
-  this.showMeetingModal = false
-  this.selectedMeeting = {}
-  this.isEditingTopics = false   // 👈 reset
-},
+    openViewEvent(event) {
+      this.viewEvent = {
+        title: event.title,
+        description: event.description || '—',
+        type: event.type,
+        date: event.date
+      }
+      this.showViewModal = true
+    },
+
+    async openService(id) {
+      const res = await fetch(`https://employees.archenterprises.co.in/api/api/service-assign/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+      const result = await res.json()
+      this.selectedService = result.data
+      this.showServiceModal = true
+    },
+
+    async fetchServiceAssignments() {
+      try {
+        const res = await fetch('https://employees.archenterprises.co.in/api/api/service-assign/calendar', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const data = await res.json()
+        this.serviceEvents = data.map(s => ({
+          id: s.id,
+          date: s.visit_date,
+          title: s.company_name,
+          type: 'service'
+        }))
+      } catch (e) {
+        console.error(e)
+      }
+    },
+
+    async openMeeting(event) {
+      try {
+        const res = await fetch(`https://employees.archenterprises.co.in/api/api/meetings/${event.id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const result = await res.json()
+        this.selectedMeeting = result.data
+        this.meetingTopics = this.selectedMeeting.topics || ''
+        this.showMeetingModal = true
+      } catch (err) {
+        console.error('Failed to fetch meeting', err)
+      }
+    },
+
+    async saveTopics() {
+      const meetingId = this.selectedMeeting.id
+      if (!meetingId) {
+        toastError("Meeting ID not found")
+        return
+      }
+      try {
+        await fetch(`https://employees.archenterprises.co.in/api/api/meetings/${meetingId}/topics`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ topics: this.meetingTopics })
+        })
+        this.selectedMeeting.topics = this.meetingTopics
+        toastSuccess('Topics saved successfully')
+      } catch (e) {
+        console.error('Failed to save topics', e)
+      }
+    },
+
+    closeMeeting() {
+      this.showMeetingModal = false
+      this.selectedMeeting = {}
+      this.isEditingTopics = false
+    },
 
     async fetchMeetings() {
-    try {
-      const res = await fetch('https://employees.archenterprises.co.in/api/api/meetings/interviews', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      try {
+        const res = await fetch('https://employees.archenterprises.co.in/api/api/meetings/interviews', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        const data = await res.json()
+        this.events = data.map(m => ({
+          id: m.id,
+          date: m.date,
+          title: m.title,
+          type: m.type === 'offline' ? 'offline' : 'online'
+        }))
+      } catch (err) {
+        console.error('Failed to load meetings', err)
+      }
+    },
 
-      const data = await res.json()
-
-      this.events = data.map(m => ({
-        id: m.id,
-        date: m.date,
-        title: m.title,
-        type: m.type === 'offline' ? 'offline' : 'online'
-      }))
-    } catch (err) {
-      console.error('Failed to load meetings', err)
-    }
-  },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -1010,148 +886,396 @@ closeMeeting() {
     },
 
     prevMonth() {
-      this.currentDate = new Date(
-        this.currentDate.getFullYear(),
-        this.currentDate.getMonth() - 1,
-        1
-      )
+      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1)
     },
 
     nextMonth() {
-      this.currentDate = new Date(
-        this.currentDate.getFullYear(),
-        this.currentDate.getMonth() + 1,
-        1
-      )
+      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1)
     }
   },
 
-mounted() {
-  this.checkIfMobile()
-  window.addEventListener('resize', this.checkIfMobile)
+  mounted() {
+    this.checkIfMobile()
+    window.addEventListener('resize', this.checkIfMobile)
 
-  const token = localStorage.getItem('token')
-  if (!token) this.$router.push('/auth')
-this.fetchAttendanceCalendar()
-  this.fetchServiceAssignments()
-  this.fetchVisitAssignments()
-  this.fetchMeetings()
-  this.fetchBirthdays()
-  this.fetchCustomCalendarData() // ✅ IMPORTANT
-},
+    document.addEventListener('click', (e) => {
+      if (!this.$el.querySelector('.download-app')?.contains(e.target)) {
+        this.showDownloadMenu = false
+      }
+    })
 
+    const token = localStorage.getItem('token')
+    if (!token) this.$router.push('/auth')
+
+    this.fetchCurrentUser()
+    this.fetchNotifications()
+    this.fetchAttendanceCalendar()
+    this.fetchServiceAssignments()
+    this.fetchVisitAssignments()
+    this.fetchMeetings()
+    this.fetchBirthdays()
+    this.fetchCustomCalendarData()
+    this.showFocusOnSBUButton()
+  },
 
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile)
+    document.body.style.overflow = ''
+    if (this.focusTimer) {
+      clearTimeout(this.focusTimer)
+    }
+    document.removeEventListener('click', this.closeNotificationPanel)
   }
 }
 </script>
 
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-/* Layout */
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #fff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
+:root {
+  --primary: #4361ee;
+  --primary-dark: #3a56d4;
+  --secondary: #06ffa5;
+  --dark: #1e293b;
+  --gray: #64748b;
+  --light: #f8fafc;
+  --border: #e2e8f0;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --text: #1f7f6f;
 }
 
-/* Header */
-.header {
-  background-color: var(--primary);
-  color: white;
-  padding: 8px 30px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.layout {
+  min-height: 100vh;
+  background: #f1f5f9;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  position: relative;
+}
+
+/* Focus Overlay Styles */
+.layout.focus-overlay-active {
+  overflow: hidden;
+}
+
+.focus-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modern Header */
+.modern-header {
+  background: white;
+  backdrop-filter: blur(10px);
+  padding: 0 2rem;
+  height: 70px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--border);
 }
 
-.head-title {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: white;
-  font-family: cursive;
-  text-decoration: none;
-      font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-
+  gap: 1rem;
 }
 
 .mobile-menu-icon {
-  font-size: 22px;
-  cursor: pointer;
   display: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--dark);
 }
 
-/* Main */
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-img {
+  height: 36px;
+  width: auto;
+}
+
+.logo-text {
+  font-weight: 700;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+.user-greeting {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+.user-greeting i {
+  font-size: 1.2rem;
+  color: var(--primary);
+}
+
+/* Notification Bell */
+.notification-bell-wrapper {
+  position: relative;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--gray);
+  transition: color 0.2s;
+}
+
+.notification-bell-wrapper:hover {
+  color: var(--primary);
+}
+
+.notification-bell-wrapper .badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: var(--danger);
+  color: white;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  width: 300px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+  z-index: 200;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.notification-item i {
+  color: var(--primary);
+}
+
+.notification-item small {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--gray);
+}
+
+.no-notif {
+  padding: 20px;
+  text-align: center;
+  color: var(--gray);
+}
+
+.download-app {
+  position: relative;
+}
+
+.download-btn {
+  background: var(--light);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  border-radius: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.download-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.download-menu {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+  overflow: hidden;
+  z-index: 10;
+  min-width: 140px;
+}
+
+.download-menu a {
+  display: block;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: var(--dark);
+  transition: background 0.2s;
+}
+
+.download-menu a:hover {
+  background: var(--light);
+}
+
+.google-form-btn {
+  background: linear-gradient(135deg, #ea4335, #c5221f);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.google-form-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(234, 67, 53, 0.3);
+}
+
+.btn-glowing {
+  animation: btnGlow 1s ease-in-out infinite;
+}
+
+@keyframes btnGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(234, 67, 53, 0.7);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(234, 67, 53, 0.3);
+    transform: scale(1.02);
+  }
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 20px;
+  animation: badgePulse 1s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.logout-btn-modern {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--gray);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 40px;
+  transition: all 0.2s;
+}
+
+.logout-btn-modern:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Main Layout */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
-  gap: 20px;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 220px;
-  background: #fff;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-}
-
-/* Content */
 .content {
   flex: 1;
-  margin-top: 66px;
-  background-color:#a5d5cf33;
+  background: transparent;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+  margin-top: 0;
   padding: 30px 40px;
+  background-color: #a5d5cf33;
   border-radius: 15px;
   overflow-x: auto;
 }
 
-h2 {
-  margin-bottom: 30px;
-  font-weight: 800;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
+/* Calendar Filters */
+.calendar-filters {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  flex-wrap: wrap;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-
-  .main-content {
-    flex-direction: column;
-    padding: 20px 15px;
-  }
-
-  .sidebar {
-    width: 100%;
-    border-radius: 10px;
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-  }
+.calendar-filters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
 }
 
+.calendar-filters input {
+  accent-color: var(--text);
+}
 
-/* Calendar */
+/* Calendar Header */
 .calendar-header {
   display: flex;
   justify-content: space-between;
@@ -1169,6 +1293,7 @@ h2 {
   cursor: pointer;
 }
 
+/* Calendar Grid */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -1205,7 +1330,7 @@ h2 {
   padding: 3px 6px;
   font-size: 11px;
   border-radius: 6px;
-      background-color: #59c8d8;
+  background-color: #59c8d8;
 }
 
 /* Event Types */
@@ -1213,238 +1338,12 @@ h2 {
 .event.interview { background: #6f42c1; }
 .event.resource { background: #fd7e14; }
 .event.holiday { background: #dc3545!important; }
-.event.online {
-  background: #4caf50;
-   cursor: help;
-  color: white;
-}
-
-.event.offline {
-   cursor: help;
-  background: #ff9800;
-  color: white;
-}
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal-card.small {
-  background: #fff;
-  width: 80%;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-}
-
-.modal-title {
-  margin-bottom: 10px;
-  font-size: 18px;
-}
-
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  margin-bottom: 15px;
-}
-
-.badge.online {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.badge.offline {
-  background: #fff3e0;
-  color: #ef6c00;
-}
-
-.modal-row {
-  margin-bottom: 10px;
-  font-size: 14px;
-}
-
-.modal-row ul {
-  padding-left: 18px;
-}
-
-.btn-close {
-  margin-top: 15px;
-  background: var(--text);
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.event.service {
-   cursor: help;
-  background: #1f7f6f;
-  color: #fff;
-}
-
-.modal-card.medium {
-  background: #fff;
-  width: 520px;
-  border-radius: 12px;
-  padding: 22px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-}
-
-.calendar-filters {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-  font-size: 14px;
-}
-
-.calendar-filters label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.calendar-filters input {
-  accent-color: var(--text);
-}
-.modal-card.professional {
-  padding: 0;
-  overflow: hidden;
-  border-radius: 14px;
-}
-
-/* Header */
-.modal-header {
-  background: linear-gradient(135deg, var(--primary), var(--text))!important;
-  color: #fff;
-  padding: 18px 22px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-/* Status badge */
-.status-badge {
-  padding: 5px 12px;
-  font-size: 12px;
-  border-radius: 20px;
-  font-weight: 600;
-  background: rgba(255,255,255,0.2);
-  text-transform: capitalize;
-}
-
-/* Body */
-.modal-body {
-  padding: 22px;
-    max-height: 70vh;
-  overflow-y: auto;
-}
-
-/* Info grid */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.label {
-  font-size: 12px;
-  color: #888;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #222;
-}
-
-/* Footer */
-.modal-footer {
-  padding: 16px 22px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* Button */
-.btn-close {
-  background: var(--text);
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.btn-close:hover {
-  background: var(--primary);
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-}
-.join-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  padding: 9px 16px;
-  background: linear-gradient(135deg, var(--primary), var(--text));
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: all 0.25s ease;
-  box-shadow: 0 6px 14px rgba(31, 127, 111, 0.25);
-}
-
-.join-btn i {
-  font-size: 14px;
-}
-
-.join-btn:hover {
-  background: linear-gradient(135deg, var(--primary), var(--text));
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(31, 127, 111, 0.35);
-}
-
-.event.birthday {
-   cursor: not-allowed;
-  background: linear-gradient(135deg, #fd20dc, #83067a);
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.date-cell.today .event.birthday {
-  box-shadow: 0 0 0 2px #ff6b6b;
-}
+.event.online { background: #4caf50; cursor: help; color: white; }
+.event.offline { cursor: help; background: #ff9800; color: white; }
+.event.birthday { cursor: not-allowed; background: linear-gradient(135deg, #fd20dc, #83067a); color: #ffffff; font-weight: 600; }
+.event.visit { cursor: help; background: linear-gradient(135deg, #20c997, #63e6be); color: #053b2e; font-weight: 600; }
+.event.note { cursor: help; background: linear-gradient(135deg, #c084fc, #e9d5ff); color: #3b0764; font-weight: 600; }
+.event.attendance { background: #35ff50; }
 
 .modal-backdrop {
   position: fixed;
@@ -1468,29 +1367,22 @@ h2 {
 }
 
 @keyframes scaleIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
-/* Header */
 .modal-header {
-  background: linear-gradient(135deg, #1f7f6f, #2fa28f);
-  color: white;
-  padding: 16px 20px;
+  background: linear-gradient(135deg, var(--primary), var(--text))!important;
+  color: #fff;
+  padding: 18px 22px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 
 .modal-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .icon-close {
@@ -1501,16 +1393,17 @@ h2 {
   cursor: pointer;
   opacity: 0.8;
 }
+
 .icon-close:hover {
   opacity: 1;
 }
 
-/* Body */
 .modal-body {
-  padding: 20px;
+  padding: 22px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
-/* Action Buttons */
 .action-buttons {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1528,25 +1421,15 @@ h2 {
   transition: 0.2s ease;
 }
 
-.btn.holiday {
-  background: #ffe8cc;
-  color: #b45309;
-}
-.btn.event {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-.btn.note {
-  background: #f3e8ff;
-  color: #7e22ce;
-}
+.btn.holiday { background: #ffe8cc; color: #b45309; }
+.btn.event { background: #e0f2fe; color: #0369a1; }
+.btn.note { background: #f3e8ff; color: #7e22ce; }
 
 .btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-/* Form */
 .form-group input,
 .form-group textarea {
   width: 100%;
@@ -1557,13 +1440,13 @@ h2 {
   font-size: 13px;
   resize: none;
 }
+
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: #1f7f6f;
 }
 
-/* Save Button */
 .btn-save {
   width: 100%;
   background: var(--text);
@@ -1574,214 +1457,57 @@ h2 {
   border: none;
   cursor: pointer;
 }
+
 .btn-save:hover {
   background: #176b5e;
 }
 
-/* Animations */
 .fade-in {
   animation: fadeUp 0.3s ease;
 }
+
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ===== Custom Calendar Event Colors ===== */
-
-.event.holiday {
-  background: linear-gradient(135deg, #ff6b6b, #ff8787);
-  color: #fff;
-  font-weight: 600;
-}
-
-
-.event.note {
-   cursor: help;
-  background: linear-gradient(135deg, #c084fc, #e9d5ff);
-  color: #3b0764;
-  font-weight: 600;
-}
-
-.event.visit {
-   cursor: help;
-  background: linear-gradient(135deg, #20c997, #63e6be);
-  color: #053b2e;
-  font-weight: 600;
-}
-
-.event-actions {
-  font-size: 10px;
-  margin-top: 3px;
-  opacity: 0.85;
-  cursor: pointer;
-}
-
-.event-actions span:hover {
-  text-decoration: underline;
-}
-
-.topics-textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  margin-top: 6px;
-  font-size: 13px;
-}
-
-.btn-save-topics {
-  margin-top: 8px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: none;
-  background: var(--text);
-  color: white;
-  cursor: pointer;
-}
-
-.btn-save-topics:hover {
-  background: var(--primary);
-}
-.topics-display {
-  white-space: pre-line;
-}
-.topics-display {
-  padding: 10px;
-  background: #f9fafb;
-  border-radius: 8px;
-  line-height: 1.6;
-}
-
-.topics-display ul,
-.topics-display ol {
-  padding-left: 20px;
-}
-/* Topics Display Box */
-.topics-display {
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 14px;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  font-size: 14px;
-  line-height: 1.6;
-  word-break: break-word;
-}
-
-/* Scrollbar Styling */
-.topics-display::-webkit-scrollbar {
-  width: 6px;
-}
-
-.topics-display::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
-/* Proper spacing for rich text */
-.topics-display p {
-  margin: 6px 0;
-}
-
-.topics-display ul,
-.topics-display ol {
-  padding-left: 18px;
-  margin: 6px 0;
-}
-
-.topics-display h1,
-.topics-display h2,
-.topics-display h3 {
-  margin: 8px 0;
-  font-weight: 600;
-}
-.show-btn {
-  margin-top: 6px;
-  background: none;
-  border: none;
-  color: #2563eb;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.show-btn:hover {
-  text-decoration: underline;
-}
-/* Backdrop */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-/* Card */
 .modal-card.professional {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
   max-width: 95%;
   background: #ffffff;
-  border-radius: 16px;
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  animation: fadeInScale 0.25s ease;
 }
 
-/* Header */
-.modal-header {
-  padding: 18px 22px;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.modal-card.medium {
+  width: 520px;
 }
 
-.modal-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0;
+.modal-card.small {
+  width: 450px;
 }
 
-/* Status Badge */
 .status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 5px 12px;
   font-size: 12px;
+  border-radius: 20px;
   font-weight: 600;
-  text-transform: uppercase;
+  background: rgba(255,255,255,0.2);
+  text-transform: capitalize;
 }
 
-.status-badge.online {
-  background: #dcfce7;
-  color: #16a34a;
-}
+.status-badge.online { background: #dcfce7; color: #16a34a; }
+.status-badge.offline { background: #fee2e2; color: #dc2626; }
 
-.status-badge.offline {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-/* Body */
-.modal-body {
-  padding: 20px;
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
 }
 
 .info-grid.single {
   display: flex;
-      padding: 25px;
-
   flex-direction: column;
   gap: 18px;
 }
@@ -1790,20 +1516,18 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 6px;
-      padding: 6px;
-    border-bottom-style: inset;
+  padding: 6px;
+  border-bottom-style: inset;
 }
 
 .info-item.full-width {
   margin-top: 10px;
   border: ridge;
-    padding: 12px;
-        max-height: 340px;
-            overflow: auto;
-
+  padding: 12px;
+  max-height: 340px;
+  overflow: auto;
 }
 
-/* Labels */
 .label {
   font-size: 12px;
   font-weight: 600;
@@ -1817,9 +1541,93 @@ h2 {
   color: #111827;
 }
 
-/* Quill Editor */
-.ql-container {
-  border-radius: 10px;
+.modal-footer {
+  padding: 16px 22px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  background: #f9fafb;
+}
+
+.btn-close {
+  background: var(--text);
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  background: var(--primary);
+}
+
+.join-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 9px 16px;
+  background: linear-gradient(135deg, var(--primary), var(--text));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 14px rgba(31, 127, 111, 0.25);
+}
+
+.join-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(31, 127, 111, 0.35);
+}
+
+.event-actions {
+  font-size: 10px;
+  margin-top: 3px;
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.event-actions span:hover {
+  text-decoration: underline;
+}
+
+.topics-display {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.show-btn {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-edit-topics {
+  margin-top: 14px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  width: 156px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .btn-save-topics {
@@ -1832,108 +1640,6 @@ h2 {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.btn-save-topics:hover {
-  background: #4338ca;
-}
-
-/* Guests */
-.guest-list {
-  padding-left: 18px;
-  margin: 0;
-}
-
-.guest-list li {
-  font-size: 14px;
-  margin-bottom: 4px;
-  color: #374151;
-}
-
-.show-btn {
-  margin-top: 6px;
-  background: none;
-  border: none;
-  color: #4f46e5;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-/* Join Button */
-.join-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #10b981;
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: 0.2s ease;
-}
-
-.join-btn:hover {
-  background: #059669;
-}
-
-/* Footer */
-.modal-footer {
-  padding: 15px 20px;
-  background: #f9fafb;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.btn-close {
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  background: var(--text);
-  font-size: 13px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.btn-close:hover {
-  background: var(--text);
-}
-
-/* Animation */
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-.btn-edit-topics {
-  margin-top: 14px;
-  padding: 9px 18px;
-  font-size: 13px;
-  font-weight: 600;
-      width: 156px;
-  border-radius: 8px;
-  border: none;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.btn-edit-topics:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-  transform: translateY(-1px);
-}
-
-.btn-edit-topics:active {
-  transform: scale(0.97);
 }
 
 .btn-cancel-topics {
@@ -1945,26 +1651,181 @@ h2 {
   background: #f9fafb;
   color: #374151;
   cursor: pointer;
-  transition: all 0.2s ease;
   margin-left: 8px;
 }
 
-.btn-cancel-topics:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-  color: #111827;
+.guest-list {
+  padding-left: 18px;
+  margin: 0;
 }
 
-.btn-cancel-topics:active {
-  transform: scale(0.97);
+/* Google Form Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.btn-cancel-topics:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.3);
+.google-form-modal {
+  background: white;
+  border-radius: 28px;
+  width: 90%;
+  max-width: 900px;
+  height: 85vh;
+  max-height: 700px;
+  padding: 0;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
-.event.attendance{
-  background:#35ff50;
+.google-form-header {
+  background: var(--primary);
+}
+
+.google-form-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+}
+
+.form-info-banner {
+  background: #e8f0fe;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #1967d2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.google-form-iframe {
+  width: 100%;
+  height: calc(100% - 45px);
+  border: none;
+}
+
+.google-form-footer {
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  background: var(--light);
+}
+
+.remind-later-btn, .open-new-tab-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.remind-later-btn {
+  border: 1px solid var(--border);
+  background: white;
+}
+
+.open-new-tab-btn {
+  border: none;
+  background: var(--primary);
+  color: white;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modern-header {
+    padding: 0 1rem;
+  }
+  
+  .mobile-menu-icon {
+    display: block;
+  }
+  
+  .logo-text {
+    display: none;
+  }
+  
+  .user-greeting span {
+    display: none;
+  }
+  
+  .logout-btn-modern span {
+    display: none;
+  }
+  
+  .google-form-btn span {
+    display: none;
+  }
+  
+  .main-content {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .content {
+    padding: 20px 15px;
+    margin-left: 0;
+  }
+  
+  .expanded-content {
+    margin-left: 0 !important;
+  }
+  
+  .sidebar {
+    width: 100%;
+    border-radius: 10px;
+  }
+  
+  .calendar-filters {
+    gap: 10px;
+  }
+  
+  .calendar-grid {
+    gap: 5px;
+  }
+  
+  .date-cell {
+    min-height: 70px;
+    padding: 4px;
+  }
+  
+  .notification-dropdown {
+    width: 280px;
+    right: -50px;
+  }
+  
+  .google-form-modal {
+    width: 95%;
+    height: 90vh;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

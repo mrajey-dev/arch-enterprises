@@ -4,69 +4,128 @@
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-      <!-- Hide announcement board if sidebar is visible on mobile -->
-      <div v-if="!isMobile || !isSidebarVisible" class="announcement-board">
-        <h2><i class="fa-solid fa-bullhorn"></i> Announcements</h2>
+      <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-bullhorn"></i>
+            </div>
+            <div>
+              <h1>Announcement Board</h1>
+              <p class="subtitle-modern">Share important updates with your team</p>
+            </div>
+          </div>
+        </div>
 
-        <form @submit.prevent="addAnnouncement" class="announcement-form">
-          <input
-            type="text"
-            v-model="newAnnouncement.title"
-            placeholder="Announcement Title"
-            required
-          />
-          <textarea
-            v-model="newAnnouncement.message"
-            placeholder="Write your message..."
-            rows="4"
-            required
-          ></textarea>
-         <button type="submit" :disabled="isLoading">
-  <span v-if="!isLoading">
-    <i class="fa-solid fa-paper-plane"></i>
-    {{ editingId ? 'Update' : 'Post' }}
-  </span>
+        <!-- Create Announcement Card -->
+        <div class="create-card">
+          <div class="section-title-modern">
+            <i class="fas fa-pen-alt"></i>
+            <span>{{ editingId ? 'Edit Announcement' : 'Create New Announcement' }}</span>
+          </div>
+          
+          <form @submit.prevent="addAnnouncement" class="announcement-form-premium">
+            <div class="form-field">
+              <div class="field-wrapper">
+                <i class="fas fa-heading field-icon"></i>
+                <input
+                  type="text"
+                  v-model="newAnnouncement.title"
+                  placeholder="Announcement title"
+                  required
+                />
+              </div>
+            </div>
 
-  <span v-else>
-    <i class="fa-solid fa-spinner fa-spin"></i>
-    Please wait...
-  </span>
-</button>
+            <div class="form-field">
+              <div class="field-wrapper">
+                <i class="fas fa-align-left field-icon" style="top: 18px;"></i>
+                <textarea
+                  v-model="newAnnouncement.message"
+                  placeholder="Write your announcement message..."
+                  rows="4"
+                  required
+                ></textarea>
+              </div>
+            </div>
 
+            <div class="form-actions">
+              <button type="submit" class="btn-submit-premium" :disabled="isLoading">
+                <span v-if="!isLoading">
+                  <i :class="editingId ? 'fas fa-save' : 'fas fa-paper-plane'"></i>
+                  {{ editingId ? 'Update Announcement' : 'Post Announcement' }}
+                </span>
+                <span v-else>
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Please wait...
+                </span>
+              </button>
+              <button v-if="editingId" type="button" class="btn-cancel-premium" @click="cancelEdit">
+                <i class="fas fa-times"></i> Cancel Edit
+              </button>
+            </div>
+          </form>
+        </div>
 
-        </form>
+        <!-- Announcements List -->
+        <div class="announcements-section">
+          <div class="section-title-modern">
+            <i class="fas fa-list-alt"></i>
+            <span>Recent Announcements</span>
+            <span class="badge-count">{{ announcements.length }}</span>
+          </div>
 
-       <div class="announcement-list">
-  <div
-    class="announcement-card"
-    v-for="(announcement, index) in displayedAnnouncements"
-    :key="announcement.id"
-  >
-    <div class="card-header">
-      <h3>{{ announcement.title }}</h3>
-      <span class="date">{{ announcement.date }}</span>
-    </div>
+          <div class="announcements-grid">
+            <div
+              v-for="announcement in displayedAnnouncements"
+              :key="announcement.id"
+              class="announcement-card-premium"
+            >
+              <div class="card-accent"></div>
+              <div class="card-header-premium">
+                <div class="header-info">
+                  <div class="announcement-icon">
+                    <i class="fas fa-bullhorn"></i>
+                  </div>
+                  <div>
+                    <h3>{{ announcement.title }}</h3>
+                    <div class="meta-info">
+                      <i class="fas fa-calendar-alt"></i>
+                      <span>{{ announcement.date }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-actions-premium">
+                  <button class="action-icon edit" @click="editAnnouncement(announcement.id)" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="action-icon delete" @click="deleteAnnouncement(announcement.id)" title="Delete">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="card-body-premium">
+                <p>{{ announcement.message }}</p>
+              </div>
+            </div>
 
-    <p class="card-message" v-text="announcement.message"></p>
+            <!-- Empty State -->
+            <div v-if="announcements.length === 0" class="empty-state-premium">
+              <i class="fas fa-bullhorn"></i>
+              <h4>No Announcements Yet</h4>
+              <p>Create your first announcement to share with your team</p>
+            </div>
+          </div>
 
-    <div class="card-actions">
-      <button class="edit-btn" @click="editAnnouncement(index)">
-            <i class="fa fa-edit" style="font-size:13px"></i>
-Edit
-      </button>
-      <button class="delete-btn" @click="deleteAnnouncement(announcement.id)">
-        <i class="fa-solid fa-trash"></i> Delete
-      </button>
-    </div>
-  </div>
-</div>
-<div v-if="announcements.length > 1" class="more-btn-wrapper">
-  <button class="more-btn" @click="showAll = !showAll">
-    {{ showAll ? 'Show Less' : 'More Announcements' }}
-  </button>
-</div>
-
-      </div>
+          <!-- Show More Button -->
+          <div v-if="announcements.length > 1" class="more-btn-wrapper">
+            <button class="more-btn-premium" @click="showAll = !showAll">
+              <i :class="showAll ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+              {{ showAll ? 'Show Less' : `Show All (${announcements.length})` }}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -78,7 +137,6 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
 
 export default {
@@ -89,8 +147,8 @@ export default {
   data() {
     return {
       showAll: false,
-        isLoading: false,
-       editingId: null, // New for tracking edits
+      isLoading: false,
+      editingId: null,
       isMobile: false,
       isSidebarVisible: true,
       announcements: [],
@@ -100,776 +158,617 @@ export default {
       }
     }
   },
+  computed: {
+    displayedAnnouncements() {
+      if (this.showAll) {
+        return this.announcements;
+      }
+      return this.announcements.length ? [this.announcements[0]] : [];
+    }
+  },
   mounted() {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
-    this.fetchAnnouncements()
-  },
-  computed: {
-  displayedAnnouncements() {
-    if (this.showAll) {
-      return this.announcements;
+    this.fetchAnnouncements();
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$router.push('/auth');
     }
-    // show only latest one
-    return this.announcements.length
-      ? [this.announcements[0]]
-      : [];
-  }
-},
-
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
+  },
   methods: {
-    editAnnouncement(index) {
-    const announcement = this.announcements[index];
-    this.newAnnouncement.title = announcement.title;
-    this.newAnnouncement.message = announcement.message;
+    cancelEdit() {
+      this.editingId = null;
+      this.newAnnouncement = { title: "", message: "" };
+      toastInfo('Edit cancelled');
+    },
 
-    // Store ID for update
-    this.editingId = announcement.id;
-  },
+    editAnnouncement(id) {
+      const announcement = this.announcements.find(a => a.id === id);
+      if (announcement) {
+        this.newAnnouncement.title = announcement.title;
+        this.newAnnouncement.message = announcement.message;
+        this.editingId = announcement.id;
+        // Scroll to form
+        document.querySelector('.create-card')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
 
-  async deleteAnnouncement(id) {
-    if (!confirm("Are you sure you want to delete this announcement?")) return;
+    async deleteAnnouncement(id) {
+      if (!confirm("Are you sure you want to delete this announcement?")) return;
 
-    try {
-      await axios.delete(`https://employees.archenterprises.co.in/api/api/announcements/${id}`);
-      this.fetchAnnouncements();
-    } catch (error) {
-      console.error('❌ Failed to delete announcement:', error);
-      toastSuccess('Delete failed!');
-    }
-  },
+      try {
+        await axios.delete(`https://employees.archenterprises.co.in/api/api/announcements/${id}`);
+        toastSuccess('Announcement deleted successfully!');
+        this.fetchAnnouncements();
+      } catch (error) {
+        console.error('Failed to delete announcement:', error);
+        toastError('Delete failed!');
+      }
+    },
+
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
     },
+
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
     },
 
     async fetchAnnouncements() {
-  try {
-    const res = await axios.get('https://employees.archenterprises.co.in/api/api/announcements');
-    const records = res.data.data;
+      try {
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/announcements');
+        const records = res.data.data;
+        this.announcements = records.map(item => ({
+          id: item.id,
+          title: item.title,
+          message: item.message,
+          date: new Date(item.created_at).toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }));
+      } catch (error) {
+        console.error('Failed to fetch announcements:', error);
+        toastError('Failed to load announcements');
+      }
+    },
 
-    this.announcements = records.map(item => ({
-      id: item.id, // ✅ include ID
-      title: item.title,
-      message: item.message,
-      date: new Date(item.created_at).toLocaleString()
-    }));
-  } catch (error) {
-    console.error('❌ Failed to fetch announcements:', error);
-  }
-},
+    async addAnnouncement() {
+      if (!this.newAnnouncement.title.trim()) {
+        toastWarning('Please enter an announcement title');
+        return;
+      }
+      if (!this.newAnnouncement.message.trim()) {
+        toastWarning('Please enter an announcement message');
+        return;
+      }
 
-async addAnnouncement() {
-  this.isLoading = true;   // 🔵 START loader
+      this.isLoading = true;
+      try {
+        const payload = {
+          title: this.newAnnouncement.title,
+          message: this.newAnnouncement.message
+        };
 
-  try {
-    const payload = {
-      title: this.newAnnouncement.title,
-      message: this.newAnnouncement.message
-    };
+        if (this.editingId) {
+          await axios.put(
+            `https://employees.archenterprises.co.in/api/api/announcements/${this.editingId}`,
+            payload
+          );
+          toastSuccess('Announcement updated successfully!');
+          this.editingId = null;
+        } else {
+          await axios.post(
+            'https://employees.archenterprises.co.in/api/api/announcements',
+            payload
+          );
+          toastSuccess('Announcement posted successfully!');
+        }
 
-    if (this.editingId) {
-      await axios.put(
-        `https://employees.archenterprises.co.in/api/api/announcements/${this.editingId}`,
-        payload
-      );
-      this.editingId = null;
-    } else {
-      await axios.post(
-        'https://employees.archenterprises.co.in/api/api/announcements',
-        payload
-      );
-    }
-
-    this.newAnnouncement.title = '';
-    this.newAnnouncement.message = '';
-    await this.fetchAnnouncements();
-
-  } catch (error) {
-    console.error('❌ Error:', error.response?.data || error.message);
-    toastSuccess('Failed: ' + (error.response?.data?.message || 'Unknown'));
-  } finally {
-    this.isLoading = false; // 🔴 STOP loader (always runs)
-  }
-},
-
-
+        this.newAnnouncement = { title: "", message: "" };
+        await this.fetchAnnouncements();
+      } catch (error) {
+        console.error('Error:', error.response?.data || error.message);
+        toastError(error.response?.data?.message || 'Failed to save announcement');
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
     logout() {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('token');
       axios
-        .post(
-          'https://employees.archenterprises.co.in/api/logout',
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
-        .finally(() => {
-          localStorage.removeItem('token')
-          this.$router.push('/auth')
+        .post('https://employees.archenterprises.co.in/api/logout', {}, {
+          headers: { Authorization: `Bearer ${token}` }
         })
+        .finally(() => {
+          localStorage.removeItem('token');
+          this.$router.push('/auth');
+        });
     }
   }
 }
 </script>
 
-
-
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-.more-btn-wrapper {
-  text-align: center;
-  margin-top: 15px;
-}
 
-.more-btn {
-  background: #007bff;
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 20px;
-  cursor: pointer;
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
 }
 
-.more-btn:hover {
-  background: var(--text);
-}
-
-button[disabled] {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.card-actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-}
-
-.card-actions .edit-btn,
-.card-actions .delete-btn {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-actions .edit-btn {
- background-color: #072dff;
-    color: #ffffff;
-}
-
-.card-actions .edit-btn:hover {
-  background-color: #001797;
-}
-
-.card-actions .delete-btn {
-  background-color: #dc3545;
-  color: white;
-}
-
-.card-actions .delete-btn:hover {
-  background-color: #bb2d3b;
-}
-
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-.announcement-board {
-  flex: 1;
-  width: 100%;
- margin-top: 66px;
-  padding: 30px;
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.announcement-board h2 {
-  text-align: center;
-  font-size: 28px;
-  color: var(--text);
-  margin-bottom: 25px;
-  text-transform: uppercase;
-}
-
-.announcement-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 30px;
-}
-
-.announcement-form input,
-.announcement-form textarea {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  transition: all 0.3s ease;
-  font-size: 15px;
-}
-
-.announcement-form input:focus,
-.announcement-form textarea:focus {
-  outline: none;
-  border-color: #4caf50;
-  background: #f4fff4;
-}
-
-.announcement-form button {
-  align-self: flex-end;
-  background-color: var(--primary);
-  color: white;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 15px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.announcement-form button:hover {
-  background: #388e3c;
-  box-shadow: 0 6px 14px rgba(0, 128, 0, 0.2);
-}
-
-.announcement-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.announcement-card {
-  background: #f9f9f9;
-  border-left: 6px solid #007bff;
-  border-radius: 10px;
-  padding: 18px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.announcement-card:hover {
-  background: #f1fff1;
-  transform: translateY(-4px);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.card-header h3 {
-  font-size: 18px;
-  color: var(--text);
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.card-header .date {
-  font-size: 13px;
-  color: #888;
-}
-
-.card-message {
-  font-size: 15px;
-  color: var(--text);
-  margin-top: 5px;
-  line-height: 1.5;
-   white-space: pre-line; /* ✅ Preserve line breaks */
-}
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-
-.logo-img {
-      height: 73px;
-    margin-top: 4px;
-}
-
-.company-name {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-}
-/* Header */
-.header {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 8px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-.logout-btn {
-  background-color: white;
-  color: #003977;
-  border: 2px solid #007bff;
-}
-
-.logout-btn:hover {
-  background-color: #e7f1ff;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
   gap: 20px;
+  padding: 20px;
+   ;
+  min-height: 100vh;
 }
 
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
+.content {
+  flex: 1;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+/* Content Header */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 0;
 }
 
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
-}
-
-/* Content Section */
-.content {
-  flex: 1;
-  background-color: #a5d5cf33;
-  padding: 30px 40px;
-  border-radius: 15px;
-  /* box-shadow: 0 5px 30px rgba(0,0,0,0.08); */
-  overflow-x: auto;
-}
-
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
-}
-
-/* User Table */
-.user-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 12px;
-}
-
-.user-table th,
-.user-table td {
-  padding: 14px 20px;
-  text-align: left;
-  font-size: 16px;
-  color: var(--text);
-}
-
-.user-table th {
-  background-color: #f8f9fa;
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-}
-
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
-}
-
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
-}
-
-.user-table tbody td {
-  border: none;
-  vertical-align: middle;
-}
-
-/* Footer */
-.footer {
-  background-color: #343a40;
-  color: white;
-  text-align: center;
-  padding: 15px 0;
+.subtitle-modern {
+  color: #6b7280;
   font-size: 14px;
-  font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
+  margin-top: 4px;
 }
 
-/* Modal Backdrop */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
-  position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-}
-
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
-}
-
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 48%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
+/* Section Title */
+.section-title-modern {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1a1a2e;
 }
 
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+.section-title-modern i {
+  color: var(--primary-color);
+  font-size: 18px;
 }
 
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
+.badge-count {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-left: 8px;
 }
 
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
+/* Create Card */
+.create-card {
+  background: linear-gradient(135deg, #f8fafc, #ffffff);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.announcement-form-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-wrapper {
+  position: relative;
+}
+
+.field-wrapper .field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.field-wrapper textarea + .field-icon {
+  top: 18px;
+  transform: none;
+}
+
+.field-wrapper input,
+.field-wrapper textarea {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 14px;
+  transition: all 0.3s ease;
   font-family: inherit;
 }
 
-/* Modal Buttons */
-.modal-buttons {
+.field-wrapper textarea {
+  padding-top: 12px;
+  resize: vertical;
+}
+
+.field-wrapper input:focus,
+.field-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-actions {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-submit-premium {
+  padding: 12px 28px;
+  background: var(--primary);
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.btn-submit-premium:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-submit-premium:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-cancel-premium {
+  padding: 12px 28px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 14px;
+  color: #6b7280;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.btn-cancel-premium:hover {
+  background: #e5e7eb;
+}
+
+/* Announcements Section */
+.announcements-section {
+  margin-top: 8px;
+}
+
+.announcements-grid {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 
-.btn {
+/* Announcement Card */
+.announcement-card-premium {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+}
+
+.announcement-card-premium:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px -12px rgba(0, 0, 0, 0.15);
+}
+
+.card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+}
+
+.card-header-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px 12px 24px;
+  background: #fafbfc;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex: 1;
-  padding: 14px 0;
+}
+
+.announcement-icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.header-info h3 {
+  font-size: 18px;
   font-weight: 700;
-  font-size: 0.9rem;
-  border-radius: 12px;
+  color: #1a1a2e;
+  margin: 0 0 4px 0;
+}
+
+.meta-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.meta-info i {
+  font-size: 11px;
+}
+
+.card-actions-premium {
+  display: flex;
+  gap: 8px;
+}
+
+.action-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+.action-icon.edit {
+  background: #e0e7ff;
+  color: var(--primary-color);
 }
 
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
+.action-icon.edit:hover {
+  color: rgb(12, 2, 2);
+  transform: translateY(-2px);
 }
 
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  box-shadow: 0 6px 15px rgba(108, 117, 125, 0.4);
+.action-icon.delete {
+  background: #fee2e2;
+  color: var(--danger);
 }
 
-.btn-secondary:hover {
-  background-color: var(--primary);
-  box-shadow: 0 8px 18px rgba(90, 98, 104, 0.6);
+.action-icon.delete:hover {
+  color: rgb(12, 1, 1);
+  transform: translateY(-2px);
 }
 
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
+.card-body-premium {
+  padding: 16px 24px 24px 24px;
 }
-.fade-enter-from, .fade-leave-to {
+
+.card-body-premium p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+  white-space: pre-line;
+}
+
+/* More Button */
+.more-btn-wrapper {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.more-btn-premium {
+  background: #f3f4f6;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.more-btn-premium:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+/* Empty State */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  background: #fafbfc;
+  border-radius: 20px;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+/* Modal Fade */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
   opacity: 0;
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
   }
 
-  .modal-card {
-    padding: 30px 25px;
+  .content {
+    padding: 20px;
   }
-}
 
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
   }
-  .menu-btn, .logout-btn {
+
+  .card-header-premium {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-actions-premium {
+    align-self: flex-end;
+  }
+
+  .header-info {
     width: 100%;
   }
-}
-.attractive-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-submit-premium,
+  .btn-cancel-premium {
+    justify-content: center;
+  }
+
+  .announcement-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .header-info h3 {
+    font-size: 16px;
+  }
 }
 
-.btn-primary.attractive-btn {
-  background-color: var(--primary);
-  border: none;
-  color: white;
+/* Disabled Button State */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
-
-.btn-primary.attractive-btn:hover {
-  background-color: var(--text);
-  box-shadow: 0 4px 12px rgba(13,110,253,0.6);
-}
-
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
-}
-
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
-}
-
-.attractive-btn i {
-  font-size: 14px;
-}
-
 </style>

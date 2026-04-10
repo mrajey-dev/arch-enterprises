@@ -6,156 +6,304 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <h2>Resource Booking  <button class="btn-add" @click="showAddModal = true">
-    <i class="fas fa-plus"></i> Add New Resource
-  </button></h2>
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div>
+              <h1>Resource Booking</h1>
+              <p class="subtitle-modern">Manage and track resource bookings</p>
+            </div>
+          </div>
+          <button class="register-btn-modern" @click="showAddModal = true">
+            <i class="fas fa-plus-circle"></i>
+            <span>Add New Resource</span>
+          </button>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-card">
+            <i class="fas fa-cubes"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ resources.length }}</span>
+              <span class="stat-label">Total Resources</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-check-circle"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ availableCount }}</span>
+              <span class="stat-label">Available</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-bookmark"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ bookedCount }}</span>
+              <span class="stat-label">Booked</span>
+            </div>
+          </div>
+        </div>
 
         <!-- Loading Spinner -->
-        <div v-if="loadingResources" class="text-center my-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
+        <div v-if="loadingResources" class="loading-container">
+          <div class="spinner"></div>
           <p>Loading resources...</p>
         </div>
 
+        <!-- Resource Cards Grid -->
+        <div v-else class="resources-grid">
+          <div
+            v-for="resource in resources"
+            :key="resource.id"
+            class="resource-card-premium"
+            :class="{ 'booked': resource.status === 'booked' }"
+          >
+            <div class="card-glow"></div>
+            <div class="resource-header-premium">
+              <div class="resource-icon">
+                <i class="fas fa-laptop"></i>
+              </div>
+              <div class="resource-info">
+                <h3>{{ resource.resource_type }}</h3>
+                <span class="status-badge-premium" :class="resource.status === 'booked' ? 'booked' : 'available'">
+                  <i :class="resource.status === 'booked' ? 'fas fa-clock' : 'fas fa-check-circle'"></i>
+                  {{ resource.status === 'booked' ? 'Booked' : 'Available' }}
+                </span>
+              </div>
+            </div>
 
+            <div class="resource-details">
+              <div class="detail-item">
+                <i class="fas fa-user"></i>
+                <div>
+                  <span class="detail-label">Booked By</span>
+                  <p class="detail-value">{{ resource.user?.name || 'Not assigned' }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-calendar-alt"></i>
+                <div>
+                  <span class="detail-label">From Date</span>
+                  <p class="detail-value">{{ formatDate(resource.from_date) }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-calendar-check"></i>
+                <div>
+                  <span class="detail-label">To Date</span>
+                  <p class="detail-value">{{ formatDate(resource.to_date) }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-tasks"></i>
+                <div>
+                  <span class="detail-label">Purpose</span>
+                  <p class="detail-value">{{ resource.purpose || 'Not specified' }}</p>
+                </div>
+              </div>
+            </div>
 
-        <!-- Resource Cards -->
-       <div v-else class="resources-grid">
-  <div
-    v-for="resource in resources"
-    :key="resource.id"
-    class="resource-card"
-  >
-    <div class="resource-header">
-      <h3>{{ resource.resource_type }}</h3>
+            <button class="btn-book-premium" disabled>
+              <i class="fas fa-check"></i> Already Booked
+            </button>
+          </div>
 
-      <span
-        class="status-badge"
-        :class="resource.status === 'booked' ? 'booked' : 'available'"
-      >
-        {{ resource.status }}
-      </span>
-    </div>
-
-    <p><strong>Booked By:</strong> {{ resource.user?.name || 'N/A' }}</p>
-    <p><strong>From:</strong> {{ formatDate(resource.from_date) }}</p>
-    <p><strong>To:</strong> {{ formatDate(resource.to_date) }}</p>
-    <p><strong>Purpose:</strong> {{ resource.purpose }}</p>
-
-    <button class="btn-book" disabled>
-      Already Booked
-    </button>
-  </div>
-</div>
-
-
-        <!-- Booking Confirmation Modal -->
-        <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-          <div class="modal">
-            <h3>Resource Booked Successfully!</h3>
-            <p>You have booked <strong>{{ bookedResourceName }}</strong>.</p>
-            <button class="btn-close" @click="showModal = false"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
+          <!-- Empty State -->
+          <div v-if="resources.length === 0" class="empty-state-premium">
+            <i class="fas fa-box-open"></i>
+            <h4>No Resources Found</h4>
+            <p>Click "Add New Resource" to create your first resource</p>
           </div>
         </div>
+
+        <!-- Booking Confirmation Modal -->
+        <transition name="modal-fade">
+          <div v-if="showModal" class="modal-backdrop" @click.self="showModal = false">
+            <div class="premium-modal success-modal" @click.stop>
+              <div class="modal-decoration"></div>
+              <div class="modal-header-premium">
+                <div class="header-icon-premium success-icon">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="header-text">
+                  <h2>Booking Confirmed!</h2>
+                  <p>Resource booked successfully</p>
+                </div>
+                <button class="close-btn-premium" @click="showModal = false">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="modal-body-premium">
+                <div class="confirmation-message">
+                  <i class="fas fa-calendar-check"></i>
+                  <p>You have successfully booked <strong>{{ bookedResourceName }}</strong>.</p>
+                  <p class="small-text">The resource has been reserved for your use.</p>
+                </div>
+              </div>
+              <div class="modal-footer-premium">
+                <button class="btn-submit-premium" @click="showModal = false">
+                  <i class="fas fa-check"></i> Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </transition>
+
+        <!-- Add Resource Modal -->
+        <transition name="modal-fade">
+          <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
+            <div class="premium-modal" @click.stop>
+              <div class="modal-decoration"></div>
+              
+              <div class="modal-header-premium">
+                <div class="header-icon-premium">
+                  <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="header-text">
+                  <h2>Add New Resource</h2>
+                  <p>Create a new bookable resource</p>
+                </div>
+                <button class="close-btn-premium" @click="showAddModal = false">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="modal-body-premium">
+                <form @submit.prevent="addResource">
+                  <div class="form-section">
+                    <div class="form-field">
+                      <label>Resource Name <span class="required-star">*</span></label>
+                      <div class="field-wrapper">
+                        <i class="fas fa-tag field-icon"></i>
+                        <input 
+                          v-model="newResource.name" 
+                          type="text" 
+                          placeholder="e.g., Conference Room A, Projector, Laptop"
+                          required 
+                        />
+                      </div>
+                    </div>
+
+                    <div class="form-field full-width">
+                      <label>Description</label>
+                      <div class="field-wrapper">
+                        <i class="fas fa-align-left field-icon" style="top: 18px;"></i>
+                        <textarea 
+                          v-model="newResource.description" 
+                          placeholder="Enter resource description (optional)"
+                          rows="3"
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    <div class="form-field">
+                      <label>Status</label>
+                      <div class="field-wrapper">
+                        <i class="fas fa-toggle-on field-icon"></i>
+                        <select v-model="newResource.available">
+                          <option :value="1">Available</option>
+                          <option :value="0">Booked</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer-premium">
+                    <button type="button" class="btn-cancel-premium" @click="showAddModal = false">
+                      <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn-submit-premium">
+                      <i class="fas fa-save"></i> Save Resource
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </transition>
       </section>
-      <!-- Add Resource Modal -->
-<div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
-  <div class="modal">
-    <h3>Add New Resource</h3>
-
-    <div class="form-group">
-      <label>Resource Name</label>
-      <input v-model="newResource.name" type="text" />
-    </div>
-
-    <div class="form-group">
-      <label>Description</label>
-      <textarea v-model="newResource.description"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>Status</label>
-      <select v-model="newResource.available">
-        <option :value="1">Available</option>
-        <option :value="0">Booked</option>
-      </select>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-book" @click="addResource"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
-      <button class="btn-close" @click="showAddModal = false"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
-    </div>
-  </div>
-</div>
-
     </div>
   </div>
 </template>
 
 <script>
-  import axios from 'axios'
+import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
 import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
+
 export default {
   components: { Sidebar },
 
   data() {
-  return {
-    isMobile: false,
-    isSidebarVisible: true,
-    loadingResources: true,
-    resources: [],
-
-    showModal: false,
-    bookedResourceName: '',
-
-    // 🔹 ADD THESE
-    showAddModal: false,
-    newResource: {
-      name: '',
-      description: '',
-      available: 1
+    return {
+      isMobile: false,
+      isSidebarVisible: true,
+      loadingResources: true,
+      resources: [],
+      showModal: false,
+      bookedResourceName: '',
+      showAddModal: false,
+      newResource: {
+        name: '',
+        description: '',
+        available: 1
+      }
     }
-  }
-},
+  },
 
+  computed: {
+    availableCount() {
+      return this.resources.filter(r => r.status === 'available').length
+    },
+    bookedCount() {
+      return this.resources.filter(r => r.status === 'booked').length
+    }
+  },
 
   methods: {
-     formatDate(date) {
-    return new Date(date).toLocaleString()
-  },
- addResource() {
-  if (!this.newResource.name || !this.newResource.description) {
-    toastSuccess('All fields are required')
-    return
-  }
+    formatDate(date) {
+      if (!date) return 'Not specified'
+      return new Date(date).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    },
 
-  axios.post('/api/resource-booking', {
-    name: this.newResource.name,
-    description: this.newResource.description
-  })
-  .then(() => {
-    this.showAddModal = false
+    async addResource() {
+      if (!this.newResource.name) {
+        toastWarning('Please enter resource name')
+        return
+      }
 
-    this.newResource = {
-      name: '',
-      description: '',
-      available: 1
-    }
-
-    toastSuccess('Resource booking request submitted')
-  })
-  .catch(() => {
-    toastSuccess('Failed to submit request')
-  })
-},
-
+      try {
+        await axios.post('/api/resource-booking', {
+          name: this.newResource.name,
+          description: this.newResource.description
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        
+        this.showAddModal = false
+        this.newResource = { name: '', description: '', available: 1 }
+        toastSuccess('Resource added successfully!')
+        this.fetchResources()
+      } catch (error) {
+        console.error(error)
+        toastError('Failed to add resource')
+      }
+    },
 
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
@@ -166,34 +314,22 @@ export default {
       this.isSidebarVisible = !this.isSidebarVisible
     },
 
-    bookResource(id) {
-      const resource = this.resources.find(r => r.id === id)
-      if (resource && resource.available) {
-        resource.available = false
-        this.bookedResourceName = resource.name
-        this.showModal = true
+    async fetchResources() {
+      this.loadingResources = true
+      try {
+        const response = await axios.get('/api/resource-bookings', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        this.resources = response.data
+      } catch (error) {
+        console.error(error)
+        toastError('Failed to load resources')
+      } finally {
+        this.loadingResources = false
       }
-    },
-
-   fetchResources() {
-  this.loadingResources = true
-
-  axios.get('/api/resource-bookings', {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`
     }
-  })
-  .then(res => {
-    this.resources = res.data
-    this.loadingResources = false
-  })
-  .catch(err => {
-    console.error(err)
-    this.loadingResources = false
-    toastSuccess('Failed to load resources')
-  })
-}
-
   },
 
   mounted() {
@@ -216,331 +352,683 @@ export default {
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-/* Layout */
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #fff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
 }
 
-/* Header */
-.header {
-  background-color: var(--primary);
-  color: white;
-  padding: 8px 30px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.layout {
+  min-height: 100vh;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Main Content */
+.main-content {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
+   ;
+}
+
+.content {
+  flex: 1;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Content Header */
+.content-header-modern {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.head-title {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: white;
-  font-family: cursive;
-  text-decoration: none;
-      font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-
+  gap: 16px;
 }
 
-.mobile-menu-icon {
-  font-size: 22px;
-  cursor: pointer;
-  display: none;
-}
-
-/* Main */
-.main-content {
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
   display: flex;
-  flex: 1;
-  padding: 30px;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+}
+
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.register-btn-modern {
+  padding: 12px 24px;
+  background: var(--primary);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.register-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 20px;
+  margin-bottom: 32px;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 220px;
-  background: #fff;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
+  transition: all 0.3s ease;
 }
 
-/* Content */
-.content {
-  flex: 1;
-  margin-top: 66px;
-  background-color: var(--sidebar);
-  padding: 30px 40px;
-  border-radius: 15px;
-  overflow-x: auto;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
-h2 {
-      margin-bottom: 30px;
-    font-weight: 800;
-    display: flex;
-    font-size: 21px;
-    border-bottom: 2px solid var(--primary);
-    padding-bottom: 8px;
-    text-transform: uppercase;
-    justify-content: space-between;
-    align-items: center;
+.stat-card i {
+  font-size: 36px;
+  color: var(--primary-color);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Resources Grid */
 .resources-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
 }
 
-/* Resource Card */
-.resource-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+/* Resource Card Premium */
+.resource-card-premium {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
-.resource-card:hover {
+
+.resource-card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+}
+
+.resource-card-premium.booked::before {
+  background: var(--danger);
+}
+
+.resource-card-premium:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.15);
 }
 
-.resource-header {
+.card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(102, 126, 234, 0.05), transparent);
+  pointer-events: none;
+}
+
+/* Resource Header */
+.resource-header-premium {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.status-badge {
+.resource-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.resource-info {
+  flex: 1;
+}
+
+.resource-info h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 6px 0;
+}
+
+.status-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 8px;
-  color: white;
-}
-.status-badge.available {
-  background: #28a745;
-}
-.status-badge.booked {
-  background: #dc3545;
 }
 
-.btn-book {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
+.status-badge-premium.available {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-premium.booked {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Resource Details */
+.resource-details {
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.detail-item i {
+  width: 20px;
+  color: var(--primary-color);
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.detail-item > div {
+  flex: 1;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Book Button */
+.btn-book-premium {
   width: 100%;
-  margin-top: 15px;
-  transition: background 0.3s;
-}
-.btn-book:hover:not(:disabled) {
-  background: #012a5c;
-}
-.btn-book:disabled {
+  padding: 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
   cursor: not-allowed;
-  opacity: 0.6;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0.7;
 }
 
-/* Modal */
-.modal-overlay {
+/* Modal Styles */
+.modal-backdrop {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 10000;
+  padding: 20px;
 }
-.modal {
-  background: #fff;
-  padding: 30px 25px;
-  border-radius: 15px;
+
+.premium-modal {
+  position: relative;
+  background: white;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 550px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.premium-modal.success-modal {
+  max-width: 450px;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
+}
+
+/* Modal Header */
+.modal-header-premium {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 28px;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.header-icon-premium {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.header-icon-premium.success-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-text h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.header-text p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.close-btn-premium {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.close-btn-premium:hover {
+  background: var(--danger);
+  color: white;
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.modal-body-premium {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  background: #fafbfc;
+}
+
+.modal-body-premium::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body-premium::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.modal-body-premium::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+/* Confirmation Message */
+.confirmation-message {
   text-align: center;
-  width: 300px;
+  padding: 20px;
 }
-.btn-close {
-  margin-top: 20px;
+
+.confirmation-message i {
+  font-size: 64px;
+  color: var(--success);
+  margin-bottom: 20px;
+}
+
+.confirmation-message p {
+  font-size: 16px;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.confirmation-message .small-text {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Form Section */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field.full-width {
+  grid-column: span 2;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.required-star {
+  color: var(--danger);
+}
+
+.field-wrapper {
+  position: relative;
+}
+
+.field-wrapper .field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.field-wrapper textarea + .field-icon {
+  top: 18px;
+  transform: none;
+}
+
+.field-wrapper input,
+.field-wrapper select,
+.field-wrapper textarea {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.field-wrapper textarea {
+  padding-top: 12px;
+  resize: vertical;
+}
+
+.field-wrapper input:focus,
+.field-wrapper select:focus,
+.field-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Modal Footer */
+.modal-footer-premium {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn-cancel-premium,
+.btn-submit-premium {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  border: none;
+}
+
+.btn-cancel-premium {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-cancel-premium:hover {
+  background: #e5e7eb;
+}
+
+.btn-submit-premium {
   background: var(--primary);
   color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
+.btn-submit-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
 
+/* Empty State */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  grid-column: 1 / -1;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+/* Modal Fade */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 20px 15px;
+    padding: 16px;
   }
 
-  .sidebar {
-    width: 100%;
-    border-radius: 10px;
+  .content {
+    padding: 20px;
   }
 
-  .expanded-content {
-    margin-left: 0 !important;
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .register-btn-modern {
+    justify-content: center;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr;
   }
 
   .resources-grid {
     grid-template-columns: 1fr;
   }
-}
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-}
 
-.btn-add {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-.btn-add i {
-  margin-right: 6px;
-}
+  .premium-modal {
+    max-width: 95%;
+  }
 
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
-}
+  .modal-header-premium {
+    padding: 16px 20px;
+  }
 
-.form-group label {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  display: block;
-}
+  .modal-body-premium {
+    padding: 16px;
+  }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
-  width: 100%;
-  padding: 7px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  .modal-footer-premium {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
 }
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-/* Resource Card */
-.resource-card {
-  background: linear-gradient(145deg, #f9f9f9, #e6f0ff);
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.resource-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: rgba(255,255,255,0.1);
-  transform: rotate(25deg);
-  pointer-events: none;
-}
-
-.resource-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-}
-
-/* Resource Header */
-.resource-header h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #0d3b66;
-}
-
-.status-badge {
-  font-size: 13px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 50px;
-  color: white;
-  text-transform: uppercase;
-}
-
-.status-badge.available {
-  background: #28a745;
-  box-shadow: 0 3px 6px rgba(40,167,69,0.3);
-}
-
-.status-badge.booked {
-  background: #dc3545;
-  box-shadow: 0 3px 6px rgba(220,53,69,0.3);
-}
-
-/* Buttons */
-.btn-book {
-  background: #0d3b66;
-  color: #fff;
-  font-weight: 600;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 12px;
-  width: 100%;
-  margin-top: 15px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-book:hover:not(:disabled) {
-  background: #07407c;
-  transform: scale(1.05);
-}
-
-.btn-book:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Text Styling */
-.resource-card p {
-  font-size: 14px;
-  margin: 6px 0;
-  color: #333;
-}
-
-.resource-card p strong {
-  color: #0d3b66;
-}
-
 </style>
