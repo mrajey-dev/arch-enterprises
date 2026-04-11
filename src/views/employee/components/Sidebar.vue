@@ -116,7 +116,9 @@
            <li @click="goTo('employee/resourcebooking')">
             <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
           </li>
-          
+          <li @click="goTo('employee/mysalaryadvances')">
+            <i class="fas fa-hand-holding-usd"></i><span>Salary Advances</span>
+          </li>
           <li @click="goTo('employee/viewkra')">
             <i class="fas fa-tasks"></i> <span>View KRA</span>
           </li>

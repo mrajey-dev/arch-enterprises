@@ -16,10 +16,10 @@
               <p class="subtitle-modern">Manage employee salary advance requests (HR View)</p>
             </div>
           </div>
-          <button class="new-request-btn" @click="openRequestModal">
+          <!-- <button class="new-request-btn" @click="openRequestModal">
             <i class="fas fa-plus-circle"></i>
             <span>New Salary Advance</span>
-          </button>
+          </button> -->
         </div>
 
         <!-- Stats Bar -->
@@ -44,15 +44,7 @@
 
         <!-- Filter Bar -->
         <div class="filter-bar">
-          <div class="filter-group">
-            <i class="fas fa-search"></i>
-            <input 
-              type="text" 
-              v-model="searchQuery" 
-              placeholder="Search by employee or reason..."
-              class="filter-input"
-            />
-          </div>
+         
           <div class="filter-group">
             <i class="fas fa-filter"></i>
             <select v-model="statusFilter" class="filter-select">
@@ -97,7 +89,7 @@
                   <th>Reason</th>
                   <th>Date Submitted</th>
                   <th>Repayment</th>
-                  <th>Status</th>
+                  <!-- <th>Status</th> -->
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -139,11 +131,11 @@
                     <select 
                       v-model="advance.status"
                       @change="changeStatus(advance)"
-                      :class="['status-dropdown-premium', getStatusClass(advance.status)]"
+                      :class="['status-dropdown-premium', getStatusClass(advance.status)]" disabled
                     >
                       <option value="Pending">🕐 Pending</option>
-                      <option value="Approved">✅ Approved</option>
                       <option value="Completed">💰 Disbursed</option>
+                     
                     </select>
                   </td>
                   <td class="actions-cell">
@@ -387,7 +379,7 @@
 
 <script>
 import axios from 'axios'
-import Sidebar from '../components/Sidebar.vue'
+import Sidebar from './components/Sidebar.vue'
 import {
   toastSuccess,
   toastError,
@@ -645,21 +637,26 @@ export default {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
     },
-    async fetchSalaryAdvances() {
-      this.loadingRequests = true
-      const token = localStorage.getItem('token')
-      try {
-        const res = await axios.get('/api/salary-advances/all', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        this.salaryAdvances = res.data
-      } catch (err) {
-        console.error('Salary advances error:', err)
-        toastError('Failed to load salary advances')
-      } finally {
-        this.loadingRequests = false
+   async fetchSalaryAdvances() {
+  this.loadingRequests = true
+  const token = localStorage.getItem('token')
+
+  try {
+    const res = await axios.get('/api/salary-advances/my', {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-    },
+    })
+
+    this.salaryAdvances = res.data
+
+  } catch (err) {
+    console.error(err)
+    toastError('Failed to load salary advances')
+  } finally {
+    this.loadingRequests = false
+  }
+},
     async fetchEmployees() {
       const token = localStorage.getItem('token')
       try {

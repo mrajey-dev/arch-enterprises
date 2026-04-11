@@ -1,338 +1,470 @@
-
 <template>
   <div class="layout">
-
-
 
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="main-content-work-report">
-        <div class="report-container">
-       <div class="header-row">
-  <h2>📝 Work Reports</h2>
-
-  <div class="header-actions">
-    <button 
-      class="btn btn-primary attractive-btn"
-      @click="showAssignedReport = true"
-    >
-     <i class="fa fa-file"></i> Report
-    </button>
-
-    <button 
-      class="btn btn-primary attractive-btn"
-      @click="openAssignTaskModal"
-    >
-      <i class="fas fa-tasks"></i> Assign
-    </button>
-  </div>
-</div>
-          <div class="search-group">
-            <input
-              type="text"
-              v-model="filters.search"
-              class="input-bar"
-              placeholder="Search tasks..."
-            />
-            <span class="search-icon"><i class="fas fa-search"></i></span>
+        <section class="report-container">
+          <div class="content-header-modern">
+            <div class="header-left">
+              <div class="title-icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div>
+                <h1>Work Reports</h1>
+                <p class="subtitle-modern">Manage and track employee tasks</p>
+              </div>
+            </div>
+            <div class="header-buttons">
+              <button class="register-btn-modern secondary" @click="showAssignedReport = true">
+                <i class="fas fa-chart-bar"></i>
+                <span>Report</span>
+              </button>
+              <button class="register-btn-modern" @click="openAssignTaskModal">
+                <i class="fas fa-plus-circle"></i>
+                <span>Assign Task</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Filters -->
-          <div class="filter-bar">
-            <div class="filter-group">
-             <select v-model="filters.name" class="filter-input">
-  <option value="">Filter By Name</option>
-  <option
-    v-for="emp in filteredEmployeeList"
-    :key="emp.name"
-    :value="emp.name"
-  >
-    {{ emp.name }}
-  </option>
-</select>
+          <!-- Stats Bar -->
+          <div class="stats-bar">
+            <div class="stat-card">
+              <i class="fas fa-tasks"></i>
+              <div class="stat-info">
+                <span class="stat-value">{{ reports.length }}</span>
+                <span class="stat-label">Total Tasks</span>
+              </div>
+            </div>
+            <div class="stat-card pending">
+              <i class="fas fa-clock"></i>
+              <div class="stat-info">
+                <span class="stat-value">{{ pendingTasks }}</span>
+                <span class="stat-label">Pending</span>
+              </div>
+            </div>
+            <div class="stat-card progress">
+              <i class="fas fa-spinner"></i>
+              <div class="stat-info">
+                <span class="stat-value">{{ inProgressTasks }}</span>
+                <span class="stat-label">In Progress</span>
+              </div>
+            </div>
+            <div class="stat-card completed">
+              <i class="fas fa-check-circle"></i>
+              <div class="stat-info">
+                <span class="stat-value">{{ completedTasks }}</span>
+                <span class="stat-label">Completed</span>
+              </div>
+            </div>
+          </div>
 
+          <!-- Search and Filters -->
+          <div class="search-filter-section">
+            <div class="search-wrapper-modern">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                v-model="filters.search"
+                class="search-input-modern"
+                placeholder="Search tasks by name, summary, or employee..."
+              />
+            </div>
 
-              <input type="date" v-model="filters.date" class="filter-input" />
+            <div class="filter-group-modern">
+              <select v-model="filters.name" class="filter-select">
+                <option value="">All Employees</option>
+                <option v-for="emp in filteredEmployeeList" :key="emp.name" :value="emp.name">
+                  {{ emp.name }}
+                </option>
+              </select>
 
-              <select v-model="filters.month" class="filter-input">
+              <input type="date" v-model="filters.date" class="filter-date" />
+
+              <select v-model="filters.month" class="filter-select">
                 <option value="">All Months</option>
                 <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
               </select>
 
-              <select v-model="filters.status" class="filter-input">
+              <select v-model="filters.status" class="filter-select">
                 <option value="">All Statuses</option>
                 <option value="Pending">Pending</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
-                  <option value="Assigned">Assigned Tasks</option>
+                <option value="Assigned">Assigned Tasks</option>
               </select>
 
-              <button class="btn btn-primary attractive-btn" @click="clearFilters">
+              <button class="clear-filter-btn" @click="clearFilters">
                 <i class="fas fa-times-circle"></i> Clear
               </button>
             </div>
           </div>
 
-          <!-- Report Cards -->
-          <div class="report-grid">
-            <transition-group name="fade" tag="div" class="report-grid">
+          <!-- Report Cards Grid - 2 cards per row properly -->
+          <div class="report-grid-premium">
+            <transition-group name="card-fade" tag="div" class="cards-grid-two">
               <div
-  class="report-card"
-  v-for="report in visibleReports"
-  :key="report.id"
-  style="cursor: pointer; position: relative;"
->
-  <div class="card-header">
-    <h3>
-      {{ report.name }}
-      <span v-if="report.assigned_by_manager" class="manager-tag">
-        👔 {{ report.manager_name }}
-      </span>
-    </h3>
+                class="report-card-premium"
+                :class="{ 'assigned-task-card': report.priority === 'Task Assigned' }"
+                v-for="report in visibleReports"
+                :key="report.id"
+                @click="openModal(report)"
+              >
+                <!-- Assigned task badge -->
+                <div v-if="report.priority === 'Task Assigned'" class="assigned-badge">
+                  <i class="fas fa-tasks"></i> Assigned Task
+                </div>
+                <div class="card-accent" :class="report.status.toLowerCase()"></div>
+                <div class="card-header-premium">
+                  <div class="header-info">
+                    <div class="task-icon">
+                      <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div>
+                      <h3>{{ report.name }}</h3>
+                      <div class="meta-tags">
+                        <span class="date-badge">
+                          <i class="fas fa-calendar-alt"></i> {{ report.date }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <span :class="['status-badge-premium', getStatusClass(report.status)]">
+                    <i :class="getStatusIcon(report.status)"></i>
+                    {{ report.status }}
+                  </span>
+                </div>
 
-    <span class="status" :class="report.status.toLowerCase()">
-      {{ report.status }}
-    </span>
-  </div>
+                <div class="card-body-premium">
+                  <div class="info-row">
+                    <i class="fas fa-user"></i>
+                    <span><strong>Assigned To:</strong> {{ report.username }}</span>
+                  </div>
+                  <div class="info-row">
+                    <i class="fas fa-building"></i>
+                    <span><strong>Department:</strong> {{ report.department }}</span>
+                  </div>
+                  <!-- Show Assign By only for assigned tasks -->
+                  <div class="info-row" v-if="report.priority === 'Task Assigned'">
+                    <i class="fas fa-user-check"></i>
+                    <span><strong>Assign By:</strong> {{ report.assign_by_name || '-' }}</span>
+                  </div>
+                  <div class="info-row summary">
+                    <i class="fas fa-align-left"></i>
+                    <span><strong>Summary:</strong> {{ truncateText(report.summary, 100) }}</span>
+                  </div>
+                  <div class="info-row" v-if="report.comment">
+                    <i class="fas fa-comment"></i>
+                    <span><strong>Comment:</strong> {{ truncateText(report.comment, 80) }}</span>
+                  </div>
+                </div>
 
-  <p><strong>Date:</strong> {{ report.date }}</p>
-  <p><strong>Assigned To:</strong> {{ report.username || 'Unknown' }}</p>
-  <p><strong>Department:</strong> {{ report.department }}</p>
-  <p class="summary"><strong>Summary:</strong> {{ report.summary }}</p>
-  <p><strong>Comments:</strong> {{ report.comment }}</p>
-
-  
- <button class="edit-task-btn" @click.stop="editTask(report)">
-          <i class="fa fa-edit" style="font-size:13px"></i>
- Edit
-    </button>
-     <button class="delete-task-btn" @click.stop="deleteTask(report.id)">
-      <i class="fas fa-trash-alt"></i> Delete
-    </button>
-  <!-- ✅ Edit/Delete buttons (Visible only for Manager-assigned tasks) -->
-  <div
-    v-if="report.assigned_by_manager"
-    class="card-actions"
-    style="margin-top: 10px; display: flex; gap: 10px;"
-  >
-   
-  </div>
-</div>
-
+                <div class="card-footer-premium">
+                  <button class="action-edit" @click.stop="editTask(report)">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button class="action-delete" @click.stop="deleteTask(report.id)">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </div>
+              </div>
             </transition-group>
           </div>
 
           <!-- Load More Button -->
-          <div v-if="visibleCount < reports.length" class="load-more-container">
-            <button class="btn btn-load-task load-more-btn" @click="loadMore">
-              Load More
+          <div v-if="visibleCount < reports.length" class="load-more-wrapper">
+            <button class="load-more-btn-premium" @click="loadMore">
+              <i class="fas fa-chevron-down"></i> Load More
             </button>
           </div>
-        </div>
+        </section>
       </div>
     </div>
 
     <!-- Task Detail Modal -->
-    <div class="modal-backdrop" v-if="selectedReport" @click.self="closeModal">
-      <div class="modal-card">
-        <p class="manager-tag" v-if="selectedReport.assigned_by_manager">
-          👔 Assigned by {{ selectedReport.manager_name }}
-        </p>
+    <transition name="modal-fade">
+      <div class="modal-backdrop" v-if="selectedReport" @click.self="closeModal">
+        <div class="premium-modal detail-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="header-text">
+              <h2>Task Details</h2>
+              <p>{{ selectedReport.name }}</p>
+            </div>
+            <button class="close-btn-premium" @click="closeModal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-        <p><strong>Task:</strong> {{ selectedReport.name }}</p>
-        <p><strong>Date:</strong> {{ selectedReport.date }}</p>
-        <p><strong>Completed At:</strong> {{ selectedReport.completed_at }}</p>
-        <p><strong>Assigned To:</strong> {{ selectedReport.username }}</p>
-        <p><strong>Department:</strong> {{ selectedReport.department }}</p>
-        <p>
-          <strong>Status:</strong>
-          <span :class="'status ' + selectedReport.status.toLowerCase()">{{ selectedReport.status }}</span>
-        </p>
-        <p><strong>Summary:</strong> {{ selectedReport.summary }}</p>
-        <p><strong>Modules:</strong> {{ selectedReport.modules }}</p>
+          <div class="modal-body-premium">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <i class="fas fa-user-tie"></i>
+                <div>
+                  <label>Assign By</label>
+                  <!-- Show Assign By only for assigned tasks -->
+                  <p v-if="selectedReport.priority === 'Task Assigned'">{{ selectedReport.assign_by_name || selectedReport.manager_name || loggedUserName }}</p>
+                  <p v-else>-</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-user"></i>
+                <div>
+                  <label>Assigned To</label>
+                  <p>{{ selectedReport.username }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-building"></i>
+                <div>
+                  <label>Department</label>
+                  <p>{{ selectedReport.department }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-calendar-alt"></i>
+                <div>
+                  <label>Due Date</label>
+                  <p>{{ selectedReport.date }}</p>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-flag-checkered"></i>
+                <div>
+                  <label>Status</label>
+                  <span :class="['status-badge-premium', getStatusClass(selectedReport.status)]">
+                    {{ selectedReport.status }}
+                  </span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                  <label>Completed At</label>
+                  <p>{{ selectedReport.completed_at || 'Not completed' }}</p>
+                </div>
+              </div>
+              <div class="detail-item full-width">
+                <i class="fas fa-align-left"></i>
+                <div>
+                  <label>Summary</label>
+                  <p>{{ selectedReport.summary }}</p>
+                </div>
+              </div>
+              <div class="detail-item full-width" v-if="selectedReport.modules !== 'N/A'">
+                <i class="fas fa-cube"></i>
+                <div>
+                  <label>Modules</label>
+                  <p>{{ selectedReport.modules }}</p>
+                </div>
+              </div>
+              <div class="detail-item full-width" v-if="selectedReport.comment">
+                <i class="fas fa-comment"></i>
+                <div>
+                  <label>Comments</label>
+                  <p>{{ selectedReport.comment }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <div class="modal-buttons">
-          <button class="btn btn-primary" @click="closeModal">
-            <i class="fas fa-times-circle"></i>&nbsp;<i class="fas fa-times-circle"></i> Close
-          </button>
+          <div class="modal-footer-premium">
+            <button class="btn-submit-premium" @click="closeModal">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
 
     <!-- Assign Task Modal -->
-    <div class="modal-backdrop" v-if="showAssignTaskModal" @click.self="closeAssignTaskModal">
-      <div class="modal-card">
-        <h2 class="modal-title">📝 Assign Task</h2>
-
-        <div class="attractive-form">
-          <div class="form-row">
-           <div class="input-group full-width">
-  <label>Task Name</label>
-  <input
-    type="text"
-    v-model="newTask.title"
-    placeholder="Enter task name"
-    maxlength="50"
-  />
-  <small>
-   {{ newTask.title.length }}/50 characters
-  </small>
-</div>
-
-
-           <div class="input-group full-width">
-  <label>Description</label>
-  <textarea
-    v-model="newTask.description"
-    placeholder="Enter task description"
-    maxlength="250"
-    rows="4"
-  ></textarea>
-  <small>
-    {{ newTask.description.length }}/250 characters
-  </small>
-</div>
-
-
-            <div class="input-group">
-              <label>Assign To</label>
-              <select v-model="newTask.user_id">
-                <option value="">Select Employee</option>
-                <option
-                  v-for="emp in filteredEmployeesDropdown"
-                  :key="emp.id"
-                  :value="emp.id"
-                >
-                  {{ emp.name }}
-                </option>
-              </select>
+    <transition name="modal-fade">
+      <div class="modal-backdrop" v-if="showAssignTaskModal" @click.self="closeAssignTaskModal">
+        <div class="premium-modal" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-tasks"></i>
             </div>
-
-            <div class="input-group">
-              <label>Due Date</label>
-              <input type="date" v-model="newTask.due_date" :min="minDate" />
+            <div class="header-text">
+              <h2>{{ isEditTaskMode ? 'Edit Task' : 'Assign New Task' }}</h2>
+              <p>{{ isEditTaskMode ? 'Update task details' : 'Assign a task to an employee' }}</p>
             </div>
-
-          <div class="input-group">
-  <label>Modules</label>
-  <input
-    type="text"
-    v-model="newTask.modules"
-    placeholder="Module names"
-    maxlength="250"
-  />
-  <small>
-    {{ newTask.modules.length }}/250 characters
-  </small>
-</div>
-
+            <button class="close-btn-premium" @click="closeAssignTaskModal">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
 
-          <div class="modal-buttons">
-            <button class="btn btn-primary" @click="assignTask">
-              <i class="fas fa-check-circle"></i> Assign
+          <div class="modal-body-premium">
+            <div class="form-section">
+              <div class="form-field full-width">
+                <label>Task Name <span class="required-star">*</span></label>
+                <div class="field-wrapper">
+                  <i class="fas fa-heading field-icon"></i>
+                  <input
+                    type="text"
+                    v-model="newTask.title"
+                    placeholder="Enter task name"
+                    maxlength="50"
+                  />
+                </div>
+                <div class="char-counter">{{ newTask.title.length }}/50 characters</div>
+              </div>
+
+              <div class="form-field full-width">
+                <label>Description</label>
+                <div class="field-wrapper">
+                  <i class="fas fa-align-left field-icon" style="top: 18px;"></i>
+                  <textarea
+                    v-model="newTask.description"
+                    placeholder="Enter task description"
+                    maxlength="250"
+                    rows="4"
+                  ></textarea>
+                </div>
+                <div class="char-counter">{{ newTask.description.length }}/250 characters</div>
+              </div>
+
+              <div class="form-field">
+                <label>Assign To <span class="required-star">*</span></label>
+                <div class="field-wrapper">
+                  <i class="fas fa-user field-icon"></i>
+                  <select v-model="newTask.user_id">
+                    <option value="">Select Employee</option>
+                    <option v-for="emp in filteredEmployeesDropdown" :key="emp.id" :value="emp.id">
+                      {{ emp.name }} ({{ emp.department }})
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label>Due Date <span class="required-star">*</span></label>
+                <div class="field-wrapper">
+                  <i class="fas fa-calendar-alt field-icon"></i>
+                  <input type="date" v-model="newTask.due_date" :min="minDate" />
+                </div>
+              </div>
+
+              <div class="form-field full-width">
+                <label>Modules</label>
+                <div class="field-wrapper">
+                  <i class="fas fa-cube field-icon"></i>
+                  <input
+                    type="text"
+                    v-model="newTask.modules"
+                    placeholder="Module names (comma separated)"
+                    maxlength="250"
+                  />
+                </div>
+                <div class="char-counter">{{ newTask.modules.length }}/250 characters</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer-premium">
+            <button class="btn-cancel-premium" @click="closeAssignTaskModal">
+              <i class="fas fa-times"></i> Cancel
             </button>
-            <button class="btn btn-secondary" @click="closeAssignTaskModal">
-            <i class="fas fa-times-circle"></i> Cancel
+            <button class="btn-submit-premium" @click="assignTask">
+              <i class="fas fa-save"></i> {{ isEditTaskMode ? 'Update Task' : 'Assign Task' }}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </transition>
 
     <!-- Assigned Report Modal -->
-<div 
-  class="modal-backdrop" 
-  v-if="showAssignedReport" 
-  @click.self="showAssignedReport = false"
->
-  <div class="modal-card report-modal">
-
-    <div class="header-row">
-      <h2>Assigned Task Report</h2>
-
-      <button 
-        class="btn btn-secondary"
-        @click="showAssignedReport = false"
-      >
-       <i class="fas fa-times-circle"></i> Close
-      </button>
-    </div>
-
-    <!-- Filters -->
-    <div class="filter-bar">
-
-      <input 
-        type="text"
-        v-model="reportSearch"
-        placeholder="Search..."
-        class="filter-input"
-      />
-
-      <select v-model="reportFilters.status" class="filter-input">
-        <option value="">All Status</option>
-        <option>Pending</option>
-        <option>In Progress</option>
-        <option>Completed</option>
-      </select>
-
-      <input 
-        type="date"
-        v-model="reportFilters.date"
-        class="filter-input"
-      />
-
-    </div>
-
-    <!-- Excel Table -->
-    <div class="table-wrapper">
-
-      <table class="excel-table">
-        <thead>
-          <tr>
-              <th>SR No.</th>
-            <th>Task</th>
-            <th>Summary</th>
-            <th>Assigned To</th>
-            <th>Department</th>
-            <th>Due Date</th>
-            <th>Comments</th>
-            <th>Completed at</th>
-            <th>Status</th>
+    <transition name="modal-fade">
+      <div class="modal-backdrop" v-if="showAssignedReport" @click.self="showAssignedReport = false">
+        <div class="premium-modal report-modal" @click.stop>
+          <div class="modal-decoration"></div>
           
-          </tr>
-        </thead>
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="header-text">
+              <h2>Assigned Task Report</h2>
+              <p>Overview of all assigned tasks</p>
+            </div>
+            <button class="close-btn-premium" @click="showAssignedReport = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
-        <tbody>
-          <tr 
-    v-for="(task, index) in filteredAssignedReports" 
-    :key="task.id"
-  >
-           <td>{{ index + 1 }}</td>
-            <td>{{ task.name }}</td>
-            <td>{{ task.summary }}</td>
-            <td>{{ task.username }}</td>
-            <td>{{ task.department }}</td>
-            <td>{{ task.date }}</td>
-            <td>{{ task.comment }}</td>
-            <td>{{ task.completed_at }}</td>
-            <td>
-              <span class="status" :class="task.status.toLowerCase()">
-                {{ task.status }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
+          <div class="modal-body-premium report-body">
+            <div class="report-filters">
+              <div class="search-wrapper-small">
+                <i class="fas fa-search"></i>
+                <input type="text" v-model="reportSearch" placeholder="Search tasks..." />
+              </div>
+              <select v-model="reportFilters.status" class="filter-select-small">
+                <option value="">All Status</option>
+                <option>Pending</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+              </select>
+              <input type="date" v-model="reportFilters.date" class="filter-date-small" />
+            </div>
 
-      </table>
+            <div class="table-wrapper-premium">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Task</th>
+                    <th>Summary</th>
+                    <th>Assigned To</th>
+                    <th>Assign By</th>
+                    <th>Department</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(task, index) in filteredAssignedReports" :key="task.id">
+                    <td class="task-title-cell">{{ index + 1 }}</td>
+                    <td class="task-title-cell">{{ task.name }}</td>
+                    <td class="summary-cell">{{ truncateText(task.summary, 60) }}</td>
+                    <td>{{ task.username }}</td>
+                    <td>{{ task.assign_by_name || task.manager_name || loggedUserName }}</td>
+                    <td><span class="dept-badge">{{ task.department }}</span></td>
+                    <td>{{ task.date }}</td>
+                    <td>
+                      <span :class="['status-badge-premium small', getStatusClass(task.status)]">
+                        {{ task.status }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr v-if="filteredAssignedReports.length === 0">
+                    <td colspan="8" class="empty-state-cell">
+                      <div class="empty-state-small">
+                        <i class="fas fa-inbox"></i>
+                        <p>No assigned tasks found</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-    </div>
-
-  </div>
-</div>
-
+          <div class="modal-footer-premium">
+            <button class="btn-submit-premium" @click="showAssignedReport = false">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -343,29 +475,43 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
+
 export default {
   components: { Sidebar },
   data() {
     const today = new Date().toISOString().split('T')[0]
+    
+    // Parse user data from localStorage
+    let loggedUser = null
+    let loggedUserName = 'Ajay'
+    let loggedUserId = null
+    
+    try {
+      const userData = localStorage.getItem('user')
+      if (userData) {
+        loggedUser = JSON.parse(userData)
+        loggedUserName = loggedUser.name || 'Ajay'
+        loggedUserId = loggedUser.id || null
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+    }
+    
     return {
       showAssignedReport: false,
-
-reportSearch: '',
-
-reportFilters: {
-  status: '',
-  date: ''
-},
+      reportSearch: '',
+      reportFilters: { status: '', date: '' },
       isEditTaskMode: false,
-editTaskId: null,
-      managerName: localStorage.getItem('user_name') || 'Assigned',
+      editTaskId: null,
+      managerName: loggedUserName,
+      loggedUserId: loggedUserId,
+      loggedUserName: loggedUserName,
       selectedReport: null,
       showAssignTaskModal: false,
-      visibleCount: 99,
+      visibleCount: 12,
       minDate: today,
-      filters: { name: '', date: today, month: (new Date().getMonth() + 1).toString(), status: '', search: '' },
+      filters: { name: '', date: '', month: (new Date().getMonth() + 1).toString(), status: '', search: '' },
       tasks: [],
       employeeList: [],
       employeesDropdown: [],
@@ -389,82 +535,60 @@ editTaskId: null,
     }
   },
   computed: {
-filteredAssignedReports() {
+    pendingTasks() {
+      return this.reports.filter(r => r.status === 'Pending').length
+    },
+    inProgressTasks() {
+      return this.reports.filter(r => r.status === 'In Progress').length
+    },
+    completedTasks() {
+      return this.reports.filter(r => r.status === 'Completed').length
+    },
+    filteredAssignedReports() {
+      const today = new Date()
+      const lastYear = new Date()
+      lastYear.setFullYear(today.getFullYear() - 1)
 
-  const today = new Date()
-
-  const lastYear = new Date()
-  lastYear.setFullYear(today.getFullYear() - 1)
-
-  return this.tasks
-    .map(task => {
-
-      const isManagerAssigned =
-        task.assigned_by_manager === true ||
-        (task.assigned_by && task.assigned_by !== task.user_id)
-
-      return {
-        id: task.id,
-        username: task.user?.name || 'Unknown',
-        name: task.title,
-        date: task.due_date,
-        department: task.user?.department || 'Unknown',
-        status: task.status || 'Pending',
-        modules: task.modules || '',
-        comment: task.comment || '-',
-         summary: task.description || '-',
-        completed_at: task.completed_at || 'Not completed',
-        priority: task.priority || '',
-        manager_name: task.manager_name || this.managerName,
-        assigned_by_manager: isManagerAssigned
-      }
-
-    })
-    .filter(task => {
-
-      const taskDate = new Date(task.date)
-
-      // ✅ Last year filter
-      const lastYearMatch = taskDate >= lastYear
-
-      // ✅ Only Assigned Tasks
-      const assignedMatch = task.priority === 'Task Assigned'
-
-      // ✅ Search
-      const search = this.reportSearch.toLowerCase()
-
-      const searchMatch =
-        !search ||
-        task.name.toLowerCase().includes(search) ||
-        task.username.toLowerCase().includes(search) ||
-        task.department.toLowerCase().includes(search)
-
-      const statusMatch =
-        !this.reportFilters.status ||
-        task.status === this.reportFilters.status
-
-      return lastYearMatch && assignedMatch && searchMatch && statusMatch
-    })
-},
-    wordCount() {
-    if (!this.newTask.title) return 0;
-    return this.newTask.title.trim().split(/\s+/).length;
-  },
-    // ✅ Hide employees from "Ownership" department in both dropdowns
+      return this.tasks
+        .map(task => {
+          const isManagerAssigned = task.assigned_by_manager === true || (task.assigned_by && task.assigned_by !== task.user_id)
+          return {
+            id: task.id,
+            username: task.user?.name || 'Unknown',
+            name: task.title,
+            date: task.due_date,
+            department: task.user?.department || 'Unknown',
+            status: task.status || 'Pending',
+            modules: task.modules || '',
+            comment: task.comment || '-',
+            summary: task.description || '-',
+            completed_at: task.completed_at || 'Not completed',
+            priority: task.priority || '',
+            manager_name: task.manager_name || this.managerName,
+            assign_by_name: task.assign_by_name || task.manager_name || this.managerName,
+            assigned_by_manager: isManagerAssigned
+          }
+        })
+        .filter(task => {
+          const taskDate = new Date(task.date)
+          const lastYearMatch = taskDate >= lastYear
+          const assignedMatch = task.priority === 'Task Assigned'
+          const search = this.reportSearch.toLowerCase()
+          const searchMatch = !search || task.name.toLowerCase().includes(search) || task.username.toLowerCase().includes(search)
+          const statusMatch = !this.reportFilters.status || task.status === this.reportFilters.status
+          return lastYearMatch && assignedMatch && searchMatch && statusMatch
+        })
+    },
     filteredEmployeesDropdown() {
       return this.employeesDropdown.filter(emp => emp.department !== 'Ownership')
     },
     filteredEmployeeList() {
       return this.employeeList.filter(emp => emp.department !== 'Ownership' && emp.name)
     },
-
     reports() {
       return this.tasks
         .map(task => {
-          const isManagerAssigned =
-            task.assigned_by_manager === true ||
-            (task.assigned_by && task.assigned_by !== task.user_id)
-
+          const isManagerAssigned = task.assigned_by_manager === true || (task.assigned_by && task.assigned_by !== task.user_id)
           return {
             id: task.id,
             username: task.user?.name || 'Unknown',
@@ -476,9 +600,10 @@ filteredAssignedReports() {
             comment: task.comment || '',
             modules: task.modules || 'N/A',
             completed_at: task.completed_at || 'Not completed',
-              priority: task.priority || '',
+            priority: task.priority || '',
             assigned_by_manager: isManagerAssigned,
-            manager_name: isManagerAssigned ? (task.manager_name || this.managerName) : null
+            manager_name: isManagerAssigned ? (task.manager_name || this.managerName) : null,
+            assign_by_name: task.assign_by_name || task.manager_name || this.loggedUserName
           }
         })
         .filter(task => {
@@ -486,86 +611,83 @@ filteredAssignedReports() {
           const dateMatch = !this.filters.date || task.date === this.filters.date
           const monthMatch = !this.filters.month || new Date(task.date).getMonth() + 1 === parseInt(this.filters.month)
           let statusMatch = true
-
-if (this.filters.status === 'Assigned') {
-  statusMatch = task.priority === 'Task Assigned'
-} else if (this.filters.status) {
-  statusMatch =
-    task.status &&
-    task.status.toLowerCase() === this.filters.status.toLowerCase()
-}
-
-
+          if (this.filters.status === 'Assigned') {
+            statusMatch = task.priority === 'Task Assigned'
+          } else if (this.filters.status) {
+            statusMatch = task.status && task.status.toLowerCase() === this.filters.status.toLowerCase()
+          }
           const searchText = this.filters.search.trim().toLowerCase()
           const searchMatch = !searchText ||
             task.name.toLowerCase().includes(searchText) ||
             task.summary.toLowerCase().includes(searchText) ||
-            task.modules.toLowerCase().includes(searchText) ||
             task.username.toLowerCase().includes(searchText) ||
             task.department.toLowerCase().includes(searchText)
-
           return nameMatch && dateMatch && monthMatch && statusMatch && searchMatch
         })
     },
-
     visibleReports() {
       return this.reports.slice(0, this.visibleCount)
     }
   },
   methods: {
+    truncateText(text, length) {
+      if (!text) return ''
+      return text.length > length ? text.substring(0, length) + '...' : text
+    },
+    getStatusClass(status) {
+      const s = (status || '').toLowerCase()
+      if (s === 'completed') return 'completed'
+      if (s === 'in progress') return 'in-progress'
+      return 'pending'
+    },
+    getStatusIcon(status) {
+      const s = (status || '').toLowerCase()
+      if (s === 'completed') return 'fas fa-check-circle'
+      if (s === 'in progress') return 'fas fa-spinner fa-pulse'
+      return 'fas fa-clock'
+    },
     editTask(report) {
-  // Pre-fill Assign Task modal with selected report
-  this.newTask = {
-    title: report.name,
-    description: report.summary,
-    user_id: this.employeesDropdown.find(emp => emp.name === report.username)?.id || '',
-    due_date: report.date,
-    modules: report.modules,
-    status: report.status || 'Pending',
-  }
-
-  this.showAssignTaskModal = true
-  this.isEditTaskMode = true
-  this.editTaskId = report.id
-},
-
-deleteTask(id) {
-  if (confirm('Are you sure you want to delete this task?')) {
-    axios.delete(`https://employees.archenterprises.co.in/api/api/delete-task/${id}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(() => {
-        toastSuccess('Task deleted successfully!')
-        this.fetchReports()
-      })
-      .catch(err => {
-        console.error('Error deleting task:', err)
-        toastSuccess('Failed to delete task!')
-      })
-  }
-},
+      this.newTask = {
+        title: report.name,
+        description: report.summary !== 'No summary provided.' ? report.summary : '',
+        user_id: this.employeesDropdown.find(emp => emp.name === report.username)?.id || '',
+        due_date: report.date,
+        modules: report.modules !== 'N/A' ? report.modules : '',
+        status: report.status || 'Pending',
+      }
+      this.showAssignTaskModal = true
+      this.isEditTaskMode = true
+      this.editTaskId = report.id
+    },
+    deleteTask(id) {
+      if (confirm('Are you sure you want to delete this task?')) {
+        axios.delete(`https://employees.archenterprises.co.in/api/api/delete-task/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        .then(() => {
+          toastSuccess('Task deleted successfully!')
+          this.fetchReports()
+        })
+        .catch(err => {
+          console.error('Error deleting task:', err)
+          toastError('Failed to delete task!')
+        })
+      }
+    },
     fetchEmployees() {
       axios.get('https://employees.archenterprises.co.in/api/api/users', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
-        .then(res => {
-          this.employeesDropdown = res.data
-            .filter(user => user.id && user.name && user.department !== 'Ownership') // ✅ filter applied here too
-            .map(user => ({
-              id: user.id,
-              name: user.name,
-              department: user.department
-            }))
-        })
-        .catch(err => {
-          console.error('Error fetching employees:', err)
-          this.employeesDropdown = []
-        })
+      .then(res => {
+        this.employeesDropdown = res.data
+          .filter(user => user.id && user.name && user.department !== 'Ownership')
+          .map(user => ({ id: user.id, name: user.name, department: user.department }))
+      })
+      .catch(err => console.error('Error fetching employees:', err))
     },
-
     openModal(report) { this.selectedReport = report },
     closeModal() { this.selectedReport = null },
-    loadMore() { this.visibleCount += 99 },
+    loadMore() { this.visibleCount += 12 },
     clearFilters() {
       this.filters = { name: '', date: '', month: '', status: '', search: '' }
     },
@@ -574,7 +696,12 @@ deleteTask(id) {
       this.isSidebarVisible = !this.isMobile
     },
     toggleSidebar() { this.isSidebarVisible = !this.isSidebarVisible },
-    openAssignTaskModal() { this.showAssignTaskModal = true },
+    openAssignTaskModal() { 
+      this.isEditTaskMode = false
+      this.editTaskId = null
+      this.resetNewTask()
+      this.showAssignTaskModal = true 
+    },
     closeAssignTaskModal() { this.showAssignTaskModal = false; this.resetNewTask() },
     resetNewTask() {
       this.newTask = {
@@ -586,51 +713,51 @@ deleteTask(id) {
         status: 'Pending'
       }
     },
-
-   assignTask() {
-  if (!this.newTask.title || !this.newTask.user_id || !this.newTask.due_date) {
-    toastWarning("please fill all required fields!")
-    return
-  }
-
-  const url = this.isEditTaskMode
-    ? `https://employees.archenterprises.co.in/api/api/update-task/${this.editTaskId}`
-    : 'https://employees.archenterprises.co.in/api/api/assign-task'
-
-  const method = this.isEditTaskMode ? 'put' : 'post'
-
-  axios[method](url, this.newTask, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  })
-    .then(() => {
-      toastSuccess(this.isEditTaskMode ? "Task updated successfully!" : "Task assigned successfully!")
-      this.fetchReports()
-      this.closeAssignTaskModal()
-      this.isEditTaskMode = false
-      this.editTaskId = null
-    })
-    .catch(err => {
-      console.error(err)
-      toastError("error saving task!")
-    })
-},
-
-
+    assignTask() {
+      if (!this.newTask.title || !this.newTask.user_id || !this.newTask.due_date) {
+        toastWarning("Please fill all required fields!")
+        return
+      }
+      // Add logged user info to task data
+      const taskData = {
+        ...this.newTask,
+        assigned_by: this.loggedUserId,
+        assign_by_name: this.loggedUserName,
+        manager_name: this.loggedUserName
+      }
+      
+      const url = this.isEditTaskMode
+        ? `https://employees.archenterprises.co.in/api/api/update-task/${this.editTaskId}`
+        : 'https://employees.archenterprises.co.in/api/api/assign-task'
+      const method = this.isEditTaskMode ? 'put' : 'post'
+      axios[method](url, taskData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(() => {
+        toastSuccess(this.isEditTaskMode ? "Task updated successfully!" : "Task assigned successfully!")
+        this.fetchReports()
+        this.closeAssignTaskModal()
+      })
+      .catch(err => {
+        console.error(err)
+        toastError("Error saving task!")
+      })
+    },
     fetchReports() {
       axios.get('https://employees.archenterprises.co.in/api/api/employee-reports', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
-        .then(response => {
-          this.tasks = response.data
-          const namesSet = new Set()
-          this.tasks.forEach(task => {
-            if (task.user && task.user.name && task.user.department !== 'Ownership') {
-              namesSet.add(task.user.name)
-            }
-          })
-          this.employeeList = Array.from(namesSet).map(name => ({ name }))
+      .then(response => {
+        this.tasks = response.data
+        const namesSet = new Set()
+        this.tasks.forEach(task => {
+          if (task.user && task.user.name && task.user.department !== 'Ownership') {
+            namesSet.add(task.user.name)
+          }
         })
-        .catch(error => { console.error(error) })
+        this.employeeList = Array.from(namesSet).map(name => ({ name }))
+      })
+      .catch(error => { console.error(error) })
     }
   },
   mounted() {
@@ -638,822 +765,1001 @@ deleteTask(id) {
     window.addEventListener('resize', this.checkIfMobile)
     this.fetchReports()
     this.fetchEmployees()
+    const token = localStorage.getItem('token')
+    if (!token) this.$router.push('/auth')
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile)
   }
 }
 </script>
 
-
-
-
-
-
-
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-/* work report */
-.head-title{
-      color: white;
-    display: flex;
-    gap: 7px;
-    text-decoration: none;
-font-family: cursive;
-    align-items: center; width: 100%;
-}
-.edit-task-btn{
-  background-color: var(--primary);
-    color: white;
-    padding: 5px 12px;
-    font-size: 11px;
-    border-radius: 5px;
-    font-weight: 600;
-    margin-right: 24px;
-}
-.delete-task-btn{
-  background-color: #ff0018;
-    color: white;
-    padding: 5px 12px;
-    font-size: 11px;
-    border-radius: 5px;
-    font-weight: 600;
-    margin-right: 24px;
-}
-.search-group {
-  position: relative;
-  width: 100%;
-  max-width: 400px; /* Adjust as needed */
-  margin: 0 auto;
+
+/* Variables */
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
 }
 
-.input-bar {
-  width: 100%;
-  padding: 12px 45px 12px 15px; /* Space for the icon */
-  border-radius: 25px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.input-bar:focus {
-  border-color: #4A90E2;
-  box-shadow: 0 4px 12px rgba(74,144,226,0.3);
-  outline: none;
-}
-
-.search-icon {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #aaa;
-  font-size: 18px;
-  pointer-events: none;
-  transition: color 0.3s ease;
-}
-
-.input-bar:focus + .search-icon {
-  color: #4A90E2;
-}
-
-.logo-img {
-  height: 70px;
-}
-.manager-tag {
-  background-color: var(--primary);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 10px;
-  margin-left: 8px;
-  display: inline-block;
-}
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4); /* Darker backdrop */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
-}
-
-
-.btn-load-task{
-  background-color: var(--text)!important ;
-    color: #fff!important;
-   width: 84px !important;
-    font-size: 0.8rem!important ;
-}
-.report-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.report-card {
-  width: calc(33.333% - 16px);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.5s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.load-more-container {
-  width: 100%;
-  text-align: center;
-  margin-top: 20px;
-}
-
-.load-more-btn {
-  padding: 10px 20px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.load-more-btn:hover {
-  background-color: #45a049;
-}
-.filter-bar {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 20px;
-  padding: 10px 0;
-}
-
-.filter-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
-.filter-input {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 14px;
-  min-width: 160px;
-}
-
-.mobile-menu-icon {
-  font-size: 22px;
-  margin-left: 10px;
-  cursor: pointer;
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-icon {
-    display: inline-block;
-  }
-
-  .sidebar {
-    position: absolute;
-    z-index: 1000;
-    width: 240px;
-    height: 100vh;
-    background-color: var(--text);
-  }
-
-  .expanded-content {
-    margin-left: 0 !important;
-    transition: margin 0.3s ease-in-out;
-  }
-}
-
-.status {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background-color: orange;
-  font-size: 9px;
-  text-transform: uppercase;
-  font-weight: bold;
-  color: white;
-}
-
-.status.completed {
-  background-color: #28a745;
-}
-
-.status.in-progress {
-  background-color: #ffc107;
-}
-
-.status.pending {
-  background-color: #dc3545;
-}
-.report-container {
-     
-     padding: 30px 40px;
-         border-radius: 15px;
-  width: 100%;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f8fb;
-  min-height: 100vh;
-}
-
-.heading {
-  font-size: 28px;
-  text-align: center;
-  color: var(--text);
-  margin-bottom: 2rem;
-  font-weight: bold;
-}
-
-.report-grid {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.report-card {
-  background: linear-gradient(145deg, #ffffff, #e6ecf0);
-  border-radius: 16px;
-  width: 80%;
-  padding: 1.5rem;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease-in-out;
-  border-left: 6px solid #007bff;
-}
-
-.report-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-  border-left: 6px solid #00c292;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.report-card h3 {
+* {
   margin: 0;
-    text-transform: uppercase;
-  font-size: 13px;
-  color: var(--text);
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.report-card p {
-  margin: 6px 0;
-  font-size: 11px;
-  color: var(--text);
-}
-
-.summary {
-  margin-top: 10px;
-  /* font-style: italic; */
-  color: #020840;
-}
-
-/* ------------------------------------- */
-.password-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.password-wrapper input {
-  flex: 1;
-}
-
-.toggle-btn,
-.generate-btn {
-  padding: 6px 10px;
-  background-color: var(--primary);
-  border: none;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.toggle-btn i {
-  pointer-events: none;
-}
-
-.toggle-btn:hover,
-.generate-btn:hover {
-  background-color: var(--text);
-}
-
-.user-table td .btn-group {
-  display: flex;
-  gap: 0.5rem;
-}
-/* Layout */
 .layout {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text);
-}
-.company-name {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-}
-/* Header */
-.header {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, .3);
- background-color: var(--primary); 
-  color: white;
-  padding: 8px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.logo {
-  font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.menu-btn, .logout-btn {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.menu-btn {
-  background-color: #28a745;
-  color: white;
-  margin-right: 15px;
-}
-
-.menu-btn:hover {
-  background-color: #218838;
-}
-
-.logout-btn {
-  background-color: white;
-  color: #003977;
-  border: 2px solid #007bff;
-}
-
-.logout-btn:hover {
-  background-color: #e7f1ff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Main Content */
 .main-content {
   display: flex;
-  flex: 1;
-  padding: 30px;
   gap: 20px;
-}
-.main-content-work-report{
-   display: flex;
-  flex: 1;
-  padding: 0px !important;
-  gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
 }
 
-/* Sidebar */
-.sidebar {
-  background-color: #ffffff;
-  width: 220px;
-  padding: 25px 20px;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  font-weight: 600;
-  color: var(--text);
+.main-content-work-report {
+  flex: 1;
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+.report-container {
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Content Header */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.content-header-modern h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin: 0;
 }
 
-.sidebar li {
-  padding: 14px 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.register-btn-modern {
+  padding: 12px 24px;
+  background: var(--primary);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.sidebar li:hover {
-  background-color: var(--primary);
-  color: white;
+
+.register-btn-modern.secondary {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.register-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.pending {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+.stat-card.progress {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+}
+.stat-card.completed {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+}
+
+.stat-card i {
+  font-size: 32px;
+  color: var(--primary-color);
+}
+
+.stat-card.pending i { color: #d97706; }
+.stat-card.progress i { color: #4338ca; }
+.stat-card.completed i { color: #065f46; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 28px;
   font-weight: 700;
+  color: #1a1a2e;
 }
 
-/* Content Section */
-.content {
-     
-  flex: 1;
-  background-color: white;
-  padding: 30px 40px;
-  border-radius: 15px;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.08);
-  overflow-x: auto;
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
 }
 
-h2 {
-  margin-bottom: 30px;
-  color: var(--text);
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 21px;
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 8px;
+/* Search and Filter Section */
+.search-filter-section {
+  margin-bottom: 28px;
 }
 
-/* User Table */
-.user-table {
+.search-wrapper-modern {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.search-input-modern {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 12px;
+  padding: 14px 16px 14px 45px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
 }
 
-.user-table th,
-.user-table td {
-  padding: 14px 20px;
-  text-align: left;
-  font-size: 16px;
-  color: var(--text);
+.search-input-modern:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.user-table th {
-  background-color: #f8f9fa;
-  font-weight: 700;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
+.filter-group-modern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.user-table tbody tr {
-  background-color: #fefefe;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-  border-radius: 10px;
-  transition: transform 0.2s ease;
+.filter-select, .filter-date {
+  padding: 10px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+  flex: 1;
+  min-width: 130px;
 }
 
-.user-table tbody tr:hover {
-  background-color: #e9f5ff;
-  transform: translateX(5px);
+.filter-select:focus, .filter-date:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
-.user-table tbody td {
+.clear-filter-btn {
+  padding: 10px 20px;
+  background: #f3f4f6;
   border: none;
-  vertical-align: middle;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Footer */
-.footer {
-  background-color: #343a40;
+.clear-filter-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Report Cards Grid - 2 cards per row properly */
+.report-grid-premium {
+  width: 100%;
+}
+
+.cards-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+/* Report Card */
+.report-card-premium {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-card-premium:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Assigned task card styling */
+.report-card-premium.assigned-task-card {
+  border-left: 4px solid var(--primary-color);
+  background: linear-gradient(135deg, #ffffff, #f8f9ff);
+}
+
+.assigned-badge {
+  /* position: absolute; */
+  top: 12px;
+  right: 12px;
+  background: var(--primary);
   color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.card-accent.pending { background: var(--warning); }
+.card-accent.in-progress { background: var(--info); }
+.card-accent.completed { background: var(--success); }
+
+.card-header-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 20px 12px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-info {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.task-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+}
+
+.header-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 6px 0;
+}
+
+.meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.manager-badge, .date-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge-premium.completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-premium.in-progress {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.status-badge-premium.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.card-body-premium {
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: #4b5563;
+}
+
+.info-row i {
+  width: 18px;
+  color: var(--primary-color);
+  margin-top: 2px;
+}
+
+.info-row.summary {
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 0;
+}
+
+.card-footer-premium {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 18px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.action-edit, .action-delete {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+}
+
+.action-edit {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.action-edit:hover {
+  color: rgb(5, 3, 3);
+}
+
+.action-delete {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.action-delete:hover {
+  color: rgb(5, 1, 1);
+}
+
+/* Load More Button */
+.load-more-wrapper {
   text-align: center;
-  padding: 15px 0;
+  margin-top: 28px;
+}
+
+.load-more-btn-premium {
+  background: #f3f4f6;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 40px;
   font-size: 14px;
   font-weight: 500;
-  margin-top: auto;
-  letter-spacing: 0.6px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Modal Backdrop */
+.load-more-btn-premium:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+/* Modal Styles */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
-  width: 97vw;
-  height: 100vh;
-  background-color: #f0f2f5;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
-  padding: 0 15px;
+  z-index: 10000;
+  padding: 20px;
 }
 
-/* Modal Card */
-.modal-card {
-  background-color: white;
-  width: 68%;
-  border-radius: 20px;
-  padding: 40px 50px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-  max-height: 86vh;
-  overflow-y: auto;
-  animation: slideDown 0.4s ease forwards;
+.premium-modal {
   position: relative;
-
-  /* Hide scrollbar but allow scroll */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  background: white;
+  border-radius: 32px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-.modal-card::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+.premium-modal.detail-modal {
+  max-width: 650px;
 }
 
+.premium-modal.report-modal {
+  max-width: 1100px;
+}
 
-@keyframes slideDown {
+@keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-50px);
+    transform: scale(0.95) translateY(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
 }
 
-/* Modal Title */
-.modal-title {
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 35px;
-  color: var(--text);
-  letter-spacing: 1.3px;
+.modal-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary);
 }
 
-/* Form Layout */
-.attractive-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-/* Form Rows */
-.form-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.form-row .input-group {
-  flex: 1 1 48%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Full width input group */
-.input-group.full-width {
-  flex: 1 1 100%;
-}
-
-/* Input Group */
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
+.modal-header-premium {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 15px;
+  gap: 16px;
+  padding: 24px 28px;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.input-group input,
-.input-group select,
-.input-group textarea {
-  padding: 14px 18px;
-  border: 2px solid #ced4da;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
-}
-
-.input-group input:focus,
-.input-group select:focus,
-.input-group textarea:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
-  background-color: #f9fbff;
-}
-
-/* Textarea resize */
-.input-group textarea {
-  resize: vertical;
-  min-height: 56px;
-  font-family: inherit;
-}
-
-/* Modal Buttons */
-.modal-buttons {
+.header-icon-premium {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-text h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1a2e;
+}
+
+.header-text p {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.close-btn-premium {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.close-btn-premium:hover {
+  color: rgb(10, 4, 4);
+  transform: rotate(90deg);
+}
+
+.modal-body-premium {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  background: #fafbfc;
+}
+
+.modal-body-premium::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body-premium::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.modal-body-premium::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+/* Detail Grid */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-.btn {
-  /* flex: 1; */
-  padding: 14px 0;
-  font-weight: 700;
-  font-size: 1rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+.detail-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
 }
 
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-  width: 92px;
-  font-size: 0.9rem;
-  box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+.detail-item.full-width {
+  grid-column: span 2;
 }
 
-.btn-primary:hover {
-  background-color: var(--text);
-  box-shadow: 0 8px 18px rgba(0, 86, 179, 0.6);
+.detail-item i {
+  width: 20px;
+  color: var(--primary-color);
+  margin-top: 2px;
 }
 
-.btn-secondary {
-  background-color: var(--text);
-  color: white;
-  width: 92px;
-  font-size: 0.9rem;
-}
-
-.btn-secondary:hover {
-  background-color: var(--primary);
-}
-
-/* Fade Transition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.35s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-@media (max-width: 768px) {
-  .main-content {
-    flex-direction: column;
-    /* padding: 15px; */
-  }
-.report-container{
-  background-color: #f4f8fb00;
-}
-  .sidebar {
-    width: 100%;
-    margin-bottom: 20px;
-  }
-
-  .report-container {
-    padding: 15px;
-  }
-
-  .report-grid {
-    grid-template-columns: repeat(2, 1fr); /* 2 cards per row */
-  }
-
-  @media (max-width: 480px) {
-    .report-grid {
-      grid-template-columns: 1fr; /* fallback to 1 card per row on extra small screens */
-    }
-  }
-}
-
-
-/* Responsive */
-@media (max-width: 900px) {
-  .form-row .input-group {
-    flex: 1 1 100%;
-  }
-
-  .modal-card {
-    padding: 30px 25px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header {
-    flex-direction: row;
-    gap: 10px;
-  }
-  .menu-btn, .logout-btn {
-    width: 100%;
-  }
-}
-.attractive-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+.detail-item label {
+  font-size: 11px;
   font-weight: 600;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  user-select: none;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
 }
 
-.btn-primary.attractive-btn {
-  background-color: var(--text);
-  border: none;
-  
-  color: white;
+.detail-item p {
+  font-size: 14px;
+  color: #1a1a2e;
+  margin: 0;
 }
 
-.btn-primary.attractive-btn:hover {
-  background-color: #272626;
-  box-shadow: 0 4px 12px rgba(57, 58, 59, 0.6);
+/* Form Section */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.btn-danger.attractive-btn {
-  background-color: #dc3545;
-  border: none;
-  color: white;
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.btn-danger.attractive-btn:hover {
-  background-color: #bb2d3b;
-  box-shadow: 0 4px 12px rgba(220,53,69,0.6);
+.form-field.full-width {
+  grid-column: span 2;
 }
 
-.attractive-btn i {
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.required-star {
+  color: var(--danger);
+}
+
+.field-wrapper {
+  position: relative;
+}
+
+.field-wrapper .field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
   font-size: 14px;
 }
 
-.header-row{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
+.field-wrapper textarea + .field-icon {
+  top: 18px;
+  transform: none;
 }
 
-.header-actions{
-display:flex;
-gap:10px;
+.field-wrapper input,
+.field-wrapper select,
+.field-wrapper textarea {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: inherit;
 }
 
-.report-modal{
-width:95%;
-max-width:1400px;
+.field-wrapper textarea {
+  padding-top: 12px;
+  resize: vertical;
 }
 
-.table-wrapper{
-overflow:auto;
-margin-top:20px;
+.field-wrapper input:focus,
+.field-wrapper select:focus,
+.field-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.excel-table{
-width:100%;
-border-collapse:collapse;
-font-size:14px;
+.char-counter {
+  font-size: 11px;
+  text-align: right;
+  color: #6b7280;
 }
 
-.excel-table th{
-background:#f1f3f5;
-padding:12px;
-border:1px solid #ddd;
-text-align:left;
-font-weight:700;
+/* Modal Footer */
+.modal-footer-premium {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.excel-table td{
-padding:10px;
-border:1px solid #ddd;
+.btn-cancel-premium,
+.btn-submit-premium {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  border: none;
 }
 
-.excel-table tr:hover{
-background:#f8f9fa;
+.btn-cancel-premium {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
-.excel-table thead{
-position:sticky;
-top:0;
-z-index:10;
+.btn-cancel-premium:hover {
+  background: #e5e7eb;
+}
+
+.btn-submit-premium {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-submit-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Report Modal Specific */
+.report-body {
+  padding: 20px;
+}
+
+.report-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-wrapper-small {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-wrapper-small i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.search-wrapper-small input {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.filter-select-small,
+.filter-date-small {
+  padding: 10px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.report-table th {
+  background: #f8fafc;
+  padding: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
+  text-align: left;
+}
+
+.report-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.task-title-cell {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.summary-cell {
+  color: #6b7280;
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dept-badge {
+  padding: 3px 10px;
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border-radius: 20px;
+  font-size: 11px;
+}
+
+.status-badge-premium.small {
+  padding: 3px 10px;
+  font-size: 10px;
+}
+
+.empty-state-cell {
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-state-small {
+  color: #9ca3af;
+}
+
+.empty-state-small i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+/* Card Fade Animation */
+.card-fade-enter-active,
+.card-fade-leave-active {
+  transition: all 0.4s ease;
+}
+
+.card-fade-enter-from,
+.card-fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Modal Fade */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .cards-grid-two {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .report-container {
+    padding: 20px;
+  }
+
+  .content-header-modern {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-buttons {
+    flex-direction: column;
+  }
+
+  .register-btn-modern {
+    justify-content: center;
+  }
+
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filter-group-modern {
+    flex-direction: column;
+  }
+
+  .filter-select, .filter-date, .clear-filter-btn {
+    width: 100%;
+  }
+
+  .cards-grid-two {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .premium-modal {
+    max-width: 95%;
+  }
+
+  .modal-header-premium {
+    padding: 16px 20px;
+  }
+
+  .modal-body-premium {
+    padding: 16px;
+  }
+
+  .modal-footer-premium {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-item.full-width {
+    grid-column: span 1;
+  }
+
+  .report-filters {
+    flex-direction: column;
+  }
+
+  .report-table {
+    font-size: 11px;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 8px;
+  }
+
+  .summary-cell {
+    max-width: 120px;
+  }
 }
 </style>

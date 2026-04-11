@@ -69,7 +69,7 @@ import MyDsi from '../views/employee/MyDsi.vue'
 import Help from '../views/employee/Help.vue'
 import QuotationReport from '../views/QuotationReport.vue';
 import SalaryAdvances from '../views/SalaryAdvances.vue';
-
+import MySalaryAdvances from '../views/employee/MySalaryAdvances.vue';
 import MyProfile from '../views/employee/MyProfile.vue'
 
 
@@ -111,6 +111,7 @@ const routes = [
   { path: '/RecruitmentSection', name: 'RecruitmentSection', component: RecruitmentSection, meta: { requiresAuth: true, adminOnly:true, hideBell: true,  hideMenu: true, } },
   { path: '/ArchCalendar', name: 'ArchCalendar', component: ArchCalendar, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
 { path: '/salaryadvances', name: 'SalaryAdvances', component: SalaryAdvances, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
+{path: '/employee/mysalaryadvances', name: 'MySalaryAdvances', component: MySalaryAdvances, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
   {path: '/OfferLetter', name: 'OfferLetter', component: OfferLetter, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
   {path: '/JoiningLetter', name: 'JoiningLetter', component: JoiningLetter, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
 {path: '/SupplyItems', name: 'SupplyItems', component: SupplyItems, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},

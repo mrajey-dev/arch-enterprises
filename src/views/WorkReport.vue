@@ -102,15 +102,20 @@
             </div>
           </div>
 
-          <!-- Report Cards Grid -->
+          <!-- Report Cards Grid - 2 cards per row properly -->
           <div class="report-grid-premium">
-            <transition-group name="card-fade" tag="div" class="report-grid-premium">
+            <transition-group name="card-fade" tag="div" class="cards-grid-two">
               <div
                 class="report-card-premium"
+                :class="{ 'assigned-task-card': report.priority === 'Task Assigned' }"
                 v-for="report in visibleReports"
                 :key="report.id"
                 @click="openModal(report)"
               >
+                <!-- Assigned task badge -->
+                <div v-if="report.priority === 'Task Assigned'" class="assigned-badge">
+                  <i class="fas fa-tasks"></i> Assigned Task
+                </div>
                 <div class="card-accent" :class="report.status.toLowerCase()"></div>
                 <div class="card-header-premium">
                   <div class="header-info">
@@ -120,9 +125,6 @@
                     <div>
                       <h3>{{ report.name }}</h3>
                       <div class="meta-tags">
-                        <span v-if="report.assigned_by_manager" class="manager-badge">
-                          <i class="fas fa-user-tie"></i> {{ report.manager_name }}
-                        </span>
                         <span class="date-badge">
                           <i class="fas fa-calendar-alt"></i> {{ report.date }}
                         </span>
@@ -143,6 +145,11 @@
                   <div class="info-row">
                     <i class="fas fa-building"></i>
                     <span><strong>Department:</strong> {{ report.department }}</span>
+                  </div>
+                  <!-- Show Assign By only for assigned tasks -->
+                  <div class="info-row" v-if="report.priority === 'Task Assigned'">
+                    <i class="fas fa-user-check"></i>
+                    <span><strong>Assign By:</strong> {{ report.assign_by_name || '-' }}</span>
                   </div>
                   <div class="info-row summary">
                     <i class="fas fa-align-left"></i>
@@ -200,8 +207,10 @@
               <div class="detail-item">
                 <i class="fas fa-user-tie"></i>
                 <div>
-                  <label>Assigned By</label>
-                  <p>{{ selectedReport.manager_name || 'Admin' }}</p>
+                  <label>Assign By</label>
+                  <!-- Show Assign By only for assigned tasks -->
+                  <p v-if="selectedReport.priority === 'Task Assigned'">{{ selectedReport.assign_by_name || selectedReport.manager_name || loggedUserName }}</p>
+                  <p v-else>-</p>
                 </div>
               </div>
               <div class="detail-item">
@@ -414,6 +423,7 @@
                     <th>Task</th>
                     <th>Summary</th>
                     <th>Assigned To</th>
+                    <th>Assign By</th>
                     <th>Department</th>
                     <th>Due Date</th>
                     <th>Status</th>
@@ -421,10 +431,11 @@
                 </thead>
                 <tbody>
                   <tr v-for="(task, index) in filteredAssignedReports" :key="task.id">
-                    <td>{{ index + 1 }}</td>
+                    <td class="task-title-cell">{{ index + 1 }}</td>
                     <td class="task-title-cell">{{ task.name }}</td>
                     <td class="summary-cell">{{ truncateText(task.summary, 60) }}</td>
                     <td>{{ task.username }}</td>
+                    <td>{{ task.assign_by_name || task.manager_name || loggedUserName }}</td>
                     <td><span class="dept-badge">{{ task.department }}</span></td>
                     <td>{{ task.date }}</td>
                     <td>
@@ -434,7 +445,7 @@
                     </td>
                   </tr>
                   <tr v-if="filteredAssignedReports.length === 0">
-                    <td colspan="7" class="empty-state-cell">
+                    <td colspan="8" class="empty-state-cell">
                       <div class="empty-state-small">
                         <i class="fas fa-inbox"></i>
                         <p>No assigned tasks found</p>
@@ -470,13 +481,32 @@ export default {
   components: { Sidebar },
   data() {
     const today = new Date().toISOString().split('T')[0]
+    
+    // Parse user data from localStorage
+    let loggedUser = null
+    let loggedUserName = 'Ajay'
+    let loggedUserId = null
+    
+    try {
+      const userData = localStorage.getItem('user')
+      if (userData) {
+        loggedUser = JSON.parse(userData)
+        loggedUserName = loggedUser.name || 'Ajay'
+        loggedUserId = loggedUser.id || null
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+    }
+    
     return {
       showAssignedReport: false,
       reportSearch: '',
       reportFilters: { status: '', date: '' },
       isEditTaskMode: false,
       editTaskId: null,
-      managerName: localStorage.getItem('user_name') || 'Assigned',
+      managerName: loggedUserName,
+      loggedUserId: loggedUserId,
+      loggedUserName: loggedUserName,
       selectedReport: null,
       showAssignTaskModal: false,
       visibleCount: 12,
@@ -535,6 +565,7 @@ export default {
             completed_at: task.completed_at || 'Not completed',
             priority: task.priority || '',
             manager_name: task.manager_name || this.managerName,
+            assign_by_name: task.assign_by_name || task.manager_name || this.managerName,
             assigned_by_manager: isManagerAssigned
           }
         })
@@ -571,7 +602,8 @@ export default {
             completed_at: task.completed_at || 'Not completed',
             priority: task.priority || '',
             assigned_by_manager: isManagerAssigned,
-            manager_name: isManagerAssigned ? (task.manager_name || this.managerName) : null
+            manager_name: isManagerAssigned ? (task.manager_name || this.managerName) : null,
+            assign_by_name: task.assign_by_name || task.manager_name || this.loggedUserName
           }
         })
         .filter(task => {
@@ -686,11 +718,19 @@ export default {
         toastWarning("Please fill all required fields!")
         return
       }
+      // Add logged user info to task data
+      const taskData = {
+        ...this.newTask,
+        assigned_by: this.loggedUserId,
+        assign_by_name: this.loggedUserName,
+        manager_name: this.loggedUserName
+      }
+      
       const url = this.isEditTaskMode
         ? `https://employees.archenterprises.co.in/api/api/update-task/${this.editTaskId}`
         : 'https://employees.archenterprises.co.in/api/api/assign-task'
       const method = this.isEditTaskMode ? 'put' : 'post'
-      axios[method](url, this.newTask, {
+      axios[method](url, taskData, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       .then(() => {
@@ -756,7 +796,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -766,7 +805,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .main-content-work-report {
@@ -982,11 +1020,15 @@ export default {
   background: #e5e7eb;
 }
 
-/* Report Cards Grid */
+/* Report Cards Grid - 2 cards per row properly */
 .report-grid-premium {
-  /* display: grid; */
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 20px;
+  width: 100%;
+}
+
+.cards-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
 }
 
 /* Report Card */
@@ -998,11 +1040,36 @@ export default {
   transition: all 0.3s ease;
   border: 1px solid #e5e7eb;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
 .report-card-premium:hover {
   transform: translateY(-5px);
   box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Assigned task card styling */
+.report-card-premium.assigned-task-card {
+  border-left: 4px solid var(--primary-color);
+  background: linear-gradient(135deg, #ffffff, #f8f9ff);
+}
+
+.assigned-badge {
+  /* position: absolute; */
+  top: 12px;
+  right: 12px;
+  background: var(--primary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .card-accent {
@@ -1094,6 +1161,7 @@ export default {
 
 .card-body-premium {
   padding: 16px 20px;
+  flex: 1;
 }
 
 .info-row {
@@ -1146,7 +1214,6 @@ export default {
 }
 
 .action-edit:hover {
-  /* background: var(--primary-color); */
   color: rgb(5, 3, 3);
 }
 
@@ -1156,7 +1223,6 @@ export default {
 }
 
 .action-delete:hover {
-  /* background: var(--danger); */
   color: rgb(5, 1, 1);
 }
 
@@ -1295,7 +1361,6 @@ export default {
 }
 
 .close-btn-premium:hover {
-  /* background: var(--danger); */
   color: rgb(10, 4, 4);
   transform: rotate(90deg);
 }
@@ -1609,8 +1674,9 @@ export default {
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .report-grid-premium {
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  .cards-grid-two {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
 }
 
@@ -1649,8 +1715,9 @@ export default {
     width: 100%;
   }
 
-  .report-grid-premium {
+  .cards-grid-two {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .premium-modal {
@@ -1695,5 +1762,4 @@ export default {
     max-width: 120px;
   }
 }
-
 </style>

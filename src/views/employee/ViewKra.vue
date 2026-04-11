@@ -176,7 +176,7 @@ export default {
         this.kras = res.data;
       } catch (error) {
         console.error('Failed to load KRAs:', error);
-        toastError('Failed to load KRAs');
+        toastError('No KRAs found for your account');
       }
     },
     logout() {

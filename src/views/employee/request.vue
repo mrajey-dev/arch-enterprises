@@ -340,7 +340,7 @@ export default {
         this.updateChart()
       } catch (error) {
         console.error('Fetch requests error:', error)
-        toastError('Failed to load requests')
+        toastError('No requests found for your account')
       }
     },
 

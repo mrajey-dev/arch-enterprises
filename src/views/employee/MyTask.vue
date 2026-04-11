@@ -24,7 +24,7 @@
               <i class="fas fa-plus-circle"></i> Add Task
             </button>
             <button
-              v-if="currentUser.department?.toLowerCase() === 'management'"
+              v-if="currentUser.department?.toLowerCase() === 'management' || currentUser.id === 107 || currentUser.id === 1"
               class="btn-secondary-modern"
               @click="goTo('employee/empworkreport')"
             >

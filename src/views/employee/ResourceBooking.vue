@@ -255,7 +255,7 @@ export default {
         })
         .catch(error => {
           console.error("Error fetching resources:", error);
-          toastError("Failed to load resources");
+          toastError("No resources found for your account");
         });
     },
 
@@ -265,7 +265,7 @@ export default {
         this.bookings = res.data
       } catch (e) {
         console.error('Fetch failed', e)
-        toastError('Failed to load bookings')
+        toastError(' No bookings found for your account')
       }
     },
 
