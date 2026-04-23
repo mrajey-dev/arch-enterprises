@@ -10,7 +10,7 @@ import RequestDesk from '../views/RequestDesk.vue'
 import RecruitmentSection from '../views/RecruitmentSection.vue'
 import ScheduleMeeting from '../views/ScheduleMeeting.vue'
 import SupplyItems from '../views/SupplyItems.vue';
-
+import sop from '../views/employee/sop.vue';
 
 
 
@@ -200,6 +200,12 @@ const routes = [
     name: 'FollowUp',
     component: FollowUp,
     meta: {requiresAuth: true, hideBell: true,  hideHeader: true }
+  },
+  { 
+    path: '/employee/sop',
+    name: 'sop',
+    component: sop,
+    meta: { requiresAuth: true}
   },
   { 
     path: '/employee/AmcRecord',

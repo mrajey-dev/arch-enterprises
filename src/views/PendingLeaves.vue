@@ -717,8 +717,8 @@ export default {
 }
 
 .action-btn.approve:hover:not(:disabled) {
-  background: var(--success);
-  color: white;
+  background: rgb(187, 224, 187);
+  color: rgb(0, 0, 0);
   transform: translateY(-2px);
 }
 

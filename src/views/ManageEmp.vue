@@ -205,12 +205,17 @@
                     </div>
 
                     <div class="form-field">
-                      <label>Salary</label>
-                      <div class="field-wrapper">
-                        <i class="fas fa-rupee-sign field-icon"></i>
-                        <input v-model="registerForm.keyResponsibility" @input="registerForm.keyResponsibility = registerForm.keyResponsibility.replace(/[^0-9]/g, '')" placeholder="Amount" />
-                      </div>
-                    </div>
+  <label>Salary</label>
+  <div class="field-wrapper">
+    <i class="fas fa-rupee-sign field-icon"></i>
+    <input 
+      v-model="registerForm.keyResponsibility" 
+      @input="registerForm.keyResponsibility = registerForm.keyResponsibility.replace(/[^0-9]/g, '')" 
+      placeholder="Amount" 
+      type="text"
+    />
+  </div>
+</div>
                   </div>
                 </div>
 
@@ -744,54 +749,55 @@ export default {
         password: ''
       };
     },
-    async handleRegister() {
-      if (this.nameError) {
-        toastWarning("Invalid name format");
-        return;
-      }
-      if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
-        toastWarning("Please upload at least one document");
-        return;
-      }
-      if (!this.validateForm()) return;
-      
-      this.loading = true;
-      try {
-        if (this.isEditMode) {
-          await axios.put(`https://employees.archenterprises.co.in/api/api/users/${this.editingId}`, {
-            username: this.registerForm.username,
-            handle: this.registerForm.handle,
-            email: this.registerForm.email.toLowerCase(),
-            gender: this.registerForm.gender,
-            department: this.registerForm.department,
-            city: this.registerForm.city,
-            address: this.registerForm.address,
-            mobile: this.registerForm.mobile,
-            secondaryContact: this.registerForm.secondaryContact,
-            birthDate: this.registerForm.birthDate,
-            bloodGroup: this.registerForm.bloodGroup,
-            keyResponsibility: this.registerForm.keyResponsibility
-          });
-          toastSuccess("User updated successfully!");
-        } else {
-          if (!this.registerForm.password) this.generatePassword();
-          await axios.post("https://employees.archenterprises.co.in/api/api/register", {
-            ...this.registerForm,
-            email: this.registerForm.email.toLowerCase()
-          }, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-          });
-          toastSuccess("Registration successful!");
-        }
-        this.showRegister = false;
-        this.resetForm();
-        this.fetchUsers();
-      } catch (error) {
-        toastError(error.response?.data?.message || "Operation failed");
-      } finally {
-        this.loading = false;
-      }
-    },
+  async handleRegister() {
+  if (this.nameError) {
+    toastWarning("Invalid name format");
+    return;
+  }
+  if (!this.isEditMode && Object.keys(this.typedDocuments).length === 0) {
+    toastWarning("Please upload at least one document");
+    return;
+  }
+  if (!this.validateForm()) return;
+  
+  this.loading = true;
+  try {
+    if (this.isEditMode) {
+      await axios.put(`https://employees.archenterprises.co.in/api/api/users/${this.editingId}`, {
+        username: this.registerForm.username,
+        handle: this.registerForm.handle,
+        email: this.registerForm.email.toLowerCase(),
+        gender: this.registerForm.gender,
+        department: this.registerForm.department,
+        city: this.registerForm.city,
+        address: this.registerForm.address,
+        mobile: this.registerForm.mobile,
+        secondaryContact: this.registerForm.secondaryContact,
+        birthDate: this.registerForm.birthDate,
+        bloodGroup: this.registerForm.bloodGroup,
+        keyResponsibility: this.registerForm.keyResponsibility ? String(this.registerForm.keyResponsibility) : '' // Convert to string
+      });
+      toastSuccess("User updated successfully!");
+    } else {
+      if (!this.registerForm.password) this.generatePassword();
+      await axios.post("https://employees.archenterprises.co.in/api/api/register", {
+        ...this.registerForm,
+        email: this.registerForm.email.toLowerCase(),
+        keyResponsibility: this.registerForm.keyResponsibility ? String(this.registerForm.keyResponsibility) : '' // Convert to string
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      toastSuccess("Registration successful!");
+    }
+    this.showRegister = false;
+    this.resetForm();
+    this.fetchUsers();
+  } catch (error) {
+    toastError(error.response?.data?.message || "Operation failed");
+  } finally {
+    this.loading = false;
+  }
+},
     validateForm() {
       const form = this.registerForm;
       if (!/^[A-Za-z ]+$/.test(form.username.trim())) {

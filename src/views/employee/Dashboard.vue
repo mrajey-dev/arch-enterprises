@@ -65,7 +65,16 @@
               <span class="progress-text">Manage customers & add PO</span>
             </div>
           </div>
-
+ <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/sop')">
+  <div class="new-tag">New</div>
+  <div class="card-icon crm-icon">
+    <i class="fas fa-file-alt"></i>
+  </div>
+  <div class="card-info">
+    <p class="label">SOP</p>
+    <span class="progress-text">Standard Operating Procedures</span>
+  </div>
+</div>
           <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/visitschedule')">
             <div class="card-icon visit-icon">
               <i class="fas fa-calendar-week"></i>
@@ -1901,4 +1910,25 @@ textarea {
     opacity: 0;
   }
 }
+.dashboard-card {
+  position: relative;  /* Ensure the card has relative positioning */
+  overflow: hidden;    /* Optional: keeps corners clean if tag extends */
+}
+
+.new-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #ff4d4f;  /* Red color for "New" */
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
 </style>

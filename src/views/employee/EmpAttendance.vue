@@ -26,9 +26,6 @@
           </div>
         </div>
 
-        <!-- Stats Cards -->
-   
-
         <!-- Daily Attendance View -->
         <div v-if="viewMode === 'day'" class="attendance-card-premium">
           <div class="card-header-premium">
@@ -68,7 +65,7 @@
                         {{ getStatusLabel(status) }}
                       </option>
                     </select>
-                  </td>
+                   </td>
                   <td data-label="Clock In" class="clock-cell">
                     <div v-if="user.status === 'Traveling'" class="travel-info">
                       <span class="travel-place">{{ user.travelFrom || '—' }}</span>
@@ -84,7 +81,7 @@
                         <i class="fas fa-star"></i> Early
                       </span>
                     </div>
-                  </td>
+                   </td>
                   <td data-label="Clock Out" class="clock-cell">
                     <div v-if="['Present', 'HalfDay', 'OnSite'].includes(user.status)">
                       <img
@@ -96,10 +93,10 @@
                       />
                     </div>
                     <span v-else>{{ user.clockOut || '—' }}</span>
-                  </td>
+                   </td>
                   <td data-label="Required Time">{{ user.requiredTime }}</td>
                   <td data-label="Actual Time" class="actual-time">{{ user.actualTime || '—' }}</td>
-                </tr>
+                 </tr>
               </tbody>
             </table>
           </div>
@@ -155,9 +152,10 @@
                 <li><span class="legend-box traveling"></span> Traveling</li>
                 <li><span class="legend-box leave"></span> Leave</li>
                 <li><span class="legend-box absent"></span> Absent</li>
+                <li><span class="legend-box missing"></span> Missing</li>
                 <li><span class="legend-box holiday"></span> Public Holiday</li>
               </ul>
-              <div class="stats-summary">
+              <!-- <div class="stats-summary">
                 <div class="stat-item">
                   <span>✅ Present:</span>
                   <strong>{{ statusCounts.Present || 0 }}</strong>
@@ -180,9 +178,13 @@
                 </div>
                 <div class="stat-item">
                   <span>❌ Absent:</span>
+                  <strong>{{ statusCounts.Absent || 0 }}</strong>
+                </div>
+                <div class="stat-item">
+                  <span>⚠️ Missing:</span>
                   <strong>{{ statusCounts.Missing || 0 }}</strong>
                 </div>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -505,85 +507,211 @@ export default {
         this.disableStatusSelect = false;
       }
     },
-    async fetchAttendance() {
-      const token = localStorage.getItem('token');
-      const payload = { name: this.user.name, month: this.currentMonth + 1, year: this.currentYear };
-      try {
-        const response = await axios.post('https://employees.archenterprises.co.in/api/api/attendance/monthly', payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        this.calendarData = this.generateCalendarFromStatus(response.data.data);
-      } catch (error) {
-        console.error('Error fetching monthly attendance:', error);
-      }
-    },
-    generateCalendarFromStatus(data) {
+   async fetchAttendance() {
+  const token = localStorage.getItem('token');
+  const name = encodeURIComponent(this.user.name);
+  const month = this.currentMonth + 1;
+  const year = this.currentYear;
+  
+  // Use the existing route pattern from your controller
+  const url = `https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`;
+  
+  try {
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    console.log('Monthly Attendance Response:', response.data);
+    
+    // Handle different response structures
+    let attendanceData = [];
+    if (response.data.data) {
+      attendanceData = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      attendanceData = response.data;
+    } else if (response.data.records) {
+      attendanceData = response.data.records;
+    }
+    
+    console.log('Processed attendance data:', attendanceData);
+    this.generateCalendarFromStatus(attendanceData);
+    
+  } catch (error) {
+    console.error('Error fetching monthly attendance:', error);
+    if (error.response) {
+      console.error('Error response:', error.response.data);
+      toastError(`Failed to fetch: ${error.response.data.message || 'Unknown error'}`);
+    } else {
+      toastError('Failed to fetch monthly attendance data');
+    }
+    this.generateCalendarFromStatus([]);
+  }
+},
+    generateCalendarFromStatus(attendanceData) {
       const targetMonth = this.currentMonth;
       const targetYear = this.currentYear;
-      const firstDay = new Date(targetYear, targetMonth, 1);
+      
+      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
       const totalDays = new Date(targetYear, targetMonth + 1, 0).getDate();
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const normalizeStatus = (status) => {
-        const map = { 'onsite': 'on-site', 'on site': 'on-site', 'halfday': 'half-day', 'half day': 'half-day' };
-        const lower = (status || '').toLowerCase();
-        return map[lower] || lower;
-      };
-      const statusMap = {};
-      const counts = { present: 0, 'on-site': 0, 'half-day': 0, traveling: 0, absent: 0, leave: 0 };
-      const publicHolidays = ['01-26', '05-01', '08-15'];
-      let missingCount = 0;
-      data.forEach(record => {
-        if (!record.status || record.status.trim().toUpperCase() === 'N/A') return;
-        const dateObj = new Date(record.date);
-        if (dateObj.getMonth() === targetMonth && dateObj.getFullYear() === targetYear) {
-          const day = dateObj.getDate();
-          const normalized = normalizeStatus(record.status);
-          if (normalized) {
-            statusMap[day] = normalized;
-            if (counts.hasOwnProperty(normalized)) counts[normalized]++;
-          }
-        }
-      });
-      this.statusCounts = {
-        Present: counts.present || 0,
-        OnSite: counts['on-site'] || 0,
-        HalfDay: counts['half-day'] || 0,
-        Traveling: counts.traveling || 0,
-        Absent: counts.absent || 0,
-        Leave: counts.leave || 0,
+      const startingDayOfWeek = firstDayOfMonth.getDay();
+      
+      const attendanceMap = new Map();
+      const statusCounts = {
+        Present: 0,
+        OnSite: 0,
+        HalfDay: 0,
+        Traveling: 0,
+        Leave: 0,
+        Absent: 0,
         Missing: 0
       };
-      const calendar = [];
-      let week = new Array(7).fill({ date: '', status: null });
-      let dayOfWeek = firstDay.getDay();
-      for (let i = 0; i < dayOfWeek; i++) {
-        week[i] = { date: '', status: null };
+      
+      if (attendanceData && Array.isArray(attendanceData)) {
+        attendanceData.forEach(record => {
+          if (!record.status || record.status.trim().toUpperCase() === 'N/A') return;
+          
+          const recordDate = new Date(record.date);
+          if (recordDate.getMonth() === targetMonth && recordDate.getFullYear() === targetYear) {
+            const day = recordDate.getDate();
+            let status = this.normalizeStatus(record.status);
+            
+            attendanceMap.set(day, {
+              status: status,
+              rawStatus: record.status,
+              hasData: true
+            });
+            
+            if (statusCounts.hasOwnProperty(status)) {
+              statusCounts[status]++;
+            }
+          }
+        });
       }
+      
+      const publicHolidays = ['01-26', '05-01', '08-15', '10-02', '12-25'];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const calendar = [];
+      let week = [];
+      
+      for (let i = 0; i < startingDayOfWeek; i++) {
+        week.push({ 
+          date: '', 
+          status: null, 
+          noStatusAndPast: false,
+          isPublicHoliday: false,
+          isWeekend: false,
+          fullDate: null
+        });
+      }
+      
       for (let day = 1; day <= totalDays; day++) {
         const cellDate = new Date(targetYear, targetMonth, day);
-        const status = statusMap[day] || null;
+        const attendance = attendanceMap.get(day);
         const isSunday = cellDate.getDay() === 0;
-        const mmdd = String(cellDate.getMonth() + 1).padStart(2, '0') + '-' + String(cellDate.getDate()).padStart(2, '0');
+        const isSaturday = cellDate.getDay() === 6;
+        const mmdd = String(cellDate.getMonth() + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
         const isHoliday = publicHolidays.includes(mmdd);
-        const isPastAndNoStatus = cellDate < today && !status && !isSunday && !isHoliday;
-        if (isPastAndNoStatus) missingCount++;
-        week[dayOfWeek] = { date: day, status, noStatusAndPast: isPastAndNoStatus, isPublicHoliday: isHoliday };
-        dayOfWeek++;
-        if (dayOfWeek === 7 || day === totalDays) {
-          calendar.push(week);
-          week = new Array(7).fill({ date: '', status: null });
-          dayOfWeek = 0;
+        
+        let status = null;
+        let noStatusAndPast = false;
+        
+        if (attendance && attendance.hasData) {
+          status = attendance.status;
+        } else {
+          const isPastDate = cellDate < today;
+          const isWeekday = !isSunday && !isSaturday;
+          
+          if (isPastDate && isWeekday && !isHoliday && !attendance) {
+            noStatusAndPast = true;
+            statusCounts.Missing++;
+          }
+        }
+        
+        week.push({
+          date: day,
+          status: status,
+          noStatusAndPast: noStatusAndPast,
+          isPublicHoliday: isHoliday,
+          isWeekend: isSunday || isSaturday,
+          fullDate: cellDate
+        });
+        
+        if (cellDate.getDay() === 6 || day === totalDays) {
+          while (week.length < 7) {
+            week.push({ 
+              date: '', 
+              status: null, 
+              noStatusAndPast: false,
+              isPublicHoliday: false,
+              isWeekend: false,
+              fullDate: null
+            });
+          }
+          calendar.push([...week]);
+          week = [];
         }
       }
-      this.statusCounts.Missing = missingCount;
-      return calendar;
+      
+      this.statusCounts = statusCounts;
+      this.calendarData = calendar;
+    },
+    normalizeStatus(status) {
+      if (!status) return null;
+      
+      const statusLower = status.toLowerCase().trim();
+      
+      const statusMap = {
+        'present': 'Present',
+        'on-site': 'OnSite',
+        'on site': 'OnSite',
+        'onsite': 'OnSite',
+        'half-day': 'HalfDay',
+        'half day': 'HalfDay',
+        'halfday': 'HalfDay',
+        'traveling': 'Traveling',
+        'leave': 'Leave',
+        'absent': 'Absent',
+        'missing': 'Missing'
+      };
+      
+      return statusMap[statusLower] || status;
     },
     getAttendanceClass(day) {
-      const statusClass = day.status ? `attendance-${day.status}` : '';
-      const redClass = day.noStatusAndPast ? 'attendance-missing' : '';
-      const holidayClass = day.isPublicHoliday ? 'public-holiday' : '';
-      return `${statusClass} ${redClass} ${holidayClass}`.trim();
+      if (!day || !day.date) return '';
+      
+      const classes = [];
+      
+      if (day.status) {
+        const statusClassMap = {
+          'Present': 'attendance-present',
+          'OnSite': 'attendance-on-site',
+          'HalfDay': 'attendance-half-day',
+          'Traveling': 'attendance-traveling',
+          'Leave': 'attendance-leave',
+          'Absent': 'attendance-absent',
+          'Missing': 'attendance-missing'
+        };
+        
+        if (statusClassMap[day.status]) {
+          classes.push(statusClassMap[day.status]);
+        }
+      }
+      
+      if (day.noStatusAndPast && !day.status) {
+        classes.push('attendance-missing');
+      }
+      
+      if (day.isPublicHoliday) {
+        classes.push('public-holiday');
+      }
+      
+      if (day.isWeekend && day.date && !day.isPublicHoliday && !day.status) {
+        classes.push('attendance-weekend');
+      }
+      
+      return classes.join(' ');
     },
     toggleView() {
       this.viewMode = this.viewMode === 'day' ? 'month' : 'day';
@@ -670,7 +798,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -680,7 +807,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .attendance-container {
@@ -755,61 +881,6 @@ export default {
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 20px;
-  transition: all 0.3s ease;
-  border-left: 4px solid;
-}
-
-.stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-}
-
-.stat-icon.green { background: #d1fae5; color: #10b981; }
-.stat-icon.orange { background: #fef3c7; color: #f59e0b; }
-.stat-icon.blue { background: #e0e7ff; color: #3b82f6; }
-.stat-icon.purple { background: #e0e7ff; color: #8b5cf6; }
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #6b7280;
-}
-
 /* Attendance Card */
 .attendance-card-premium, .calendar-card-premium {
   background: white;
@@ -869,8 +940,8 @@ export default {
 }
 
 .nav-btn:hover {
-  background: var(--primary-color);
-  color: white;
+  background: black;
+  color: rgb(255, 255, 255);
 }
 
 .month-year {
@@ -1025,10 +1096,14 @@ export default {
   border-bottom: 1px solid #e5e7eb;
   position: relative;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .calendar-cell:hover {
-  background: #fafbfc;
+  /* background: #b2ebef; */
+  transform: scale(1.1);
+  z-index: 1;
+  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
 }
 
 .calendar-date {
@@ -1040,14 +1115,39 @@ export default {
   color: #6b7280;
 }
 
-.attendance-present { background: #d1fae5; }
-.attendance-on-site { background: #e0e7ff; }
-.attendance-half-day { background: #fed7aa; }
-.attendance-traveling { background: #fef3c7; }
-.attendance-leave { background: #e0e7ff; }
-.attendance-absent { background: #fee2e2; }
-.attendance-missing { background: #ffe0e0 !important; }
-.public-holiday { background: #fff !important; border: 2px solid #58cc71; }
+/* Enhanced Attendance Status Colors */
+.attendance-present { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+.attendance-on-site { background: linear-gradient(135deg, #e0e7ff, #c7d2fe);  }
+.attendance-half-day { background: linear-gradient(135deg, #fed7aa, #fdba74); }
+.attendance-traveling { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+.attendance-leave { background: linear-gradient(135deg, #e9d5ff, #d8b4fe);  }
+.attendance-absent { background: linear-gradient(135deg, #fee2e2, #fecaca); border-left: 3px solid #ef4444; }
+.attendance-missing { background: linear-gradient(135deg, #ffe0e0, #ffc9c9) !important; border-left: 3px solid #dc2626; position: relative; }
+.attendance-missing::after {
+  content: "!";
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  background: #dc2626;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+.public-holiday { background: linear-gradient(135deg, #fff, #fef9c3) !important; border: 2px solid #58cc71; position: relative; }
+.public-holiday::before {
+  content: "🎉";
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  font-size: 12px;
+}
+.attendance-weekend { background: #f9fafb; opacity: 0.8; }
 
 /* Legend */
 .legend-container {
@@ -1086,12 +1186,13 @@ export default {
   border-radius: 4px;
 }
 
-.legend-box.present { background: #d1fae5; }
-.legend-box.on-site { background: #e0e7ff; }
-.legend-box.half-day { background: #fed7aa; }
-.legend-box.traveling { background: #fef3c7; }
-.legend-box.leave { background: #e0e7ff; }
-.legend-box.absent { background: #fee2e2; }
+.legend-box.present { background: #d1fae5; border-left: 3px solid #10b981; }
+.legend-box.on-site { background: #e0e7ff; border-left: 3px solid #3b82f6; }
+.legend-box.half-day { background: #fed7aa; border-left: 3px solid #f59e0b; }
+.legend-box.traveling { background: #fef3c7; border-left: 3px solid #d97706; }
+.legend-box.leave { background: #e9d5ff; border-left: 3px solid #8b5cf6; }
+.legend-box.absent { background: #fee2e2; border-left: 3px solid #ef4444; }
+.legend-box.missing { background: #ffe0e0; border-left: 3px solid #dc2626; }
 .legend-box.holiday { background: #fff; border: 2px solid #58cc71; }
 
 .stats-summary {
@@ -1305,9 +1406,6 @@ export default {
   }
   .toggle-view-btn {
     justify-content: center;
-  }
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
   .attendance-table-premium {
     min-width: 500px;

@@ -5448,17 +5448,17 @@ async reopenPo(poId) {
 
 
 validateEmail() {
-    const emailPattern =
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|co\.in|in|edu|gov|io|mg)$/;
+  const emailPattern =
+    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-    if (!this.customer.email) {
-      this.emailError = '';
-    } else if (!emailPattern.test(this.customer.email)) {
-      this.emailError = 'Invalid Email';
-    } else {
-      this.emailError = '';
-    }
-  },
+  if (!this.customer.email) {
+    this.emailError = '';
+  } else if (!emailPattern.test(this.customer.email)) {
+    this.emailError = 'Invalid Email';
+  } else {
+    this.emailError = '';
+  }
+},
   formatPlusNumber(value) {
     if (!value) return '';
     // Allow + only at first position, remove all other non-digits

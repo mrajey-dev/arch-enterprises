@@ -189,7 +189,7 @@
 
                 <div class="form-field">
                   <label><i class="fas fa-calendar-alt"></i> Date of Birth</label>
-                  <input type="date" v-model="form.dateofbirth" />
+                  <input type="date" v-model="form.dateofbirth" disabled class="readonly-field" />
                 </div>
 
                 <div class="form-field">
@@ -457,62 +457,88 @@ export default {
       this.passwordError = ''
     },
 
-    async updateProfile() {
-      try {
-        this.passwordError = ''
+  async updateProfile() {
+  try {
+    this.passwordError = ''
 
-        if (this.form.new_password || this.form.new_password_confirmation || this.form.current_password) {
-          if (!this.form.current_password || !this.form.new_password || !this.form.new_password_confirmation) {
-            this.passwordError = 'All password fields are required to change password.'
-            return
-          }
-          if (this.form.new_password !== this.form.new_password_confirmation) {
-            this.passwordError = 'New passwords do not match.'
-            return
-          }
-        }
+    if (this.form.new_password || this.form.new_password_confirmation || this.form.current_password) {
+      if (!this.form.current_password || !this.form.new_password || !this.form.new_password_confirmation) {
+        this.passwordError = 'All password fields are required to change password.'
+        return
+      }
+      if (this.form.new_password !== this.form.new_password_confirmation) {
+        this.passwordError = 'New passwords do not match.'
+        return
+      }
+    }
 
-        this.form.instagram = this.normalizeUrl(this.form.instagram)
-        this.form.portfolio = this.normalizeUrl(this.form.portfolio)
-        this.form.youtube = this.normalizeUrl(this.form.youtube)
-        this.form.linkedin = this.normalizeUrl(this.form.linkedin)
+    this.form.instagram = this.normalizeUrl(this.form.instagram)
+    this.form.portfolio = this.normalizeUrl(this.form.portfolio)
+    this.form.youtube = this.normalizeUrl(this.form.youtube)
+    this.form.linkedin = this.normalizeUrl(this.form.linkedin)
 
-        const formData = new FormData()
-        
-        // Add all form fields
-        Object.keys(this.form).forEach(key => {
-          if (!['current_password', 'new_password', 'new_password_confirmation'].includes(key) &&
-              this.form[key] !== null && this.form[key] !== undefined) {
+    const formData = new FormData()
+    
+    // Add all form fields - FIXED: Include all fields properly
+    Object.keys(this.form).forEach(key => {
+      // Don't append password fields to profile update
+      if (!['current_password', 'new_password', 'new_password_confirmation'].includes(key)) {
+        // Check if the value exists (not null, undefined, or empty string)
+        if (this.form[key] !== null && this.form[key] !== undefined && this.form[key] !== '') {
+          // Special handling for dateofbirth to ensure proper format
+          if (key === 'dateofbirth' && this.form[key]) {
+            // Ensure date is in YYYY-MM-DD format
+            const dateValue = new Date(this.form[key])
+            if (!isNaN(dateValue.getTime())) {
+              const formattedDate = dateValue.toISOString().split('T')[0]
+              formData.append(key, formattedDate)
+              console.log('Appending dateofbirth:', formattedDate) // Debug log
+            } else {
+              formData.append(key, this.form[key])
+            }
+          } else {
             formData.append(key, this.form[key])
           }
-        })
-
-        // Add profile photo if changed
-        if (this.profileImageFile) {
-          formData.append('profile_photo', this.profileImageFile)
         }
-
-        await axios.post('/api/update-profile', formData, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-
-        if (this.form.current_password && this.form.new_password) {
-          await this.changePassword()
-        }
-
-        this.editMode = false
-        this.profileImageFile = null
-        this.profilePreview = null
-        this.fetchUserProfile()
-        toastSuccess('Profile updated successfully!')
-      } catch (err) {
-        console.error('Profile update failed:', err)
-        toastError('Failed to update profile')
       }
-    },
+    })
+
+    // Add profile photo if changed
+    if (this.profileImageFile) {
+      formData.append('profile_photo', this.profileImageFile)
+    }
+
+    // Debug: Log all form data entries
+    console.log('FormData entries being sent:')
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1])
+    }
+
+    const response = await axios.post('/api/update-profile', formData, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    // Check response for any issues
+    console.log('Update profile response:', response.data)
+
+    if (this.form.current_password && this.form.new_password) {
+      await this.changePassword()
+    }
+
+    this.editMode = false
+    this.profileImageFile = null
+    this.profilePreview = null
+    await this.fetchUserProfile() // Added await to ensure profile is refreshed
+    toastSuccess('Profile updated successfully!')
+  } catch (err) {
+    console.error('Profile update failed:', err)
+    console.error('Error response:', err.response?.data) // Log detailed error
+    toastError(err.response?.data?.message || 'Failed to update profile')
+  }
+},
 
     async changePassword() {
       try {

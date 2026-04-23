@@ -13,8 +13,8 @@
           <i class="fas fa-bars"></i>
         </div>
         <div class="logo-section">
-          <img src="./assets/logo.png" alt="Logo" class="logo-img" />
-          <span class="logo-text">Arch 360</span>
+          <img src="./assets/Arch360.png" alt="Logo" class="logo-img" />
+          <!-- <span class="logo-text">Arch 360</span> -->
         </div>
       </div>
 
@@ -354,7 +354,7 @@ export default {
     },
 
     downloadApk() {
-      toastInfo('APK download starting...');
+      toastInfo('APK comming soon!');
     },
     
     downloadIos() {
@@ -392,7 +392,7 @@ export default {
           this.showFocusOverlay = true;
           this.focusTimer = setTimeout(() => {
             this.dismissFocusOverlay();
-          }, 10000);
+          }, 30000);
         }
       }, 1500);
     },
@@ -611,10 +611,9 @@ export default {
   align-items: center;
   gap: 0.75rem;
 }
-
 .logo-img {
-  height: 43px;
-  width: auto;
+  height: 126px;
+  width: 123px;
 }
 
 .logo-text {

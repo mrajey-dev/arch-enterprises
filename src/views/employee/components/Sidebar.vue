@@ -122,7 +122,10 @@
           <li @click="goTo('employee/viewkra')">
             <i class="fas fa-tasks"></i> <span>View KRA</span>
           </li>
-           <li @click="goTo('employee/mydsi')">
+          <li @click="goTo('employee/sop')">
+            <i class="fas fa-book"></i><span> SOP</span>
+          </li>
+          <li @click="goTo('employee/mydsi')">
             <i class="fas fa-tasks"></i><span> DSI</span>
           </li>
           
@@ -214,19 +217,20 @@ export default {
   components: { ChangePasswordForm },
   data() {
     return {
-       isMobileOpen: false,
-       isCollapsed: false,
-       currentTheme: localStorage.getItem("theme") || "default",
+      isMobileOpen: false,
+      isCollapsed: false,
+      currentTheme: localStorage.getItem("theme") || "default",
       searchQuery: "",
       results: [],
       showPopup: false,
-        allowedVisitDepartments: ['Management', 'Service'],
+      allowedVisitDepartments: ['Management', 'Service'],
       username: "",
       user: {},
       leaveDropdownOpen: false,
       showChangePassword: false,
       defaultPhoto: "https://cdn-icons-png.flaticon.com/512/219/219983.png",
-    profilePhoto: "https://cdn-icons-png.flaticon.com/512/219/219983.png",
+      profilePhoto: "https://cdn-icons-png.flaticon.com/512/219/219983.png",
+      profileFetched: false, // Flag to track if profile has been fetched
     };
   },
   computed: {
@@ -247,42 +251,39 @@ export default {
     },
   },
   methods: {
-     handleMouseEnter() {
-    if (window.innerWidth > 768) {
-      this.isCollapsed = false;
-    }
-  },
-  handleMouseLeave() {
-    if (window.innerWidth > 768) {
-      this.isCollapsed = false; // Change to 'true' if you want it to collapse on mouse leave
-    }
-  },
-    toggleSidebar() {
-    // ONLY for mobile
-    if (window.innerWidth <= 768) {
-      this.isMobileOpen = !this.isMobileOpen;
-    }
-  },
-
-     changeTheme(e) {
-      const theme = e.target.value
-      this.currentTheme = theme
-
-      document.documentElement.classList.add("theme-transition")
-      document.documentElement.setAttribute("data-theme", theme)
-      localStorage.setItem("theme", theme)
-
-      setTimeout(() => {
-        document.documentElement.classList.remove("theme-transition")
-      }, 400)
+    handleMouseEnter() {
+      if (window.innerWidth > 768) {
+        this.isCollapsed = false;
+      }
     },
+    handleMouseLeave() {
+      if (window.innerWidth > 768) {
+        this.isCollapsed = false;
+      }
+    },
+    toggleSidebar() {
+      if (window.innerWidth <= 768) {
+        this.isMobileOpen = !this.isMobileOpen;
+      }
+    },
+
+    changeTheme(e) {
+      const theme = e.target.value;
+      this.currentTheme = theme;
+      document.documentElement.classList.add("theme-transition");
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+      setTimeout(() => {
+        document.documentElement.classList.remove("theme-transition");
+      }, 400);
+    },
+    
     handleSearch() {
       if (this.searchQuery.length < 1) {
         this.results = [];
         this.showPopup = false;
         return;
       }
-
       axios
         .get("/api/search-po", { params: { query: this.searchQuery } })
         .then((res) => {
@@ -291,19 +292,21 @@ export default {
         })
         .catch((err) => console.error(err));
     },
+    
     closePopup() {
       this.showPopup = false;
     },
+    
     toggleLeaveDropdown() {
       this.leaveDropdownOpen = !this.leaveDropdownOpen;
     },
-  goTo(route) {
-  this.$router.push(`/${route}`);
-
-  if (window.innerWidth <= 768) {
-    this.isMobileOpen = false;
-  }
-},
+    
+    goTo(route) {
+      this.$router.push(`/${route}`);
+      if (window.innerWidth <= 768) {
+        this.isMobileOpen = false;
+      }
+    },
 
     logout() {
       const token = localStorage.getItem("token");
@@ -316,7 +319,7 @@ export default {
         .finally(() => {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          // ✅ Keep stored profile photo
+          localStorage.removeItem(`profilePhoto_${this.user.id}`); // Clear cached photo on logout
           this.$router.push("/auth");
         });
     },
@@ -355,88 +358,122 @@ export default {
           }
         );
 
-if (response.data && response.data.photo_url) {
-  const freshUrl =
-    response.data.photo_url + "?v=" + Date.now();
+        if (response.data && response.data.photo_url) {
+          const freshUrl = response.data.photo_url + "?v=" + Date.now();
+          
+          this.$nextTick(() => {
+            this.profilePhoto = freshUrl;
+          });
 
-  this.$nextTick(() => {
-    this.profilePhoto = freshUrl;
-  });
-
-  if (this.user?.id) {
-    localStorage.setItem(`profilePhoto_${this.user.id}`, freshUrl);
-  }
-}
-
-
+          if (this.user?.id) {
+            localStorage.setItem(`profilePhoto_${this.user.id}`, freshUrl);
+          }
+        }
       } catch (err) {
         console.error("Upload failed:", err);
         toastError("Failed to upload image. Please try again.");
       }
     },
+    
+    // New method to load profile photo from cache or API
+    async loadProfilePhoto() {
+      const userId = this.user?.id;
+      const cachedPhoto = userId ? localStorage.getItem(`profilePhoto_${userId}`) : null;
+      
+      // Use cached photo if available
+      if (cachedPhoto) {
+        this.profilePhoto = cachedPhoto;
+        this.profileFetched = true;
+        return;
+      }
+      
+      // Only fetch from API if not cached
+      const token = localStorage.getItem("token");
+      if (!token || this.profileFetched) return;
+      
+      try {
+        const response = await axios.get(
+          "https://employees.archenterprises.co.in/api/api/user-profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.data?.data) {
+          const user = response.data.data;
+          this.user = user;
+          this.username = user.name || this.username;
+
+          if (typeof user.profile_photo === "string" && user.profile_photo.includes("/")) {
+            const imageUrl = `https://employees.archenterprises.co.in/backend/public/storage/${user.profile_photo}`;
+            this.profilePhoto = imageUrl + "?v=" + Date.now();
+            
+            // Store against ACTUAL user id
+            if (user.id) {
+              localStorage.setItem(`profilePhoto_${user.id}`, this.profilePhoto);
+            }
+          } else {
+            this.profilePhoto = this.defaultPhoto;
+          }
+        }
+        this.profileFetched = true;
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+        this.profilePhoto = this.defaultPhoto;
+      }
+    },
+    
+    // New method to load user from storage
+    loadUserFromStorage() {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          this.user = JSON.parse(storedUser);
+          this.username = this.user.name || "Unknown";
+          return true;
+        } catch {
+          this.username = "Unknown";
+          return false;
+        }
+      }
+      return false;
+    }
   },
 
-async mounted() {
-  
-  const token = localStorage.getItem("token");
-  if (!token) {
-    this.$router.push("/auth");
-    return;
-  }
-
-  // Load user from localStorage
-  const storedUser = localStorage.getItem("user");
-  if (storedUser) {
-    try {
-      this.user = JSON.parse(storedUser);
-      this.username = this.user.name || "Unknown";
-    } catch {
-      this.username = "Unknown";
+  async mounted() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      this.$router.push("/auth");
+      return;
     }
-       document.documentElement.setAttribute(
-      "data-theme",
-      this.currentTheme
-    )
-  }
 
-  try {
-    const response = await axios.get(
-      "https://employees.archenterprises.co.in/api/api/user-profile",
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    // Load user from localStorage first
+    const userLoaded = this.loadUserFromStorage();
+    
+    // Set theme
+    document.documentElement.setAttribute("data-theme", this.currentTheme);
+    
+    // Load profile photo from cache first
+    if (userLoaded && this.user?.id) {
+      const cachedPhoto = localStorage.getItem(`profilePhoto_${this.user.id}`);
+      if (cachedPhoto) {
+        this.profilePhoto = cachedPhoto;
+        this.profileFetched = true;
       }
-    );
-
-    console.log("USER PROFILE RESPONSE:", response.data);
-
-    if (response.data?.data) {
-  const user = response.data.data;
-
-      this.user = user;
-      this.username = user.name || this.username;
-
-      if (typeof user.profile_photo === "string" && user.profile_photo.includes("/")) {
-  const imageUrl =
-    `https://employees.archenterprises.co.in/backend/public/storage/${user.profile_photo}`;
-
-  this.profilePhoto = imageUrl + "?v=" + Date.now();
-
-  // store against ACTUAL user id
-  localStorage.setItem(
-    `profilePhoto_${user.id}`,
-    this.profilePhoto
-  );
-} else {
-  this.profilePhoto = this.defaultPhoto;
-}
-
     }
-  } catch (error) {
-    console.error("Failed to fetch user profile:", error);
+    
+    // Only fetch fresh profile if needed (first time or when explicitly required)
+    // You can add a condition to check when to refresh (e.g., every hour or on specific actions)
+    const lastFetchTime = localStorage.getItem(`profileFetchTime_${this.user?.id}`);
+    const shouldRefresh = !lastFetchTime || (Date.now() - parseInt(lastFetchTime)) > 3600000; // Refresh every hour
+    
+    if (!this.profileFetched || shouldRefresh) {
+      await this.loadProfilePhoto();
+      if (this.user?.id) {
+        localStorage.setItem(`profileFetchTime_${this.user?.id}`, Date.now().toString());
+      }
+    }
   }
-}
-
-
 };
 </script>
 
