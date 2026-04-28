@@ -162,9 +162,10 @@ export default {
       submitSuccessMsg: '',
       userName: '',
       userDept: '',
-      baseAllowances: { casual: 7, sick: 10, pl: 10, medical: 10 },
-      leaveBalance: { casual: 7, sick: 10, pl: 10, medical: 10 },
-      usedLeaves: { casual: 0, sick: 0, pl: 0, medical: 0 },
+      // Medical leave removed - only casual, sick, and PL remain
+      baseAllowances: { casual: 7, sick: 10, pl: 10 },
+      leaveBalance: { casual: 7, sick: 10, pl: 10 },
+      usedLeaves: { casual: 0, sick: 0, pl: 0 },
       showBalanceModal: false,
       leaveRequests: [],
       submitError: '',
@@ -259,8 +260,14 @@ export default {
       const { fromDate, toDate, leaveType } = this.form;
       if (!fromDate || !toDate || !leaveType) return;
 
-      const leaveKey = (leaveType || '').toLowerCase().replace(' leave', '');
-      const validKeys = ['casual', 'sick', 'pl', 'medical'];
+      // Map leave types - medical removed
+      let leaveKey = (leaveType || '').toLowerCase().replace(' leave', '');
+      // Handle possible "medical" value if still coming from API
+      if (leaveKey === 'medical') {
+        leaveKey = 'sick'; // Map medical to sick leave
+      }
+      
+      const validKeys = ['casual', 'sick', 'pl'];
       if (!validKeys.includes(leaveKey)) return;
 
       const totalSelectedDays = this.daysBetween(fromDate, toDate);
@@ -272,10 +279,10 @@ export default {
         });
         const user = res.data;
 
+        // Medical removed - using sick for medical cases
         const usedMap = {
           casual: user.cl_leave_used || 0,
           pl: user.pl_leave_used || 0,
-          medical: user.m_leave_used || 0,
           sick: user.sl_leave_used || 0,
         };
 
@@ -304,12 +311,12 @@ export default {
         });
         const user = res.data;
 
-        const totals = { casual: 7, sick: 10, pl: 10, medical: 10 };
+        // Medical leave removed - only casual, sick, pl
+        const totals = { casual: 7, sick: 10, pl: 10 };
         const used = {
           casual: user.cl_leave_used || 0,
           sick: user.sl_leave_used || 0,
           pl: user.pl_leave_used || 0,
-          medical: user.m_leave_used || 0,
         };
 
         const remaining = {};
@@ -362,13 +369,15 @@ export default {
 
     computeLeaveBalance() {
       const remaining = { ...this.baseAllowances };
-      const used = { casual: 0, sick: 0, pl: 0, medical: 0 };
+      // Medical removed from used tracking
+      const used = { casual: 0, sick: 0, pl: 0 };
 
       const map = {
         'casual leave': 'casual', casual: 'casual',
         'sick leave': 'sick', sick: 'sick',
         'pl leave': 'pl', pl: 'pl',
-        'medical leave': 'medical', medical: 'medical',
+        // Map any medical entries to sick
+        'medical leave': 'sick', medical: 'sick',
       };
 
       this.leaveRequests.forEach(lv => {
@@ -380,8 +389,8 @@ export default {
           used.casual += 0.5;
           remaining.casual -= 0.5;
         } else {
-          const key = map[leaveType];
-          if (!key) return;
+          const key = map[leaveType] || leaveType;
+          if (!remaining.hasOwnProperty(key)) return;
           const days = this.daysBetween(lv.from_date || lv.fromDate, lv.to_date || lv.toDate);
           used[key] += days;
           remaining[key] -= days;
@@ -414,17 +423,31 @@ export default {
         const res = await axios.get('https://employees.archenterprises.co.in/api/api/leave-types', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        this.leaveTypes = res.data || [];
-        const allowances = {};
+        // Filter out medical leave types from the API response
+        let leaveTypesData = res.data || [];
+        leaveTypesData = leaveTypesData.filter(type => 
+          type.leave_name && type.leave_name.toLowerCase() !== 'medical' && 
+          type.leave_name.toLowerCase() !== 'medical leave'
+        );
+        this.leaveTypes = leaveTypesData;
+        
+        const allowances = { casual: 7, sick: 10, pl: 10 };
         this.leaveTypes.forEach(type => {
           const key = (type.leave_name || '').toLowerCase().replace(' leave', '');
-          allowances[key] = parseInt(type.total_leaves) || 0;
+          // Skip medical if somehow still present
+          if (key === 'medical') return;
+          if (allowances.hasOwnProperty(key)) {
+            allowances[key] = parseInt(type.total_leaves) || allowances[key];
+          }
         });
         this.baseAllowances = allowances;
         this.leaveBalance = { ...allowances };
       } catch (e) {
         console.error('Fetch leave types failed:', e);
         toastError('Could not load leave types.');
+        // Set defaults without medical
+        this.baseAllowances = { casual: 7, sick: 10, pl: 10 };
+        this.leaveBalance = { casual: 7, sick: 10, pl: 10 };
       }
     },
 
@@ -439,10 +462,10 @@ export default {
         this.form.department = u.department;
         this.userName = u.name;
         this.userDept = u.department;
+        // Medical removed from used leaves
         this.usedLeaves = {
           casual: u.cl_leave_used || 0,
           pl: u.pl_leave_used || 0,
-          medical: u.m_leave_used || 0,
           sick: u.sl_leave_used || 0,
         };
         await this.fetchEarnLeaveCount();
@@ -538,6 +561,7 @@ export default {
         toastSuccess('Leave request submitted successfully!');
         this.resetForm();
         await this.fetchLeaves();
+        await this.fetchLeaveBalanceFromDB();
       } catch (e) {
         console.error('Submit error:', e);
         this.submitError = 'Failed to process leave request.';
@@ -553,6 +577,9 @@ export default {
       Object.assign(this.form, {
         leaveType: '', fromDate: '', toDate: '', reason: '', file: null, timeSlot: ''
       });
+      this.submitError = '';
+      this.submitSuccessMsg = '';
+      this.leaveWarning = '';
     },
 
     checkIfMobile() {
@@ -567,7 +594,7 @@ export default {
         casual: 'Casual Leave',
         sick: 'Sick Leave',
         pl: 'PL Leave',
-        medical: 'Medical Leave'
+        earn: 'Earn Leave'
       };
       return map[k.toLowerCase()] || `${k.charAt(0).toUpperCase()}${k.slice(1)} Leave`;
     },

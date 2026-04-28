@@ -1,401 +1,1885 @@
 <template>
-  <div class="announcement-board" v-if="!isMobile || !isSidebarVisible">
-    <h2>📊 Quotation & Order Sheet</h2>
-    <div class="filter-bar">
-  <label>Status:</label>
-  <select v-model="selectedStatus" class="filter-select">
-    <option value="">All</option>
-    <option value="pending">Pending</option>
-    <option value="followup">Follow Up</option>
-    <option value="approved">Approved</option>
-    <option value="rejected">Rejected</option>
-  </select>
-</div>
+  <div class="layout">
+    <!-- Main Content -->
+    <div class="main-content">
+      <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-    <div class="content">
-      <div class="table-scroll-wrapper">
-        <table class="styled-customer-table">
-          <thead>
-            <tr>
-              <th> Sr. No. </th>
-              <th> QUOTATION NO. </th>
-              <th> Quote Date </th>
-              <th> Party Name </th>
-              <th> Engine Serial Number </th>
-              <th> Brief Description of Goods </th>
-              <th> Initial Value (Non-Taxable) </th>
-              <th> Disc.(%) </th>
-              <th> Recommended By</th>
-             <th class="remarks-col">Remarks</th>
+      <div class="sop-board-premium" v-if="!isMobile || !isSidebarVisible">
+        <div class="content-header-modern">
+          <div class="header-left">
+            <div class="title-icon">
+              <i class="fas fa-file-invoice"></i>
+            </div>
+            <div>
+              <h1>Purchase Orders</h1>
+              <p class="subtitle-modern">Manage & Track All Purchase Orders</p>
+            </div>
+          </div>
+          <div class="stats-badge-header">
+            <i class="fas fa-chart-line"></i>
+            <span>{{ filteredPOs.length }} / {{ totalRecords }} POs</span>
+          </div>
+        </div>
 
-              <th> Status of Quotation </th>
-            </tr>
-          </thead>
-          <tbody>
-           <tr
-  v-for="(q, index) in filteredQuotations"
-  :key="q.id"
-              :class="{
-                'approved-row': q.status === 'approved',
-                'pending-row': q.status === 'pending',
-                'rejected-row': q.status === 'rejected',
-                'followup-row': q.status === 'followup',
-              }"
-            >
-              <td>{{ index + 1 }}</td>
-              <td>AE/QUOTE/{{ financialYear }}/{{ q.id }}</td>
-              <td>{{ formatDate(q.created_at) }}</td>
-              <td>{{ q.company_name }}</td>
-              <td>{{ q.engine_serial }}</td>
-              <td>
-  <ul>
-    <li v-for="item in q.items" :key="item.sr">
-      {{ item.description }}
-    </li>
-  </ul>
-</td>
-
-              <td>{{ calculateInitialValue(q.items).toLocaleString('en-IN') }}</td>
-              <td>
-                <span v-if="Number(q.discount) === 0">No Discount</span>
-                <span v-else>{{ getDiscountPercent(q.items) }}%</span>
-              </td>
-              <td>{{ q.recommended_by }}</td>
-              <td class="remarks-col">
-    <textarea
-      v-model="q.remarks"
-      placeholder="Add follow-up notes..."
-      class="remark-textarea"
-      rows="5"
-      @input="debounceSave(q)"
-    ></textarea>
-  </td>
-
-           <td>
-  <div class="status-wrapper">
-    <select
-      v-model="q.status"
-      class="status-select"
-      :class="`status-${q.status || 'default'}`"
-      @change="updateQuotationStatus(q)"
-    >
-      <option value="">Select</option>
-      <option value="pending">Pending</option>
-      <option value="followup">Follow Up</option>
-      <option value="approved">Approved</option>
-      <option value="rejected">Rejected</option>
-    </select>
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-card">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ totalPOValue }}</span>
+              <span class="stat-label">Total PO Value</span>
+            </div>
+          </div>
+          <div class="stat-card">
+  <i class="fas fa-check-circle"></i>
+  <div class="stat-info">
+    <span class="stat-value">{{ totalRecords - statusCounts.Closed }}</span>
+    <span class="stat-label">Open</span>
   </div>
-</td>
+</div>
+          <div class="stat-card">
+            <i class="fas fa-clock"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ statusCounts.Closed }}</span>
+              <span class="stat-label">Closed</span>
+            </div>
+          </div>
+          <!-- Removed Add New PO button -->
+        </div>
 
-            </tr>
+        <!-- Time Filter Toggle -->
+        <div class="time-filter-section">
+          <button 
+            :class="['time-filter-btn', { active: timeFilter === 'default' }]" 
+            @click="setTimeFilter('default')"
+          >
+            <i class="fas fa-calendar-alt"></i> From April {{ currentYear }}
+          </button>
+          <button 
+            :class="['time-filter-btn', { active: timeFilter === 'all' }]" 
+            @click="setTimeFilter('all')"
+          >
+            <i class="fas fa-history"></i> All Time
+          </button>
+        </div>
 
-            <tr v-if="followUpQuotations.length === 0">
-              <td colspan="11" class="no-data">No quotations available</td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- Search and Filters -->
+        <div class="filters-section">
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Search by PO number, company, or recommended by..."
+              class="search-input"
+            />
+          </div>
+          <div class="filter-group">
+            <select v-model="statusFilter" class="filter-select">
+              <option value="">All Status</option>
+              <option value="Open">Open</option>
+              <option value="Closed">Closed</option>
+            </select>
+            <select v-model="typeFilter" class="filter-select">
+              <option value="">All Types</option>
+              <option value="Supply">Supply</option>
+              <option value="Service">Service</option>
+              <option value="AMC">AMC</option>
+            </select>
+            <input type="month" v-model="dateFilter" class="filter-date" placeholder="Filter by month" />
+            <button class="clear-filters-btn" @click="clearFilters" v-if="isFilterActive">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="section-title-modern">
+          <i class="fas fa-list"></i>
+          <span>Purchase Orders List</span>
+          <div class="view-toggle">
+            <button 
+              :class="['view-btn', { active: viewMode === 'table' }]" 
+              @click="viewMode = 'table'"
+            >
+              <i class="fas fa-table"></i> Table View
+            </button>
+            <button 
+              :class="['view-btn', { active: viewMode === 'grid' }]" 
+              @click="viewMode = 'grid'"
+            >
+              <i class="fas fa-th"></i> Grid View
+            </button>
+          </div>
+        </div>
+
+        <!-- MAIN TABLE VIEW -->
+        <div v-if="viewMode === 'table'" class="table-wrapper">
+          <div class="table-container">
+            <table class="po-data-table">
+              <thead>
+                <tr>
+                  <th @click="sortBy('po_number')">PO Number <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('po_type')">PO Type <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('company_name')">Company Name <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('value_of_po')">Value of PO <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('date')">Date <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('recommended_by')">Recommended By <i class="fas fa-sort"></i></th>
+                  <th>PO File</th>
+                  <th @click="sortBy('status')">Status <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('closed_date')">Closed Date <i class="fas fa-sort"></i></th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody v-if="paginatedPOs.length">
+                <tr v-for="po in paginatedPOs" :key="po.id">
+                  <td class="po-number">{{ po.po_number || '-' }}</td>
+                  <td>
+                    <span class="type-badge" :class="getTypeBadgeClass(po.po_type)">
+                      <i :class="getTypeIcon(po.po_type)"></i> {{ formatType(po.po_type) }}
+                    </span>
+                  </td>
+                  <td class="company-name">{{ po.company_name || '-' }}</td>
+                  <td class="amount">{{ formatCurrency(po.value_of_po) }}</td>
+                  <td>{{ formatDate(po.date) }}</td>
+                  <td>{{ po.recommended_by || '-' }}</td>
+                  <td>
+                    <button 
+                      v-if="po.po_file_path" 
+                      class="file-link-btn" 
+                      @click="downloadPOFile(po)"
+                      title="Download PDF"
+                    >
+                      <i class="fas fa-file-pdf"></i> View PDF
+                    </button>
+                    <span v-else class="no-file">-</span>
+                  </td>
+                  <td>
+                    <span :class="['status-badge', po.status === 'Open' ? 'badge-open' : 'badge-closed']">
+                      <i :class="po.status === 'Open' ? 'fas fa-circle' : 'fas fa-check-circle'"></i>
+                      {{ po.status || 'Open' }}
+                    </span>
+                  </td>
+                  <td>{{ formatDate(po.closed_date) || '-' }}</td>
+                  <td class="table-actions">
+                    <button class="action-icon view-icon" @click="viewPODetails(po)" title="View Details">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-icon edit-icon" @click="editPO(po)" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-icon delete-icon" @click="deletePO(po)" title="Delete">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+              <tbody v-else>
+                <tr>
+                  <td colspan="10" class="empty-table-row">
+                    <div class="empty-table-content">
+                      <i class="fas fa-file-invoice"></i>
+                      <p>No purchase orders found</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination -->
+          <div class="pagination" v-if="totalPages > 1">
+            <button @click="currentPage--" :disabled="currentPage === 1" class="page-btn">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="page-info">Page {{ currentPage }} of {{ totalPages }} ({{ filteredPOs.length }} records)</span>
+            <button @click="currentPage++" :disabled="currentPage === totalPages" class="page-btn">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid View -->
+        <div v-else-if="viewMode === 'grid' && filteredPOs.length" class="pos-grid-premium">
+          <div v-for="po in paginatedGridPOs" :key="po.id" class="po-card-premium">
+            <div class="card-accent" :class="po.status === 'Open' ? 'status-open' : 'status-closed'"></div>
+            <div class="po-header">
+              <div class="po-icon" :class="getTypeIconClass(po.po_type)">
+                <i :class="getTypeIcon(po.po_type)"></i>
+              </div>
+              <div class="po-title-wrap">
+                <h3>{{ po.po_number || '-' }}</h3>
+                <div class="po-meta">
+                  <span><i class="fas fa-building"></i> {{ po.company_name || '-' }}</span>
+                  <span><i class="fas fa-user"></i> {{ po.recommended_by || '-' }}</span>
+                </div>
+              </div>
+              <div class="po-actions">
+                <button class="action-btn view-btn" @click="viewPODetails(po)" title="View Details">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn download-btn" @click="downloadPOFile(po)" title="Download PDF" v-if="po.po_file_path">
+                  <i class="fas fa-download"></i>
+                </button>
+                <button class="action-btn edit-btn" @click="editPO(po)" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+            </div>
+            <div class="po-details">
+              <div class="detail-row">
+                <span class="detail-label">PO Type:</span>
+                <span class="detail-value">{{ formatType(po.po_type) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Value:</span>
+                <span class="detail-value highlight">{{ formatCurrency(po.value_of_po) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Date:</span>
+                <span class="detail-value">{{ formatDate(po.date) }}</span>
+              </div>
+              <div class="detail-row" v-if="po.closed_date">
+                <span class="detail-label">Closed:</span>
+                <span class="detail-value">{{ formatDate(po.closed_date) }}</span>
+              </div>
+            </div>
+            <div class="po-footer">
+              <div class="badge-status" :class="po.status === 'Open' ? 'badge-open' : 'badge-closed'">
+                <i :class="po.status === 'Open' ? 'fas fa-circle' : 'fas fa-check-circle'"></i> {{ po.status || 'Open' }}
+              </div>
+              <div class="badge-type" v-if="po.po_type">
+                <i :class="getTypeIcon(po.po_type)"></i> {{ formatType(po.po_type) }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="pagination" v-if="gridTotalPages > 1">
+            <button @click="gridCurrentPage--" :disabled="gridCurrentPage === 1" class="page-btn">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="page-info">Page {{ gridCurrentPage }} of {{ gridTotalPages }} ({{ filteredPOs.length }} records)</span>
+            <button @click="gridCurrentPage++" :disabled="gridCurrentPage === gridTotalPages" class="page-btn">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="viewMode === 'grid' && !filteredPOs.length" class="empty-state-premium">
+          <i class="fas fa-file-invoice"></i>
+          <h4>No Purchase Orders Found</h4>
+          <p>No purchase orders match your criteria</p>
+        </div>
       </div>
+    </div>
+
+    <!-- Create/Edit PO Modal -->
+    <div v-if="showUploadModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-container-premium modal-large">
+        <div class="modal-header">
+          <div class="modal-icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <h2>{{ editingPO ? 'Edit Purchase Order' : 'Create New Purchase Order' }}</h2>
+          <button class="close-modal" @click="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="handlePOSubmit">
+            <div class="form-row">
+              <div class="form-group half">
+                <label><i class="fas fa-hashtag"></i> PO Number *</label>
+                <input type="text" v-model="formPO.po_number" placeholder="e.g., GC000082" required>
+              </div>
+              <div class="form-group half">
+                <label><i class="fas fa-building"></i> Company Name *</label>
+                <input type="text" v-model="formPO.company_name" placeholder="Company name" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half">
+                <label><i class="fas fa-tag"></i> PO Type *</label>
+                <select v-model="formPO.po_type" required>
+                  <option value="">Select Type</option>
+                  <option value="Supply">Supply</option>
+                  <option value="Service">Service</option>
+                  <option value="AMC">AMC</option>
+                </select>
+              </div>
+              <div class="form-group half">
+                <label><i class="fas fa-dollar-sign"></i> Value of PO *</label>
+                <input type="number" step="0.01" v-model="formPO.value_of_po" placeholder="0.00" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half">
+                <label><i class="fas fa-calendar"></i> Date *</label>
+                <input type="date" v-model="formPO.date" required>
+              </div>
+              <div class="form-group half">
+                <label><i class="fas fa-user-check"></i> Recommended By *</label>
+                <input type="text" v-model="formPO.recommended_by" placeholder="Person name" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group half">
+                <label><i class="fas fa-flag-checkered"></i> Status</label>
+                <select v-model="formPO.status">
+                  <option value="Open">Open</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+              <div class="form-group half">
+                <label><i class="fas fa-calendar-times"></i> Closed Date</label>
+                <input type="date" v-model="formPO.closed_date">
+              </div>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-file-pdf"></i> PO PDF File (optional, max 15MB)</label>
+              <div class="file-dropzone" :class="{ 'drag-over': dragActive }" @dragover.prevent="dragActive = true" @dragleave.prevent="dragActive = false" @drop.prevent="handleFileDrop">
+                <input type="file" ref="fileInput" @change="handleFileSelect" accept=".pdf" style="display: none">
+                <i class="fas fa-cloud-upload-alt fa-2x"></i>
+                <p v-if="!selectedFile && !formPO.po_file_path">Drag & drop PDF here or <span class="browse-link" @click="triggerFileInput">browse</span></p>
+                <p v-else-if="selectedFile" class="file-selected"><i class="fas fa-check-circle"></i> {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</p>
+                <p v-else class="file-selected"><i class="fas fa-file-pdf"></i> Current file: {{ formPO.po_file_path }}</p>
+              </div>
+              <div v-if="uploadError" class="error-message">{{ uploadError }}</div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="closeModal">Cancel</button>
+              <button type="submit" class="btn-primary" :disabled="submitting">
+                <i v-if="submitting" class="fas fa-spinner fa-pulse"></i>
+                <i v-else class="fas fa-save"></i>
+                {{ submitting ? 'Saving...' : (editingPO ? 'Update PO' : 'Create PO') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Details Modal -->
+    <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">
+      <div class="modal-container-premium modal-detail">
+        <div class="modal-header">
+          <div class="modal-icon">
+            <i class="fas fa-file-invoice"></i>
+          </div>
+          <h2>PO Details: {{ selectedPO?.po_number }}</h2>
+          <button class="close-modal" @click="showViewModal = false">&times;</button>
+        </div>
+        <div class="modal-body" v-if="selectedPO">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>PO Number</label>
+              <p>{{ selectedPO.po_number || '-' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>PO Type</label>
+              <p>{{ formatType(selectedPO.po_type) }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Company Name</label>
+              <p>{{ selectedPO.company_name || '-' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Value</label>
+              <p class="highlight">{{ formatCurrency(selectedPO.value_of_po) }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Date</label>
+              <p>{{ formatDate(selectedPO.date) }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Recommended By</label>
+              <p>{{ selectedPO.recommended_by || '-' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Status</label>
+              <p><span :class="['status-badge-detail', selectedPO.status === 'Open' ? 'badge-open' : 'badge-closed']">{{ selectedPO.status || 'Open' }}</span></p>
+            </div>
+            <div class="detail-item">
+              <label>Closed Date</label>
+              <p>{{ formatDate(selectedPO.closed_date) || '-' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>PDF File Path</label>
+              <p class="file-path">{{ selectedPO.po_file_path || '-' }}</p>
+            </div>
+          </div>
+          <div class="detail-actions" v-if="selectedPO.po_file_path">
+            <button class="btn-primary" @click="downloadPOFile(selectedPO)">
+              <i class="fas fa-download"></i> Download PO Document
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading {{ totalRecords > 0 ? totalRecords : '' }} records...</p>
     </div>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import Sidebar from './components/Sidebar.vue'
 import {
   toastSuccess,
   toastError,
-  toastWarning,
-  toastInfo
 } from "@/utils/toast.js";
 
 export default {
-  name: "FollowUp",
+  name: "PurchaseOrders",
+  components: {
+    Sidebar
+  },
   data() {
     return {
-       selectedStatus: "",
-      debounceTimers: {} ,
+      storageBaseUrl: 'https://employees.archenterprises.co.in/backend/storage/app/public/uploads/',
       isMobile: false,
       isSidebarVisible: true,
-      financialYear: "2025-26",
-      followUpQuotations: [],
-    };
+      pos: [],
+      filteredPOs: [],
+      totalRecords: 0,
+      loading: false,
+      showUploadModal: false,
+      showViewModal: false,
+      selectedPO: null,
+      editingPO: null,
+      formPO: {
+        po_number: '',
+        company_name: '',
+        po_type: '',
+        value_of_po: '',
+        date: '',
+        recommended_by: '',
+        po_file_path: '',
+        status: 'Open',
+        closed_date: ''
+      },
+      selectedFile: null,
+      dragActive: false,
+      submitting: false,
+      uploadError: '',
+      searchQuery: '',
+      statusFilter: '',
+      typeFilter: '',
+      dateFilter: '',
+      timeFilter: 'default', // 'default' or 'all'
+      viewMode: 'table',
+      sortField: 'date',
+      sortDirection: 'desc',
+      currentPage: 1,
+      itemsPerPage: 20,
+      gridCurrentPage: 1,
+      gridItemsPerPage: 12,
+      apiBaseUrl: 'https://employees.archenterprises.co.in'
+    }
   },
   computed: {
-  filteredQuotations() {
-    if (!this.selectedStatus) {
-      return this.followUpQuotations;
+    currentYear() {
+      return new Date().getFullYear();
+    },
+    totalPOValue() {
+      const total = this.filteredPOs.reduce((sum, po) => sum + (parseFloat(po.value_of_po) || 0), 0);
+      return this.formatCurrency(total);
+    },
+    statusCounts() {
+      return {
+        Open: this.filteredPOs.filter(po => po.status === 'Open').length,
+        Closed: this.filteredPOs.filter(po => po.status === 'Closed').length
+      };
+    },
+    isFilterActive() {
+      return this.searchQuery || this.statusFilter || this.typeFilter || this.dateFilter;
+    },
+    paginatedPOs() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredPOs.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredPOs.length / this.itemsPerPage);
+    },
+    paginatedGridPOs() {
+      const start = (this.gridCurrentPage - 1) * this.gridItemsPerPage;
+      const end = start + this.gridItemsPerPage;
+      return this.filteredPOs.slice(start, end);
+    },
+    gridTotalPages() {
+      return Math.ceil(this.filteredPOs.length / this.gridItemsPerPage);
     }
-    return this.followUpQuotations.filter(
-      q => q.status === this.selectedStatus
-    );
-  }
-},
-
-  methods: {
-saveRemark(q) {
-  axios.put(`/api/quotations/${q.id}`, { remarks: q.remarks })
-    .then(() => this.$toast.success("Remarks saved"))
-    .catch(() => {
-  this.$toast.error("Failed to save remark");
-});
-},
-
-
-
-    debounceSave(q) {
-      // clear previous timer if exists
-      if (this.debounceTimers[q.id]) {
-        clearTimeout(this.debounceTimers[q.id]);
-      }
-
-      // set new timer
-      this.debounceTimers[q.id] = setTimeout(() => {
-        this.saveRemark(q);
-        delete this.debounceTimers[q.id]; // clean up
-      }, 1000); // 1 second delay after typing stops
-  
   },
-    formatDate(date) {
-      if (!date) return "";
-      const d = new Date(date);
-      return d.toLocaleDateString("en-IN");
+  watch: {
+    searchQuery() {
+      this.applyFilters();
+      this.resetPagination();
     },
-    calculateInitialValue(items) {
-      if (!items) return 0;
-      return items.reduce((sum, item) => sum + (item.rate || 0) * (item.qty || 0), 0);
+    statusFilter() {
+      this.applyFilters();
+      this.resetPagination();
     },
-    getDiscountPercent(items) {
-      if (!items) return 0;
-      return items.reduce((sum, item) => sum + (item.discount || 0), 0);
+    typeFilter() {
+      this.applyFilters();
+      this.resetPagination();
     },
-updateQuotationStatus(q) {
-  axios.post(`/api/quotations/${q.id}/status`, { 
-      quotation_followup_status: q.status, // <-- use column name
-      remarks: q.remarks 
-  })
-  .then(res => {
-      console.log(res.data.message);
-      this.$toast.success(res.data.message);
-  })
-  .catch(err => {
-      console.error(err);
-      this.$toast.error("Failed to update status");
-  });
-},
-
-
-
-
-
-
-fetchQuotations() {
-  axios.get("/api/quotations")
-    .then(res => {
-      this.followUpQuotations = res.data.map(q => ({
-        ...q,
-        items: q.items || [],
-        status: q.quotation_followup_status?.toLowerCase() || '',
-        remarks: q.remarks || ''
-      }));
-    })
-    .catch(() => {
-      if (this.$toast && typeof this.$toast.error === 'function') {
-        this.$toast.error('Failed to fetch quotations');
-      } else {
-        console.error('Failed to fetch quotations');
-      }
-    });
-},
-
-
+    dateFilter() {
+      this.applyFilters();
+      this.resetPagination();
+    },
+    timeFilter() {
+      this.applyFilters();
+      this.resetPagination();
+    }
   },
   mounted() {
-    this.fetchQuotations();
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
+    this.loadAllPOs();
   },
-};
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
+  },
+  methods: {
+    checkIfMobile() {
+      this.isMobile = window.innerWidth <= 768;
+      this.isSidebarVisible = !this.isMobile;
+      if (this.isMobile) {
+        this.viewMode = 'grid';
+      }
+    },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible;
+    },
+    resetPagination() {
+      this.currentPage = 1;
+      this.gridCurrentPage = 1;
+    },
+    setTimeFilter(filter) {
+      this.timeFilter = filter;
+    },
+    
+    async loadAllPOs() {
+      this.loading = true;
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/api/api/view-pos`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        console.log("API Response from /api/view-pos:", data);
+        
+        let allPOs = [];
+        if (data.status && data.data) {
+          allPOs = data.data;
+          this.totalRecords = data.total_records || data.data.length;
+        } else if (Array.isArray(data)) {
+          allPOs = data;
+          this.totalRecords = data.length;
+        } else if (data.data && Array.isArray(data.data)) {
+          allPOs = data.data;
+          this.totalRecords = data.data.length;
+        } else {
+          allPOs = [];
+          this.totalRecords = 0;
+        }
+        
+        // Filter to show only Open POs by default
+        this.pos = allPOs;
+        
+        console.log(`✅ Successfully loaded ${this.totalRecords} PO records from add_po table`);
+        console.log(`Open POs: ${allPOs.filter(po => po.status === 'Open').length}`);
+        console.log(`Closed POs: ${allPOs.filter(po => po.status === 'Closed').length}`);
+        
+        if (this.totalRecords === 0) {
+          toastError("No PO records found in add_po table");
+        } else {
+          toastSuccess(`Loaded ${this.totalRecords} PO records`);
+        }
+        
+        this.applyFilters();
+      } catch(error) {
+        console.error("❌ Error loading POs:", error);
+        toastError(`Failed to load purchase orders: ${error.message}`);
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    getFileUrl(po) {
+      if (!po.po_file_path) return null;
+      
+      if (po.po_file_path.startsWith('http')) {
+        return po.po_file_path;
+      }
+      
+      let cleanPath = po.po_file_path.replace(/\/?(storage\/uploads\/)/, '');
+      cleanPath = cleanPath.replace(/^\/+/, '');
+      
+      const finalUrl = `${this.storageBaseUrl}${cleanPath}`;
+      
+      console.log("Original path:", po.po_file_path);
+      console.log("Cleaned path:", cleanPath);
+      console.log("Final URL:", finalUrl);
+      
+      return finalUrl;
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    },
+    
+    formatCurrency(value) {
+      if (!value && value !== 0) return '₹0';
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(value);
+    },
+    
+    formatFileSize(bytes) {
+      if (!bytes) return '0 KB';
+      if (bytes < 1024) return bytes + ' B';
+      else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      else return (bytes / 1048576).toFixed(1) + ' MB';
+    },
+    
+    formatType(type) {
+      const typeMap = {
+        'Supply': 'Supply',
+        'Service': 'Service',
+        'AMC': 'AMC'
+      };
+      return typeMap[type] || type || '-';
+    },
+    
+    getTypeIcon(type) {
+      const icons = {
+        'Supply': 'fas fa-box',
+        'Service': 'fas fa-handshake',
+        'AMC': 'fas fa-shield-alt'
+      };
+      return icons[type] || 'fas fa-file-invoice';
+    },
+    
+    getTypeBadgeClass(type) {
+      const classes = {
+        'Supply': 'type-supply',
+        'Service': 'type-service',
+        'AMC': 'type-amc'
+      };
+      return classes[type] || '';
+    },
+    
+    getTypeIconClass(type) {
+      const classes = {
+        'Supply': 'icon-supply',
+        'Service': 'icon-service',
+        'AMC': 'icon-amc'
+      };
+      return classes[type] || '';
+    },
+    
+applyFilters() {
+  let filtered = [...this.pos];
+  
+  // Step 1: Apply time filter (date range and status together)
+  if (this.timeFilter === 'default' && !this.dateFilter) {
+    // "From April current year" means: 
+    // Show ALL POs (both Open and Closed) that are from April onwards
+    const aprilDate = new Date(this.currentYear, 3, 1); // April 1st
+    filtered = filtered.filter(po => {
+      if (!po.date) return false;
+      const poDate = new Date(po.date);
+      return poDate >= aprilDate;
+    });
+  }
+  // For 'all' time, show ALL POs regardless of date (no date filtering)
+  
+  // Step 2: Apply search filter
+  if (this.searchQuery) {
+    const query = this.searchQuery.toLowerCase();
+    filtered = filtered.filter(po => 
+      (po.po_number && po.po_number.toLowerCase().includes(query)) ||
+      (po.company_name && po.company_name.toLowerCase().includes(query)) ||
+      (po.recommended_by && po.recommended_by.toLowerCase().includes(query))
+    );
+  }
+  
+  // Step 3: Apply status filter (if user selected specific status)
+  if (this.statusFilter) {
+    filtered = filtered.filter(po => po.status === this.statusFilter);
+  }
+  
+  // Step 4: Apply type filter
+  if (this.typeFilter) {
+    filtered = filtered.filter(po => po.po_type === this.typeFilter);
+  }
+  
+  // Step 5: Apply month filter (if user selected specific month)
+  if (this.dateFilter) {
+    const [year, month] = this.dateFilter.split('-');
+    filtered = filtered.filter(po => {
+      if (!po.date) return false;
+      const poDate = new Date(po.date);
+      return poDate.getFullYear() === parseInt(year) && 
+             (poDate.getMonth() + 1) === parseInt(month);
+    });
+  }
+  
+  // Step 6: Sorting
+  filtered.sort((a, b) => {
+    let valA = a[this.sortField];
+    let valB = b[this.sortField];
+    
+    if (this.sortField === 'value_of_po') {
+      valA = parseFloat(valA) || 0;
+      valB = parseFloat(valB) || 0;
+    } else if (this.sortField === 'date' || this.sortField === 'closed_date') {
+      valA = new Date(valA) || 0;
+      valB = new Date(valB) || 0;
+    } else {
+      valA = (valA || '').toLowerCase();
+      valB = (valB || '').toLowerCase();
+    }
+    
+    if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
+    if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  this.filteredPOs = filtered;
+},
+    
+    sortBy(field) {
+      if (this.sortField === field) {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortField = field;
+        this.sortDirection = 'asc';
+      }
+      this.applyFilters();
+    },
+    
+    clearFilters() {
+      this.searchQuery = '';
+      this.statusFilter = '';
+      this.typeFilter = '';
+      this.dateFilter = '';
+    },
+    
+    triggerFileInput() {
+      this.$refs.fileInput.click();
+    },
+    
+    handleFileSelect(event) {
+      const file = event.target.files[0];
+      this.processFile(file);
+    },
+    
+    handleFileDrop(event) {
+      this.dragActive = false;
+      const file = event.dataTransfer.files[0];
+      this.processFile(file);
+    },
+    
+    processFile(file) {
+      this.uploadError = '';
+      if (!file) return;
+      if (file.type !== 'application/pdf') {
+        this.uploadError = 'Only PDF files are allowed.';
+        this.selectedFile = null;
+        return;
+      }
+      if (file.size > 15 * 1024 * 1024) {
+        this.uploadError = 'File size must be less than 15MB.';
+        this.selectedFile = null;
+        return;
+      }
+      this.selectedFile = file;
+    },
+    
+    resetForm() {
+      this.formPO = {
+        po_number: '',
+        company_name: '',
+        po_type: '',
+        value_of_po: '',
+        date: '',
+        recommended_by: '',
+        po_file_path: '',
+        status: 'Open',
+        closed_date: ''
+      };
+      this.selectedFile = null;
+      this.editingPO = null;
+      this.uploadError = '';
+    },
+    
+    editPO(po) {
+      this.editingPO = po;
+      this.formPO = {
+        po_number: po.po_number || '',
+        company_name: po.company_name || '',
+        po_type: po.po_type || '',
+        value_of_po: po.value_of_po || '',
+        date: po.date ? po.date.split('T')[0] : '',
+        recommended_by: po.recommended_by || '',
+        po_file_path: po.po_file_path || '',
+        status: po.status || 'Open',
+        closed_date: po.closed_date ? po.closed_date.split('T')[0] : ''
+      };
+      this.showUploadModal = true;
+    },
+    
+    async handlePOSubmit() {
+      if (!this.formPO.po_number || !this.formPO.company_name || !this.formPO.po_type || 
+          !this.formPO.value_of_po || !this.formPO.date || !this.formPO.recommended_by) {
+        toastError("Please fill in all required fields");
+        return;
+      }
+      
+      this.submitting = true;
+      
+      const formData = new FormData();
+      formData.append("po_number", this.formPO.po_number);
+      formData.append("company_name", this.formPO.company_name);
+      formData.append("po_type", this.formPO.po_type);
+      formData.append("value_of_po", this.formPO.value_of_po);
+      formData.append("date", this.formPO.date);
+      formData.append("recommended_by", this.formPO.recommended_by);
+      formData.append("status", this.formPO.status);
+      if (this.formPO.closed_date) {
+        formData.append("closed_date", this.formPO.closed_date);
+      }
+      
+      if (this.selectedFile) {
+        formData.append("file", this.selectedFile);
+      }
+      
+      try {
+        let url = `${this.apiBaseUrl}/api/view-pos`;
+        let method = "POST";
+        
+        if (this.editingPO) {
+          url = `${this.apiBaseUrl}/api/view-pos/${this.editingPO.id}`;
+          method = "POST";
+          formData.append("_method", "PUT");
+        }
+        
+        const res = await fetch(url, { method, body: formData });
+        const data = await res.json();
+        
+        if (data.status === true || data.status === 200) {
+          await this.loadAllPOs();
+          this.closeModal();
+          toastSuccess(this.editingPO ? "PO Updated Successfully" : "PO Created Successfully");
+        } else {
+          toastError(data.message || "Operation failed");
+        }
+      } catch(error) {
+        console.error("Submit error:", error);
+        toastError("Operation failed");
+      } finally {
+        this.submitting = false;
+      }
+    },
+    
+    async deletePO(po) {
+      if (confirm(`Are you sure you want to delete PO "${po.po_number}"? This action cannot be undone.`)) {
+        try {
+          const response = await fetch(`${this.apiBaseUrl}/api/view-pos/${po.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.status === true || data.status === 200) {
+            await this.loadAllPOs();
+            toastSuccess('PO deleted successfully');
+          } else {
+            toastError(data.message || 'Failed to delete PO');
+          }
+        } catch(error) {
+          console.error("Delete error:", error);
+          toastError('Failed to delete PO. Please try again.');
+        }
+      }
+    },
+    
+    viewPODetails(po) {
+      this.selectedPO = po;
+      this.showViewModal = true;
+    },
+    
+    downloadPOFile(po) {
+      const fileUrl = this.getFileUrl(po);
+      console.log("Downloading from URL:", fileUrl);
+      
+      if (fileUrl) {
+        window.open(fileUrl, '_blank');
+        toastSuccess(`Opening: ${po.po_number}`);
+      } else {
+        toastError('File not available for this PO');
+      }
+    },
+    
+    closeModal() {
+      this.showUploadModal = false;
+      this.showViewModal = false;
+      this.resetForm();
+      this.uploadError = '';
+      this.selectedFile = null;
+      this.dragActive = false;
+      if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+    }
+  }
+}
 </script>
 
-
 <style scoped>
+/* Keep all existing styles from previous responses */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-/* ===== REMARKS COLUMN WIDTH ===== */
-.remarks-col {
-  min-width: 240px;
-  width: 240px;
-}
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
+
+:root {
+  --primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  --primary-color: #2a5298;
+  --success: #10b981;
+  --open-color: #10b981;
+  --closed-color: #6b7280;
+  --supply-color: #3b82f6;
+  --service-color: #8b5cf6;
+  --amc-color: #f59e0b;
 }
 
-.filter-select {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-weight: 500;
-}
-
-/* Optional: make textarea fill column */
-.remarks-col .remark-textarea {
-  width: 100%;
-}
-
-/* Example row colors based on status */
-.approved-row {
-  background-color: #92e8a6!important;
-}
-.pending-row {
-  background-color: #fff3cd!important;
-}
-.rejected-row {
-  background-color: #f8d7da!important;
-}
-.followup-row {
-  background-color: #b4d8fd!important;
-}
-.table-input {
-  width: 100%;
-  padding: 4px;
+* {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
-.no-data {
-  text-align: center;
-  font-style: italic;
-  color: #888;
-}
-.announcement-board {
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f9f9f9;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+.layout {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f4f7fc;
 }
 
-.announcement-board h2 {
-  margin-bottom: 15px;
-  color: var(--text);
+.main-content {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.sop-board-premium {
+  flex: 1;
+  background: white;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  overflow-x: auto;
+}
+
+/* Header styles */
+.content-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
   font-size: 24px;
 }
 
-.table-scroll-wrapper {
-  overflow-x: auto;
-  border-radius: 10px;
-  background: white;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+.content-header-modern h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
 }
 
-.styled-customer-table {
-  width: 100%;
-  /* border-collapse: collapse; */
-  min-width: 1000px; /* ensures horizontal scroll on small screens */
+.subtitle-modern {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 4px;
 }
 
-.styled-customer-table thead {
-  background-color: var(--text);
-  color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 1;
+.stats-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
-.styled-customer-table th,
-.styled-customer-table td {
-  padding: 12px 15px;
-  text-align: left;
-      border-bottom: 3px solid #ffffff;
+/* Time Filter Section */
+.time-filter-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  justify-content: flex-end;
+}
+
+.time-filter-btn {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-filter-btn i {
   font-size: 14px;
 }
 
+.time-filter-btn:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
 
-.styled-customer-table .no-data {
+.time-filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(42, 82, 152, 0.2);
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.stat-card i {
+  font-size: 32px;
+  color: var(--primary-color);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Filters Section */
+.filters-section {
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 28px;
+  border: 1px solid #e2e8f0;
+}
+
+.search-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-wrapper i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+}
+
+.filter-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-select, .filter-date {
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.clear-filters-btn {
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 30px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #64748b;
+  transition: 0.2s;
+}
+
+.clear-filters-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* Section Title */
+.section-title-modern {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1a1a2e;
+  justify-content: space-between;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.view-btn {
+  background: #f1f5f9;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #64748b;
+  transition: 0.2s;
+  font-size: 13px;
+}
+
+.view-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* Table View - keep all existing table styles */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: white;
+}
+
+.table-container {
+  min-width: 1000px;
+  overflow-x: auto;
+}
+
+.po-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.po-data-table th {
+  text-align: left;
+  padding: 14px 12px;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.po-data-table th:hover {
+  background: #f1f5f9;
+}
+
+.po-data-table th i {
+  margin-left: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.po-data-table td {
+  padding: 12px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.po-number {
+  font-weight: 600;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.company-name {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.amount {
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+/* Type Badges */
+.type-badge {
+  color: #870000;
+    background: #e6e1e1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.type-supply {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.type-service {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.type-amc {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.badge-open {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-open i {
+  font-size: 8px;
+  color: #10b981;
+}
+
+.badge-closed {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.badge-closed i {
+  font-size: 10px;
+}
+
+/* File Link Button */
+.file-link-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.file-link-btn:hover {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.no-file {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* Table Actions */
+.table-actions {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.action-icon {
+  background: transparent;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 13px;
+}
+
+.view-icon {
+  color: #3b82f6;
+}
+.view-icon:hover {
+  background: #eff6ff;
+}
+
+.edit-icon {
+  color: #f59e0b;
+}
+.edit-icon:hover {
+  background: #fef3c7;
+}
+
+.delete-icon {
+  color: #ef4444;
+}
+.delete-icon:hover {
+  background: #fee2e2;
+}
+
+/* Empty State */
+.empty-table-row td {
   text-align: center;
-  padding: 30px 0;
-  color: #888;
-  font-style: italic;
+  padding: 60px 20px;
 }
 
-@media (max-width: 768px) {
-  .styled-customer-table th,
-  .styled-customer-table td {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  .announcement-board h2 {
-    font-size: 20px;
-  }
+.empty-table-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
-/* ===== STATUS BUTTON STYLE ===== */
-.status-wrapper {
+
+.empty-table-content i {
+  font-size: 48px;
+  color: #cbd5e1;
+}
+
+.empty-table-content p {
+  color: #64748b;
+}
+
+/* Pagination */
+.pagination {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px;
 }
 
-.status-select {
-  padding: 6px 14px;
-  border-radius: 7px;
-  font-weight: 600;
-  font-size: 13px;
+.page-btn {
+  background: #f1f5f9;
   border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   cursor: pointer;
-  outline: none;
-  appearance: none;
-  text-align: center;
-  min-width: 110px;
+  transition: 0.2s;
+  color: #475569;
 }
 
-/* Status Colors */
-.status-pending {
+.page-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #475569;
+}
+
+/* Grid View */
+.pos-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+}
+
+.po-card-premium {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.po-card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.12);
+}
+
+.card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.card-accent.status-open { background: var(--open-color); }
+.card-accent.status-closed { background: var(--closed-color); }
+
+.po-header {
+  display: flex;
+  padding: 18px;
+  gap: 14px;
+  align-items: flex-start;
+  background: #fafbfc;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.po-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.po-icon.icon-supply { background: #dbeafe; color: #2563eb; }
+.po-icon.icon-service { background: #ede9fe; color: #6d28d9; }
+.po-icon.icon-amc { background: #fef3c7; color: #d97706; }
+
+.po-title-wrap {
+  flex: 1;
+}
+
+.po-title-wrap h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 6px;
+}
+
+.po-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.po-meta i {
+  margin-right: 4px;
+}
+
+.po-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 14px;
+}
+
+.view-btn { color: #3b82f6; }
+.view-btn:hover { background: #e0e7ff; }
+.download-btn { color: #10b981; }
+.download-btn:hover { background: #d1fae5; }
+.edit-btn { color: #f59e0b; }
+.edit-btn:hover { background: #fed7aa; }
+
+.po-details {
+  padding: 14px 18px;
   background: #ffffff;
-  color: #856404;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.status-followup {
-  background: #ffffff;
-  color: #004085;
-}
-
-.status-approved {
-  background: #ffffff;
-  color: #155724;
-}
-
-.status-rejected {
-  background: #ffffff;
-  color: #721c24;
-}
-
-.status-default {
-  background: #ffffff;
-  color: #383d41;
-}
-
-/* Hover */
-.status-select:hover {
-  filter: brightness(0.95);
-}
-
-/* ===== REMARK TEXTAREA ===== */
-.remark-textarea {
-  width: 100%;
-  resize: vertical;
-  padding: 8px 0px;
-  font-family: math;
-  border-radius: 8px;
-  border: 1px solid #605e6a;
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
   font-size: 13px;
-  transition: 0.2s ease;
-  background: #fafafa;
 }
 
-.remark-textarea:focus {
+.detail-label {
+  color: #6b7280;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.detail-value.highlight {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.po-footer {
+  padding: 12px 18px;
+  display: flex;
+  gap: 12px;
+  background: #f9fafb;
+}
+
+.badge-status, .badge-type {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badge-type {
+  background: #eef2ff;
+  color: #1e40af;
+}
+
+/* Empty State Premium */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  background: #fafbfc;
+  border-radius: 28px;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Modals - keep existing modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container-premium {
+  background: white;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+
+.modal-container-premium.modal-large {
+  max-width: 700px;
+}
+
+.modal-container-premium.modal-detail {
+  max-width: 550px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-icon {
+  font-size: 28px;
+  color: var(--primary-color);
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  font-family: inherit;
+  transition: 0.2s;
+}
+
+.form-group input:focus, .form-group select:focus {
   outline: none;
-  border-color: #3498db;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
 }
 
+.form-row {
+  display: flex;
+  gap: 14px;
+}
+
+.half { flex: 1; }
+
+.file-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 20px;
+  padding: 28px;
+  text-align: center;
+  background: #fafcff;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.drag-over {
+  border-color: var(--primary-color);
+  background: #eff6ff;
+}
+
+.browse-link {
+  color: var(--primary-color);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.file-selected {
+  color: #10b981;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 10px 24px;
+  border-radius: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* Detail View */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.detail-item {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.detail-item label {
+  font-size: 12px;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.detail-item p {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.detail-item p.highlight {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.status-badge-detail {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+}
+
+.detail-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.loading-overlay p {
+  color: white;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content { flex-direction: column; padding: 12px; }
+  .sop-board-premium { padding: 16px; }
+  .pos-grid-premium { grid-template-columns: 1fr; }
+  .form-row { flex-direction: column; gap: 0; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .filter-group { flex-direction: column; align-items: stretch; }
+  .filter-select, .filter-date { width: 100%; }
+  .view-btn { padding: 6px 12px; font-size: 12px; }
+  .time-filter-section { flex-direction: column; }
+  .time-filter-btn { width: 100%; justify-content: center; }
+}
 </style>

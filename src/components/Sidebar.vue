@@ -77,6 +77,10 @@
   <i class="	far fa-file-alt"></i> <span>Offer Letter</span>
 </li>
 
+<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('salaryslip')">
+  <i class="far fa-file-alt"></i> <span>Salary Slip</span>
+</li>
+
 <!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('joiningletter')">
   <i class="fas fa-money-bill-wave"></i> <span>Joining Letter</span>
 </li> -->

@@ -943,19 +943,17 @@ printQuotation() {
 </script>
 
 <style scoped>
-  tfoot {
+tfoot {
   display: table-footer-group;
 }
 
 .company-info-box {
   display: flex;
   align-items: center;
-  gap: 20px; /* space between logo and text */
+  gap: 20px;
 }
 
-
 .company-right {
-  /* display: flex; */
   flex-direction: column;
 }
 
@@ -973,32 +971,12 @@ printQuotation() {
 .two-column-row {
   display: flex;
   gap: 20px;
-      margin-top: -18px;
-    margin-bottom: -12px;
+  margin-top: -18px;
+  margin-bottom: -12px;
 }
 
 .two-column-row .half {
   width: 50%;
-}
-
-@media print {
-  * {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* FIX: Prevent text from duplicating */
-  .company-text {
-    position: static !important;
-    transform: none !important;
-    zoom: 1 !important;
-  }
-}
-
-@media print {
-  .button-row {
-    display: none !important;
-  }
 }
 
 .row-field {
@@ -1007,16 +985,14 @@ printQuotation() {
 }
 
 .row-field label {
-  width: 88px;        /* fixed width for labels */
+  width: 88px;
   font-weight: bold;
 }
 
 .static-field {
   flex: 1;
-  /* background: #f5f5f5; */
   padding: 6px 10px;
   border-radius: 4px;
-  /* border: 1px solid #ddd; */
 }
 
 .company-info-box {
@@ -1026,7 +1002,7 @@ printQuotation() {
 }
 
 .company-logo {
- width: 39px;;
+  width: 39px;
   margin-bottom: 68px;
 }
 
@@ -1041,75 +1017,73 @@ printQuotation() {
   position: relative;
   font-size: 9px;
   line-height: 1.1;
-
 }
 
 .static-field {
-  /* border: 1px solid #ccc; */
   padding: 4px 1px;
   border-radius: 6px;
   min-height: 0px;
   display: flex;
- text-align: left;
+  text-align: left;
   font-size: 9px;
   white-space: pre-wrap;
   justify-content: space-around;
-    flex-direction: column-reverse;
+  flex-direction: column-reverse;
 }
-.invoice-total{
-        font-size: 10px!important;
+
+.invoice-total {
+  font-size: 10px !important;
 }
+
 :root {
-        --primary: #1d4ed8;
-        --primary-light: #3b82f6;
-        --primary-bg: #eff6ff;
-        --bg: #f7f9fc;
-        --border: #d1d5db;
-        --text: #222;
-        --muted: black;
-        --card-bg: #ffffff;
-    }
-
-    body {
-        font-family: "Poppins", "Segoe UI", Arial, sans-serif;
-        background: var(--bg);
-        margin: 0;
-        padding: 30px;
-        color: black;
-    }
-
-    form {
-    max-width: 1000px;
-    background: var(--card-bg);
-    margin: auto;
+  --primary: #1d4ed8;
+  --primary-light: #3b82f6;
+  --primary-bg: #eff6ff;
+  --bg: #f7f9fc;
+  --border: #d1d5db;
+  --text: #222;
+  --muted: black;
+  --card-bg: #ffffff;
 }
 
-    h1 {
-        text-align: center;
-        font-size: 1.8em;
-        color: black;
-        letter-spacing: 0.5px;
-        margin-bottom: 25px;
-    }
-
-    .section-title {
-    font-weight: 700;
-    /* background: black; */
-    color: black;
-    padding: 5px 10px; /* reduced from 8px 12px */
-    border-radius: 4px;
-    font-size: 9px;
+body {
+  font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  margin: 0;
+  padding: 30px;
+  color: black;
 }
 
-    label {
-        display: block;
-        font-weight: 600;
-        /* margin-top: 10px; */
-        color: var(--muted);
-        font-size: 8px;
-    }
+form {
+  max-width: 1000px;
+  background: var(--card-bg);
+  margin: auto;
+}
 
-   input,
+h1 {
+  text-align: center;
+  font-size: 1.8em;
+  color: black;
+  letter-spacing: 0.5px;
+  margin-bottom: 25px;
+}
+
+.section-title {
+  font-weight: 700;
+  color: black;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 9px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+input,
 textarea {
   border: none;
   border-bottom: 1px solid #ccc;
@@ -1119,202 +1093,311 @@ textarea {
 
 input:focus,
 textarea:focus {
-  border-bottom: 1px solid black; /* optional focus effect */
+  border-bottom: 1px solid black;
   outline: none;
   box-shadow: none;
 }
 
-
-    input:focus, textarea:focus {
-        border-color: var(--primary-light);
-        box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-        outline: none;
-    }
-
-    textarea { resize: vertical; width: 100%;}
-
-   .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px; /* reduced from 20px */
+input:focus,
+textarea:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: none;
 }
 
-   .card {
-    background: #fff;
-    border: 1px solid black;
-    border-radius: 8px;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
-    padding: 12px; /* reduced from 20px */
-    margin-bottom: 10px; /* adds a tighter gap between cards */
+textarea {
+  resize: vertical;
+  width: 100%;
 }
 
-    .card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-
-    .card-title {
-        font-size: 1.05em;
-        font-weight: 600;
-        font-size: 8px;
-        color: black;
-        border-bottom: 2px solid var(--primary-light);
-        padding-bottom: 0px;
-            text-align: center;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Items Table */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-        font-size: 9px;
-    }
-
-    table th, table td {
-        border: 1px solid #420e0e;
-        /* padding: 6px 8px; */
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    table th {
-        background: #f0f4ff;
-        color: black;
-        font-weight: 600;
-    }
-
-    table input, table textarea {
-        border: none !important;
-        background: transparent;
-        outline: none;
-        width: 100%;
-        padding: 4px;
-        font-size: 0.9em;
-        text-align: center;
-    }
-
-    table textarea { resize: none; }
-
-    table input:focus, table textarea:focus {
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    .add-row, .remove-row {
-        border: none;
-        /* padding: 6px 10px; */
-        border-radius: 5px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-    }
-
-    .add-row {
-        background: black;
-        color: #fff;
-        margin-top: 8px;
-            margin-bottom: 5px;
-    }
-
-    .add-row:hover { background: var(--primary-light); }
-
-    .remove-row {
-        background: black;
-        color: white;
-    }
-
-    .remove-row:hover { background: #dc2626; }
-
-    /* BEAUTIFUL TOTALS SECTION */
-    .totals-card {
-    border-radius: 8px;
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-    .totals-box {
-        border-collapse: collapse;
-        width: 100%;
-        font-size: 0.6em;
-        font-size: 0.95em;
-    }
+.card {
+  background: #fff;
+  border: 1px solid black;
+  border-radius: 8px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
+  padding: 12px;
+  margin-bottom: 10px;
+}
 
-   .totals-box td {
-    padding: 4px 10px; /* reduced from 0px 18px */
-}   
-    .totals-box .label {
-        font-weight: 600;
-        text-align: left;
-        font-size: 0.6em;
-        color: var(--muted);
-    }
+.card:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
 
-    .totals-box .value {
-        text-align: right;
-        font-weight: 700;
-        color: #111;
-    }
+.card-title {
+  font-size: 1.05em;
+  font-weight: 600;
+  font-size: 8px;
+  color: black;
+  border-bottom: 2px solid var(--primary-light);
+  padding-bottom: 0px;
+  text-align: center;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
-    .totals-box tr:last-child td {
-        border-top: 2px solid black;
-        font-size: 1.05em;
-        color: black;
-        font-size: 0.6em;
-    }
+/* Items Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 9px;
+}
 
-    .amount-words {
-        margin-top: 12px;
-        font-style: italic;
-        background: #fff;
-        padding: 10px 12px;
-        font-size: 10px;
-        border-radius: 6px;
-        border: 1px solid #dbeafe;
-        color: black;
-    }
+table th,
+table td {
+  border: 1px solid #420e0e;
+  text-align: center;
+  vertical-align: middle;
+}
 
-    .submit-btn {
-        display: block;
-        width: 100%;
-        background: black;
-        color: white;
-        font-size: 1.1em;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        margin-top: 30px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: background 0.3s;
-    }
+table th {
+  background: #f0f4ff;
+  color: black;
+  font-weight: 600;
+}
 
-    .submit-btn:hover { background: var(--primary-light); }
+table input,
+table textarea {
+  border: none !important;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  padding: 4px;
+  font-size: 0.9em;
+  text-align: center;
+}
 
-    .note {
-        margin-top: 10px;
-        font-size: 0.85em;
-        color: #666;
-        font-style: italic;
-    }
+table textarea {
+  resize: none;
+}
+
+table input:focus,
+table textarea:focus {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.add-row,
+.remove-row {
+  border: none;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.add-row {
+  background: black;
+  color: #fff;
+  margin-top: 8px;
+  margin-bottom: 5px;
+}
+
+.add-row:hover {
+  background: var(--primary-light);
+}
+
+.remove-row {
+  background: black;
+  color: white;
+}
+
+.remove-row:hover {
+  background: #dc2626;
+}
+
+.totals-card {
+  border-radius: 8px;
+}
+
+.totals-box {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95em;
+}
+
+.totals-box td {
+  padding: 4px 10px;
+}
+
+.totals-box .label {
+  font-weight: 600;
+  text-align: left;
+  font-size: 0.6em;
+  color: var(--muted);
+}
+
+.totals-box .value {
+  text-align: right;
+  font-weight: 700;
+  color: #111;
+}
+
+.totals-box tr:last-child td {
+  border-top: 2px solid black;
+  font-size: 1.05em;
+  color: black;
+  font-size: 0.6em;
+}
+
+.amount-words {
+  margin-top: 12px;
+  font-style: italic;
+  background: #fff;
+  padding: 10px 12px;
+  font-size: 10px;
+  border-radius: 6px;
+  border: 1px solid #dbeafe;
+  color: black;
+}
+
+.submit-btn {
+  display: block;
+  width: 100%;
+  background: black;
+  color: white;
+  font-size: 1.1em;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover {
+  background: var(--primary-light);
+}
+
+.note {
+  margin-top: 10px;
+  font-size: 0.85em;
+  color: #666;
+  font-style: italic;
+}
+
+/* ============================================ */
+/* SINGLE CONSOLIDATED PRINT MEDIA BLOCK */
+/* ============================================ */
 @media print {
-  table {
-    page-break-inside: auto;
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
 
-  tr {
+  body,
+  html {
+    height: auto;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  form {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Hide print button */
+  .button-row,
+  .btn-print {
+    display: none !important;
+  }
+
+  /* Page size and margins */
+  @page {
+    size: A4;
+    margin: 0.7cm;
+  }
+
+  /* Prevent page breaks inside major sections */
+  .card,
+  .two-col,
+  .company-info-box,
+  .totals-card {
     page-break-inside: avoid;
-    page-break-after: auto;
+    break-inside: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Keep form together */
+  #quotationForm {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Table handling */
+  table {
+    page-break-after: avoid;
+    break-after: avoid;
+    page-break-inside: auto;
   }
 
   thead {
     display: table-header-group;
   }
 
-  /* 🔥 Prevent total row from breaking */
+  tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Final total row */
   .final-total-row {
     font-weight: bold;
     background: #f5f5f5;
     page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Fix text duplication issue */
+  .company-text {
+    position: static !important;
+    transform: none !important;
+    zoom: 1 !important;
+  }
+
+  /* Hide empty elements */
+  div:empty,
+  p:empty,
+  section:empty {
+    display: none !important;
+  }
+
+  /* Prevent subject line from causing page break */
+  div[style*="Subject to Nashik Jurisdiction"] {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    margin-bottom: 0 !important;
+    margin-top: 5px !important;
+  }
+
+  /* Remove extra spacing at the end */
+  #quotationForm > :last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Ensure all text is visible */
+  .static-field {
+    overflow: visible !important;
+    white-space: normal !important;
   }
 }
-
 </style>

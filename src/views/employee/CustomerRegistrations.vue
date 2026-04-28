@@ -12429,4 +12429,5 @@ transform:scale(1.05);
 .showDuplicateCompanySelection + .quotation-backdrop {
   z-index: 1030;
 }
+
 </style>

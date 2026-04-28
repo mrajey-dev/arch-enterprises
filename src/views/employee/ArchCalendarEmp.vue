@@ -1485,7 +1485,7 @@ export default {
 }
 
 .modal-card.small {
-  width: 450px;
+  width: 80%;
 }
 
 .status-badge {

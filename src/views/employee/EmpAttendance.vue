@@ -96,7 +96,7 @@
                    </td>
                   <td data-label="Required Time">{{ user.requiredTime }}</td>
                   <td data-label="Actual Time" class="actual-time">{{ user.actualTime || '—' }}</td>
-                 </tr>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -151,40 +151,8 @@
                 <li><span class="legend-box half-day"></span> Half Day</li>
                 <li><span class="legend-box traveling"></span> Traveling</li>
                 <li><span class="legend-box leave"></span> Leave</li>
-                <li><span class="legend-box absent"></span> Absent</li>
-                <li><span class="legend-box missing"></span> Missing</li>
                 <li><span class="legend-box holiday"></span> Public Holiday</li>
               </ul>
-              <!-- <div class="stats-summary">
-                <div class="stat-item">
-                  <span>✅ Present:</span>
-                  <strong>{{ statusCounts.Present || 0 }}</strong>
-                </div>
-                <div class="stat-item">
-                  <span>🏢 On Site:</span>
-                  <strong>{{ statusCounts.OnSite || 0 }}</strong>
-                </div>
-                <div class="stat-item">
-                  <span>🕒 Half Day:</span>
-                  <strong>{{ statusCounts.HalfDay || 0 }}</strong>
-                </div>
-                <div class="stat-item">
-                  <span>✈️ Traveling:</span>
-                  <strong>{{ statusCounts.Traveling || 0 }}</strong>
-                </div>
-                <div class="stat-item">
-                  <span>🌴 Leave:</span>
-                  <strong>{{ statusCounts.Leave || 0 }}</strong>
-                </div>
-                <div class="stat-item">
-                  <span>❌ Absent:</span>
-                  <strong>{{ statusCounts.Absent || 0 }}</strong>
-                </div>
-                <div class="stat-item">
-                  <span>⚠️ Missing:</span>
-                  <strong>{{ statusCounts.Missing || 0 }}</strong>
-                </div>
-              </div> -->
             </div>
           </div>
         </div>
@@ -265,10 +233,12 @@ export default {
     const today = new Date();
     const storedUser = localStorage.getItem('user');
     let userName = 'Unknown';
+    let userLeaveBalance = 0;
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
         userName = user.name || 'Unknown';
+        userLeaveBalance = user.cl_leave_used || 0;
       } catch (e) {
         console.error('Error parsing user from localStorage:', e);
       }
@@ -301,7 +271,8 @@ export default {
         travelFrom: '',
         travelTo: '',
         isLate: false,
-        isEarly: false
+        isEarly: false,
+        leaveBalance: userLeaveBalance
       }
     }
   },
@@ -507,46 +478,232 @@ export default {
         this.disableStatusSelect = false;
       }
     },
-   async fetchAttendance() {
-  const token = localStorage.getItem('token');
-  const name = encodeURIComponent(this.user.name);
-  const month = this.currentMonth + 1;
-  const year = this.currentYear;
-  
-  // Use the existing route pattern from your controller
-  const url = `https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`;
-  
-  try {
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    async fetchAttendance() {
+      const token = localStorage.getItem('token');
+      const name = encodeURIComponent(this.user.name);
+      const month = this.currentMonth + 1;
+      const year = this.currentYear;
+      
+      const url = `https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`;
+      
+      try {
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        console.log('Monthly Attendance Response:', response.data);
+        
+        let attendanceData = [];
+        if (response.data.data) {
+          attendanceData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          attendanceData = response.data;
+        } else if (response.data.records) {
+          attendanceData = response.data.records;
+        }
+        
+        console.log('Processed attendance data:', attendanceData);
+        
+        // Fetch user's leave balance before generating calendar
+        await this.fetchUserLeaveBalance();
+        
+        this.generateCalendarFromStatus(attendanceData);
+        
+        // Auto-mark missing attendances
+        await this.autoMarkMissingAttendances(attendanceData);
+        
+      } catch (error) {
+        console.error('Error fetching monthly attendance:', error);
+        if (error.response) {
+          console.error('Error response:', error.response.data);
+          toastError(`Failed to fetch: ${error.response.data.message || 'Unknown error'}`);
+        } else {
+          toastError('Failed to fetch monthly attendance data');
+        }
+        this.generateCalendarFromStatus([]);
+      }
+    },
     
-    console.log('Monthly Attendance Response:', response.data);
+    async fetchUserLeaveBalance() {
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/user/leave-balance', {
+          params: { name: this.user.name },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data && response.data.cl_leave_used !== undefined) {
+          this.user.leaveBalance = response.data.cl_leave_used;
+          // Update local storage
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            userData.cl_leave_used = response.data.cl_leave_used;
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching leave balance:', error);
+      }
+    },
     
-    // Handle different response structures
-    let attendanceData = [];
-    if (response.data.data) {
-      attendanceData = response.data.data;
-    } else if (Array.isArray(response.data)) {
-      attendanceData = response.data;
-    } else if (response.data.records) {
-      attendanceData = response.data.records;
-    }
+    async autoMarkMissingAttendances(attendanceData) {
+      const token = localStorage.getItem('token');
+      const targetMonth = this.currentMonth;
+      const targetYear = this.currentYear;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const publicHolidays = ['01-26', '05-01', '08-15', '10-02', '12-25'];
+      const markedDates = new Map();
+      
+      // Create a map of existing attendance records
+      if (attendanceData && Array.isArray(attendanceData)) {
+        attendanceData.forEach(record => {
+          if (record.date) {
+            const recordDate = new Date(record.date);
+            const dateKey = recordDate.toISOString().split('T')[0];
+            markedDates.set(dateKey, record);
+          }
+        });
+      }
+      
+      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
+      const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0);
+      const missingDates = [];
+      
+      // Loop through all days of the month
+      for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+        const currentDate = new Date(targetYear, targetMonth, day);
+        const dateString = currentDate.toISOString().split('T')[0];
+        const isSunday = currentDate.getDay() === 0;
+        const isSaturday = currentDate.getDay() === 6;
+        const mmdd = String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        const isHoliday = publicHolidays.includes(mmdd);
+        
+        // Check if date is past and no attendance record
+        if (currentDate < today && !markedDates.has(dateString)) {
+          // Skip weekends and holidays
+          if (!isSunday && !isSaturday && !isHoliday) {
+            missingDates.push({
+              date: dateString,
+              day: day,
+              month: currentDate.getMonth(),
+              year: currentDate.getFullYear()
+            });
+          }
+        }
+      }
+      
+      // Auto-mark missing dates as Leave or Absent
+      for (const missingDate of missingDates) {
+        // Check if leave balance is <= 7
+        let status = '';
+        let leaveBalanceUpdate = this.user.leaveBalance;
+        
+        if (this.user.leaveBalance <= 7) {
+          status = 'Leave';
+          leaveBalanceUpdate = this.user.leaveBalance + 1;
+        } else {
+          status = 'Absent';
+        }
+        
+        try {
+          // Check if attendance already exists for this date to avoid duplicates
+          const checkResponse = await axios.get('https://employees.archenterprises.co.in/api/api/attendance/check', {
+            params: { 
+              name: this.user.name, 
+              date: missingDate.date 
+            },
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          // Only mark if no attendance exists
+          if (!checkResponse.data || !checkResponse.data.exists) {
+            await axios.post('https://employees.archenterprises.co.in/api/api/attendance/store', {
+              name: this.user.name,
+              status: status,
+              clock_in: '',
+              clock_out: '',
+              required_time: '8 Hours',
+              actual_time: '00:00:00',
+              site_name: null,
+              travel_from: null,
+              travel_to: null,
+              date: missingDate.date
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            
+            // Update leave balance if Leave was marked
+            if (status === 'Leave') {
+              await this.updateLeaveBalance(leaveBalanceUpdate);
+              console.log(`Auto-marked ${missingDate.date} as Leave (Leave balance: ${this.user.leaveBalance} -> ${leaveBalanceUpdate})`);
+            } else {
+              console.log(`Auto-marked ${missingDate.date} as Absent (Leave balance exceeded)`);
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to auto-mark attendance for ${missingDate.date}:`, err);
+        }
+      }
+      
+      // Refresh attendance data after auto-marking
+      if (missingDates.length > 0) {
+        toastSuccess(`Auto-marked ${missingDates.length} missing attendance records`);
+        await this.refreshAttendanceData();
+      }
+    },
     
-    console.log('Processed attendance data:', attendanceData);
-    this.generateCalendarFromStatus(attendanceData);
+    async updateLeaveBalance(newBalance) {
+      const token = localStorage.getItem('token');
+      try {
+        const response = await axios.post('https://employees.archenterprises.co.in/api/api/user/update-leave-balance', {
+          name: this.user.name,
+          cl_leave_used: newBalance
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        
+        if (response.data.success) {
+          this.user.leaveBalance = newBalance;
+          // Update local storage
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            userData.cl_leave_used = newBalance;
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
+        }
+      } catch (error) {
+        console.error('Error updating leave balance:', error);
+      }
+    },
     
-  } catch (error) {
-    console.error('Error fetching monthly attendance:', error);
-    if (error.response) {
-      console.error('Error response:', error.response.data);
-      toastError(`Failed to fetch: ${error.response.data.message || 'Unknown error'}`);
-    } else {
-      toastError('Failed to fetch monthly attendance data');
-    }
-    this.generateCalendarFromStatus([]);
-  }
-},
+    async refreshAttendanceData() {
+      const token = localStorage.getItem('token');
+      const name = encodeURIComponent(this.user.name);
+      const month = this.currentMonth + 1;
+      const year = this.currentYear;
+      
+      const url = `https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`;
+      
+      try {
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        let attendanceData = [];
+        if (response.data.data) {
+          attendanceData = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          attendanceData = response.data;
+        } else if (response.data.records) {
+          attendanceData = response.data.records;
+        }
+        
+        this.generateCalendarFromStatus(attendanceData);
+      } catch (error) {
+        console.error('Error refreshing attendance data:', error);
+      }
+    },
+    
     generateCalendarFromStatus(attendanceData) {
       const targetMonth = this.currentMonth;
       const targetYear = this.currentYear;
@@ -657,6 +814,7 @@ export default {
       this.statusCounts = statusCounts;
       this.calendarData = calendar;
     },
+    
     normalizeStatus(status) {
       if (!status) return null;
       
@@ -678,6 +836,7 @@ export default {
       
       return statusMap[statusLower] || status;
     },
+    
     getAttendanceClass(day) {
       if (!day || !day.date) return '';
       
@@ -713,12 +872,14 @@ export default {
       
       return classes.join(' ');
     },
+    
     toggleView() {
       this.viewMode = this.viewMode === 'day' ? 'month' : 'day';
       if (this.viewMode === 'month') {
         this.fetchAttendance();
       }
     },
+    
     previousMonth() {
       if (this.currentMonth === 0) {
         this.currentMonth = 11;
@@ -728,6 +889,7 @@ export default {
       }
       this.fetchAttendance();
     },
+    
     nextMonth() {
       if (this.currentMonth === 11) {
         this.currentMonth = 0;
@@ -737,13 +899,16 @@ export default {
       }
       this.fetchAttendance();
     },
+    
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
     },
+    
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
     },
+    
     logout() {
       const token = localStorage.getItem('token');
       axios.post('https://employees.archenterprises.co.in/api/api/logout', {}, {
@@ -754,6 +919,7 @@ export default {
       });
     }
   },
+  
   mounted() {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
@@ -770,6 +936,7 @@ export default {
       this.$router.push('/auth');
     }
   },
+  
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
   }
@@ -1100,10 +1267,8 @@ export default {
 }
 
 .calendar-cell:hover {
-  /* background: #b2ebef; */
   transform: scale(1.1);
   z-index: 1;
-  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
 }
 
 .calendar-date {
@@ -1117,10 +1282,10 @@ export default {
 
 /* Enhanced Attendance Status Colors */
 .attendance-present { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
-.attendance-on-site { background: linear-gradient(135deg, #e0e7ff, #c7d2fe);  }
+.attendance-on-site { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); }
 .attendance-half-day { background: linear-gradient(135deg, #fed7aa, #fdba74); }
 .attendance-traveling { background: linear-gradient(135deg, #fef3c7, #fde68a); }
-.attendance-leave { background: linear-gradient(135deg, #e9d5ff, #d8b4fe);  }
+.attendance-leave { background: linear-gradient(135deg, #e9d5ff, #d8b4fe); }
 .attendance-absent { background: linear-gradient(135deg, #fee2e2, #fecaca); border-left: 3px solid #ef4444; }
 .attendance-missing { background: linear-gradient(135deg, #ffe0e0, #ffc9c9) !important; border-left: 3px solid #dc2626; position: relative; }
 .attendance-missing::after {

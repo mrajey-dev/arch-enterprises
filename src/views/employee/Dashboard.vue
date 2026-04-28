@@ -50,7 +50,7 @@
             </div>
             <div class="card-info">
               <p class="label">Recent Mentions</p>
-              <h3 class="value">{{ unreadMentionsCount }}</h3>
+              <!-- <h3 class="value">{{ unreadMentionsCount }}</h3> -->
               <span class="progress-text">You have unread messages</span>
             </div>
           </div>
@@ -61,7 +61,7 @@
             </div>
             <div class="card-info">
               <p class="label">CRM</p>
-              <h3 class="value">184</h3>
+              <!-- <h3 class="value">184</h3> -->
               <span class="progress-text">Manage customers & add PO</span>
             </div>
           </div>
@@ -73,6 +73,17 @@
   <div class="card-info">
     <p class="label">SOP</p>
     <span class="progress-text">Standard Operating Procedures</span>
+  </div>
+</div>
+
+ <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/viewallpo')">
+  <div class="new-tag">New</div>
+  <div class="card-icon crm-icon">
+    <i class="fas fa-file-invoice"></i>
+  </div>
+  <div class="card-info">
+    <p class="label">View all PO</p>
+    <span class="progress-text">Manage Purchase Orders</span>
   </div>
 </div>
           <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/visitschedule')">
@@ -1116,15 +1127,16 @@ export default {
 }
 
 .label {
-  font-size: 0.85rem;
-  color: var(--gray);
+  font-size: 1.2rem;
+  color: var(--primary);
+  font-weight: 600;
   margin-bottom: 0.25rem;
 }
 
 .value {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--dark);
+  color: red;
   margin-bottom: 0.5rem;
 }
 

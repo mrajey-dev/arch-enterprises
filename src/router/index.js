@@ -10,6 +10,7 @@ import RequestDesk from '../views/RequestDesk.vue'
 import RecruitmentSection from '../views/RecruitmentSection.vue'
 import ScheduleMeeting from '../views/ScheduleMeeting.vue'
 import SupplyItems from '../views/SupplyItems.vue';
+import SalarySlip from '../views/SalarySlip.vue';
 import sop from '../views/employee/sop.vue';
 
 
@@ -145,7 +146,7 @@ const routes = [
   { path: '/manageleavetype', name: 'ManageLeavetype', component: ManageLeavetype, meta: { requiresAuth: true, adminOnly:true, hideBell: true,  hideMenu: true, } },
 
   { path: '/customerregistration', name: 'CustomerRegistration', component: CustomerRegistration, meta: {requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-
+{ path: '/salaryslip', name: 'SalarySlip', component: SalarySlip, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
 {
   path: '/quotation',
   name: 'Quotation',
