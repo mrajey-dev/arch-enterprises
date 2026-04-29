@@ -81,7 +81,7 @@
                         <i class="fas fa-star"></i> Early
                       </span>
                     </div>
-                   </td>
+                    </td>
                   <td data-label="Clock Out" class="clock-cell">
                     <div v-if="['Present', 'HalfDay', 'OnSite'].includes(user.status)">
                       <img
@@ -93,7 +93,7 @@
                       />
                     </div>
                     <span v-else>{{ user.clockOut || '—' }}</span>
-                   </td>
+                    </td>
                   <td data-label="Required Time">{{ user.requiredTime }}</td>
                   <td data-label="Actual Time" class="actual-time">{{ user.actualTime || '—' }}</td>
                 </tr>
@@ -509,9 +509,6 @@ export default {
         
         this.generateCalendarFromStatus(attendanceData);
         
-        // Auto-mark missing attendances
-        await this.autoMarkMissingAttendances(attendanceData);
-        
       } catch (error) {
         console.error('Error fetching monthly attendance:', error);
         if (error.response) {
@@ -544,163 +541,6 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching leave balance:', error);
-      }
-    },
-    
-    async autoMarkMissingAttendances(attendanceData) {
-      const token = localStorage.getItem('token');
-      const targetMonth = this.currentMonth;
-      const targetYear = this.currentYear;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const publicHolidays = ['01-26', '05-01', '08-15', '10-02', '12-25'];
-      const markedDates = new Map();
-      
-      // Create a map of existing attendance records
-      if (attendanceData && Array.isArray(attendanceData)) {
-        attendanceData.forEach(record => {
-          if (record.date) {
-            const recordDate = new Date(record.date);
-            const dateKey = recordDate.toISOString().split('T')[0];
-            markedDates.set(dateKey, record);
-          }
-        });
-      }
-      
-      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
-      const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0);
-      const missingDates = [];
-      
-      // Loop through all days of the month
-      for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
-        const currentDate = new Date(targetYear, targetMonth, day);
-        const dateString = currentDate.toISOString().split('T')[0];
-        const isSunday = currentDate.getDay() === 0;
-        const isSaturday = currentDate.getDay() === 6;
-        const mmdd = String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-        const isHoliday = publicHolidays.includes(mmdd);
-        
-        // Check if date is past and no attendance record
-        if (currentDate < today && !markedDates.has(dateString)) {
-          // Skip weekends and holidays
-          if (!isSunday && !isSaturday && !isHoliday) {
-            missingDates.push({
-              date: dateString,
-              day: day,
-              month: currentDate.getMonth(),
-              year: currentDate.getFullYear()
-            });
-          }
-        }
-      }
-      
-      // Auto-mark missing dates as Leave or Absent
-      for (const missingDate of missingDates) {
-        // Check if leave balance is <= 7
-        let status = '';
-        let leaveBalanceUpdate = this.user.leaveBalance;
-        
-        if (this.user.leaveBalance <= 7) {
-          status = 'Leave';
-          leaveBalanceUpdate = this.user.leaveBalance + 1;
-        } else {
-          status = 'Absent';
-        }
-        
-        try {
-          // Check if attendance already exists for this date to avoid duplicates
-          const checkResponse = await axios.get('https://employees.archenterprises.co.in/api/api/attendance/check', {
-            params: { 
-              name: this.user.name, 
-              date: missingDate.date 
-            },
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          // Only mark if no attendance exists
-          if (!checkResponse.data || !checkResponse.data.exists) {
-            await axios.post('https://employees.archenterprises.co.in/api/api/attendance/store', {
-              name: this.user.name,
-              status: status,
-              clock_in: '',
-              clock_out: '',
-              required_time: '8 Hours',
-              actual_time: '00:00:00',
-              site_name: null,
-              travel_from: null,
-              travel_to: null,
-              date: missingDate.date
-            }, { headers: { Authorization: `Bearer ${token}` } });
-            
-            // Update leave balance if Leave was marked
-            if (status === 'Leave') {
-              await this.updateLeaveBalance(leaveBalanceUpdate);
-              console.log(`Auto-marked ${missingDate.date} as Leave (Leave balance: ${this.user.leaveBalance} -> ${leaveBalanceUpdate})`);
-            } else {
-              console.log(`Auto-marked ${missingDate.date} as Absent (Leave balance exceeded)`);
-            }
-          }
-        } catch (err) {
-          console.error(`Failed to auto-mark attendance for ${missingDate.date}:`, err);
-        }
-      }
-      
-      // Refresh attendance data after auto-marking
-      if (missingDates.length > 0) {
-        toastSuccess(`Auto-marked ${missingDates.length} missing attendance records`);
-        await this.refreshAttendanceData();
-      }
-    },
-    
-    async updateLeaveBalance(newBalance) {
-      const token = localStorage.getItem('token');
-      try {
-        const response = await axios.post('https://employees.archenterprises.co.in/api/api/user/update-leave-balance', {
-          name: this.user.name,
-          cl_leave_used: newBalance
-        }, { headers: { Authorization: `Bearer ${token}` } });
-        
-        if (response.data.success) {
-          this.user.leaveBalance = newBalance;
-          // Update local storage
-          const storedUser = localStorage.getItem('user');
-          if (storedUser) {
-            const userData = JSON.parse(storedUser);
-            userData.cl_leave_used = newBalance;
-            localStorage.setItem('user', JSON.stringify(userData));
-          }
-        }
-      } catch (error) {
-        console.error('Error updating leave balance:', error);
-      }
-    },
-    
-    async refreshAttendanceData() {
-      const token = localStorage.getItem('token');
-      const name = encodeURIComponent(this.user.name);
-      const month = this.currentMonth + 1;
-      const year = this.currentYear;
-      
-      const url = `https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`;
-      
-      try {
-        const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        let attendanceData = [];
-        if (response.data.data) {
-          attendanceData = response.data.data;
-        } else if (Array.isArray(response.data)) {
-          attendanceData = response.data;
-        } else if (response.data.records) {
-          attendanceData = response.data.records;
-        }
-        
-        this.generateCalendarFromStatus(attendanceData);
-      } catch (error) {
-        console.error('Error refreshing attendance data:', error);
       }
     },
     
@@ -746,8 +586,6 @@ export default {
       }
       
       const publicHolidays = ['01-26', '05-01', '08-15', '10-02', '12-25'];
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
       
       const calendar = [];
       let week = [];
@@ -756,7 +594,6 @@ export default {
         week.push({ 
           date: '', 
           status: null, 
-          noStatusAndPast: false,
           isPublicHoliday: false,
           isWeekend: false,
           fullDate: null
@@ -772,24 +609,14 @@ export default {
         const isHoliday = publicHolidays.includes(mmdd);
         
         let status = null;
-        let noStatusAndPast = false;
         
         if (attendance && attendance.hasData) {
           status = attendance.status;
-        } else {
-          const isPastDate = cellDate < today;
-          const isWeekday = !isSunday && !isSaturday;
-          
-          if (isPastDate && isWeekday && !isHoliday && !attendance) {
-            noStatusAndPast = true;
-            statusCounts.Missing++;
-          }
         }
         
         week.push({
           date: day,
           status: status,
-          noStatusAndPast: noStatusAndPast,
           isPublicHoliday: isHoliday,
           isWeekend: isSunday || isSaturday,
           fullDate: cellDate
@@ -800,7 +627,6 @@ export default {
             week.push({ 
               date: '', 
               status: null, 
-              noStatusAndPast: false,
               isPublicHoliday: false,
               isWeekend: false,
               fullDate: null
@@ -856,10 +682,6 @@ export default {
         if (statusClassMap[day.status]) {
           classes.push(statusClassMap[day.status]);
         }
-      }
-      
-      if (day.noStatusAndPast && !day.status) {
-        classes.push('attendance-missing');
       }
       
       if (day.isPublicHoliday) {
