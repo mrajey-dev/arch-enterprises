@@ -636,6 +636,7 @@ export default {
         record.status === 'Absent' && 
         this.isDateInFinancialYear(record.date, this.selectedFinancialYear)
       );
+      this.unpaidLeaveDays = this.unpaidAttendanceRecords.length;
     }
     
     this.loading = false;

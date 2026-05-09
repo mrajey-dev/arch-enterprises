@@ -89,29 +89,29 @@
                       </div>
                       <span class="employee-name">{{ formatName(leave.name) }}</span>
                     </div>
-                  </td>
+                   </td>
                   <td>
                     <span class="dept-badge">{{ leave.department }}</span>
-                  </td>
+                   </td>
                   <td>
                     <span :class="['leave-type-badge', getLeaveTypeClass(leave.leaveType)]">
                       <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
                       {{ leave.leaveType }}
                     </span>
-                  </td>
+                   </td>
                   <td class="reason-cell">{{ leave.reason }}</td>
                   <td class="date-cell">
                     <i class="fas fa-calendar-day"></i> {{ leave.fromDate }}
-                  </td>
+                   </td>
                   <td class="date-cell">
                     <i class="fas fa-calendar-day"></i> {{ leave.toDate }}
-                  </td>
+                   </td>
                   <td>
                     <span :class="['status-badge-premium', getStatusClass(leave.status)]">
                       <i :class="getStatusIcon(leave.status)"></i>
                       {{ leave.status }}
                     </span>
-                  </td>
+                   </td>
                   <td>
                     <div class="action-group">
                       <button
@@ -133,8 +133,8 @@
                         <i v-else class="fas fa-times-circle"></i>
                       </button>
                     </div>
-                  </td>
-                </tr>
+                   </td>
+                 </tr>
 
                 <!-- Empty State -->
                 <tr v-if="visibleLeaves.length === 0" class="empty-row">
@@ -144,8 +144,8 @@
                       <h4>No Leave Requests</h4>
                       <p>No leave applications found at the moment</p>
                     </div>
-                  </td>
-                </tr>
+                   </td>
+                 </tr>
               </tbody>
             </table>
           </div>
@@ -259,12 +259,41 @@ export default {
       this.visibleLeaveCount += 5
     },
 
-    calculateLeaveDays(fromDate, toDate) {
+    calculateLeaveDays(fromDate, toDate, leaveType) {
       const from = new Date(fromDate)
       const to = new Date(toDate)
       const diffTime = Math.abs(to - from)
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+      let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+      
+      // Handle half day leaves
+      const leaveTypeLower = (leaveType || '').toLowerCase().trim()
+      if (leaveTypeLower === 'half day' || leaveTypeLower === 'half-day') {
+        diffDays = 0.5
+      }
+      
       return diffDays
+    },
+
+    // Map leave type to database column names
+    mapLeaveTypeToColumn(leaveType) {
+      const typeMap = {
+        'casual': { used_column: 'used_cl_leave', total_column: 'casual_leave', remaining_column: 'remaining_cl_leave' },
+        'cl': { used_column: 'used_cl_leave', total_column: 'casual_leave', remaining_column: 'remaining_cl_leave' },
+        'pl': { used_column: 'used_pl_leave', total_column: 'pl_leave', remaining_column: 'remaining_pl_leave' },
+        'privilege': { used_column: 'used_pl_leave', total_column: 'pl_leave', remaining_column: 'remaining_pl_leave' },
+        'sick': { used_column: 'used_sick_leave', total_column: 'sick_leave', remaining_column: 'remaining_sick_leave' },
+        'sl': { used_column: 'used_sick_leave', total_column: 'sick_leave', remaining_column: 'remaining_sick_leave' },
+        'unpaid': { used_column: 'used_unpaid_leave', total_column: 'unpaid_leave', remaining_column: 'remaining_unpaid_leave' }
+      }
+      
+      const key = leaveType.toLowerCase().trim()
+      for (const [typeKey, mapping] of Object.entries(typeMap)) {
+        if (key.includes(typeKey)) {
+          return mapping
+        }
+      }
+      
+      return null
     },
 
     async approveLeave(leave) {
@@ -278,90 +307,174 @@ export default {
         const userName = leave.name || this.loggedInUserName
         if (!userName) throw new Error('No valid user name found!')
 
-        let totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate)
-        const leaveTypeLower = (leave.leaveType || '').toLowerCase().trim()
+        let totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate, leave.leaveType)
         
-        if (leaveTypeLower === 'half day' || leaveTypeLower === 'half-day') {
-          totalDays = 0.5
-        }
-
+        // Update leave request status
         await axios.patch(
           `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
           { status: 'Approved' },
           { headers: { Authorization: `Bearer ${token}` } }
         )
 
+        // Update leave balances if leave is not already approved
         if (leave.status !== 'Approved') {
-          const typeMap = {
-            'pl leave': 'pl', 'privilege leave': 'pl', 'paid leave': 'pl', pl: 'pl',
-            'casual leave': 'casual', cl: 'casual',
-            'sick leave': 'sick', sl: 'sick',
-            'medical leave': 'medical', m: 'medical',
-            'half day': 'casual', 'half-day': 'casual'
-          }
-          const leaveType = typeMap[leaveTypeLower]
-          if (!leaveType) throw new Error(`Unknown leaveType: ${leave.leaveType}`)
-
-          await axios.post(
-            'https://employees.archenterprises.co.in/api/api/update-used-leaves',
-            { name: userName, leave_type: leaveType, days: totalDays },
+          // Get user ID first
+          const userResponse = await axios.get(
+            `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(userName)}`,
             { headers: { Authorization: `Bearer ${token}` } }
           )
+          
+          const userId = userResponse.data.id
+          const currentYear = new Date().getFullYear()
+          
+          // Get current leave balance
+          const balanceResponse = await axios.get(
+            `https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`,
+            { 
+              params: { year: currentYear },
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          )
+          
+          if (!balanceResponse.data.success) {
+            throw new Error('Could not fetch leave balance')
+          }
+          
+          const currentBalance = balanceResponse.data.data
+          const leaveTypeMapping = this.mapLeaveTypeToColumn(leave.leaveType)
+          
+          if (!leaveTypeMapping) {
+            throw new Error(`Unknown leave type: ${leave.leaveType}`)
+          }
+          
+          // Calculate new used leaves value
+          const currentUsed = parseFloat(currentBalance[leaveTypeMapping.used_column]) || 0
+          const totalAllowed = parseFloat(currentBalance[leaveTypeMapping.total_column]) || 0
+          const newUsed = currentUsed + totalDays
+          
+          // Check if leave would exceed allowed limit
+          if (newUsed > totalAllowed) {
+            toastWarning(`Warning: This will exceed ${leave.leaveType} leave limit! Remaining: ${(totalAllowed - currentUsed).toFixed(1)} days`)
+          }
+          
+          // Update used leaves in the database
+          await axios.put(
+            `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
+            {
+              [leaveTypeMapping.used_column]: newUsed
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          
+          toastSuccess(`Leave approved successfully! (${totalDays} day(s) deducted from ${leave.leaveType} leave balance)`)
+        } else {
+          toastSuccess('Leave approved successfully!')
         }
 
         await this.fetchLeaves()
-        toastSuccess(`Leave approved successfully! (${totalDays} day(s) counted)`)
 
       } catch (error) {
         console.error('Approve leave failed:', error)
-        toastError('Could not approve leave')
+        toastError(error.response?.data?.message || 'Could not approve leave')
       } finally {
         this.busyLeave = { id: null, action: null }
       }
     },
 
     async rejectLeave(leave) {
-      if (this.busyLeave.id) return
-      const previousStatus = leave.status
-      this.busyLeave = { id: leave.id, action: 'Rejected' }
+  if (this.busyLeave.id) return
+  const previousStatus = leave.status
+  this.busyLeave = { id: leave.id, action: 'Rejected' }
 
-      try {
-        const token = localStorage.getItem('token')
-        const userName = leave.name || this.loggedInUserName
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) throw new Error('No auth token found!')
 
-        await axios.patch(
-          `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
-          { status: 'Rejected' },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
+    // Update leave request status to 'Rejected'
+    // The backend will handle updating attendance records
+    await axios.patch(
+      `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
+      { status: 'Rejected' },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
 
-        if (previousStatus === 'Approved') {
-          const totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate)
-          const typeMap = {
-            'pl leave': 'pl', 'privilege leave': 'pl', 'paid leave': 'pl', pl: 'pl',
-            'casual leave': 'casual', cl: 'casual',
-            'sick leave': 'sick', sl: 'sick',
-            'medical leave': 'medical', m: 'medical'
-          }
-          const leaveType = typeMap[(leave.leaveType || '').toLowerCase().trim()]
-
-          await axios.post(
-            'https://employees.archenterprises.co.in/api/api/update-used-leaves',
-            { name: userName, leave_type: leaveType, days: -totalDays },
+    // If the leave was previously approved, revert the used leaves
+    if (previousStatus === 'Approved') {
+      const userName = leave.name || this.loggedInUserName
+      const totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate, leave.leaveType)
+      
+      // Get user ID
+      const userResponse = await axios.get(
+        `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(userName)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      const userId = userResponse.data.id
+      const currentYear = new Date().getFullYear()
+      
+      // Get current leave balance
+      const balanceResponse = await axios.get(
+        `https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`,
+        { 
+          params: { year: currentYear },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      
+      if (balanceResponse.data.success) {
+        const currentBalance = balanceResponse.data.data
+        const leaveTypeMapping = this.mapLeaveTypeToColumn(leave.leaveType)
+        
+        if (leaveTypeMapping) {
+          const currentUsed = parseFloat(currentBalance[leaveTypeMapping.used_column]) || 0
+          const newUsed = Math.max(0, currentUsed - totalDays)
+          
+          await axios.put(
+            `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
+            {
+              [leaveTypeMapping.used_column]: newUsed
+            },
             { headers: { Authorization: `Bearer ${token}` } }
           )
         }
-
-        await this.fetchLeaves()
-        toastSuccess('Leave rejected successfully')
-
-      } catch (error) {
-        console.error('Reject failed:', error)
-        toastError('Could not reject leave')
-      } finally {
-        this.busyLeave = { id: null, action: null }
       }
-    },
+    }
+
+    toastSuccess('Leave rejected successfully')
+    await this.fetchLeaves()
+
+  } catch (error) {
+    console.error('Reject failed:', error)
+    toastError(error.response?.data?.message || 'Could not reject leave')
+  } finally {
+    this.busyLeave = { id: null, action: null }
+  }
+},
+
+// REMOVE the markAttendanceAsAbsent method entirely
+
+// New method to mark attendance as Absent
+async markAttendanceAsAbsent(leave) {
+  try {
+    const token = localStorage.getItem('token')
+    
+    // Call backend API to mark attendance as Absent for the date range
+    await axios.post(
+      'https://employees.archenterprises.co.in/api/api/mark-attendance-absent',
+      {
+        name: leave.name,
+        fromDate: leave.fromDate,
+        toDate: leave.toDate,
+        leaveType: leave.leaveType,
+        is_half_day: leave.is_half_day || false
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+  } catch (error) {
+    console.error('Failed to mark attendance as Absent:', error)
+    // Don't throw - we still want to show success for rejection
+  }
+},
 
     async fetchLeaves() {
       this.loadingLeaves = true
@@ -373,24 +486,24 @@ export default {
         )
         this.leaveRequests = response.data
       } catch (error) {
-  console.error('FULL ERROR:', error)
+        console.error('FULL ERROR:', error)
 
-  if (error.response) {
-    console.log('STATUS:', error.response.status)
-    console.log('DATA:', error.response.data)
-    console.log('HEADERS:', error.response.headers)
-  } else if (error.request) {
-    console.log('NO RESPONSE RECEIVED:', error.request)
-  } else {
-    console.log('ERROR MESSAGE:', error.message)
-  }
+        if (error.response) {
+          console.log('STATUS:', error.response.status)
+          console.log('DATA:', error.response.data)
+          console.log('HEADERS:', error.response.headers)
+        } else if (error.request) {
+          console.log('NO RESPONSE RECEIVED:', error.request)
+        } else {
+          console.log('ERROR MESSAGE:', error.message)
+        }
 
-  toastError(
-    error.response?.data?.message ||
-    error.message ||
-    'Error loading leave requests'
-  )
-} finally {
+        toastError(
+          error.response?.data?.message ||
+          error.message ||
+          'Error loading leave requests'
+        )
+      } finally {
         this.loadingLeaves = false
       }
     },
