@@ -372,12 +372,16 @@
   <div style="display:flex; justify-content:space-between; gap:10px;">
 
     <!-- LEFT: TERMS & CONDITIONS -->
-    <div style="flex: 0 0 75%;">
-      <div class="section-title">Terms & Conditions</div>
-      <div class="static-field">
-        {{ form.terms_conditions }}
-      </div>
+ <!-- LEFT: TERMS & CONDITIONS -->
+<!-- LEFT: TERMS & CONDITIONS -->
+<div style="flex: 0 0 75%;">
+  <div class="section-title">Terms & Conditions</div>
+  <div class="static-field">
+    <div v-for="(line, index) in form.terms_conditions.split('\n').reverse()" :key="index">
+      {{ line }}
     </div>
+  </div>
+</div>
 
     <!-- RIGHT: AUTHORIZED SIGNATORY -->
     <div style="flex: 0 0 25%; text-align:right;     margin-top: 35px;

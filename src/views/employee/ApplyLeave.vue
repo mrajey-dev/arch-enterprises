@@ -1,42 +1,6 @@
 <template>
   <div class="layout">
 
-    <!-- Leave Balance Modal -->
-    <transition name="modal-fade">
-      <div v-if="showBalanceModal" class="modal-premium" @click.self="showBalanceModal = false">
-        <div class="modal-premium-container small">
-          <div class="modal-premium-header">
-            <div class="modal-icon">
-              <i class="fas fa-chart-pie"></i>
-            </div>
-            <h2>Leave Balance</h2>
-            <button class="modal-close" @click="showBalanceModal = false">×</button>
-          </div>
-          <div class="modal-premium-body">
-            <div class="balance-list">
-              <div v-for="(total, type) in baseAllowances" :key="type" class="balance-item">
-                <div class="balance-info">
-                  <span class="balance-type">{{ beautify(type) }}</span>
-                  <span class="balance-days">
-                    <span class="used">{{ usedLeaves[type] || 0 }}</span> / 
-                    <span class="total">{{ total }}</span>
-                  </span>
-                </div>
-                <div class="progress-bar">
-                  <div class="progress-fill" :style="{ width: getProgressPercentage(type) + '%' }"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-premium-footer">
-            <button class="btn-primary-modern" @click="showBalanceModal = false">
-              <i class="fas fa-check"></i> Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
-
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
@@ -53,9 +17,6 @@
               <p class="subtitle-modern">Submit your leave request</p>
             </div>
           </div>
-          <button class="balance-btn" @click="showBalanceModal = true">
-            <i class="fas fa-chart-line"></i> Leave Balance
-          </button>
         </div>
 
         <form @submit.prevent="submitForm" class="premium-form">
@@ -162,11 +123,9 @@ export default {
       submitSuccessMsg: '',
       userName: '',
       userDept: '',
-      // Medical leave removed - only casual, sick, and PL remain
       baseAllowances: { casual: 7, sick: 10, pl: 10 },
       leaveBalance: { casual: 7, sick: 10, pl: 10 },
       usedLeaves: { casual: 0, sick: 0, pl: 0 },
-      showBalanceModal: false,
       leaveRequests: [],
       submitError: '',
       isMobile: false,
@@ -226,12 +185,6 @@ export default {
   },
 
   methods: {
-    getProgressPercentage(type) {
-      const total = this.baseAllowances[type] || 1;
-      const used = this.usedLeaves[type] || 0;
-      return Math.min((used / total) * 100, 100);
-    },
-
     findOverlapMessage() {
       if (!this.form.fromDate || !this.form.toDate) return '';
       const clash = this.leaveRequests.find(lv =>
@@ -260,11 +213,9 @@ export default {
       const { fromDate, toDate, leaveType } = this.form;
       if (!fromDate || !toDate || !leaveType) return;
 
-      // Map leave types - medical removed
       let leaveKey = (leaveType || '').toLowerCase().replace(' leave', '');
-      // Handle possible "medical" value if still coming from API
       if (leaveKey === 'medical') {
-        leaveKey = 'sick'; // Map medical to sick leave
+        leaveKey = 'sick';
       }
       
       const validKeys = ['casual', 'sick', 'pl'];
@@ -279,7 +230,6 @@ export default {
         });
         const user = res.data;
 
-        // Medical removed - using sick for medical cases
         const usedMap = {
           casual: user.cl_leave_used || 0,
           pl: user.pl_leave_used || 0,
@@ -311,7 +261,6 @@ export default {
         });
         const user = res.data;
 
-        // Medical leave removed - only casual, sick, pl
         const totals = { casual: 7, sick: 10, pl: 10 };
         const used = {
           casual: user.cl_leave_used || 0,
@@ -369,14 +318,12 @@ export default {
 
     computeLeaveBalance() {
       const remaining = { ...this.baseAllowances };
-      // Medical removed from used tracking
       const used = { casual: 0, sick: 0, pl: 0 };
 
       const map = {
         'casual leave': 'casual', casual: 'casual',
         'sick leave': 'sick', sick: 'sick',
         'pl leave': 'pl', pl: 'pl',
-        // Map any medical entries to sick
         'medical leave': 'sick', medical: 'sick',
       };
 
@@ -423,7 +370,6 @@ export default {
         const res = await axios.get('https://employees.archenterprises.co.in/api/api/leave-types', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        // Filter out medical leave types from the API response
         let leaveTypesData = res.data || [];
         leaveTypesData = leaveTypesData.filter(type => 
           type.leave_name && type.leave_name.toLowerCase() !== 'medical' && 
@@ -434,7 +380,6 @@ export default {
         const allowances = { casual: 7, sick: 10, pl: 10 };
         this.leaveTypes.forEach(type => {
           const key = (type.leave_name || '').toLowerCase().replace(' leave', '');
-          // Skip medical if somehow still present
           if (key === 'medical') return;
           if (allowances.hasOwnProperty(key)) {
             allowances[key] = parseInt(type.total_leaves) || allowances[key];
@@ -445,7 +390,6 @@ export default {
       } catch (e) {
         console.error('Fetch leave types failed:', e);
         toastError('Could not load leave types.');
-        // Set defaults without medical
         this.baseAllowances = { casual: 7, sick: 10, pl: 10 };
         this.leaveBalance = { casual: 7, sick: 10, pl: 10 };
       }
@@ -462,7 +406,6 @@ export default {
         this.form.department = u.department;
         this.userName = u.name;
         this.userDept = u.department;
-        // Medical removed from used leaves
         this.usedLeaves = {
           casual: u.cl_leave_used || 0,
           pl: u.pl_leave_used || 0,
@@ -633,7 +576,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -643,7 +585,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .leave-form-wrapper {
@@ -696,25 +637,6 @@ export default {
   color: #6b7280;
   font-size: 14px;
   margin-top: 4px;
-}
-
-.balance-btn {
-  padding: 10px 22px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.balance-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
 }
 
 /* Premium Form */
@@ -861,194 +783,6 @@ export default {
   cursor: not-allowed;
 }
 
-/* Modal Styles */
-.modal-premium {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-  animation: modalBackdropIn 0.3s ease;
-}
-
-@keyframes modalBackdropIn {
-  from { opacity: 0; backdrop-filter: blur(0px); }
-  to { opacity: 1; backdrop-filter: blur(10px); }
-}
-
-.modal-premium-container {
-  background: white;
-  border-radius: 32px;
-  width: 100%;
-  max-width: 450px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
-}
-
-.modal-premium-container.small { max-width: 400px; }
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.modal-premium-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px 28px;
-  background: white;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.modal-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-  font-size: 20px;
-}
-
-.modal-premium-header h2 {
-  flex: 1;
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0;
-  color: #1a1a2e;
-}
-
-.modal-close {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #6b7280;
-  font-size: 18px;
-}
-
-.modal-close:hover {
-  /* background: var(--danger); */
-  color: rgb(1, 0, 0);
-  transform: rotate(90deg);
-}
-
-.modal-premium-body {
-  padding: 24px;
-  background: #fafbfc;
-}
-
-.modal-premium-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.btn-primary-modern {
-  padding: 10px 20px;
-  background: var(--primary);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-primary-modern:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-/* Balance List */
-.balance-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.balance-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.balance-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.balance-type {
-  font-weight: 600;
-  color: #1a1a2e;
-}
-
-.balance-days {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.balance-days .used {
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.balance-days .total {
-  font-weight: 500;
-}
-
-.progress-bar {
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--primary);
-  border-radius: 10px;
-  transition: width 0.3s ease;
-}
-
-/* Modal Fade */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .main-content {
@@ -1065,32 +799,12 @@ export default {
     align-items: stretch;
   }
 
-  .balance-btn {
-    justify-content: center;
-  }
-
   .form-grid-premium {
     grid-template-columns: 1fr;
   }
 
   .form-field.full-width {
     grid-column: span 1;
-  }
-
-  .modal-premium-container {
-    max-width: 95%;
-  }
-
-  .modal-premium-header {
-    padding: 16px 20px;
-  }
-
-  .modal-premium-body {
-    padding: 20px;
-  }
-
-  .modal-premium-footer {
-    padding: 16px 20px;
   }
 }
 </style>

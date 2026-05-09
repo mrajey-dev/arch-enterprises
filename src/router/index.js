@@ -33,7 +33,7 @@ import JoiningLetter from '../views/JoiningLetter.vue'
 import OfferLetterList from '../views/OfferLetterList.vue'
 import PerformancePage from '../views/PerformancePage.vue'
 import EmployeePerformance from '../views/employee/PerformancePage.vue'
-
+import MyLeaveBalance from '../views/employee/MyLeaveBalance.vue';
 
 
 import ManageDepartments from '../views/ManageDepartments.vue'
@@ -202,6 +202,7 @@ const routes = [
     component: FollowUp,
     meta: {requiresAuth: true, hideBell: true,  hideHeader: true }
   },
+  {path: '/employee/myleavebalance', name: 'MyLeaveBalance', component: MyLeaveBalance, meta: { requiresAuth: true } },
   { 
     path: '/employee/sop',
     name: 'sop',

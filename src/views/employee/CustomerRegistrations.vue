@@ -10070,7 +10070,9 @@ flex-wrap: wrap;
   background: white;
   padding: 20px;
   border-radius: 8px;
-  width: 73%
+  width: 73%;
+  height: 100%;
+  overflow: scroll;
 }
 .modal-content {
   background: white;

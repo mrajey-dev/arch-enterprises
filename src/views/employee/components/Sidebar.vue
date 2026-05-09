@@ -1,207 +1,205 @@
 <template>
   <div class="sidebar-root">
-  <div class="layout">
- <!-- Mobile Menu Button -->
-<button class="mobile-menu-btn" @click="isMobileOpen = true">
-  ☰
-</button>
+    <div class="layout">
+      <!-- Mobile Menu Button -->
+      <button class="mobile-menu-btn" @click="isMobileOpen = true">
+        ☰
+      </button>
 
-<aside
-  class="sidebar"
-  :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
-  @mouseenter="handleMouseEnter"
-  @mouseleave="handleMouseLeave"
->
-
-
-
-
-
-      <!-- Profile Section -->
-      <div class="profile-section">
-        <!-- Profile Picture with Camera Icon -->
-       <div class="profile-pic-wrapper">
-  <label for="profileUpload" class="profile-upload-label">
- <img
-  :key="profilePhoto"
-  :src="profilePhoto"
-  @error="profilePhoto = defaultPhoto"
-  class="profile-pic"
-/>
-
-
-
-    <input
-      type="file"
-      id="profileUpload"
-      accept="image/*"
-      @change="onProfilePicChange"
-      style="display: none"
-    />
-  </label>
-
-</div>
-
-
-        <h2 class="sidebar-title" v-if="username">{{ greetingMessage }}</h2>
-      </div>
-
-      <!-- Scrollable Menu Section -->
-      <div class="menu-scroll">
-      
-        <ul class="sidebar-menu">
-          <li @click="goTo('employee/dashboard')">
-            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
-          </li>
-           <li @click="goTo('employee/archcalendar')">
-  <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
-</li>
- <li @click="goTo('employee/help')">
-            <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
-          </li>
-          <!-- Leave Dropdown -->
-          <li class="dropdown-wrapper">
-            <div @click="toggleLeaveDropdown">
-              <i class="fas fa-calendar-alt"></i><span> Leave</span>
-              <i class="fas fa-caret-down"></i>
-            </div>
-            <ul v-if="leaveDropdownOpen" class="dropdown-menu">
-              <li @click="goTo('employee/leaveapplicationsemp')">
-                <i class="fas fa-list"></i> <span>All Leaves</span>
-              </li>
-              <li @click="goTo('employee/approvedleavesemp')">
-                <i class="fas fa-check-circle"></i> <span>Approved</span>
-              </li>
-              <li @click="goTo('employee/rejectedleavesemp')">
-                <i class="fas fa-times-circle"></i> <span>Rejected</span>
-              </li>
-              <li @click="goTo('employee/pendingleaves')">
-                <i class="fas fa-hourglass-half"></i><span> Pending</span>
-              </li>
-            </ul>
-          </li>
-
-          <li @click="goTo('employee/applyleave')">
-            <i class="fas fa-plane-departure"></i><span> Apply for Leave </span>
-          </li>
-          <li
-  v-if="user.department && allowedVisitDepartments.includes(user.department.toLowerCase())"
-  @click="goTo('employee/visitschedule')"
->
-  <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
-</li>
- <li 
-  class="desktop-only"
-  @click="goTo('employee/visitschedule')"
->
-  <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
-</li>
-
-<li 
-  v-if="user?.department === 'Management'"
-  class="mobile-only"
-  @click="goTo('employee/performance')"
->
-  <i class="fas fa-chart-line"></i>
-  <span>Performance</span>
-</li>
-
-
-          <li @click="goTo('employee/viewAnnouncement')">
-            <i class="fas fa-bullhorn"></i><span> Announcement</span>
-          </li>
-          <li @click="goTo('employee/request')">
-            <i class="fa fa-check-square-o"></i><span> Request Desk</span>
-          </li>
-           <li @click="goTo('employee/resourcebooking')">
-            <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
-          </li>
-          <li @click="goTo('employee/mysalaryadvances')">
-            <i class="fas fa-hand-holding-usd"></i><span>Salary Advances</span>
-          </li>
-          <li @click="goTo('employee/viewkra')">
-            <i class="fas fa-tasks"></i> <span>View KRA</span>
-          </li>
-          <li @click="goTo('employee/sop')">
-            <i class="fas fa-book"></i><span> SOP</span>
-          </li>
-          <li @click="goTo('employee/mydsi')">
-            <i class="fas fa-tasks"></i><span> DSI</span>
-          </li>
-          
-          <li @click="goTo('employee/myprofile')">
-            <i class="fa-solid fa-user"></i><span> My Profile</span>
-          </li>
-         
-          <li @click="logout" class="danger-bg">
-            <i class="fas fa-sign-out-alt"></i><span> Logout</span>
-          </li>
-           <li>
-     <select
-        class="theme-select"
-        @change="changeTheme"
-        :value="currentTheme"
+      <aside
+        class="sidebar"
+        :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
+        @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave"
       >
-        <option value="default">⚪</option>
-        <option value="blue">🟦</option>
-        <option value="green">🟩</option>
-        <option value="orange">🟧</option>
-        <option value="red">🟥</option>
-        <option value="teal">🟦</option>
-        <option value="purple">🟥</option>
-      </select><span> Theme</span>
-    </li>
-        </ul>
-      </div>
-    </aside>
-<!-- MOBILE OVERLAY -->
-<div
-  v-if="isMobileOpen"
-  class="mobile-overlay"
-  @click="isMobileOpen = false"
-></div>
-    <!-- Main Content -->
-    <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '260px' }">
-      <router-view></router-view>
-    </main>
+        <!-- Profile Section -->
+        <div class="profile-section">
+          <div class="profile-pic-wrapper">
+            <label for="profileUpload" class="profile-upload-label">
+              <img
+                :key="profilePhoto"
+                :src="profilePhoto"
+                @error="profilePhoto = defaultPhoto"
+                class="profile-pic"
+              />
+              <input
+                type="file"
+                id="profileUpload"
+                accept="image/*"
+                @change="onProfilePicChange"
+                style="display: none"
+              />
+            </label>
+          </div>
+          <h2 class="sidebar-title" v-if="username">{{ greetingMessage }}</h2>
+        </div>
 
-    <ChangePasswordForm
-      v-if="showChangePassword"
-      @close="showChangePassword = false"
-    />
-  </div>
-  
-<!-- Popup for search results -->
-<div v-if="showPopup" class="popup-backdrop" @click.self="closePopup">
-  <div class="popup">
-    <h3>Search Results</h3>
-    <div class="table-container">
-      <table v-if="results.length" class="results-table">
-        <thead>
-          <tr>
-            <th>Company Name</th>
-            <th>PO Type</th>
-            <th>PO Number</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in results" :key="item.id">
-            <td>{{ item.company_name }}</td>
-            <td>{{ item.po_type }}</td>
-            <td>{{ item.po_number }}</td>
-            <td>{{ item.status }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-else class="no-results">No results found.</p>
+        <!-- Scrollable Menu Section -->
+        <div class="menu-scroll">
+          <ul class="sidebar-menu">
+            <li @click="goTo('employee/dashboard')">
+              <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+            </li>
+            <li @click="goTo('employee/archcalendar')">
+              <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
+            </li>
+            <li @click="goTo('employee/help')">
+              <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
+            </li>
+            <!-- Leave Dropdown -->
+            <li class="dropdown-wrapper">
+              <div @click="toggleLeaveDropdown">
+                <i class="fas fa-calendar-alt"></i><span> Leave</span>
+                <i class="fas fa-caret-down"></i>
+              </div>
+              <ul v-if="leaveDropdownOpen" class="dropdown-menu">
+                <li @click="goTo('employee/leaveapplicationsemp')">
+                  <i class="fas fa-list"></i> <span>All Leaves</span>
+                </li>
+                <li @click="goTo('employee/approvedleavesemp')">
+                  <i class="fas fa-check-circle"></i> <span>Approved</span>
+                </li>
+                <li @click="goTo('employee/rejectedleavesemp')">
+                  <i class="fas fa-times-circle"></i> <span>Rejected</span>
+                </li>
+                <li @click="goTo('employee/pendingleaves')">
+                  <i class="fas fa-hourglass-half"></i><span> Pending</span>
+                </li>
+              </ul>
+            </li>
+
+            <li @click="goTo('employee/applyleave')">
+              <i class="fas fa-plane-departure"></i><span> Apply for Leave </span>
+            </li>
+            <li @click="goTo('employee/myleavebalance')">
+              <i class="fas fa-balance-scale"></i><span> My Leave Balance </span>
+            </li>
+            <li
+              v-if="user.department && allowedVisitDepartments.includes(user.department.toLowerCase())"
+              @click="goTo('employee/visitschedule')"
+            >
+              <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
+            </li>
+            <li 
+              class="desktop-only"
+              @click="goTo('employee/visitschedule')"
+            >
+              <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
+            </li>
+
+            <li 
+              v-if="user?.department === 'Management'"
+              class="mobile-only"
+              @click="goTo('employee/performance')"
+            >
+              <i class="fas fa-chart-line"></i>
+              <span>Performance</span>
+            </li>
+
+            <li @click="goTo('employee/viewAnnouncement')">
+              <i class="fas fa-bullhorn"></i><span> Announcement</span>
+            </li>
+            <li @click="goTo('employee/request')">
+              <i class="fa fa-check-square-o"></i><span> Request Desk</span>
+            </li>
+            <li @click="goTo('employee/resourcebooking')">
+              <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
+            </li>
+            <li @click="goTo('employee/mysalaryadvances')">
+              <i class="fas fa-hand-holding-usd"></i><span>Salary Advances</span>
+            </li>
+            <li @click="goTo('employee/viewkra')">
+              <i class="fas fa-tasks"></i> <span>View KRA</span>
+            </li>
+            <li @click="goTo('employee/sop')">
+              <i class="fas fa-book"></i><span> SOP</span>
+            </li>
+            <li @click="goTo('employee/mydsi')">
+              <i class="fas fa-tasks"></i><span> DSI</span>
+            </li>
+            
+            <li @click="goTo('employee/myprofile')">
+              <i class="fa-solid fa-user"></i><span> My Profile</span>
+            </li>
+           
+            <li @click="logout" class="danger-bg">
+              <i class="fas fa-sign-out-alt"></i><span> Logout</span>
+            </li>
+            
+            <!-- Enhanced Theme Selector Section -->
+            <li class="theme-selector-item">
+              <div class="theme-selector-label">
+                <i class="fas fa-palette"></i>
+                <span>Theme</span>
+              </div>
+              <div class="theme-options">
+                <button
+                  v-for="themeOption in themeOptions"
+                  :key="themeOption.value"
+                  class="theme-option"
+                  :class="{ active: currentTheme === themeOption.value }"
+                  :style="{ backgroundColor: themeOption.color }"
+                  @click="changeTheme(themeOption.value)"
+                  :title="themeOption.label"
+                >
+                  <span v-if="currentTheme === themeOption.value" class="theme-check">
+                    <i class="fas fa-check"></i>
+                  </span>
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </aside>
+      
+      <!-- MOBILE OVERLAY -->
+      <div
+        v-if="isMobileOpen"
+        class="mobile-overlay"
+        @click="isMobileOpen = false"
+      ></div>
+      
+      <!-- Main Content -->
+      <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '260px' }">
+        <router-view></router-view>
+      </main>
+
+      <ChangePasswordForm
+        v-if="showChangePassword"
+        @close="showChangePassword = false"
+      />
     </div>
-    <button class="close-btn" @click="closePopup">Close</button>
+    
+    <!-- Popup for search results -->
+    <div v-if="showPopup" class="popup-backdrop" @click.self="closePopup">
+      <div class="popup">
+        <h3>Search Results</h3>
+        <div class="table-container">
+          <table v-if="results.length" class="results-table">
+            <thead>
+              <tr>
+                <th>Company Name</th>
+                <th>PO Type</th>
+                <th>PO Number</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in results" :key="item.id">
+                <td>{{ item.company_name }}</td>
+                <td>{{ item.po_type }}</td>
+                <td>{{ item.po_number }}</td>
+                <td>{{ item.status }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else class="no-results">No results found.</p>
+        </div>
+        <button class="close-btn" @click="closePopup">Close</button>
+      </div>
+    </div>
   </div>
-</div>
- </div>
 </template>
-
 
 <script>
 import axios from "axios";
@@ -230,7 +228,15 @@ export default {
       showChangePassword: false,
       defaultPhoto: "https://cdn-icons-png.flaticon.com/512/219/219983.png",
       profilePhoto: "https://cdn-icons-png.flaticon.com/512/219/219983.png",
-      profileFetched: false, // Flag to track if profile has been fetched
+      profileFetched: false,
+      themeOptions: [
+        { value: "default", label: "Default Purple", color: "#8b5cf6", icon: "💜" },
+        { value: "blue", label: "Ocean Blue", color: "#3b82f6", icon: "💙" },
+        { value: "green", label: "Forest Green", color: "#10b981", icon: "💚" },
+        { value: "orange", label: "Sunset Orange", color: "#f97316", icon: "🧡" },
+        { value: "red", label: "Crimson Red", color: "#ef4444", icon: "❤️" },
+        { value: "teal", label: "Mystic Teal", color: "#14b8a6", icon: "💚" }
+      ]
     };
   },
   computed: {
@@ -267,8 +273,7 @@ export default {
       }
     },
 
-    changeTheme(e) {
-      const theme = e.target.value;
+    changeTheme(theme) {
       this.currentTheme = theme;
       document.documentElement.classList.add("theme-transition");
       document.documentElement.setAttribute("data-theme", theme);
@@ -319,7 +324,7 @@ export default {
         .finally(() => {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          localStorage.removeItem(`profilePhoto_${this.user.id}`); // Clear cached photo on logout
+          localStorage.removeItem(`profilePhoto_${this.user.id}`);
           this.$router.push("/auth");
         });
     },
@@ -334,7 +339,6 @@ export default {
         return;
       }
 
-      // preview before upload
       const reader = new FileReader();
       reader.onload = (e) => {
         this.profilePhoto = e.target.result;
@@ -375,19 +379,16 @@ export default {
       }
     },
     
-    // New method to load profile photo from cache or API
     async loadProfilePhoto() {
       const userId = this.user?.id;
       const cachedPhoto = userId ? localStorage.getItem(`profilePhoto_${userId}`) : null;
       
-      // Use cached photo if available
       if (cachedPhoto) {
         this.profilePhoto = cachedPhoto;
         this.profileFetched = true;
         return;
       }
       
-      // Only fetch from API if not cached
       const token = localStorage.getItem("token");
       if (!token || this.profileFetched) return;
       
@@ -408,7 +409,6 @@ export default {
             const imageUrl = `https://employees.archenterprises.co.in/backend/public/storage/${user.profile_photo}`;
             this.profilePhoto = imageUrl + "?v=" + Date.now();
             
-            // Store against ACTUAL user id
             if (user.id) {
               localStorage.setItem(`profilePhoto_${user.id}`, this.profilePhoto);
             }
@@ -423,7 +423,6 @@ export default {
       }
     },
     
-    // New method to load user from storage
     loadUserFromStorage() {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
@@ -447,13 +446,10 @@ export default {
       return;
     }
 
-    // Load user from localStorage first
     const userLoaded = this.loadUserFromStorage();
     
-    // Set theme
     document.documentElement.setAttribute("data-theme", this.currentTheme);
     
-    // Load profile photo from cache first
     if (userLoaded && this.user?.id) {
       const cachedPhoto = localStorage.getItem(`profilePhoto_${this.user.id}`);
       if (cachedPhoto) {
@@ -462,10 +458,8 @@ export default {
       }
     }
     
-    // Only fetch fresh profile if needed (first time or when explicitly required)
-    // You can add a condition to check when to refresh (e.g., every hour or on specific actions)
     const lastFetchTime = localStorage.getItem(`profileFetchTime_${this.user?.id}`);
-    const shouldRefresh = !lastFetchTime || (Date.now() - parseInt(lastFetchTime)) > 3600000; // Refresh every hour
+    const shouldRefresh = !lastFetchTime || (Date.now() - parseInt(lastFetchTime)) > 3600000;
     
     if (!this.profileFetched || shouldRefresh) {
       await this.loadProfilePhoto();
@@ -477,36 +471,29 @@ export default {
 };
 </script>
 
-
 <style scoped>
 /* Layout */
 .layout {
   display: flex;
-   /* min-height: 100vh; */
-   position: sticky;
+  position: sticky;
   background: #f4f6fb;
 }
 
 /* Sidebar */
 .sidebar {
   width: 260px;
-  /* background: linear-gradient(180deg, var(--primary), #020617); */
   color: var(--text);
   display: flex;
   flex-direction: column;
-      border-radius: 12px;
-
-  /* 👇 FIXED SIDEBAR */
+  border-radius: 12px;
   position: fixed;
   top: 95px;
   left: 22px;
   height: 86vh;
-
   transition: width 0.35s ease;
   box-shadow: 4px 0 12px rgba(0,0,0,0.15);
   z-index: 100;
 }
-
 
 /* Collapsed sidebar */
 .sidebar.collapsed {
@@ -552,7 +539,7 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 10px 0;
-    max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 180px);
 }
 
 /* Scrollbar */
@@ -582,8 +569,8 @@ export default {
   transition: background 0.25s ease, padding 0.3s ease;
   border-radius: 8px;
   margin: 4px 10px;
-      flex-wrap: wrap;
-        transition: all 0.75s ease;
+  flex-wrap: wrap;
+  transition: all 0.75s ease;
 }
 
 .sidebar-menu li i {
@@ -665,39 +652,137 @@ export default {
   justify-content: center;
   padding: 14px;
 }
-/* COLLAPSED SIDEBAR */
+
+/* Enhanced Theme Selector Styles */
+.theme-selector-item {
+  display: flex;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  padding: 12px 18px !important;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.theme-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.theme-selector-label i {
+  font-size: 16px;
+}
+
+.theme-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.theme-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  outline: none;
+}
+
+.theme-option:hover {
+  transform: scale(1.15);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.theme-option.active {
+  border-color: white;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.theme-check {
+  color: white;
+  font-size: 12px;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.theme-check i {
+  font-size: 12px;
+  margin: 0;
+}
+
+/* Collapsed sidebar theme adjustments */
+.sidebar.collapsed .theme-selector-item {
+  padding: 12px 10px !important;
+  align-items: center !important;
+}
+
+.sidebar.collapsed .theme-selector-label span,
+.sidebar.collapsed .theme-options {
+  display: none;
+}
+
+.sidebar.collapsed .theme-selector-label i {
+  margin: 0 auto;
+  font-size: 18px;
+}
+
+.sidebar.collapsed .theme-selector-item:hover .theme-options {
+  display: flex;
+  position: absolute;
+  left: 70px;
+  background: var(--bg-secondary, #1e1e2f);
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.sidebar.collapsed .theme-selector-item:hover .theme-selector-label span {
+  display: none;
+}
+
+/* Collapsed sidebar adjustments */
 .sidebar.collapsed .sidebar-menu li {
   justify-content: center;
   padding: 14px;
 }
 
-/* Hide text only */
 .sidebar.collapsed .sidebar-menu li span {
   display: none;
 }
 
-/* Hide caret arrow only */
 .sidebar.collapsed .fa-caret-down {
   display: none;
 }
 
-/* Make dropdown container behave like normal item */
 .sidebar.collapsed .dropdown-wrapper > div {
   justify-content: center;
 }
 
-/* Ensure icons stay visible */
 .sidebar.collapsed .sidebar-menu li i {
   display: inline-block;
 }
 
 /* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 768px) {
-
   .sidebar {
     position: fixed;
     top: 0;
-  left: -260px;
+    left: -260px;
     height: 100vh;
     width: 260px;
     z-index: 1001;
@@ -708,12 +793,10 @@ export default {
     left: 0;
   }
 
-  /* Disable collapse mode on mobile */
   .sidebar.collapsed {
     width: 260px;
   }
 
-  /* Always show text on mobile */
   .sidebar-menu li span {
     display: inline !important;
   }
@@ -722,7 +805,6 @@ export default {
     display: inline !important;
   }
 
-  /* Overlay */
   .mobile-overlay {
     position: fixed;
     inset: 0;
@@ -730,20 +812,28 @@ export default {
     z-index: 1000;
   }
 
-  /* Toggle button reposition */
   .sidebar-toggle {
     top: 15px;
     right: 15px;
     z-index: 1100;
   }
 
-  /* Main content full width */
   .layout {
     flex-direction: column;
   }
 
   .main-content {
     margin-left: 0 !important;
+  }
+
+  /* Mobile theme options adjustments */
+  .theme-options {
+    gap: 12px;
+  }
+  
+  .theme-option {
+    width: 36px;
+    height: 36px;
   }
 }
 
@@ -776,7 +866,6 @@ export default {
   transition: all 0.4s ease;
 }
 
-/* Animate hamburger to X */
 .sidebar-toggle .bar1.active {
   transform: rotate(45deg) translate(4px, 4px);
 }
@@ -787,15 +876,13 @@ export default {
   transform: rotate(-45deg) translate(4px, -4px);
 }
 
-/* Desktop hide */
 .mobile-only {
   display: none;
 }
 
-/* Mobile show */
 @media (max-width: 768px) {
   .mobile-only {
-    display: flex; /* flex to align icon + text correctly */
+    display: flex;
     align-items: center;
     gap: 10px;
   }
@@ -810,6 +897,7 @@ export default {
 .sidebar.collapsed .sidebar-title {
   opacity: 0;
 }
+
 .mobile-menu-btn {
   display: none;
   position: fixed;
@@ -825,11 +913,9 @@ export default {
   cursor: pointer;
 }
 
-/* Show only on mobile */
 @media (max-width: 768px) {
   .mobile-menu-btn {
     display: block;
   }
 }
-
 </style>

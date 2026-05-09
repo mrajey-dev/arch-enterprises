@@ -373,9 +373,24 @@ export default {
         )
         this.leaveRequests = response.data
       } catch (error) {
-        console.error('Failed to fetch leave requests:', error)
-        toastError('Error loading leave requests')
-      } finally {
+  console.error('FULL ERROR:', error)
+
+  if (error.response) {
+    console.log('STATUS:', error.response.status)
+    console.log('DATA:', error.response.data)
+    console.log('HEADERS:', error.response.headers)
+  } else if (error.request) {
+    console.log('NO RESPONSE RECEIVED:', error.request)
+  } else {
+    console.log('ERROR MESSAGE:', error.message)
+  }
+
+  toastError(
+    error.response?.data?.message ||
+    error.message ||
+    'Error loading leave requests'
+  )
+} finally {
         this.loadingLeaves = false
       }
     },
