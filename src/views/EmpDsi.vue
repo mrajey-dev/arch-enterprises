@@ -86,9 +86,48 @@
                       <span>{{ item.user }}</span>
                     </div>
                   </td>
-                  <td class="problem-cell" :title="item.problem">{{ truncateText(item.problem, 50) }}</td>
-                  <td class="solution-cell" :title="item.solution">{{ truncateText(item.solution, 50) }}</td>
-                  <td class="result-cell" :title="item.result">{{ truncateText(item.result, 50) }}</td>
+                  <td class="problem-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isExpanded(item.id, 'problem') && isTextLong(item.problem, 50) }">
+                        {{ isExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 50) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.problem, 50)" 
+                        @click.stop="toggleReadMore(item.id, 'problem')"
+                        class="readmore-btn"
+                      >
+                        {{ isExpanded(item.id, 'problem') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                  </td>
+                  <td class="solution-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isExpanded(item.id, 'solution') && isTextLong(item.solution, 50) }">
+                        {{ isExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 50) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.solution, 50)" 
+                        @click.stop="toggleReadMore(item.id, 'solution')"
+                        class="readmore-btn"
+                      >
+                        {{ isExpanded(item.id, 'solution') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                  </td>
+                  <td class="result-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isExpanded(item.id, 'result') && isTextLong(item.result, 50) }">
+                        {{ isExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 50) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.result, 50)" 
+                        @click.stop="toggleReadMore(item.id, 'result')"
+                        class="readmore-btn"
+                      >
+                        {{ isExpanded(item.id, 'result') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                  </td>
                   <td class="image-cell">
                     <img
                       v-if="item.beforeImage"
@@ -152,9 +191,9 @@
         </div>
 
         <!-- Image Modal - FIXED POSITIONING -->
-        <div v-if="previewImage" class="image-modal-overlay" @click="previewImage = null">
+        <div v-if="previewImage" class="image-modal-overlay" @click="closeImageModal">
           <div class="image-modal-container" @click.stop>
-            <button class="image-modal-close" @click="previewImage = null">
+            <button class="image-modal-close" @click="closeImageModal">
               <i class="fas fa-times"></i>
             </button>
             <img :src="previewImage" alt="Preview" class="image-modal-img" />
@@ -184,6 +223,7 @@ export default {
       isSidebarVisible: true,
       dsiList: [],
       previewImage: null,
+      expandedTexts: new Map(), // Using Map for better performance
     }
   },
   computed: {
@@ -210,22 +250,45 @@ export default {
     window.removeEventListener('resize', this.checkIfMobile)
   },
   methods: {
+    getExpandKey(id, field) {
+      return `${id}_${field}`
+    },
+    isExpanded(id, field) {
+      const key = this.getExpandKey(id, field)
+      return this.expandedTexts.get(key) === true
+    },
+    isTextLong(text, length) {
+      if (!text || typeof text !== 'string') return false
+      return text.length > length
+    },
+    truncateText(text, length) {
+      if (!text || typeof text !== 'string') return '—'
+      if (text.length <= length) return text
+      return text.substring(0, length) + '...'
+    },
+    toggleReadMore(id, field) {
+      const key = this.getExpandKey(id, field)
+      const currentState = this.expandedTexts.get(key) || false
+      this.expandedTexts.set(key, !currentState)
+      // Force reactivity
+      this.expandedTexts = new Map(this.expandedTexts)
+    },
     getInitials(name) {
       if (!name) return '?'
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     },
-    truncateText(text, length) {
-      if (!text) return '—'
-      return text.length > length ? text.substring(0, length) + '...' : text
-    },
     formatDate(dateStr) {
       if (!dateStr) return '—'
-      const date = new Date(dateStr)
-      return date.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
+      try {
+        const date = new Date(dateStr)
+        return date.toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        })
+      } catch (e) {
+        return '—'
+      }
     },
     getStatusClass(status) {
       const s = (status || '').toLowerCase()
@@ -257,19 +320,38 @@ export default {
     async fetchAllDSI() {
       try {
         const res = await axios.get('/api/dsis/all')
-        this.dsiList = res.data
+        // Ensure text fields have default values
+        this.dsiList = res.data.map(item => ({
+          ...item,
+          problem: item.problem || '',
+          solution: item.solution || '',
+          result: item.result || ''
+        }))
       } catch (e) {
         toastError('Failed to load DSI')
       }
     },
     async updateStatus(dsiId, status) {
       try {
-        await axios.put(`/api/dsis/${dsiId}/status`, { status: status.toLowerCase() })
-        const index = this.dsiList.findIndex(item => item.id === dsiId)
-        if (index !== -1) this.dsiList[index].status = status.toLowerCase()
-        toastSuccess(`Status updated to ${status}`)
+        // Send with capital first letter as expected by backend
+        const statusToSend = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+        
+        await axios.put(`/api/dsis/${dsiId}/status`, { 
+          status: statusToSend 
+        });
+        
+        const index = this.dsiList.findIndex(item => item.id === dsiId);
+        if (index !== -1) {
+          // Store lowercase in frontend for consistent display
+          this.dsiList[index].status = status.toLowerCase();
+          // Force reactivity
+          this.dsiList = [...this.dsiList];
+        }
+        
+        toastSuccess(`Status updated to ${statusToSend}`);
       } catch (error) {
-        toastError('Failed to update status')
+        console.error('Update status error:', error.response?.data);
+        toastError('Failed to update status');
       }
     }
   }
@@ -298,7 +380,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -308,7 +389,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .content {
@@ -539,12 +619,42 @@ export default {
   font-size: 12px;
 }
 
-/* Text Cells */
-.problem-cell, .solution-cell, .result-cell {
+/* Read More Styles */
+.text-with-readmore {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   max-width: 200px;
+}
+
+.text-with-readmore .truncated {
+  display: inline-block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.readmore-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  width: fit-content;
+  transition: all 0.2s ease;
+}
+
+.readmore-btn:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+/* Text Cells */
+.problem-cell, .solution-cell, .result-cell {
+  max-width: 200px;
   color: #4b5563;
 }
 
@@ -617,7 +727,6 @@ export default {
 }
 
 .action-btn.approve:hover:not(:disabled) {
-  /* background: var(--success); */
   color: rgb(12, 5, 5);
   transform: translateY(-2px);
 }
@@ -628,7 +737,6 @@ export default {
 }
 
 .action-btn.reject:hover:not(:disabled) {
-  /* background: var(--danger); */
   color: rgb(0, 0, 0);
   transform: translateY(-2px);
 }
@@ -731,7 +839,6 @@ export default {
 }
 
 .image-modal-close:hover {
-  /* background: var(--danger); */
   color: rgb(6, 3, 3);
   transform: rotate(90deg);
 }

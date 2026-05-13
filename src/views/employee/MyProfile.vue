@@ -148,8 +148,12 @@
                 </div>
 
                 <div class="form-field">
+                  <label><i class="fas fa-id-card"></i> Employee ID</label>
+                  <input v-model="form.emp_id"   disabled class="readonly-field" />
+                </div>
+                 <div class="form-field">
                   <label><i class="fas fa-user"></i> Full Name</label>
-                  <input v-model="form.name" @input="validateName" placeholder="Enter your name" />
+                  <input v-model="form.name" @input="validateName" placeholder="Enter your name" disabled class="readonly-field" />
                 </div>
 
                 <div class="form-field">

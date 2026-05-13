@@ -521,9 +521,9 @@
         <div class="quotation-form-group">
           <label>Recommended By</label>
           <select v-model="form.recommended_by">
-            <option value="">Select Name</option>
-            <option v-for="user in users" :key="user.id" :value="user.name">
-              {{ user.name }}
+            <option value="">Select Employee</option>
+            <option v-for="user in users" :key="user.id" :value="user.emp_id">
+              {{ user.emp_id }}
             </option>
           </select>
         </div>
@@ -12314,13 +12314,17 @@ transform:scale(1.05);
   transform: translateY(0);
 }
 .quotation-duplicate-btn {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
+ background-color: #c01f90;
+    color: #fff;
+    border: none;
+    margin-left: 7px;
+    margin-top: 8px;
+    font-size: 12px;
+    padding: 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .3s ease;
+    white-space: nowrap;
 }
 /* Add these styles if needed */
 .modal-card.medium {

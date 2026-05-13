@@ -136,32 +136,71 @@
               <tbody>
                 <tr v-for="(item, index) in dsiList" :key="item.id" class="dsi-row-premium">
                   <td class="serial">{{ index + 1 }}</td>
-                  <td class="problem-cell" :title="item.problem">{{ truncateText(item.problem, 50) }}</td>
-                  <td class="solution-cell" :title="item.solution">{{ truncateText(item.solution, 50) }}</td>
-                  <td class="result-cell" :title="item.result">{{ truncateText(item.result, 50) }}</td>
+                  <td class="problem-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isExpanded(item.id, 'problem') && isTextLong(item.problem, 50) }">
+                        {{ isExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 50) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.problem, 50)" 
+                        @click.stop="toggleReadMore(item.id, 'problem')"
+                        class="readmore-btn"
+                      >
+                        {{ isExpanded(item.id, 'problem') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                    </td>
+                  <td class="solution-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isExpanded(item.id, 'solution') && isTextLong(item.solution, 50) }">
+                        {{ isExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 50) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.solution, 50)" 
+                        @click.stop="toggleReadMore(item.id, 'solution')"
+                        class="readmore-btn"
+                      >
+                        {{ isExpanded(item.id, 'solution') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                    </td>
+                  <td class="result-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isExpanded(item.id, 'result') && isTextLong(item.result, 50) }">
+                        {{ isExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 50) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.result, 50)" 
+                        @click.stop="toggleReadMore(item.id, 'result')"
+                        class="readmore-btn"
+                      >
+                        {{ isExpanded(item.id, 'result') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                    </td>
                   <td class="image-cell">
                     <img v-if="item.beforeImage" :src="item.beforeImage" class="dsi-thumb-premium" @click="openImage(item.beforeImage)" />
                     <span v-else class="no-image">—</span>
-                  </td>
+                    </td>
                   <td class="image-cell">
                     <img v-if="item.afterImage" :src="item.afterImage" class="dsi-thumb-premium" @click="openImage(item.afterImage)" />
                     <span v-else class="no-image">—</span>
-                  </td>
+                    </td>
                   <td class="date-cell">
                     <i class="fas fa-calendar-alt"></i> {{ formatDate(item.date) }}
-                  </td>
+                    </td>
                   <td class="status-cell">
                     <span :class="['status-badge-premium', getStatusClass(item.status)]">
                       <i :class="getStatusIcon(item.status)"></i>
                       {{ capitalizeFirstLetter(item.status) }}
                     </span>
-                  </td>
+                    </td>
                   <td class="action-cell">
                     <button class="action-icon delete" @click="deleteDSI(item.id, index)" title="Delete">
                       <i class="fas fa-trash-alt"></i>
                     </button>
-                  </td>
-                </tr>
+                    </td>
+                 </tr>
 
                 <!-- Empty State -->
                 <tr v-if="dsiList.length === 0" class="empty-row">
@@ -171,8 +210,8 @@
                       <h4>No Improvements Yet</h4>
                       <p>Submit your first DSI using the form above</p>
                     </div>
-                  </td>
-                </tr>
+                    </td>
+                 </tr>
               </tbody>
             </table>
           </div>
@@ -210,35 +249,74 @@
                 <tr v-for="(item, i) in dsiList" :key="i" class="dsi-row-premium">
                   <td class="serial">{{ i + 1 }}</td>
                   <td class="user-cell">{{ item.user || 'Me' }}</td>
-                  <td class="problem-cell" :title="item.problem">{{ truncateText(item.problem, 40) }}</td>
-                  <td class="solution-cell" :title="item.solution">{{ truncateText(item.solution, 40) }}</td>
-                  <td class="result-cell" :title="item.result">{{ truncateText(item.result, 40) }}</td>
+                  <td class="problem-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isPopupExpanded(item.id, 'problem') && isTextLong(item.problem, 40) }">
+                        {{ isPopupExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 40) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.problem, 40)" 
+                        @click.stop="togglePopupReadMore(item.id, 'problem')"
+                        class="readmore-btn"
+                      >
+                        {{ isPopupExpanded(item.id, 'problem') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                    </td>
+                  <td class="solution-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isPopupExpanded(item.id, 'solution') && isTextLong(item.solution, 40) }">
+                        {{ isPopupExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 40) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.solution, 40)" 
+                        @click.stop="togglePopupReadMore(item.id, 'solution')"
+                        class="readmore-btn"
+                      >
+                        {{ isPopupExpanded(item.id, 'solution') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                    </td>
+                  <td class="result-cell">
+                    <div class="text-with-readmore">
+                      <span :class="{ 'truncated': !isPopupExpanded(item.id, 'result') && isTextLong(item.result, 40) }">
+                        {{ isPopupExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 40) }}
+                      </span>
+                      <button 
+                        v-if="isTextLong(item.result, 40)" 
+                        @click.stop="togglePopupReadMore(item.id, 'result')"
+                        class="readmore-btn"
+                      >
+                        {{ isPopupExpanded(item.id, 'result') ? 'Read Less' : 'Read More' }}
+                      </button>
+                    </div>
+                    </td>
                   <td class="image-cell">
                     <img v-if="item.beforeImage" :src="item.beforeImage" class="dsi-thumb-premium" @click="openImage(item.beforeImage)" />
                     <span v-else class="no-image">—</span>
-                  </td>
+                    </td>
                   <td class="image-cell">
                     <img v-if="item.afterImage" :src="item.afterImage" class="dsi-thumb-premium" @click="openImage(item.afterImage)" />
                     <span v-else class="no-image">—</span>
-                  </td>
+                    </td>
                   <td class="date-cell">
                     <i class="fas fa-calendar-alt"></i> {{ formatDate(item.date) }}
-                  </td>
+                    </td>
                   <td class="status-cell">
                     <span :class="['status-badge-premium', getStatusClass(item.status)]">
                       <i :class="getStatusIcon(item.status)"></i>
                       {{ capitalizeFirstLetter(item.status) }}
                     </span>
-                  </td>
-                </tr>
+                    </td>
+                 </tr>
                 <tr v-if="dsiList.length === 0" class="empty-row">
                   <td colspan="9">
                     <div class="empty-state-premium">
                       <i class="fas fa-inbox"></i>
                       <p>No DSI records found</p>
                     </div>
-                  </td>
-                </tr>
+                    </td>
+                 </tr>
               </tbody>
             </table>
           </div>
@@ -284,6 +362,8 @@ export default {
       username: '',
       isMobile: false,
       isSidebarVisible: true,
+      expandedTexts: new Map(), // Using Map for better performance
+      popupExpandedTexts: new Map(),
       newDSI: {
         problem: "",
         solution: "",
@@ -318,9 +398,39 @@ export default {
     window.removeEventListener('resize', this.checkIfMobile);
   },
   methods: {
+    getExpandKey(id, field) {
+      return `${id}_${field}`;
+    },
+    isExpanded(id, field) {
+      const key = this.getExpandKey(id, field);
+      return this.expandedTexts.get(key) === true;
+    },
+    isPopupExpanded(id, field) {
+      const key = this.getExpandKey(id, field);
+      return this.popupExpandedTexts.get(key) === true;
+    },
+    isTextLong(text, length) {
+      if (!text || typeof text !== 'string') return false;
+      return text.length > length;
+    },
     truncateText(text, length) {
-      if (!text) return '—';
-      return text.length > length ? text.substring(0, length) + '...' : text;
+      if (!text || typeof text !== 'string') return '—';
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    },
+    toggleReadMore(id, field) {
+      const key = this.getExpandKey(id, field);
+      const currentState = this.expandedTexts.get(key) || false;
+      this.expandedTexts.set(key, !currentState);
+      // Force reactivity
+      this.expandedTexts = new Map(this.expandedTexts);
+    },
+    togglePopupReadMore(id, field) {
+      const key = this.getExpandKey(id, field);
+      const currentState = this.popupExpandedTexts.get(key) || false;
+      this.popupExpandedTexts.set(key, !currentState);
+      // Force reactivity
+      this.popupExpandedTexts = new Map(this.popupExpandedTexts);
     },
     getStatusClass(status) {
       const s = (status || '').toLowerCase();
@@ -336,14 +446,18 @@ export default {
     },
     formatDate(date) {
       if (!date) return '—';
-      return new Date(date).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
+      try {
+        return new Date(date).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+      } catch (e) {
+        return '—';
+      }
     },
     capitalizeFirstLetter(text) {
-      if (!text) return '—';
+      if (!text || typeof text !== 'string') return '—';
       return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
     },
     async deleteDSI(id, index) {
@@ -371,6 +485,8 @@ export default {
     },
     closeAllDsiPopup() {
       this.showAllDsiPopup = false;
+      this.popupExpandedTexts.clear();
+      this.popupExpandedTexts = new Map(); // Reset reactivity
     },
     async loadDSIs() {
       try {
@@ -378,9 +494,9 @@ export default {
         const fixUrl = (url) => url ? url.replace('/api/backend', '/backend') : null;
         this.dsiList = res.data.map(dsi => ({
           id: dsi.id,
-          problem: dsi.problem,
-          solution: dsi.solution,
-          result: dsi.result,
+          problem: dsi.problem || '',
+          solution: dsi.solution || '',
+          result: dsi.result || '',
           beforeImage: fixUrl(dsi.before_image),
           afterImage: fixUrl(dsi.after_image),
           date: dsi.created_at,
@@ -415,9 +531,9 @@ export default {
         const fixUrl = (url) => url ? url.replace('/api/backend', '/backend') : null;
         const newDsi = {
           id: res.data.dsi.id,
-          problem: res.data.dsi.problem,
-          solution: res.data.dsi.solution,
-          result: res.data.dsi.result,
+          problem: res.data.dsi.problem || '',
+          solution: res.data.dsi.solution || '',
+          result: res.data.dsi.result || '',
           beforeImage: fixUrl(res.data.dsi.before_image),
           afterImage: fixUrl(res.data.dsi.after_image),
           date: res.data.dsi.created_at,
@@ -432,7 +548,7 @@ export default {
         toastSuccess('Improvement added successfully!');
       } catch (error) {
         console.error(error);
-        toastError('All fields are required');
+        toastError('Failed to add improvement. Please try again.');
       } finally {
         this.isSubmitting = false;
       }
@@ -475,6 +591,7 @@ export default {
 }
 </script>
 
+
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
@@ -497,7 +614,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -507,7 +623,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .dsi-board-premium {
@@ -730,7 +845,6 @@ export default {
 }
 
 .image-upload-card-premium:hover {
-  /* border-color: var(--primary-color); */
   background: #07080a;
 }
 
@@ -853,11 +967,41 @@ export default {
   width: 50px;
 }
 
-.problem-cell, .solution-cell, .result-cell {
+/* Read More Styles */
+.text-with-readmore {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   max-width: 200px;
+}
+
+.text-with-readmore .truncated {
+  display: inline-block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.readmore-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  width: fit-content;
+  transition: all 0.2s ease;
+}
+
+.readmore-btn:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.problem-cell, .solution-cell, .result-cell {
+  max-width: 200px;
   color: #4b5563;
 }
 
@@ -907,6 +1051,7 @@ export default {
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .status-badge-premium.approved {
@@ -946,7 +1091,6 @@ export default {
 }
 
 .action-icon.delete:hover {
-  /* background: var(--danger); */
   color: rgb(6, 3, 3);
   transform: translateY(-2px);
 }
@@ -1064,7 +1208,6 @@ export default {
 }
 
 .modal-close:hover {
-  /* background: var(--danger); */
   color: rgb(9, 3, 3);
   transform: rotate(90deg);
 }
@@ -1137,7 +1280,6 @@ export default {
 }
 
 .image-close-btn:hover {
-  /* background: var(--danger); */
   color: rgb(0, 0, 0);
   transform: rotate(90deg);
 }
