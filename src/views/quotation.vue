@@ -220,7 +220,14 @@
   <tbody>
     <tr v-for="(row, index) in items" :key="index">
       <td style="width:1%;"><div class="static-field">{{ row.sr }}</div></td>
-      <td style="width:20%;"><div class="static-field" style="min-height:40px;">{{ row.desc }}</div></td>
+      <!-- DESCRIPTION CELL WITH LINE-BY-LINE FORMATTING -->
+      <td style="width:20%;">
+        <div class="static-field description-cell">
+          <div v-for="(line, lineIdx) in getDescriptionLines(row.desc)" :key="lineIdx" class="desc-line">
+            {{ line }}
+          </div>
+        </div>
+      </td>
       <td style="width:8%;"><div class="static-field" style="text-align: center">{{ row.hsn }}</div></td>
       <td style="width:1%;"><div class="static-field" style="text-align: center">{{ row.qty }}</div></td>
       <td style="width:1%;"><div class="static-field" style="text-align: center">{{ row.uom }}</div></td>
@@ -371,13 +378,12 @@
   <!-- ROW 1: TERMS (75%) + SIGNATORY (25%) -->
   <div style="display:flex; justify-content:space-between; gap:10px;">
 
-    <!-- LEFT: TERMS & CONDITIONS -->
- <!-- LEFT: TERMS & CONDITIONS -->
-<!-- LEFT: TERMS & CONDITIONS -->
+    <!-- LEFT: TERMS & CONDITIONS - LINE BY LINE PRESERVATION -->
 <div style="flex: 0 0 75%;">
   <div class="section-title">Terms & Conditions</div>
-  <div class="static-field">
-    <div v-for="(line, index) in form.terms_conditions.split('\n').reverse()" :key="index">
+  <div class="static-field terms-content">
+    <!-- Split by newline and render each line separately -->
+    <div v-for="(line, idx) in getTermsLines()" :key="idx" class="terms-line">
       {{ line }}
     </div>
   </div>
@@ -437,14 +443,14 @@ export default {
       loggedInUser: "",
       form: {
         engine_serial: "",
-model_no: "",
+        model_no: "",
         currency: "INR",
         quote_no: "",
         nature_of_sale: "",
         date: "",
         customer_reference: "",
-    recommended_by: "",
-    terms_conditions: "",
+        recommended_by: "",
+        terms_conditions: "",
        
         created_by: "",
         bill_to: {
@@ -496,401 +502,407 @@ model_no: "",
     };
   },
   watch: {
-  "form.quote_no"(newVal) {
-    if (!newVal) return;
-    this.fetchQuotation(newVal);
-  }
-},
+    "form.quote_no"(newVal) {
+      if (!newVal) return;
+      this.fetchQuotation(newVal);
+    }
+  },
 
-mounted() {
-  this.getLoggedInUser();
-  this.fetchQuotation();
-  this.initUserSession();
+  mounted() {
+    this.getLoggedInUser();
+    this.fetchQuotation();
+    this.initUserSession();
 
-  const savedId = localStorage.getItem("selectedQuotationId");
-  if (savedId) {
-    this.form.quote_no = savedId;
-  }
-},
-computed: {
-columnTotals() {
-    let total = 0;
-    let taxable = 0;
-    let gst = 0;
+    const savedId = localStorage.getItem("selectedQuotationId");
+    if (savedId) {
+      this.form.quote_no = savedId;
+    }
+  },
+  computed: {
+    columnTotals() {
+      let total = 0;
+      let taxable = 0;
+      let gst = 0;
 
-    this.items.forEach(row => {
-      total += Number(row.total) || 0;
-      taxable += Number(row.taxable) || 0;
+      this.items.forEach(row => {
+        total += Number(row.total) || 0;
+        taxable += Number(row.taxable) || 0;
 
+        if (this.form.nature_of_sale === "Intrastate") {
+          gst += (Number(row.cgst_amt) || 0) + (Number(row.sgst_amt) || 0);
+        }
+
+        if (this.form.nature_of_sale === "Interstate") {
+          gst += Number(row.igst_amt) || 0;
+        }
+      });
+
+      return {
+        total: total.toFixed(2),
+        taxable: taxable.toFixed(2),
+        gst: gst.toFixed(2)
+      };
+    },
+    formattedDate() {
+      if (!this.form.date) return "";
+
+      const d = new Date(this.form.date);
+
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const year = String(d.getFullYear()).slice(-2);
+
+      return `${day}-${month}-${year}`; // DDMMYY format
+    },
+    financialYear() {
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+      return `${currentYear}-${nextYear.toString().slice(-2)}`; 
+    }
+  },
+
+  methods: {
+    // Method to get description lines for item description
+    getDescriptionLines(desc) {
+      if (!desc) return [];
+      // Normalize line breaks (handle both \r\n and \n)
+      const normalized = desc.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      return normalized.split('\n');
+    },
+
+    // Method to get terms lines preserving exact formatting
+    getTermsLines() {
+      if (!this.form.terms_conditions) return [];
+      // Split by newline, but keep all lines including empty ones
+      // Replace \r\n and \n with \n, then split
+      const normalized = this.form.terms_conditions.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      return normalized.split('\n');
+    },
+
+    async login() {
+      try {
+        // 🔹 Get CSRF cookie (MANDATORY)
+        await fetch("https://employees.archenterprises.co.in/sanctum/csrf-cookie", {
+          credentials: "include",
+        });
+
+        // 🔹 Login request
+        const res = await fetch("https://employees.archenterprises.co.in/login", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.password,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Login failed");
+        }
+
+        // 🔹 After successful login, load user
+        await this.getLoggedInUser();
+
+      } catch (err) {
+        console.error("Login error:", err);
+        toastWarning("invalid login credentials");
+      }
+    },
+
+    // STEP 2: GET LOGGED-IN USER
+    async getLoggedInUser() {
+      try {
+        const res = await fetch(
+          "https://employees.archenterprises.co.in/api/api/user",
+          {
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (res.status === 401) {
+          console.warn("User not logged in");
+          this.loggedInUser = null;
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch user");
+        }
+
+        const user = await res.json();
+        this.loggedInUser = user.name; // ✅ STORE USER NAME
+        console.log("Logged in as:", user.name);
+
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      }
+    },
+    formatNumber(value) {
+      if (!value && value !== 0) return "";
+      const number = Number(value);
+      const hasDecimal = number % 1 !== 0;
+
+      if (hasDecimal) {
+        // Keep original decimal value, but format with Indian commas
+        return number.toLocaleString("en-IN");
+      } else {
+        // Add .00 for whole numbers and format with Indian commas
+        return number.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+    },
+
+    getCurrencyText(rupees, paise = 0) {
+      let currencyFull = "";
+      let paiseLabel = "";
+
+      if (this.form.currency === "INR") {
+        currencyFull = "Indian Rupees";
+        paiseLabel = "Paise";
+      } else if (this.form.currency === "USD") {
+        currencyFull = "US Dollars";
+        paiseLabel = "Cents";
+      } else if (this.form.currency === "EUR") {
+        currencyFull = "Euros";
+        paiseLabel = "Cents";
+      } else {
+        currencyFull = this.form.currency;
+        paiseLabel = "Cents";
+      }
+
+      const mainWords = rupees ? this.convertNumberToWords(rupees) : "Zero";
+      const paiseWords = paise ? this.convertNumberToWords(paise) : "";
+
+      let result = `${mainWords} ${currencyFull}`;
+
+      if (paise > 0) {
+        result += ` and ${paiseWords} ${paiseLabel}`;
+      }
+
+      return result + " Only";
+    },
+    convertNumberToWords(n) {
+      // re-use your numberToWords logic
+      return (function numberToWords(n) {
+        const a = [
+          "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+          "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+          "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+        ];
+        const b = [
+          "", "", "Twenty", "Thirty", "Forty", "Fifty",
+          "Sixty", "Seventy", "Eighty", "Ninety"
+        ];
+
+        if (n < 20) return a[n];
+        if (n < 100) return b[Math.floor(n / 10)] + " " + a[n % 10];
+        if (n < 1000)
+          return a[Math.floor(n / 100)] + " Hundred " + numberToWords(n % 100);
+        if (n < 100000)
+          return numberToWords(Math.floor(n / 1000)) + " Thousand " + numberToWords(n % 1000);
+        if (n < 10000000)
+          return numberToWords(Math.floor(n / 100000)) + " Lakh " + numberToWords(n % 100000);
+        return numberToWords(Math.floor(n / 10000000)) + " Crore " + numberToWords(n % 10000000);
+      })(n);
+    },
+
+    async initUserSession() {
+      await fetch("/sanctum/csrf-cookie", {
+        credentials: "include"
+      });
+
+      this.getLoggedInUser();
+    },
+
+    calculateRow(row) {
+      const qty = parseFloat(row.qty) || 0;
+      const rate = parseFloat(row.rate) || 0;
+      const disc = parseFloat(row.discount || row.disc) || 0;
+
+      // Base total
+      const baseTotal = qty * rate;
+      row.total = baseTotal.toFixed(2);
+
+      // Discount amount
+      const discountAmt = (baseTotal * disc) / 100;
+
+      // Taxable value after discount
+      const taxable = baseTotal - discountAmt;
+      row.taxable = taxable.toFixed(2);
+
+      // Taxes
       if (this.form.nature_of_sale === "Intrastate") {
-        gst += (Number(row.cgst_amt) || 0) + (Number(row.sgst_amt) || 0);
+        row.cgst_amt = ((taxable * (row.cgst_rate || 0)) / 100).toFixed(2);
+        row.sgst_amt = ((taxable * (row.sgst_rate || 0)) / 100).toFixed(2);
       }
 
       if (this.form.nature_of_sale === "Interstate") {
-        gst += Number(row.igst_amt) || 0;
-      }
-    });
-
-    return {
-      total: total.toFixed(2),
-      taxable: taxable.toFixed(2),
-      gst: gst.toFixed(2)
-    };
-  },
-  formattedDate() {
-    if (!this.form.date) return "";
-
-    const d = new Date(this.form.date);
-
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = String(d.getFullYear()).slice(-2);
-
-    return `${day}-${month}-${year}`; // DDMMYY format
-  },
-  financialYear() {
-    const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
-    return `${currentYear}-${nextYear.toString().slice(-2)}`; 
-  }
-},
-
-  methods: {
-    async login() {
-    try {
-      // 🔹 Get CSRF cookie (MANDATORY)
-      await fetch("https://employees.archenterprises.co.in/sanctum/csrf-cookie", {
-        credentials: "include",
-      });
-
-      // 🔹 Login request
-      const res = await fetch("https://employees.archenterprises.co.in/login", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          email: this.email,
-          password: this.password,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Login failed");
+        row.igst_amt = ((taxable * (row.igst_rate || 0)) / 100).toFixed(2);
       }
 
-      // 🔹 After successful login, load user
-      await this.getLoggedInUser();
-
-    } catch (err) {
-      console.error("Login error:", err);
-      toastWarning("invalid login credentials");
-    }
-  },
-
-  // STEP 2: GET LOGGED-IN USER
-  async getLoggedInUser() {
-    try {
-      const res = await fetch(
-        "https://employees.archenterprises.co.in/api/api/user",
-        {
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (res.status === 401) {
-        console.warn("User not logged in");
-        this.loggedInUser = null;
-        return;
+      if (this.form.nature_of_sale === "Export") {
+        row.cgst_amt = 0;
+        row.sgst_amt = 0;
+        row.igst_amt = 0;
       }
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch user");
-      }
+      // Final line total
+      this.calculateLineTotal(row);
 
-      const user = await res.json();
-      this.loggedInUser = user.name; // ✅ STORE USER NAME
-      console.log("Logged in as:", user.name);
-
-    } catch (err) {
-      console.error("Error fetching user:", err);
-    }
-  },
- formatNumber(value) {
-  if (!value && value !== 0) return "";
-  const number = Number(value);
-  const hasDecimal = number % 1 !== 0;
-
-  if (hasDecimal) {
-    // Keep original decimal value, but format with Indian commas
-    return number.toLocaleString("en-IN");
-  } else {
-    // Add .00 for whole numbers and format with Indian commas
-    return number.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-},
-
-    getCurrencyText(rupees, paise = 0) {
-  let currencyFull = "";
-  let paiseLabel = "";
-
-  if (this.form.currency === "INR") {
-    currencyFull = "Indian Rupees";
-    paiseLabel = "Paise";
-  } else if (this.form.currency === "USD") {
-    currencyFull = "US Dollars";
-    paiseLabel = "Cents";
-  } else if (this.form.currency === "EUR") {
-    currencyFull = "Euros";
-    paiseLabel = "Cents";
-  } else {
-    currencyFull = this.form.currency;
-    paiseLabel = "Cents";
-  }
-
-  const mainWords = rupees ? this.convertNumberToWords(rupees) : "Zero";
-  const paiseWords = paise ? this.convertNumberToWords(paise) : "";
-
-  let result = `${mainWords} ${currencyFull}`;
-
-  if (paise > 0) {
-    result += ` and ${paiseWords} ${paiseLabel}`;
-  }
-
-  return result + " Only";
-},
-convertNumberToWords(n) {
-  // re-use your numberToWords logic
-  return (function numberToWords(n) {
-    const a = [
-      "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-      "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
-      "Sixteen", "Seventeen", "Eighteen", "Nineteen"
-    ];
-    const b = [
-      "", "", "Twenty", "Thirty", "Forty", "Fifty",
-      "Sixty", "Seventy", "Eighty", "Ninety"
-    ];
-
-    if (n < 20) return a[n];
-    if (n < 100) return b[Math.floor(n / 10)] + " " + a[n % 10];
-    if (n < 1000)
-      return a[Math.floor(n / 100)] + " Hundred " + numberToWords(n % 100);
-    if (n < 100000)
-      return numberToWords(Math.floor(n / 1000)) + " Thousand " + numberToWords(n % 1000);
-    if (n < 10000000)
-      return numberToWords(Math.floor(n / 100000)) + " Lakh " + numberToWords(n % 100000);
-    return numberToWords(Math.floor(n / 10000000)) + " Crore " + numberToWords(n % 10000000);
-  })(n);
-},
-
-  async initUserSession() {
-    await fetch("/sanctum/csrf-cookie", {
-      credentials: "include"
-    });
-
-    this.getLoggedInUser();
-  },
-
-
-calculateRow(row) {
-  const qty = parseFloat(row.qty) || 0;
-  const rate = parseFloat(row.rate) || 0;
-  const disc = parseFloat(row.discount || row.disc) || 0;
-
-  // Base total
-  const baseTotal = qty * rate;
-  row.total = baseTotal.toFixed(2);
-
-  // Discount amount
-  const discountAmt = (baseTotal * disc) / 100;
-
-  // Taxable value after discount
-  const taxable = baseTotal - discountAmt;
-  row.taxable = taxable.toFixed(2);
-
-  // Taxes
-  if (this.form.nature_of_sale === "Intrastate") {
-    row.cgst_amt = ((taxable * (row.cgst_rate || 0)) / 100).toFixed(2);
-    row.sgst_amt = ((taxable * (row.sgst_rate || 0)) / 100).toFixed(2);
-  }
-
-  if (this.form.nature_of_sale === "Interstate") {
-    row.igst_amt = ((taxable * (row.igst_rate || 0)) / 100).toFixed(2);
-  }
-
-  if (this.form.nature_of_sale === "Export") {
-    row.cgst_amt = 0;
-    row.sgst_amt = 0;
-    row.igst_amt = 0;
-  }
-
-  // Final line total
-  this.calculateLineTotal(row);
-
-  // Update invoice total
-  this.calculateInvoiceTotal();
-},
+      // Update invoice total
+      this.calculateInvoiceTotal();
+    },
 
     calculateInvoiceTotal() {
-    let total = 0;
+      let total = 0;
 
-    this.items.forEach(row => {
-      total += parseFloat(row.line_total) || 0;
-    });
+      this.items.forEach(row => {
+        total += parseFloat(row.line_total) || 0;
+      });
 
-    this.form.subtotal = total.toFixed(2);
+      this.form.subtotal = total.toFixed(2);
 
-    this.form.amount_words = this.convertToWords(total);
-  },
+      this.form.amount_words = this.convertToWords(total);
+    },
 
-  // Convert number to words
-convertToWords(num) {
-  if (num === 0) return this.getCurrencyText(0);
+    // Convert number to words
+    convertToWords(num) {
+      if (num === 0) return this.getCurrencyText(0);
 
-  const a = [
-    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
-    "Sixteen", "Seventeen", "Eighteen", "Nineteen"
-  ];
-  const b = [
-    "", "", "Twenty", "Thirty", "Forty", "Fifty",
-    "Sixty", "Seventy", "Eighty", "Ninety"
-  ];
+      const a = [
+        "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+        "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+        "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+      ];
+      const b = [
+        "", "", "Twenty", "Thirty", "Forty", "Fifty",
+        "Sixty", "Seventy", "Eighty", "Ninety"
+      ];
 
-  const numberToWords = (n) => {
-    if (n < 20) return a[n];
-    if (n < 100) return b[Math.floor(n / 10)] + " " + a[n % 10];
-    if (n < 1000)
-      return a[Math.floor(n / 100)] + " Hundred " + numberToWords(n % 100);
-    if (n < 100000)
-      return numberToWords(Math.floor(n / 1000)) + " Thousand " + numberToWords(n % 1000);
-    if (n < 10000000)
-      return numberToWords(Math.floor(n / 100000)) + " Lakh " + numberToWords(n % 100000);
-    return numberToWords(Math.floor(n / 10000000)) + " Crore " + numberToWords(n % 10000000);
-  };
+      const numberToWords = (n) => {
+        if (n < 20) return a[n];
+        if (n < 100) return b[Math.floor(n / 10)] + " " + a[n % 10];
+        if (n < 1000)
+          return a[Math.floor(n / 100)] + " Hundred " + numberToWords(n % 100);
+        if (n < 100000)
+          return numberToWords(Math.floor(n / 1000)) + " Thousand " + numberToWords(n % 1000);
+        if (n < 10000000)
+          return numberToWords(Math.floor(n / 100000)) + " Lakh " + numberToWords(n % 100000);
+        return numberToWords(Math.floor(n / 10000000)) + " Crore " + numberToWords(n % 10000000);
+      };
 
-  const rupees = Math.floor(num);
-  const paise = Math.round((num - rupees) * 100);
+      const rupees = Math.floor(num);
+      const paise = Math.round((num - rupees) * 100);
 
-  return this.getCurrencyText(rupees, paise);
-},
+      return this.getCurrencyText(rupees, paise);
+    },
 
     calculateLineTotal(row) {
-    const taxable = parseFloat(row.taxable) || 0;
+      const taxable = parseFloat(row.taxable) || 0;
 
-    const cgst = parseFloat(row.cgst_amt) || 0;
-    const sgst = parseFloat(row.sgst_amt) || 0;
-    const igst = parseFloat(row.igst_amt) || 0;
+      const cgst = parseFloat(row.cgst_amt) || 0;
+      const sgst = parseFloat(row.sgst_amt) || 0;
+      const igst = parseFloat(row.igst_amt) || 0;
 
-    // Intrastate = CGST + SGST
-    if (this.form.nature_of_sale === "Intrastate") {
-      row.line_total = (taxable + cgst + sgst).toFixed(2);
-    }
-
-    // Interstate = IGST only
-    else if (this.form.nature_of_sale === "Interstate") {
-      row.line_total = (taxable + igst).toFixed(2);
-    }
-
-    // Export = NO TAX → Only taxable value
-    else if (this.form.nature_of_sale === "Export") {
-      row.line_total = taxable.toFixed(2);
-    }
-  },
-async fetchQuotation(id) {
-  try {
-    const res = await fetch(`/api/api/quotation/${id}`);
-    if (!res.ok) {
-      console.log("Quotation not found");
-      return;
-    }
-
-    const data = await res.json();
-
-    // ---------------- FILL MAIN FORM ----------------
-    this.form.nature_of_sale = data.nature_of_sale ?? "";
-    this.form.currency = data.currency ?? "INR";
-    this.form.bill_to.company = data.company_name ?? "";
-    this.form.ship_to.company = data.company_name ?? "";
-this.form.customer_reference = data.customer_reference ?? "";
-this.form.recommended_by = data.recommended_by ?? "";
-this.form.terms_conditions = data.terms_conditions ?? "";
-this.form.engine_serial = data.engine_serial ?? "";
-this.form.model_no = data.model_no ?? "";
-// SET DATE FROM created_at COLUMN
-this.form.date = data.created_at ? data.created_at.substring(0, 10) : "";
-this.form.created_by = this.form.created_by || data.created_by || "";
-    // ---------------------------------------------------
-    // 🔥 FETCH CUSTOMER DETAILS WHERE company matches
-    // ---------------------------------------------------
-    if (data.company_name) {
-      const custRes = await fetch(`/api/api/customer/by-name/${encodeURIComponent(data.company_name)}`);
-
-      if (custRes.ok) {
-        const cust = await custRes.json();
-
-        // ---------------- BILLING INFO ----------------
-        this.form.bill_to.address = cust.billing_address ?? "";
-        this.form.bill_to.gst = cust.gst_number ?? "";
-        this.form.bill_to.contact = cust.contact_person ?? "";
-        this.form.bill_to.phone = cust.contact_number ?? "";
-        this.form.bill_to.sphone = cust.secondary_contact_number ?? "";
-
-        // ---------------- SHIPPING INFO ----------------
-        this.form.ship_to.address = cust.shipping_address ?? "";
-        this.form.ship_to.gst = cust.gst_number ?? "";   // Usually same GST
-        this.form.ship_to.contact = cust.contact_person ?? "";
-        this.form.ship_to.phone = cust.contact_number ?? "";
-        this.form.ship_to.sphone = cust.secondary_contact_number ?? "";
-
+      // Intrastate = CGST + SGST
+      if (this.form.nature_of_sale === "Intrastate") {
+        row.line_total = (taxable + cgst + sgst).toFixed(2);
       }
-    }
+      // Interstate = IGST only
+      else if (this.form.nature_of_sale === "Interstate") {
+        row.line_total = (taxable + igst).toFixed(2);
+      }
+      // Export = NO TAX → Only taxable value
+      else if (this.form.nature_of_sale === "Export") {
+        row.line_total = taxable.toFixed(2);
+      }
+    },
+    async fetchQuotation(id) {
+      try {
+        const res = await fetch(`/api/api/quotation/${id}`);
+        if (!res.ok) {
+          console.log("Quotation not found");
+          return;
+        }
 
-    // ---------------- FILL ITEMS TABLE ----------------
-// ---------------- FILL ITEMS TABLE ----------------
-if (Array.isArray(data.items)) {
-  this.items = data.items.map((item, index) => ({
-    sr: item.sr ?? index + 1,
-    desc: item.description ?? item.desc ?? "",
-    hsn: item.hsn ?? "",
-    qty: item.qty ?? 0,
-    uom: item.uom ?? "",
-    rate: item.rate ?? 0,
-    discount: item.discount ?? 0,
+        const data = await res.json();
 
-    total: item.total ?? 0,
-    taxable: item.taxable ?? 0,
+        // ---------------- FILL MAIN FORM ----------------
+        this.form.nature_of_sale = data.nature_of_sale ?? "";
+        this.form.currency = data.currency ?? "INR";
+        this.form.bill_to.company = data.company_name ?? "";
+        this.form.ship_to.company = data.company_name ?? "";
+        this.form.customer_reference = data.customer_reference ?? "";
+        this.form.recommended_by = data.recommended_by ?? "";
+        this.form.terms_conditions = data.terms_conditions ?? "";
+        this.form.engine_serial = data.engine_serial ?? "";
+        this.form.model_no = data.model_no ?? "";
+        // SET DATE FROM created_at COLUMN
+        this.form.date = data.created_at ? data.created_at.substring(0, 10) : "";
+        this.form.created_by = this.form.created_by || data.created_by || "";
+        // ---------------------------------------------------
+        // 🔥 FETCH CUSTOMER DETAILS WHERE company matches
+        // ---------------------------------------------------
+        if (data.company_name) {
+          const custRes = await fetch(`/api/api/customer/by-name/${encodeURIComponent(data.company_name)}`);
 
-    cgst_rate: item.cgst_rate ?? 0,
-    cgst_amt: item.cgst_amt ?? 0,
-    sgst_rate: item.sgst_rate ?? 0,
-    sgst_amt: item.sgst_amt ?? 0,
-    igst_rate: item.igst_rate ?? 0,
-    igst_amt: item.igst_amt ?? 0,
+          if (custRes.ok) {
+            const cust = await custRes.json();
 
-    line_total: item.line_total ?? 0
-  }));
-}
+            // ---------------- BILLING INFO ----------------
+            this.form.bill_to.address = cust.billing_address ?? "";
+            this.form.bill_to.gst = cust.gst_number ?? "";
+            this.form.bill_to.contact = cust.contact_person ?? "";
+            this.form.bill_to.phone = cust.contact_number ?? "";
+            this.form.bill_to.sphone = cust.secondary_contact_number ?? "";
 
+            // ---------------- SHIPPING INFO ----------------
+            this.form.ship_to.address = cust.shipping_address ?? "";
+            this.form.ship_to.gst = cust.gst_number ?? "";   // Usually same GST
+            this.form.ship_to.contact = cust.contact_person ?? "";
+            this.form.ship_to.phone = cust.contact_number ?? "";
+            this.form.ship_to.sphone = cust.secondary_contact_number ?? "";
+          }
+        }
 
-    // Recalculate totals
-    this.$nextTick(() => {
-      this.items.forEach(row => this.calculateRow(row));
-      this.calculateInvoiceTotal();
-    });
+        // ---------------- FILL ITEMS TABLE ----------------
+        if (Array.isArray(data.items)) {
+          this.items = data.items.map((item, index) => ({
+            sr: item.sr ?? index + 1,
+            desc: item.description ?? item.desc ?? "",
+            hsn: item.hsn ?? "",
+            qty: item.qty ?? 0,
+            uom: item.uom ?? "",
+            rate: item.rate ?? 0,
+            discount: item.discount ?? 0,
+            total: item.total ?? 0,
+            taxable: item.taxable ?? 0,
+            cgst_rate: item.cgst_rate ?? 0,
+            cgst_amt: item.cgst_amt ?? 0,
+            sgst_rate: item.sgst_rate ?? 0,
+            sgst_amt: item.sgst_amt ?? 0,
+            igst_rate: item.igst_rate ?? 0,
+            igst_amt: item.igst_amt ?? 0,
+            line_total: item.line_total ?? 0
+          }));
+        }
 
-  } catch (err) {
-    console.error("Error fetching quotation:", err);
-  }
-},
+        // Recalculate totals
+        this.$nextTick(() => {
+          this.items.forEach(row => this.calculateRow(row));
+          this.calculateInvoiceTotal();
+        });
 
-
+      } catch (err) {
+        console.error("Error fetching quotation:", err);
+      }
+    },
 
     addRow() {
       this.items.push({
@@ -923,25 +935,23 @@ if (Array.isArray(data.items)) {
       toastSuccess("Quotation Saved Successfully!");
     },
 
-printQuotation() {
-  const quoteId = this.form.quote_no;
+    printQuotation() {
+      const quoteId = this.form.quote_no;
 
-  const company = (this.form.bill_to.company || "Customer")
-    .replace(/\./g, ""); // ❌ remove dot only
+      const company = (this.form.bill_to.company || "Customer")
+        .replace(/\./g, ""); // ❌ remove dot only
 
-  const originalTitle = document.title;
-  document.title = `Quotation-${quoteId}-${company}`;
+      const originalTitle = document.title;
+      document.title = `Quotation-${quoteId}-${company}`;
 
-  this.$nextTick(() => {
-    window.print();
+      this.$nextTick(() => {
+        window.print();
 
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 500);
-  });
-}
-
-
+        setTimeout(() => {
+          document.title = originalTitle;
+        }, 500);
+      });
+    }
   }
 };
 </script>
@@ -980,7 +990,7 @@ tfoot {
 }
 
 .two-column-row .half {
-  width: 50%;
+  width: 100%;
 }
 
 .row-field {
@@ -1033,6 +1043,35 @@ tfoot {
   white-space: pre-wrap;
   justify-content: space-around;
   flex-direction: column-reverse;
+}
+
+/* Description cell line-by-line styling */
+.description-cell {
+  display: block !important;
+  white-space: normal !important;
+}
+
+.desc-line {
+  display: block;
+  margin-bottom: 2px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 9px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* Terms content line-by-line styling */
+.terms-content {
+  display: block !important;
+  white-space: normal !important;
+}
+
+.terms-line {
+  display: block;
+  margin-bottom: 2px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .invoice-total {
@@ -1402,6 +1441,13 @@ table textarea:focus {
   .static-field {
     overflow: visible !important;
     white-space: normal !important;
+  }
+  
+  /* Ensure description and terms lines print properly */
+  .desc-line,
+  .terms-line {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
 </style>
