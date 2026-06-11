@@ -606,8 +606,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: -77px;
-  padding: 20px;
+  /* margin-top: -77px; */
+  /* padding: 20px; */
   position: relative;
   overflow: hidden;
 }
@@ -1139,7 +1139,7 @@ export default {
 }
 
 .modal {
-  background: rgba(255, 255, 255, 0);
+  background: rgb(255, 255, 255);
   border-radius: 24px;
   width: 90%;
   max-width: 450px;

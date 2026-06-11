@@ -83,7 +83,8 @@ import MyProfile from '../views/employee/MyProfile.vue'
 
 
 const routes = [
-  { path: '/', component: AuthForm, meta: { hideBell: true, hideHelp: true } },
+  { path: '/', component: AuthForm, meta: { hideBell: true, hideHelp: true, hideMenu: true,
+    hideHeader: true } },
   { path: '/auth', component: AuthForm, meta: { hideBell: true, hideHelp: true,  hideMenu: true,  hideHeader: true } },
 
   {
@@ -144,7 +145,8 @@ const routes = [
   { path: '/rejectedleaves', name: 'RejectedLeaves', component: RejectedLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
   { path: '/pendingleaves', name: 'PendingLeaves', component: PendingLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
   { path: '/manageleavetype', name: 'ManageLeavetype', component: ManageLeavetype, meta: { requiresAuth: true, adminOnly:true, hideBell: true,  hideMenu: true, } },
-
+{path: '/MyApps', name: 'MyApps', component: () => import('../views/MyApps.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
+{path: '/employee/ManageStock', name: 'ManageStock', component: () => import('../views/employee/ManageStock.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
   { path: '/customerregistration', name: 'CustomerRegistration', component: CustomerRegistration, meta: {requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
 { path: '/salaryslip', name: 'SalarySlip', component: SalarySlip, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
 {

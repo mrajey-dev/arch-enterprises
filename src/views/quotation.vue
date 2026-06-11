@@ -987,6 +987,7 @@ tfoot {
   gap: 20px;
   margin-top: -18px;
   margin-bottom: -12px;
+  width: 200%;
 }
 
 .two-column-row .half {

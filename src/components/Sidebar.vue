@@ -76,7 +76,9 @@
 <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('offerletter')">
   <i class="	far fa-file-alt"></i> <span>Offer Letter</span>
 </li>
-
+<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('myapps')">
+  <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
+</li>
 <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('salaryslip')">
   <i class="far fa-file-alt"></i> <span>Salary Slip</span>
 </li>

@@ -547,28 +547,190 @@
       </div>
     </div>
 
-    <!-- ENGINE & TERMS -->
-    <div class="quotation-section-card">
-      <h3 class="quotation-section-title">Equipments & Terms</h3>
-      <div class="quotation-grid">
-        <div class="quotation-form-group">
-          <label>Equipment Serial No</label>
-          <input v-model="form.engine_serial" type="text" />
+<!-- ENGINE & TERMS -->
+<div class="quotation-section-card">
+  <h3 class="quotation-section-title">Equipments & Terms</h3>
+  
+  <!-- Equipment Selection Section -->
+  <div class="equipment-selection-section" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+    
+    <!-- Mode Selection Toggle -->
+    <div style="display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6;">
+      <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+        <input 
+          type="radio" 
+          value="select" 
+          v-model="equipmentInputMode"
+          @change="onInputModeChange"
+        />
+        <span>Select from Database</span>
+      </label>
+      <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+        <input 
+          type="radio" 
+          value="manual" 
+          v-model="equipmentInputMode"
+          @change="onInputModeChange"
+        />
+        <span>Manual Entry</span>
+      </label>
+    </div>
+    
+    <!-- Database Selection Mode -->
+    <div v-if="equipmentInputMode === 'select'">
+      <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+        <div v-for="equipType in equipmentTypes" :key="equipType.key" style="display: flex; align-items: center; gap: 5px;">
+          <input 
+            type="checkbox" 
+            :id="'equip_' + equipType.key"
+            :value="equipType.key"
+            v-model="selectedEquipmentTypes"
+            @change="fetchEquipmentByType(equipType.key)"
+          />
+          <label :for="'equip_' + equipType.key" style="margin: 0; font-weight: normal;">
+            {{ equipType.label }}
+          </label>
         </div>
-        <div class="quotation-form-group">
-          <label>Model No</label>
-          <input v-model="form.model_no" type="text" />
-        </div>
-        <div class="quotation-form-group">
-          <label>Delivery</label>
-          <input v-model="form.delivery" placeholder="EX Works, Freight Prepaid" />
-        </div>
-        <div class="quotation-form-group">
-          <label>Payment Terms</label>
-          <input v-model="form.payment_terms" placeholder="e.g., 50% Advance, 50% on Delivery"/>
+      </div>
+      
+      <!-- Equipment Multi-Select Dropdowns -->
+      <div v-for="equipType in selectedEquipmentTypes" :key="'select_' + equipType" style="margin-bottom: 15px;">
+        <label :for="'equip_select_' + equipType" style="font-size: 13px; display: block; margin-bottom: 5px; font-weight: 500;">
+          Select {{ getEquipmentLabel(equipType) }}(s):
+        </label>
+        <select 
+          :id="'equip_select_' + equipType"
+          v-model="selectedEquipment[equipType]"
+          @change="onEquipmentSelect(equipType)"
+          multiple
+          size="3"
+          style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ddd; width: 100%; max-width: 500px;"
+        >
+          <option 
+            v-for="equip in equipmentList[equipType]" 
+            :key="equip.id" 
+            :value="equip"
+          >
+            {{ equip.model }} - {{ equip.controller }} ({{ equip.make || 'N/A' }})
+          </option>
+        </select>
+        <!-- <small style="color: #666; font-size: 11px;">Hold Ctrl/Cmd to select multiple items</small> -->
+        
+        <!-- Show selected items as chips -->
+        <div v-if="selectedEquipment[equipType] && selectedEquipment[equipType].length" style="margin-top: 8px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            <span 
+              v-for="(equip, idx) in selectedEquipment[equipType]" 
+              :key="idx"
+              style="background: #e9ecef; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;"
+            >
+              {{ equip.model }} - {{ equip.controller }}
+              <button 
+                type="button"
+                @click="removeSelectedEquipment(equipType, idx)"
+                style="background: none; border: none; cursor: pointer; color: #dc3545; font-weight: bold; padding: 0 3px;"
+              >×</button>
+            </span>
+          </div>
         </div>
       </div>
     </div>
+    
+    <!-- Manual Entry Mode -->
+    <div v-if="equipmentInputMode === 'manual'">
+      <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div style="flex: 1;">
+          <label style="font-size: 13px; display: block; margin-bottom: 5px; font-weight: 500;">
+            Equipment Serial No
+          </label>
+          <textarea 
+            v-model="manualSerialNumbers"
+            rows="2"
+            placeholder="Enter serial numbers separated by commas&#10;Example: SN12345, SN67890, SN111213"
+            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+            @input="updateManualFields"
+          ></textarea>
+        </div>
+        <div style="flex: 1;">
+          <label style="font-size: 13px; display: block; margin-bottom: 5px; font-weight: 500;">
+            Model No
+          </label>
+          <textarea 
+            v-model="manualModelNumbers"
+            rows="2"
+            placeholder="Enter model numbers separated by commas&#10;Example: X1000, X2000, X3000"
+            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+            @input="updateManualFields"
+          ></textarea>
+        </div>
+      </div>
+      <div style="margin-top: 10px; display: flex; gap: 10px;">
+        <button 
+          type="button"
+          @click="addManualRow"
+          style="padding: 5px 10px; font-size: 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;"
+        >
+          + Add Another Equipment
+        </button>
+        <button 
+          type="button"
+          @click="clearManualFields"
+          style="padding: 5px 10px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"
+        >
+          Clear All
+        </button>
+      </div>
+      
+      <!-- Manual Equipment List -->
+      <div v-if="manualEquipmentList.length > 0" style="margin-top: 15px;">
+        <label style="font-size: 13px; display: block; margin-bottom: 8px; font-weight: 500;">
+          Added Equipment:
+        </label>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <div 
+            v-for="(item, idx) in manualEquipmentList" 
+            :key="idx"
+            style="background: #e9ecef; padding: 5px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 10px;"
+          >
+            <span><strong>Serial:</strong> {{ item.serial }}</span>
+            <span><strong>Model:</strong> {{ item.model }}</span>
+            <button 
+              type="button"
+              @click="removeManualRow(idx)"
+              style="background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer; padding: 2px 6px;"
+            >×</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div class="quotation-grid">
+    <div class="quotation-form-group">
+      <label>Equipment Serial No</label>
+      <textarea 
+        v-model="form.engine_serial" 
+        rows="2"
+        :placeholder="equipmentInputMode === 'select' ? 'Auto-filled from selected equipment (comma separated)' : 'Enter serial numbers manually'"
+        :readonly="equipmentInputMode === 'select'"
+        :style="equipmentInputMode === 'select' ? 'background: #f5f5f5;' : ''"
+      ></textarea>
+      <!-- <small style="color: #666;">{{ equipmentInputMode === 'select' ? 'Automatically populated from selected equipment' : 'You can edit these values freely' }}</small> -->
+    </div>
+    <div class="quotation-form-group">
+      <label>Model No</label>
+      <textarea 
+        v-model="form.model_no" 
+        rows="2"
+        :placeholder="equipmentInputMode === 'select' ? 'Auto-filled from selected equipment (comma separated)' : 'Enter model numbers manually'"
+        :readonly="equipmentInputMode === 'select'"
+        :style="equipmentInputMode === 'select' ? 'background: #f5f5f5;' : ''"
+      ></textarea>
+      <!-- <small style="color: #666;">{{ equipmentInputMode === 'select' ? 'Automatically populated from selected equipment' : 'You can edit these values freely' }}</small> -->
+    </div>
+  </div>
+</div>
 
 
 <!-- ITEMS -->
@@ -3445,6 +3607,34 @@ import { saveAs } from "file-saver"
     },
     data() {
       return {
+       // New equipment-related properties
+        equipmentInputMode: 'select',
+    equipmentTypes: [
+      { key: 'engines', label: 'Engine' },
+      { key: 'pumps', label: 'Pump' },
+      { key: 'controllers', label: 'Controller' },
+      { key: 'motors', label: 'Motor' },
+      { key: 'jockey_pumps', label: 'Jockey Pump' }
+    ],
+     manualSerialNumbers: '',
+    manualModelNumbers: '',
+    manualEquipmentList: [],
+
+    selectedEquipmentTypes: [],
+    equipmentList: {
+      engines: [],
+      pumps: [],
+      controllers: [],
+      motors: [],
+      jockey_pumps: []
+    },
+     selectedEquipment: {
+      engines: [],
+      pumps: [],
+      controllers: [],
+      motors: [],
+      jockey_pumps: []
+    },
          isDuplicateMode: false,
         duplicateCompanySelection: null,
 showDuplicateCompanySelection: false,
@@ -3720,9 +3910,9 @@ PODate: "",
         uom: "",
         rate: "",
         discount: "",
-        cgst: "",
-        sgst: "",
-        igst: "",
+        cgst: "9",
+        sgst: "9",
+        igst: "18",
         quote_no: "",
         quote_code: "",
         date: "",
@@ -4276,6 +4466,16 @@ quotationsByCompany() {
 
   },
 watch: {
+   calculations: {
+    deep: true,
+    handler(rows) {
+      rows.forEach(row => {
+        if (row.type === 'Import' && row.currency && row.currency !== 'USD') {
+          row.usd_to_inr = this.getExchangeRate(row.currency)
+        }
+      })
+    }
+  },
    showDuplicateCompanySelection(newVal) {
     // If the duplicate modal is closed without selection, clean up
     if (!newVal && this.duplicateQuotationData && !this.showQuotation) {
@@ -4360,9 +4560,190 @@ filterCompany(newCompany) {
       }
     },
   },
-  
+  // Watch for currency changes in calculation rows
+
  methods: {
- // Better API with actual rates
+  updateManualFields() {
+    // Update the form fields when manual inputs change
+    this.form.engine_serial = this.manualSerialNumbers;
+    this.form.model_no = this.manualModelNumbers;
+    
+    // Parse and store in manualEquipmentList for display
+    const serials = this.manualSerialNumbers.split(',').map(s => s.trim()).filter(s => s);
+    const models = this.manualModelNumbers.split(',').map(m => m.trim()).filter(m => m);
+    
+    this.manualEquipmentList = serials.map((serial, index) => ({
+      serial: serial,
+      model: models[index] || ''
+    }));
+  },
+addManualRow() {
+    // Add empty entries for new equipment
+    const currentSerials = this.manualSerialNumbers ? this.manualSerialNumbers.split(',').map(s => s.trim()) : [];
+    const currentModels = this.manualModelNumbers ? this.manualModelNumbers.split(',').map(m => m.trim()) : [];
+    
+    currentSerials.push('');
+    currentModels.push('');
+    
+    this.manualSerialNumbers = currentSerials.join(', ');
+    this.manualModelNumbers = currentModels.join(', ');
+    this.updateManualFields();
+  },
+  
+  removeManualRow(index) {
+    const serials = this.manualSerialNumbers.split(',').map(s => s.trim()).filter(s => s);
+    const models = this.manualModelNumbers.split(',').map(m => m.trim()).filter(m => m);
+    
+    serials.splice(index, 1);
+    models.splice(index, 1);
+    
+    this.manualSerialNumbers = serials.join(', ');
+    this.manualModelNumbers = models.join(', ');
+    this.updateManualFields();
+  },
+  
+  clearManualFields() {
+    this.manualSerialNumbers = '';
+    this.manualModelNumbers = '';
+    this.manualEquipmentList = [];
+    this.form.engine_serial = '';
+    this.form.model_no = '';
+  },
+  
+  getEquipmentLabel(type) {
+    const labels = {
+      engines: 'Engine',
+      pumps: 'Pump',
+      controllers: 'Controller',
+      motors: 'Motor',
+      jockey_pumps: 'Jockey Pump'
+    };
+    return labels[type] || type;
+  },
+  
+  async fetchEquipmentByType(equipmentType) {
+    if (!this.form.company_name) {
+      toastWarning("Please select a company first");
+      const index = this.selectedEquipmentTypes.indexOf(equipmentType);
+      if (index > -1) {
+        this.selectedEquipmentTypes.splice(index, 1);
+      }
+      return;
+    }
+    
+    const customer = this.customers.find(c => c.company_name === this.form.company_name);
+    if (!customer) {
+      toastWarning("Customer not found");
+      return;
+    }
+    
+    try {
+      const response = await axios.get(`/api/customers/${customer.id}/equipment/${equipmentType}`);
+      this.equipmentList[equipmentType] = response.data;
+      
+      if (!this.selectedEquipmentTypes.includes(equipmentType)) {
+        this.selectedEquipment[equipmentType] = [];
+      }
+    } catch (error) {
+      console.error(`Error fetching ${equipmentType}:`, error);
+      this.equipmentList[equipmentType] = [];
+      toastError(`Failed to load ${this.getEquipmentLabel(equipmentType)} data`);
+    }
+  },
+  
+  onEquipmentSelect(equipmentType) {
+    this.updateEquipmentSerialAndModel();
+  },
+  
+  removeSelectedEquipment(equipmentType, index) {
+    this.selectedEquipment[equipmentType].splice(index, 1);
+    this.updateEquipmentSerialAndModel();
+  },
+  
+  updateEquipmentSerialAndModel() {
+    if (this.equipmentInputMode !== 'select') return;
+    
+    const serialNumbers = [];
+    const modelNumbers = [];
+    
+    for (const equipType of this.selectedEquipmentTypes) {
+      const selected = this.selectedEquipment[equipType] || [];
+      for (const equip of selected) {
+        if (equip.controller || equip.serial_no) {
+          serialNumbers.push(equip.controller || equip.serial_no);
+        }
+        if (equip.model || equip.model_no) {
+          modelNumbers.push(equip.model || equip.model_no);
+        }
+      }
+    }
+    
+    this.form.engine_serial = serialNumbers.join(', ');
+    this.form.model_no = modelNumbers.join(', ');
+    
+    if (serialNumbers.length > 0) {
+      toastSuccess(`${serialNumbers.length} equipment(s) selected`);
+    }
+  },
+
+  onInputModeChange() {
+    if (this.equipmentInputMode === 'select') {
+      // Switching to select mode - populate from existing data if any
+      if (this.form.engine_serial && this.form.company_name) {
+        this.loadExistingEquipmentSelections(this.form.engine_serial);
+      }
+    } else {
+      // Switching to manual mode - populate textareas with current values
+      this.manualSerialNumbers = this.form.engine_serial || '';
+      this.manualModelNumbers = this.form.model_no || '';
+    }
+  },
+
+ getEquipmentLabel(type) {
+    const labels = {
+      engines: 'Engine',
+      pumps: 'Pump',
+      controllers: 'Controller',
+      motors: 'Motor',
+      jockey_pumps: 'Jockey Pump'
+    };
+    return labels[type] || type;
+  },
+
+  
+ async fetchEquipmentByType(equipmentType) {
+    if (!this.form.company_name) {
+      toastWarning("Please select a company first");
+      const index = this.selectedEquipmentTypes.indexOf(equipmentType);
+      if (index > -1) {
+        this.selectedEquipmentTypes.splice(index, 1);
+      }
+      return;
+    }
+     const customer = this.customers.find(c => c.company_name === this.form.company_name);
+    if (!customer) {
+      toastWarning("Customer not found");
+      return;
+    }
+    
+    try {
+      const response = await axios.get(`/api/customers/${customer.id}/equipment/${equipmentType}`);
+      this.equipmentList[equipmentType] = response.data;
+      
+      if (!this.selectedEquipmentTypes.includes(equipmentType)) {
+        this.selectedEquipment[equipmentType] = [];
+      }
+    } catch (error) {
+      console.error(`Error fetching ${equipmentType}:`, error);
+      this.equipmentList[equipmentType] = [];
+      toastError(`Failed to load ${this.getEquipmentLabel(equipmentType)} data`);
+    }
+  },
+  
+ onEquipmentSelect(equipmentType) {
+    this.updateEquipmentSerialAndModel();
+  },
+   // Better API with actual rates
 async getCurrencies() {
   try {
     // Using exchangerate-api.com (free tier)
@@ -4388,19 +4769,36 @@ async getCurrencies() {
   }
 },
 
-// Watch for currency changes in calculation rows
-watch: {
-  calculations: {
-    deep: true,
-    handler(rows) {
-      rows.forEach(row => {
-        if (row.type === 'Import' && row.currency && row.currency !== 'USD') {
-          row.usd_to_inr = this.getExchangeRate(row.currency)
+ removeSelectedEquipment(equipmentType, index) {
+    this.selectedEquipment[equipmentType].splice(index, 1);
+    this.updateEquipmentSerialAndModel();
+  },
+  
+  updateEquipmentSerialAndModel() {
+    const serialNumbers = [];
+    const modelNumbers = [];
+    
+    for (const equipType of this.selectedEquipmentTypes) {
+      const selected = this.selectedEquipment[equipType] || [];
+      for (const equip of selected) {
+        if (equip.controller || equip.serial_no) {
+          serialNumbers.push(equip.controller || equip.serial_no);
         }
-      })
+        if (equip.model || equip.model_no) {
+          modelNumbers.push(equip.model || equip.model_no);
+        }
+      }
     }
-  }
-},
+    
+    this.form.engine_serial = serialNumbers.join(', ');
+    this.form.model_no = modelNumbers.join(', ');
+    
+    if (serialNumbers.length > 0) {
+      toastSuccess(`${serialNumbers.length} equipment selected`);
+    }
+  },
+
+
   // Add this method temporarily to debug
 async testApiQuotation(id) {
   try {
@@ -5705,29 +6103,29 @@ fetchReports() {
     }
   },
 async openQuotationlist(cust) {
-  // If we're in duplicate mode, don't open a new quotation
-  if (this.isDuplicateMode) {
-    return;
-  }
-  
-  this.showQuotation = true;
-  this.isEdit = false;
-
-  this.form.company_name = cust.company_name;
-  this.form.customer_id = cust.id;
-
-  try {
-    const res = await axios.get(`/api/customers/${cust.id}`);
-
-    // ✅ Correct fallback logic
-    this.form.shipping_address =
-      res.data.shipping_address ?? res.data.address ?? "";
-
-  } catch (error) {
-    console.error("Failed to load shipping address", error);
-    this.form.shipping_address = "";
-  }
-},
+    if (this.isDuplicateMode) {
+      return;
+    }
+    
+    this.showQuotation = true;
+    this.isEdit = false;
+    
+    this.form.company_name = cust.company_name;
+    this.form.customer_id = cust.id;
+    
+    // Reset to select mode by default
+    this.equipmentInputMode = 'select';
+    this.resetEquipmentSelections();
+    this.clearManualFields();
+    
+    try {
+      const res = await axios.get(`/api/customers/${cust.id}`);
+      this.form.shipping_address = res.data.shipping_address ?? res.data.address ?? "";
+    } catch (error) {
+      console.error("Failed to load shipping address", error);
+      this.form.shipping_address = "";
+    }
+  },
 
 
   // -----------------------------
@@ -5851,68 +6249,150 @@ refreshForm() {
 },
 
 async editQuotation(quotation) {
-  console.log("Editing quotation:", quotation);
-  
-  this.isEdit = true;
-  this.showQuotation = true;
-  this.showViewQuotationPopup = false;
-  this.showViewAllQuotationPopup = false;
-
-  try {
-    // Make sure we have the correct ID
-    const quotationId = quotation.id;
-    if (!quotationId) {
-      toastError("Invalid quotation ID");
-      return;
+    console.log("Editing quotation:", quotation);
+    
+    this.isEdit = true;
+    this.showQuotation = true;
+    this.showViewQuotationPopup = false;
+    this.showViewAllQuotationPopup = false;
+    
+    // Reset to select mode by default
+    this.equipmentInputMode = 'select';
+    this.resetEquipmentSelections();
+    this.clearManualFields();
+    
+    try {
+      const quotationId = quotation.id;
+      if (!quotationId) {
+        toastError("Invalid quotation ID");
+        return;
+      }
+      
+      const res = await axios.get(`/api/quotations/${quotationId}`);
+      const fullQuotation = res.data;
+      
+      console.log("Full quotation data for edit:", fullQuotation);
+      
+      let items = [];
+      if (fullQuotation.items) {
+        if (typeof fullQuotation.items === "string") {
+          items = JSON.parse(fullQuotation.items);
+        } else {
+          items = JSON.parse(JSON.stringify(fullQuotation.items));
+        }
+      }
+      
+      this.form = {
+        id: fullQuotation.id,
+        nature_of_sale: fullQuotation.nature_of_sale || "",
+        currency: fullQuotation.currency || "",
+        company_name: fullQuotation.company_name,
+        recommended_by: fullQuotation.recommended_by || "",
+        customer_reference: fullQuotation.customer_reference || "",
+        engine_serial: fullQuotation.engine_serial || "",
+        model_no: fullQuotation.model_no || "",
+        delivery: fullQuotation.delivery || "",
+        payment_terms: fullQuotation.payment_terms || "",
+        terms_conditions: fullQuotation.terms_conditions || "",
+        created_by: fullQuotation.created_by || "",
+        shipping_address: fullQuotation.shipping_address || fullQuotation.material_shipping_address || "",
+        items: items,
+        bill_to: fullQuotation.bill_to ? 
+          (typeof fullQuotation.bill_to === "string" ? JSON.parse(fullQuotation.bill_to) : fullQuotation.bill_to) : 
+          { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" },
+        ship_to: fullQuotation.ship_to ? 
+          (typeof fullQuotation.ship_to === "string" ? JSON.parse(fullQuotation.ship_to) : fullQuotation.ship_to) : 
+          { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" }
+      };
+      
+      // Check if the serial numbers match any existing equipment
+      if (fullQuotation.engine_serial && this.form.company_name) {
+        const serialNumbers = fullQuotation.engine_serial.split(',').map(s => s.trim());
+        let hasMatches = false;
+        
+        // Try to load matching equipment
+        for (const equipType of this.equipmentTypes) {
+          const customer = this.customers.find(c => c.company_name === this.form.company_name);
+          if (customer) {
+            try {
+              const response = await axios.get(`/api/customers/${customer.id}/equipment/${equipType.key}`);
+              const equipmentList = response.data;
+              
+              const matchedEquipment = equipmentList.filter(equip => 
+                serialNumbers.includes(equip.controller || equip.serial_no)
+              );
+              
+              if (matchedEquipment.length > 0) {
+                hasMatches = true;
+                this.selectedEquipmentTypes.push(equipType.key);
+                this.equipmentList[equipType.key] = equipmentList;
+                this.selectedEquipment[equipType.key] = matchedEquipment;
+              }
+            } catch (error) {
+              console.error(`Error loading ${equipType.key}:`, error);
+            }
+          }
+        }
+        
+        // If no matches found, switch to manual mode
+        if (!hasMatches && fullQuotation.engine_serial) {
+          this.equipmentInputMode = 'manual';
+          this.manualSerialNumbers = fullQuotation.engine_serial;
+          this.manualModelNumbers = fullQuotation.model_no || '';
+          this.updateManualFields();
+        }
+      }
+      
+      console.log("Form loaded for edit:", this.form);
+      
+    } catch (error) {
+      console.error("Failed to load quotation data:", error);
+      toastError("Failed to load quotation data");
     }
+  },
+ async loadExistingEquipmentSelections(serialNumbersStr) {
+    const serialNumbers = serialNumbersStr.split(',').map(s => s.trim());
     
-    const res = await axios.get(`/api/quotations/${quotationId}`);
-    const fullQuotation = res.data;
+    const customer = this.customers.find(c => c.company_name === this.form.company_name);
+    if (!customer) return;
     
-    console.log("Full quotation data for edit:", fullQuotation);
-    console.log("Items for edit:", fullQuotation.items);
-    
-    // Parse items if needed
-    let items = [];
-    if (fullQuotation.items) {
-      if (typeof fullQuotation.items === "string") {
-        items = JSON.parse(fullQuotation.items);
-      } else {
-        items = JSON.parse(JSON.stringify(fullQuotation.items));
+    // For each equipment type, fetch and match serial numbers
+    for (const equipType of this.equipmentTypes) {
+      try {
+        const response = await axios.get(`/api/customers/${customer.id}/equipment/${equipType.key}`);
+        const equipmentList = response.data;
+        
+        const matchedEquipment = equipmentList.filter(equip => 
+          serialNumbers.includes(equip.controller || equip.serial_no)
+        );
+        
+        if (matchedEquipment.length > 0) {
+          this.selectedEquipmentTypes.push(equipType.key);
+          this.equipmentList[equipType.key] = equipmentList;
+          this.selectedEquipment[equipType.key] = matchedEquipment;
+        }
+      } catch (error) {
+        console.error(`Error loading ${equipType.key}:`, error);
       }
     }
-    
-    this.form = {
-      id: fullQuotation.id,
-      nature_of_sale: fullQuotation.nature_of_sale || "",
-      currency: fullQuotation.currency || "",
-      company_name: fullQuotation.company_name,
-      recommended_by: fullQuotation.recommended_by || "",
-      customer_reference: fullQuotation.customer_reference || "",
-      engine_serial: fullQuotation.engine_serial || "",
-      model_no: fullQuotation.model_no || "",
-      delivery: fullQuotation.delivery || "",
-      payment_terms: fullQuotation.payment_terms || "",
-      terms_conditions: fullQuotation.terms_conditions || "",
-      created_by: fullQuotation.created_by || "",
-      shipping_address: fullQuotation.shipping_address || fullQuotation.material_shipping_address || "",
-      items: items,
-      bill_to: fullQuotation.bill_to ? 
-        (typeof fullQuotation.bill_to === "string" ? JSON.parse(fullQuotation.bill_to) : fullQuotation.bill_to) : 
-        { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" },
-      ship_to: fullQuotation.ship_to ? 
-        (typeof fullQuotation.ship_to === "string" ? JSON.parse(fullQuotation.ship_to) : fullQuotation.ship_to) : 
-        { company: "", address: "", state: "", state_code: "", gst: "", contact: "", phone: "" }
+  },
+resetEquipmentSelections() {
+    this.selectedEquipmentTypes = [];
+    this.selectedEquipment = {
+      engines: [],
+      pumps: [],
+      controllers: [],
+      motors: [],
+      jockey_pumps: []
     };
-    
-    console.log("Form loaded for edit:", this.form);
-    console.log("Items loaded:", this.form.items);
-    
-  } catch (error) {
-    console.error("Failed to load quotation data:", error);
-    toastError("Failed to load quotation data");
-  }
-},
+    this.equipmentList = {
+      engines: [],
+      pumps: [],
+      controllers: [],
+      motors: [],
+      jockey_pumps: []
+    };
+  },
 
 
    viewReport(path) {
@@ -6017,9 +6497,9 @@ addItem() {
     total: '',
     discount: '',
     taxable: '',
-    cgst_rate: '',
+    cgst_rate: '9',
     cgst_amt: '',
-    sgst_rate: '',
+    sgst_rate: '9',
     sgst_amt: '',
     igst_rate: 18,
     igst_amt: 0,
@@ -10071,7 +10551,8 @@ flex-wrap: wrap;
   padding: 20px;
   border-radius: 8px;
   width: 73%;
-  height: 100%;
+      max-height: 91%;
+    height: max-content;
   overflow: scroll;
 }
 .modal-content {
@@ -12435,5 +12916,23 @@ transform:scale(1.05);
 .showDuplicateCompanySelection + .quotation-backdrop {
   z-index: 1030;
 }
+.equipment-selection-section select[multiple] {
+  background: white;
+}
 
+.equipment-selection-section select[multiple] option {
+  padding: 6px;
+  border-bottom: 1px solid #eee;
+}
+
+.equipment-selection-section select[multiple] option:checked {
+  background: #007bff linear-gradient(0deg, #007bff 0%, #007bff 100%);
+  color: white;
+}
+
+/* Make readonly textareas look better */
+.quotation-form-group textarea[readonly] {
+  background-color: #f8f9fa;
+  cursor: default;
+}
 </style>

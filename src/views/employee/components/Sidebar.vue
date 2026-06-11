@@ -81,6 +81,12 @@
               <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
             </li>
             <li 
+              @click="goTo('employee/ManageStock')"
+            >
+              <i class="fas fa-boxes"></i>
+              <span>Manage Stock</span>  
+            </li>
+            <li 
               class="desktop-only"
               @click="goTo('employee/visitschedule')"
             >

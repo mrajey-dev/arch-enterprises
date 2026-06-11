@@ -24,12 +24,13 @@
         <!-- KPI Cards Grid -->
         <div class="dashboard-row">
           <div class="dashboard-card clickable-card" @click="goTo('employee/mytask')">
+  <div class="active-tag">Active: {{ activeTasks.length }}</div>
             <div class="card-icon tasks-icon">
               <i class="fas fa-tasks"></i>
             </div>
             <div class="card-info">
               <p class="label">My Tasks</p>
-              <h3 class="value">Active: {{ activeTasks.length }}</h3>
+              <!-- <h3 class="value">Active: {{ activeTasks.length }}</h3> -->
               <span class="progress-text">View & Manage Tasks</span>
             </div>
           </div>
@@ -43,18 +44,6 @@
               <span class="progress-text">Mark your daily attendance</span>
             </div>
           </div>
-
-          <div class="dashboard-card clickable-card" @click="goTo('employee/help')">
-            <div class="card-icon chat-icon">
-              <i class="fas fa-comments"></i>
-            </div>
-            <div class="card-info">
-              <p class="label">Recent Mentions</p>
-              <!-- <h3 class="value">{{ unreadMentionsCount }}</h3> -->
-              <span class="progress-text">You have unread messages</span>
-            </div>
-          </div>
-
           <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/Customerregistrations')">
             <div class="card-icon crm-icon">
               <i class="fas fa-users"></i>
@@ -66,7 +55,7 @@
             </div>
           </div>
  <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/sop')">
-  <div class="new-tag">New</div>
+  <!-- <div class="new-tag">New</div> -->
   <div class="card-icon crm-icon">
     <i class="fas fa-file-alt"></i>
   </div>
@@ -1943,4 +1932,19 @@ textarea {
   z-index: 1;
 }
 
+.active-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #52c41a;  /* Green color for "Active" */
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
 </style>

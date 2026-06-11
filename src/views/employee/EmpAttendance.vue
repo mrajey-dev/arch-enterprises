@@ -836,7 +836,7 @@ export default {
 }
 
 .attendance-header-premium h1 {
-  font-size: 28px;
+  font-size: 21px;
   font-weight: 700;
   background: var(--primary);
   -webkit-background-clip: text;
@@ -847,7 +847,7 @@ export default {
 
 .header-subtitle {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 12px;
   margin-top: 4px;
 }
 
@@ -1372,7 +1372,7 @@ export default {
 /* Responsive */
 @media (max-width: 1024px) {
   .calendar-wrapper {
-    flex-direction: column;
+    /* flex-direction: column; */
   }
   .calendar-container {
     min-width: auto;
