@@ -249,38 +249,42 @@
       <td style="width:10%;"><div class="static-field" style="text-align: right">{{ formatNumber(row.line_total) }}</div></td>
     </tr>
 
-    <!-- ✅ FINAL TOTAL ROW (ONLY ONCE) -->
-  <tr class="final-total-row">
-    <td colspan="6" style="text-align:right;">TOTAL</td>
+    <!-- FINAL TOTAL ROW - UPDATED: Individual CGST and SGST totals -->
+    <tr class="final-total-row">
+      <td colspan="6" style="text-align:right;">TOTAL</td>
 
-    <td style="text-align:right;">
-      {{ formatNumber(columnTotals.total) }}
-    </td>
-
-    <td></td>
-
-    <td style="text-align:right;">
-      {{ formatNumber(columnTotals.taxable) }}
-    </td>
-
-    <template v-if="form.nature_of_sale === 'Intrastate'">
-      <td></td>
-      <td style="text-align:right;">—</td>
-      <td></td>
       <td style="text-align:right;">
-        {{ formatNumber(columnTotals.gst) }}
+        {{ formatNumber(columnTotals.total) }}
       </td>
-    </template>
 
-    <template v-if="form.nature_of_sale === 'Interstate'">
       <td></td>
-      <td style="text-align:right;">
-        {{ formatNumber(columnTotals.gst) }}
-      </td>
-    </template>
 
-    <td></td>
-  </tr>
+      <td style="text-align:right;">
+        {{ formatNumber(columnTotals.taxable) }}
+      </td>
+
+      <!-- For Intrastate: Show CGST Total and SGST Total in separate columns -->
+      <template v-if="form.nature_of_sale === 'Intrastate'">
+        <td style="text-align:right;">—</td>
+        <td style="text-align:right;">
+          {{ formatNumber(columnTotals.cgstTotal) }}
+        </td>
+        <td style="text-align:right;">—</td>
+        <td style="text-align:right;">
+          {{ formatNumber(columnTotals.sgstTotal) }}
+        </td>
+      </template>
+
+      <!-- For Interstate: Show IGST Total -->
+      <template v-if="form.nature_of_sale === 'Interstate'">
+        <td style="text-align:right;">—</td>
+        <td style="text-align:right;">
+          {{ formatNumber(columnTotals.gst) }}
+        </td>
+      </template>
+
+      <td></td>
+    </tr>
   </tbody>
  
 
@@ -364,8 +368,6 @@
       </div>
     </div>
   </div>
-
-
 
 </div>
 
@@ -522,6 +524,8 @@ export default {
     columnTotals() {
       let total = 0;
       let taxable = 0;
+      let cgstTotal = 0;
+      let sgstTotal = 0;
       let gst = 0;
 
       this.items.forEach(row => {
@@ -529,7 +533,9 @@ export default {
         taxable += Number(row.taxable) || 0;
 
         if (this.form.nature_of_sale === "Intrastate") {
-          gst += (Number(row.cgst_amt) || 0) + (Number(row.sgst_amt) || 0);
+          cgstTotal += Number(row.cgst_amt) || 0;
+          sgstTotal += Number(row.sgst_amt) || 0;
+          gst = cgstTotal + sgstTotal;
         }
 
         if (this.form.nature_of_sale === "Interstate") {
@@ -540,6 +546,8 @@ export default {
       return {
         total: total.toFixed(2),
         taxable: taxable.toFixed(2),
+        cgstTotal: cgstTotal.toFixed(2),
+        sgstTotal: sgstTotal.toFixed(2),
         gst: gst.toFixed(2)
       };
     },

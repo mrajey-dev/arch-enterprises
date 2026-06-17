@@ -384,7 +384,7 @@
 </template>
 
 <script>
-import Sidebar from '../components/Sidebar.vue'
+import Sidebar from './components/Sidebar.vue'
 
 // Update this to your actual API endpoint
 const API_BASE = 'https://employees.archenterprises.co.in/api/api';

@@ -86,6 +86,15 @@
               <i class="fas fa-boxes"></i>
               <span>Manage Stock</span>  
             </li>
+             <li 
+              @click="goTo('employee/ETPSession')"
+            >
+              <i class="fas fa-chalkboard-teacher"></i>
+              <span>ETP Session</span>  
+            </li>
+            <li @click="goTo('archapps')">
+  <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
+</li>
             <li 
               class="desktop-only"
               @click="goTo('employee/visitschedule')"
