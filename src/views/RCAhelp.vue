@@ -6,8 +6,20 @@
 
       <div class="announcement-board" v-if="!isMobile || !isSidebarVisible">
         <div class="qa-container">
-          <!-- Header Section -->
-          <div class="qa-header">
+          <!-- Mobile Header -->
+          <div class="mobile-header" v-if="isMobile">
+          
+            <div class="mobile-title">
+              <i class="fas fa-microscope"></i>
+              <span>RCA</span>
+            </div>
+            <button class="mobile-add-btn" @click="scrollToForm">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+
+          <!-- Desktop Header -->
+          <div class="qa-header desktop-only">
             <div class="header-content">
               <div class="title-section">
                 <div class="icon-badge">
@@ -18,13 +30,12 @@
                   <p>Document, discuss, and resolve technical issues collaboratively</p>
                 </div>
               </div>
-               
             </div>
           </div>
 
-          <!-- Ask Question Box - Modern Design -->
-          <div class="ask-card">
-            <div class="card-header">
+          <!-- Ask Question Box - Mobile Optimized -->
+          <div class="ask-card" ref="formRef">
+            <div class="card-header" :class="{ 'mobile-card-header': isMobile }">
               <div class="avatar-large" :style="{ backgroundColor: getAvatarColor(authUser.id) }">
                 {{ getUserInitials(authUser.handle) }}
               </div>
@@ -36,11 +47,12 @@
                   @input="onMentionInput($event, 'question')"
                   @keydown="onMentionKeydown"
                   class="smart-input"
+                  :class="{ 'mobile-input': isMobile }"
                 ></textarea>
-                <div class="input-actions">
-                  <label class="attach-btn">
+                <div class="input-actions" :class="{ 'mobile-actions': isMobile }">
+                  <label class="attach-btn" :class="{ 'mobile-btn': isMobile }">
                     <i class="fas fa-image"></i>
-                    <span>Add image</span>
+                    <span v-if="!isMobile">Add image</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -49,9 +61,9 @@
                       hidden
                     />
                   </label>
-                  <button class="submit-btn" @click="addQuestion" :disabled="!newQuestion.trim() && !questionImage">
+                  <button class="submit-btn" :class="{ 'mobile-btn': isMobile }" @click="addQuestion" :disabled="!newQuestion.trim() && !questionImage">
                     <i class="fas fa-paper-plane"></i>
-                    <span>Post Issue</span>
+                    <span v-if="!isMobile">Post Issue</span>
                   </button>
                 </div>
               </div>
@@ -59,15 +71,15 @@
             <p v-if="questionError" class="error-message">{{ questionError }}</p>
           </div>
 
-          <!-- Question List -->
+          <!-- Question List - Mobile Optimized -->
           <div class="questions-feed">
             <div
               class="question-card"
               v-for="(q, idx) in questions"
               :key="q.id"
-              :class="{ 'expanded': q.showAnswers }"
+              :class="{ 'expanded': q.showAnswers, 'mobile-card': isMobile }"
             >
-              <div class="question-header">
+              <div class="question-header" :class="{ 'mobile-header-flex': isMobile }">
                 <div class="user-info">
                   <div class="avatar" :style="{ backgroundColor: getAvatarColor(q.user_id) }">
                     {{ capitalizeHandle(q.user?.handle || 'A')[0] }}
@@ -80,7 +92,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="qa-actions">
+                <div class="qa-actions" :class="{ 'mobile-actions': isMobile }">
                   <button v-if="canModify(q) && q.answers.length === 0" class="icon-btn edit" @click="editQuestion(q)" title="Edit">
                     <i class="fas fa-pen"></i>
                   </button>
@@ -95,7 +107,7 @@
               </div>
 
               <!-- Question Content -->
-              <div class="question-body" v-if="!q.isEditing">
+              <div class="question-body" :class="{ 'mobile-body': isMobile }" v-if="!q.isEditing">
                 <p class="question-text" v-html="highlightMentions(q.question)"></p>
                 <div v-if="q.image_url" class="image-preview" @click="openImage(q.image_url)">
                   <img :src="q.image_url" alt="Question attachment" />
@@ -105,17 +117,17 @@
                 </div>
               </div>
 
-              <div class="question-body" v-else>
-                <textarea v-model="q.editText" class="edit-textarea" rows="3"></textarea>
-                <div class="edit-actions">
+              <div class="question-body" :class="{ 'mobile-body': isMobile }" v-else>
+                <textarea v-model="q.editText" class="edit-textarea" :class="{ 'mobile-input': isMobile }" rows="3"></textarea>
+                <div class="edit-actions" :class="{ 'mobile-actions': isMobile }">
                   <button class="save-btn" @click="updateQuestion(q)"><i class="fas fa-check"></i> Save</button>
                   <button class="cancel-btn" @click="cancelEditQuestion(q)"><i class="fas fa-times"></i> Cancel</button>
                 </div>
               </div>
 
-              <!-- Answers Section -->
+              <!-- Answers Section - Mobile Optimized -->
               <transition name="slide-fade">
-                <div v-show="q.showAnswers" class="answers-section">
+                <div v-show="q.showAnswers" class="answers-section" :class="{ 'mobile-section': isMobile }">
                   <div class="answers-timeline">
                     <div class="timeline-line"></div>
                     <div
@@ -128,8 +140,8 @@
                           {{ capitalizeHandle(a.user?.handle || 'A')[0] }}
                         </div>
                       </div>
-                      <div class="answer-bubble">
-                        <div class="answer-header">
+                      <div class="answer-bubble" :class="{ 'mobile-bubble': isMobile }">
+                        <div class="answer-header" :class="{ 'mobile-header-flex': isMobile }">
                           <div class="answerer-info">
                             <strong>{{ capitalizeHandle(a.user?.handle) || 'Anonymous' }}</strong>
                             <span class="answer-time">{{ formatTimeAgo(a.created_at) }}</span>
@@ -146,8 +158,8 @@
                           </div>
                         </div>
                         <div v-else>
-                          <textarea v-model="a.editText" class="edit-textarea small" rows="2"></textarea>
-                          <div class="edit-actions inline">
+                          <textarea v-model="a.editText" class="edit-textarea small" :class="{ 'mobile-input': isMobile }" rows="2"></textarea>
+                          <div class="edit-actions inline" :class="{ 'mobile-actions': isMobile }">
                             <button class="save-btn" @click="updateAnswer(a)"><i class="fas fa-check"></i></button>
                             <button class="cancel-btn" @click="cancelEditAnswer(a)"><i class="fas fa-times"></i></button>
                           </div>
@@ -156,20 +168,21 @@
                     </div>
                   </div>
 
-                  <!-- Reply Input -->
-                  <div class="reply-input-area">
+                  <!-- Reply Input - Mobile Optimized -->
+                  <div class="reply-input-area" :class="{ 'mobile-reply': isMobile }">
                     <div class="avatar small" :style="{ backgroundColor: getAvatarColor(authUser.id) }">
                       {{ getUserInitials(authUser.handle) }}
                     </div>
-                    <div class="reply-input-wrapper">
+                    <div class="reply-input-wrapper" :class="{ 'mobile-reply-wrapper': isMobile }">
                       <input
                         v-model="q.replyText"
                         placeholder="Write a reply... (use @ to mention someone)"
                         @input="onMentionInput($event, q)"
                         @keydown="onMentionKeydown"
                         class="reply-input"
+                        :class="{ 'mobile-input': isMobile }"
                       />
-                      <div class="reply-actions">
+                      <div class="reply-actions" :class="{ 'mobile-actions': isMobile }">
                         <label class="attach-icon">
                           <i class="fas fa-paperclip"></i>
                           <input
@@ -192,10 +205,11 @@
           </div>
         </div>
 
-        <!-- Mention Dropdown -->
+        <!-- Mention Dropdown - Mobile Optimized -->
         <div
           v-if="showMentionBox"
           class="mention-dropdown"
+          :class="{ 'mobile-dropdown': isMobile }"
           :style="{ top: mentionPosition.top + 'px', left: mentionPosition.left + 'px' }"
         >
           <div class="mention-header">
@@ -218,10 +232,10 @@
           </div>
         </div>
 
-        <!-- Image Preview Modal -->
+        <!-- Image Preview Modal - Mobile Optimized -->
         <div v-if="showImageModal" class="image-modal" @click="closeImage">
           <div class="modal-content" @click.stop>
-            <img :src="previewImage" class="modal-image" />
+            <img :src="previewImage" class="modal-image" :class="{ 'mobile-image': isMobile }" />
             <button class="modal-close" @click="closeImage"><i class="fas fa-times"></i></button>
           </div>
         </div>
@@ -300,6 +314,9 @@ export default {
   },
 
   methods: {
+    scrollToForm() {
+      this.$refs.formRef?.scrollIntoView({ behavior: 'smooth' });
+    },
     getAvatarColor(id) {
       const colors = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
       if (!id) return colors[0]
@@ -602,15 +619,14 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .main-content {
- display: flex;
-    flex: 1;
-    padding: 24px;
-    gap: 24px;
+  display: flex;
+  flex: 1;
+  padding: 24px;
+  gap: 24px;
 }
 
 .announcement-board {
@@ -622,7 +638,58 @@ export default {
 .qa-container {
   max-width: 1000px;
   margin: 0 auto;
-        
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-primary);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-title i {
+  color: var(--primary);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
 }
 
 /* Header Section */
@@ -632,7 +699,7 @@ export default {
 
 .header-content {
   display: flex;
- justify-content: space-between;
+  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
@@ -657,7 +724,7 @@ export default {
 
 .icon-badge i {
   font-size: 28px;
-  color: rgb(70, 69, 69);
+  color: white;
 }
 
 .title-section h1 {
@@ -670,28 +737,6 @@ export default {
 .title-section p {
   color: var(--text-secondary);
   font-size: 14px;
-}
-
-.stats-badge {
-  background: var(--surface);
-  padding: 12px 20px;
-  border-radius: 16px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--border);
-}
-
-.stat-count {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--primary);
-  display: block;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--text-secondary);
 }
 
 /* Ask Card */
@@ -715,6 +760,11 @@ export default {
   gap: 16px;
 }
 
+.card-header.mobile-card-header {
+  flex-direction: column;
+  gap: 12px;
+}
+
 .avatar-large {
   width: 48px;
   height: 48px;
@@ -734,7 +784,7 @@ export default {
 
 .smart-input {
   width: 100%;
-  border: 1px solid rgb(234, 228, 228);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 14px 16px;
   font-size: 14px;
@@ -751,11 +801,22 @@ export default {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
+.smart-input.mobile-input {
+  font-size: 16px;
+}
+
 .input-actions {
   display: flex;
-      justify-content: flex-end;
+  justify-content: flex-end;
   align-items: center;
   margin-top: 12px;
+  gap: 8px;
+}
+
+.input-actions.mobile-actions {
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
 }
 
 .attach-btn {
@@ -776,12 +837,16 @@ export default {
   color: var(--primary);
 }
 
+.attach-btn.mobile-btn {
+  justify-content: center;
+}
+
 .submit-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  background: black;
+  background: var(--primary);
   border: none;
   border-radius: 30px;
   color: white;
@@ -799,6 +864,12 @@ export default {
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.submit-btn.mobile-btn {
+  justify-content: center;
+  padding: 10px;
+  width: 100%;
 }
 
 .error-message {
@@ -828,6 +899,10 @@ export default {
   border: 1px solid var(--border);
 }
 
+.question-card.mobile-card {
+  padding: 16px;
+}
+
 .question-card:hover {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
@@ -842,6 +917,11 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+}
+
+.question-header.mobile-header-flex {
+  flex-direction: column;
+  gap: 12px;
 }
 
 .user-info {
@@ -892,6 +972,11 @@ export default {
   gap: 8px;
 }
 
+.qa-actions.mobile-actions {
+  justify-content: flex-start;
+  width: 100%;
+}
+
 .icon-btn {
   width: 32px;
   height: 32px;
@@ -936,6 +1021,10 @@ export default {
 .question-body {
   margin-bottom: 16px;
   padding-left: 52px;
+}
+
+.question-body.mobile-body {
+  padding-left: 0;
 }
 
 .question-text {
@@ -1010,9 +1099,17 @@ export default {
   border-color: var(--primary);
 }
 
+.edit-textarea.mobile-input {
+  font-size: 16px;
+}
+
 .edit-actions {
   display: flex;
   gap: 8px;
+}
+
+.edit-actions.mobile-actions {
+  flex-direction: column;
 }
 
 .save-btn, .cancel-btn {
@@ -1052,6 +1149,10 @@ export default {
   padding-top: 20px;
 }
 
+.answers-section.mobile-section {
+  padding-left: 0;
+}
+
 .answers-timeline {
   position: relative;
   margin-bottom: 20px;
@@ -1084,11 +1185,21 @@ export default {
   padding: 12px 16px;
 }
 
+.answer-bubble.mobile-bubble {
+  padding: 10px 12px;
+}
+
 .answer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.answer-header.mobile-header-flex {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .answerer-info {
@@ -1133,6 +1244,11 @@ export default {
   margin-top: 16px;
 }
 
+.reply-input-area.mobile-reply {
+  flex-direction: column;
+  gap: 8px;
+}
+
 .reply-input-wrapper {
   flex: 1;
   display: flex;
@@ -1141,7 +1257,7 @@ export default {
   background: var(--bg-light);
   border-radius: 30px;
   padding: 4px 12px;
-  border: 1px solid gray;
+  border: 1px solid var(--border);
   transition: all 0.2s;
 }
 
@@ -1149,6 +1265,11 @@ export default {
   border-color: var(--primary);
   background: white;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.reply-input-wrapper.mobile-reply-wrapper {
+  border-radius: 20px;
+  padding: 4px 10px;
 }
 
 .reply-input {
@@ -1164,10 +1285,19 @@ export default {
   outline: none;
 }
 
+.reply-input.mobile-input {
+  font-size: 15px;
+  padding: 8px 0;
+}
+
 .reply-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.reply-actions.mobile-actions {
+  gap: 4px;
 }
 
 .attach-icon {
@@ -1215,6 +1345,12 @@ export default {
   overflow-y: auto;
   z-index: 1000;
   border: 1px solid var(--border);
+}
+
+.mention-dropdown.mobile-dropdown {
+  width: 220px;
+  max-height: 200px;
+  border-radius: 10px;
 }
 
 .mention-header {
@@ -1285,6 +1421,10 @@ export default {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 
+.modal-image.mobile-image {
+  border-radius: 8px;
+}
+
 .modal-close {
   position: absolute;
   top: -40px;
@@ -1331,12 +1471,20 @@ export default {
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .main-content {
-    padding: 16px;
+    padding: 12px;
     flex-direction: column;
   }
   
   .qa-container {
     width: 100%;
+  }
+  
+  .mobile-header {
+    display: flex;
+  }
+  
+  .qa-header {
+    display: none;
   }
   
   .title-section h1 {
@@ -1393,6 +1541,81 @@ export default {
   .header-content {
     flex-direction: column;
     align-items: flex-start;
+  }
+  
+  .question-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .qa-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .answer-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .reply-input-area {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .reply-input-wrapper {
+    border-radius: 20px;
+  }
+  
+  .edit-actions {
+    flex-direction: column;
+  }
+  
+  .save-btn, .cancel-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+  }
+  
+  .question-card.mobile-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+  
+  .mobile-title {
+    font-size: 16px;
+  }
+  
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .ask-card {
+    padding: 12px;
+  }
+  
+  .question-card.mobile-card {
+    padding: 12px;
+  }
+  
+  .answer-bubble.mobile-bubble {
+    padding: 10px 12px;
+  }
+  
+  .mention-dropdown.mobile-dropdown {
+    width: 200px;
+  }
+  
+  .modal-image.mobile-image {
+    max-width: 95vw;
   }
 }
 </style>

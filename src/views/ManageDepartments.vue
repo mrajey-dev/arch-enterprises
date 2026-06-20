@@ -4,7 +4,7 @@
     <!-- KRA Modal - Premium Design -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showKRAModal" @click.self="closeKRAModal()">
-        <div class="premium-modal" @click.stop>
+        <div class="premium-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -91,7 +91,7 @@
                     />
                   </div>
                   <button @click="addKpi" class="add-kpi-btn">
-                    <i class="fas fa-save"></i> Add KPI
+                    <i class="fas fa-save"></i> <span class="btn-text">Add KPI</span>
                   </button>
                 </div>
                 <span v-if="kpiError" class="field-error">
@@ -129,7 +129,7 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button v-if="!isEditMode && addKRAModalStep > 1" type="button" class="btn-cancel-premium" @click="addKRAModalStep--">
               <i class="fas fa-arrow-left"></i> Previous
             </button>
@@ -150,7 +150,7 @@
     <!-- Department Modal - Premium Design -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showDepartmentForm" @click.self="closeDepartmentForm()">
-        <div class="premium-modal department-modal" @click.stop>
+        <div class="premium-modal department-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -186,7 +186,7 @@
                 </div>
               </div>
 
-              <div class="modal-footer-premium">
+              <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
                 <button type="button" class="btn-cancel-premium" @click="closeDepartmentForm()">
                   <i class="fas fa-times"></i> Cancel
                 </button>
@@ -203,7 +203,7 @@
     <!-- View KRAs Modal - Premium Design -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showKRAsModal" @click.self="showKRAsModal = false">
-        <div class="premium-modal view-kra-modal" @click.stop>
+        <div class="premium-modal view-kra-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -284,7 +284,7 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button type="button" class="btn-submit-premium" @click="showKRAsModal = false">
               <i class="fas fa-check"></i> Close
             </button>
@@ -301,7 +301,20 @@
         'expanded-content': isMobile && !isSidebarVisible,
         'hide-on-mobile': isMobile && isSidebarVisible
       }">
-        <div class="content-header-modern">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+        
+          <div class="mobile-title">
+            <i class="fas fa-building"></i>
+            <span>Departments</span>
+          </div>
+          <button class="mobile-add-btn" @click="showDepartmentForm = true">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-building"></i>
@@ -317,6 +330,7 @@
           </button>
         </div>
 
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
           <div class="stat-card">
             <i class="fas fa-building"></i>
@@ -334,8 +348,51 @@
           </div>
         </div>
 
+        <!-- Search - Mobile -->
+        <div class="search-bar-mobile" v-if="isMobile && departments.length > 0">
+          <div class="search-group-mobile">
+            <i class="fas fa-search"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search departments..." class="search-input-mobile" />
+          </div>
+        </div>
+
+        <!-- Table - Mobile Optimized -->
         <div class="table-wrapper-premium">
-          <table class="department-table">
+          <!-- Mobile Card View -->
+          <div class="mobile-cards" v-if="isMobile">
+            <div v-for="dept in filteredDepartments" :key="dept.id" class="department-card">
+              <div class="card-header" @click="viewDepartmentKRAs(dept)">
+                <div class="dept-info">
+                  <div class="dept-avatar">
+                    {{ getInitials(dept.name) }}
+                  </div>
+                  <div>
+                    <div class="dept-name">{{ dept.name }}</div>
+                    <span class="code-badge-mobile">{{ dept.code }}</span>
+                  </div>
+                </div>
+                <!-- <i class="fas fa-chevron-down"></i> -->
+              </div>
+              <div class="card-actions">
+                <button class="card-action-btn primary" @click.stop="addKRA(dept)">
+                  <i class="fas fa-plus-circle"></i> Add KRA
+                </button>
+                <button class="card-action-btn danger" @click.stop="deleteDepartment(dept.id)">
+                  <i class="fas fa-trash-alt"></i> Delete
+                </button>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <div v-if="filteredDepartments.length === 0" class="empty-state-mobile">
+              <i class="fas fa-building"></i>
+              <h4>{{ searchQuery ? 'No Matching Departments' : 'No Departments Yet' }}</h4>
+              <p>{{ searchQuery ? 'Try adjusting your search' : 'Click "Add Department" to create your first department' }}</p>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <table class="department-table" v-else>
             <thead>
               <tr>
                 <th>Department Name</th>
@@ -344,7 +401,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="dept in departments" :key="dept.id">
+              <tr v-for="dept in filteredDepartments" :key="dept.id">
                 <td class="department-name" @click="viewDepartmentKRAs(dept)">
                   <div class="dept-info">
                     <div class="dept-avatar">
@@ -365,7 +422,7 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="departments.length === 0" class="empty-row">
+              <tr v-if="filteredDepartments.length === 0" class="empty-row">
                 <td colspan="3">
                   <div class="empty-state-premium">
                     <i class="fas fa-building"></i>
@@ -397,6 +454,7 @@ export default {
   },
   data() {
     return {
+      searchQuery: '',
       existingKRAs: [],
       isMobile: false,
       isSidebarVisible: true,
@@ -435,6 +493,14 @@ export default {
     },
     totalKRAs() {
       return this.departments.reduce((total, dept) => total + (dept.kras_count || 0), 0);
+    },
+    filteredDepartments() {
+      if (!this.searchQuery) return this.departments;
+      const query = this.searchQuery.toLowerCase();
+      return this.departments.filter(dept =>
+        dept.name.toLowerCase().includes(query) ||
+        dept.code.toLowerCase().includes(query)
+      );
     }
   },
   created() {
@@ -687,7 +753,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -695,7 +760,6 @@ export default {
 .main-content {
   display: flex;
   gap: 20px;
-   ;
   padding: 20px;
   min-height: 100vh;
 }
@@ -706,6 +770,92 @@ export default {
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
+}
+
+/* Search Bar - Mobile */
+.search-bar-mobile {
+  display: none;
+  margin-bottom: 16px;
+}
+
+.search-group-mobile {
+  position: relative;
+  flex: 1;
+}
+
+.search-group-mobile i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.search-input-mobile {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.search-input-mobile:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 /* Content Header */
@@ -817,6 +967,127 @@ export default {
   color: #6b7280;
 }
 
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+}
+
+.department-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+.dept-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dept-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dept-name {
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 14px;
+}
+
+.code-badge-mobile {
+  padding: 2px 10px;
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.card-action-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.card-action-btn.primary {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.card-action-btn.primary:active {
+  transform: scale(0.97);
+}
+
+.card-action-btn.danger {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.card-action-btn.danger:active {
+  transform: scale(0.97);
+}
+
+/* Empty State Mobile */
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile h4 {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.empty-state-mobile p {
+  font-size: 13px;
+}
+
 /* Table Styles */
 .table-wrapper-premium {
   overflow-x: auto;
@@ -918,7 +1189,6 @@ export default {
 }
 
 .action-btn-primary:hover {
-  /* background: var(--primary-color); */
   color: rgb(0, 0, 0);
   transform: translateY(-2px);
 }
@@ -929,7 +1199,6 @@ export default {
 }
 
 .action-btn-danger:hover {
-  /* background: var(--danger); */
   color: rgb(196, 9, 9);
   transform: translateY(-2px);
 }
@@ -962,6 +1231,12 @@ export default {
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.premium-modal.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+  max-height: 90vh;
 }
 
 .premium-modal.department-modal {
@@ -1002,6 +1277,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-header-premium {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .header-icon-premium {
   width: 52px;
   height: 52px;
@@ -1012,6 +1292,12 @@ export default {
   justify-content: center;
   color: white;
   font-size: 24px;
+}
+
+.mobile-modal .header-icon-premium {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
 }
 
 .header-text {
@@ -1025,10 +1311,18 @@ export default {
   color: #1a1a2e;
 }
 
+.mobile-modal .header-text h2 {
+  font-size: 18px;
+}
+
 .header-text p {
   font-size: 13px;
   color: #6b7280;
   margin: 4px 0 0;
+}
+
+.mobile-modal .header-text p {
+  font-size: 12px;
 }
 
 .close-btn-premium {
@@ -1056,6 +1350,10 @@ export default {
   background: #fafbfc;
 }
 
+.mobile-modal .modal-body-premium {
+  padding: 16px;
+}
+
 .modal-body-premium::-webkit-scrollbar {
   width: 6px;
 }
@@ -1079,6 +1377,10 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.mobile-modal .form-section {
+  padding: 16px;
+}
+
 .section-title {
   display: flex;
   align-items: center;
@@ -1089,6 +1391,10 @@ export default {
   font-weight: 600;
   font-size: 16px;
   color: #1a1a2e;
+}
+
+.mobile-modal .section-title {
+  font-size: 14px;
 }
 
 .section-title i {
@@ -1135,6 +1441,13 @@ export default {
   font-size: 14px;
   transition: all 0.3s ease;
   font-family: inherit;
+}
+
+.mobile-modal .field-wrapper input,
+.mobile-modal .field-wrapper select,
+.mobile-modal .field-wrapper textarea {
+  font-size: 16px;
+  padding: 10px 12px 10px 36px;
 }
 
 .field-wrapper input:focus,
@@ -1185,9 +1498,8 @@ export default {
   transition: all 0.3s ease;
 }
 
-.remove-task-btn:hover {
-  background: var(--danger);
-  color: white;
+.remove-task-btn:active {
+  transform: scale(0.9);
 }
 
 .add-btn {
@@ -1204,8 +1516,8 @@ export default {
   width: fit-content;
 }
 
-.add-btn:hover {
-  background: #e5e7eb;
+.add-btn:active {
+  transform: scale(0.97);
 }
 
 /* KPI Container */
@@ -1219,6 +1531,10 @@ export default {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.mobile-modal .kpi-input-group {
+  flex-direction: column;
 }
 
 .kpi-input-group .field-wrapper {
@@ -1237,9 +1553,13 @@ export default {
   white-space: nowrap;
 }
 
-.add-kpi-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+.mobile-modal .add-kpi-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.add-kpi-btn:active {
+  transform: scale(0.97);
 }
 
 .kpi-chips {
@@ -1265,8 +1585,8 @@ export default {
   transition: all 0.3s ease;
 }
 
-.kpi-chip i:hover {
-  color: var(--danger);
+.kpi-chip i:active {
+  transform: scale(0.9);
 }
 
 /* Modal Footer */
@@ -1276,6 +1596,11 @@ export default {
   padding: 20px 28px;
   background: white;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.modal-footer-premium.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
 }
 
 .btn-cancel-premium,
@@ -1292,6 +1617,11 @@ export default {
   gap: 8px;
   font-size: 14px;
   border: none;
+}
+
+.mobile-footer .btn-cancel-premium,
+.mobile-footer .btn-submit-premium {
+  padding: 14px;
 }
 
 .btn-cancel-premium {
@@ -1337,8 +1667,8 @@ export default {
   transition: all 0.3s ease;
 }
 
-.kra-card-header:hover {
-  background: #f1f5f9;
+.kra-card-header:active {
+  transform: scale(0.99);
 }
 
 .kra-title-section {
@@ -1374,6 +1704,10 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.icon-btn-small:active {
+  transform: scale(0.9);
 }
 
 .icon-btn-small.edit {
@@ -1538,28 +1872,54 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .register-btn-modern {
-    justify-content: center;
+    display: none;
   }
 
   .stats-bar {
     flex-direction: column;
+    gap: 10px;
   }
 
   .stat-card {
     width: 100%;
+    padding: 14px;
+  }
+
+  .stat-card i {
+    font-size: 28px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .search-bar-mobile {
+    display: block;
+  }
+
+  .mobile-cards {
+    display: flex;
+  }
+
+  .department-table {
+    display: none;
+  }
+
+  .table-wrapper-premium {
+    border: none;
   }
 
   .premium-modal {
@@ -1594,11 +1954,93 @@ export default {
   .action-btn-primary,
   .action-btn-danger {
     width: 100%;
+    padding: 12px 16px;
   }
 
   .department-table th,
   .department-table td {
     padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .department-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+
+  .dept-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .dept-name {
+    font-size: 13px;
+  }
+
+  .search-input-mobile {
+    font-size: 15px;
+    padding: 8px 10px 8px 34px;
+  }
+
+  .kra-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .kra-card-actions {
+    align-self: flex-end;
+  }
+
+  .kra-title-section h3 {
+    font-size: 14px;
+  }
+
+  .info-list {
+    padding-left: 16px;
+  }
+
+  .kpi-badges {
+    padding-left: 16px;
+  }
+
+  .target-text {
+    padding-left: 16px;
+  }
+
+  .empty-state-mobile i {
+    font-size: 40px;
+  }
+
+  .empty-state-mobile h4 {
+    font-size: 15px;
   }
 }
 </style>

@@ -8,9 +8,21 @@
       <!-- Hide task content when sidebar is open on mobile -->
       <div class="task-container" v-if="!isMobile || !isSidebarVisible">
 
-        <!-- Premium Header -->
-        <div class="task-header-premium">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+          
+          <div class="mobile-title">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+          </div>
+          <button class="mobile-add-btn" @click="openAddTaskModal">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="task-header-premium" v-else>
+          <div class="header-left desktop-only">
             <div class="header-icon">
               <i class="fas fa-tasks"></i>
             </div>
@@ -28,23 +40,23 @@
               class="btn-secondary-modern"
               @click="goTo('employee/empworkreport')"
             >
-              <i class="fas fa-chart-line"></i> Task Report
+              <i class="fas fa-chart-line"></i> <span class="btn-text">Report</span>
             </button>
           </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Cards - Mobile Optimized -->
         <div class="stats-grid">
-          <div class="stat-card" :style="{ borderLeftColor: '#3b82f6' }">
+          <div class="stat-card" :style="{ borderLeftColor: '#3b82f6' }" @click="filterByStatus('all')">
             <div class="stat-icon blue">
               <i class="fas fa-list-check"></i>
             </div>
             <div class="stat-info">
               <span class="stat-value">{{ tasks.length }}</span>
-              <span class="stat-label">Total Tasks</span>
+              <span class="stat-label">Total</span>
             </div>
           </div>
-          <div class="stat-card" :style="{ borderLeftColor: '#f59e0b' }">
+          <div class="stat-card" :style="{ borderLeftColor: '#f59e0b' }" @click="filterByStatus('Pending')">
             <div class="stat-icon orange">
               <i class="fas fa-clock"></i>
             </div>
@@ -53,7 +65,7 @@
               <span class="stat-label">Pending</span>
             </div>
           </div>
-          <div class="stat-card" :style="{ borderLeftColor: '#10b981' }">
+          <div class="stat-card" :style="{ borderLeftColor: '#10b981' }" @click="filterByStatus('Completed')">
             <div class="stat-icon green">
               <i class="fas fa-check-circle"></i>
             </div>
@@ -62,24 +74,26 @@
               <span class="stat-label">Completed</span>
             </div>
           </div>
-          <div class="stat-card" :style="{ borderLeftColor: '#8b5cf6' }">
+          <div class="stat-card" :style="{ borderLeftColor: '#8b5cf6' }" @click="filterByStatus('In Progress')">
             <div class="stat-icon purple">
               <i class="fas fa-chart-line"></i>
             </div>
             <div class="stat-info">
               <span class="stat-value">{{ inProgressTasks }}</span>
-              <span class="stat-label">In Progress</span>
+              <span class="stat-label">Progress</span>
             </div>
           </div>
         </div>
 
-        <!-- Upcoming Reminders -->
+        <!-- Upcoming Reminders - Mobile Optimized -->
         <div class="reminders-section" v-if="upcomingTasks.length">
-          <div class="section-title">
+          <div class="section-title" @click="toggleReminders">
             <i class="fas fa-bell"></i>
             <span>Upcoming Deadlines</span>
+            <span class="reminder-count">{{ upcomingTasks.length }}</span>
+            <i class="fas fa-chevron-down reminder-toggle" :class="{ 'rotated': remindersVisible }"></i>
           </div>
-          <div class="reminders-grid">
+          <div class="reminders-grid" :class="{ 'reminders-hidden': !remindersVisible }">
             <div
               v-for="(task, index) in upcomingTasks"
               :key="task.id"
@@ -90,7 +104,7 @@
                 <i class="fas fa-exclamation-triangle"></i>
               </div>
               <div class="reminder-content">
-                <strong>{{ task.title }}</strong>
+                <strong>{{ truncateText(task.title, isMobile ? 25 : 40) }}</strong>
                 <small>Due: {{ formatDate(task.dueDate) }}</small>
               </div>
               <button class="reminder-dismiss">
@@ -100,13 +114,14 @@
           </div>
         </div>
 
-        <!-- Filter Section -->
+        <!-- Filter Section - Mobile Optimized -->
         <div class="filter-section">
-          <div class="section-title">
+          <div class="section-title" @click="toggleFilters">
             <i class="fas fa-filter"></i>
             <span>Filter Tasks</span>
+            <i class="fas fa-chevron-down filter-toggle" :class="{ 'rotated': filtersVisible }"></i>
           </div>
-          <div class="filter-grid">
+          <div class="filter-grid" :class="{ 'filters-hidden': !filtersVisible }">
             <div class="filter-group">
               <i class="fas fa-calendar"></i>
               <input type="date" v-model="filters.date" placeholder="Due Date" />
@@ -115,7 +130,7 @@
               <i class="fas fa-calendar-alt"></i>
               <select v-model="filters.month">
                 <option value="">All Months</option>
-                <option v-for="m in 12" :key="m" :value="m">{{ new Date(0, m - 1).toLocaleString('default', { month: 'long' }) }}</option>
+                <option v-for="m in 12" :key="m" :value="m">{{ new Date(0, m - 1).toLocaleString('default', { month: 'short' }) }}</option>
               </select>
             </div>
             <div class="filter-group">
@@ -133,12 +148,14 @@
           </div>
         </div>
 
-        <!-- Task Grid -->
+        <!-- Task Grid - Mobile Optimized -->
         <div class="tasks-section">
           <div class="section-title">
-            <i class="fas fa-list-ul"></i>
-            <span>My Tasks</span>
-            <span class="task-count">{{ filteredTasks.length }} tasks</span>
+            <div class="title-left">
+              <i class="fas fa-list-ul"></i>
+              <span>My Tasks</span>
+              <span class="task-count">{{ filteredTasks.length }}</span>
+            </div>
           </div>
 
           <div class="task-grid">
@@ -146,10 +163,10 @@
               class="task-card-premium"
               v-for="task in filteredTasks"
               :key="task.id"
-              :class="getStatusClass(task.status)"
+              :class="[getStatusClass(task.status), { 'mobile-card': isMobile }]"
               @click="openTaskPopup(task)"
             >
-              <div class="task-card-header">
+              <div class="task-card-header" :class="{ 'mobile-header': isMobile }">
                 <div class="task-priority-badge" :class="getPriorityClass(task.priority)">
                   <i :class="getPriorityIcon(task.priority)"></i>
                   {{ task.priority || 'Normal' }}
@@ -160,10 +177,10 @@
                 </div>
               </div>
 
-              <h3 class="task-title">{{ task.title }}</h3>
-              <p class="task-description">{{ truncateText(task.description, 80) }}</p>
+              <h3 class="task-title">{{ truncateText(task.title, isMobile ? 30 : 40) }}</h3>
+              <p class="task-description" :class="{ 'mobile-desc': isMobile }">{{ truncateText(task.description, isMobile ? 50 : 80) }}</p>
 
-              <div class="task-card-footer">
+              <div class="task-card-footer" :class="{ 'mobile-footer': isMobile }">
                 <select
                   v-if="!task.isVisit"
                   v-model="task.status"
@@ -176,7 +193,7 @@
                   <option>Completed</option>
                 </select>
 
-                <div class="task-actions">
+                <div class="task-actions" :class="{ 'mobile-actions': isMobile }">
                   <button
                     class="icon-btn edit"
                     @click.stop="openEditTaskModal(task)"
@@ -197,8 +214,8 @@
               </div>
             </div>
 
-            <!-- Empty State -->
-            <div v-if="filteredTasks.length === 0" class="empty-state-premium">
+            <!-- Empty State - Mobile Optimized -->
+            <div v-if="filteredTasks.length === 0" class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
               <i class="fas fa-check-circle"></i>
               <h4>All caught up!</h4>
               <p>No tasks match your filters</p>
@@ -208,33 +225,33 @@
           <!-- Load More -->
           <div v-if="visibleTaskCount < totalFilteredTasks" class="load-more-container">
             <button @click="loadMore" class="load-more-btn">
-              <i class="fas fa-chevron-down"></i> Load More Tasks
+              <i class="fas fa-chevron-down"></i> Load More
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Task Details Modal -->
+    <!-- Task Details Modal - Mobile Optimized -->
     <div v-if="showTaskPopup" class="modal-premium" @click.self="closeTaskPopup">
-      <div class="modal-premium-container task-modal">
+      <div class="modal-premium-container task-modal" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-premium-header">
           <div class="modal-icon">
             <i class="fas fa-clipboard-list"></i>
           </div>
-          <h2>Task Details</h2>
+          <h2>{{ isMobile ? 'Task' : 'Task Details' }}</h2>
           <button class="modal-close" @click="closeTaskPopup">×</button>
         </div>
         <div class="modal-premium-body" v-if="selectedTask">
-          <div class="task-detail-header">
-            <h3>{{ selectedTask.title }}</h3>
+          <div class="task-detail-header" :class="{ 'mobile-header': isMobile }">
+            <h3>{{ truncateText(selectedTask.title, isMobile ? 30 : 50) }}</h3>
             <span :class="['status-badge-premium', getStatusClass(selectedTask.status)]">
               <i :class="getStatusIcon(selectedTask.status)"></i>
-              {{ selectedTask.status }}
+              <span class="status-text">{{ selectedTask.status }}</span>
             </span>
           </div>
 
-          <div class="task-detail-grid">
+          <div class="task-detail-grid" :class="{ 'mobile-grid': isMobile }">
             <div class="detail-item">
               <label><i class="fas fa-calendar-alt"></i> Due Date</label>
               <p>{{ formatDate(selectedTask.dueDate) }}</p>
@@ -259,18 +276,19 @@
               placeholder="Add your comment here..."
               rows="3"
               class="comment-textarea"
+              :class="{ 'mobile-textarea': isMobile }"
             ></textarea>
             <button class="btn-primary-modern small" @click="saveTaskComment">
-              <i class="fas fa-save"></i> Save Comment
+              <i class="fas fa-save"></i> Save
             </button>
           </div>
 
-          <div class="detail-item full-width" v-if="selectedTask.modules">
+          <div class="detail-item full-width" v-if="selectedTask.modules && !isMobile">
             <label><i class="fas fa-cube"></i> Modules</label>
             <p>{{ selectedTask.modules }}</p>
           </div>
         </div>
-        <div class="modal-premium-footer">
+        <div class="modal-premium-footer" :class="{ 'mobile-footer': isMobile }">
           <button class="btn-secondary-modern" @click="closeTaskPopup">
             <i class="fas fa-times"></i> Close
           </button>
@@ -278,19 +296,19 @@
       </div>
     </div>
 
-    <!-- Add/Edit Task Modal -->
+    <!-- Add/Edit Task Modal - Mobile Optimized -->
     <div v-if="showAddTaskForm" class="modal-premium" @click.self="closeTaskModal">
-      <div class="modal-premium-container task-form-modal">
+      <div class="modal-premium-container task-form-modal" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-premium-header">
           <div class="modal-icon">
             <i class="fas fa-plus-circle"></i>
           </div>
-          <h2>{{ isEditTaskMode ? 'Edit Task' : 'Create New Task' }}</h2>
+          <h2>{{ isEditTaskMode ? 'Edit Task' : 'New Task' }}</h2>
           <button class="modal-close" @click="closeTaskModal">×</button>
         </div>
         <div class="modal-premium-body">
           <form @submit.prevent="submitTask" class="task-form">
-            <div class="form-row">
+            <div class="form-row" :class="{ 'mobile-row': isMobile }">
               <div class="form-field">
                 <label>Due Date *</label>
                 <input type="date" v-model="newTask.dueDate" :min="today" required />
@@ -309,19 +327,19 @@
             <div class="form-field">
               <label>Title *</label>
               <input type="text" v-model="newTask.title" placeholder="Enter task title" maxlength="50" required />
-              <small>{{ newTask.title.length }}/50 characters</small>
+              <small>{{ newTask.title.length }}/50</small>
             </div>
 
             <div class="form-field">
               <label>Description</label>
               <textarea v-model="newTask.description" placeholder="Enter task description (optional)" maxlength="250" rows="3"></textarea>
-              <small>{{ newTask.description.length }}/250 characters</small>
+              <small>{{ newTask.description.length }}/250</small>
             </div>
 
-            <div class="form-field">
+            <div class="form-field" v-if="!isMobile">
               <label>Modules</label>
               <textarea v-model="newTask.modules" placeholder="Enter module names (optional)" rows="3" maxlength="250"></textarea>
-              <small>{{ newTask.modules.length }}/250 characters</small>
+              <small>{{ newTask.modules.length }}/250</small>
             </div>
 
             <div class="form-field">
@@ -334,12 +352,12 @@
               </select>
             </div>
 
-            <div class="form-actions">
+            <div class="form-actions" :class="{ 'mobile-actions': isMobile }">
               <button type="button" class="btn-secondary-modern" @click="closeTaskModal">
                 <i class="fas fa-times"></i> Cancel
               </button>
               <button type="submit" class="btn-primary-modern">
-                <i class="fas fa-save"></i> {{ isEditTaskMode ? 'Update Task' : 'Save Task' }}
+                <i class="fas fa-save"></i> {{ isEditTaskMode ? 'Update' : 'Save' }}
               </button>
             </div>
           </form>
@@ -369,6 +387,8 @@ export default {
       totalFilteredTasks: 0,
       upcomingTasks: [],
       visibleTaskCount: 99,
+      filtersVisible: true,
+      remindersVisible: true,
       filters: {
         date: '',
         month: '',
@@ -465,6 +485,19 @@ export default {
     }
   },
   methods: {
+    toggleFilters() {
+      if (this.isMobile) {
+        this.filtersVisible = !this.filtersVisible;
+      }
+    },
+    toggleReminders() {
+      if (this.isMobile) {
+        this.remindersVisible = !this.remindersVisible;
+      }
+    },
+    filterByStatus(status) {
+      this.filters.status = this.filters.status === status ? '' : status;
+    },
     truncateText(text, length) {
       if (!text) return '';
       return text.length > length ? text.substring(0, length) + '...' : text;
@@ -599,6 +632,13 @@ export default {
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
+      if (this.isMobile) {
+        this.filtersVisible = false;
+        this.remindersVisible = false;
+      } else {
+        this.filtersVisible = true;
+        this.remindersVisible = true;
+      }
     },
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
@@ -619,7 +659,8 @@ export default {
           status: task.status,
           completedAt: task.completed_at,
           createdAt: task.created_at,
-          assignedTo: task.user_name
+          assignedTo: task.user_name,
+          modules: task.modules
         }));
         const today = new Date();
         this.upcomingTasks = this.tasks.filter(task => {
@@ -822,7 +863,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -832,7 +872,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .task-container {
@@ -842,6 +881,58 @@ export default {
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   overflow-x: auto;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
 }
 
 /* ==================== HEADER ==================== */
@@ -891,6 +982,10 @@ export default {
 .header-actions {
   display: flex;
   gap: 12px;
+}
+
+.btn-text {
+  display: inline;
 }
 
 .btn-primary-modern {
@@ -947,11 +1042,16 @@ export default {
   border-radius: 20px;
   transition: all 0.3s ease;
   border-left: 4px solid;
+  cursor: pointer;
 }
 
 .stat-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card:active {
+  transform: scale(0.97);
 }
 
 .stat-icon {
@@ -1012,10 +1112,29 @@ export default {
   font-weight: 600;
   font-size: 16px;
   color: #1a1a2e;
+  cursor: pointer;
 }
 
 .section-title i {
   color: var(--primary-color);
+}
+
+.reminder-count {
+  background: #f59e0b;
+  color: white;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.reminder-toggle {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.reminder-toggle.rotated {
+  transform: rotate(180deg);
 }
 
 .task-count {
@@ -1031,6 +1150,11 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.reminders-grid.reminders-hidden {
+  display: none;
 }
 
 .reminder-card {
@@ -1104,10 +1228,24 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
+.filter-toggle {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle.rotated {
+  transform: rotate(180deg);
+}
+
 .filter-grid {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  transition: all 0.3s ease;
+}
+
+.filter-grid.filters-hidden {
+  display: none;
 }
 
 .filter-group {
@@ -1178,6 +1316,11 @@ export default {
   overflow: hidden;
 }
 
+.task-card-premium.mobile-card {
+  padding: 16px;
+  border-radius: 16px;
+}
+
 .task-card-premium::before {
   content: '';
   position: absolute;
@@ -1207,6 +1350,12 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.task-card-header.mobile-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
 
 .task-priority-badge {
@@ -1258,11 +1407,20 @@ export default {
   margin-bottom: 16px;
 }
 
+.task-description.mobile-desc {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
 .task-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.task-card-footer.mobile-footer {
+  flex-wrap: wrap;
 }
 
 .task-status-select {
@@ -1294,6 +1452,10 @@ export default {
   gap: 8px;
 }
 
+.task-actions.mobile-actions {
+  gap: 4px;
+}
+
 .icon-btn {
   width: 32px;
   height: 32px;
@@ -1311,9 +1473,8 @@ export default {
   color: var(--primary-color);
 }
 
-.icon-btn.edit:hover {
-  /* background: var(--primary-color); */
-  color: rgb(0, 0, 0);
+.icon-btn.edit:active {
+  transform: scale(0.9);
 }
 
 .icon-btn.delete {
@@ -1321,9 +1482,8 @@ export default {
   color: #991b1b;
 }
 
-.icon-btn.delete:hover {
-  background: #991b1b;
-  color: white;
+.icon-btn.delete:active {
+  transform: scale(0.9);
 }
 
 /* ==================== MODAL STYLES ==================== */
@@ -1361,6 +1521,12 @@ export default {
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
+.modal-premium-container.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+  max-height: 90vh;
+}
+
 .task-modal {
   max-width: 600px;
 }
@@ -1389,6 +1555,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-premium-header {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .modal-icon {
   width: 48px;
   height: 48px;
@@ -1401,12 +1572,22 @@ export default {
   font-size: 20px;
 }
 
+.mobile-modal .modal-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
 .modal-premium-header h2 {
   flex: 1;
   font-size: 22px;
   font-weight: 700;
   margin: 0;
   color: #1a1a2e;
+}
+
+.mobile-modal .modal-premium-header h2 {
+  font-size: 18px;
 }
 
 .modal-close {
@@ -1422,7 +1603,6 @@ export default {
 }
 
 .modal-close:hover {
-  /* background: var(--danger); */
   color: rgb(10, 2, 2);
   transform: rotate(90deg);
 }
@@ -1434,6 +1614,10 @@ export default {
   background: #fafbfc;
 }
 
+.mobile-modal .modal-premium-body {
+  padding: 16px;
+}
+
 .modal-premium-footer {
   display: flex;
   justify-content: flex-end;
@@ -1443,12 +1627,23 @@ export default {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.modal-premium-footer.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
+}
+
 /* ==================== TASK DETAILS ==================== */
 .task-detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.task-detail-header.mobile-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .task-detail-header h3 {
@@ -1480,11 +1675,20 @@ export default {
   color: #d97706;
 }
 
+.status-text {
+  display: inline;
+}
+
 .task-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.task-detail-grid.mobile-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .detail-item {
@@ -1495,6 +1699,10 @@ export default {
 
 .detail-item.full-width {
   grid-column: span 2;
+}
+
+.mobile-grid .detail-item.full-width {
+  grid-column: span 1;
 }
 
 .detail-item label {
@@ -1530,6 +1738,10 @@ export default {
   font-family: inherit;
 }
 
+.comment-textarea.mobile-textarea {
+  font-size: 16px;
+}
+
 .comment-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
@@ -1546,6 +1758,11 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.form-row.mobile-row {
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .form-field {
@@ -1571,6 +1788,12 @@ export default {
   font-family: inherit;
 }
 
+.mobile-modal .form-field input,
+.mobile-modal .form-field select,
+.mobile-modal .form-field textarea {
+  font-size: 16px;
+}
+
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
@@ -1589,6 +1812,15 @@ export default {
   gap: 12px;
   justify-content: flex-end;
   margin-top: 8px;
+}
+
+.form-actions.mobile-actions {
+  flex-direction: column;
+}
+
+.form-actions.mobile-actions button {
+  width: 100%;
+  justify-content: center;
 }
 
 /* ==================== LOAD MORE ==================== */
@@ -1625,16 +1857,28 @@ export default {
   grid-column: 1 / -1;
 }
 
+.empty-state-premium.empty-mobile {
+  padding: 40px 16px;
+}
+
 .empty-state-premium i {
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
 }
 
+.empty-mobile .empty-state-premium i {
+  font-size: 48px;
+}
+
 .empty-state-premium h4 {
   font-size: 18px;
   color: #6b7280;
   margin-bottom: 8px;
+}
+
+.empty-mobile .empty-state-premium h4 {
+  font-size: 16px;
 }
 
 /* ==================== RESPONSIVE ==================== */
@@ -1647,36 +1891,67 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .task-container {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .task-header-premium {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    justify-content: center;
+    display: none;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 10px;
   }
 
   .filter-grid {
     flex-direction: column;
   }
 
+  .filter-grid.filters-hidden {
+    display: none;
+  }
+
   .filter-group {
     min-width: auto;
   }
 
+  .section-title {
+    font-size: 14px;
+  }
+
   .task-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .form-row {
@@ -1700,32 +1975,139 @@ export default {
   }
 
   .modal-premium-body {
-    padding: 20px;
+    padding: 16px;
   }
 
   .modal-premium-footer {
     padding: 16px 20px;
   }
-}
 
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .btn-text {
+    display: none;
+  }
+
+  .reminder-card {
+    padding: 12px 16px;
+  }
+
+  .reminder-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .reminder-content strong {
+    font-size: 13px;
+  }
+
+  .task-card-footer.mobile-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .task-status-select {
+    width: 100%;
+  }
+
+  .task-actions.mobile-actions {
+    justify-content: flex-end;
+  }
+
+  .load-more-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-/* Scrollbar */
-.modal-premium-body::-webkit-scrollbar {
-  width: 6px;
-}
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
 
-.modal-premium-body::-webkit-scrollbar-track {
-  background: #e5e7eb;
-  border-radius: 10px;
-}
+  .task-container {
+    padding: 12px;
+    border-radius: 16px;
+  }
 
-.modal-premium-body::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 10px;
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .task-card-premium.mobile-card {
+    padding: 12px;
+  }
+
+  .task-title {
+    font-size: 14px;
+  }
+
+  .task-description.mobile-desc {
+    font-size: 12px;
+  }
+
+  .task-priority-badge {
+    font-size: 10px;
+    padding: 3px 10px;
+  }
+
+  .task-date {
+    font-size: 10px;
+  }
+
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .modal-premium-header h2 {
+    font-size: 16px;
+  }
+
+  .modal-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    font-size: 15px;
+    padding: 8px 12px;
+  }
+
+  .comment-textarea.mobile-textarea {
+    font-size: 15px;
+  }
+
+  .empty-state-premium i {
+    font-size: 40px;
+  }
 }
 </style>

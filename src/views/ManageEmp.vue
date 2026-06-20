@@ -205,17 +205,17 @@
                     </div>
 
                     <div class="form-field">
-  <label>Salary</label>
-  <div class="field-wrapper">
-    <i class="fas fa-rupee-sign field-icon"></i>
-    <input 
-      v-model="registerForm.keyResponsibility" 
-      @input="registerForm.keyResponsibility = registerForm.keyResponsibility.replace(/[^0-9]/g, '')" 
-      placeholder="Amount" 
-      type="text"
-    />
-  </div>
-</div>
+                      <label>Salary</label>
+                      <div class="field-wrapper">
+                        <i class="fas fa-rupee-sign field-icon"></i>
+                        <input 
+                          v-model="registerForm.keyResponsibility" 
+                          @input="registerForm.keyResponsibility = registerForm.keyResponsibility.replace(/[^0-9]/g, '')" 
+                          placeholder="Amount" 
+                          type="text"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -279,7 +279,20 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" v-if="!isMobile || !isSidebarVisible">
-        <div class="content-header">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+        
+          <div class="mobile-title">
+            <i class="fas fa-users"></i>
+            <span>Employees</span>
+          </div>
+          <button class="mobile-add-btn" @click="openRegisterForm()">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header" v-else>
           <div>
             <h1>Employee Management</h1>
             <p>Manage and oversee all employee records</p>
@@ -300,7 +313,56 @@
           </div>
         </div>
 
-        <div class="table-container">
+        <!-- Mobile Card View -->
+        <div class="mobile-cards" v-if="isMobile">
+          <div v-for="(user, index) in filteredUsers" :key="user.id" class="employee-card">
+            <div class="card-header">
+              <div class="card-avatar" @click="openKRASelection(user)">
+                <div class="avatar">{{ getInitials(user.name) }}</div>
+                <span class="card-name">{{ formatName(user.name) }}</span>
+                <i class="fas fa-chart-line kra-hint-mobile"></i>
+              </div>
+              <span :class="['status-badge-mobile', user.status === 'active' ? 'active' : 'inactive']">
+                <i class="fas fa-circle"></i>
+                {{ user.status === 'active' ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <div class="card-body">
+              <div class="card-row">
+                <span class="card-label"><i class="fas fa-envelope"></i> Email</span>
+                <span class="card-value">{{ user.email }}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label"><i class="fas fa-building"></i> Department</span>
+                <span class="card-value dept-badge-mobile">{{ user.department }}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label"><i class="fas fa-phone"></i> Contact</span>
+                <span class="card-value">{{ user.mobile }}</span>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button class="card-action-btn edit" @click="editUser(user)">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button class="card-action-btn toggle" :class="user.status === 'active' ? 'deactivate' : 'activate'" @click="toggleStatus(user)">
+                <i :class="user.status === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+                {{ user.status === 'active' ? 'Deactivate' : 'Activate' }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="filteredUsers.length === 0" class="empty-state-mobile">
+            <i class="fas fa-user-friends"></i>
+            <p>No employees found</p>
+            <span>Try adjusting your search</span>
+          </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="table-container" v-else>
           <table class="employee-table">
             <thead>
               <tr>
@@ -680,6 +742,9 @@ export default {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
     },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible;
+    },
     async fetchUsers() {
       try {
         const response = await axios.get('https://employees.archenterprises.co.in/api/api/users');
@@ -775,7 +840,7 @@ export default {
         secondaryContact: this.registerForm.secondaryContact,
         birthDate: this.registerForm.birthDate,
         bloodGroup: this.registerForm.bloodGroup,
-        keyResponsibility: this.registerForm.keyResponsibility ? String(this.registerForm.keyResponsibility) : '' // Convert to string
+        keyResponsibility: this.registerForm.keyResponsibility ? String(this.registerForm.keyResponsibility) : ''
       });
       toastSuccess("User updated successfully!");
     } else {
@@ -783,7 +848,7 @@ export default {
       await axios.post("https://employees.archenterprises.co.in/api/api/register", {
         ...this.registerForm,
         email: this.registerForm.email.toLowerCase(),
-        keyResponsibility: this.registerForm.keyResponsibility ? String(this.registerForm.keyResponsibility) : '' // Convert to string
+        keyResponsibility: this.registerForm.keyResponsibility ? String(this.registerForm.keyResponsibility) : ''
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
@@ -994,7 +1059,6 @@ export default {
 }
 
 .close-btn-premium:hover {
-  /* background: var(--danger); */
   color: rgb(0, 0, 0);
   transform: rotate(90deg);
 }
@@ -1466,11 +1530,63 @@ export default {
   flex: 1;
   background: white;
   border-radius: 28px;
-       
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
+}
+
+/* Content Header */
 .content-header {
   display: flex;
   justify-content: space-between;
@@ -1562,6 +1678,194 @@ export default {
   gap: 8px;
   font-weight: 500;
   font-size: 14px;
+}
+
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.employee-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-avatar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.card-avatar .avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.card-name {
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 14px;
+}
+
+.kra-hint-mobile {
+  color: var(--primary-color);
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.status-badge-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-badge-mobile.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-mobile.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge-mobile i {
+  font-size: 5px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-value {
+  font-size: 13px;
+  color: var(--dark);
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+}
+
+.dept-badge-mobile {
+  padding: 2px 10px;
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.card-action-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.card-action-btn.edit {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.card-action-btn.edit:active {
+  transform: scale(0.97);
+}
+
+.card-action-btn.toggle.deactivate {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.card-action-btn.toggle.deactivate:active {
+  transform: scale(0.97);
+}
+
+.card-action-btn.toggle.activate {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.card-action-btn.toggle.activate:active {
+  transform: scale(0.97);
+}
+
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile p {
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: #6b7280;
 }
 
 /* Table Styles */
@@ -1679,7 +1983,6 @@ export default {
 }
 
 .action-edit:hover {
-  /* background: var(--primary-color); */
   color: rgb(6, 1, 1);
 }
 
@@ -1734,6 +2037,46 @@ export default {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .content {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+
+  .content-header {
+    display: none;
+  }
+
+  .search-bar {
+    flex-direction: column;
+    margin-bottom: 16px;
+  }
+
+  .search-input-wrapper {
+    max-width: 100%;
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobile-cards {
+    display: flex;
+  }
+
+  .table-container {
+    display: none;
+  }
+
   .form-row-premium {
     grid-template-columns: 1fr;
   }
@@ -1744,10 +2087,15 @@ export default {
 
   .premium-modal {
     max-width: 95%;
+    max-height: 83vh;
   }
 
   .modal-header-premium {
     padding: 16px 20px;
+  }
+
+  .modal-header-premium h2 {
+    font-size: 18px;
   }
 
   .modal-body-premium {
@@ -1759,43 +2107,115 @@ export default {
     flex-direction: column;
   }
 
-  .main-content {
-    flex-direction: column;
-    padding: 16px;
-  }
-
-  .content {
-    padding: 20px;
-  }
-
-  .content-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .register-btn {
-    justify-content: center;
-  }
-
-  .search-bar {
-    flex-direction: column;
-  }
-
-  .search-input-wrapper {
-    max-width: 100%;
-  }
-
-  .actions {
-    flex-direction: column;
-  }
-
-  .action-edit,
-  .action-toggle {
+  .btn-cancel-premium,
+  .btn-secondary-premium,
+  .btn-submit-premium {
     width: 100%;
+  }
+
+  .premium-modal.kra-modal,
+  .premium-modal.assigned-modal {
+    max-width: 95%;
   }
 
   .upload-row {
     flex-direction: column;
+  }
+
+  .password-field-premium {
+    flex-direction: column;
+  }
+
+  .icon-btn-premium {
+    width: 100%;
+  }
+
+  .generate-btn-premium {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .doc-item {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .employee-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .card-value {
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .dept-badge-mobile {
+    align-self: flex-start;
+  }
+
+  .modal-header-premium {
+    padding: 12px 16px;
+  }
+
+  .modal-header-premium h2 {
+    font-size: 16px;
+  }
+
+  .header-icon-premium {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .modal-body-premium {
+    padding: 12px;
+  }
+
+  .modal-footer-premium {
+    padding: 12px 16px;
+  }
+
+  .form-section {
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 14px;
   }
 }
 </style>

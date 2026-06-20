@@ -6,7 +6,20 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <div class="content-header-modern">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-calendar-check"></i>
+            <span>Resources</span>
+          </div>
+          <button class="mobile-add-btn" @click="showAddModal = true">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-calendar-check"></i>
@@ -22,28 +35,36 @@
           </button>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('all')">
             <i class="fas fa-cubes"></i>
             <div class="stat-info">
               <span class="stat-value">{{ resources.length }}</span>
-              <span class="stat-label">Total Resources</span>
+              <span class="stat-label">Total</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('available')">
             <i class="fas fa-check-circle"></i>
             <div class="stat-info">
               <span class="stat-value">{{ availableCount }}</span>
               <span class="stat-label">Available</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('booked')">
             <i class="fas fa-bookmark"></i>
             <div class="stat-info">
               <span class="stat-value">{{ bookedCount }}</span>
               <span class="stat-label">Booked</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Search - Mobile -->
+        <div class="search-bar-mobile" v-if="isMobile && resources.length > 0">
+          <div class="search-group-mobile">
+            <i class="fas fa-search"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search resources..." class="search-input-mobile" />
           </div>
         </div>
 
@@ -53,13 +74,13 @@
           <p>Loading resources...</p>
         </div>
 
-        <!-- Resource Cards Grid -->
+        <!-- Resource Cards Grid - Mobile Optimized -->
         <div v-else class="resources-grid">
           <div
-            v-for="resource in resources"
+            v-for="resource in filteredResources"
             :key="resource.id"
             class="resource-card-premium"
-            :class="{ 'booked': resource.status === 'booked' }"
+            :class="{ 'booked': resource.status === 'booked', 'mobile-card': isMobile }"
           >
             <div class="card-glow"></div>
             <div class="resource-header-premium">
@@ -67,7 +88,7 @@
                 <i class="fas fa-laptop"></i>
               </div>
               <div class="resource-info">
-                <h3>{{ resource.resource_type }}</h3>
+                <h3>{{ truncateText(resource.resource_type, isMobile ? 20 : 30) }}</h3>
                 <span class="status-badge-premium" :class="resource.status === 'booked' ? 'booked' : 'available'">
                   <i :class="resource.status === 'booked' ? 'fas fa-clock' : 'fas fa-check-circle'"></i>
                   {{ resource.status === 'booked' ? 'Booked' : 'Available' }}
@@ -90,7 +111,7 @@
                   <p class="detail-value">{{ formatDate(resource.from_date) }}</p>
                 </div>
               </div>
-              <div class="detail-item">
+              <div class="detail-item" v-if="!isMobile">
                 <i class="fas fa-calendar-check"></i>
                 <div>
                   <span class="detail-label">To Date</span>
@@ -111,121 +132,121 @@
             </button>
           </div>
 
-          <!-- Empty State -->
-          <div v-if="resources.length === 0" class="empty-state-premium">
+          <!-- Empty State - Mobile Optimized -->
+          <div v-if="filteredResources.length === 0" class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
             <i class="fas fa-box-open"></i>
-            <h4>No Resources Found</h4>
-            <p>Click "Add New Resource" to create your first resource</p>
+            <h4>{{ searchQuery ? 'No Matching Resources' : 'No Resources Found' }}</h4>
+            <p>{{ searchQuery ? 'Try adjusting your search' : 'Click "Add New Resource" to create your first resource' }}</p>
           </div>
         </div>
-
-        <!-- Booking Confirmation Modal -->
-        <transition name="modal-fade">
-          <div v-if="showModal" class="modal-backdrop" @click.self="showModal = false">
-            <div class="premium-modal success-modal" @click.stop>
-              <div class="modal-decoration"></div>
-              <div class="modal-header-premium">
-                <div class="header-icon-premium success-icon">
-                  <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="header-text">
-                  <h2>Booking Confirmed!</h2>
-                  <p>Resource booked successfully</p>
-                </div>
-                <button class="close-btn-premium" @click="showModal = false">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-              <div class="modal-body-premium">
-                <div class="confirmation-message">
-                  <i class="fas fa-calendar-check"></i>
-                  <p>You have successfully booked <strong>{{ bookedResourceName }}</strong>.</p>
-                  <p class="small-text">The resource has been reserved for your use.</p>
-                </div>
-              </div>
-              <div class="modal-footer-premium">
-                <button class="btn-submit-premium" @click="showModal = false">
-                  <i class="fas fa-check"></i> Done
-                </button>
-              </div>
-            </div>
-          </div>
-        </transition>
-
-        <!-- Add Resource Modal -->
-        <transition name="modal-fade">
-          <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
-            <div class="premium-modal" @click.stop>
-              <div class="modal-decoration"></div>
-              
-              <div class="modal-header-premium">
-                <div class="header-icon-premium">
-                  <i class="fas fa-plus-circle"></i>
-                </div>
-                <div class="header-text">
-                  <h2>Add New Resource</h2>
-                  <p>Create a new bookable resource</p>
-                </div>
-                <button class="close-btn-premium" @click="showAddModal = false">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-
-              <div class="modal-body-premium">
-                <form @submit.prevent="addResource">
-                  <div class="form-section">
-                    <div class="form-field">
-                      <label>Resource Name <span class="required-star">*</span></label>
-                      <div class="field-wrapper">
-                        <i class="fas fa-tag field-icon"></i>
-                        <input 
-                          v-model="newResource.name" 
-                          type="text" 
-                          placeholder="e.g., Conference Room A, Projector, Laptop"
-                          required 
-                        />
-                      </div>
-                    </div>
-
-                    <div class="form-field full-width">
-                      <label>Description</label>
-                      <div class="field-wrapper">
-                        <i class="fas fa-align-left field-icon" style="top: 18px;"></i>
-                        <textarea 
-                          v-model="newResource.description" 
-                          placeholder="Enter resource description (optional)"
-                          rows="3"
-                        ></textarea>
-                      </div>
-                    </div>
-
-                    <div class="form-field">
-                      <label>Status</label>
-                      <div class="field-wrapper">
-                        <i class="fas fa-toggle-on field-icon"></i>
-                        <select v-model="newResource.available">
-                          <option :value="1">Available</option>
-                          <option :value="0">Booked</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="modal-footer-premium">
-                    <button type="button" class="btn-cancel-premium" @click="showAddModal = false">
-                      <i class="fas fa-times"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn-submit-premium">
-                      <i class="fas fa-save"></i> Save Resource
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </transition>
       </section>
     </div>
+
+    <!-- Booking Confirmation Modal - Mobile Optimized -->
+    <transition name="modal-fade">
+      <div v-if="showModal" class="modal-backdrop" @click.self="showModal = false">
+        <div class="premium-modal success-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
+          <div class="modal-decoration"></div>
+          <div class="modal-header-premium">
+            <div class="header-icon-premium success-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="header-text">
+              <h2>Booking Confirmed!</h2>
+              <p>Resource booked successfully</p>
+            </div>
+            <button class="close-btn-premium" @click="showModal = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body-premium">
+            <div class="confirmation-message">
+              <i class="fas fa-calendar-check"></i>
+              <p>You have successfully booked <strong>{{ bookedResourceName }}</strong>.</p>
+              <p class="small-text">The resource has been reserved for your use.</p>
+            </div>
+          </div>
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
+            <button class="btn-submit-premium" @click="showModal = false">
+              <i class="fas fa-check"></i> Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Add Resource Modal - Mobile Optimized -->
+    <transition name="modal-fade">
+      <div v-if="showAddModal" class="modal-backdrop" @click.self="showAddModal = false">
+        <div class="premium-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="header-text">
+              <h2>{{ isMobile ? 'Add Resource' : 'Add New Resource' }}</h2>
+              <p>{{ isMobile ? 'Create a new bookable resource' : 'Create a new bookable resource' }}</p>
+            </div>
+            <button class="close-btn-premium" @click="showAddModal = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="modal-body-premium">
+            <form @submit.prevent="addResource">
+              <div class="form-section">
+                <div class="form-field">
+                  <label>Resource Name <span class="required-star">*</span></label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-tag field-icon"></i>
+                    <input 
+                      v-model="newResource.name" 
+                      type="text" 
+                      placeholder="e.g., Conference Room A, Projector"
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div class="form-field full-width">
+                  <label>Description</label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-align-left field-icon" style="top: 18px;"></i>
+                    <textarea 
+                      v-model="newResource.description" 
+                      placeholder="Enter resource description (optional)"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div class="form-field" v-if="!isMobile">
+                  <label>Status</label>
+                  <div class="field-wrapper">
+                    <i class="fas fa-toggle-on field-icon"></i>
+                    <select v-model="newResource.available">
+                      <option :value="1">Available</option>
+                      <option :value="0">Booked</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
+                <button type="button" class="btn-cancel-premium" @click="showAddModal = false">
+                  <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="submit" class="btn-submit-premium">
+                  <i class="fas fa-save"></i> Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -250,6 +271,8 @@ export default {
       showModal: false,
       bookedResourceName: '',
       showAddModal: false,
+      searchQuery: '',
+      statusFilter: 'all',
       newResource: {
         name: '',
         description: '',
@@ -264,10 +287,37 @@ export default {
     },
     bookedCount() {
       return this.resources.filter(r => r.status === 'booked').length
+    },
+    filteredResources() {
+      let filtered = this.resources;
+      
+      // Status filter
+      if (this.statusFilter !== 'all') {
+        filtered = filtered.filter(r => r.status === this.statusFilter);
+      }
+      
+      // Search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(r => 
+          r.resource_type.toLowerCase().includes(query) ||
+          (r.purpose && r.purpose.toLowerCase().includes(query)) ||
+          (r.user?.name && r.user.name.toLowerCase().includes(query))
+        );
+      }
+      
+      return filtered;
     }
   },
 
   methods: {
+    filterByStatus(status) {
+      this.statusFilter = this.statusFilter === status ? 'all' : status;
+    },
+    truncateText(text, length) {
+      if (!text) return '';
+      return text.length > length ? text.substring(0, length) + '...' : text;
+    },
     formatDate(date) {
       if (!date) return 'Not specified'
       return new Date(date).toLocaleString('en-IN', {
@@ -371,7 +421,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -381,7 +430,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .content {
@@ -390,6 +438,93 @@ export default {
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
+}
+
+/* Search Bar - Mobile */
+.search-bar-mobile {
+  display: none;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.search-group-mobile {
+  position: relative;
+  flex: 1;
+}
+
+.search-group-mobile i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.search-input-mobile {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.search-input-mobile:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 /* Content Header */
@@ -471,11 +606,16 @@ export default {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 20px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:active {
+  transform: scale(0.97);
 }
 
 .stat-card i {
@@ -541,6 +681,11 @@ export default {
   overflow: hidden;
 }
 
+.resource-card-premium.mobile-card {
+  padding: 16px;
+  border-radius: 16px;
+}
+
 .resource-card-premium::before {
   content: '';
   position: absolute;
@@ -558,6 +703,10 @@ export default {
 .resource-card-premium:hover {
   transform: translateY(-5px);
   box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.15);
+}
+
+.resource-card-premium.mobile-card:active {
+  transform: scale(0.98);
 }
 
 .card-glow {
@@ -578,6 +727,11 @@ export default {
   margin-bottom: 20px;
 }
 
+.mobile-card .resource-header-premium {
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
 .resource-icon {
   width: 48px;
   height: 48px;
@@ -588,6 +742,12 @@ export default {
   justify-content: center;
   color: var(--primary-color);
   font-size: 20px;
+}
+
+.mobile-card .resource-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
 }
 
 .resource-info {
@@ -601,6 +761,10 @@ export default {
   margin: 0 0 6px 0;
 }
 
+.mobile-card .resource-info h3 {
+  font-size: 15px;
+}
+
 .status-badge-premium {
   display: inline-flex;
   align-items: center;
@@ -609,6 +773,11 @@ export default {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+}
+
+.mobile-card .status-badge-premium {
+  font-size: 10px;
+  padding: 3px 10px;
 }
 
 .status-badge-premium.available {
@@ -626,6 +795,10 @@ export default {
   margin-bottom: 20px;
 }
 
+.mobile-card .resource-details {
+  margin-bottom: 14px;
+}
+
 .detail-item {
   display: flex;
   align-items: flex-start;
@@ -633,11 +806,21 @@ export default {
   margin-bottom: 14px;
 }
 
+.mobile-card .detail-item {
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
 .detail-item i {
   width: 20px;
   color: var(--primary-color);
   font-size: 14px;
   margin-top: 2px;
+}
+
+.mobile-card .detail-item i {
+  font-size: 13px;
+  width: 18px;
 }
 
 .detail-item > div {
@@ -654,10 +837,18 @@ export default {
   margin-bottom: 2px;
 }
 
+.mobile-card .detail-label {
+  font-size: 10px;
+}
+
 .detail-value {
   font-size: 14px;
   color: #374151;
   font-weight: 500;
+}
+
+.mobile-card .detail-value {
+  font-size: 13px;
 }
 
 /* Book Button */
@@ -675,6 +866,52 @@ export default {
   justify-content: center;
   gap: 8px;
   opacity: 0.7;
+}
+
+.mobile-card .btn-book-premium {
+  padding: 10px;
+  font-size: 13px;
+  border-radius: 12px;
+}
+
+/* Empty States */
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  grid-column: 1 / -1;
+}
+
+.empty-state-premium.empty-mobile {
+  padding: 40px 16px;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-mobile .empty-state-premium i {
+  font-size: 48px;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-mobile .empty-state-premium h4 {
+  font-size: 16px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+.empty-mobile .empty-state-premium p {
+  font-size: 13px;
 }
 
 /* Modal Styles */
@@ -705,6 +942,12 @@ export default {
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.premium-modal.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+  max-height: 90vh;
 }
 
 .premium-modal.success-modal {
@@ -741,6 +984,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-header-premium {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .header-icon-premium {
   width: 52px;
   height: 52px;
@@ -751,6 +999,12 @@ export default {
   justify-content: center;
   color: white;
   font-size: 24px;
+}
+
+.mobile-modal .header-icon-premium {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
 }
 
 .header-icon-premium.success-icon {
@@ -768,10 +1022,18 @@ export default {
   color: #1a1a2e;
 }
 
+.mobile-modal .header-text h2 {
+  font-size: 18px;
+}
+
 .header-text p {
   font-size: 13px;
   color: #6b7280;
   margin: 4px 0 0;
+}
+
+.mobile-modal .header-text p {
+  font-size: 12px;
 }
 
 .close-btn-premium {
@@ -800,6 +1062,10 @@ export default {
   background: #fafbfc;
 }
 
+.mobile-modal .modal-body-premium {
+  padding: 16px;
+}
+
 .modal-body-premium::-webkit-scrollbar {
   width: 6px;
 }
@@ -820,10 +1086,18 @@ export default {
   padding: 20px;
 }
 
+.mobile-modal .confirmation-message {
+  padding: 12px;
+}
+
 .confirmation-message i {
   font-size: 64px;
   color: var(--success);
   margin-bottom: 20px;
+}
+
+.mobile-modal .confirmation-message i {
+  font-size: 48px;
 }
 
 .confirmation-message p {
@@ -832,9 +1106,17 @@ export default {
   margin-bottom: 10px;
 }
 
+.mobile-modal .confirmation-message p {
+  font-size: 14px;
+}
+
 .confirmation-message .small-text {
   font-size: 13px;
   color: #6b7280;
+}
+
+.mobile-modal .confirmation-message .small-text {
+  font-size: 12px;
 }
 
 /* Form Section */
@@ -842,6 +1124,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.mobile-modal .form-section {
+  gap: 16px;
 }
 
 .form-field {
@@ -854,10 +1140,18 @@ export default {
   grid-column: span 2;
 }
 
+.mobile-modal .form-field.full-width {
+  grid-column: span 1;
+}
+
 .form-field label {
   font-size: 13px;
   font-weight: 600;
   color: #374151;
+}
+
+.mobile-modal .form-field label {
+  font-size: 12px;
 }
 
 .required-star {
@@ -894,6 +1188,13 @@ export default {
   font-family: inherit;
 }
 
+.mobile-modal .field-wrapper input,
+.mobile-modal .field-wrapper select,
+.mobile-modal .field-wrapper textarea {
+  font-size: 16px;
+  padding: 10px 12px 10px 36px;
+}
+
 .field-wrapper textarea {
   padding-top: 12px;
   resize: vertical;
@@ -916,6 +1217,11 @@ export default {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.modal-footer-premium.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
+}
+
 .btn-cancel-premium,
 .btn-submit-premium {
   flex: 1;
@@ -930,6 +1236,11 @@ export default {
   gap: 8px;
   font-size: 14px;
   border: none;
+}
+
+.mobile-footer .btn-cancel-premium,
+.mobile-footer .btn-submit-premium {
+  padding: 14px;
 }
 
 .btn-cancel-premium {
@@ -951,30 +1262,6 @@ export default {
   box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Empty State */
-.empty-state-premium {
-  text-align: center;
-  padding: 60px 20px;
-  color: #9ca3af;
-  grid-column: 1 / -1;
-}
-
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state-premium h4 {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.empty-state-premium p {
-  font-size: 14px;
-}
-
 /* Modal Fade */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
@@ -990,28 +1277,57 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .register-btn-modern {
-    justify-content: center;
+    display: none;
   }
 
   .stats-bar {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .stat-card i {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .search-bar-mobile {
+    display: block;
   }
 
   .resources-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .resource-card-premium.mobile-card {
+    padding: 16px;
   }
 
   .premium-modal {
@@ -1029,6 +1345,101 @@ export default {
   .modal-footer-premium {
     padding: 16px 20px;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card i {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .resource-card-premium.mobile-card {
+    padding: 12px;
+  }
+
+  .resource-header-premium {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .resource-info h3 {
+    font-size: 14px;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detail-item i {
+    display: none;
+  }
+
+  .detail-label {
+    font-size: 10px;
+  }
+
+  .detail-value {
+    font-size: 12px;
+  }
+
+  .btn-book-premium {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .empty-state-premium {
+    padding: 30px 16px;
+  }
+
+  .empty-state-premium i {
+    font-size: 40px;
+  }
+
+  .empty-state-premium h4 {
+    font-size: 15px;
+  }
+
+  .search-input-mobile {
+    font-size: 15px;
+    padding: 8px 10px 8px 34px;
+  }
+
+  .modal-footer-premium.mobile-footer button {
+    width: 100%;
   }
 }
 </style>

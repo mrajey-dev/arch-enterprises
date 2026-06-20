@@ -6,8 +6,21 @@
 
       <!-- Content -->
       <div class="content" v-show="!isMobile || !isSidebarVisible">
-        <div class="content-header-modern">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-calendar-check"></i>
+            <span>Visit Schedule</span>
+          </div>
+          <div class="mobile-stats-badge">
+            <span>{{ combinedVisits.length }}</span>
+          </div>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
+          <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-calendar-check"></i>
             </div>
@@ -22,30 +35,30 @@
           </div>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('Pending')">
             <i class="fas fa-clock"></i>
             <div class="stat-info">
               <span class="stat-value">{{ pendingCount }}</span>
               <span class="stat-label">Pending</span>
             </div>
           </div>
-          <div class="stat-card completed">
+          <div class="stat-card completed" @click="filterByStatus('Completed')">
             <i class="fas fa-check-circle"></i>
             <div class="stat-info">
               <span class="stat-value">{{ completedCount }}</span>
               <span class="stat-label">Completed</span>
             </div>
           </div>
-          <div class="stat-card amc">
+          <div class="stat-card amc" @click="filterByType('AMC')">
             <i class="fas fa-calendar-week"></i>
             <div class="stat-info">
               <span class="stat-value">{{ amcCount }}</span>
               <span class="stat-label">AMC Visits</span>
             </div>
           </div>
-          <div class="stat-card service">
+          <div class="stat-card service" @click="filterByType('SERVICE')">
             <i class="fas fa-wrench"></i>
             <div class="stat-info">
               <span class="stat-value">{{ serviceCount }}</span>
@@ -54,13 +67,14 @@
           </div>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- Filter Bar - Mobile Optimized -->
         <div class="filter-section-premium">
-          <div class="section-title-modern">
+          <div class="section-title-modern" @click="toggleFilters">
             <i class="fas fa-filter"></i>
             <span>Filter Visits</span>
+            <i class="fas fa-chevron-down filter-toggle" :class="{ rotated: filtersVisible }"></i>
           </div>
-          <div class="filter-grid-premium">
+          <div class="filter-grid-premium" :class="{ 'filters-hidden': !filtersVisible }">
             <div class="filter-group">
               <i class="fas fa-calendar-alt"></i>
               <input type="month" v-model="filters.month" class="filter-input-premium" />
@@ -78,12 +92,12 @@
               <input type="text" v-model="filters.company" placeholder="Search Company" class="filter-input-premium" />
             </div>
             <button class="reset-filter-btn" @click="resetFilters">
-              <i class="fas fa-sync-alt"></i> View All
+              <i class="fas fa-sync-alt"></i> <span class="btn-text">View All</span>
             </button>
           </div>
         </div>
 
-        <!-- Visits Table -->
+        <!-- Visits Table - Mobile Optimized -->
         <div class="table-card-premium">
           <div class="table-header-premium">
             <div class="section-title-modern">
@@ -96,7 +110,79 @@
             </div>
           </div>
 
-          <div class="table-wrapper-premium">
+          <!-- Mobile Card View -->
+          <div class="mobile-cards" v-if="isMobile">
+            <div v-for="(item, index) in combinedVisits" :key="index" class="visit-card">
+              <div class="card-header">
+                <div class="company-info">
+                  <div class="company-avatar">
+                    {{ getInitials(item.company_name) }}
+                  </div>
+                  <div>
+                    <div class="company-name">{{ item.company_name }}</div>
+                    <div class="po-number">PO: {{ item.po_number }}</div>
+                  </div>
+                </div>
+                <span :class="['status-badge-mobile', item.status?.toLowerCase()]">
+                  {{ item.status }}
+                </span>
+              </div>
+              
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="card-label">Visit Date</span>
+                  <input type="date" v-model="item.visit_date" class="date-input-mobile" @change="item.visitType === 'AMC' ? updateAmcVisitDate(item) : updateServiceVisitDate(item)" />
+                </div>
+                <div class="card-row">
+                  <span class="card-label">Service Type</span>
+                  <span :class="['service-type-badge-mobile', item.visitType === 'AMC' ? 'amc' : 'service']">
+                    <i :class="item.visitType === 'AMC' ? 'fas fa-calendar-alt' : 'fas fa-wrench'"></i>
+                    {{ item.visitType === 'AMC' ? 'AMC' : item.type_of_service }}
+                  </span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label">Status</span>
+                  <select :value="item.status" @change="onStatusChange($event, item)" :class="['status-select-mobile', item.status?.toLowerCase()]">
+                    <option value="Pending">⏳ Pending</option>
+                    <option value="Completed">✅ Completed</option>
+                  </select>
+                </div>
+                <div class="card-row">
+                  <span class="card-label">Upload Report</span>
+                  <div class="upload-section-mobile">
+                    <label class="upload-btn-mobile">
+                      <i class="fas fa-upload"></i> Upload
+                      <input type="file" multiple @change="handleReportUpload($event, item, item.visitType === 'AMC' ? 'amc' : 'service')" hidden />
+                    </label>
+                    <span v-if="item.reportNames?.length" class="file-count-mobile">{{ item.reportNames.length }} file(s)</span>
+                  </div>
+                </div>
+                <div class="card-row" v-if="item.report_paths && item.report_paths.length">
+                  <span class="card-label">Reports</span>
+                  <div class="report-buttons-mobile">
+                    <div v-for="(path, rIndex) in item.report_paths" :key="rIndex" class="report-item-mobile">
+                      <button class="view-report-btn-mobile" @click="viewReport(path)">
+                        <i class="fas fa-file-pdf"></i> Report {{ rIndex + 1 }}
+                      </button>
+                      <button class="delete-report-btn-mobile" @click="deleteReport(item, path, rIndex)">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <div v-if="combinedVisits.length === 0" class="empty-state-mobile">
+              <i class="fas fa-calendar-times"></i>
+              <h4>No Visits Found</h4>
+              <p>No visit assignments match your filters</p>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="table-wrapper-premium" v-else>
             <table class="visit-table-premium">
               <thead>
                 <tr>
@@ -159,7 +245,7 @@
                   </td>
                 </tr>
 
-                <!-- Empty State -->
+                <!-- Empty State Desktop -->
                 <tr v-if="combinedVisits.length === 0" class="empty-row">
                   <td colspan="7">
                     <div class="empty-state-premium">
@@ -198,6 +284,7 @@ export default {
       },
       isMobile: false,
       isSidebarVisible: true,
+      filtersVisible: false,
       amcVisits: [],
       services: [],
       currentUser: null,
@@ -250,6 +337,16 @@ export default {
     window.removeEventListener("resize", this.checkIfMobile);
   },
   methods: {
+    toggleFilters() {
+      this.filtersVisible = !this.filtersVisible;
+    },
+    filterByStatus(status) {
+      this.filters.status = this.filters.status === status ? "" : status;
+    },
+    filterByType(type) {
+      // This is a simple filter - you can implement as needed
+      this.filters.company = type;
+    },
     getInitials(name) {
       if (!name) return '?';
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -447,7 +544,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -466,8 +562,54 @@ export default {
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  /*     */
   overflow-x: auto;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-stats-badge {
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 /* Content Header */
@@ -542,6 +684,7 @@ export default {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 20px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-card:hover {
@@ -596,11 +739,21 @@ export default {
   font-weight: 600;
   font-size: 16px;
   color: #1a1a2e;
+  cursor: pointer;
 }
 
 .section-title-modern i {
   color: var(--primary-color);
   font-size: 18px;
+}
+
+.filter-toggle {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle.rotated {
+  transform: rotate(180deg);
 }
 
 /* Filter Section */
@@ -612,6 +765,13 @@ export default {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  transition: all 0.3s ease;
+}
+
+.filter-grid-premium.filters-hidden {
+  max-height: 0;
+  overflow: hidden;
+  margin: 0;
 }
 
 .filter-group {
@@ -749,6 +909,7 @@ export default {
   color: white;
   font-weight: 600;
   font-size: 12px;
+  flex-shrink: 0;
 }
 
 .po-badge {
@@ -898,6 +1059,219 @@ export default {
   font-size: 12px;
 }
 
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.visit-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.company-name {
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 14px;
+}
+
+.po-number {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.status-badge-mobile {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge-mobile.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-mobile.completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  min-width: 90px;
+}
+
+.date-input-mobile {
+  padding: 6px 10px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  flex: 1;
+}
+
+.service-type-badge-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.service-type-badge-mobile.amc {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.service-type-badge-mobile.service {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.status-select-mobile {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+
+.status-select-mobile.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-select-mobile.completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.upload-section-mobile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.upload-btn-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.file-count-mobile {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.report-buttons-mobile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.report-item-mobile {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.view-report-btn-mobile {
+  padding: 4px 8px;
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delete-report-btn-mobile {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile h4 {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.empty-state-mobile p {
+  font-size: 13px;
+}
+
 /* Empty State */
 .empty-state-premium {
   text-align: center;
@@ -934,29 +1308,199 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
+    margin-top: 0;
   }
+  
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
   }
+  
+  .mobile-header {
+    display: flex;
+  }
+  
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
+    display: none;
   }
-  .stats-badge-header {
-    align-self: flex-start;
-  }
+  
   .stats-bar {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
+  
+  .stat-card {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .stat-card i {
+    font-size: 22px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+  }
+  
   .filter-grid-premium {
     flex-direction: column;
+    gap: 8px;
+    max-height: 500px;
+    overflow: visible;
   }
-  .visit-table-premium {
-    min-width: 800px;
+  
+  .filter-grid-premium.filters-hidden {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
   }
-  .company-cell {
-    min-width: 150px;
+  
+  .filter-group {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .filter-input-premium {
+    font-size: 14px;
+    padding: 10px 12px 10px 36px;
+  }
+  
+  .reset-filter-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .btn-text {
+    display: inline;
+  }
+  
+  .table-wrapper-premium {
+    display: none;
+  }
+  
+  .mobile-cards {
+    display: flex;
+  }
+  
+  .table-header-premium {
+    padding: 12px 16px;
+  }
+  
+  .table-header-premium .section-title-modern {
+    font-size: 14px;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .section-title-modern {
+    font-size: 14px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+  
+  .table-info {
+    font-size: 11px;
+  }
+  
+  .card-row {
+    flex-wrap: wrap;
+  }
+  
+  .card-label {
+    min-width: 80px;
+  }
+  
+  .upload-section-mobile {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  
+  .report-buttons-mobile {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+  
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+  
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 10px;
+  }
+  
+  .stat-card i {
+    font-size: 18px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+  }
+  
+  .visit-card {
+    padding: 12px;
+  }
+  
+  .card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .card-label {
+    min-width: auto;
+  }
+  
+  .date-input-mobile {
+    width: 100%;
+  }
+  
+  .upload-section-mobile {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .report-buttons-mobile {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .mobile-title {
+    font-size: 16px;
+  }
+  
+  .company-name {
+    font-size: 13px;
+  }
+}
+
+/* Utility Classes */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
   }
 }
 </style>

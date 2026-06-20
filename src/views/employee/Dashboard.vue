@@ -13,7 +13,7 @@
         <div class="welcome-banner">
           <div class="banner-content">
             <h1>Welcome back, {{ formatFirstName(currentUser.name) || 'Employee' }}!</h1>
-            <p>Here's what's happening with your work today.</p>
+            <!-- <p>Here's what's happening with your work today.</p> -->
           </div>
           <div class="date-badge">
             <i class="fas fa-calendar-alt"></i>
@@ -22,78 +22,251 @@
         </div>
 
         <!-- KPI Cards Grid -->
-        <div class="dashboard-row">
-          <div class="dashboard-card clickable-card" @click="goTo('employee/mytask')">
-  <div class="active-tag">Active: {{ activeTasks.length }}</div>
-            <div class="card-icon tasks-icon">
-              <i class="fas fa-tasks"></i>
-            </div>
-            <div class="card-info">
-              <p class="label">My Tasks</p>
-              <!-- <h3 class="value">Active: {{ activeTasks.length }}</h3> -->
-              <span class="progress-text">View & Manage Tasks</span>
-            </div>
-          </div>
-
-          <div class="dashboard-card clickable-card" @click="goTo('employee/empattendance')">
-            <div class="card-icon attendance-icon">
-              <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="card-info">
-              <p class="label">Attendance</p>
-              <span class="progress-text">Mark your daily attendance</span>
-            </div>
-          </div>
-          <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/Customerregistrations')">
-            <div class="card-icon crm-icon">
-              <i class="fas fa-users"></i>
-            </div>
-            <div class="card-info">
-              <p class="label">CRM</p>
-              <!-- <h3 class="value">184</h3> -->
-              <span class="progress-text">Manage customers & add PO</span>
-            </div>
-          </div>
- <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/sop')">
-  <!-- <div class="new-tag">New</div> -->
-  <div class="card-icon crm-icon">
-    <i class="fas fa-file-alt"></i>
+     <!-- KPI Cards Grid - Organized for Mobile -->
+<div class="dashboard-row">
+  <!-- Primary Cards (Always Visible) -->
+  <div class="dashboard-card clickable-card" @click="goTo('employee/mytask')">
+    <div class="active-tag">Active: {{ activeTasks.length }}</div>
+    <div class="card-icon tasks-icon">
+      <i class="fas fa-tasks"></i>
+    </div>
+    <div class="card-info">
+      <p class="label">My Tasks</p>
+      <span class="progress-text">View & Manage Tasks</span>
+    </div>
   </div>
-  <div class="card-info">
-    <p class="label">SOP</p>
-    <span class="progress-text">Standard Operating Procedures</span>
+
+  <div class="dashboard-card clickable-card" @click="goTo('employee/empattendance')">
+    <div class="card-icon attendance-icon">
+      <i class="fas fa-calendar-check"></i>
+    </div>
+    <div class="card-info">
+      <p class="label">Attendance</p>
+      <span class="progress-text">Mark your daily attendance</span>
+    </div>
+  </div>
+
+  <div class="dashboard-card clickable-card" @click="goTo('employee/Customerregistrations')">
+    <div class="card-icon crm-icon">
+      <i class="fas fa-users"></i>
+    </div>
+    <div class="card-info">
+      <p class="label">CRM</p>
+      <span class="progress-text">Manage customers & add PO</span>
+    </div>
+  </div>
+  <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/sop')">
+    <div class="card-icon crm-icon">
+      <i class="fas fa-file-alt"></i>
+    </div>
+    <div class="card-info">
+      <p class="label">SOP</p>
+      <span class="progress-text">Standard Operating Procedures</span>
+    </div>
+    </div>
+    <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/viewallpo')">
+      <div class="new-tag">New</div>
+      <div class="card-icon crm-icon">
+        <i class="fas fa-file-invoice"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">View all PO</p>
+        <span class="progress-text">Manage Purchase Orders</span>
+      </div>
+      </div>  
+   
+
+  <!-- Mobile Only Cards - Grouped by Category -->
+  <div class="mobile-section-title">
+    <span><i class="fas fa-th-large"></i> All Features</span>
+  </div>
+
+  <!-- Category: Work Management -->
+  <div class="mobile-card-group mobile-only">
+    <div class="group-label">
+      <i class="fas fa-briefcase"></i> Work Management
+    </div>
+    
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/visitschedule')">
+      <div class="card-icon visits-icon">
+        <i class="fas fa-map-marked-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Visit Schedule</p>
+        <span class="progress-text">View & Manage Visits</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/viewallpo')">
+      <div class="new-tag">New</div>
+      <div class="card-icon crm-icon">
+        <i class="fas fa-file-invoice"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">View all PO</p>
+        <span class="progress-text">Manage Purchase Orders</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/sop')">
+      <div class="card-icon crm-icon">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">SOP</p>
+        <span class="progress-text">Standard Operating Procedures</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category: Leave & Attendance -->
+  <div class="mobile-card-group mobile-only">
+    <div class="group-label">
+      <i class="fas fa-calendar-alt"></i> Leave & Attendance
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/applyleave')">
+      <div class="card-icon leave-icon">
+        <i class="fas fa-umbrella-beach"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Apply for Leaves</p>
+        <span class="progress-text">Apply & View Status</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/myleavebalance')">
+      <div class="card-icon balance-icon">
+        <i class="fas fa-balance-scale"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Leave Balance</p>
+        <span class="progress-text">View Your Balances</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/leaveapplicationsemp')">
+      <div class="card-icon leave-icon">
+        <i class="fas fa-umbrella-beach"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Leave Applications</p>
+        <span class="progress-text">View & Apply for Leaves</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category: Learning & Development -->
+  <div class="mobile-card-group mobile-only">
+    <div class="group-label">
+      <i class="fas fa-graduation-cap"></i> Learning & Development
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/ETPsession')">
+      <div class="card-icon etp-icon">
+        <i class="fas fa-chalkboard-teacher"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">ETP Sessions</p>
+        <span class="progress-text">View & Join Training</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/viewkra')">
+      <div class="card-icon kra-icon">
+        <i class="fas fa-chart-bar"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">KRA</p>
+        <span class="progress-text">View & Manage KRA</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/mydsi')">
+      <div class="card-icon dsi-icon">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">DSI</p>
+        <span class="progress-text">View & Manage DSI</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category: Resources & Support -->
+  <div class="mobile-card-group mobile-only">
+    <div class="group-label">
+      <i class="fas fa-hand-holding-heart"></i> Resources & Support
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/resourcebooking')">
+      <div class="card-icon resource-icon">
+        <i class="fas fa-book"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Resource Booking</p>
+        <span class="progress-text">Book Resources & Facilities</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/request')">
+      <div class="card-icon request-icon">
+        <i class="fas fa-envelope"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Request Desk</p>
+        <span class="progress-text">View & Manage Requests</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/help')">
+      <div class="card-icon help-icon">
+        <i class="fas fa-question-circle"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Help & Support</p>
+        <span class="progress-text">View Notifications & Mentions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category: Finance -->
+  <div class="mobile-card-group mobile-only">
+    <div class="group-label">
+      <i class="fas fa-coins"></i> Finance
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/mysalaryadvances')">
+      <div class="card-icon salary-icon">
+        <i class="fas fa-money-bill-wave"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Salary Advances</p>
+        <span class="progress-text">View & Request Advances</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category: Calendar -->
+  <div class="mobile-card-group mobile-only">
+    <div class="group-label">
+      <i class="fas fa-calendar-day"></i> Calendar
+    </div>
+
+    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/archcalendar')">
+      <div class="card-icon calendar-icon">
+        <i class="fas fa-calendar"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Calendar</p>
+        <span class="progress-text">View events & holidays</span>
+      </div>
+    </div>
   </div>
 </div>
-
- <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/viewallpo')">
-  <div class="new-tag">New</div>
-  <div class="card-icon crm-icon">
-    <i class="fas fa-file-invoice"></i>
-  </div>
-  <div class="card-info">
-    <p class="label">View all PO</p>
-    <span class="progress-text">Manage Purchase Orders</span>
-  </div>
-</div>
-          <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/visitschedule')">
-            <div class="card-icon visit-icon">
-              <i class="fas fa-calendar-week"></i>
-            </div>
-            <div class="card-info">
-              <p class="label">Visit Schedule</p>
-              <h3 class="value">3</h3>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 60%"></div>
-              </div>
-              <span class="progress-text">This week</span>
-            </div>
-          </div>
-
-          
-        </div>
 
         <!-- Split Section: Chart & Birthday Celebrations -->
-        <div class="dashboard-split">
+        <div class="dashboard-split desktop-only">
           <div class="chart-card">
             <div class="card-header">
               <h3>Work Analytics</h3>
@@ -129,8 +302,8 @@
         </div>
 
         <!-- Active Tasks & Recent Leaves Row -->
-        <div class="dashboard-split">
-           <div class="birthday-widget">
+        <div class="dashboard-split desktop-only">
+           <div class="birthday-widget ">
             <div class="card-header">
               <h3>
                 <i class="fas fa-birthday-cake"></i> Birthday Celebrations
@@ -1105,7 +1278,20 @@ export default {
 
 .tasks-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .attendance-icon { background: linear-gradient(135deg, #10b981, #059669); }
+.etp-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.help-icon { background: linear-gradient(135deg, #ec4899, #db2777); }
+.request-icon { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+.kra-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.dsi-icon { background: linear-gradient(135deg, #f97316, #ea580c); }
+.salary-icon { background: linear-gradient(135deg, #f97316, #ea580c); }
+.resource-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.leaves-icon { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.notifications-icon { background: linear-gradient(135deg, #facc15, #d97706); }
+.mentions-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.visits-icon { background: linear-gradient(135deg, #f97316, #ea580c); }
 .crm-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.calendar-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.balance-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .visit-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
 .leave-icon { background: linear-gradient(135deg, #14b8a6, #0d9488); }
 .chat-icon { background: linear-gradient(135deg, #ec4899, #db2777); }
@@ -1847,25 +2033,8 @@ textarea {
   }
 }
 
-.mobile-only {
-  display: none;
-}
 
-@media (max-width: 768px) {
-  .mobile-only {
-    display: flex;
-  }
-}
 
-.desktop-only {
-  display: flex;
-}
-
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-}
 
 .disabled {
   opacity: 0.6;
@@ -1946,5 +2115,212 @@ textarea {
   letter-spacing: 0.5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1;
+}
+
+
+/* Responsive visibility classes - FIXED */
+@media (max-width: 768px) {
+  .mobile-only { 
+    display: flex !important; 
+  }
+  .desktop-only { 
+    display: none !important; 
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only { 
+    display: none !important; 
+  }
+  .desktop-only { 
+    display: flex !important; 
+  }
+}
+/* Mobile Card Organization Styles */
+.mobile-section-title {
+  grid-column: 1 / -1;
+  padding: 1rem 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark);
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 0.5rem;
+  display: none;
+}
+
+.mobile-card-group {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: rgba(241, 245, 249, 0.5);
+  padding: 0.75rem;
+  border-radius: 16px;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.group-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.25rem 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 0.25rem;
+}
+
+.group-label i {
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+/* Enhanced Mobile Card Styles */
+@media (max-width: 768px) {
+  .mobile-section-title {
+    display: block;
+  }
+
+  .mobile-card-group {
+    padding: 0.75rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .mobile-card-group .dashboard-card {
+    margin-bottom: 0.25rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: var(--light);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-card-group .dashboard-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .mobile-card-group .dashboard-card:active {
+    transform: scale(0.98);
+    background: #e8ecf1;
+  }
+
+  .group-label {
+    font-size: 0.7rem;
+    padding: 0.2rem 0 0.4rem 0;
+  }
+
+  .mobile-card-group .card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+  }
+
+  .mobile-card-group .label {
+    font-size: 0.9rem;
+  }
+
+  .mobile-card-group .progress-text {
+    font-size: 0.65rem;
+  }
+
+  .mobile-card-group .new-tag {
+    font-size: 8px;
+    padding: 1px 6px;
+    top: 6px;
+    right: 6px;
+  }
+
+  /* Smooth scroll for dashboard */
+  .dashboard-row {
+    padding-bottom: 80px;
+    gap: 0.75rem;
+  }
+}
+
+/* Compact view for smaller screens */
+@media (max-width: 480px) {
+  .mobile-card-group {
+    padding: 0.5rem;
+    border-radius: 12px;
+  }
+
+  .mobile-card-group .dashboard-card {
+    padding: 0.6rem;
+    border-radius: 10px;
+  }
+
+  .mobile-card-group .card-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+
+  .mobile-card-group .label {
+    font-size: 0.8rem;
+  }
+
+  .group-label {
+    font-size: 0.65rem;
+  }
+
+  .mobile-section-title {
+    font-size: 1rem;
+    padding: 0.75rem 0 0.5rem 0;
+  }
+}
+
+/* Card hover animation for desktop */
+@media (min-width: 769px) {
+  .mobile-card-group .dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--border);
+  }
+}
+
+/* Status indicators for cards */
+.mobile-card-group .dashboard-card .card-info .label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Badge for card count */
+.mobile-card-group .group-label .badge-count {
+  background: var(--primary);
+  color: white;
+  font-size: 0.6rem;
+  padding: 1px 8px;
+  border-radius: 20px;
+  margin-left: auto;
+}
+
+/* Category icon animations */
+.mobile-card-group .group-label i {
+  transition: transform 0.3s ease;
+}
+
+.mobile-card-group:hover .group-label i {
+  transform: rotate(-5deg);
+}
+
+/* Quick action indicator */
+.mobile-card-group .dashboard-card .card-info .quick-action {
+  font-size: 0.6rem;
+  color: var(--primary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.mobile-card-group .dashboard-card:active .card-info .quick-action {
+  opacity: 1;
 }
 </style>

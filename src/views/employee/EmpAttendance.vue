@@ -7,8 +7,20 @@
 
       <div v-if="!isMobile || !isSidebarVisible" class="attendance-container">
         
-        <!-- Premium Header -->
-        <div class="attendance-header-premium">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-fingerprint"></i>
+            <span>Attendance</span>
+          </div>
+          <button class="mobile-toggle-btn" @click="toggleView">
+            <i :class="viewMode === 'day' ? 'fas fa-calendar-alt' : 'fas fa-clock'"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="attendance-header-premium desktop-only">
           <div class="header-left">
             <div class="header-icon">
               <i class="fas fa-fingerprint"></i>
@@ -26,7 +38,7 @@
           </div>
         </div>
 
-        <!-- Daily Attendance View -->
+        <!-- Daily Attendance View - Mobile Optimized -->
         <div v-if="viewMode === 'day'" class="attendance-card-premium">
           <div class="card-header-premium">
             <div class="section-title">
@@ -40,7 +52,71 @@
           </div>
 
           <div class="attendance-table-wrapper">
-            <table class="attendance-table-premium">
+            <!-- Mobile Card View -->
+            <div class="mobile-attendance-cards" v-if="isMobile">
+              <div class="attendance-card-mobile">
+                <div class="card-status-row">
+                  <span class="status-label">Status</span>
+                  <select
+                    v-model="user.status"
+                    @change="updateStatus"
+                    class="status-select-mobile"
+                    :class="getStatusClass(user.status)"
+                    :disabled="disableStatusSelect || user.statusLocked"
+                  >
+                    <option disabled value="">Select Status</option>
+                    <option v-for="status in availableStatuses" :key="status" :value="status">
+                      {{ getStatusLabel(status) }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="card-detail-row">
+                  <span class="detail-label">Clock In</span>
+                  <div v-if="user.status === 'Traveling'" class="travel-info-mobile">
+                    <span class="travel-place">{{ user.travelFrom || '—' }}</span>
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="travel-place">{{ user.travelTo || '—' }}</span>
+                  </div>
+                  <div v-else class="clock-info-mobile">
+                    <span class="clock-time">{{ user.clockIn || '—' }}</span>
+                    <span v-if="user.status === 'Present' && user.isLate" class="late-badge">
+                      <i class="fas fa-exclamation-triangle"></i> Late
+                    </span>
+                    <span v-else-if="user.status === 'Present' && user.isEarly" class="early-badge">
+                      <i class="fas fa-star"></i> Early
+                    </span>
+                  </div>
+                </div>
+
+                <div class="card-detail-row">
+                  <span class="detail-label">Clock Out</span>
+                  <div v-if="['Present', 'HalfDay', 'OnSite'].includes(user.status)">
+                    <img
+                      src="https://icons.veryicon.com/png/o/internet--web/common-work-social-mobile-terminals/check-in-and-punch-out.png"
+                      alt="Punch Out"
+                      @click="confirmPunchOut(user)"
+                      class="punch-out-icon-mobile"
+                      :class="{ disabled: user.clockOut !== '' }"
+                    />
+                  </div>
+                  <span v-else>{{ user.clockOut || '—' }}</span>
+                </div>
+
+                <div class="card-detail-row">
+                  <span class="detail-label">Required Time</span>
+                  <span class="detail-value">{{ user.requiredTime }}</span>
+                </div>
+
+                <div class="card-detail-row">
+                  <span class="detail-label">Actual Time</span>
+                  <span class="detail-value actual-time">{{ user.actualTime || '—' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <table class="attendance-table-premium" v-else>
               <thead>
                 <tr>
                   <th>Status</th>
@@ -65,7 +141,7 @@
                         {{ getStatusLabel(status) }}
                       </option>
                     </select>
-                   </td>
+                  </td>
                   <td data-label="Clock In" class="clock-cell">
                     <div v-if="user.status === 'Traveling'" class="travel-info">
                       <span class="travel-place">{{ user.travelFrom || '—' }}</span>
@@ -81,7 +157,7 @@
                         <i class="fas fa-star"></i> Early
                       </span>
                     </div>
-                    </td>
+                  </td>
                   <td data-label="Clock Out" class="clock-cell">
                     <div v-if="['Present', 'HalfDay', 'OnSite'].includes(user.status)">
                       <img
@@ -93,7 +169,7 @@
                       />
                     </div>
                     <span v-else>{{ user.clockOut || '—' }}</span>
-                    </td>
+                  </td>
                   <td data-label="Required Time">{{ user.requiredTime }}</td>
                   <td data-label="Actual Time" class="actual-time">{{ user.actualTime || '—' }}</td>
                 </tr>
@@ -102,7 +178,7 @@
           </div>
         </div>
 
-        <!-- Monthly Calendar View -->
+        <!-- Monthly Calendar View - Mobile Optimized -->
         <div v-if="viewMode === 'month'" class="calendar-card-premium">
           <div class="card-header-premium">
             <div class="section-title">
@@ -122,7 +198,29 @@
 
           <div class="calendar-wrapper">
             <div class="calendar-container">
-              <div class="calendar-grid">
+              <!-- Mobile Calendar - Full 7 days -->
+              <div class="calendar-grid-mobile" v-if="isMobile">
+                <div class="calendar-header-mobile">
+                  <div v-for="day in weekdays" :key="day" class="calendar-header-cell-mobile">
+                    {{ day.slice(0, 2) }}
+                  </div>
+                </div>
+                <div class="calendar-body-mobile">
+                  <div v-for="(week, weekIndex) in calendarData" :key="weekIndex" class="calendar-week-mobile">
+                    <div
+                      v-for="(day, dayIndex) in week"
+                      :key="dayIndex"
+                      class="calendar-cell-mobile"
+                      :class="getAttendanceClass(day)"
+                    >
+                      <span class="calendar-date-mobile">{{ day.date }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Desktop Calendar -->
+              <div class="calendar-grid" v-else>
                 <div class="calendar-header">
                   <div v-for="day in weekdays" :key="day" class="calendar-header-cell">
                     {{ day }}
@@ -143,15 +241,16 @@
               </div>
             </div>
 
+            <!-- Legend - Mobile Optimized -->
             <div class="legend-container">
               <h5><i class="fas fa-info-circle"></i> Legend</h5>
-              <ul class="legend-list">
+              <ul class="legend-list" :class="{ 'legend-list-mobile': isMobile }">
                 <li><span class="legend-box present"></span> Present</li>
                 <li><span class="legend-box on-site"></span> On Site</li>
                 <li><span class="legend-box half-day"></span> Half Day</li>
                 <li><span class="legend-box traveling"></span> Traveling</li>
                 <li><span class="legend-box leave"></span> Leave</li>
-                <li><span class="legend-box holiday"></span> Public Holiday</li>
+                <li><span class="legend-box holiday"></span> Holiday</li>
               </ul>
             </div>
           </div>
@@ -159,9 +258,9 @@
       </div>
     </div>
 
-    <!-- OnSite Popup Modal -->
+    <!-- OnSite Popup Modal - Mobile Optimized -->
     <div v-if="showOnSitePopup" class="modal-premium" @click.self="cancelOnSite">
-      <div class="modal-premium-container small">
+      <div class="modal-premium-container small" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-premium-header">
           <div class="modal-icon">
             <i class="fas fa-building"></i>
@@ -175,20 +274,21 @@
             type="text"
             v-model="user.siteName"
             class="site-input-premium"
+            :class="{ 'mobile-input': isMobile }"
             placeholder="Enter site name"
             autofocus
           />
         </div>
-        <div class="modal-premium-footer">
+        <div class="modal-premium-footer" :class="{ 'mobile-footer': isMobile }">
           <button class="btn-secondary-modern" @click="cancelOnSite">Cancel</button>
           <button class="btn-primary-modern" @click="confirmOnSite">Submit</button>
         </div>
       </div>
     </div>
 
-    <!-- Traveling Popup Modal -->
+    <!-- Traveling Popup Modal - Mobile Optimized -->
     <div v-if="showTravelPopup" class="modal-premium" @click.self="cancelTravel">
-      <div class="modal-premium-container small">
+      <div class="modal-premium-container small" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-premium-header">
           <div class="modal-icon">
             <i class="fas fa-plane"></i>
@@ -200,14 +300,14 @@
           <p class="modal-subtitle">Please enter your travel locations</p>
           <div class="form-field">
             <label>From Place</label>
-            <input type="text" v-model="user.travelFrom" class="site-input-premium" placeholder="Starting place" />
+            <input type="text" v-model="user.travelFrom" class="site-input-premium" :class="{ 'mobile-input': isMobile }" placeholder="Starting place" />
           </div>
           <div class="form-field">
             <label>To Place</label>
-            <input type="text" v-model="user.travelTo" class="site-input-premium" placeholder="Destination place" />
+            <input type="text" v-model="user.travelTo" class="site-input-premium" :class="{ 'mobile-input': isMobile }" placeholder="Destination place" />
           </div>
         </div>
-        <div class="modal-premium-footer">
+        <div class="modal-premium-footer" :class="{ 'mobile-footer': isMobile }">
           <button class="btn-secondary-modern" @click="cancelTravel">Cancel</button>
           <button class="btn-primary-modern" @click="confirmTravel">Submit</button>
         </div>
@@ -504,9 +604,7 @@ export default {
         
         console.log('Processed attendance data:', attendanceData);
         
-        // Fetch user's leave balance before generating calendar
         await this.fetchUserLeaveBalance();
-        
         this.generateCalendarFromStatus(attendanceData);
         
       } catch (error) {
@@ -531,7 +629,6 @@ export default {
         
         if (response.data && response.data.cl_leave_used !== undefined) {
           this.user.leaveBalance = response.data.cl_leave_used;
-          // Update local storage
           const storedUser = localStorage.getItem('user');
           if (storedUser) {
             const userData = JSON.parse(storedUser);
@@ -807,6 +904,58 @@ export default {
   overflow-x: auto;
 }
 
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-toggle-btn {
+  background: var(--primary);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-toggle-btn:active {
+  transform: scale(0.9);
+}
+
 /* Header */
 .attendance-header-premium {
   display: flex;
@@ -863,11 +1012,16 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .toggle-view-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.toggle-view-btn:active {
+  transform: scale(0.95);
 }
 
 /* Attendance Card */
@@ -910,6 +1064,7 @@ export default {
   border-radius: 20px;
   font-size: 13px;
   color: var(--primary-color);
+  white-space: nowrap;
 }
 
 .month-navigation {
@@ -926,11 +1081,18 @@ export default {
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-btn:hover {
   background: black;
   color: rgb(255, 255, 255);
+}
+
+.nav-btn:active {
+  transform: scale(0.9);
 }
 
 .month-year {
@@ -944,11 +1106,13 @@ export default {
 /* Attendance Table */
 .attendance-table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .attendance-table-premium {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 .attendance-table-premium thead {
@@ -970,6 +1134,114 @@ export default {
   font-size: 14px;
 }
 
+/* Mobile Attendance Cards */
+.mobile-attendance-cards {
+  display: none;
+  padding: 16px;
+}
+
+.attendance-card-mobile {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.card-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.status-label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.status-select-mobile {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  background: #f3f4f6;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.status-select-mobile:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.status-select-mobile.present { background: #d1fae5; color: #065f46; }
+.status-select-mobile.onsite { background: #e0e7ff; color: #4338ca; }
+.status-select-mobile.traveling { background: #fef3c7; color: #d97706; }
+.status-select-mobile.halfday { background: #fed7aa; color: #c2410c; }
+
+.card-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.detail-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark);
+}
+
+.detail-value.actual-time {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.travel-info-mobile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.clock-info-mobile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.punch-out-icon-mobile {
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.punch-out-icon-mobile:active:not(.disabled) {
+  transform: scale(0.9);
+}
+
+.punch-out-icon-mobile.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .status-select-premium {
   padding: 8px 14px;
   border-radius: 10px;
@@ -979,6 +1251,14 @@ export default {
   cursor: pointer;
   background: #f3f4f6;
   color: #6b7280;
+  width: 100%;
+  max-width: 160px;
+  transition: all 0.3s ease;
+}
+
+.status-select-premium:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .status-select-premium.present { background: #d1fae5; color: #065f46; }
@@ -991,17 +1271,26 @@ export default {
   font-size: 14px;
 }
 
+.clock-time {
+  font-weight: 500;
+}
+
 .travel-info {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
+  flex-wrap: wrap;
 }
 
 .travel-place {
   background: #f3f4f6;
   padding: 4px 8px;
   border-radius: 6px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .late-badge, .early-badge {
@@ -1010,6 +1299,7 @@ export default {
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 12px;
+  white-space: nowrap;
 }
 
 .late-badge { background: #fee2e2; color: #991b1b; }
@@ -1024,6 +1314,10 @@ export default {
 
 .punch-out-icon:hover:not(.disabled) {
   transform: scale(1.1);
+}
+
+.punch-out-icon:active:not(.disabled) {
+  transform: scale(0.9);
 }
 
 .punch-out-icon.disabled {
@@ -1047,12 +1341,15 @@ export default {
 .calendar-container {
   flex: 2;
   min-width: 500px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .calendar-grid {
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   overflow: hidden;
+  min-width: 500px;
 }
 
 .calendar-header {
@@ -1067,6 +1364,7 @@ export default {
   font-weight: 600;
   color: #6b7280;
   border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
 }
 
 .calendar-body {
@@ -1102,7 +1400,78 @@ export default {
   color: #6b7280;
 }
 
-/* Enhanced Attendance Status Colors */
+/* Mobile Calendar - Full 7 Days */
+.calendar-grid-mobile {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.calendar-header-mobile {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.calendar-header-cell-mobile {
+  padding: 8px 4px;
+  text-align: center;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 10px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.calendar-header-cell-mobile:last-child {
+  border-right: none;
+}
+
+.calendar-body-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-week-mobile {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-cell-mobile {
+  min-height: 40px;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.calendar-cell-mobile:last-child {
+  border-right: none;
+}
+
+.calendar-date-mobile {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* Mobile Calendar Status Colors */
+.calendar-cell-mobile.attendance-present { background: #d1fae5; }
+.calendar-cell-mobile.attendance-on-site { background: #e0e7ff; }
+.calendar-cell-mobile.attendance-half-day { background: #fed7aa; }
+.calendar-cell-mobile.attendance-traveling { background: #fef3c7; }
+.calendar-cell-mobile.attendance-leave { background: #e9d5ff; }
+.calendar-cell-mobile.attendance-absent { background: #fee2e2; border-left: 2px solid #ef4444; }
+.calendar-cell-mobile.attendance-missing { background: #ffe0e0; border-left: 2px solid #dc2626; position: relative; }
+.calendar-cell-mobile.attendance-weekend { background: #f9fafb; opacity: 0.8; }
+.calendar-cell-mobile.public-holiday { background: #fef9c3; border: 2px solid #58cc71; }
+
+/* Attendance Status Colors */
 .attendance-present { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
 .attendance-on-site { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); }
 .attendance-half-day { background: linear-gradient(135deg, #fed7aa, #fdba74); }
@@ -1139,7 +1508,7 @@ export default {
 /* Legend */
 .legend-container {
   flex: 1;
-  min-width: 220px;
+  min-width: 200px;
   background: #f8fafc;
   border-radius: 16px;
   padding: 20px;
@@ -1167,10 +1536,16 @@ export default {
   font-size: 13px;
 }
 
+.legend-list-mobile li {
+  font-size: 12px;
+  padding: 6px 0;
+}
+
 .legend-box {
   width: 20px;
   height: 20px;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .legend-box.present { background: #d1fae5; border-left: 3px solid #10b981; }
@@ -1178,21 +1553,7 @@ export default {
 .legend-box.half-day { background: #fed7aa; border-left: 3px solid #f59e0b; }
 .legend-box.traveling { background: #fef3c7; border-left: 3px solid #d97706; }
 .legend-box.leave { background: #e9d5ff; border-left: 3px solid #8b5cf6; }
-.legend-box.absent { background: #fee2e2; border-left: 3px solid #ef4444; }
-.legend-box.missing { background: #ffe0e0; border-left: 3px solid #dc2626; }
 .legend-box.holiday { background: #fff; border: 2px solid #58cc71; }
-
-.stats-summary {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 16px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  font-size: 13px;
-}
 
 /* Modal */
 .modal-premium {
@@ -1229,6 +1590,11 @@ export default {
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
+.modal-premium-container.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+}
+
 .modal-premium-container.small { max-width: 400px; }
 
 @keyframes modalSlideIn {
@@ -1251,6 +1617,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-premium-header {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .modal-icon {
   width: 48px;
   height: 48px;
@@ -1261,6 +1632,13 @@ export default {
   justify-content: center;
   color: var(--primary-color);
   font-size: 20px;
+  flex-shrink: 0;
+}
+
+.mobile-modal .modal-icon {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
 }
 
 .modal-premium-header h2 {
@@ -1269,6 +1647,10 @@ export default {
   font-weight: 700;
   margin: 0;
   color: #1a1a2e;
+}
+
+.mobile-modal .modal-premium-header h2 {
+  font-size: 18px;
 }
 
 .modal-close {
@@ -1281,6 +1663,10 @@ export default {
   transition: all 0.3s ease;
   color: #6b7280;
   font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .modal-close:hover {
@@ -1292,6 +1678,11 @@ export default {
 .modal-premium-body {
   padding: 28px;
   background: #fafbfc;
+  overflow-y: auto;
+}
+
+.mobile-modal .modal-premium-body {
+  padding: 16px;
 }
 
 .modal-subtitle {
@@ -1308,6 +1699,11 @@ export default {
   border-radius: 12px;
   font-size: 14px;
   transition: all 0.3s ease;
+}
+
+.site-input-premium.mobile-input {
+  font-size: 16px;
+  padding: 14px;
 }
 
 .site-input-premium:focus {
@@ -1336,6 +1732,11 @@ export default {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.modal-premium-footer.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
+}
+
 .btn-primary-modern {
   flex: 1;
   padding: 10px 20px;
@@ -1351,6 +1752,10 @@ export default {
 .btn-primary-modern:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary-modern:active {
+  transform: scale(0.98);
 }
 
 .btn-secondary-modern {
@@ -1369,57 +1774,286 @@ export default {
   background: #e5e7eb;
 }
 
+.btn-secondary-modern:active {
+  transform: scale(0.98);
+}
+
+.mobile-footer .btn-primary-modern,
+.mobile-footer .btn-secondary-modern {
+  width: 100%;
+  padding: 14px;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
-  .calendar-wrapper {
-    /* flex-direction: column; */
-  }
   .calendar-container {
     min-width: auto;
+  }
+  .calendar-grid {
+    min-width: 400px;
   }
 }
 
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
+    gap: 12px;
   }
+  
   .attendance-container {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
   }
+  
+  .mobile-header {
+    display: flex;
+  }
+  
   .attendance-header-premium {
+    display: none;
+  }
+  
+  .card-header-premium {
+    padding: 16px;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    gap: 8px;
   }
-  .toggle-view-btn {
-    justify-content: center;
+  
+  .section-title {
+    font-size: 15px;
   }
+  
+  .date-badge {
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+  
+  .month-navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .month-year {
+    font-size: 14px;
+    min-width: auto;
+  }
+  
   .attendance-table-premium {
-    min-width: 500px;
+    display: none;
   }
+  
+  .mobile-attendance-cards {
+    display: block;
+  }
+  
+  .calendar-wrapper {
+    flex-direction: column;
+    padding: 16px;
+    gap: 20px;
+  }
+  
   .calendar-container {
+    min-width: auto;
     overflow-x: auto;
   }
+  
   .calendar-grid {
-    min-width: 600px;
+    display: none;
   }
-  .modal-premium-container {
-    max-width: 95%;
+  
+  .calendar-grid-mobile {
+    display: block;
+    min-width: 320px;
   }
-  .modal-premium-header {
-    padding: 16px 20px;
+  
+  .legend-container {
+    min-width: auto;
   }
-  .modal-premium-body {
-    padding: 20px;
-  }
-  .modal-premium-footer {
-    padding: 16px 20px;
+  
+  .legend-list li {
+    font-size: 12px;
+    padding: 6px 0;
   }
 }
 
 @media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .main-content {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .attendance-container {
+    padding: 12px;
+    border-radius: 16px;
+  }
+  
+  .mobile-title {
+    font-size: 16px;
+  }
+  
+  .mobile-toggle-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .card-header-premium {
+    padding: 12px;
+  }
+  
+  .section-title {
+    font-size: 13px;
+  }
+  
+  .attendance-card-mobile {
+    padding: 12px;
+  }
+  
+  .status-select-mobile {
+    font-size: 12px;
+    padding: 4px 10px;
+    min-width: 100px;
+  }
+  
+  .card-detail-row {
+    padding: 8px 0;
+  }
+  
+  .detail-label {
+    font-size: 12px;
+  }
+  
+  .detail-value {
+    font-size: 12px;
+  }
+  
+  .punch-out-icon-mobile {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .calendar-grid-mobile {
+    min-width: 280px;
+  }
+  
+  .calendar-header-cell-mobile {
+    font-size: 8px;
+    padding: 6px 2px;
+  }
+  
+  .calendar-cell-mobile {
+    min-height: 32px;
+    font-size: 9px;
+    padding: 2px;
+  }
+  
+  .calendar-date-mobile {
+    font-size: 9px;
+  }
+  
+  .calendar-cell-mobile.attendance-missing::after {
+    width: 10px;
+    height: 10px;
+    font-size: 7px;
+    bottom: 2px;
+    left: 2px;
+  }
+  
+  .public-holiday::before {
+    font-size: 8px;
+    bottom: 2px;
+    left: 2px;
+  }
+  
+  .legend-container {
+    padding: 16px;
+  }
+  
+  .legend-container h5 {
+    font-size: 14px;
+  }
+  
+  .legend-box {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .modal-premium-container {
+    max-width: 98%;
+  }
+  
+  .modal-premium-header {
+    padding: 14px 16px;
+  }
+  
+  .modal-premium-header h2 {
+    font-size: 16px;
+  }
+  
+  .modal-premium-body {
+    padding: 16px;
+  }
+  
+  .modal-premium-footer {
+    padding: 14px 16px;
+  }
+  
+  .site-input-premium.mobile-input {
+    font-size: 15px;
+    padding: 12px;
+  }
+  
+  .travel-place {
+    max-width: 50px;
+    font-size: 9px;
+  }
+  
+  .late-badge, .early-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+  
+  .clock-time {
+    font-size: 12px;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .status-select-premium,
+  .status-select-mobile,
+  .toggle-view-btn,
+  .nav-btn,
+  .btn-primary-modern,
+  .btn-secondary-modern,
+  .modal-close,
+  .mobile-toggle-btn,
+  .menu-toggle {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .punch-out-icon,
+  .punch-out-icon-mobile {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .calendar-cell:hover {
+    transform: none;
+  }
+}
+
+/* Utility classes */
+.desktop-only {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
   }
 }
 </style>

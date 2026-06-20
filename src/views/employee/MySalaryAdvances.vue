@@ -6,8 +6,21 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <div class="content-header-modern">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+       
+          <div class="mobile-title">
+            <i class="fas fa-hand-holding-usd"></i>
+            <span>Salary Advance</span>
+          </div>
+          <button class="mobile-add-btn" @click="openRequestModal">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
+          <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-hand-holding-usd"></i>
             </div>
@@ -16,46 +29,51 @@
               <p class="subtitle-modern">Manage employee salary advance requests (HR View)</p>
             </div>
           </div>
-          <!-- <button class="new-request-btn" @click="openRequestModal">
-            <i class="fas fa-plus-circle"></i>
-            <span>New Salary Advance</span>
-          </button> -->
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-           <!-- <div class="stat-card completed">
-            <i class="fas fa-check-double"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ completedCount }}</span>
-              <span class="stat-label">Disbursed</span>
-            </div>
-          </div> -->
-          <div class="stat-card pending">
+          <div class="stat-card pending" @click="filterByStatus('Pending')">
             <i class="fas fa-clock"></i>
             <div class="stat-info">
               <span class="stat-value">{{ pendingCount }}</span>
               <span class="stat-label">Pending</span>
             </div>
           </div>
-          
-         
+          <div class="stat-card completed" @click="filterByStatus('Completed')">
+            <i class="fas fa-check-double"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ completedCount }}</span>
+              <span class="stat-label">Disbursed</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- Filter Bar - Mobile Optimized -->
         <div class="filter-bar">
-         
-          <div class="filter-group">
-            <i class="fas fa-filter"></i>
-            <select v-model="statusFilter" class="filter-select">
-              <option value="all">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Completed">Disbursed</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <i class="fas fa-calendar"></i>
-            <input type="month" v-model="monthFilter" class="filter-input" />
+          <button class="filter-toggle-btn" @click="toggleFilters">
+            <i class="fas fa-sliders-h"></i>
+            <span>{{ isMobile ? 'Filters' : 'Filter' }}</span>
+            <i class="fas fa-chevron-down" :class="{ 'rotated': filtersVisible }"></i>
+          </button>
+          
+          <div class="filter-group-container" :class="{ 'filters-hidden': !filtersVisible }">
+            <div class="filter-group">
+              <i class="fas fa-filter"></i>
+              <select v-model="statusFilter" class="filter-select">
+                <option value="all">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Disbursed</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <i class="fas fa-calendar"></i>
+              <input type="month" v-model="monthFilter" class="filter-input" />
+            </div>
+            <div class="filter-group search-group" v-if="isMobile">
+              <i class="fas fa-search"></i>
+              <input type="text" v-model="searchQuery" placeholder="Search..." class="filter-input" />
+            </div>
           </div>
         </div>
 
@@ -65,20 +83,84 @@
           <p>Loading salary advances...</p>
         </div>
 
-        <!-- Requests Table -->
+        <!-- Requests Table - Mobile Optimized -->
         <div v-else class="table-wrapper-premium">
           <div class="table-header">
             <div class="section-title-modern">
-              <i class="fas fa-list-ul"></i>
-              <span>All Salary Advance Requests</span>
+              <div class="title-left">
+                <i class="fas fa-list-ul"></i>
+                <span>All Requests</span>
+                <span class="record-count-mobile" v-if="isMobile">{{ filteredAdvances.length }}</span>
+              </div>
             </div>
-            <div class="table-info">
+            <div class="table-info desktop-only">
               <i class="fas fa-file-alt"></i>
               <span>{{ filteredAdvances.length }} records</span>
             </div>
           </div>
 
-          <div class="table-container">
+          <!-- Mobile Card View -->
+          <div class="mobile-cards" v-if="isMobile">
+            <div v-for="(advance, index) in filteredAdvances" :key="advance.id" class="advance-card">
+              <div class="card-header">
+                <div class="card-employee">
+                  <div class="card-avatar" :style="{ background: getAvatarColor(advance.user_name) }">
+                    {{ getInitials(advance.user_name) }}
+                  </div>
+                  <div class="card-employee-info">
+                    <div class="card-name">{{ advance.user_name || 'Unknown' }}</div>
+                    <div class="card-email">{{ advance.user_email || '' }}</div>
+                  </div>
+                </div>
+                <span :class="['status-badge-mobile', getStatusClass(advance.status)]">
+                  <i :class="getStatusIcon(advance.status)"></i>
+                  {{ advance.status }}
+                </span>
+              </div>
+
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-building"></i> Department</span>
+                  <span class="card-value">{{ advance.department || '—' }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-rupee-sign"></i> Amount</span>
+                  <span class="card-value amount">{{ formatCurrency(advance.amount) }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-calendar-week"></i> Repayment</span>
+                  <span class="card-value">{{ advance.repayment_months || 1 }} month(s)</span>
+                </div>
+                <div class="card-row" v-if="advance.reason">
+                  <span class="card-label"><i class="fas fa-file-alt"></i> Reason</span>
+                  <span class="card-value reason-text">{{ truncateText(advance.reason, 60) }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-calendar"></i> Submitted</span>
+                  <span class="card-value">{{ formatDate(advance.created_at) }}</span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="card-action-btn view" @click="viewDetails(advance)">
+                  <i class="fas fa-eye"></i> View
+                </button>
+                <button class="card-action-btn note" @click="addNote(advance)">
+                  <i class="fas fa-sticky-note"></i> Note
+                </button>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <div v-if="filteredAdvances.length === 0" class="empty-state-mobile">
+              <i class="fas fa-hand-holding-usd"></i>
+              <h4>No Salary Advances</h4>
+              <p>{{ searchQuery || statusFilter !== 'all' ? 'No matches found for your filters' : 'No salary advance requests found' }}</p>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="table-container" v-else>
             <table class="request-table-premium">
               <thead>
                 <tr>
@@ -87,9 +169,9 @@
                   <th>Department</th>
                   <th>Amount</th>
                   <th>Reason</th>
-                  <th>Date Submitted</th>
+                  <th>Date</th>
                   <th>Repayment</th>
-                  <!-- <th>Status</th> -->
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -131,11 +213,10 @@
                     <select 
                       v-model="advance.status"
                       @change="changeStatus(advance)"
-                      :class="['status-dropdown-premium', getStatusClass(advance.status)]" disabled
+                      :class="['status-dropdown-premium', getStatusClass(advance.status)]"
                     >
                       <option value="Pending">🕐 Pending</option>
                       <option value="Completed">💰 Disbursed</option>
-                     
                     </select>
                   </td>
                   <td class="actions-cell">
@@ -148,7 +229,7 @@
                   </td>
                 </tr>
 
-                <!-- Empty State -->
+                <!-- Desktop Empty State -->
                 <tr v-if="filteredAdvances.length === 0" class="empty-row">
                   <td colspan="9">
                     <div class="empty-state-premium">
@@ -165,13 +246,13 @@
       </section>
     </div>
 
-    <!-- Request Modal -->
+    <!-- Request Modal - Mobile Optimized -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-container">
+      <div class="modal-container" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-title">
             <i class="fas fa-hand-holding-usd"></i>
-            <h3>Create Salary Advance Request</h3>
+            <h3>{{ isMobile ? 'New Request' : 'Create Salary Advance Request' }}</h3>
           </div>
           <button class="modal-close" @click="closeModal">
             <i class="fas fa-times"></i>
@@ -180,7 +261,6 @@
 
         <div class="modal-body">
           <form @submit.prevent="submitRequest" class="salary-form">
-            <!-- Employee Selection Dropdown -->
             <div class="form-group">
               <label><i class="fas fa-user"></i> Select Employee *</label>
               <div class="employee-select-wrapper">
@@ -191,14 +271,13 @@
                     :key="employee.id" 
                     :value="employee.id"
                   >
-                    {{ employee.name }} ({{ employee.email }}) - {{ employee.department || 'N/A' }}
+                    {{ employee.name }} ({{ employee.email }})
                   </option>
                 </select>
               </div>
-              <p class="form-hint">Select the employee who is requesting the salary advance</p>
+              <p class="form-hint">Select the employee requesting the advance</p>
             </div>
 
-            <!-- Selected Employee Preview -->
             <div v-if="selectedEmployee" class="employee-preview">
               <div class="preview-avatar">
                 {{ getInitials(selectedEmployee.name) }}
@@ -214,7 +293,7 @@
 
             <div class="form-row">
               <div class="form-group half">
-                <label><i class="fas fa-rupee-sign"></i> Amount Required *</label>
+                <label><i class="fas fa-rupee-sign"></i> Amount *</label>
                 <div class="amount-input-wrapper">
                   <span class="currency-symbol">₹</span>
                   <input 
@@ -231,7 +310,7 @@
               </div>
 
               <div class="form-group half">
-                <label><i class="fas fa-calendar-week"></i> Repayment Tenure *</label>
+                <label><i class="fas fa-calendar-week"></i> Tenure *</label>
                 <select v-model="form.repayment_months" class="form-select" required>
                   <option value="1">1 month</option>
                   <option value="2">2 months</option>
@@ -244,19 +323,19 @@
             </div>
 
             <div class="form-group">
-              <label><i class="fas fa-file-alt"></i> Reason / Purpose *</label>
+              <label><i class="fas fa-file-alt"></i> Reason *</label>
               <textarea 
                 v-model="form.reason" 
                 class="form-textarea"
-                placeholder="Please provide a detailed reason for the salary advance request..."
+                placeholder="Provide a detailed reason for the salary advance request..."
                 rows="4"
                 required
               ></textarea>
             </div>
 
-            <div class="form-group">
-              <label><i class="fas fa-info-circle"></i> EMI Calculation</label>
-              <div class="emi-preview" v-if="form.amount && form.repayment_months">
+            <div class="form-group" v-if="form.amount && form.repayment_months">
+              <label><i class="fas fa-info-circle"></i> EMI Preview</label>
+              <div class="emi-preview">
                 <div class="emi-item">
                   <span>Monthly Deduction:</span>
                   <strong>{{ formatCurrency(form.amount / form.repayment_months) }}</strong>
@@ -268,11 +347,11 @@
               </div>
             </div>
 
-            <div class="form-actions">
+            <div class="form-actions" :class="{ 'mobile-actions': isMobile }">
               <button type="button" class="btn-cancel" @click="closeModal">Cancel</button>
               <button type="submit" class="btn-submit" :disabled="submitting">
                 <i v-if="submitting" class="fas fa-spinner fa-spin"></i>
-                <span v-else>Submit Request</span>
+                <span v-else>{{ isMobile ? 'Submit' : 'Submit Request' }}</span>
               </button>
             </div>
           </form>
@@ -280,13 +359,13 @@
       </div>
     </div>
 
-    <!-- View Details Modal -->
+    <!-- View Details Modal - Mobile Optimized -->
     <div v-if="showViewModal" class="modal-overlay" @click.self="closeViewModal">
-      <div class="modal-container view-modal">
+      <div class="modal-container view-modal" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-title">
             <i class="fas fa-receipt"></i>
-            <h3>Salary Advance Details</h3>
+            <h3>Details</h3>
           </div>
           <button class="modal-close" @click="closeViewModal">
             <i class="fas fa-times"></i>
@@ -309,11 +388,11 @@
             
             <div class="detail-grid">
               <div class="detail-item">
-                <label>Amount Requested</label>
+                <label>Amount</label>
                 <div class="detail-value amount">{{ formatCurrency(selectedAdvance.amount) }}</div>
               </div>
               <div class="detail-item">
-                <label>Repayment Tenure</label>
+                <label>Tenure</label>
                 <div class="detail-value">{{ selectedAdvance.repayment_months || 1 }} months</div>
               </div>
               <div class="detail-item">
@@ -321,15 +400,15 @@
                 <div class="detail-value">{{ formatCurrency((selectedAdvance.amount || 0) / (selectedAdvance.repayment_months || 1)) }}</div>
               </div>
               <div class="detail-item">
-                <label>Date Submitted</label>
+                <label>Date</label>
                 <div class="detail-value">{{ formatDate(selectedAdvance.created_at) }}</div>
               </div>
               <div class="detail-item full-width">
-                <label>Reason / Purpose</label>
+                <label>Reason</label>
                 <div class="detail-value reason-text">{{ selectedAdvance.reason || '—' }}</div>
               </div>
               <div class="detail-item full-width" v-if="selectedAdvance.admin_notes">
-                <label>HR / Admin Notes</label>
+                <label>Notes</label>
                 <div class="detail-value notes-text">{{ selectedAdvance.admin_notes }}</div>
               </div>
             </div>
@@ -338,9 +417,9 @@
       </div>
     </div>
 
-    <!-- Add Note Modal -->
+    <!-- Add Note Modal - Mobile Optimized -->
     <div v-if="showNoteModal" class="modal-overlay" @click.self="closeNoteModal">
-      <div class="modal-container note-modal">
+      <div class="modal-container note-modal" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-title">
             <i class="fas fa-sticky-note"></i>
@@ -361,10 +440,10 @@
           <textarea 
             v-model="noteText" 
             class="note-textarea"
-            placeholder="Add internal notes about this request (reason for approval/rejection, repayment schedule, etc.)..."
+            placeholder="Add internal notes about this request..."
             rows="5"
           ></textarea>
-          <div class="form-actions">
+          <div class="form-actions" :class="{ 'mobile-actions': isMobile }">
             <button class="btn-cancel" @click="closeNoteModal">Cancel</button>
             <button class="btn-submit" @click="saveNote" :disabled="savingNote">
               <i v-if="savingNote" class="fas fa-spinner fa-spin"></i>
@@ -391,6 +470,7 @@ export default {
     return {
       isMobile: false,
       isSidebarVisible: true,
+      filtersVisible: true,
       loadingRequests: true,
       salaryAdvances: [],
       employees: [],
@@ -459,6 +539,20 @@ export default {
     }
   },
   methods: {
+    toggleFilters() {
+      if (this.isMobile) {
+        this.filtersVisible = !this.filtersVisible
+      }
+    },
+    filterByStatus(status) {
+      this.statusFilter = this.statusFilter === status ? 'all' : status
+    },
+    getStatusIcon(status) {
+      const s = (status || '').toLowerCase()
+      if (s === 'approved' || s === 'completed') return 'fas fa-check-circle'
+      if (s === 'rejected') return 'fas fa-times-circle'
+      return 'fas fa-clock'
+    },
     getInitials(name) {
       if (!name) return '👤'
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -495,9 +589,8 @@ export default {
     },
     getStatusClass(status) {
       const s = (status || '').toLowerCase()
-      if (s === 'approved') return 'approved'
+      if (s === 'approved' || s === 'completed') return 'completed'
       if (s === 'rejected') return 'rejected'
-      if (s === 'completed') return 'completed'
       return 'pending'
     },
     formatDate(dateStr) {
@@ -520,6 +613,7 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         })
         toastSuccess(`Salary advance status updated to ${advance.status}`)
+        this.fetchSalaryAdvances()
       } catch (err) {
         console.error('Failed to update status:', err)
         toastError('Failed to update status')
@@ -626,6 +720,7 @@ export default {
         this.salaryAdvances.unshift(newAdvance)
         toastSuccess(`Salary advance request submitted for ${employee?.name}`)
         this.closeModal()
+        this.fetchSalaryAdvances()
       } catch (err) {
         console.error('Submission error:', err)
         toastError(err.response?.data?.message || 'Failed to submit request')
@@ -636,27 +731,32 @@ export default {
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
-    },
-   async fetchSalaryAdvances() {
-  this.loadingRequests = true
-  const token = localStorage.getItem('token')
-
-  try {
-    const res = await axios.get('/api/salary-advances/my', {
-      headers: {
-        Authorization: `Bearer ${token}`
+      if (this.isMobile) {
+        this.filtersVisible = false
+      } else {
+        this.filtersVisible = true
       }
-    })
+    },
+    async fetchSalaryAdvances() {
+      this.loadingRequests = true
+      const token = localStorage.getItem('token')
 
-    this.salaryAdvances = res.data
+      try {
+        const res = await axios.get('/api/salary-advances/my', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
 
-  } catch (err) {
-    console.error(err)
-    toastError('Failed to load salary advances')
-  } finally {
-    this.loadingRequests = false
-  }
-},
+        this.salaryAdvances = res.data
+
+      } catch (err) {
+        console.error(err)
+        toastError('Failed to load salary advances')
+      } finally {
+        this.loadingRequests = false
+      }
+    },
     async fetchEmployees() {
       const token = localStorage.getItem('token')
       try {
@@ -668,6 +768,9 @@ export default {
         console.error('Employees fetch error:', err)
         toastError('Failed to load employees list')
       }
+    },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible
     }
   },
   mounted() {
@@ -725,6 +828,59 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
+}
+
+/* Content Header */
 .content-header-modern {
   display: flex;
   justify-content: space-between;
@@ -768,27 +924,7 @@ export default {
   margin-top: 4px;
 }
 
-.new-request-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background: var(--primary);
-  border: none;
-  border-radius: 40px;
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.new-request-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-}
-
+/* Stats Bar */
 .stats-bar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -804,6 +940,7 @@ export default {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 20px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-card:hover {
@@ -811,20 +948,14 @@ export default {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
+.stat-card:active {
+  transform: scale(0.97);
+}
+
 .stat-card.pending {
   background: linear-gradient(135deg, #fef3c7, #fde68a);
 }
 .stat-card.pending i { color: #d97706; }
-
-.stat-card.approved {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-}
-.stat-card.approved i { color: #065f46; }
-
-.stat-card.rejected {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-}
-.stat-card.rejected i { color: #991b1b; }
 
 .stat-card.completed {
   background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
@@ -851,11 +982,50 @@ export default {
   color: #6b7280;
 }
 
+/* Filter Bar */
 .filter-bar {
   display: flex;
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+}
+
+.filter-toggle-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.filter-toggle-btn .fa-chevron-down {
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle-btn .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
+.filter-group-container {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  transition: all 0.3s ease;
+}
+
+.filter-group-container.filters-hidden {
+  display: none;
 }
 
 .filter-group {
@@ -885,6 +1055,11 @@ export default {
   cursor: pointer;
 }
 
+.search-group {
+  flex: 1;
+}
+
+/* Loading */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -908,6 +1083,7 @@ export default {
   to { transform: rotate(360deg); }
 }
 
+/* Table Wrapper */
 .table-wrapper-premium {
   background: white;
   border-radius: 20px;
@@ -932,8 +1108,23 @@ export default {
   color: #1a1a2e;
 }
 
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .section-title-modern i {
   color: var(--primary-color);
+}
+
+.record-count-mobile {
+  background: var(--primary);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 4px;
 }
 
 .table-info {
@@ -951,6 +1142,7 @@ export default {
 .request-table-premium {
   width: 100%;
   border-collapse: collapse;
+  min-width: 1000px;
 }
 
 .request-table-premium thead {
@@ -986,6 +1178,190 @@ export default {
   width: 50px;
 }
 
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.advance-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-employee {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.card-employee-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-name {
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 14px;
+}
+
+.card-email {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.status-badge-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge-mobile.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-mobile.completed {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-value {
+  font-size: 13px;
+  color: var(--dark);
+  text-align: right;
+}
+
+.card-value.amount {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.reason-text {
+  max-width: 60%;
+  word-break: break-word;
+  text-align: right;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.card-action-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.card-action-btn.view {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.card-action-btn.view:active {
+  transform: scale(0.97);
+}
+
+.card-action-btn.note {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.card-action-btn.note:active {
+  transform: scale(0.97);
+}
+
+/* Empty State Mobile */
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile h4 {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.empty-state-mobile p {
+  font-size: 13px;
+}
+
+/* Desktop Table Styles */
 .employee-cell {
   min-width: 200px;
 }
@@ -1104,16 +1480,6 @@ export default {
   color: #d97706;
 }
 
-.status-dropdown-premium.approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-dropdown-premium.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
 .status-dropdown-premium.completed {
   background: #e0e7ff;
   color: #4338ca;
@@ -1156,6 +1522,7 @@ export default {
   transform: translateY(-2px);
 }
 
+/* Empty State */
 .empty-state-premium {
   text-align: center;
   padding: 60px 20px;
@@ -1204,6 +1571,13 @@ export default {
   animation: modalFadeIn 0.3s ease;
 }
 
+.modal-container.mobile-modal {
+  border-radius: 20px;
+  max-width: 100%;
+  width: 95%;
+  margin: 16px;
+}
+
 @keyframes modalFadeIn {
   from {
     opacity: 0;
@@ -1223,6 +1597,11 @@ export default {
   border-bottom: 1px solid #e5e7eb;
   background: linear-gradient(135deg, #f8fafc, #fff);
   border-radius: 28px 28px 0 0;
+}
+
+.mobile-modal .modal-header {
+  border-radius: 20px 20px 0 0;
+  padding: 16px 20px;
 }
 
 .modal-title {
@@ -1245,6 +1624,10 @@ export default {
   color: #1a1a2e;
 }
 
+.mobile-modal .modal-title h3 {
+  font-size: 17px;
+}
+
 .modal-close {
   background: #f3f4f6;
   border: none;
@@ -1265,10 +1648,18 @@ export default {
   padding: 24px;
 }
 
+.mobile-modal .modal-body {
+  padding: 16px;
+}
+
 .salary-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.mobile-modal .salary-form {
+  gap: 16px;
 }
 
 .form-group {
@@ -1290,6 +1681,11 @@ export default {
 
 .form-row {
   display: flex;
+  gap: 16px;
+}
+
+.mobile-modal .form-row {
+  flex-direction: column;
   gap: 16px;
 }
 
@@ -1319,6 +1715,13 @@ export default {
   font-size: 14px;
   font-family: inherit;
   transition: all 0.3s ease;
+}
+
+.mobile-modal .form-input,
+.mobile-modal .form-select,
+.mobile-modal .form-textarea {
+  font-size: 16px;
+  padding: 10px 14px;
 }
 
 .form-input {
@@ -1351,6 +1754,10 @@ export default {
   margin-top: 4px;
 }
 
+.mobile-modal .employee-preview {
+  padding: 12px;
+}
+
 .preview-avatar {
   width: 48px;
   height: 48px;
@@ -1379,6 +1786,7 @@ export default {
   gap: 16px;
   font-size: 12px;
   color: #6b7280;
+  flex-wrap: wrap;
 }
 
 .preview-details i {
@@ -1392,6 +1800,11 @@ export default {
   display: flex;
   justify-content: space-between;
   gap: 16px;
+}
+
+.mobile-modal .emi-preview {
+  flex-direction: column;
+  gap: 8px;
 }
 
 .emi-item {
@@ -1416,6 +1829,11 @@ export default {
   gap: 12px;
   justify-content: flex-end;
   margin-top: 8px;
+}
+
+.form-actions.mobile-actions {
+  flex-direction: column-reverse;
+  gap: 10px;
 }
 
 .btn-cancel {
@@ -1456,11 +1874,22 @@ export default {
   cursor: not-allowed;
 }
 
+.mobile-actions .btn-cancel,
+.mobile-actions .btn-submit {
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+}
+
 /* Detail View Modal */
 .detail-card {
   background: #fafbfc;
   border-radius: 20px;
   overflow: hidden;
+}
+
+.mobile-modal .detail-card {
+  border-radius: 16px;
 }
 
 .detail-header {
@@ -1470,6 +1899,13 @@ export default {
   padding: 20px;
   background: white;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.mobile-modal .detail-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
 }
 
 .detail-employee {
@@ -1513,16 +1949,6 @@ export default {
   color: #d97706;
 }
 
-.detail-status.approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.detail-status.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
 .detail-status.completed {
   background: #e0e7ff;
   color: #4338ca;
@@ -1535,6 +1961,11 @@ export default {
   padding: 20px;
 }
 
+.mobile-modal .detail-grid {
+  grid-template-columns: 1fr;
+  padding: 16px;
+}
+
 .detail-item {
   display: flex;
   flex-direction: column;
@@ -1543,6 +1974,10 @@ export default {
 
 .detail-item.full-width {
   grid-column: span 2;
+}
+
+.mobile-modal .detail-item.full-width {
+  grid-column: span 1;
 }
 
 .detail-item label {
@@ -1583,6 +2018,10 @@ export default {
   margin-bottom: 20px;
 }
 
+.mobile-modal .note-employee-info {
+  padding: 12px;
+}
+
 .note-avatar {
   width: 44px;
   height: 44px;
@@ -1617,6 +2056,11 @@ export default {
   transition: all 0.3s ease;
 }
 
+.mobile-modal .note-textarea {
+  font-size: 16px;
+  padding: 12px;
+}
+
 .note-textarea:focus {
   outline: none;
   border-color: var(--primary-color);
@@ -1624,43 +2068,35 @@ export default {
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .request-table-premium th,
-  .request-table-premium td {
-    padding: 12px;
-  }
-  
-  .reason-cell {
-    max-width: 150px;
-  }
-}
-
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .new-request-btn {
-    align-self: flex-start;
+    display: none;
   }
 
   .stats-bar {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
   }
 
   .stat-card {
     padding: 12px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
   }
 
   .stat-card i {
@@ -1671,52 +2107,160 @@ export default {
     font-size: 20px;
   }
 
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .request-table-premium {
-    min-width: 900px;
-  }
-
-  .form-row {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .modal-container {
-    width: 95%;
-    margin: 16px;
-  }
-
-  .emi-preview {
-    flex-direction: column;
-  }
-
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-item.full-width {
-    grid-column: span 1;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-bar {
-    grid-template-columns: 1fr;
+  .stat-label {
+    font-size: 10px;
   }
 
   .filter-bar {
     flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-toggle-btn {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-group-container {
+    flex-direction: column;
+    gap: 10px;
   }
 
   .filter-group {
     width: 100%;
+    padding: 8px 12px;
   }
 
   .filter-input, .filter-select {
     flex: 1;
+    min-width: auto;
+  }
+
+  .search-group {
+    display: flex;
+  }
+
+  .table-container {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: flex;
+  }
+
+  .table-header {
+    padding: 12px 16px;
+  }
+
+  .section-title-modern {
+    font-size: 14px;
+  }
+
+  .table-info {
+    display: none;
+  }
+
+  .modal-container {
+    max-width: 100%;
+    width: 95%;
+    margin: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card i {
+    font-size: 18px;
+  }
+
+  .stat-value {
+    font-size: 17px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .advance-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .card-value {
+    text-align: left;
+    width: 100%;
+  }
+
+  .reason-text {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .filter-toggle-btn {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    flex-direction: row;
+    text-align: left;
+  }
+}
+
+/* Utility Classes */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
   }
 }
 </style>

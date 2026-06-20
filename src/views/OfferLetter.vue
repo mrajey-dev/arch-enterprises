@@ -4,7 +4,20 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <div class="content-header-modern">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+          
+          <div class="mobile-title">
+            <i class="fas fa-file-signature"></i>
+            <span>Offer Letter</span>
+          </div>
+          <button class="mobile-view-btn" @click="openOfferModal">
+            <i class="fas fa-folder-open"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-file-signature"></i>
@@ -20,7 +33,7 @@
           </button>
         </div>
 
-        <!-- Form Section -->
+        <!-- Form Section - Mobile Optimized -->
         <div class="form-card-premium">
           <div class="section-title-modern">
             <i class="fas fa-edit"></i>
@@ -86,25 +99,25 @@
             </div>
           </div>
 
-          <div class="form-actions">
+          <div class="form-actions" :class="{ 'mobile-actions': isMobile }">
             <button class="btn-submit-premium" @click="generatePDF">
-              <i class="fas fa-file-pdf"></i> Save as PDF
+              <i class="fas fa-file-pdf"></i> <span class="btn-text">Save as PDF</span>
             </button>
           </div>
         </div>
 
-        <!-- Offer Letter Preview -->
+        <!-- Offer Letter Preview - Mobile Optimized -->
         <div class="preview-section">
           <div class="section-title-modern">
             <i class="fas fa-eye"></i>
             <span>Offer Letter Preview</span>
           </div>
 
-          <div ref="offerLetter" class="offer-letter-premium">
+          <div ref="offerLetter" class="offer-letter-premium" :class="{ 'mobile-preview': isMobile }">
             <div class="top-accent"></div>
 
-            <div class="letter-header">
-              <img :src="logo" class="company-logo" alt="Logo" />
+            <div class="letter-header" :class="{ 'mobile-header': isMobile }">
+              <img :src="logo" class="company-logo" :class="{ 'mobile-logo': isMobile }" alt="Logo" />
               <div class="company-details">
                 <h2>Arch Enterprises</h2>
                 <p>Plot No. 49, Prathamesh, Khutwadnagar, Nashik, Maharashtra - 422008</p>
@@ -118,7 +131,7 @@
               <span>Date:</span> {{ todayDate }}
             </div>
 
-            <div class="letter-body">
+            <div class="letter-body" :class="{ 'mobile-body': isMobile }">
               <p><strong>To,</strong><br /><strong>{{ form.name || '________' }}</strong></p>
               <p class="subject"><strong>Subject: Offer of Employment</strong></p>
               <p>Dear <strong>{{ form.name || '________' }}</strong>,</p>
@@ -130,7 +143,7 @@
               <p>We look forward to welcoming you to our team and wish you a successful and rewarding career with us.</p>
             </div>
 
-            <div class="signature-section">
+            <div class="signature-section" :class="{ 'mobile-signature': isMobile }">
               <div class="sign-block">
                 <div class="sign-line"></div>
                 <strong>DIRECTOR</strong>
@@ -141,7 +154,7 @@
               </div>
             </div>
 
-            <div class="letter-footer">
+            <div class="letter-footer" :class="{ 'mobile-footer': isMobile }">
               <div class="footer-divider"></div>
               <div class="footer-content">
                 <div class="footer-left">
@@ -161,10 +174,10 @@
           </div>
         </div>
 
-        <!-- Offer List Modal -->
+        <!-- Offer List Modal - Mobile Optimized -->
         <transition name="modal-fade">
           <div v-if="showOfferModal" class="modal-backdrop" @click.self="closeOfferModal">
-            <div class="premium-modal large-modal" @click.stop>
+            <div class="premium-modal large-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
               <div class="modal-decoration"></div>
               
               <div class="modal-header-premium">
@@ -172,8 +185,8 @@
                   <i class="fas fa-folder-open"></i>
                 </div>
                 <div class="header-text">
-                  <h2>All Offer Letters</h2>
-                  <p>Manage and view generated offers</p>
+                  <h2>{{ isMobile ? 'Offer Letters' : 'All Offer Letters' }}</h2>
+                  <p>{{ isMobile ? 'Manage generated offers' : 'Manage and view generated offers' }}</p>
                 </div>
                 <button class="close-btn-premium" @click="closeOfferModal">
                   <i class="fas fa-times"></i>
@@ -181,7 +194,52 @@
               </div>
 
               <div class="modal-body-premium">
-                <div class="table-wrapper-premium">
+                <!-- Mobile Card View -->
+                <div class="mobile-offer-cards" v-if="isMobile">
+                  <div v-for="offer in offerLetters" :key="offer.id" class="offer-card">
+                    <div class="offer-card-header">
+                      <div class="employee-info">
+                        <div class="employee-avatar-small">
+                          {{ getInitials(offer.name) }}
+                        </div>
+                        <div>
+                          <div class="offer-name">{{ offer.name }}</div>
+                          <span class="offer-position">{{ offer.position }}</span>
+                        </div>
+                      </div>
+                      <span class="work-type-badge-mobile">{{ offer.work_type }}</span>
+                    </div>
+                    <div class="offer-card-body">
+                      <div class="offer-row">
+                        <span class="offer-label">Stipend</span>
+                        <span class="offer-value amount">₹{{ formatAmount(offer.salary) }}</span>
+                      </div>
+                      <div class="offer-row">
+                        <span class="offer-label">Joining Date</span>
+                        <span class="offer-value">{{ formatDateSimple(offer.joining_date) }}</span>
+                      </div>
+                    </div>
+                    <div class="offer-card-actions">
+                      <button class="offer-action-btn view" @click="viewLetter(offer)">
+                        <i class="fas fa-eye"></i> View
+                      </button>
+                      <button class="offer-action-btn edit" @click="editLetter(offer)">
+                        <i class="fas fa-edit"></i> Edit
+                      </button>
+                      <button class="offer-action-btn delete" @click="deleteLetter(offer.id)">
+                        <i class="fas fa-trash-alt"></i> Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-if="offerLetters.length === 0" class="empty-state-mobile">
+                    <i class="fas fa-inbox"></i>
+                    <p>No offer letters found</p>
+                  </div>
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="table-wrapper-premium" v-else>
                   <table class="offer-table-premium">
                     <thead>
                       <tr>
@@ -234,7 +292,7 @@
                 </div>
               </div>
 
-              <div class="modal-footer-premium">
+              <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
                 <button class="btn-submit-premium" @click="closeOfferModal">
                   <i class="fas fa-check"></i> Close
                 </button>
@@ -368,6 +426,9 @@ export default {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
     },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible
+    },
     async generatePDF() {
       if (!this.form.name || !this.form.position || !this.form.salary || !this.form.probationPeriod) {
         toastWarning("Please fill all required fields")
@@ -453,7 +514,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -463,7 +523,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .content {
@@ -472,6 +531,58 @@ export default {
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-view-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-view-btn:active {
+  transform: scale(0.9);
 }
 
 /* Content Header */
@@ -628,6 +739,10 @@ export default {
   justify-content: flex-end;
 }
 
+.form-actions.mobile-actions {
+  justify-content: stretch;
+}
+
 .btn-submit-premium {
   padding: 12px 28px;
   background: var(--primary);
@@ -641,6 +756,11 @@ export default {
   align-items: center;
   gap: 8px;
   font-size: 14px;
+}
+
+.mobile-actions .btn-submit-premium {
+  width: 100%;
+  justify-content: center;
 }
 
 .btn-submit-premium:hover {
@@ -666,6 +786,11 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
+.offer-letter-premium.mobile-preview {
+  padding: 20px 16px;
+  border-radius: 16px;
+}
+
 .top-accent {
   position: absolute;
   top: 0;
@@ -683,9 +808,19 @@ export default {
   margin-bottom: 20px;
 }
 
+.letter-header.mobile-header {
+  flex-direction: column;
+  text-align: center;
+  gap: 12px;
+}
+
 .company-logo {
   width: 80px;
   height: auto;
+}
+
+.company-logo.mobile-logo {
+  width: 60px;
 }
 
 .company-details h2 {
@@ -720,6 +855,11 @@ export default {
   color: #374151;
 }
 
+.letter-body.mobile-body {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
 .letter-body p {
   margin-bottom: 14px;
   text-align: justify;
@@ -736,9 +876,19 @@ export default {
   margin-top: 50px;
 }
 
+.signature-section.mobile-signature {
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
 .sign-block {
   text-align: center;
   width: 40%;
+}
+
+.mobile-signature .sign-block {
+  width: 80%;
 }
 
 .sign-line {
@@ -753,6 +903,10 @@ export default {
   color: #6b7280;
 }
 
+.letter-footer.mobile-footer {
+  font-size: 9px;
+}
+
 .footer-divider {
   height: 1px;
   background: linear-gradient(90deg, #e5e7eb, transparent);
@@ -762,6 +916,16 @@ export default {
 .footer-content {
   display: flex;
   justify-content: space-between;
+}
+
+.mobile-footer .footer-content {
+  flex-direction: column;
+  text-align: center;
+  gap: 8px;
+}
+
+.mobile-footer .footer-right {
+  text-align: center;
 }
 
 .footer-left p,
@@ -810,6 +974,12 @@ export default {
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
+.premium-modal.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+  max-height: 90vh;
+}
+
 .premium-modal.large-modal {
   max-width: 1100px;
 }
@@ -843,6 +1013,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-header-premium {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .header-icon-premium {
   width: 52px;
   height: 52px;
@@ -853,6 +1028,12 @@ export default {
   justify-content: center;
   color: white;
   font-size: 24px;
+}
+
+.mobile-modal .header-icon-premium {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
 }
 
 .header-text {
@@ -866,10 +1047,18 @@ export default {
   color: #1a1a2e;
 }
 
+.mobile-modal .header-text h2 {
+  font-size: 18px;
+}
+
 .header-text p {
   font-size: 13px;
   color: #6b7280;
   margin: 4px 0 0;
+}
+
+.mobile-modal .header-text p {
+  font-size: 12px;
 }
 
 .close-btn-premium {
@@ -885,7 +1074,6 @@ export default {
 }
 
 .close-btn-premium:hover {
-  /* background: var(--danger); */
   color: rgb(13, 3, 3);
   transform: rotate(90deg);
 }
@@ -895,6 +1083,10 @@ export default {
   overflow-y: auto;
   padding: 24px;
   background: #fafbfc;
+}
+
+.mobile-modal .modal-body-premium {
+  padding: 16px;
 }
 
 .modal-body-premium::-webkit-scrollbar {
@@ -917,6 +1109,141 @@ export default {
   padding: 20px 28px;
   background: white;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.modal-footer-premium.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
+}
+
+/* Mobile Offer Cards */
+.mobile-offer-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.offer-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.offer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.employee-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.employee-avatar-small {
+  width: 36px;
+  height: 36px;
+  background: var(--primary);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.offer-name {
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 14px;
+}
+
+.offer-position {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.work-type-badge-mobile {
+  padding: 2px 10px;
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.offer-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.offer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.offer-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.offer-value {
+  font-size: 13px;
+  color: var(--dark);
+}
+
+.offer-value.amount {
+  font-weight: 600;
+  color: var(--success);
+}
+
+.offer-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.offer-action-btn {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.offer-action-btn:active {
+  transform: scale(0.97);
+}
+
+.offer-action-btn.view {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.offer-action-btn.edit {
+  background: #d1fae5;
+  color: var(--success);
+}
+
+.offer-action-btn.delete {
+  background: #fee2e2;
+  color: var(--danger);
 }
 
 /* Table Styles */
@@ -1014,7 +1341,6 @@ export default {
 }
 
 .action-icon.view:hover {
-  /* background: var(--primary-color); */
   color: rgb(13, 8, 8);
 }
 
@@ -1024,7 +1350,6 @@ export default {
 }
 
 .action-icon.edit:hover {
-  /* background: var(--success); */
   color: rgb(4, 2, 2);
 }
 
@@ -1034,7 +1359,6 @@ export default {
 }
 
 .action-icon.delete:hover {
-  /* background: var(--danger); */
   color: rgb(8, 4, 4);
 }
 
@@ -1048,6 +1372,22 @@ export default {
   font-size: 48px;
   margin-bottom: 12px;
   opacity: 0.5;
+}
+
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile p {
+  font-size: 14px;
 }
 
 /* Modal Fade */
@@ -1075,56 +1415,53 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .register-btn-modern {
-    justify-content: center;
+    display: none;
   }
 
   .form-grid-premium {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .offer-letter-premium {
-    padding: 20px;
+  .form-card-premium {
+    padding: 16px;
   }
 
-  .letter-header {
-    flex-direction: column;
-    text-align: center;
+  .field-wrapper input,
+  .field-wrapper select {
+    font-size: 16px;
   }
 
-  .signature-section {
-    flex-direction: column;
-    align-items: center;
-    gap: 30px;
+  .btn-text {
+    display: inline;
   }
 
-  .sign-block {
-    width: 80%;
+  .offer-letter-premium.mobile-preview {
+    padding: 16px;
   }
 
-  .footer-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
+  .mobile-offer-cards {
+    display: flex;
   }
 
-  .footer-right {
-    text-align: center;
+  .table-wrapper-premium {
+    display: none;
   }
 
-  .premium-modal {
+  .premium-modal.mobile-modal {
     max-width: 95%;
   }
 
@@ -1139,14 +1476,104 @@ export default {
   .modal-footer-premium {
     padding: 16px 20px;
   }
+}
 
-  .offer-table-premium {
-    font-size: 11px;
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
   }
 
-  .offer-table-premium th,
-  .offer-table-premium td {
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-view-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .form-card-premium {
+    padding: 12px;
+  }
+
+  .form-grid-premium {
+    gap: 12px;
+  }
+
+  .field-wrapper input,
+  .field-wrapper select {
+    font-size: 15px;
+    padding: 10px 12px 10px 36px;
+  }
+
+  .btn-submit-premium {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .offer-letter-premium.mobile-preview {
+    padding: 12px;
+  }
+
+  .company-logo.mobile-logo {
+    width: 50px;
+  }
+
+  .company-details h2 {
+    font-size: 18px;
+  }
+
+  .company-details p {
+    font-size: 9px;
+  }
+
+  .letter-body.mobile-body {
+    font-size: 10px;
+  }
+
+  .offer-card {
+    padding: 12px;
+  }
+
+  .offer-card-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .offer-card-actions {
+    flex-direction: column;
+  }
+
+  .offer-action-btn {
     padding: 8px;
+  }
+
+  .empty-state-mobile i {
+    font-size: 40px;
+  }
+
+  .empty-state-mobile p {
+    font-size: 13px;
+  }
+
+  .modal-header-premium {
+    padding: 12px 16px;
+  }
+
+  .modal-header-premium h2 {
+    font-size: 16px;
+  }
+
+  .header-icon-premium {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
 }
 </style>

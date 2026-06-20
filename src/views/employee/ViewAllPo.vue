@@ -5,8 +5,21 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="sop-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <div class="content-header-modern">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-file-invoice"></i>
+            <span>Purchase Orders</span>
+          </div>
+          <button class="mobile-add-btn" @click="openCreateModal">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
+          <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-file-invoice"></i>
             </div>
@@ -21,94 +34,104 @@
           </div>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('all')">
             <i class="fas fa-file-invoice-dollar"></i>
             <div class="stat-info">
               <span class="stat-value">{{ totalPOValue }}</span>
-              <span class="stat-label">Total PO Value</span>
+              <span class="stat-label">Total Value</span>
             </div>
           </div>
-          <div class="stat-card">
-  <i class="fas fa-check-circle"></i>
-  <div class="stat-info">
-    <span class="stat-value">{{ totalRecords - statusCounts.Closed }}</span>
-    <span class="stat-label">Open</span>
-  </div>
-</div>
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('Open')">
+            <i class="fas fa-check-circle"></i>
+            <div class="stat-info">
+              <span class="stat-value">{{ statusCounts.Open }}</span>
+              <span class="stat-label">Open</span>
+            </div>
+          </div>
+          <div class="stat-card" @click="filterByStatus('Closed')">
             <i class="fas fa-clock"></i>
             <div class="stat-info">
               <span class="stat-value">{{ statusCounts.Closed }}</span>
               <span class="stat-label">Closed</span>
             </div>
           </div>
-          <!-- Removed Add New PO button -->
         </div>
 
-        <!-- Time Filter Toggle -->
+        <!-- Time Filter Toggle - Mobile Optimized -->
         <div class="time-filter-section">
           <button 
             :class="['time-filter-btn', { active: timeFilter === 'default' }]" 
             @click="setTimeFilter('default')"
           >
-            <i class="fas fa-calendar-alt"></i> From April {{ currentYear }}
+            <i class="fas fa-calendar-alt"></i> <span class="btn-text">From April {{ currentYear }}</span>
           </button>
           <button 
             :class="['time-filter-btn', { active: timeFilter === 'all' }]" 
             @click="setTimeFilter('all')"
           >
-            <i class="fas fa-history"></i> All Time
+            <i class="fas fa-history"></i> <span class="btn-text">All Time</span>
           </button>
         </div>
 
-        <!-- Search and Filters -->
+        <!-- Search and Filters - Mobile Optimized -->
         <div class="filters-section">
-          <div class="search-wrapper">
-            <i class="fas fa-search"></i>
-            <input 
-              type="text" 
-              v-model="searchQuery" 
-              placeholder="Search by PO number, company, or recommended by..."
-              class="search-input"
-            />
-          </div>
-          <div class="filter-group">
-            <select v-model="statusFilter" class="filter-select">
-              <option value="">All Status</option>
-              <option value="Open">Open</option>
-              <option value="Closed">Closed</option>
-            </select>
-            <select v-model="typeFilter" class="filter-select">
-              <option value="">All Types</option>
-              <option value="Supply">Supply</option>
-              <option value="Service">Service</option>
-              <option value="AMC">AMC</option>
-            </select>
-            <input type="month" v-model="dateFilter" class="filter-date" placeholder="Filter by month" />
-            <button class="clear-filters-btn" @click="clearFilters" v-if="isFilterActive">
-              <i class="fas fa-times"></i> Clear
-            </button>
+          <button class="filter-toggle-btn" @click="toggleFilters">
+            <i class="fas fa-sliders-h"></i>
+            <span>{{ isMobile ? 'Filters' : 'Filter' }}</span>
+            <i class="fas fa-chevron-down" :class="{ 'rotated': filtersVisible }"></i>
+          </button>
+          
+          <div class="filter-group-container" :class="{ 'filters-hidden': !filtersVisible }">
+            <div class="search-wrapper">
+              <i class="fas fa-search"></i>
+              <input 
+                type="text" 
+                v-model="searchQuery" 
+                placeholder="Search by PO number, company..."
+                class="search-input"
+              />
+            </div>
+            <div class="filter-group">
+              <select v-model="statusFilter" class="filter-select">
+                <option value="">All Status</option>
+                <option value="Open">Open</option>
+                <option value="Closed">Closed</option>
+              </select>
+              <select v-model="typeFilter" class="filter-select">
+                <option value="">All Types</option>
+                <option value="Supply">Supply</option>
+                <option value="Service">Service</option>
+                <option value="AMC">AMC</option>
+              </select>
+              <input type="month" v-model="dateFilter" class="filter-date" placeholder="Filter by month" />
+              <button class="clear-filters-btn" @click="clearFilters" v-if="isFilterActive">
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- View Toggle -->
+        <!-- View Toggle - Mobile Optimized -->
         <div class="section-title-modern">
-          <i class="fas fa-list"></i>
-          <span>Purchase Orders List</span>
+          <div class="title-left">
+            <i class="fas fa-list"></i>
+            <span>Purchase Orders</span>
+            <span class="record-count-mobile" v-if="isMobile">{{ filteredPOs.length }}</span>
+          </div>
           <div class="view-toggle">
             <button 
               :class="['view-btn', { active: viewMode === 'table' }]" 
               @click="viewMode = 'table'"
             >
-              <i class="fas fa-table"></i> Table View
+              <i class="fas fa-table"></i>
             </button>
             <button 
               :class="['view-btn', { active: viewMode === 'grid' }]" 
               @click="viewMode = 'grid'"
             >
-              <i class="fas fa-th"></i> Grid View
+              <i class="fas fa-th"></i>
             </button>
           </div>
         </div>
@@ -119,15 +142,14 @@
             <table class="po-data-table">
               <thead>
                 <tr>
-                  <th @click="sortBy('po_number')">PO Number <i class="fas fa-sort"></i></th>
-                  <th @click="sortBy('po_type')">PO Type <i class="fas fa-sort"></i></th>
-                  <th @click="sortBy('company_name')">Company Name <i class="fas fa-sort"></i></th>
-                  <th @click="sortBy('value_of_po')">Value of PO <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('po_number')">PO # <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('po_type')">Type <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('company_name')">Company <i class="fas fa-sort"></i></th>
+                  <th @click="sortBy('value_of_po')">Value <i class="fas fa-sort"></i></th>
                   <th @click="sortBy('date')">Date <i class="fas fa-sort"></i></th>
-                  <th @click="sortBy('recommended_by')">Recommended By <i class="fas fa-sort"></i></th>
-                  <th>PO File</th>
+                  <th @click="sortBy('recommended_by')">Recommended <i class="fas fa-sort"></i></th>
+                  <th>PDF</th>
                   <th @click="sortBy('status')">Status <i class="fas fa-sort"></i></th>
-                  <th @click="sortBy('closed_date')">Closed Date <i class="fas fa-sort"></i></th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -150,7 +172,7 @@
                       @click="downloadPOFile(po)"
                       title="Download PDF"
                     >
-                      <i class="fas fa-file-pdf"></i> View PDF
+                      <i class="fas fa-file-pdf"></i>
                     </button>
                     <span v-else class="no-file">-</span>
                   </td>
@@ -160,9 +182,8 @@
                       {{ po.status || 'Open' }}
                     </span>
                   </td>
-                  <td>{{ formatDate(po.closed_date) || '-' }}</td>
                   <td class="table-actions">
-                    <button class="action-icon view-icon" @click="viewPODetails(po)" title="View Details">
+                    <button class="action-icon view-icon" @click="viewPODetails(po)" title="View">
                       <i class="fas fa-eye"></i>
                     </button>
                     <button class="action-icon edit-icon" @click="editPO(po)" title="Edit">
@@ -176,7 +197,7 @@
               </tbody>
               <tbody v-else>
                 <tr>
-                  <td colspan="10" class="empty-table-row">
+                  <td colspan="9" class="empty-table-row">
                     <div class="empty-table-content">
                       <i class="fas fa-file-invoice"></i>
                       <p>No purchase orders found</p>
@@ -192,43 +213,39 @@
             <button @click="currentPage--" :disabled="currentPage === 1" class="page-btn">
               <i class="fas fa-chevron-left"></i>
             </button>
-            <span class="page-info">Page {{ currentPage }} of {{ totalPages }} ({{ filteredPOs.length }} records)</span>
+            <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
             <button @click="currentPage++" :disabled="currentPage === totalPages" class="page-btn">
               <i class="fas fa-chevron-right"></i>
             </button>
           </div>
         </div>
 
-        <!-- Grid View -->
+        <!-- Grid View - Mobile Optimized -->
         <div v-else-if="viewMode === 'grid' && filteredPOs.length" class="pos-grid-premium">
-          <div v-for="po in paginatedGridPOs" :key="po.id" class="po-card-premium">
+          <div v-for="po in paginatedGridPOs" :key="po.id" class="po-card-premium" :class="{ 'mobile-card': isMobile }">
             <div class="card-accent" :class="po.status === 'Open' ? 'status-open' : 'status-closed'"></div>
-            <div class="po-header">
+            <div class="po-header" :class="{ 'mobile-header': isMobile }">
               <div class="po-icon" :class="getTypeIconClass(po.po_type)">
                 <i :class="getTypeIcon(po.po_type)"></i>
               </div>
               <div class="po-title-wrap">
                 <h3>{{ po.po_number || '-' }}</h3>
                 <div class="po-meta">
-                  <span><i class="fas fa-building"></i> {{ po.company_name || '-' }}</span>
-                  <span><i class="fas fa-user"></i> {{ po.recommended_by || '-' }}</span>
+                  <span><i class="fas fa-building"></i> {{ truncateText(po.company_name, isMobile ? 15 : 25) }}</span>
                 </div>
               </div>
-              <div class="po-actions">
-                <button class="action-btn view-btn" @click="viewPODetails(po)" title="View Details">
+              <div class="po-actions" :class="{ 'mobile-actions': isMobile }">
+                <button class="action-btn view-btn" @click="viewPODetails(po)" title="View">
                   <i class="fas fa-eye"></i>
                 </button>
-                <button class="action-btn download-btn" @click="downloadPOFile(po)" title="Download PDF" v-if="po.po_file_path">
+                <button class="action-btn download-btn" @click="downloadPOFile(po)" title="Download" v-if="po.po_file_path">
                   <i class="fas fa-download"></i>
-                </button>
-                <button class="action-btn edit-btn" @click="editPO(po)" title="Edit">
-                  <i class="fas fa-edit"></i>
                 </button>
               </div>
             </div>
-            <div class="po-details">
+            <div class="po-details" :class="{ 'mobile-details': isMobile }">
               <div class="detail-row">
-                <span class="detail-label">PO Type:</span>
+                <span class="detail-label">Type:</span>
                 <span class="detail-value">{{ formatType(po.po_type) }}</span>
               </div>
               <div class="detail-row">
@@ -239,17 +256,25 @@
                 <span class="detail-label">Date:</span>
                 <span class="detail-value">{{ formatDate(po.date) }}</span>
               </div>
-              <div class="detail-row" v-if="po.closed_date">
-                <span class="detail-label">Closed:</span>
-                <span class="detail-value">{{ formatDate(po.closed_date) }}</span>
+              <div class="detail-row" v-if="po.recommended_by">
+                <span class="detail-label">Recommended:</span>
+                <span class="detail-value">{{ po.recommended_by }}</span>
               </div>
             </div>
-            <div class="po-footer">
+            <div class="po-footer" :class="{ 'mobile-footer': isMobile }">
               <div class="badge-status" :class="po.status === 'Open' ? 'badge-open' : 'badge-closed'">
                 <i :class="po.status === 'Open' ? 'fas fa-circle' : 'fas fa-check-circle'"></i> {{ po.status || 'Open' }}
               </div>
               <div class="badge-type" v-if="po.po_type">
                 <i :class="getTypeIcon(po.po_type)"></i> {{ formatType(po.po_type) }}
+              </div>
+              <div class="card-actions">
+                <button class="action-btn edit-btn" @click="editPO(po)" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" @click="deletePO(po)" title="Delete">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -258,7 +283,7 @@
             <button @click="gridCurrentPage--" :disabled="gridCurrentPage === 1" class="page-btn">
               <i class="fas fa-chevron-left"></i>
             </button>
-            <span class="page-info">Page {{ gridCurrentPage }} of {{ gridTotalPages }} ({{ filteredPOs.length }} records)</span>
+            <span class="page-info">Page {{ gridCurrentPage }} of {{ gridTotalPages }}</span>
             <button @click="gridCurrentPage++" :disabled="gridCurrentPage === gridTotalPages" class="page-btn">
               <i class="fas fa-chevron-right"></i>
             </button>
@@ -266,7 +291,7 @@
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="viewMode === 'grid' && !filteredPOs.length" class="empty-state-premium">
+        <div v-else-if="viewMode === 'grid' && !filteredPOs.length" class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
           <i class="fas fa-file-invoice"></i>
           <h4>No Purchase Orders Found</h4>
           <p>No purchase orders match your criteria</p>
@@ -274,29 +299,29 @@
       </div>
     </div>
 
-    <!-- Create/Edit PO Modal -->
+    <!-- Create/Edit PO Modal - Mobile Optimized -->
     <div v-if="showUploadModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-container-premium modal-large">
+      <div class="modal-container-premium modal-large" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-icon">
             <i class="fas fa-file-invoice-dollar"></i>
           </div>
-          <h2>{{ editingPO ? 'Edit Purchase Order' : 'Create New Purchase Order' }}</h2>
+          <h2>{{ editingPO ? 'Edit PO' : 'New PO' }}</h2>
           <button class="close-modal" @click="closeModal">&times;</button>
         </div>
         <div class="modal-body">
           <form @submit.prevent="handlePOSubmit">
-            <div class="form-row">
+            <div class="form-row" :class="{ 'mobile-row': isMobile }">
               <div class="form-group half">
                 <label><i class="fas fa-hashtag"></i> PO Number *</label>
                 <input type="text" v-model="formPO.po_number" placeholder="e.g., GC000082" required>
               </div>
               <div class="form-group half">
-                <label><i class="fas fa-building"></i> Company Name *</label>
+                <label><i class="fas fa-building"></i> Company *</label>
                 <input type="text" v-model="formPO.company_name" placeholder="Company name" required>
               </div>
             </div>
-            <div class="form-row">
+            <div class="form-row" :class="{ 'mobile-row': isMobile }">
               <div class="form-group half">
                 <label><i class="fas fa-tag"></i> PO Type *</label>
                 <select v-model="formPO.po_type" required>
@@ -307,21 +332,21 @@
                 </select>
               </div>
               <div class="form-group half">
-                <label><i class="fas fa-dollar-sign"></i> Value of PO *</label>
+                <label><i class="fas fa-dollar-sign"></i> Value *</label>
                 <input type="number" step="0.01" v-model="formPO.value_of_po" placeholder="0.00" required>
               </div>
             </div>
-            <div class="form-row">
+            <div class="form-row" :class="{ 'mobile-row': isMobile }">
               <div class="form-group half">
                 <label><i class="fas fa-calendar"></i> Date *</label>
                 <input type="date" v-model="formPO.date" required>
               </div>
               <div class="form-group half">
-                <label><i class="fas fa-user-check"></i> Recommended By *</label>
+                <label><i class="fas fa-user-check"></i> Recommended *</label>
                 <input type="text" v-model="formPO.recommended_by" placeholder="Person name" required>
               </div>
             </div>
-            <div class="form-row">
+            <div class="form-row" :class="{ 'mobile-row': isMobile }" v-if="!isMobile">
               <div class="form-group half">
                 <label><i class="fas fa-flag-checkered"></i> Status</label>
                 <select v-model="formPO.status">
@@ -335,22 +360,22 @@
               </div>
             </div>
             <div class="form-group">
-              <label><i class="fas fa-file-pdf"></i> PO PDF File (optional, max 15MB)</label>
-              <div class="file-dropzone" :class="{ 'drag-over': dragActive }" @dragover.prevent="dragActive = true" @dragleave.prevent="dragActive = false" @drop.prevent="handleFileDrop">
+              <label><i class="fas fa-file-pdf"></i> PDF File (optional, max 15MB)</label>
+              <div class="file-dropzone" :class="{ 'drag-over': dragActive, 'mobile-dropzone': isMobile }" @dragover.prevent="dragActive = true" @dragleave.prevent="dragActive = false" @drop.prevent="handleFileDrop">
                 <input type="file" ref="fileInput" @change="handleFileSelect" accept=".pdf" style="display: none">
                 <i class="fas fa-cloud-upload-alt fa-2x"></i>
-                <p v-if="!selectedFile && !formPO.po_file_path">Drag & drop PDF here or <span class="browse-link" @click="triggerFileInput">browse</span></p>
-                <p v-else-if="selectedFile" class="file-selected"><i class="fas fa-check-circle"></i> {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</p>
-                <p v-else class="file-selected"><i class="fas fa-file-pdf"></i> Current file: {{ formPO.po_file_path }}</p>
+                <p v-if="!selectedFile && !formPO.po_file_path">Drop PDF here or <span class="browse-link" @click="triggerFileInput">browse</span></p>
+                <p v-else-if="selectedFile" class="file-selected"><i class="fas fa-check-circle"></i> {{ selectedFile.name }}</p>
+                <p v-else class="file-selected"><i class="fas fa-file-pdf"></i> Current file</p>
               </div>
               <div v-if="uploadError" class="error-message">{{ uploadError }}</div>
             </div>
-            <div class="modal-actions">
+            <div class="modal-actions" :class="{ 'mobile-actions': isMobile }">
               <button type="button" class="btn-secondary" @click="closeModal">Cancel</button>
               <button type="submit" class="btn-primary" :disabled="submitting">
                 <i v-if="submitting" class="fas fa-spinner fa-pulse"></i>
                 <i v-else class="fas fa-save"></i>
-                {{ submitting ? 'Saving...' : (editingPO ? 'Update PO' : 'Create PO') }}
+                {{ submitting ? 'Saving...' : (editingPO ? 'Update' : 'Create') }}
               </button>
             </div>
           </form>
@@ -358,18 +383,18 @@
       </div>
     </div>
 
-    <!-- View Details Modal -->
+    <!-- View Details Modal - Mobile Optimized -->
     <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">
-      <div class="modal-container-premium modal-detail">
+      <div class="modal-container-premium modal-detail" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-icon">
             <i class="fas fa-file-invoice"></i>
           </div>
-          <h2>PO Details: {{ selectedPO?.po_number }}</h2>
+          <h2>{{ isMobile ? 'PO Details' : 'PO Details: ' + (selectedPO?.po_number || '') }}</h2>
           <button class="close-modal" @click="showViewModal = false">&times;</button>
         </div>
         <div class="modal-body" v-if="selectedPO">
-          <div class="detail-grid">
+          <div class="detail-grid" :class="{ 'mobile-grid': isMobile }">
             <div class="detail-item">
               <label>PO Number</label>
               <p>{{ selectedPO.po_number || '-' }}</p>
@@ -379,7 +404,7 @@
               <p>{{ formatType(selectedPO.po_type) }}</p>
             </div>
             <div class="detail-item">
-              <label>Company Name</label>
+              <label>Company</label>
               <p>{{ selectedPO.company_name || '-' }}</p>
             </div>
             <div class="detail-item">
@@ -391,25 +416,21 @@
               <p>{{ formatDate(selectedPO.date) }}</p>
             </div>
             <div class="detail-item">
-              <label>Recommended By</label>
+              <label>Recommended</label>
               <p>{{ selectedPO.recommended_by || '-' }}</p>
             </div>
             <div class="detail-item">
               <label>Status</label>
               <p><span :class="['status-badge-detail', selectedPO.status === 'Open' ? 'badge-open' : 'badge-closed']">{{ selectedPO.status || 'Open' }}</span></p>
             </div>
-            <div class="detail-item">
+            <div class="detail-item" v-if="!isMobile">
               <label>Closed Date</label>
               <p>{{ formatDate(selectedPO.closed_date) || '-' }}</p>
-            </div>
-            <div class="detail-item">
-              <label>PDF File Path</label>
-              <p class="file-path">{{ selectedPO.po_file_path || '-' }}</p>
             </div>
           </div>
           <div class="detail-actions" v-if="selectedPO.po_file_path">
             <button class="btn-primary" @click="downloadPOFile(selectedPO)">
-              <i class="fas fa-download"></i> Download PO Document
+              <i class="fas fa-download"></i> Download PDF
             </button>
           </div>
         </div>
@@ -441,6 +462,7 @@ export default {
       storageBaseUrl: 'https://employees.archenterprises.co.in/backend/storage/app/public/uploads/',
       isMobile: false,
       isSidebarVisible: true,
+      filtersVisible: true,
       pos: [],
       filteredPOs: [],
       totalRecords: 0,
@@ -468,7 +490,7 @@ export default {
       statusFilter: '',
       typeFilter: '',
       dateFilter: '',
-      timeFilter: 'default', // 'default' or 'all'
+      timeFilter: 'default',
       viewMode: 'table',
       sortField: 'date',
       sortDirection: 'desc',
@@ -489,7 +511,7 @@ export default {
     },
     statusCounts() {
       return {
-        Open: this.filteredPOs.filter(po => po.status === 'Open').length,
+        Open: this.filteredPOs.filter(po => po.status !== 'Closed').length,
         Closed: this.filteredPOs.filter(po => po.status === 'Closed').length
       };
     },
@@ -544,11 +566,30 @@ export default {
     window.removeEventListener('resize', this.checkIfMobile);
   },
   methods: {
+    toggleFilters() {
+      if (this.isMobile) {
+        this.filtersVisible = !this.filtersVisible;
+      }
+    },
+    filterByStatus(status) {
+      this.statusFilter = this.statusFilter === status ? '' : status;
+    },
+    truncateText(text, length) {
+      if (!text) return '';
+      return text.length > length ? text.substring(0, length) + '...' : text;
+    },
+    openCreateModal() {
+      this.resetForm();
+      this.showUploadModal = true;
+    },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
       if (this.isMobile) {
+        this.filtersVisible = false;
         this.viewMode = 'grid';
+      } else {
+        this.filtersVisible = true;
       }
     },
     toggleSidebar() {
@@ -590,12 +631,9 @@ export default {
           this.totalRecords = 0;
         }
         
-        // Filter to show only Open POs by default
         this.pos = allPOs;
         
         console.log(`✅ Successfully loaded ${this.totalRecords} PO records from add_po table`);
-        console.log(`Open POs: ${allPOs.filter(po => po.status === 'Open').length}`);
-        console.log(`Closed POs: ${allPOs.filter(po => po.status === 'Closed').length}`);
         
         if (this.totalRecords === 0) {
           toastError("No PO records found in add_po table");
@@ -623,10 +661,6 @@ export default {
       cleanPath = cleanPath.replace(/^\/+/, '');
       
       const finalUrl = `${this.storageBaseUrl}${cleanPath}`;
-      
-      console.log("Original path:", po.po_file_path);
-      console.log("Cleaned path:", cleanPath);
-      console.log("Final URL:", finalUrl);
       
       return finalUrl;
     },
@@ -685,76 +719,67 @@ export default {
       return classes[type] || '';
     },
     
-applyFilters() {
-  let filtered = [...this.pos];
-  
-  // Step 1: Apply time filter (date range and status together)
-  if (this.timeFilter === 'default' && !this.dateFilter) {
-    // "From April current year" means: 
-    // Show ALL POs (both Open and Closed) that are from April onwards
-    const aprilDate = new Date(this.currentYear, 3, 1); // April 1st
-    filtered = filtered.filter(po => {
-      if (!po.date) return false;
-      const poDate = new Date(po.date);
-      return poDate >= aprilDate;
-    });
-  }
-  // For 'all' time, show ALL POs regardless of date (no date filtering)
-  
-  // Step 2: Apply search filter
-  if (this.searchQuery) {
-    const query = this.searchQuery.toLowerCase();
-    filtered = filtered.filter(po => 
-      (po.po_number && po.po_number.toLowerCase().includes(query)) ||
-      (po.company_name && po.company_name.toLowerCase().includes(query)) ||
-      (po.recommended_by && po.recommended_by.toLowerCase().includes(query))
-    );
-  }
-  
-  // Step 3: Apply status filter (if user selected specific status)
-  if (this.statusFilter) {
-    filtered = filtered.filter(po => po.status === this.statusFilter);
-  }
-  
-  // Step 4: Apply type filter
-  if (this.typeFilter) {
-    filtered = filtered.filter(po => po.po_type === this.typeFilter);
-  }
-  
-  // Step 5: Apply month filter (if user selected specific month)
-  if (this.dateFilter) {
-    const [year, month] = this.dateFilter.split('-');
-    filtered = filtered.filter(po => {
-      if (!po.date) return false;
-      const poDate = new Date(po.date);
-      return poDate.getFullYear() === parseInt(year) && 
-             (poDate.getMonth() + 1) === parseInt(month);
-    });
-  }
-  
-  // Step 6: Sorting
-  filtered.sort((a, b) => {
-    let valA = a[this.sortField];
-    let valB = b[this.sortField];
-    
-    if (this.sortField === 'value_of_po') {
-      valA = parseFloat(valA) || 0;
-      valB = parseFloat(valB) || 0;
-    } else if (this.sortField === 'date' || this.sortField === 'closed_date') {
-      valA = new Date(valA) || 0;
-      valB = new Date(valB) || 0;
-    } else {
-      valA = (valA || '').toLowerCase();
-      valB = (valB || '').toLowerCase();
-    }
-    
-    if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
-    if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-  
-  this.filteredPOs = filtered;
-},
+    applyFilters() {
+      let filtered = [...this.pos];
+      
+      if (this.timeFilter === 'default' && !this.dateFilter) {
+        const aprilDate = new Date(this.currentYear, 3, 1);
+        filtered = filtered.filter(po => {
+          if (!po.date) return false;
+          const poDate = new Date(po.date);
+          return poDate >= aprilDate;
+        });
+      }
+      
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(po => 
+          (po.po_number && po.po_number.toLowerCase().includes(query)) ||
+          (po.company_name && po.company_name.toLowerCase().includes(query)) ||
+          (po.recommended_by && po.recommended_by.toLowerCase().includes(query))
+        );
+      }
+      
+      if (this.statusFilter) {
+        filtered = filtered.filter(po => po.status === this.statusFilter);
+      }
+      
+      if (this.typeFilter) {
+        filtered = filtered.filter(po => po.po_type === this.typeFilter);
+      }
+      
+      if (this.dateFilter) {
+        const [year, month] = this.dateFilter.split('-');
+        filtered = filtered.filter(po => {
+          if (!po.date) return false;
+          const poDate = new Date(po.date);
+          return poDate.getFullYear() === parseInt(year) && 
+                 (poDate.getMonth() + 1) === parseInt(month);
+        });
+      }
+      
+      filtered.sort((a, b) => {
+        let valA = a[this.sortField];
+        let valB = b[this.sortField];
+        
+        if (this.sortField === 'value_of_po') {
+          valA = parseFloat(valA) || 0;
+          valB = parseFloat(valB) || 0;
+        } else if (this.sortField === 'date' || this.sortField === 'closed_date') {
+          valA = new Date(valA) || 0;
+          valB = new Date(valB) || 0;
+        } else {
+          valA = (valA || '').toLowerCase();
+          valB = (valB || '').toLowerCase();
+        }
+        
+        if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+      
+      this.filteredPOs = filtered;
+    },
     
     sortBy(field) {
       if (this.sortField === field) {
@@ -946,7 +971,6 @@ applyFilters() {
 </script>
 
 <style scoped>
-/* Keep all existing styles from previous responses */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 :root {
@@ -986,6 +1010,58 @@ applyFilters() {
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark, #1a1a2e);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark, #1a1a2e);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
 }
 
 /* Header styles */
@@ -1044,45 +1120,6 @@ applyFilters() {
   color: var(--primary-color);
 }
 
-/* Time Filter Section */
-.time-filter-section {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  justify-content: flex-end;
-}
-
-.time-filter-btn {
-  padding: 10px 20px;
-  background: #f1f5f9;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #475569;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.time-filter-btn i {
-  font-size: 14px;
-}
-
-.time-filter-btn:hover {
-  background: #e2e8f0;
-  transform: translateY(-1px);
-}
-
-.time-filter-btn.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(42, 82, 152, 0.2);
-}
-
 /* Stats Bar */
 .stats-bar {
   display: grid;
@@ -1099,6 +1136,11 @@ applyFilters() {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 20px;
   transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-card:active {
+  transform: scale(0.97);
 }
 
 .stat-card i {
@@ -1122,6 +1164,48 @@ applyFilters() {
   color: #6b7280;
 }
 
+/* Time Filter Section */
+.time-filter-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  justify-content: flex-end;
+}
+
+.time-filter-btn {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-filter-btn:active {
+  transform: scale(0.97);
+}
+
+.time-filter-btn i {
+  font-size: 14px;
+}
+
+.time-filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(42, 82, 152, 0.2);
+}
+
+.btn-text {
+  display: inline;
+}
+
 /* Filters Section */
 .filters-section {
   background: #f8fafc;
@@ -1129,6 +1213,44 @@ applyFilters() {
   padding: 20px;
   margin-bottom: 28px;
   border: 1px solid #e2e8f0;
+}
+
+.filter-toggle-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark, #1a1a2e);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.filter-toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.filter-toggle-btn .fa-chevron-down {
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle-btn .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
+.filter-group-container {
+  transition: all 0.3s ease;
+}
+
+.filter-group-container.filters-hidden {
+  display: none;
 }
 
 .search-wrapper {
@@ -1207,6 +1329,21 @@ applyFilters() {
   justify-content: space-between;
 }
 
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.record-count-mobile {
+  background: var(--primary);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
 .view-toggle {
   display: flex;
   gap: 6px;
@@ -1223,12 +1360,16 @@ applyFilters() {
   font-size: 13px;
 }
 
+.view-btn:active {
+  transform: scale(0.95);
+}
+
 .view-btn.active {
   background: var(--primary);
   color: #ffffff;
 }
 
-/* Table View - keep all existing table styles */
+/* Table View */
 .table-wrapper {
   overflow-x: auto;
   border-radius: 16px;
@@ -1294,8 +1435,6 @@ applyFilters() {
 
 /* Type Badges */
 .type-badge {
-  color: #870000;
-    background: #e6e1e1;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1393,6 +1532,10 @@ applyFilters() {
   font-size: 13px;
 }
 
+.action-icon:active {
+  transform: scale(0.9);
+}
+
 .view-icon {
   color: #3b82f6;
 }
@@ -1488,6 +1631,10 @@ applyFilters() {
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
+.po-card-premium.mobile-card {
+  border-radius: 16px;
+}
+
 .po-card-premium:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.12);
@@ -1511,6 +1658,11 @@ applyFilters() {
   align-items: flex-start;
   background: #fafbfc;
   border-bottom: 1px solid #eef2f6;
+}
+
+.po-header.mobile-header {
+  padding: 14px;
+  flex-wrap: wrap;
 }
 
 .po-icon {
@@ -1554,6 +1706,10 @@ applyFilters() {
   gap: 8px;
 }
 
+.po-actions.mobile-actions {
+  gap: 4px;
+}
+
 .action-btn {
   background: transparent;
   border: none;
@@ -1565,17 +1721,27 @@ applyFilters() {
   font-size: 14px;
 }
 
+.action-btn:active {
+  transform: scale(0.9);
+}
+
 .view-btn { color: #3b82f6; }
 .view-btn:hover { background: #e0e7ff; }
 .download-btn { color: #10b981; }
 .download-btn:hover { background: #d1fae5; }
 .edit-btn { color: #f59e0b; }
 .edit-btn:hover { background: #fed7aa; }
+.delete-btn { color: #ef4444; }
+.delete-btn:hover { background: #fee2e2; }
 
 .po-details {
   padding: 14px 18px;
   background: #ffffff;
   border-bottom: 1px solid #f0f0f0;
+}
+
+.po-details.mobile-details {
+  padding: 12px 14px;
 }
 
 .detail-row {
@@ -1604,6 +1770,13 @@ applyFilters() {
   display: flex;
   gap: 12px;
   background: #f9fafb;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.po-footer.mobile-footer {
+  padding: 10px 14px;
+  gap: 8px;
 }
 
 .badge-status, .badge-type {
@@ -1620,6 +1793,12 @@ applyFilters() {
   color: #1e40af;
 }
 
+.card-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
 /* Empty State Premium */
 .empty-state-premium {
   text-align: center;
@@ -1629,13 +1808,21 @@ applyFilters() {
   border-radius: 28px;
 }
 
+.empty-state-premium.empty-mobile {
+  padding: 40px 16px;
+}
+
 .empty-state-premium i {
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
 }
 
-/* Modals - keep existing modal styles */
+.empty-mobile .empty-state-premium i {
+  font-size: 48px;
+}
+
+/* Modals */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1659,6 +1846,11 @@ applyFilters() {
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 
+.modal-container-premium.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+}
+
 .modal-container-premium.modal-large {
   max-width: 700px;
 }
@@ -1674,6 +1866,18 @@ applyFilters() {
   padding: 20px 24px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.mobile-modal .modal-header {
+  padding: 16px 20px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+}
+
+.mobile-modal .modal-header h2 {
+  font-size: 17px;
 }
 
 .modal-icon {
@@ -1693,6 +1897,10 @@ applyFilters() {
   padding: 24px;
 }
 
+.mobile-modal .modal-body {
+  padding: 16px;
+}
+
 .form-group {
   margin-bottom: 18px;
 }
@@ -1706,6 +1914,10 @@ applyFilters() {
   font-size: 14px;
 }
 
+.mobile-modal .form-group label {
+  font-size: 13px;
+}
+
 .form-group input, .form-group select, .form-group textarea {
   width: 100%;
   padding: 12px 14px;
@@ -1713,6 +1925,12 @@ applyFilters() {
   border-radius: 14px;
   font-family: inherit;
   transition: 0.2s;
+}
+
+.mobile-modal .form-group input,
+.mobile-modal .form-group select {
+  font-size: 16px;
+  padding: 10px 12px;
 }
 
 .form-group input:focus, .form-group select:focus {
@@ -1726,6 +1944,11 @@ applyFilters() {
   gap: 14px;
 }
 
+.form-row.mobile-row {
+  flex-direction: column;
+  gap: 0;
+}
+
 .half { flex: 1; }
 
 .file-dropzone {
@@ -1736,6 +1959,10 @@ applyFilters() {
   background: #fafcff;
   transition: 0.2s;
   cursor: pointer;
+}
+
+.file-dropzone.mobile-dropzone {
+  padding: 20px;
 }
 
 .drag-over {
@@ -1764,6 +1991,16 @@ applyFilters() {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
+}
+
+.modal-actions.mobile-actions {
+  flex-direction: column;
+}
+
+.modal-actions.mobile-actions button {
+  width: 100%;
+  justify-content: center;
+  padding: 14px;
 }
 
 .btn-primary, .btn-secondary {
@@ -1795,6 +2032,11 @@ applyFilters() {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+}
+
+.detail-grid.mobile-grid {
+  grid-template-columns: 1fr;
+  gap: 14px;
 }
 
 .detail-item {
@@ -1871,15 +2113,208 @@ applyFilters() {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .main-content { flex-direction: column; padding: 12px; }
-  .sop-board-premium { padding: 16px; }
-  .pos-grid-premium { grid-template-columns: 1fr; }
-  .form-row { flex-direction: column; gap: 0; }
-  .detail-grid { grid-template-columns: 1fr; }
-  .filter-group { flex-direction: column; align-items: stretch; }
-  .filter-select, .filter-date { width: 100%; }
-  .view-btn { padding: 6px 12px; font-size: 12px; }
-  .time-filter-section { flex-direction: column; }
-  .time-filter-btn { width: 100%; justify-content: center; }
+  .main-content { 
+    flex-direction: column; 
+    padding: 12px; 
+  }
+  .sop-board-premium { 
+    padding: 16px; 
+    border-radius: 20px;
+  }
+  
+  .mobile-header {
+    display: flex;
+  }
+  
+  .content-header-modern {
+    display: none;
+  }
+  
+  .stats-bar {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+  
+  .stat-card i {
+    font-size: 24px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+  }
+  
+  .time-filter-section {
+    flex-direction: column;
+  }
+  
+  .time-filter-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .btn-text {
+    display: inline;
+  }
+  
+  .filter-toggle-btn {
+    display: flex;
+  }
+  
+  .filter-group-container.filters-hidden {
+    display: none;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-select, .filter-date {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .pos-grid-premium {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .view-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .table-wrapper {
+    display: none;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+  }
+  
+  .page-info {
+    font-size: 12px;
+  }
+  
+  .modal-container-premium.mobile-modal {
+    max-width: 95%;
+    border-radius: 20px;
+  }
+  
+  .form-row.mobile-row {
+    flex-direction: column;
+  }
+  
+  .detail-grid.mobile-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-actions.mobile-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+  
+  .sop-board-premium {
+    padding: 12px;
+    border-radius: 16px;
+  }
+  
+  .mobile-title {
+    font-size: 16px;
+  }
+  
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 10px;
+  }
+  
+  .stat-card i {
+    font-size: 20px;
+  }
+  
+  .stat-value {
+    font-size: 14px;
+  }
+  
+  .time-filter-btn {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+  
+  .po-card-premium.mobile-card {
+    border-radius: 14px;
+  }
+  
+  .po-header.mobile-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .po-actions.mobile-actions {
+    justify-content: flex-end;
+  }
+  
+  .po-details.mobile-details {
+    padding: 10px 12px;
+  }
+  
+  .detail-row {
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .po-footer.mobile-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .card-actions {
+    margin-left: 0;
+    justify-content: center;
+  }
+  
+  .empty-state-premium i {
+    font-size: 40px;
+  }
+  
+  .empty-state-premium h4 {
+    font-size: 15px;
+  }
+  
+  .search-input {
+    font-size: 15px;
+    padding: 10px 12px 10px 36px;
+  }
+  
+  .file-dropzone.mobile-dropzone {
+    padding: 16px;
+    font-size: 13px;
+  }
 }
 </style>

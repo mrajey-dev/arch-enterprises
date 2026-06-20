@@ -5,7 +5,20 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <div class="content-header-modern">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-bullhorn"></i>
+            <span>Announcements</span>
+          </div>
+          <button class="mobile-add-btn" @click="scrollToForm">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-bullhorn"></i>
@@ -17,14 +30,17 @@
           </div>
         </div>
 
-        <!-- Create Announcement Card -->
-        <div class="create-card">
-          <div class="section-title-modern">
-            <i class="fas fa-pen-alt"></i>
-            <span>{{ editingId ? 'Edit Announcement' : 'Create New Announcement' }}</span>
+        <!-- Create Announcement Card - Mobile Optimized -->
+        <div class="create-card" ref="formRef">
+          <div class="section-title-modern" @click="toggleForm">
+            <div class="title-left">
+              <i class="fas fa-pen-alt"></i>
+              <span>{{ editingId ? 'Edit Announcement' : 'Create New Announcement' }}</span>
+            </div>
+            <i class="fas fa-chevron-down form-toggle" :class="{ 'rotated': formVisible }"></i>
           </div>
           
-          <form @submit.prevent="addAnnouncement" class="announcement-form-premium">
+          <form @submit.prevent="addAnnouncement" class="announcement-form-premium" :class="{ 'form-hidden': !formVisible }">
             <div class="form-field">
               <div class="field-wrapper">
                 <i class="fas fa-heading field-icon"></i>
@@ -49,11 +65,11 @@
               </div>
             </div>
 
-            <div class="form-actions">
+            <div class="form-actions" :class="{ 'mobile-actions': isMobile }">
               <button type="submit" class="btn-submit-premium" :disabled="isLoading">
                 <span v-if="!isLoading">
                   <i :class="editingId ? 'fas fa-save' : 'fas fa-paper-plane'"></i>
-                  {{ editingId ? 'Update Announcement' : 'Post Announcement' }}
+                  {{ editingId ? 'Update' : 'Post' }}
                 </span>
                 <span v-else>
                   <i class="fas fa-spinner fa-spin"></i>
@@ -61,7 +77,7 @@
                 </span>
               </button>
               <button v-if="editingId" type="button" class="btn-cancel-premium" @click="cancelEdit">
-                <i class="fas fa-times"></i> Cancel Edit
+                <i class="fas fa-times"></i> Cancel
               </button>
             </div>
           </form>
@@ -70,32 +86,36 @@
         <!-- Announcements List -->
         <div class="announcements-section">
           <div class="section-title-modern">
-            <i class="fas fa-list-alt"></i>
-            <span>Recent Announcements</span>
-            <span class="badge-count">{{ announcements.length }}</span>
+            <div class="title-left">
+              <i class="fas fa-list-alt"></i>
+              <span>Recent Announcements</span>
+              <span class="badge-count">{{ announcements.length }}</span>
+            </div>
           </div>
 
+          <!-- Mobile Card View -->
           <div class="announcements-grid">
             <div
               v-for="announcement in displayedAnnouncements"
               :key="announcement.id"
               class="announcement-card-premium"
+              :class="{ 'mobile-card': isMobile }"
             >
               <div class="card-accent"></div>
-              <div class="card-header-premium">
+              <div class="card-header-premium" :class="{ 'mobile-header': isMobile }">
                 <div class="header-info">
-                  <div class="announcement-icon">
+                  <div class="announcement-icon" :class="{ 'mobile-icon': isMobile }">
                     <i class="fas fa-bullhorn"></i>
                   </div>
                   <div>
-                    <h3>{{ announcement.title }}</h3>
+                    <h3 :class="{ 'mobile-title': isMobile }">{{ announcement.title }}</h3>
                     <div class="meta-info">
                       <i class="fas fa-calendar-alt"></i>
                       <span>{{ announcement.date }}</span>
                     </div>
                   </div>
                 </div>
-                <div class="card-actions-premium">
+                <div class="card-actions-premium" :class="{ 'mobile-actions': isMobile }">
                   <button class="action-icon edit" @click="editAnnouncement(announcement.id)" title="Edit">
                     <i class="fas fa-edit"></i>
                   </button>
@@ -104,20 +124,20 @@
                   </button>
                 </div>
               </div>
-              <div class="card-body-premium">
+              <div class="card-body-premium" :class="{ 'mobile-body': isMobile }">
                 <p>{{ announcement.message }}</p>
               </div>
             </div>
 
-            <!-- Empty State -->
-            <div v-if="announcements.length === 0" class="empty-state-premium">
+            <!-- Empty State - Mobile Optimized -->
+            <div v-if="announcements.length === 0" class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
               <i class="fas fa-bullhorn"></i>
               <h4>No Announcements Yet</h4>
               <p>Create your first announcement to share with your team</p>
             </div>
           </div>
 
-          <!-- Show More Button -->
+          <!-- Show More Button - Mobile Optimized -->
           <div v-if="announcements.length > 1" class="more-btn-wrapper">
             <button class="more-btn-premium" @click="showAll = !showAll">
               <i :class="showAll ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
@@ -137,6 +157,7 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
+  toastInfo,
 } from "@/utils/toast.js";
 
 export default {
@@ -147,6 +168,7 @@ export default {
   data() {
     return {
       showAll: false,
+      formVisible: true,
       isLoading: false,
       editingId: null,
       isMobile: false,
@@ -180,6 +202,17 @@ export default {
     window.removeEventListener('resize', this.checkIfMobile);
   },
   methods: {
+    toggleForm() {
+      if (this.isMobile) {
+        this.formVisible = !this.formVisible;
+      }
+    },
+    scrollToForm() {
+      this.$refs.formRef?.scrollIntoView({ behavior: 'smooth' });
+      if (this.isMobile) {
+        this.formVisible = true;
+      }
+    },
     cancelEdit() {
       this.editingId = null;
       this.newAnnouncement = { title: "", message: "" };
@@ -192,8 +225,11 @@ export default {
         this.newAnnouncement.title = announcement.title;
         this.newAnnouncement.message = announcement.message;
         this.editingId = announcement.id;
+        if (this.isMobile) {
+          this.formVisible = true;
+        }
         // Scroll to form
-        document.querySelector('.create-card')?.scrollIntoView({ behavior: 'smooth' });
+        this.$refs.formRef?.scrollIntoView({ behavior: 'smooth' });
       }
     },
 
@@ -213,6 +249,11 @@ export default {
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
+      if (this.isMobile) {
+        this.formVisible = false;
+      } else {
+        this.formVisible = true;
+      }
     },
 
     toggleSidebar() {
@@ -274,6 +315,9 @@ export default {
         }
 
         this.newAnnouncement = { title: "", message: "" };
+        if (this.isMobile) {
+          this.formVisible = false;
+        }
         await this.fetchAnnouncements();
       } catch (error) {
         console.error('Error:', error.response?.data || error.message);
@@ -320,7 +364,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -329,7 +372,6 @@ export default {
   display: flex;
   gap: 20px;
   padding: 20px;
-   ;
   min-height: 100vh;
 }
 
@@ -339,6 +381,58 @@ export default {
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
 }
 
 /* Content Header */
@@ -389,6 +483,7 @@ export default {
 .section-title-modern {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   margin-bottom: 20px;
   padding-bottom: 12px;
@@ -396,11 +491,26 @@ export default {
   font-weight: 600;
   font-size: 16px;
   color: #1a1a2e;
+  cursor: pointer;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .section-title-modern i {
   color: var(--primary-color);
   font-size: 18px;
+}
+
+.form-toggle {
+  transition: transform 0.3s ease;
+}
+
+.form-toggle.rotated {
+  transform: rotate(180deg);
 }
 
 .badge-count {
@@ -427,6 +537,11 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.announcement-form-premium.form-hidden {
+  display: none;
 }
 
 .form-field {
@@ -482,6 +597,10 @@ export default {
   justify-content: flex-end;
 }
 
+.form-actions.mobile-actions {
+  flex-direction: column;
+}
+
 .btn-submit-premium {
   padding: 12px 28px;
   background: var(--primary);
@@ -507,6 +626,11 @@ export default {
   cursor: not-allowed;
 }
 
+.mobile-actions .btn-submit-premium {
+  width: 100%;
+  justify-content: center;
+}
+
 .btn-cancel-premium {
   padding: 12px 28px;
   background: #f3f4f6;
@@ -524,6 +648,11 @@ export default {
 
 .btn-cancel-premium:hover {
   background: #e5e7eb;
+}
+
+.mobile-actions .btn-cancel-premium {
+  width: 100%;
+  justify-content: center;
 }
 
 /* Announcements Section */
@@ -547,9 +676,17 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
+.announcement-card-premium.mobile-card {
+  border-radius: 16px;
+}
+
 .announcement-card-premium:hover {
   transform: translateY(-3px);
   box-shadow: 0 15px 30px -12px rgba(0, 0, 0, 0.15);
+}
+
+.announcement-card-premium.mobile-card:active {
+  transform: scale(0.99);
 }
 
 .card-accent {
@@ -567,6 +704,12 @@ export default {
   align-items: flex-start;
   padding: 20px 24px 12px 24px;
   background: #fafbfc;
+}
+
+.card-header-premium.mobile-header {
+  padding: 14px 16px 10px 16px;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .header-info {
@@ -588,11 +731,21 @@ export default {
   font-size: 20px;
 }
 
+.announcement-icon.mobile-icon {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+}
+
 .header-info h3 {
   font-size: 18px;
   font-weight: 700;
   color: #1a1a2e;
   margin: 0 0 4px 0;
+}
+
+.header-info h3.mobile-title {
+  font-size: 15px;
 }
 
 .meta-info {
@@ -612,6 +765,10 @@ export default {
   gap: 8px;
 }
 
+.card-actions-premium.mobile-actions {
+  align-self: flex-end;
+}
+
 .action-icon {
   width: 34px;
   height: 34px;
@@ -624,14 +781,18 @@ export default {
   justify-content: center;
 }
 
+.mobile-actions .action-icon {
+  width: 40px;
+  height: 40px;
+}
+
 .action-icon.edit {
   background: #e0e7ff;
   color: var(--primary-color);
 }
 
-.action-icon.edit:hover {
-  color: rgb(12, 2, 2);
-  transform: translateY(-2px);
+.action-icon.edit:active {
+  transform: scale(0.9);
 }
 
 .action-icon.delete {
@@ -639,13 +800,16 @@ export default {
   color: var(--danger);
 }
 
-.action-icon.delete:hover {
-  color: rgb(12, 1, 1);
-  transform: translateY(-2px);
+.action-icon.delete:active {
+  transform: scale(0.9);
 }
 
 .card-body-premium {
   padding: 16px 24px 24px 24px;
+}
+
+.card-body-premium.mobile-body {
+  padding: 12px 16px 16px 16px;
 }
 
 .card-body-premium p {
@@ -653,6 +817,10 @@ export default {
   line-height: 1.6;
   color: #4b5563;
   white-space: pre-line;
+}
+
+.mobile-body p {
+  font-size: 13px;
 }
 
 /* More Button */
@@ -681,6 +849,10 @@ export default {
   transform: translateY(-1px);
 }
 
+.more-btn-premium:active {
+  transform: scale(0.97);
+}
+
 /* Empty State */
 .empty-state-premium {
   text-align: center;
@@ -690,10 +862,18 @@ export default {
   border-radius: 20px;
 }
 
+.empty-state-premium.empty-mobile {
+  padding: 40px 16px;
+}
+
 .empty-state-premium i {
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
+}
+
+.empty-mobile .empty-state-premium i {
+  font-size: 48px;
 }
 
 .empty-state-premium h4 {
@@ -702,8 +882,16 @@ export default {
   margin-bottom: 8px;
 }
 
+.empty-mobile .empty-state-premium h4 {
+  font-size: 16px;
+}
+
 .empty-state-premium p {
   font-size: 14px;
+}
+
+.empty-mobile .empty-state-premium p {
+  font-size: 13px;
 }
 
 /* Modal Fade */
@@ -721,21 +909,49 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
+    display: none;
+  }
+
+  .create-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .section-title-modern {
+    font-size: 14px;
+  }
+
+  .form-actions {
     flex-direction: column;
-    align-items: stretch;
+  }
+
+  .btn-submit-premium,
+  .btn-cancel-premium {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+  }
+
+  .announcements-grid {
+    gap: 16px;
   }
 
   .card-header-premium {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
   .card-actions-premium {
@@ -746,15 +962,6 @@ export default {
     width: 100%;
   }
 
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .btn-submit-premium,
-  .btn-cancel-premium {
-    justify-content: center;
-  }
-
   .announcement-icon {
     width: 36px;
     height: 36px;
@@ -762,13 +969,121 @@ export default {
   }
 
   .header-info h3 {
+    font-size: 15px;
+  }
+
+  .card-body-premium {
+    padding: 12px 16px 16px 16px;
+  }
+
+  .card-body-premium p {
+    font-size: 13px;
+  }
+
+  .empty-state-premium {
+    padding: 40px 16px;
+  }
+
+  .empty-state-premium i {
+    font-size: 48px;
+  }
+
+  .empty-state-premium h4 {
     font-size: 16px;
+  }
+
+  .more-btn-premium {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
   }
 }
 
-/* Disabled Button State */
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .create-card {
+    padding: 12px;
+  }
+
+  .section-title-modern {
+    font-size: 13px;
+  }
+
+  .field-wrapper input,
+  .field-wrapper textarea {
+    font-size: 15px;
+    padding: 10px 12px 10px 36px;
+  }
+
+  .btn-submit-premium,
+  .btn-cancel-premium {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .announcement-card-premium.mobile-card {
+    border-radius: 14px;
+  }
+
+  .card-header-premium.mobile-header {
+    padding: 12px;
+  }
+
+  .card-body-premium.mobile-body {
+    padding: 10px 12px 12px 12px;
+  }
+
+  .header-info h3.mobile-title {
+    font-size: 14px;
+  }
+
+  .meta-info {
+    font-size: 10px;
+  }
+
+  .action-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .empty-state-premium {
+    padding: 30px 12px;
+  }
+
+  .empty-state-premium i {
+    font-size: 40px;
+  }
+
+  .empty-state-premium h4 {
+    font-size: 15px;
+  }
+
+  .empty-state-premium p {
+    font-size: 12px;
+  }
+
+  .more-btn-premium {
+    font-size: 12px;
+    padding: 10px;
+  }
 }
 </style>

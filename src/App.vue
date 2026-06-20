@@ -19,12 +19,12 @@
       </div>
 
       <div class="header-right">
-        <div class="user-greeting" v-if="user.name">
+        <div class="user-greeting desktop-only" v-if="user.name">
           <i class="fas fa-user-circle"></i>
           <span>Hi, {{ formatFirstName(user.name) }}</span>
         </div>
         
-        <div class="download-app">
+        <div class="download-app desktop-only">
           <button @click="toggleDownloadMenu" class="download-btn">
             <i class="fas fa-download"></i> App
           </button>
@@ -33,17 +33,17 @@
             <a href="#" @click.prevent="downloadIos">iOS App</a>
           </div>
         </div>
-       
         <button @click="logout" class="logout-btn-modern">
-          <i class="fas fa-sign-out-alt"></i> Logout
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
         </button>
       </div>
     </header>
 
     <!-- Main Content Area -->
-    <div class="main-content-area">
-      <router-view />
-    </div>
+    <div class="main-content-area" :class="{ 'no-margin': $route.meta.hideHeader }">
+  <router-view />
+</div>
     
     <!-- ⚠️ Idle Warning Modal -->
     <div v-if="showWarning" class="idle-modal">
@@ -654,7 +654,9 @@ export default {
   color: var(--gray);
   transition: color 0.2s;
 }
-
+.mobile-only {
+  display: none!important;
+}
 .notification-bell-wrapper:hover {
   color: var(--primary);
 }
@@ -1129,10 +1131,10 @@ export default {
   .modern-header {
     padding: 0 1rem;
   }
-  
+/*   
   .mobile-menu-icon {
     display: block;
-  }
+  } */
   
   .logo-text {
     display: none;
@@ -1183,5 +1185,38 @@ export default {
   font-size: 1.2rem;
   color: var(--text)!important;
   transition: color 0.2s;
+}
+/* Responsive visibility classes - FIXED */
+@media (max-width: 768px) {
+  .logo-img {
+  height: 90px;
+  width: 90px;
+}
+  .mobile-only { 
+    display: flex !important; 
+  }
+  .desktop-only { 
+    display: none !important; 
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only { 
+    display: none !important; 
+  }
+  .desktop-only { 
+    display: flex !important; 
+  }
+}
+.main-content-area.no-margin {
+  margin-top: 0;
+  min-height: 100vh;
+}
+
+/* Or if you want auth page to have no margin and no scroll */
+.main-content-area.no-margin {
+  margin-top: 0;
+  min-height: 100vh;
+  overflow-y: hidden;
 }
 </style>

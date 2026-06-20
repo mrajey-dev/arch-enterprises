@@ -6,8 +6,21 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="kra-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <div class="content-header-modern">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-umbrella-beach"></i>
+            <span>Leave Balance</span>
+          </div>
+          <div class="mobile-stats-badge">
+            <span>{{ totalRemaining }}</span>
+          </div>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
+          <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-umbrella-beach"></i>
             </div>
@@ -22,7 +35,7 @@
           </div>
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Summary Cards - Mobile Optimized -->
         <div class="stats-bar">
           <div class="stat-card" v-for="(value, type) in leaveSummary" :key="type">
             <i :class="getLeaveIcon(type)"></i>
@@ -34,47 +47,50 @@
           </div>
         </div>
 
-        <!-- Total Summary Card -->
+        <!-- Total Summary Card - Mobile Optimized -->
         <div class="total-summary-card">
           <div class="total-summary-content">
-            <div class="total-item">
+            <div class="total-item" @click="scrollToSection('remaining')">
               <i class="fas fa-calendar-check"></i>
               <div>
-                <span class="total-label">Total Remaining</span>
+                <span class="total-label">Remaining</span>
                 <span class="total-value">{{ totalRemaining }}</span>
               </div>
             </div>
-            <div class="total-item">
+            <div class="total-item" @click="scrollToSection('used')">
               <i class="fas fa-check-circle"></i>
               <div>
-                <span class="total-label">Total Used (Paid)</span>
+                <span class="total-label">Used</span>
                 <span class="total-value">{{ totalUsed }}</span>
               </div>
             </div>
-            <div class="total-item">
+            <div class="total-item" @click="scrollToSection('allocated')">
               <i class="fas fa-chart-bar"></i>
               <div>
-                <span class="total-label">Total Allocated</span>
+                <span class="total-label">Allocated</span>
                 <span class="total-value">{{ totalAllocated }}</span>
               </div>
             </div>
-            <div class="total-item">
+            <div class="total-item" @click="scrollToSection('unpaid')">
               <i class="fas fa-hourglass-half"></i>
               <div>
-                <span class="total-label">Unpaid Leave</span>
+                <span class="total-label">Unpaid</span>
                 <span class="total-value">{{ unpaidLeaveDays }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Half Day Info Card -->
-        <div v-if="halfDayLeaves.length" class="halfday-info-card">
-          <div class="halfday-info-header">
-            <i class="fas fa-sun"></i>
-            <h4>Half Day Leaves Information</h4>
+        <!-- Half Day Info Card - Mobile Optimized -->
+        <div v-if="halfDayLeaves.length" class="halfday-info-card" :class="{ 'mobile-card': isMobile }">
+          <div class="halfday-info-header" @click="toggleHalfDayDetails">
+            <div class="header-left-half">
+              <i class="fas fa-sun"></i>
+              <h4>Half Day Leaves</h4>
+            </div>
+            <i class="fas fa-chevron-down" :class="{ 'rotated': halfDayVisible }"></i>
           </div>
-          <div class="halfday-info-body">
+          <div class="halfday-info-body" :class="{ 'halfday-hidden': !halfDayVisible }">
             <div class="halfday-detail">
               <span class="label">Total Half Days Taken:</span>
               <span class="value">{{ halfDayLeaves.length }} half day(s)</span>
@@ -94,15 +110,51 @@
           </div>
         </div>
 
-        <!-- Leave Details Table -->
+        <!-- Leave Details Table - Mobile Optimized -->
         <div class="kras-section">
           <div class="section-title-modern">
             <i class="fas fa-list-ul"></i>
-            <span>Leave Breakdown Details</span>
+            <span>Leave Breakdown</span>
           </div>
 
           <div v-if="leaveDetails.length" class="leave-table-container">
-            <table class="leave-table">
+            <!-- Mobile Card View -->
+            <div class="mobile-leave-cards" v-if="isMobile">
+              <div v-for="(item, index) in leaveDetails" :key="index" class="leave-detail-card">
+                <div class="card-header">
+                  <div class="leave-type-cell">
+                    <i :class="getLeaveIcon(item.type)"></i>
+                    <span>{{ formatLeaveType(item.type) }}</span>
+                  </div>
+                  <span class="status-badge" :class="getStatusClass(item.remaining, item.total)">
+                    {{ getStatusText(item.remaining, item.total) }}
+                  </span>
+                </div>
+                <div class="card-body">
+                  <div class="card-row">
+                    <span class="card-label">Total</span>
+                    <span class="card-value">{{ item.total }}</span>
+                  </div>
+                  <div class="card-row">
+                    <span class="card-label">Used</span>
+                    <span class="card-value">{{ item.used }}</span>
+                  </div>
+                  <div class="card-row">
+                    <span class="card-label">Remaining</span>
+                    <span class="card-value" :class="getRemainingClass(item.remaining)">{{ item.remaining }}</span>
+                  </div>
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" 
+                         :style="{ width: getUsagePercentage(item.used, item.total) + '%' }"
+                         :class="getProgressClass(item.remaining, item.total)">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <table class="leave-table" v-else>
               <thead>
                 <tr>
                   <th>Leave Type</th>
@@ -117,154 +169,163 @@
                   <td class="leave-type-cell">
                     <i :class="getLeaveIcon(item.type)"></i>
                     <span>{{ formatLeaveType(item.type) }}</span>
-                   </td>
+                  </td>
                   <td class="total-cell">{{ item.total }}</td>
                   <td class="used-cell">{{ item.used }}</td>
                   <td class="remaining-cell" :class="getRemainingClass(item.remaining)">
                     <strong>{{ item.remaining }}</strong>
-                   </td>
+                  </td>
                   <td>
                     <span class="status-badge" :class="getStatusClass(item.remaining, item.total)">
                       {{ getStatusText(item.remaining, item.total) }}
                     </span>
-                   </td>
-                 </tr>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
+        </div>
 
-          <!-- Half Day Leave Requests List -->
-          <div class="halfday-leaves-section" v-if="halfDayLeaves.length">
-            <div class="section-title-modern">
+        <!-- Half Day Leave Requests List - Mobile Optimized -->
+        <div class="halfday-leaves-section" v-if="halfDayLeaves.length">
+          <div class="section-title-modern" @click="toggleHalfDayList">
+            <div class="title-left">
               <i class="fas fa-sun"></i>
-              <span>Half Day Leave Requests ({{ getFinancialYearRange() }})</span>
+              <span>Half Day Requests</span>
               <span class="count-badge">{{ halfDayLeaves.length }}</span>
             </div>
-            <div class="halfday-leaves-container">
-              <div v-for="(leave, index) in halfDayLeaves" :key="index" class="halfday-leave-card">
-                <div class="leave-header">
-                  <i class="fas fa-sun"></i>
-                  <span class="leave-type">Half Day</span>
-                  <span class="leave-dates">{{ formatDate(leave.fromDate) }}</span>
+            <i class="fas fa-chevron-down" :class="{ 'rotated': halfDayListVisible }"></i>
+          </div>
+          <div class="halfday-leaves-container" :class="{ 'list-hidden': !halfDayListVisible }">
+            <div v-for="(leave, index) in halfDayLeaves" :key="index" class="halfday-leave-card" :class="{ 'mobile-item': isMobile }">
+              <div class="leave-header">
+                <i class="fas fa-sun"></i>
+                <span class="leave-type">Half Day</span>
+                <span class="leave-dates">{{ formatDate(leave.fromDate) }}</span>
+              </div>
+              <div class="leave-body">
+                <div class="leave-duration">
+                  <i class="fas fa-clock"></i>
+                  <span>0.5 day (Casual Leave)</span>
                 </div>
-                <div class="leave-body">
-                  <div class="leave-duration">
-                    <i class="fas fa-clock"></i>
-                    <span>0.5 day (Casual Leave)</span>
-                  </div>
-                  <div class="leave-reason">
-                    <i class="fas fa-comment"></i>
-                    <span>{{ leave.reason }}</span>
-                  </div>
+                <div class="leave-reason" v-if="leave.reason">
+                  <i class="fas fa-comment"></i>
+                  <span>{{ truncateText(leave.reason, isMobile ? 30 : 50) }}</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Approved Leave Requests List (Paid Leaves from leave_requests) -->
-          <div class="approved-leaves-section" v-if="approvedLeaves.length">
-            <div class="section-title-modern">
+        <!-- Approved Leave Requests List - Mobile Optimized -->
+        <div class="approved-leaves-section" v-if="approvedLeaves.length">
+          <div class="section-title-modern" @click="toggleApprovedList">
+            <div class="title-left">
               <i class="fas fa-check-circle"></i>
-              <span>Approved Leave Requests ({{ getFinancialYearRange() }})</span>
+              <span>Approved Leaves</span>
               <span class="count-badge">{{ approvedLeaves.length }}</span>
             </div>
-            <div class="approved-leaves-container">
-              <div v-for="(leave, index) in approvedLeaves" :key="index" class="approved-leave-card">
-                <div class="leave-header">
-                  <i :class="getLeaveIcon(leave.leaveType)"></i>
-                  <span class="leave-type">{{ formatLeaveType(leave.leaveType) }}</span>
-                  <span class="leave-dates">{{ formatDate(leave.fromDate) }} - {{ formatDate(leave.toDate) }}</span>
+            <i class="fas fa-chevron-down" :class="{ 'rotated': approvedListVisible }"></i>
+          </div>
+          <div class="approved-leaves-container" :class="{ 'list-hidden': !approvedListVisible }">
+            <div v-for="(leave, index) in approvedLeaves" :key="index" class="approved-leave-card" :class="{ 'mobile-item': isMobile }">
+              <div class="leave-header">
+                <i :class="getLeaveIcon(leave.leaveType)"></i>
+                <span class="leave-type">{{ formatLeaveType(leave.leaveType) }}</span>
+                <span class="leave-dates">{{ formatDate(leave.fromDate) }} - {{ formatDate(leave.toDate) }}</span>
+              </div>
+              <div class="leave-body">
+                <div class="leave-duration">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ leave.duration }} day(s)</span>
                 </div>
-                <div class="leave-body">
-                  <div class="leave-duration">
-                    <i class="fas fa-clock"></i>
-                    <span>{{ leave.duration }} day(s)</span>
-                  </div>
-                  <div class="leave-reason">
-                    <i class="fas fa-comment"></i>
-                    <span>{{ leave.reason }}</span>
-                  </div>
+                <div class="leave-reason" v-if="leave.reason">
+                  <i class="fas fa-comment"></i>
+                  <span>{{ truncateText(leave.reason, isMobile ? 30 : 50) }}</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Unpaid Leave Records from Attendances Table -->
-          <div class="unpaid-leaves-section" v-if="unpaidAttendanceRecords.length">
-            <div class="section-title-modern">
+        <!-- Unpaid Leave Records - Mobile Optimized -->
+        <div class="unpaid-leaves-section" v-if="unpaidAttendanceRecords.length">
+          <div class="section-title-modern" @click="toggleUnpaidList">
+            <div class="title-left">
               <i class="fas fa-hourglass-half"></i>
-              <span>Unpaid Leave Records (Absent from Attendance)</span>
+              <span>Unpaid Leave Records</span>
               <span class="count-badge">{{ unpaidAttendanceRecords.length }}</span>
             </div>
-            <div class="unpaid-leaves-container">
-              <div v-for="(record, index) in unpaidAttendanceRecords" :key="index" class="unpaid-leave-card">
-                <div class="leave-header">
-                  <i class="fas fa-user-clock"></i>
-                  <span class="leave-type">Unpaid Leave (Absent)</span>
-                  <span class="leave-dates">{{ formatDate(record.date) }}</span>
+            <i class="fas fa-chevron-down" :class="{ 'rotated': unpaidListVisible }"></i>
+          </div>
+          <div class="unpaid-leaves-container" :class="{ 'list-hidden': !unpaidListVisible }">
+            <div v-for="(record, index) in unpaidAttendanceRecords" :key="index" class="unpaid-leave-card" :class="{ 'mobile-item': isMobile }">
+              <div class="leave-header">
+                <i class="fas fa-user-clock"></i>
+                <span class="leave-type">Unpaid Leave (Absent)</span>
+                <span class="leave-dates">{{ formatDate(record.date) }}</span>
+              </div>
+              <div class="leave-body">
+                <div class="leave-duration">
+                  <i class="fas fa-clock"></i>
+                  <span>1 day</span>
                 </div>
-                <div class="leave-body">
-                  <div class="leave-duration">
-                    <i class="fas fa-clock"></i>
-                    <span>1 day</span>
-                  </div>
-                  <div class="leave-reason">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Marked as Absent in attendance</span>
-                  </div>
+                <div class="leave-reason">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Marked as Absent in attendance</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Leave Usage Progress Bars -->
-          <div class="progress-section" v-if="leaveDetails.length">
-            <div class="section-title-modern">
-              <i class="fas fa-chart-line"></i>
-              <span>Leave Usage Overview</span>
-            </div>
-            <div class="progress-bars">
-              <div v-for="(item, index) in leaveDetails" :key="index" class="progress-item">
-                <div class="progress-header">
-                  <span class="progress-label">{{ formatLeaveType(item.type) }}</span>
-                  <span class="progress-stats">{{ item.used }} / {{ item.total }} used ({{ getUsagePercentage(item.used, item.total) }}%)</span>
-                </div>
-                <div class="progress-bar-bg">
-                  <div class="progress-bar-fill" 
-                       :style="{ width: getUsagePercentage(item.used, item.total) + '%' }"
-                       :class="getProgressClass(item.remaining, item.total)">
-                  </div>
+        <!-- Leave Usage Progress Bars - Mobile Optimized -->
+        <div class="progress-section" v-if="leaveDetails.length">
+          <div class="section-title-modern">
+            <i class="fas fa-chart-line"></i>
+            <span>Leave Usage Overview</span>
+          </div>
+          <div class="progress-bars">
+            <div v-for="(item, index) in leaveDetails" :key="index" class="progress-item">
+              <div class="progress-header">
+                <span class="progress-label">{{ formatLeaveType(item.type) }}</span>
+                <span class="progress-stats">{{ item.used }} / {{ item.total }} ({{ getUsagePercentage(item.used, item.total) }}%)</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" 
+                     :style="{ width: getUsagePercentage(item.used, item.total) + '%' }"
+                     :class="getProgressClass(item.remaining, item.total)">
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Financial Year Selector -->
-          <div class="leave-footer">
-            <div class="year-selector" v-if="availableYears.length">
-              <label><i class="fas fa-calendar-week"></i> Select Financial Year:</label>
-              <select v-model="selectedFinancialYear" @change="fetchLeaveBalance">
-                <option v-for="year in availableYears" :key="year" :value="year">{{ year }} - {{ year + 1 }}</option>
-              </select>
-            </div>
-            <div class="footer-note">
-              <i class="fas fa-info-circle"></i>
-              <span>Leave policy: Privilege Leave, Casual Leave, Sick Leave | 2 half days = 1 casual leave | Financial Year: April 1 - March 31</span>
-            </div>
+        <!-- Financial Year Selector - Mobile Optimized -->
+        <div class="leave-footer" :class="{ 'mobile-footer': isMobile }">
+          <div class="year-selector">
+            <label><i class="fas fa-calendar-week"></i> Financial Year:</label>
+            <select v-model="selectedFinancialYear" @change="fetchLeaveBalance">
+              <option v-for="year in availableYears" :key="year" :value="year">{{ year }} - {{ year + 1 }}</option>
+            </select>
           </div>
+          <div class="footer-note">
+            <i class="fas fa-info-circle"></i>
+            <span>FY: Apr - Mar</span>
+          </div>
+        </div>
 
-          <!-- Empty State -->
-          <div v-if="!leaveDetails.length && !loading && !approvedLeaves.length && !unpaidAttendanceRecords.length && !halfDayLeaves.length" class="empty-state-premium">
-            <i class="fas fa-calendar-times"></i>
-            <h4>No Leave Data Found</h4>
-            <p>No leave requests or absent records found for {{ getFinancialYearRange() }}</p>
-          </div>
+        <!-- Empty State - Mobile Optimized -->
+        <div v-if="!leaveDetails.length && !loading && !approvedLeaves.length && !unpaidAttendanceRecords.length && !halfDayLeaves.length" class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
+          <i class="fas fa-calendar-times"></i>
+          <h4>No Leave Data Found</h4>
+          <p>No leave requests or absent records found</p>
+        </div>
 
-          <!-- Loading State -->
-          <div v-if="loading" class="loading-state">
-            <i class="fas fa-spinner fa-spin"></i>
-            <span>Loading leave balance...</span>
-          </div>
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Loading leave balance...</span>
         </div>
       </div>
     </div>
@@ -297,20 +358,22 @@ export default {
       halfDayLeaves: [],
       unpaidAttendanceRecords: [],
       leaveDetails: [],
-      // Leave totals from leave_balances (allocated quotas)
       leaveAllocations: {
         privilege: 0,
         casual: 0,
         sick: 0
       },
-      // Used leaves calculated from leave_requests
       leaveUsed: {
         privilege: 0,
         casual: 0,
         sick: 0
       },
       unpaidLeaveDays: 0,
-      holidayWorkCredits: 0
+      holidayWorkCredits: 0,
+      halfDayVisible: true,
+      halfDayListVisible: false,
+      approvedListVisible: false,
+      unpaidListVisible: false
     }
   },
   computed: {
@@ -351,9 +414,51 @@ export default {
     window.removeEventListener('resize', this.checkIfMobile);
   },
   methods: {
+    truncateText(text, length) {
+      if (!text) return '';
+      return text.length > length ? text.substring(0, length) + '...' : text;
+    },
+    toggleHalfDayDetails() {
+      if (this.isMobile) {
+        this.halfDayVisible = !this.halfDayVisible;
+      }
+    },
+    toggleHalfDayList() {
+      if (this.isMobile) {
+        this.halfDayListVisible = !this.halfDayListVisible;
+      }
+    },
+    toggleApprovedList() {
+      if (this.isMobile) {
+        this.approvedListVisible = !this.approvedListVisible;
+      }
+    },
+    toggleUnpaidList() {
+      if (this.isMobile) {
+        this.unpaidListVisible = !this.unpaidListVisible;
+      }
+    },
+    scrollToSection(section) {
+      // Scroll to relevant section on mobile
+      const element = document.querySelector(`.${section}-section`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
+      if (this.isMobile) {
+        this.halfDayVisible = false;
+        this.halfDayListVisible = false;
+        this.approvedListVisible = false;
+        this.unpaidListVisible = false;
+      } else {
+        this.halfDayVisible = true;
+        this.halfDayListVisible = true;
+        this.approvedListVisible = true;
+        this.unpaidListVisible = true;
+      }
     },
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
@@ -389,7 +494,7 @@ export default {
     getFinancialYearRange() {
       const startYear = this.selectedFinancialYear;
       const endYear = startYear + 1;
-      return `April ${startYear} - March ${endYear}`;
+      return `Apr ${startYear} - Mar ${endYear}`;
     },
     getFinancialYearDates(year) {
       const startDate = `${year}-04-01`;
@@ -410,13 +515,11 @@ export default {
       
       const start = new Date(startDate);
       const end = new Date(endDate);
-      // Calculate difference in days including both start and end dates
       const diffTime = Math.abs(end - start);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
       return diffDays;
     },
-    // Get leave type mapping from request to standard types
     mapLeaveType(leaveType) {
       const typeMap = {
         'PL': 'privilege',
@@ -433,232 +536,213 @@ export default {
       };
       return typeMap[leaveType] || 'casual';
     },
-  async fetchLeaveBalance() {
-  if (!this.userId) {
-    toastError('User information not available');
-    return;
-  }
-
-  this.loading = true;
-
-  try {
-    // Reset data
-    this.leaveUsed = {
-      privilege: 0,
-      casual: 0,
-      sick: 0
-    };
-    
-    this.approvedLeaves = [];
-    this.halfDayLeaves = [];
-    this.unpaidAttendanceRecords = [];
-
-    // 1. Fetch leave balances from leave_balances table
-    const balanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-balances/user/${this.userId}`, {
-      params: { 
-        year: this.selectedFinancialYear
-      },
-      headers: { 
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
+    async fetchLeaveBalance() {
+      if (!this.userId) {
+        toastError('User information not available');
+        return;
       }
-    });
 
-    console.log('Leave Balance Response:', balanceResponse.data);
+      this.loading = true;
 
-    if (balanceResponse.data && balanceResponse.data.success && balanceResponse.data.data) {
-      const balanceData = balanceResponse.data.data;
-      
-      // Store allocations from leave_balances (total allocated leaves)
-      this.leaveAllocations = {
-        privilege: parseFloat(balanceData.pl_leave) || 0,
-        casual: parseFloat(balanceData.casual_leave) || 0,
-        sick: parseFloat(balanceData.sick_leave) || 0
-      };
-      
-      // Store used leaves from leave_balances
-      this.leaveUsed = {
-        privilege: parseFloat(balanceData.used_pl_leave) || 0,
-        casual: parseFloat(balanceData.used_cl_leave) || 0,
-        sick: parseFloat(balanceData.used_sick_leave) || 0
-      };
-      
-      // Store remaining leaves (directly from database generated columns)
-      const remainingPL = parseFloat(balanceData.remaining_pl_leave) || 0;
-      const remainingCL = parseFloat(balanceData.remaining_cl_leave) || 0;
-      const remainingSick = parseFloat(balanceData.remaining_sick_leave) || 0;
-      
-      // Update unpaid leave days
-      this.unpaidLeaveDays = parseFloat(balanceData.used_unpaid_leave) || 0;
-      
-      console.log('Leave Data from DB:', {
-        allocations: this.leaveAllocations,
-        used: this.leaveUsed,
-        remaining: { privilege: remainingPL, casual: remainingCL, sick: remainingSick },
-        unpaidLeave: this.unpaidLeaveDays
-      });
-      
-      // Build leave details table using database values
-      this.leaveDetails = [
-        { 
-          type: 'privilege', 
-          total: this.leaveAllocations.privilege, 
-          used: this.leaveUsed.privilege, 
-          remaining: remainingPL
-        },
-        { 
-          type: 'casual', 
-          total: this.leaveAllocations.casual, 
-          used: this.leaveUsed.casual, 
-          remaining: remainingCL
-        },
-        { 
-          type: 'sick', 
-          total: this.leaveAllocations.sick, 
-          used: this.leaveUsed.sick, 
-          remaining: remainingSick
-        }
-      ];
-      
-    } else {
-      // If no balance record, set everything to 0
-      this.leaveAllocations = {
-        privilege: 0,
-        casual: 0,
-        sick: 0
-      };
-      
-      this.leaveUsed = {
-        privilege: 0,
-        casual: 0,
-        sick: 0
-      };
-      
-      this.leaveDetails = [
-        { type: 'privilege', total: 0, used: 0, remaining: 0 },
-        { type: 'casual', total: 0, used: 0, remaining: 0 },
-        { type: 'sick', total: 0, used: 0, remaining: 0 }
-      ];
-      
-      this.unpaidLeaveDays = 0;
-    }
-
-    // 2. Fetch approved leave requests from leave_requests table for display
-    const response = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-requests`, {
-      params: { 
-        name: this.username,
-        year: this.selectedFinancialYear
-      },
-      headers: { 
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    console.log('Leave Requests Response:', response.data);
-
-    if (response.data) {
-      let allLeaves = [];
-      if (Array.isArray(response.data)) {
-        allLeaves = response.data;
-      } else if (response.data.data && Array.isArray(response.data.data)) {
-        allLeaves = response.data.data;
-      } else if (response.data.success && response.data.data) {
-        allLeaves = response.data.data;
-      } else {
-        allLeaves = [];
-      }
-      
-      // Filter leaves for selected financial year and status = 'Approved'
-      const filteredLeaves = allLeaves.filter(leave => 
-        this.isDateInFinancialYear(leave.fromDate, this.selectedFinancialYear) &&
-        leave.status === 'Approved'
-      );
-      
-      // Process each approved leave request for display
-      filteredLeaves.forEach(leave => {
-        // Check if it's a half day
-        const isHalfDay = leave.is_half_day === 1 || leave.leave_duration === 'half';
+      try {
+        this.leaveUsed = {
+          privilege: 0,
+          casual: 0,
+          sick: 0
+        };
         
-        let duration = 0;
-        
-        if (isHalfDay) {
-          // Half day = 0.5 casual leave
-          duration = 0.5;
+        this.approvedLeaves = [];
+        this.halfDayLeaves = [];
+        this.unpaidAttendanceRecords = [];
+
+        const balanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-balances/user/${this.userId}`, {
+          params: { 
+            year: this.selectedFinancialYear
+          },
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('Leave Balance Response:', balanceResponse.data);
+
+        if (balanceResponse.data && balanceResponse.data.success && balanceResponse.data.data) {
+          const balanceData = balanceResponse.data.data;
           
-          // Add to half day leaves display list
-          this.halfDayLeaves.push({
-            ...leave,
-            duration: 0.5
+          this.leaveAllocations = {
+            privilege: parseFloat(balanceData.pl_leave) || 0,
+            casual: parseFloat(balanceData.casual_leave) || 0,
+            sick: parseFloat(balanceData.sick_leave) || 0
+          };
+          
+          this.leaveUsed = {
+            privilege: parseFloat(balanceData.used_pl_leave) || 0,
+            casual: parseFloat(balanceData.used_cl_leave) || 0,
+            sick: parseFloat(balanceData.used_sick_leave) || 0
+          };
+          
+          const remainingPL = parseFloat(balanceData.remaining_pl_leave) || 0;
+          const remainingCL = parseFloat(balanceData.remaining_cl_leave) || 0;
+          const remainingSick = parseFloat(balanceData.remaining_sick_leave) || 0;
+          
+          this.unpaidLeaveDays = parseFloat(balanceData.used_unpaid_leave) || 0;
+          
+          console.log('Leave Data from DB:', {
+            allocations: this.leaveAllocations,
+            used: this.leaveUsed,
+            remaining: { privilege: remainingPL, casual: remainingCL, sick: remainingSick },
+            unpaidLeave: this.unpaidLeaveDays
           });
+          
+          this.leaveDetails = [
+            { 
+              type: 'privilege', 
+              total: this.leaveAllocations.privilege, 
+              used: this.leaveUsed.privilege, 
+              remaining: remainingPL
+            },
+            { 
+              type: 'casual', 
+              total: this.leaveAllocations.casual, 
+              used: this.leaveUsed.casual, 
+              remaining: remainingCL
+            },
+            { 
+              type: 'sick', 
+              total: this.leaveAllocations.sick, 
+              used: this.leaveUsed.sick, 
+              remaining: remainingSick
+            }
+          ];
+          
         } else {
-          // Full day leave - calculate days between fromDate and toDate (inclusive)
-          duration = this.calculateDaysBetweenDates(leave.fromDate, leave.toDate, false);
+          this.leaveAllocations = {
+            privilege: 0,
+            casual: 0,
+            sick: 0
+          };
           
-          // Add to approved leaves for display
-          this.approvedLeaves.push({
-            ...leave,
-            duration: duration
+          this.leaveUsed = {
+            privilege: 0,
+            casual: 0,
+            sick: 0
+          };
+          
+          this.leaveDetails = [
+            { type: 'privilege', total: 0, used: 0, remaining: 0 },
+            { type: 'casual', total: 0, used: 0, remaining: 0 },
+            { type: 'sick', total: 0, used: 0, remaining: 0 }
+          ];
+          
+          this.unpaidLeaveDays = 0;
+        }
+
+        const response = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-requests`, {
+          params: { 
+            name: this.username,
+            year: this.selectedFinancialYear
+          },
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('Leave Requests Response:', response.data);
+
+        if (response.data) {
+          let allLeaves = [];
+          if (Array.isArray(response.data)) {
+            allLeaves = response.data;
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            allLeaves = response.data.data;
+          } else if (response.data.success && response.data.data) {
+            allLeaves = response.data.data;
+          } else {
+            allLeaves = [];
+          }
+          
+          const filteredLeaves = allLeaves.filter(leave => 
+            this.isDateInFinancialYear(leave.fromDate, this.selectedFinancialYear) &&
+            leave.status === 'Approved'
+          );
+          
+          filteredLeaves.forEach(leave => {
+            const isHalfDay = leave.is_half_day === 1 || leave.leave_duration === 'half';
+            
+            let duration = 0;
+            
+            if (isHalfDay) {
+              duration = 0.5;
+              this.halfDayLeaves.push({
+                ...leave,
+                duration: 0.5
+              });
+            } else {
+              duration = this.calculateDaysBetweenDates(leave.fromDate, leave.toDate, false);
+              this.approvedLeaves.push({
+                ...leave,
+                duration: duration
+              });
+            }
           });
         }
-      });
-    }
 
-    // 3. Fetch unpaid leaves from attendances table (for display only)
-    const { startDate, endDate } = this.getFinancialYearDates(this.selectedFinancialYear);
-    
-    const attendanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/attendances`, {
-      params: {
-        name: this.username,
-        status: 'Absent',
-        from_date: startDate,
-        to_date: endDate
-      },
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
+        const { startDate, endDate } = this.getFinancialYearDates(this.selectedFinancialYear);
+        
+        const attendanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/attendances`, {
+          params: {
+            name: this.username,
+            status: 'Absent',
+            from_date: startDate,
+            to_date: endDate
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('Attendance Response:', attendanceResponse.data);
+
+        if (attendanceResponse.data) {
+          let allAttendances = [];
+          if (Array.isArray(attendanceResponse.data)) {
+            allAttendances = attendanceResponse.data;
+          } else if (attendanceResponse.data.data && Array.isArray(attendanceResponse.data.data)) {
+            allAttendances = attendanceResponse.data.data;
+          } else {
+            allAttendances = [];
+          }
+
+          this.unpaidAttendanceRecords = allAttendances.filter(record => 
+            record.status === 'Absent' && 
+            this.isDateInFinancialYear(record.date, this.selectedFinancialYear)
+          );
+          this.unpaidLeaveDays = this.unpaidAttendanceRecords.length;
+        }
+        
+        this.loading = false;
+        toastSuccess(`Leave balance loaded for ${this.getFinancialYearRange()}`);
+        
+      } catch (error) {
+        console.error('Failed to load leave balance:', error);
+        if (error.response) {
+          console.error('Error response:', error.response.data);
+          if (error.response.status === 404) {
+            toastError('No leave balance record found. Please contact HR.');
+          } else if (error.response.status === 422) {
+            toastError('Please select a valid financial year');
+          } else {
+            toastError(error.response.data.message || 'Could not fetch leave data. Please try again.');
+          }
+        } else {
+          toastError('Could not fetch leave data. Please try again.');
+        }
+        this.loading = false;
       }
-    });
-
-    console.log('Attendance Response:', attendanceResponse.data);
-
-    if (attendanceResponse.data) {
-      let allAttendances = [];
-      if (Array.isArray(attendanceResponse.data)) {
-        allAttendances = attendanceResponse.data;
-      } else if (attendanceResponse.data.data && Array.isArray(attendanceResponse.data.data)) {
-        allAttendances = attendanceResponse.data.data;
-      } else {
-        allAttendances = [];
-      }
-
-      this.unpaidAttendanceRecords = allAttendances.filter(record => 
-        record.status === 'Absent' && 
-        this.isDateInFinancialYear(record.date, this.selectedFinancialYear)
-      );
-      this.unpaidLeaveDays = this.unpaidAttendanceRecords.length;
-    }
-    
-    this.loading = false;
-    toastSuccess(`Leave balance loaded for ${this.getFinancialYearRange()}`);
-    
-  } catch (error) {
-    console.error('Failed to load leave balance:', error);
-    if (error.response) {
-      console.error('Error response:', error.response.data);
-      if (error.response.status === 404) {
-        toastError('No leave balance record found. Please contact HR.');
-      } else if (error.response.status === 422) {
-        toastError('Please select a valid financial year');
-      } else {
-        toastError(error.response.data.message || 'Could not fetch leave data. Please try again.');
-      }
-    } else {
-      toastError('Could not fetch leave data. Please try again.');
-    }
-    this.loading = false;
-  }
-},
+    },
     formatDate(date) {
       if (!date) return '';
       const d = new Date(date);
@@ -677,10 +761,10 @@ export default {
     },
     formatLeaveType(type) {
       const types = {
-        privilege: 'Privilege Leave',
-        casual: 'Casual Leave',
-        sick: 'Sick / Medical Leave',
-        absent: 'Unpaid Leave (Absent)',
+        privilege: 'Privilege',
+        casual: 'Casual',
+        sick: 'Sick / Medical',
+        absent: 'Unpaid (Absent)',
         'half day': 'Half Day'
       };
       return types[type?.toLowerCase()] || type;
@@ -726,7 +810,6 @@ export default {
 </script>
 
 <style scoped>
-/* All styles remain exactly the same as provided */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 /* Variables */
@@ -766,6 +849,53 @@ export default {
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   overflow-x: auto;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-stats-badge {
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .content-header-modern {
@@ -892,6 +1022,12 @@ export default {
   align-items: center;
   gap: 12px;
   color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.total-item:active {
+  transform: scale(0.95);
 }
 
 .total-item i {
@@ -922,16 +1058,28 @@ export default {
   border: 1px solid #fbbf24;
 }
 
+.halfday-info-card.mobile-card {
+  padding: 16px;
+}
+
 .halfday-info-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid #fbbf24;
+  cursor: pointer;
 }
 
-.halfday-info-header i {
+.header-left-half {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.halfday-info-header i:first-child {
   font-size: 24px;
   color: #d97706;
 }
@@ -943,10 +1091,24 @@ export default {
   margin: 0;
 }
 
+.halfday-info-header .fa-chevron-down {
+  transition: transform 0.3s ease;
+  color: #92400e;
+}
+
+.halfday-info-header .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
 .halfday-info-body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.halfday-info-body.halfday-hidden {
+  display: none;
 }
 
 .halfday-detail {
@@ -988,6 +1150,7 @@ export default {
 .section-title-modern {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   margin-bottom: 20px;
   padding-bottom: 12px;
@@ -995,6 +1158,13 @@ export default {
   font-weight: 600;
   font-size: 16px;
   color: #1a1a2e;
+  cursor: pointer;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .section-title-modern i {
@@ -1002,8 +1172,16 @@ export default {
   font-size: 18px;
 }
 
+.section-title-modern .fa-chevron-down {
+  transition: transform 0.3s ease;
+}
+
+.section-title-modern .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
 .count-badge {
-  margin-left: auto;
+  margin-left: 4px;
   background: #e0e7ff;
   padding: 2px 10px;
   border-radius: 20px;
@@ -1017,6 +1195,79 @@ export default {
   border-radius: 16px;
   border: 1px solid #e5e7eb;
   margin-bottom: 28px;
+}
+
+/* Mobile Leave Cards */
+.mobile-leave-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+}
+
+.leave-detail-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.leave-type-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.leave-type-cell i {
+  width: 28px;
+  color: var(--primary-color);
+  font-size: 16px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.card-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.card-value.good {
+  color: var(--success);
+}
+
+.card-value.warning {
+  color: var(--warning);
+}
+
+.card-value.critical {
+  color: var(--danger);
 }
 
 .leave-table {
@@ -1116,6 +1367,13 @@ export default {
   max-height: 400px;
   overflow-y: auto;
   padding: 4px;
+  transition: all 0.3s ease;
+}
+
+.approved-leaves-container.list-hidden,
+.unpaid-leaves-container.list-hidden,
+.halfday-leaves-container.list-hidden {
+  display: none;
 }
 
 .approved-leave-card {
@@ -1131,6 +1389,10 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.approved-leave-card.mobile-item {
+  padding: 10px;
+}
+
 .unpaid-leave-card {
   background: #fef3c7;
   border-radius: 12px;
@@ -1144,6 +1406,10 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.unpaid-leave-card.mobile-item {
+  padding: 10px;
+}
+
 .halfday-leave-card {
   background: #fef3c7;
   border-radius: 12px;
@@ -1155,6 +1421,10 @@ export default {
 .halfday-leave-card:hover {
   transform: translateX(4px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.halfday-leave-card.mobile-item {
+  padding: 10px;
 }
 
 .leave-header {
@@ -1195,6 +1465,7 @@ export default {
   gap: 12px;
   font-size: 12px;
   color: #4b5563;
+  flex-wrap: wrap;
 }
 
 .leave-duration, .leave-reason {
@@ -1283,6 +1554,11 @@ export default {
   border-top: 1px solid #f0f0f0;
 }
 
+.leave-footer.mobile-footer {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .year-selector {
   display: flex;
   align-items: center;
@@ -1345,10 +1621,18 @@ export default {
   border-radius: 20px;
 }
 
+.empty-state-premium.empty-mobile {
+  padding: 40px 16px;
+}
+
 .empty-state-premium i {
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
+}
+
+.empty-mobile .empty-state-premium i {
+  font-size: 48px;
 }
 
 .empty-state-premium h4 {
@@ -1357,8 +1641,16 @@ export default {
   margin-bottom: 8px;
 }
 
+.empty-mobile .empty-state-premium h4 {
+  font-size: 16px;
+}
+
 .empty-state-premium p {
   font-size: 14px;
+}
+
+.empty-mobile .empty-state-premium p {
+  font-size: 13px;
 }
 
 .approved-leaves-container::-webkit-scrollbar,
@@ -1384,45 +1676,66 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .kra-board-premium {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .stats-badge-header {
-    align-self: flex-start;
+    display: none;
   }
 
   .stats-bar {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-card i {
+    font-size: 28px;
+  }
+
+  .stat-value {
+    font-size: 28px;
   }
 
   .total-summary-content {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 
-  .leave-footer {
-    flex-direction: column;
-    align-items: flex-start;
+  .total-item i {
+    font-size: 24px;
   }
 
-  .leave-table th,
-  .leave-table td {
-    padding: 10px 12px;
+  .total-value {
+    font-size: 20px;
   }
-  
+
+  .mobile-leave-cards {
+    display: flex;
+  }
+
+  .leave-table {
+    display: none;
+  }
+
   .approved-leaves-container,
   .unpaid-leaves-container,
   .halfday-leaves-container {
     grid-template-columns: 1fr;
+    max-height: 300px;
   }
   
   .leave-header {
@@ -1436,6 +1749,150 @@ export default {
   
   .halfday-info-body {
     flex-direction: column;
+  }
+
+  .section-title-modern {
+    font-size: 14px;
+  }
+
+  .footer-note span {
+    display: none;
+  }
+
+  .year-selector {
+    width: 100%;
+  }
+
+  .year-selector select {
+    flex: 1;
+  }
+
+  .leave-footer.mobile-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .kra-board-premium {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-stats-badge {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .stats-bar {
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card i {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .stat-sub {
+    font-size: 10px;
+  }
+
+  .total-item i {
+    font-size: 20px;
+  }
+
+  .total-value {
+    font-size: 18px;
+  }
+
+  .halfday-info-card.mobile-card {
+    padding: 12px;
+  }
+
+  .halfday-detail .label {
+    font-size: 12px;
+  }
+
+  .halfday-detail .value {
+    font-size: 14px;
+  }
+
+  .leave-detail-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .card-value {
+    font-size: 14px;
+  }
+
+  .approved-leave-card.mobile-item,
+  .unpaid-leave-card.mobile-item,
+  .halfday-leave-card.mobile-item {
+    padding: 10px;
+  }
+
+  .leave-body {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .leave-reason {
+    white-space: normal;
+  }
+
+  .progress-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .empty-state-premium i {
+    font-size: 40px;
+  }
+
+  .empty-state-premium h4 {
+    font-size: 15px;
+  }
+
+  .year-selector label {
+    font-size: 12px;
+  }
+
+  .year-selector select {
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }
 </style>

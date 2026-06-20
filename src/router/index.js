@@ -83,9 +83,9 @@ import MyProfile from '../views/employee/MyProfile.vue'
 
 
 const routes = [
-  { path: '/', component: AuthForm, meta: { hideBell: true, hideHelp: true, hideMenu: true,
+  { path: '/', component: AuthForm, meta: { hideHeader: true, hideBell: true, hideHelp: true, hideMenu: true,
     hideHeader: true } },
-  { path: '/auth', component: AuthForm, meta: { hideBell: true, hideHelp: true,  hideMenu: true,  hideHeader: true } },
+  { path: '/auth', component: AuthForm, meta: { hideHeader: true, hideBell: true, hideHelp: true,  hideMenu: true,  hideHeader: true } },
 
   {
   path: '/dashboard',

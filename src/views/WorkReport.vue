@@ -7,7 +7,20 @@
 
       <div class="main-content-work-report">
         <section class="report-container">
-          <div class="content-header-modern">
+          <!-- Mobile Header -->
+          <div class="mobile-header" v-if="isMobile">
+           
+            <div class="mobile-title">
+              <i class="fas fa-file-alt"></i>
+              <span>Work Reports</span>
+            </div>
+            <button class="mobile-add-btn" @click="openAssignTaskModal">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+
+          <!-- Desktop Header -->
+          <div class="content-header-modern" v-else>
             <div class="header-left">
               <div class="title-icon">
                 <i class="fas fa-file-alt"></i>
@@ -29,30 +42,30 @@
             </div>
           </div>
 
-          <!-- Stats Bar -->
+          <!-- Stats Bar - Mobile Optimized -->
           <div class="stats-bar">
-            <div class="stat-card">
+            <div class="stat-card" @click="filterByStatus('all')">
               <i class="fas fa-tasks"></i>
               <div class="stat-info">
                 <span class="stat-value">{{ reports.length }}</span>
-                <span class="stat-label">Total Tasks</span>
+                <span class="stat-label">Total</span>
               </div>
             </div>
-            <div class="stat-card pending">
+            <div class="stat-card pending" @click="filterByStatus('Pending')">
               <i class="fas fa-clock"></i>
               <div class="stat-info">
                 <span class="stat-value">{{ pendingTasks }}</span>
                 <span class="stat-label">Pending</span>
               </div>
             </div>
-            <div class="stat-card progress">
+            <div class="stat-card progress" @click="filterByStatus('In Progress')">
               <i class="fas fa-spinner"></i>
               <div class="stat-info">
                 <span class="stat-value">{{ inProgressTasks }}</span>
-                <span class="stat-label">In Progress</span>
+                <span class="stat-label">Progress</span>
               </div>
             </div>
-            <div class="stat-card completed">
+            <div class="stat-card completed" @click="filterByStatus('Completed')">
               <i class="fas fa-check-circle"></i>
               <div class="stat-info">
                 <span class="stat-value">{{ completedTasks }}</span>
@@ -61,19 +74,25 @@
             </div>
           </div>
 
-          <!-- Search and Filters -->
+          <!-- Search and Filters - Mobile Optimized -->
           <div class="search-filter-section">
-            <div class="search-wrapper-modern">
-              <i class="fas fa-search search-icon"></i>
-              <input
-                type="text"
-                v-model="filters.search"
-                class="search-input-modern"
-                placeholder="Search tasks by name, summary, or employee..."
-              />
+            <div class="filter-toggle-btn" @click="toggleFilters">
+              <i class="fas fa-sliders-h"></i>
+              <span>{{ isMobile ? 'Filters' : 'Filter' }}</span>
+              <i class="fas fa-chevron-down" :class="{ 'rotated': filtersVisible }"></i>
             </div>
 
-            <div class="filter-group-modern">
+            <div class="filter-group-modern" :class="{ 'filters-hidden': !filtersVisible }">
+              <div class="search-wrapper-modern">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                  type="text"
+                  v-model="filters.search"
+                  class="search-input-modern"
+                  placeholder="Search tasks..."
+                />
+              </div>
+
               <select v-model="filters.name" class="filter-select">
                 <option value="">All Employees</option>
                 <option v-for="emp in filteredEmployeeList" :key="emp.name" :value="emp.name">
@@ -102,19 +121,19 @@
             </div>
           </div>
 
-          <!-- Report Cards Grid - 2 cards per row properly -->
+          <!-- Report Cards Grid - Mobile Optimized -->
           <div class="report-grid-premium">
             <transition-group name="card-fade" tag="div" class="cards-grid-two">
               <div
                 class="report-card-premium"
-                :class="{ 'assigned-task-card': report.priority === 'Task Assigned' }"
+                :class="{ 'assigned-task-card': report.priority === 'Task Assigned', 'mobile-card': isMobile }"
                 v-for="report in visibleReports"
                 :key="report.id"
                 @click="openModal(report)"
               >
                 <!-- Assigned task badge -->
                 <div v-if="report.priority === 'Task Assigned'" class="assigned-badge">
-                  <i class="fas fa-tasks"></i> Assigned Task
+                  <i class="fas fa-tasks"></i> Assigned
                 </div>
                 <div class="card-accent" :class="report.status.toLowerCase()"></div>
                 <div class="card-header-premium">
@@ -123,7 +142,7 @@
                       <i class="fas fa-clipboard-list"></i>
                     </div>
                     <div>
-                      <h3>{{ report.name }}</h3>
+                      <h3>{{ truncateText(report.name, isMobile ? 25 : 30) }}</h3>
                       <div class="meta-tags">
                         <span class="date-badge">
                           <i class="fas fa-calendar-alt"></i> {{ report.date }}
@@ -133,7 +152,7 @@
                   </div>
                   <span :class="['status-badge-premium', getStatusClass(report.status)]">
                     <i :class="getStatusIcon(report.status)"></i>
-                    {{ report.status }}
+                    <span class="status-text">{{ report.status }}</span>
                   </span>
                 </div>
 
@@ -142,31 +161,30 @@
                     <i class="fas fa-user"></i>
                     <span><strong>Assigned To:</strong> {{ report.username }}</span>
                   </div>
-                  <div class="info-row">
+                  <div class="info-row" v-if="!isMobile">
                     <i class="fas fa-building"></i>
                     <span><strong>Department:</strong> {{ report.department }}</span>
                   </div>
-                  <!-- Show Assign By only for assigned tasks -->
                   <div class="info-row" v-if="report.priority === 'Task Assigned'">
                     <i class="fas fa-user-check"></i>
                     <span><strong>Assign By:</strong> {{ report.assign_by_name || '-' }}</span>
                   </div>
                   <div class="info-row summary">
                     <i class="fas fa-align-left"></i>
-                    <span><strong>Summary:</strong> {{ truncateText(report.summary, 100) }}</span>
+                    <span><strong>Summary:</strong> {{ truncateText(report.summary, isMobile ? 60 : 100) }}</span>
                   </div>
-                  <div class="info-row" v-if="report.comment">
+                  <div class="info-row" v-if="report.comment && !isMobile">
                     <i class="fas fa-comment"></i>
                     <span><strong>Comment:</strong> {{ truncateText(report.comment, 80) }}</span>
                   </div>
                 </div>
 
-                <div class="card-footer-premium">
+                <div class="card-footer-premium" :class="{ 'mobile-footer': isMobile }">
                   <button class="action-edit" @click.stop="editTask(report)">
-                    <i class="fas fa-edit"></i> Edit
+                    <i class="fas fa-edit"></i> <span class="btn-text">Edit</span>
                   </button>
                   <button class="action-delete" @click.stop="deleteTask(report.id)">
-                    <i class="fas fa-trash-alt"></i> Delete
+                    <i class="fas fa-trash-alt"></i> <span class="btn-text">Delete</span>
                   </button>
                 </div>
               </div>
@@ -183,10 +201,10 @@
       </div>
     </div>
 
-    <!-- Task Detail Modal -->
+    <!-- Task Detail Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="selectedReport" @click.self="closeModal">
-        <div class="premium-modal detail-modal" @click.stop>
+        <div class="premium-modal detail-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -194,8 +212,8 @@
               <i class="fas fa-file-alt"></i>
             </div>
             <div class="header-text">
-              <h2>Task Details</h2>
-              <p>{{ selectedReport.name }}</p>
+              <h2>{{ isMobile ? 'Task' : 'Task Details' }}</h2>
+              <p>{{ truncateText(selectedReport.name, isMobile ? 30 : 50) }}</p>
             </div>
             <button class="close-btn-premium" @click="closeModal">
               <i class="fas fa-times"></i>
@@ -203,12 +221,11 @@
           </div>
 
           <div class="modal-body-premium">
-            <div class="detail-grid">
+            <div class="detail-grid" :class="{ 'mobile-grid': isMobile }">
               <div class="detail-item">
                 <i class="fas fa-user-tie"></i>
                 <div>
                   <label>Assign By</label>
-                  <!-- Show Assign By only for assigned tasks -->
                   <p v-if="selectedReport.priority === 'Task Assigned'">{{ selectedReport.assign_by_name || selectedReport.manager_name || loggedUserName }}</p>
                   <p v-else>-</p>
                 </div>
@@ -220,7 +237,7 @@
                   <p>{{ selectedReport.username }}</p>
                 </div>
               </div>
-              <div class="detail-item">
+              <div class="detail-item" v-if="!isMobile">
                 <i class="fas fa-building"></i>
                 <div>
                   <label>Department</label>
@@ -243,7 +260,7 @@
                   </span>
                 </div>
               </div>
-              <div class="detail-item">
+              <div class="detail-item" v-if="!isMobile">
                 <i class="fas fa-check-circle"></i>
                 <div>
                   <label>Completed At</label>
@@ -257,7 +274,7 @@
                   <p>{{ selectedReport.summary }}</p>
                 </div>
               </div>
-              <div class="detail-item full-width" v-if="selectedReport.modules !== 'N/A'">
+              <div class="detail-item full-width" v-if="selectedReport.modules !== 'N/A' && !isMobile">
                 <i class="fas fa-cube"></i>
                 <div>
                   <label>Modules</label>
@@ -274,7 +291,7 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button class="btn-submit-premium" @click="closeModal">
               <i class="fas fa-check"></i> Close
             </button>
@@ -283,10 +300,10 @@
       </div>
     </transition>
 
-    <!-- Assign Task Modal -->
+    <!-- Assign Task Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showAssignTaskModal" @click.self="closeAssignTaskModal">
-        <div class="premium-modal" @click.stop>
+        <div class="premium-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -294,7 +311,7 @@
               <i class="fas fa-tasks"></i>
             </div>
             <div class="header-text">
-              <h2>{{ isEditTaskMode ? 'Edit Task' : 'Assign New Task' }}</h2>
+              <h2>{{ isEditTaskMode ? 'Edit Task' : 'Assign Task' }}</h2>
               <p>{{ isEditTaskMode ? 'Update task details' : 'Assign a task to an employee' }}</p>
             </div>
             <button class="close-btn-premium" @click="closeAssignTaskModal">
@@ -339,7 +356,7 @@
                   <select v-model="newTask.user_id">
                     <option value="">Select Employee</option>
                     <option v-for="emp in filteredEmployeesDropdown" :key="emp.id" :value="emp.id">
-                      {{ emp.name }} ({{ emp.department }})
+                      {{ emp.name }}
                     </option>
                   </select>
                 </div>
@@ -353,7 +370,7 @@
                 </div>
               </div>
 
-              <div class="form-field full-width">
+              <div class="form-field full-width" v-if="!isMobile">
                 <label>Modules</label>
                 <div class="field-wrapper">
                   <i class="fas fa-cube field-icon"></i>
@@ -369,22 +386,22 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button class="btn-cancel-premium" @click="closeAssignTaskModal">
               <i class="fas fa-times"></i> Cancel
             </button>
             <button class="btn-submit-premium" @click="assignTask">
-              <i class="fas fa-save"></i> {{ isEditTaskMode ? 'Update Task' : 'Assign Task' }}
+              <i class="fas fa-save"></i> {{ isEditTaskMode ? 'Update' : 'Assign' }}
             </button>
           </div>
         </div>
       </div>
     </transition>
 
-    <!-- Assigned Report Modal -->
+    <!-- Assigned Report Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showAssignedReport" @click.self="showAssignedReport = false">
-        <div class="premium-modal report-modal" @click.stop>
+        <div class="premium-modal report-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -392,8 +409,8 @@
               <i class="fas fa-chart-line"></i>
             </div>
             <div class="header-text">
-              <h2>Assigned Task Report</h2>
-              <p>Overview of all assigned tasks</p>
+              <h2>{{ isMobile ? 'Assigned Tasks' : 'Assigned Task Report' }}</h2>
+              <p>{{ isMobile ? 'Overview of assigned tasks' : 'Overview of all assigned tasks' }}</p>
             </div>
             <button class="close-btn-premium" @click="showAssignedReport = false">
               <i class="fas fa-times"></i>
@@ -401,7 +418,7 @@
           </div>
 
           <div class="modal-body-premium report-body">
-            <div class="report-filters">
+            <div class="report-filters" :class="{ 'mobile-filters': isMobile }">
               <div class="search-wrapper-small">
                 <i class="fas fa-search"></i>
                 <input type="text" v-model="reportSearch" placeholder="Search tasks..." />
@@ -415,7 +432,34 @@
               <input type="date" v-model="reportFilters.date" class="filter-date-small" />
             </div>
 
-            <div class="table-wrapper-premium">
+            <!-- Mobile Report Cards -->
+            <div class="mobile-report-cards" v-if="isMobile">
+              <div v-for="(task, index) in filteredAssignedReports" :key="task.id" class="report-mini-card">
+                <div class="mini-card-header">
+                  <span class="mini-task-name">{{ truncateText(task.name, 30) }}</span>
+                  <span :class="['status-badge-premium small', getStatusClass(task.status)]">
+                    {{ task.status }}
+                  </span>
+                </div>
+                <div class="mini-card-body">
+                  <div class="mini-row">
+                    <span class="mini-label">Assigned To:</span>
+                    <span>{{ task.username }}</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-label">Due:</span>
+                    <span>{{ task.date }}</span>
+                  </div>
+                </div>
+              </div>
+              <div v-if="filteredAssignedReports.length === 0" class="empty-state-small">
+                <i class="fas fa-inbox"></i>
+                <p>No assigned tasks found</p>
+              </div>
+            </div>
+
+            <!-- Desktop Report Table -->
+            <div class="table-wrapper-premium" v-else>
               <table class="report-table">
                 <thead>
                   <tr>
@@ -457,7 +501,7 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button class="btn-submit-premium" @click="showAssignedReport = false">
               <i class="fas fa-check"></i> Close
             </button>
@@ -482,7 +526,6 @@ export default {
   data() {
     const today = new Date().toISOString().split('T')[0]
     
-    // Parse user data from localStorage
     let loggedUser = null
     let loggedUserName = 'Ajay'
     let loggedUserId = null
@@ -511,15 +554,16 @@ export default {
       showAssignTaskModal: false,
       visibleCount: 12,
       minDate: today,
+      filtersVisible: true,
       filters: { name: '', date: '', month: (new Date().getMonth() + 1).toString(), status: '', search: '' },
       tasks: [],
       employeeList: [],
       employeesDropdown: [],
       months: [
-        { value: '1', label: 'January' }, { value: '2', label: 'February' }, { value: '3', label: 'March' },
-        { value: '4', label: 'April' }, { value: '5', label: 'May' }, { value: '6', label: 'June' },
-        { value: '7', label: 'July' }, { value: '8', label: 'August' }, { value: '9', label: 'September' },
-        { value: '10', label: 'October' }, { value: '11', label: 'November' }, { value: '12', label: 'December' }
+        { value: '1', label: 'Jan' }, { value: '2', label: 'Feb' }, { value: '3', label: 'Mar' },
+        { value: '4', label: 'Apr' }, { value: '5', label: 'May' }, { value: '6', label: 'Jun' },
+        { value: '7', label: 'Jul' }, { value: '8', label: 'Aug' }, { value: '9', label: 'Sep' },
+        { value: '10', label: 'Oct' }, { value: '11', label: 'Nov' }, { value: '12', label: 'Dec' }
       ],
       isMobile: false,
       isSidebarVisible: true,
@@ -630,6 +674,14 @@ export default {
     }
   },
   methods: {
+    toggleFilters() {
+      if (this.isMobile) {
+        this.filtersVisible = !this.filtersVisible
+      }
+    },
+    filterByStatus(status) {
+      this.filters.status = this.filters.status === status ? '' : status
+    },
     truncateText(text, length) {
       if (!text) return ''
       return text.length > length ? text.substring(0, length) + '...' : text
@@ -694,6 +746,11 @@ export default {
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
+      if (this.isMobile) {
+        this.filtersVisible = false
+      } else {
+        this.filtersVisible = true
+      }
     },
     toggleSidebar() { this.isSidebarVisible = !this.isSidebarVisible },
     openAssignTaskModal() { 
@@ -718,7 +775,6 @@ export default {
         toastWarning("Please fill all required fields!")
         return
       }
-      // Add logged user info to task data
       const taskData = {
         ...this.newTask,
         assigned_by: this.loggedUserId,
@@ -818,6 +874,58 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
+}
+
 /* Content Header */
 .content-header-modern {
   display: flex;
@@ -906,11 +1014,16 @@ export default {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 20px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:active {
+  transform: scale(0.97);
 }
 
 .stat-card.pending {
@@ -953,9 +1066,49 @@ export default {
   margin-bottom: 28px;
 }
 
+.filter-toggle-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.filter-toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.filter-toggle-btn .fa-chevron-down {
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle-btn .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
+.filter-group-modern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.filter-group-modern.filters-hidden {
+  display: none;
+}
+
 .search-wrapper-modern {
   position: relative;
-  margin-bottom: 16px;
+  flex: 1;
+  min-width: 200px;
 }
 
 .search-icon {
@@ -979,12 +1132,6 @@ export default {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.filter-group-modern {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 
 .filter-select, .filter-date {
@@ -1020,7 +1167,7 @@ export default {
   background: #e5e7eb;
 }
 
-/* Report Cards Grid - 2 cards per row properly */
+/* Report Cards Grid */
 .report-grid-premium {
   width: 100%;
 }
@@ -1049,27 +1196,30 @@ export default {
   box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
 }
 
-/* Assigned task card styling */
+.report-card-premium.mobile-card {
+  border-radius: 16px;
+}
+
 .report-card-premium.assigned-task-card {
   border-left: 4px solid var(--primary-color);
   background: linear-gradient(135deg, #ffffff, #f8f9ff);
 }
 
 .assigned-badge {
-  /* position: absolute; */
-  top: 12px;
-  right: 12px;
   background: var(--primary);
   color: white;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 10px;
   font-weight: 600;
-  z-index: 2;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
 }
 
 .card-accent {
@@ -1093,6 +1243,10 @@ export default {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.mobile-card .card-header-premium {
+  padding: 14px 16px 10px 16px;
+}
+
 .header-info {
   display: flex;
   gap: 12px;
@@ -1110,11 +1264,21 @@ export default {
   color: var(--primary-color);
 }
 
+.mobile-card .task-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
 .header-info h3 {
   font-size: 15px;
   font-weight: 700;
   color: #1a1a2e;
   margin: 0 0 6px 0;
+}
+
+.mobile-card .header-info h3 {
+  font-size: 13px;
 }
 
 .meta-tags {
@@ -1134,6 +1298,10 @@ export default {
   gap: 4px;
 }
 
+.status-text {
+  display: inline;
+}
+
 .status-badge-premium {
   display: inline-flex;
   align-items: center;
@@ -1142,6 +1310,12 @@ export default {
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
+  flex-shrink: 0;
+}
+
+.mobile-card .status-badge-premium {
+  padding: 3px 8px;
+  font-size: 10px;
 }
 
 .status-badge-premium.completed {
@@ -1164,6 +1338,10 @@ export default {
   flex: 1;
 }
 
+.mobile-card .card-body-premium {
+  padding: 12px 16px;
+}
+
 .info-row {
   display: flex;
   align-items: flex-start;
@@ -1171,6 +1349,11 @@ export default {
   font-size: 13px;
   margin-bottom: 10px;
   color: #4b5563;
+}
+
+.mobile-card .info-row {
+  font-size: 12px;
+  margin-bottom: 8px;
 }
 
 .info-row i {
@@ -1193,6 +1376,10 @@ export default {
   border-top: 1px solid #e5e7eb;
 }
 
+.card-footer-premium.mobile-footer {
+  padding: 10px 16px 14px;
+}
+
 .action-edit, .action-delete {
   flex: 1;
   padding: 8px;
@@ -1206,6 +1393,12 @@ export default {
   justify-content: center;
   gap: 6px;
   border: none;
+}
+
+.mobile-footer .action-edit,
+.mobile-footer .action-delete {
+  padding: 10px;
+  font-size: 11px;
 }
 
 .action-edit {
@@ -1224,6 +1417,10 @@ export default {
 
 .action-delete:hover {
   color: rgb(5, 1, 1);
+}
+
+.btn-text {
+  display: inline;
 }
 
 /* Load More Button */
@@ -1282,6 +1479,12 @@ export default {
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
+.premium-modal.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+  max-height: 90vh;
+}
+
 .premium-modal.detail-modal {
   max-width: 650px;
 }
@@ -1319,6 +1522,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-header-premium {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .header-icon-premium {
   width: 52px;
   height: 52px;
@@ -1329,6 +1537,12 @@ export default {
   justify-content: center;
   color: white;
   font-size: 24px;
+}
+
+.mobile-modal .header-icon-premium {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
 }
 
 .header-text {
@@ -1342,10 +1556,18 @@ export default {
   color: #1a1a2e;
 }
 
+.mobile-modal .header-text h2 {
+  font-size: 18px;
+}
+
 .header-text p {
   font-size: 13px;
   color: #6b7280;
   margin: 4px 0 0;
+}
+
+.mobile-modal .header-text p {
+  font-size: 12px;
 }
 
 .close-btn-premium {
@@ -1372,6 +1594,10 @@ export default {
   background: #fafbfc;
 }
 
+.mobile-modal .modal-body-premium {
+  padding: 16px;
+}
+
 .modal-body-premium::-webkit-scrollbar {
   width: 6px;
 }
@@ -1393,6 +1619,11 @@ export default {
   gap: 20px;
 }
 
+.detail-grid.mobile-grid {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
 .detail-item {
   display: flex;
   gap: 12px;
@@ -1401,6 +1632,10 @@ export default {
 
 .detail-item.full-width {
   grid-column: span 2;
+}
+
+.mobile-grid .detail-item.full-width {
+  grid-column: span 1;
 }
 
 .detail-item i {
@@ -1440,6 +1675,10 @@ export default {
 
 .form-field.full-width {
   grid-column: span 2;
+}
+
+.mobile-modal .form-field.full-width {
+  grid-column: span 1;
 }
 
 .form-field label {
@@ -1482,6 +1721,13 @@ export default {
   font-family: inherit;
 }
 
+.mobile-modal .field-wrapper input,
+.mobile-modal .field-wrapper select,
+.mobile-modal .field-wrapper textarea {
+  font-size: 16px;
+  padding: 10px 12px 10px 36px;
+}
+
 .field-wrapper textarea {
   padding-top: 12px;
   resize: vertical;
@@ -1510,6 +1756,11 @@ export default {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.modal-footer-premium.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
+}
+
 .btn-cancel-premium,
 .btn-submit-premium {
   flex: 1;
@@ -1524,6 +1775,11 @@ export default {
   gap: 8px;
   font-size: 14px;
   border: none;
+}
+
+.mobile-footer .btn-cancel-premium,
+.mobile-footer .btn-submit-premium {
+  padding: 14px;
 }
 
 .btn-cancel-premium {
@@ -1550,11 +1806,19 @@ export default {
   padding: 20px;
 }
 
+.mobile-modal .report-body {
+  padding: 12px;
+}
+
 .report-filters {
   display: flex;
   gap: 12px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+}
+
+.report-filters.mobile-filters {
+  flex-direction: column;
 }
 
 .search-wrapper-small {
@@ -1639,7 +1903,57 @@ export default {
   padding: 40px;
 }
 
+/* Mobile Report Cards */
+.mobile-report-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-mini-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.mini-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mini-task-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--dark);
+}
+
+.mini-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mini-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.mini-label {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+/* Empty States */
 .empty-state-small {
+  text-align: center;
+  padding: 40px;
   color: #9ca3af;
 }
 
@@ -1683,32 +1997,63 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .report-container {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-buttons {
-    flex-direction: column;
-  }
-
-  .register-btn-modern {
-    justify-content: center;
+    display: none;
   }
 
   .stats-bar {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 12px 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .stat-card i {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .filter-toggle-btn {
+    display: flex;
+    width: 100%;
+    justify-content: center;
   }
 
   .filter-group-modern {
     flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-group-modern.filters-hidden {
+    display: none;
+  }
+
+  .search-wrapper-modern {
+    min-width: auto;
   }
 
   .filter-select, .filter-date, .clear-filter-btn {
@@ -1720,46 +2065,149 @@ export default {
     gap: 16px;
   }
 
-  .premium-modal {
-    max-width: 95%;
+  .mobile-report-cards {
+    display: flex;
   }
 
-  .modal-header-premium {
-    padding: 16px 20px;
-  }
-
-  .modal-body-premium {
-    padding: 16px;
-  }
-
-  .modal-footer-premium {
-    padding: 16px 20px;
-    flex-direction: column;
-  }
-
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-item.full-width {
-    grid-column: span 1;
-  }
-
-  .report-filters {
-    flex-direction: column;
+  .table-wrapper-premium {
+    display: none;
   }
 
   .report-table {
     font-size: 11px;
   }
 
-  .report-table th,
-  .report-table td {
+  .report-filters {
+    flex-direction: column;
+  }
+
+  .btn-text {
+    display: inline;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
     padding: 8px;
   }
 
-  .summary-cell {
-    max-width: 120px;
+  .report-container {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card i {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .report-card-premium.mobile-card {
+    border-radius: 14px;
+  }
+
+  .card-header-premium {
+    padding: 12px 14px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .header-info h3 {
+    font-size: 13px;
+  }
+
+  .status-badge-premium {
+    align-self: flex-start;
+  }
+
+  .card-body-premium {
+    padding: 10px 14px;
+  }
+
+  .info-row {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  .info-row.summary {
+    padding: 8px;
+  }
+
+  .card-footer-premium.mobile-footer {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .action-edit, .action-delete {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .premium-modal.mobile-modal {
+    max-width: 98%;
+    border-radius: 20px;
+  }
+
+  .modal-header-premium {
+    padding: 12px 16px;
+  }
+
+  .modal-header-premium h2 {
+    font-size: 16px;
+  }
+
+  .modal-body-premium {
+    padding: 12px;
+  }
+
+  .modal-footer-premium.mobile-footer {
+    padding: 12px 16px;
+  }
+
+  .detail-item {
+    font-size: 13px;
+  }
+
+  .report-mini-card {
+    padding: 10px;
+  }
+
+  .mini-task-name {
+    font-size: 12px;
+  }
+
+  .mini-row {
+    font-size: 11px;
+  }
+
+  .empty-state-small {
+    padding: 30px 16px;
+  }
+
+  .empty-state-small i {
+    font-size: 36px;
   }
 }
 </style>

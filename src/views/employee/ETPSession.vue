@@ -4,9 +4,21 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="session-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <!-- Header Section -->
-        <div class="content-header-modern">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+        
+          <div class="mobile-title">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>ETP Ratings</span>
+          </div>
+          <button class="mobile-add-btn" @click="openAddSessionModal">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
+          <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-chalkboard-teacher"></i>
             </div>
@@ -21,59 +33,59 @@
           </div>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-          <div class="stat-card">
+          <div class="stat-card" @click="activeTab = 'sessions'">
             <i class="fas fa-calendar-week"></i>
             <div class="stat-info">
               <span class="stat-value">{{ totalSessions }}</span>
-              <span class="stat-label">Total Sessions</span>
+              <span class="stat-label">Sessions</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" @click="activeTab = 'leaderboard'">
             <i class="fas fa-users"></i>
             <div class="stat-info">
               <span class="stat-value">{{ totalRatings }}</span>
-              <span class="stat-label">Total Ratings</span>
+              <span class="stat-label">Ratings</span>
             </div>
           </div>
           <div class="stat-card">
             <i class="fas fa-chart-line"></i>
             <div class="stat-info">
               <span class="stat-value">{{ avgRatingOverall }}</span>
-              <span class="stat-label">Overall Avg Rating</span>
+              <span class="stat-label">Avg Rating</span>
             </div>
           </div>
           <div class="stat-card" @click="openAddSessionModal">
             <i class="fas fa-plus-circle"></i>
             <div class="stat-info">
-              <span class="stat-value action-stat">+ New Session</span>
-              <span class="stat-label">Add Session Entry</span>
+              <span class="stat-value action-stat">+ New</span>
+              <span class="stat-label">Add Session</span>
             </div>
           </div>
         </div>
 
-        <!-- Tabs: Sessions List & Leaderboard -->
+        <!-- Tabs: Sessions List & Leaderboard - Mobile Optimized -->
         <div class="tabs-modern">
           <button 
             class="tab-btn" 
             :class="{ active: activeTab === 'sessions' }"
             @click="activeTab = 'sessions'"
           >
-            <i class="fas fa-list"></i> Sessions & Ratings
+            <i class="fas fa-list"></i> <span class="tab-text">Sessions</span>
           </button>
           <button 
             class="tab-btn" 
             :class="{ active: activeTab === 'leaderboard' }"
             @click="activeTab = 'leaderboard'"
           >
-            <i class="fas fa-trophy"></i> Employee Leaderboard
+            <i class="fas fa-trophy"></i> <span class="tab-text">Leaderboard</span>
           </button>
         </div>
 
         <!-- Sessions List Tab -->
         <div v-show="activeTab === 'sessions'">
-          <!-- Filter Section -->
+          <!-- Filter Section - Mobile Optimized -->
           <div class="filter-section">
             <div class="search-wrapper">
               <i class="fas fa-search"></i>
@@ -81,25 +93,28 @@
                 type="text" 
                 v-model="searchQuery" 
                 @input="debouncedSearch"
-                placeholder="Search by topic, presenter name..."
+                placeholder="Search sessions..."
                 class="search-input"
               >
             </div>
             <select v-model="selectedMonth" class="month-select" @change="loadSessions">
               <option value="">All Months</option>
               <option v-for="month in months" :key="month.value" :value="month.value">
-                {{ month.name }}
+                {{ isMobile ? month.short : month.name }}
               </option>
             </select>
           </div>
 
-          <!-- Sessions Grid -->
+          <!-- Sessions Grid - Mobile Optimized -->
           <div class="sessions-section">
             <div class="section-title-modern">
-              <i class="fas fa-chalkboard"></i>
-              <span>Session History</span>
+              <div class="title-left">
+                <i class="fas fa-chalkboard"></i>
+                <span>Session History</span>
+                <span class="record-count-mobile" v-if="isMobile">{{ sessions.length }}</span>
+              </div>
               <button class="btn-add-small" @click="openAddSessionModal">
-                <i class="fas fa-plus"></i> Add Session
+                <i class="fas fa-plus"></i> <span class="btn-text">Add</span>
               </button>
             </div>
 
@@ -109,34 +124,34 @@
             </div>
 
             <div v-else-if="sessions.length" class="sessions-grid-premium">
-              <div v-for="session in sessions" :key="session.id" class="session-card-premium">
+              <div v-for="session in sessions" :key="session.id" class="session-card-premium" :class="{ 'mobile-card': isMobile }">
                 <div class="card-accent" :style="{ background: session.accent_color || 'linear-gradient(135deg, #1e3c72, #2a5298)' }"></div>
                 
-                <div class="session-header">
+                <div class="session-header" :class="{ 'mobile-header': isMobile }">
                   <div class="session-icon">
                     <i class="fas fa-chalkboard-teacher"></i>
                   </div>
                   <div class="session-title-wrap">
-                    <h3>{{ session.topic }}</h3>
+                    <h3>{{ truncateText(session.topic, isMobile ? 30 : 40) }}</h3>
                     <div class="session-meta">
                       <span><i class="fas fa-user"></i> {{ session.presenter_name }}</span>
-                      <span><i class="fas fa-calendar-alt"></i> {{ formatDate(session.session_date) }}</span>
+                      <span><i class="fas fa-calendar-alt"></i> {{ formatDateShort(session.session_date) }}</span>
                     </div>
                   </div>
                   <div
                     class="session-actions"
                     v-if="session.created_by === currentUserId"
                   >
-                    <button class="action-btn edit-btn" @click="editSession(session)" title="Edit Session">
+                    <button class="action-btn edit-btn" @click="editSession(session)" title="Edit">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button class="action-btn delete-btn" @click="confirmDeleteSession(session)" title="Delete Session">
+                    <button class="action-btn delete-btn" @click="confirmDeleteSession(session)" title="Delete">
                       <i class="fas fa-trash-alt"></i>
                     </button>
                   </div>
                 </div>
 
-                <!-- Key Points with Read More -->
+                <!-- Key Points -->
                 <div class="key-points" v-if="session.key_points">
                   <div class="points-label">
                     <i class="fas fa-lightbulb"></i> Key Points
@@ -156,12 +171,12 @@
                   </div>
                 </div>
 
-                <!-- Rating Section -->
-                <div class="rating-section">
+                <!-- Rating Section - Mobile Optimized -->
+                <div class="rating-section" :class="{ 'mobile-rating': isMobile }">
                   <div class="rating-label">
                     <i class="fas fa-star"></i> Rate this session (1-5)
                   </div>
-                  <div class="rating-input">
+                  <div class="rating-input" :class="{ 'mobile-rating-input': isMobile }">
                     <div class="stars-input">
                       <span 
                         v-for="star in 5" 
@@ -180,77 +195,75 @@
                       :disabled="ratingSubmitting === session.id"
                     >
                       <i v-if="ratingSubmitting === session.id" class="fas fa-spinner fa-pulse"></i>
-                      Submit Rating
+                      Submit
                     </button>
                     <span v-if="session.userRatingSubmitted" class="rating-submitted-badge">
-                      <i class="fas fa-check-circle"></i> You rated {{ session.userRatingSubmitted }}/5
+                      <i class="fas fa-check-circle"></i> {{ session.userRatingSubmitted }}/5
                     </span>
                   </div>
                 </div>
 
-                <!-- INDIVIDUAL RATINGS LIST - Each review shown separately -->
+                <!-- Individual Ratings List -->
                 <div class="ratings-list-section" v-if="session.ratings && session.ratings.length > 0">
-                  <div class="ratings-label">
-                    <i class="fas fa-users"></i> Individual Reviews
-                    <span class="ratings-count-badge">{{ session.ratings.length }} review{{ session.ratings.length !== 1 ? 's' : '' }}</span>
+                  <div class="ratings-label" @click="toggleRatingsList(session)">
+                    <i class="fas fa-users"></i>
+                    <span>Reviews ({{ session.ratings.length }})</span>
+                    <i class="fas fa-chevron-down" :class="{ 'rotated': session.ratingsVisible }"></i>
                   </div>
                   
-                  <!-- List each rating/review separately -->
-                  <div class="ratings-list">
+                  <div class="ratings-list" :class="{ 'ratings-hidden': !session.ratingsVisible }">
                     <div 
                       v-for="rating in session.ratings" 
                       :key="rating.id" 
                       class="rating-item"
-                      :class="{ 'current-user-rating': rating.user_id === currentUserId }"
+                      :class="{ 
+                        'current-user-rating': rating.user_id === currentUserId,
+                        'mobile-rating-item': isMobile 
+                      }"
                     >
-                      <!-- Reviewer Name -->
                       <div class="rating-user-info">
                         <i class="fas fa-user-circle"></i>
-                        <span class="rating-user-name">{{ rating.user_name || 'Anonymous User' }}</span>
+                        <span class="rating-user-name">{{ truncateText(rating.user_name || 'Anonymous', isMobile ? 15 : 25) }}</span>
                         <span class="rating-user-badge" v-if="rating.user_id === currentUserId">(You)</span>
                       </div>
-                      
-                      <!-- Star Rating Display -->
                       <div class="rating-stars-display">
                         <i v-for="star in 5" :key="star" class="fas fa-star" :class="{ 'filled': rating.rating >= star }"></i>
                         <span class="rating-value-text">{{ rating.rating }}/5</span>
                       </div>
-                      
-                      <!-- Rating Date -->
-                      <div class="rating-date" v-if="rating.created_at">
+                      <div class="rating-date" v-if="!isMobile">
                         <i class="fas fa-clock"></i> {{ formatDateTime(rating.created_at) }}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- Average Rating (Optional - can be removed if you only want individual reviews) -->
-                <div class="avg-rating" v-if="session.avg_rating">
+                <!-- Average Rating -->
+                <div class="avg-rating" v-if="session.avg_rating" :class="{ 'mobile-avg': isMobile }">
                   <div class="avg-rating-stars">
-                    <i class="fas fa-chart-simple"></i> Average Rating: 
+                    <i class="fas fa-chart-simple"></i> Avg: 
                     <span class="rating-value">{{ session.avg_rating }}/5</span>
                     <span class="star-rating-display">
                       <i v-for="n in 5" :key="n" class="fas fa-star" :class="{ 'filled': Math.round(session.avg_rating) >= n }"></i>
                     </span>
                   </div>
-                  <span class="rating-count">(from {{ session.rating_count || 0 }} review{{ session.rating_count !== 1 ? 's' : '' }})</span>
+                  <span class="rating-count">({{ session.rating_count || 0 }})</span>
                 </div>
 
-                <div class="session-footer">
+                <div class="session-footer" :class="{ 'mobile-footer': isMobile }">
                   <div class="badge-duration" v-if="session.duration_minutes">
                     <i class="fas fa-clock"></i> {{ session.duration_minutes }} min
                   </div>
                   <div class="badge-presenter">
-                    <i class="fas fa-user-circle"></i> {{ session.presenter_name }}
+                    <i class="fas fa-user-circle"></i> {{ truncateText(session.presenter_name, isMobile ? 15 : 25) }}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div v-else class="empty-state-premium">
+            <div v-else class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
               <i class="fas fa-calendar-times"></i>
               <h4>No Sessions Found</h4>
-              <p>{{ searchQuery ? 'Try a different search term' : 'Click "Add Session" to create your first Saturday session' }}</p>
+              <p>{{ searchQuery ? 'Try a different search' : 'Click "Add Session" to create your first Saturday session' }}</p>
               <button class="btn-primary-empty" @click="openAddSessionModal">
                 <i class="fas fa-plus-circle"></i> Add First Session
               </button>
@@ -258,11 +271,11 @@
           </div>
         </div>
 
-        <!-- Leaderboard Tab -->
+        <!-- Leaderboard Tab - Mobile Optimized -->
         <div v-show="activeTab === 'leaderboard'" class="leaderboard-section">
           <div class="section-title-modern">
             <i class="fas fa-trophy"></i>
-            <span>Employee Performance Leaderboard</span>
+            <span>Employee Leaderboard</span>
           </div>
           
           <div v-if="loadingLeaderboard" class="loading-state">
@@ -271,14 +284,52 @@
           </div>
           
           <div v-else-if="leaderboard.length" class="leaderboard-table-wrapper">
-            <table class="leaderboard-table">
+            <!-- Mobile Card View -->
+            <div class="leaderboard-cards" v-if="isMobile">
+              <div v-for="(employee, index) in leaderboard" :key="employee.presenter_name" class="leaderboard-card">
+                <div class="card-rank">
+                  <span v-if="index === 0" class="rank-badge gold">🥇</span>
+                  <span v-else-if="index === 1" class="rank-badge silver">🥈</span>
+                  <span v-else-if="index === 2" class="rank-badge bronze">🥉</span>
+                  <span v-else class="rank-number">{{ index + 1 }}</span>
+                </div>
+                <div class="card-content">
+                  <div class="presenter-name">
+                    <i class="fas fa-user-circle"></i> {{ employee.presenter_name }}
+                  </div>
+                  <div class="card-stats">
+                    <div class="stat-chip">
+                      <span class="stat-label">Sessions</span>
+                      <span class="stat-number">{{ employee.sessions_count }}</span>
+                    </div>
+                    <div class="stat-chip">
+                      <span class="stat-label">Ratings</span>
+                      <span class="stat-number">{{ employee.total_ratings_received || 0 }}</span>
+                    </div>
+                    <div class="stat-chip">
+                      <span class="stat-label">Avg</span>
+                      <span class="stat-number rating">{{ employee.avg_rating || 'N/A' }}</span>
+                    </div>
+                  </div>
+                  <div class="progress-bar-mini">
+                    <div class="progress-fill-mini" :style="{ width: ((employee.avg_rating || 0) / 5 * 100) + '%' }"></div>
+                  </div>
+                  <div class="stars-mini-display">
+                    <i v-for="n in 5" :key="n" class="fas fa-star" :class="{ 'filled': Math.round(employee.avg_rating) >= n }"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <table class="leaderboard-table" v-else>
               <thead>
                 <tr>
                   <th>Rank</th>
                   <th>Presenter</th>
-                  <th>Sessions Conducted</th>
-                  <th>Total Ratings Received</th>
-                  <th>Average Rating</th>
+                  <th>Sessions</th>
+                  <th>Ratings</th>
+                  <th>Average</th>
                   <th>Performance</th>
                 </tr>
               </thead>
@@ -311,7 +362,7 @@
             </table>
           </div>
           
-          <div v-else class="empty-state-premium">
+          <div v-else class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
             <i class="fas fa-chart-simple"></i>
             <h4>No Data Available</h4>
             <p>Add sessions and ratings to see the leaderboard</p>
@@ -320,73 +371,62 @@
       </div>
     </div>
 
-    <!-- Session Form Modal (Popup) -->
+    <!-- Session Form Modal - Mobile Optimized -->
     <div v-if="showSessionModal" class="modal-overlay" @click.self="closeSessionModal">
-      <div class="modal-container-premium modal-form">
+      <div class="modal-container-premium modal-form" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-icon">
             <i class="fas fa-edit"></i>
           </div>
-          <h2>{{ editingSession ? 'Edit Session' : 'Add New Saturday Session' }}</h2>
+          <h2>{{ editingSession ? 'Edit Session' : 'Add New Session' }}</h2>
           <button class="close-modal" @click="closeSessionModal">&times;</button>
         </div>
         <div class="modal-body">
           <form @submit.prevent="handleSessionSubmit">
-            <div class="form-row-grid">
+            <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
               <div class="form-group">
-                <label><i class="fas fa-heading"></i> Topic / Title *</label>
-                <input type="text" v-model="sessionForm.topic" placeholder="e.g., Advanced React Patterns" required>
+                <label><i class="fas fa-heading"></i> Topic *</label>
+                <input type="text" v-model="sessionForm.topic" placeholder="Enter topic" required>
               </div>
               <div class="form-group">
-                <label>
-                  <i class="fas fa-user"></i>
-                  Presenter Name *
-                </label>
-                <select
-                  v-model="sessionForm.presenter_name"
-                  required
-                  class="employee-select"
-                >
+                <label><i class="fas fa-user"></i> Presenter *</label>
+                <select v-model="sessionForm.presenter_name" required class="employee-select">
                   <option value="">Select Employee</option>
-                  <option
-                    v-for="employee in employees"
-                    :key="employee.id"
-                    :value="employee.name"
-                  >
+                  <option v-for="employee in employees" :key="employee.id" :value="employee.name">
                     {{ employee.name }}
                   </option>
                 </select>
               </div>
             </div>
 
-            <div class="form-row-grid">
+            <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
               <div class="form-group">
-                <label><i class="fas fa-calendar-alt"></i> Session Date *</label>
+                <label><i class="fas fa-calendar-alt"></i> Date *</label>
                 <input type="date" v-model="sessionForm.session_date" required>
               </div>
               <div class="form-group">
-                <label><i class="fas fa-clock"></i> Duration (minutes)</label>
+                <label><i class="fas fa-clock"></i> Duration (min)</label>
                 <input type="number" v-model.number="sessionForm.duration_minutes" placeholder="60">
               </div>
             </div>
 
             <div class="form-group">
-              <label><i class="fas fa-lightbulb"></i> Key Points / Learning Outcomes</label>
+              <label><i class="fas fa-lightbulb"></i> Key Points</label>
               <textarea v-model="sessionForm.key_points" rows="4" placeholder="Enter key points line by line..."></textarea>
-              <small class="form-hint">Press Enter for line breaks. Formatting will be preserved exactly as typed.</small>
+              <small class="form-hint">Press Enter for line breaks.</small>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" v-if="!isMobile">
               <label><i class="fas fa-palette"></i> Accent Color</label>
               <input type="color" v-model="sessionForm.accent_color" class="color-picker">
             </div>
 
-            <div class="modal-actions">
+            <div class="modal-actions" :class="{ 'mobile-actions': isMobile }">
               <button type="button" class="btn-secondary" @click="closeSessionModal">Cancel</button>
               <button type="submit" class="btn-primary" :disabled="submitting">
                 <i v-if="submitting" class="fas fa-spinner fa-pulse"></i>
                 <i v-else class="fas fa-save"></i>
-                {{ submitting ? 'Saving...' : (editingSession ? 'Update Session' : 'Add Session') }}
+                {{ submitting ? 'Saving...' : (editingSession ? 'Update' : 'Add') }}
               </button>
             </div>
           </form>
@@ -394,9 +434,9 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete Confirmation Modal - Mobile Optimized -->
     <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
-      <div class="modal-container-premium">
+      <div class="modal-container-premium" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-icon">
             <i class="fas fa-trash-alt" style="color: #ef4444;"></i>
@@ -405,12 +445,12 @@
           <button class="close-modal" @click="showDeleteModal = false">&times;</button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you want to delete session <strong>{{ sessionToDelete?.topic }}</strong>? This will also remove all ratings for this session.</p>
-          <div class="modal-actions" style="margin-top: 24px;">
+          <p>Delete <strong>{{ sessionToDelete?.topic }}</strong>? This will remove all ratings.</p>
+          <div class="modal-actions" :class="{ 'mobile-actions': isMobile }" style="margin-top: 24px;">
             <button class="btn-secondary" @click="showDeleteModal = false">Cancel</button>
             <button class="btn-danger" @click="deleteSession" :disabled="deleting">
               <i v-if="deleting" class="fas fa-spinner fa-pulse"></i>
-              Delete Permanently
+              Delete
             </button>
           </div>
         </div>
@@ -423,7 +463,6 @@
 import Sidebar from './components/Sidebar.vue'
 import { toastSuccess, toastError } from "@/utils/toast.js";
 
-// API Base URL
 const API_BASE = 'https://employees.archenterprises.co.in/api/api';
 
 export default {
@@ -436,48 +475,42 @@ export default {
       isSidebarVisible: true,
       activeTab: 'sessions',
       
-      // Sessions data
       sessions: [],
       totalSessions: 0,
       totalRatings: 0,
       avgRatingOverall: '0.0',
       
-      // Leaderboard
       leaderboard: [],
       loadingLeaderboard: false,
       
-      // UI states
       loading: false,
       submitting: false,
       deleting: false,
       ratingSubmitting: null,
       
-      // Modal state
       showSessionModal: false,
       showDeleteModal: false,
       sessionToDelete: null,
       
-      // Search and filters
       searchQuery: '',
       searchTimeout: null,
       selectedMonth: '',
       
       months: [
-        { value: '1', name: 'January' },
-        { value: '2', name: 'February' },
-        { value: '3', name: 'March' },
-        { value: '4', name: 'April' },
-        { value: '5', name: 'May' },
-        { value: '6', name: 'June' },
-        { value: '7', name: 'July' },
-        { value: '8', name: 'August' },
-        { value: '9', name: 'September' },
-        { value: '10', name: 'October' },
-        { value: '11', name: 'November' },
-        { value: '12', name: 'December' }
+        { value: '1', name: 'January', short: 'Jan' },
+        { value: '2', name: 'February', short: 'Feb' },
+        { value: '3', name: 'March', short: 'Mar' },
+        { value: '4', name: 'April', short: 'Apr' },
+        { value: '5', name: 'May', short: 'May' },
+        { value: '6', name: 'June', short: 'Jun' },
+        { value: '7', name: 'July', short: 'Jul' },
+        { value: '8', name: 'August', short: 'Aug' },
+        { value: '9', name: 'September', short: 'Sep' },
+        { value: '10', name: 'October', short: 'Oct' },
+        { value: '11', name: 'November', short: 'Nov' },
+        { value: '12', name: 'December', short: 'Dec' }
       ],
       
-      // Edit state
       editingSession: null,
       sessionForm: {
         id: null,
@@ -507,7 +540,15 @@ export default {
     }
   },
   methods: {
-    // Modal controls
+    truncateText(text, length) {
+      if (!text) return '';
+      return text.length > length ? text.substring(0, length) + '...' : text;
+    },
+    toggleRatingsList(session) {
+      if (this.isMobile) {
+        session.ratingsVisible = !session.ratingsVisible;
+      }
+    },
     openAddSessionModal() {
       this.resetSessionForm();
       this.showSessionModal = true;
@@ -522,7 +563,6 @@ export default {
       try {
         const response = await fetch(`${API_BASE}/employees`);
         const data = await response.json();
-        console.log('Employees:', data);
         this.employees = data;
       } catch (error) {
         console.error('Error loading employees:', error);
@@ -532,6 +572,9 @@ export default {
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
+    },
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible;
     },
 
     async loadSessions() {
@@ -553,16 +596,14 @@ export default {
             ratingSubmitted: false,
             userRatingSubmitted: null,
             keyPointsExpanded: false,
-            ratings: [] // Will be populated from session_ratings table
+            ratingsVisible: false,
+            ratings: []
           }));
           this.totalSessions = data.total || this.sessions.length;
           this.totalRatings = data.total_ratings || 0;
           this.avgRatingOverall = data.avg_rating_overall || '0.0';
           
-          // Load user's existing ratings for these sessions
           await this.loadUserRatings();
-          
-          // Load all individual ratings from session_ratings table
           await this.loadRatingsFromDB();
         } else {
           toastError('Failed to load sessions');
@@ -597,14 +638,12 @@ export default {
       }
     },
 
-    // Load individual ratings from session_ratings table
     async loadRatingsFromDB() {
       try {
         const response = await fetch(`${API_BASE}/session-ratings`);
         const data = await response.json();
         
         if (data.success && data.ratings) {
-          // Group ratings by session_id
           const ratingsBySession = {};
           data.ratings.forEach(rating => {
             if (!ratingsBySession[rating.session_id]) {
@@ -619,58 +658,19 @@ export default {
             });
           });
           
-          // Assign individual ratings to each session
           this.sessions.forEach(session => {
             session.ratings = ratingsBySession[session.id] || [];
-            // Sort ratings by created_at descending (newest first)
             session.ratings.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             
-            // Calculate average rating from individual ratings
             if (session.ratings.length > 0) {
               const sum = session.ratings.reduce((acc, r) => acc + r.rating, 0);
               session.avg_rating = (sum / session.ratings.length).toFixed(1);
               session.rating_count = session.ratings.length;
             }
           });
-          
-          console.log('Individual ratings loaded:', this.sessions.map(s => ({ 
-            id: s.id, 
-            topic: s.topic,
-            ratings: s.ratings 
-          })));
         }
       } catch (error) {
-        console.error('Error loading ratings from session_ratings table:', error);
-        await this.loadRatingsPerSession();
-      }
-    },
-
-    // Alternative: Load ratings per session individually
-    async loadRatingsPerSession() {
-      for (const session of this.sessions) {
-        try {
-          const response = await fetch(`${API_BASE}/sessions/${session.id}/ratings`);
-          const data = await response.json();
-          if (data.success && data.ratings) {
-            session.ratings = data.ratings.map(r => ({
-              id: r.id,
-              rating: r.rating,
-              user_id: r.user_id,
-              user_name: r.user_name || 'Anonymous User',
-              created_at: r.created_at
-            }));
-            
-            // Calculate average from individual ratings
-            if (session.ratings.length > 0) {
-              const sum = session.ratings.reduce((acc, r) => acc + r.rating, 0);
-              session.avg_rating = (sum / session.ratings.length).toFixed(1);
-              session.rating_count = session.ratings.length;
-            }
-          }
-        } catch (error) {
-          console.error(`Error loading ratings for session ${session.id}:`, error);
-          session.ratings = [];
-        }
+        console.error('Error loading ratings:', error);
       }
     },
 
@@ -698,11 +698,6 @@ export default {
       this.searchTimeout = setTimeout(() => {
         this.loadSessions();
       }, 500);
-    },
-
-    clearSearch() {
-      this.searchQuery = '';
-      this.loadSessions();
     },
 
     formatDate(dateString) {
@@ -925,6 +920,58 @@ export default {
   overflow-x: auto;
 }
 
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark, #1a1a2e);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark, #1a1a2e);
+}
+
+.mobile-title i {
+  color: #2a5298;
+}
+
+.mobile-add-btn {
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
+}
+
 /* Header */
 .content-header-modern {
   display: flex;
@@ -1006,6 +1053,10 @@ export default {
   background: linear-gradient(135deg, #eef2ff, #e0e7ff);
 }
 
+.stat-card:active {
+  transform: scale(0.97);
+}
+
 .stat-card i {
   font-size: 32px;
   color: #2a5298;
@@ -1066,10 +1117,14 @@ export default {
   border-bottom: 3px solid #2a5298;
 }
 
+.tab-text {
+  display: inline;
+}
+
 /* Filter Section */
 .filter-section {
   display: flex;
-  gap: 66px;
+  gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
 }
@@ -1128,6 +1183,21 @@ export default {
   justify-content: space-between;
 }
 
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.record-count-mobile {
+  background: #2a5298;
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
 .btn-add-small {
   background: linear-gradient(135deg, #1e3c72, #2a5298);
   border: none;
@@ -1143,9 +1213,12 @@ export default {
   gap: 6px;
 }
 
-.btn-add-small:hover {
-  opacity: 0.9;
-  transform: scale(0.97);
+.btn-add-small:active {
+  transform: scale(0.95);
+}
+
+.btn-text {
+  display: inline;
 }
 
 /* Sessions Grid */
@@ -1164,6 +1237,10 @@ export default {
   transition: all 0.3s ease;
   border: 1px solid #e5e7eb;
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.session-card-premium.mobile-card {
+  border-radius: 16px;
 }
 
 .session-card-premium:hover {
@@ -1186,6 +1263,12 @@ export default {
   align-items: flex-start;
   background: #fafbfc;
   border-bottom: 1px solid #eef2f6;
+}
+
+.session-header.mobile-header {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 14px;
 }
 
 .session-icon {
@@ -1226,6 +1309,10 @@ export default {
 .session-actions {
   display: flex;
   gap: 6px;
+}
+
+.session-actions .action-btn:active {
+  transform: scale(0.9);
 }
 
 .action-btn {
@@ -1310,9 +1397,8 @@ export default {
   width: fit-content;
 }
 
-.read-more-btn:hover {
-  background: #dcfce7;
-  color: #166534;
+.read-more-btn:active {
+  transform: scale(0.95);
 }
 
 /* Rating Section */
@@ -1320,6 +1406,10 @@ export default {
   padding: 14px 18px;
   background: #fffbeb;
   border-bottom: 1px solid #fde68a;
+}
+
+.rating-section.mobile-rating {
+  padding: 12px 14px;
 }
 
 .rating-label {
@@ -1334,6 +1424,12 @@ export default {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.rating-input.mobile-rating-input {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
 }
 
 .stars-input {
@@ -1352,8 +1448,8 @@ export default {
   color: #fbbf24;
 }
 
-.star:hover {
-  transform: scale(1.1);
+.star:active {
+  transform: scale(0.9);
 }
 
 .btn-submit-rating {
@@ -1367,6 +1463,10 @@ export default {
   cursor: pointer;
 }
 
+.btn-submit-rating:active {
+  transform: scale(0.95);
+}
+
 .rating-submitted-badge {
   font-size: 12px;
   color: #10b981;
@@ -1375,7 +1475,7 @@ export default {
   gap: 4px;
 }
 
-/* INDIVIDUAL RATINGS LIST - Each review shown separately */
+/* Individual Ratings List */
 .ratings-list-section {
   padding: 12px 18px;
   background: #f8fafc;
@@ -1390,6 +1490,16 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+}
+
+.ratings-label .fa-chevron-down {
+  transition: transform 0.3s ease;
+  margin-left: auto;
+}
+
+.ratings-label .fa-chevron-down.rotated {
+  transform: rotate(180deg);
 }
 
 .ratings-count-badge {
@@ -1407,9 +1517,13 @@ export default {
   gap: 10px;
   max-height: 300px;
   overflow-y: auto;
+  transition: all 0.3s ease;
 }
 
-/* Individual rating item - one per review */
+.ratings-list.ratings-hidden {
+  display: none;
+}
+
 .rating-item {
   display: flex;
   align-items: center;
@@ -1423,9 +1537,9 @@ export default {
   transition: all 0.2s;
 }
 
-.rating-item:hover {
-  background: #fefce8;
-  border-color: #fde047;
+.rating-item.mobile-rating-item {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .rating-item.current-user-rating {
@@ -1487,7 +1601,7 @@ export default {
   gap: 4px;
 }
 
-/* Average Rating (optional summary) */
+/* Average Rating */
 .avg-rating {
   padding: 10px 18px;
   background: #f9fafb;
@@ -1496,6 +1610,12 @@ export default {
   align-items: center;
   font-size: 12px;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.avg-rating.mobile-avg {
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
 }
 
 .avg-rating-stars {
@@ -1536,6 +1656,12 @@ export default {
   display: flex;
   gap: 16px;
   background: #f9fafb;
+  flex-wrap: wrap;
+}
+
+.session-footer.mobile-footer {
+  padding: 8px 14px;
+  gap: 10px;
 }
 
 .badge-duration, .badge-presenter {
@@ -1546,7 +1672,7 @@ export default {
   color: #1e40af;
 }
 
-/* Leaderboard Table */
+/* Leaderboard */
 .leaderboard-section {
   margin-top: 16px;
 }
@@ -1579,20 +1705,117 @@ export default {
   font-size: 14px;
 }
 
-.leaderboard-table tr:hover {
-  background: #f9fafb;
+/* Leaderboard Mobile Cards */
+.leaderboard-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+}
+
+.leaderboard-card {
+  display: flex;
+  gap: 14px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-rank {
+  flex-shrink: 0;
+}
+
+.rank-badge {
+  font-size: 28px;
+}
+
+.rank-number {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 20px;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.presenter-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.presenter-name i {
+  margin-right: 6px;
+  color: #2a5298;
+}
+
+.card-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 9px;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.stat-number {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.stat-number.rating {
+  color: #2a5298;
+}
+
+.progress-bar-mini {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-fill-mini {
+  height: 100%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.stars-mini-display {
+  display: flex;
+  gap: 2px;
+}
+
+.stars-mini-display i {
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+.stars-mini-display i.filled {
+  color: #fbbf24;
 }
 
 .rank-cell {
   width: 70px;
-}
-
-.rank-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 30px;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .rank-badge.gold {
@@ -1608,11 +1831,6 @@ export default {
 .rank-badge.bronze {
   background: #fed7aa;
   color: #9a3412;
-}
-
-.rank-number {
-  font-weight: 600;
-  color: #6b7280;
 }
 
 .presenter-cell i {
@@ -1685,6 +1903,11 @@ export default {
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 
+.modal-container-premium.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+}
+
 .modal-container-premium.modal-form {
   max-width: 700px;
 }
@@ -1698,12 +1921,20 @@ export default {
   border-bottom: 1px solid #e2e8f0;
 }
 
+.mobile-modal .modal-header {
+  padding: 16px 20px;
+}
+
 .modal-header h2 {
   font-size: 20px;
   font-weight: 600;
   margin: 0;
   flex: 1;
   margin-left: 12px;
+}
+
+.mobile-modal .modal-header h2 {
+  font-size: 17px;
 }
 
 .modal-icon {
@@ -1720,23 +1951,36 @@ export default {
   transition: 0.2s;
 }
 
-.close-modal:hover {
-  color: #ef4444;
+.close-modal:active {
+  transform: rotate(90deg);
 }
 
 .modal-body {
   padding: 24px;
 }
 
+.mobile-modal .modal-body {
+  padding: 16px;
+}
+
 .form-row-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 50px;
+  gap: 16px;
   margin-bottom: 18px;
+}
+
+.form-row-grid.mobile-grid {
+  grid-template-columns: 1fr;
+  gap: 0;
 }
 
 .form-group {
   margin-bottom: 18px;
+}
+
+.mobile-grid .form-group {
+  margin-bottom: 14px;
 }
 
 .form-group label {
@@ -1746,6 +1990,10 @@ export default {
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 14px;
+}
+
+.mobile-modal .form-group label {
+  font-size: 13px;
 }
 
 .form-group input, 
@@ -1758,6 +2006,13 @@ export default {
   font-family: inherit;
   transition: 0.2s;
   font-size: 14px;
+}
+
+.mobile-modal .form-group input,
+.mobile-modal .form-group textarea,
+.mobile-modal .employee-select {
+  font-size: 16px;
+  padding: 10px 12px;
 }
 
 .form-group textarea {
@@ -1790,9 +2045,6 @@ export default {
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
 }
 
 .modal-actions {
@@ -1800,6 +2052,16 @@ export default {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
+}
+
+.modal-actions.mobile-actions {
+  flex-direction: column;
+}
+
+.modal-actions.mobile-actions button {
+  width: 100%;
+  justify-content: center;
+  padding: 14px;
 }
 
 .btn-primary, .btn-secondary, .btn-danger {
@@ -1816,9 +2078,8 @@ export default {
   color: white;
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+.btn-primary:active {
+  transform: scale(0.97);
 }
 
 .btn-secondary {
@@ -1826,8 +2087,8 @@ export default {
   color: #1e293b;
 }
 
-.btn-secondary:hover {
-  background: #cbd5e1;
+.btn-secondary:active {
+  transform: scale(0.97);
 }
 
 .btn-danger {
@@ -1835,8 +2096,8 @@ export default {
   color: white;
 }
 
-.btn-danger:hover {
-  background: #dc2626;
+.btn-danger:active {
+  transform: scale(0.97);
 }
 
 .loading-state {
@@ -1858,10 +2119,18 @@ export default {
   border-radius: 28px;
 }
 
+.empty-state-premium.empty-mobile {
+  padding: 40px 16px;
+}
+
 .empty-state-premium i {
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
+}
+
+.empty-mobile .empty-state-premium i {
+  font-size: 48px;
 }
 
 .btn-primary-empty {
@@ -1878,32 +2147,62 @@ export default {
 /* Responsive */
 @media (max-width: 768px) {
   .main-content { flex-direction: column; padding: 12px; }
-  .session-board-premium { padding: 16px; }
-  .sessions-grid-premium { grid-template-columns: 1fr; }
+  .session-board-premium { padding: 16px; border-radius: 20px; }
+  .sessions-grid-premium { grid-template-columns: 1fr; gap: 16px; }
   .form-row-grid { grid-template-columns: 1fr; gap: 0; }
-  .stats-bar { grid-template-columns: 1fr 1fr; }
-  .filter-section { flex-direction: column; }
+  .stats-bar { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .filter-section { flex-direction: column; gap: 10px; }
   .search-wrapper { max-width: 100%; }
-  .leaderboard-table th, .leaderboard-table td { padding: 10px; font-size: 12px; }
-  .rating-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .modal-container-premium {
-    width: 95%;
-    margin: 16px;
-  }
-  .modal-header h2 {
-    font-size: 18px;
-  }
-  .rating-user-info {
-    min-width: auto;
-  }
+  
+  .mobile-header { display: flex; }
+  .content-header-modern { display: none; }
+  
+  .leaderboard-table { display: none; }
+  .leaderboard-cards { display: flex; }
+  
+  .tab-text { display: inline; }
+  .btn-text { display: none; }
+  .btn-add-small { padding: 6px 12px; }
+  
+  .modal-container-premium { width: 95%; }
+  .modal-header h2 { font-size: 18px; }
+  .rating-item { flex-direction: column; align-items: flex-start; }
+  .rating-user-info { min-width: auto; }
 }
 
 @media (max-width: 480px) {
-  .stats-bar {
-    grid-template-columns: 1fr;
-  }
+  .main-content { padding: 8px; }
+  .session-board-premium { padding: 12px; border-radius: 16px; }
+  .mobile-title { font-size: 16px; }
+  .mobile-add-btn { width: 32px; height: 32px; font-size: 14px; }
+  .stats-bar { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { padding: 12px; flex-direction: column; text-align: center; gap: 6px; }
+  .stat-card i { font-size: 24px; }
+  .stat-value { font-size: 22px; }
+  .action-stat { font-size: 16px; }
+  .stat-label { font-size: 10px; }
+  
+  .session-card-premium.mobile-card { border-radius: 14px; }
+  .session-header.mobile-header { padding: 12px; }
+  .session-title-wrap h3 { font-size: 15px; }
+  
+  .rating-section.mobile-rating { padding: 10px 12px; }
+  .rating-input.mobile-rating-input { gap: 8px; }
+  .star { font-size: 18px; }
+  
+  .rating-item.mobile-rating-item { padding: 8px 12px; }
+  .leaderboard-card { padding: 12px; }
+  .card-rank .rank-badge { font-size: 22px; }
+  .presenter-name { font-size: 13px; }
+  .stat-chip { padding: 2px 8px; }
+  .stat-number { font-size: 12px; }
+  
+  .modal-header h2 { font-size: 16px; }
+  .modal-icon { font-size: 24px; }
+  .modal-body { padding: 12px; }
+  
+  .empty-state-premium i { font-size: 40px; }
+  .empty-state-premium h4 { font-size: 15px; }
+  .search-input { font-size: 15px; padding: 10px 12px 10px 36px; }
 }
 </style>

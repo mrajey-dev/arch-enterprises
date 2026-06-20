@@ -20,41 +20,46 @@
       v-model="searchQuery"
       @focus="searchFocused = true"
       @blur="searchFocused = false"
-      placeholder="Search by Customer No or Company Name..."
+      placeholder="Search customers..."
       class="search-input"
     />
+    <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''; searchFocused = false">
+      <i class="fas fa-times-circle"></i>
+    </button>
   </div>
 
-  <!-- Assign PO Button -->
- <div class="button-row" style="display: flex; gap: 10px;">
-  <button class="assign-btn" @click="openAssignPoForm">
-    <!-- View & Assign PO in {{ currentMonth }} 2025 -->
-    <i class="fa fa-tasks" style="font-size:13px"></i> Manage Purchase Order
-  </button>
- <button class="assign-btn" @click="showViewAllQuotationPopup=true">
- <i class='fas fa-file-invoice' style='font-size:13px'></i> View All Quotations
-</button>
+  <!-- Action Buttons -->
+  <div class="button-row">
+    <button class="assign-btn primary desktop-only" @click="openAssignPoForm">
+      <i class="fas fa-tasks"></i>
+      <span class="btn-text">Manage PO</span>
+    </button>
+    
+    <button class="assign-btn info desktop-only" @click="showViewAllQuotationPopup=true">
+      <i class="fas fa-file-invoice"></i>
+      <span class="btn-text">Quotations</span>
+    </button>
 
-   <button class="assign-btn "@click="goTo('employee/followup')">
-    <i class="fa fa-volume-control-phone" style="font-size:13px"></i> Follow Up
-  </button>
-   <button class="assign-btn "@click="goTo('employee/amcrecord')">
-    <i class="fa fa-file-o" style="font-size:13px"></i> AMC Record Data
-  </button>
- <button class="assign-btn" @click="showEmailModal = true">
-  <i class="fa fa-envelope" style="font-size:13px"></i>
-  Customer Emails
-</button>
+    <button class="assign-btn warning" @click="goTo('employee/followup')">
+      <i class="fas fa-phone-alt"></i>
+      <span class="btn-text">Follow Up</span>
+    </button>
+    
+    <button class="assign-btn secondary" @click="goTo('employee/amcrecord')">
+      <i class="fas fa-file-alt"></i>
+      <span class="btn-text">AMC</span>
+    </button>
+    
+    <button class="assign-btn dark" @click="showEmailModal = true">
+      <i class="fas fa-envelope"></i>
+      <span class="btn-text">Emails</span>
+    </button>
 
-                      <button class="assign-btn" style="font-weight: 800;" @click="openRegisterForm()">✚ NEW</button>
-
-
-  <!-- <button class="view-all-btn" @click="viewAllPo">
-    View All PO
-  </button> -->
-</div>
-
-  
+    <button class="assign-btn add-btn" @click="openRegisterForm()">
+      <i class="fas fa-plus"></i>
+      <span class="btn-text">New</span>
+    </button>
+  </div>
 </div>
 
 <!-- Duplicate Quotation - Company Selection Modal -->
@@ -1012,43 +1017,95 @@
 <!-- Popup Modal -->
 <div v-if="showAssignPoModal" class="modal-backdrop">
   
-  <div class="modal-card large">
-      <div style="text-align:center;margin-bottom: -4%;display: flex;">
-      <button class="btn btn-dark" @click="showAssignPoModal = false">
-        ⬅ Back
+<!-- Manage Purchase Order Modal -->
+<div v-if="showAssignPoModal" class="modal-backdrop" @click.self="showAssignPoModal = false">
+  <div class="modal-card large po-management-modal">
+    
+    <!-- Header with Back Button -->
+    <div class="modal-header-custom">
+      <button class="btn-back" @click="showAssignPoModal = false">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back</span>
       </button>
+      <div class="modal-title-wrapper">
+        <div class="modal-icon-badge">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <h2 class="modal-title">Manage Purchase Orders</h2>
+        <p class="modal-subtitle">Create and manage different types of purchase orders</p>
+      </div>
     </div>
-    <!-- Close button --><h2> Manage Purchase Order & Visits</h2>
-  
-    <!-- Center Buttons Row -->
-<div
-  style="display: flex; justify-content: center; gap: 20px; margin: 15px 0 25px 0;"
->
-  <button class="amc-ord"
-   
-    @click="openVisitPopup"
-  >
-    <i class="fa fa-calendar" style="font-size:13px"></i> AMC
- 
-  </button>
 
-  <button class="service-ord"
-   
-    @click="openServicePopup"
-  >
-     <i class="fa fa-wrench" style="font-size:13px"></i> Service Orders
-  
-  </button>
+    <!-- Action Cards Grid -->
+    <div class="po-action-grid">
+      <div class="po-action-card" @click="openVisitPopup">
+        <div class="card-icon-wrapper amc">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="card-content">
+          <h3>AMC</h3>
+          <p>Annual Maintenance Contract</p>
+          <span class="card-tag">Manage Visits</span>
+        </div>
+        <div class="card-arrow">
+          <i class="fas fa-chevron-right"></i>
+        </div>
+      </div>
 
-  <button class="material-del"
-    @click="openSupplyPopup"
-  >
-     <i class='fas fa-dolly' style='font-size:13px'></i>  Material Supply
-  </button>
-</div>
+      <div class="po-action-card" @click="openServicePopup">
+        <div class="card-icon-wrapper service">
+          <i class="fas fa-tools"></i>
+        </div>
+        <div class="card-content">
+          <h3>Service Orders</h3>
+          <p>Service & maintenance requests</p>
+          <span class="card-tag">Assign Service</span>
+        </div>
+        <div class="card-arrow">
+          <i class="fas fa-chevron-right"></i>
+        </div>
+      </div>
 
+      <div class="po-action-card" @click="openSupplyPopup">
+        <div class="card-icon-wrapper supply">
+          <i class="fas fa-boxes"></i>
+        </div>
+        <div class="card-content">
+          <h3>Material Supply</h3>
+          <p>Supply chain & delivery management</p>
+          <span class="card-tag">Track Supply</span>
+        </div>
+        <div class="card-arrow">
+          <i class="fas fa-chevron-right"></i>
+        </div>
+      </div>
+    </div>
 
+    <!-- Quick Stats / Info Section -->
+    <div class="po-quick-stats">
+      <div class="stat-item">
+        <span class="stat-number">{{ visit_assign.length || 0 }}</span>
+        <span class="stat-label">Active AMC</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number">{{ servicePoList.length || 0 }}</span>
+        <span class="stat-label">Service Orders</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number">{{ supplies.length || 0 }}</span>
+        <span class="stat-label">Supply Orders</span>
+      </div>
+    </div>
+
+    <!-- Footer Note -->
+    <div class="modal-footer-note">
+      <i class="fas fa-info-circle"></i>
+      <span>Select an option above to manage purchase orders</span>
+    </div>
   </div>
+</div>
 </div>
 <tbody v-if="isLoadingCustomers">
   <tr>
@@ -1060,147 +1117,162 @@
 </tbody>
 
 
-<table v-else class="styled-customer-table user-table">
-  <thead>
-    <tr>
-      <th>Sr.No.</th>
-      <th>Company</th>
-      <th>Cust No</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-
-
-  <tbody >
-  <tr v-for="(cust, index) in filteredCustomers" :key="cust.id">
-      <td  style="color: var(--text)">{{ index + 1 }}</td>
-
-<td>
-  <a
-    href="#"
-    class="company-link tooltip-link"
-    data-tooltip="View customer & add PO"
-    @click.prevent="viewCustomerDetails(cust)"
-  >
-    {{ formatCompanyName(cust.company_name) }}
-  </a>
-</td>
-
-
-
-      <td style="color: var(--text);">{{ formatNumber(cust.id) }}</td>
-
-     <td class="action-btns">
-  <button class="tooltip-btn btn-view-po"
-    data-tooltip="View Purchase Order"
-    @click="openviewPoModal(cust.company_name)">
-   <i class="fa fa-eye" style="font-size:13px"></i> View PO
-  </button>
-
-<button
-  class="tooltip-btn btn-followup"
-  data-tooltip="Create Quotation"
-  @click="openQuotationlist(cust)"
->
- <i class="fa fa-file-text-o" style="font-size:13px;"></i> Quotation
-</button>
-
-<button
-  class="tooltip-btn btn-followup"
-  data-tooltip="View Report"
-  @click="openWelcomeModal(cust.company_name)"
->
-<i class='fas fa-file-invoice' style='font-size:13px'></i> Reports
-</button>
-
-
-</td>
-
-    </tr>
-  </tbody>
-</table>
-
-
-
-</div>
-
-<div v-if="showWelcomeModal" class="modal-backdrop">
-  <div class="modal-card">
-
-    <!-- Header -->
-    <div class="modal-header" style="float: right;">
-      
-      <button class="btn btn-dark" @click="closeWelcomeModal"> ⬅ Back</button>
-      
-    </div>
-
-    <!-- Body -->
- <div class="modal-body">
-  <h3>
-     <strong>{{ selectedCompany }}</strong> reports
-  </h3>
-
-  <table class="report-table" v-if="allReports.length">
+<!-- Table Section - Replace your existing table with this -->
+<div class="table-container">
+  <!-- Desktop Table View -->
+  <table v-if="!isMobile" class="styled-customer-table user-table">
     <thead>
       <tr>
-        <th>Type</th>
-        <th>Report uploaded date</th>
-        <th>Report</th>
+        <th>Sr.No.</th>
+        <th>Company</th>
+        <th>Cust No</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(item, index) in allReports" :key="index">
+      <tr v-for="(cust, index) in filteredCustomers" :key="cust.id">
+        <td style="color: var(--text)">{{ index + 1 }}</td>
         <td>
-  <!-- Service -->
-  <span
-    v-if="item.type === 'Service'"
-    class="badge-service"
-  >
-    {{ item.type_of_service }}
-  </span>
-
-  <!-- Visit -->
-  <span
-    v-else
-    class="badge-visit"
-  >
-    {{ item.type }}
-  </span>
-</td>
-
-
-        <td>{{ formatDate(item.updated_at) }}</td>
-
-        <td>
-  <div v-if="item.report_path">
-    <button
-      v-for="(path, idx) in item.report_path.split(',')"
-      :key="idx"
-      class="view-btn"
-      @click="openReport(path)"
-      style="margin-right:5px;"
-    >
-    <i class='fas fa-file-invoice' style='font-size:13px'></i> Report {{ idx + 1 }}
-    </button>
-  </div>
-
-  <span v-else style="color:#999;font-size:13px;">
-    Not Available
-  </span>
-</td>
-
-
+          <a
+            href="#"
+            class="company-link tooltip-link"
+            data-tooltip="View customer & add PO"
+            @click.prevent="viewCustomerDetails(cust)"
+          >
+            {{ formatCompanyName(cust.company_name) }}
+          </a>
+        </td>
+        <td style="color: var(--text);">{{ formatNumber(cust.id) }}</td>
+        <td class="action-btns">
+          <button class="tooltip-btn btn-view-po"
+            data-tooltip="View Purchase Order"
+            @click="openviewPoModal(cust.company_name)">
+            <i class="fa fa-eye" style="font-size:13px"></i> View PO
+          </button>
+          <button
+            class="tooltip-btn btn-followup"
+            data-tooltip="Create Quotation"
+            @click="openQuotationlist(cust)"
+          >
+            <i class="fa fa-file-text-o" style="font-size:13px;"></i> Quotation
+          </button>
+          <button
+            class="tooltip-btn btn-followup"
+            data-tooltip="View Report"
+            @click="openWelcomeModal(cust.company_name)"
+          >
+            <i class='fas fa-file-invoice' style='font-size:13px'></i> Reports
+          </button>
+        </td>
       </tr>
     </tbody>
   </table>
 
-  <p v-else>No reports found.</p>
-</div>
-
-
-
+  <!-- Mobile Card View -->
+  <div v-if="isMobile" class="mobile-cards">
+    <div v-for="(cust, index) in filteredCustomers" :key="cust.id" class="customer-card">
+      <div class="card-header">
+        <div class="card-company">
+          <span class="card-sr">#{{ index + 1 }}</span>
+          <a
+            href="#"
+            class="company-link"
+            @click.prevent="viewCustomerDetails(cust)"
+          >
+            {{ formatCompanyName(cust.company_name) }}
+          </a>
+        </div>
+        <span class="cust-number">{{ formatNumber(cust.id) }}</span>
+      </div>
+      <div class="card-actions">
+        <button class="action-btn-small view-po desktop-only" @click="openviewPoModal(cust.company_name)">
+          <i class="fa fa-eye desktop-only"></i> View PO
+        </button>
+        <button class="action-btn-small quotation" @click="openQuotationlist(cust)">
+          <i class="fa fa-file-text-o desktop-only"></i> Quotation
+        </button>
+        <button class="action-btn-small reports" @click="openWelcomeModal(cust.company_name)">
+          <i class='fas fa-file-invoice desktop-only'></i> Reports
+        </button>
+      </div>
+    </div>
   </div>
 </div>
+
+
+
+</div>
+
+<div v-if="showWelcomeModal" class="modal-backdrop" @click.self="closeWelcomeModal">
+    <div class="modal-card">
+      <!-- Header -->
+      <div class="modal-header">
+        <button class="btn-back" @click="closeWelcomeModal">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <h3 class="modal-title">
+          <strong>{{ selectedCompany }}</strong> reports
+        </h3>
+
+        <div class="table-wrapper" v-if="allReports.length">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Uploaded date</th>
+                <th>Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item, index) in allReports" :key="index">
+                <td>
+                  <!-- Service -->
+                  <span
+                    v-if="item.type === 'Service'"
+                    class="badge-service"
+                  >
+                    {{ item.type_of_service }}
+                  </span>
+
+                  <!-- Visit -->
+                  <span
+                    v-else
+                    class="badge-visit"
+                  >
+                    {{ item.type }}
+                  </span>
+                </td>
+
+                <td>{{ formatDate(item.updated_at) }}</td>
+
+                <td>
+                  <div v-if="item.report_path" class="report-actions">
+                    <button
+                      v-for="(path, idx) in item.report_path.split(',')"
+                      :key="idx"
+                      class="view-btn"
+                      @click="openReport(path)"
+                    >
+                      <i class="fas fa-file-invoice"></i> Report {{ idx + 1 }}
+                    </button>
+                  </div>
+                  <span v-else class="not-available">
+                    Not Available
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p v-else class="empty-state">No reports found.</p>
+      </div>
+    </div>
+  </div>
 
 
 
@@ -9233,7 +9305,6 @@ input:focus, select:focus, textarea:focus {
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  margin-top: 10px;
 }
 
 .remove-btn {
@@ -10278,14 +10349,12 @@ margin-left: 8px;
   display: flex;
   align-items: center;
   background: #fff;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
   padding: 8px 12px;
   transition: border 0.3s, box-shadow 0.3s;
 }
 
 .search-container.active {
-  border-color: #4f46e5; /* Indigo focus color */
+  width: 94%;
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
 }
 
@@ -10299,7 +10368,6 @@ margin-left: 8px;
   outline: none;
   flex: 1;
   font-size: 14px;
-  color: var(--text);
 }
 
 /* Button */
@@ -10986,12 +11054,11 @@ flex-wrap: wrap;
   background: #fff;
   border-radius: 25px;
   padding: 5px 12px;
-  border: 1px solid #ddd;
+  
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .search-container.active {
-  border-color: #4a90e2;
   box-shadow: 0 4px 12px rgba(74,144,226,0.3);
 }
 
@@ -11002,9 +11069,6 @@ flex-wrap: wrap;
   transition: color 0.3s ease;
 }
 
-.search-container.active .search-icon {
-  color: #4a90e2;
-}
 
 .search-input {
   border: none;
@@ -11019,9 +11083,6 @@ flex-wrap: wrap;
   transition: color 0.3s ease;
 }
 
-.search-container.active .search-input::placeholder {
-  color: #4a90e2;
-}
 
 .search-bar {
   margin-bottom: 10px;
@@ -12934,5 +12995,1507 @@ transform:scale(1.05);
 .quotation-form-group textarea[readonly] {
   background-color: #f8f9fa;
   cursor: default;
+}
+/* ===============================
+   MOBILE RESPONSIVE TABLE STYLES
+================================ */
+
+/* Hide mobile cards on desktop */
+.mobile-cards {
+  display: none;
+}
+
+/* Mobile Cards - Show on mobile */
+@media (max-width: 768px) {
+  .mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px;
+  }
+
+  .styled-customer-table {
+    display: none;
+  }
+
+  .customer-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+  }
+
+  .customer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .card-company {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-sr {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .company-link {
+    font-weight: 500;
+    color: #147b6b;
+    text-decoration: none;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  .company-link:hover {
+    color: #0e5c52;
+  }
+
+  .cust-number {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn-small {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .action-btn-small:active {
+    transform: scale(0.95);
+  }
+
+  .action-btn-small.view-po {
+    background-color: #1a1a2e;
+  }
+
+  .action-btn-small.view-po:hover {
+    background-color: #2d2d4a;
+  }
+
+  .action-btn-small.quotation {
+    background-color: #667eea;
+  }
+
+  .action-btn-small.quotation:hover {
+    background-color: #5a6fd6;
+  }
+
+  .action-btn-small.reports {
+    background-color: #10b981;
+  }
+
+  .action-btn-small.reports:hover {
+    background-color: #059669;
+  }
+
+  .action-btn-small i {
+    font-size: 12px;
+  }
+
+  /* Hide desktop action buttons on mobile */
+  .action-btns {
+    display: none;
+  }
+
+  /* Ensure table container handles overflow */
+  .table-container {
+    overflow-x: auto;
+  }
+}
+
+/* Mobile Cards Scrollbar */
+.mobile-cards::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-cards::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.mobile-cards::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 10px;
+}
+
+/* Medium screens (tablets) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .action-btns {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .btn-view-po,
+  .btn-followup {
+    padding: 4px 6px;
+    font-size: 9px;
+  }
+
+  .btn-view-po i,
+  .btn-followup i {
+    font-size: 10px;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+  .customer-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .card-company {
+    width: 100%;
+  }
+
+  .company-link {
+    font-size: 13px;
+  }
+
+  .cust-number {
+    align-self: flex-end;
+  }
+
+  .card-actions {
+    /* flex-direction: column; */
+    gap: 4px;
+  }
+
+  .action-btn-small {
+    padding: 8px 10px;
+    font-size: 11px;
+    width: 100%;
+  }
+
+  .action-btn-small i {
+    font-size: 13px;
+  }
+}
+/* ===============================
+   ENHANCED SEARCH BAR & BUTTONS
+================================ */
+
+:root {
+  --primary-color: #667eea;
+  --primary-dark: #5a67d8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --dark: #1a1a2e;
+  --gray: #6b7280;
+  --light-gray: #f3f4f6;
+  --border: #e5e7eb;
+}
+
+/* Search Bar Container */
+.search-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+}
+
+/* Search Input */
+.search-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #021f36;
+  width: 94%;
+  padding: 8px 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 200px;
+  position: relative;
+}
+
+.search-container:hover {
+  background: #021f36;
+}
+
+.search-container.active {
+  background: #021f36;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12);
+}
+
+.search-icon {
+  color: #9ca3af;
+  margin-right: 10px;
+  font-size: 15px;
+  transition: color 0.3s;
+}
+
+.search-container.active .search-icon {
+  color: var(--primary-color);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  background: transparent;
+  font-weight: 400;
+  min-height: 36px;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+.clear-search {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-search:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+
+/* Button Row */
+.button-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+          align-items: start;
+}
+
+/* Base Button Style */
+.assign-btn {
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Button Ripple Effect */
+.assign-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.assign-btn:hover::after {
+  opacity: 1;
+}
+
+.assign-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.assign-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.assign-btn i {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.btn-text {
+  display: inline;
+}
+
+/* Button Variants */
+.assign-btn.primary {
+  background: #bfc4c3;
+  color: #333;
+}
+
+.assign-btn.info {
+  background: #bfc4c3;
+  color: #333;
+}
+
+.assign-btn.warning {
+  background: #bfc4c3;
+  color: #333;
+}
+
+.assign-btn.secondary {
+  background: #bfc4c3;
+  color: #333;
+}
+
+.assign-btn.dark {
+  background: #bfc4c3;
+  color: #333;
+}
+
+.assign-btn.add-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+
+
+/* Button Badge (optional - for notifications) */
+.assign-btn .badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--danger);
+  color: white;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .button-row {
+    gap: 6px;
+  }
+  
+  .assign-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  
+  .assign-btn i {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+    width: 94%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .search-container {
+    min-width: auto;
+  }
+
+  .search-input {
+    font-size: 15px;
+    min-height: 40px;
+  }
+
+
+  .button-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .assign-btn {
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 11px;
+    gap: 6px;
+    min-height: 44px;
+    border-radius: 8px;
+  }
+
+  .assign-btn i {
+    font-size: 13px;
+  }
+
+  .btn-text {
+    display: inline;
+  }
+
+  .assign-btn .badge {
+    top: -4px;
+    right: -4px;
+    font-size: 8px;
+    padding: 1px 5px;
+    min-width: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-bar {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .search-container {
+    padding: 6px 10px;
+  }
+
+  .search-input {
+    font-size: 16px;
+    min-height: 36px;
+  }
+
+  .search-icon {
+    font-size: 13px;
+    margin-right: 8px;
+  }
+
+  .button-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .assign-btn {
+    padding: 10px 6px;
+    font-size: 10px;
+    gap: 4px;
+    min-height: 44px;
+    border-radius: 8px;
+  }
+
+  .assign-btn i {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .button-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .assign-btn {
+    font-size: 9px;
+    padding: 8px 4px;
+    min-height: 40px;
+    gap: 3px;
+  }
+
+  .assign-btn i {
+    font-size: 11px;
+  }
+
+  .btn-text {
+    display: inline;
+  }
+}
+
+/* Animation for buttons on load */
+.assign-btn {
+  animation: fadeInUp 0.4s ease backwards;
+}
+
+.assign-btn:nth-child(1) { animation-delay: 0.05s; }
+.assign-btn:nth-child(2) { animation-delay: 0.1s; }
+.assign-btn:nth-child(3) { animation-delay: 0.15s; }
+.assign-btn:nth-child(4) { animation-delay: 0.2s; }
+.assign-btn:nth-child(5) { animation-delay: 0.25s; }
+.assign-btn:nth-child(6) { animation-delay: 0.3s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus visible for accessibility */
+.assign-btn:focus-visible,
+.search-input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+
+
+  .search-input {
+    color: #fff;
+  }
+
+  .search-input::placeholder {
+    color: #94a3b8;
+  }
+
+
+  .clear-search:hover {
+    background: rgba(239, 68, 68, 0.15);
+  }
+}
+
+/* ===============================
+   ENHANCED PO MANAGEMENT MODAL
+================================ */
+
+/* Modal Backdrop */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 0px;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* Modal Card */
+.modal-card.large.po-management-modal {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+  position: relative;
+}
+
+.modal-card.large.po-management-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-card.large.po-management-modal::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-card.large.po-management-modal::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea, #764ba2);
+  border-radius: 10px;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Modal Header */
+.modal-header-custom {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  color: #475569;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.btn-back:hover {
+  background: #e2e8f0;
+  transform: translateX(-2px);
+}
+
+.btn-back:active {
+  transform: scale(0.95);
+}
+
+.modal-title-wrapper {
+  flex: 1;
+  text-align: center;
+}
+
+.modal-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 14px;
+  color: white;
+  font-size: 22px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
+}
+
+.modal-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Action Cards Grid */
+.po-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.po-action-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  border: 2px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.po-action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.po-action-card:hover::before {
+  opacity: 1;
+}
+
+.po-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  border-color: transparent;
+}
+
+.po-action-card:active {
+  transform: scale(0.97);
+}
+
+/* Card Variants */
+.po-action-card .card-icon-wrapper.amc {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #2563eb;
+}
+
+.po-action-card .card-icon-wrapper.service {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #059669;
+}
+
+.po-action-card .card-icon-wrapper.supply {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #d97706;
+}
+
+.po-action-card .card-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.po-action-card:hover .card-icon-wrapper {
+  transform: scale(1.05) rotate(-5deg);
+}
+
+.po-action-card .card-content {
+  flex: 1;
+}
+
+.po-action-card .card-content h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 2px 0;
+}
+
+.po-action-card .card-content p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 6px 0;
+}
+
+.po-action-card .card-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  transition: all 0.3s;
+}
+
+.po-action-card:hover .card-tag {
+  background: #e2e8f0;
+}
+
+.po-action-card .card-arrow {
+  color: #9ca3af;
+  font-size: 18px;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.po-action-card:hover .card-arrow {
+  color: #667eea;
+  transform: translateX(4px);
+}
+
+/* Card Hover Colors */
+.po-action-card:hover {
+  border-color: #667eea;
+}
+
+.po-action-card:hover::before {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+/* Quick Stats */
+.po-quick-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 30px;
+  background: #e2e8f0;
+}
+
+/* Footer Note */
+.modal-footer-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border-radius: 10px;
+  color: #3b82f6;
+  font-size: 12px;
+}
+
+.modal-footer-note i {
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .modal-card.large.po-management-modal {
+    padding: 24px;
+    max-width: 95%;
+  }
+
+  .po-action-grid {
+    gap: 12px;
+  }
+
+  .po-action-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-card.large.po-management-modal {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .modal-header-custom {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .btn-back {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-subtitle {
+    font-size: 13px;
+  }
+
+  .po-action-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .po-action-card {
+    padding: 16px 18px;
+  }
+
+  .po-action-card .card-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .po-action-card .card-content h3 {
+    font-size: 15px;
+  }
+
+  .po-quick-stats {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .stat-divider {
+    display: none;
+  }
+
+  .stat-item {
+    flex: 1;
+    justify-content: center;
+    padding: 4px 8px;
+    background: white;
+    border-radius: 8px;
+  }
+
+  .modal-footer-note {
+    font-size: 11px;
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-card.large.po-management-modal {
+    padding: 16px;
+    border-radius: 16px;
+    max-height: 95vh;
+  }
+
+  .modal-title-wrapper {
+    text-align: left;
+    width: 100%;
+  }
+
+  .modal-icon-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-subtitle {
+    font-size: 12px;
+  }
+
+  .btn-back {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+
+  .po-action-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .po-action-card .card-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .po-action-card .card-content h3 {
+    font-size: 14px;
+  }
+
+  .po-action-card .card-content p {
+    font-size: 11px;
+  }
+
+  .po-action-card .card-tag {
+    font-size: 9px;
+    padding: 1px 8px;
+  }
+
+  .po-action-card .card-arrow {
+    font-size: 14px;
+  }
+
+  .stat-number {
+    font-size: 17px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .modal-footer-note {
+    font-size: 10px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modal-card.large.po-management-modal {
+    background: #1e293b;
+  }
+
+  .modal-title {
+    color: #333;
+  }
+
+  .modal-subtitle {
+    color: #94a3b8;
+  }
+
+  .po-action-card {
+    background: #334155;
+    border-color: #475569;
+  }
+
+  .po-action-card .card-content h3 {
+    color: #f1f5f9;
+  }
+
+  .po-action-card .card-content p {
+    color: #94a3b8;
+  }
+
+  .po-action-card .card-tag {
+    background: #475569;
+    color: #cbd5e1;
+  }
+
+  .po-quick-stats {
+    background: #334155;
+  }
+
+  .stat-number {
+    color: #f1f5f9;
+  }
+
+  .stat-label {
+    color: #94a3b8;
+  }
+
+  .modal-footer-note {
+    background: #1e3a5f;
+    color: #60a5fa;
+  }
+
+  .btn-back {
+    background: #334155;
+    color: #cbd5e1;
+  }
+
+  .btn-back:hover {
+    background: #475569;
+  }
+
+  .modal-header-custom {
+    border-bottom-color: #334155;
+  }
+}
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 9999;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Card ── */
+.modal-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
+  border-radius: 28px;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  padding: 1.5rem 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Header ── */
+.modal-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f4f9;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 60px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.btn-back i {
+  font-size: 0.9rem;
+}
+
+.btn-back:hover {
+  background: #e2e8f0;
+  transform: translateX(-2px);
+}
+
+.btn-back:active {
+  transform: scale(0.96);
+}
+
+/* ── Body ── */
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+/* custom scroll */
+.modal-body::-webkit-scrollbar {
+  width: 5px;
+}
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 12px;
+}
+
+.modal-title {
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: #0f172a;
+  margin: 0 0 1.25rem 0;
+  letter-spacing: -0.01em;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 0.75rem;
+}
+
+.modal-title strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* ── Table wrapper (scroll on small screens) ── */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  background: #fafcff;
+}
+
+/* ── Table ── */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 480px;
+}
+
+.report-table thead {
+  background: #f8fafc;
+  border-bottom: 2px solid #e9edf3;
+}
+
+.report-table th {
+  text-align: left;
+  padding: 0.9rem 1rem;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.report-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #1e293b;
+}
+
+.report-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.report-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* ── Badges ── */
+.badge-service,
+.badge-visit {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 40px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-service {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-visit {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+/* ── Report buttons ── */
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 40px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.view-btn i {
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.view-btn:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.view-btn:active {
+  transform: scale(0.95);
+}
+
+.not-available {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.empty-state {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2.5rem 0;
+  font-size: 1rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .modal-card {
+    padding: 1rem 1rem 1.5rem;
+    border-radius: 24px;
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    margin-bottom: 0.25rem;
+  }
+
+  .btn-back {
+    padding: 0.45rem 1rem;
+    font-size: 0.8rem;
+    gap: 0.35rem;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .report-table {
+    font-size: 0.8rem;
+    min-width: 400px;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .badge-service,
+  .badge-visit {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.6rem;
+    max-width: 100px;
+  }
+
+  .view-btn {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    gap: 0.25rem;
+  }
+
+  .view-btn i {
+    font-size: 0.7rem;
+  }
+
+  .table-wrapper {
+    border-radius: 12px;
+  }
+
+  .modal-backdrop {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .modal-card {
+    padding: 0.75rem 0.75rem 1.25rem;
+    border-radius: 20px;
+  }
+
+  .report-table {
+    min-width: 320px;
+    font-size: 0.7rem;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 0.5rem 0.5rem;
+  }
+
+  .badge-service,
+  .badge-visit {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    max-width: 80px;
+  }
+
+  .view-btn {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .btn-back {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.8rem;
+  }
+}
+
+/* ── landscape phones ── */
+@media (max-height: 500px) and (orientation: landscape) {
+  .modal-card {
+    max-height: 92vh;
+    padding: 0.75rem 1rem 1rem;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 0.4rem 0.6rem;
+  }
 }
 </style>

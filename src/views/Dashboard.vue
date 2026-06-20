@@ -11,6 +11,16 @@
         v-if="!isMobile || !isSidebarVisible"
         :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
       >
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-chart-pie"></i>
+            <span>Dashboard</span>
+          </div>
+        
+        </div>
+
         <!-- Dashboard Cards -->
         <div class="dashboard-slider-container">
           <div v-if="showSkeleton" class="dashboard-slider skeleton-wrapper">
@@ -25,7 +35,7 @@
             </div>
           </div>
 
-          <!-- Scrollable Card Section -->
+          <!-- Scrollable Card Section - Mobile Optimized -->
           <div v-else class="dashboard-slider" ref="slider">
             <div class="dashboard-card clickable-card temp leavetype" @click="goTo('employees')" v-if="currentUserName !== 'crm'">
               <div class="card-icon">👨🏻‍💼</div>
@@ -99,7 +109,7 @@
               </div>
             </div>
 
-            <div class="dashboard-card clickable-card  leavetype" @click="goTo('announcement')" v-if="currentUserName !== 'crm'">
+            <div class="dashboard-card clickable-card leavetype" @click="goTo('announcement')" v-if="currentUserName !== 'crm'">
               <div class="card-icon">📢</div>
               <div>
                 <p class="label label-ann">Announcements</p>
@@ -122,7 +132,20 @@
                 <p class="tagline">Manage leaves</p>
               </div>
             </div>
-
+            <div class="dashboard-card clickable-card Leaves leavetype mobile-only" @click="goToOfferLetters" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">📄</div>
+              <div>
+                <p class="label label-leave">Offer Letters</p>
+                <p class="tagline">Manage offer letters</p>
+              </div>
+            </div>
+            <div class="dashboard-card clickable-card Leaves leavetype mobile-only" @click="goToMyApps" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">📊</div>
+              <div>
+                <p class="label label-leave">Applications</p>
+                <p class="tagline">View application status</p>
+              </div>
+</div>
             <div class="dashboard-card clickable-card Leaves leavetype" @click="goToSalaryAdvances" v-if="currentUserName !== 'crm'">
               <div class="card-icon">💰</div>
               <div>
@@ -133,14 +156,14 @@
           </div>
         </div>
 
-        <!-- Performance Analytics Section -->
+        <!-- Performance Analytics Section - Mobile Optimized -->
         <div class="analytics-section">
           <div class="section-header">
             <h3>📊 Performance Analytics</h3>
             <div class="period-selector">
-              <button :class="{ active: period === 'week' }" @click="period = 'week'">Week</button>
-              <button :class="{ active: period === 'month' }" @click="period = 'month'">Month</button>
-              <button :class="{ active: period === 'quarter' }" @click="period = 'quarter'">Quarter</button>
+              <button :class="{ active: period === 'week' }" @click="period = 'week'">W</button>
+              <button :class="{ active: period === 'month' }" @click="period = 'month'">M</button>
+              <button :class="{ active: period === 'quarter' }" @click="period = 'quarter'">Q</button>
             </div>
           </div>
 
@@ -151,7 +174,9 @@
                 <h4>📝 Work Reports</h4>
                 <span class="badge">{{ workReportStats.total }} Tasks</span>
               </div>
-              <canvas id="workReportChart"></canvas>
+              <div class="chart-container">
+                <canvas id="workReportChart"></canvas>
+              </div>
               <div class="stats-row">
                 <div class="stat">
                   <span class="stat-value">{{ workReportStats.completed }}</span>
@@ -163,7 +188,7 @@
                 </div>
                 <div class="stat">
                   <span class="stat-value">{{ workReportStats.completionRate }}%</span>
-                  <span class="stat-label">Completion Rate</span>
+                  <span class="stat-label">Rate</span>
                 </div>
               </div>
             </div>
@@ -174,11 +199,13 @@
                 <h4>💵 Expense Breakdown</h4>
                 <span class="badge">This {{ period }}</span>
               </div>
-              <canvas id="expenseChart"></canvas>
+              <div class="chart-container">
+                <canvas id="expenseChart"></canvas>
+              </div>
               <div class="stats-row">
                 <div class="stat">
                   <span class="stat-value">₹{{ formatNumber(expenseStats.total) }}</span>
-                  <span class="stat-label">Total Expenses</span>
+                  <span class="stat-label">Total</span>
                 </div>
                 <div class="stat">
                   <span class="stat-value">{{ expenseStats.categories }}</span>
@@ -190,10 +217,12 @@
             <!-- Attendance Chart -->
             <div class="analytics-card">
               <div class="card-header">
-                <h4>✅ Attendance Overview</h4>
+                <h4>✅ Attendance</h4>
                 <span class="badge">{{ period }}</span>
               </div>
-              <canvas id="attendanceChart"></canvas>
+              <div class="chart-container">
+                <canvas id="attendanceChart"></canvas>
+              </div>
               <div class="stats-row">
                 <div class="stat">
                   <span class="stat-value">{{ attendanceStats.present }}%</span>
@@ -216,7 +245,9 @@
                 <h4>🏖️ Leave Distribution</h4>
                 <span class="badge">{{ leaveStats.total }} Requests</span>
               </div>
-              <canvas id="leaveChart"></canvas>
+              <div class="chart-container">
+                <canvas id="leaveChart"></canvas>
+              </div>
               <div class="stats-row">
                 <div class="stat">
                   <span class="stat-value">{{ leaveStats.approved }}</span>
@@ -235,22 +266,22 @@
           </div>
         </div>
 
- 
+      
 
-        <!-- Monthly Revenue Section -->
+        <!-- Monthly Revenue Section - Mobile Optimized -->
         <div class="monthly-revenue-row" v-if="currentUserName !== 'crm'">
           <div class="revenue-card">
             <div class="revenue-header">
               <div class="revenue-title">
                 <h3>Revenue Overview</h3>
-                <p>Financial Year {{ financialYear }} (Apr – Mar)</p>
+                <p>FY {{ financialYear }}</p>
               </div>
               <div class="target-input">
                 <label>🎯 Yearly Target (₹) </label>
                 <input
                   type="number"
                   v-model.number="yearlyTarget"
-                  placeholder="Enter yearly target"
+                  placeholder="Enter target"
                   min="0"
                 />
               </div>
@@ -280,7 +311,7 @@
               >
                 <h4>{{ q }}</h4>
                 <p>₹ {{ quarterAnalytics[q].revenue.toLocaleString() }}</p>
-                <small>Target ₹ {{ quarterAnalytics[q].target.toLocaleString() }} · {{ quarterAnalytics[q].percent }}%</small>
+                <small>{{ quarterAnalytics[q].percent }}%</small>
               </div>
             </div>
 
@@ -297,7 +328,7 @@
           </div>
         </div>
 
-        <!-- Birthday Reminder Section -->
+        <!-- Birthday Reminder Section - Mobile Optimized -->
         <div class="birthday-section">
           <div class="birthday-card">
             <h3>🎉 Birthday Reminder - {{ months[new Date().getMonth()] }}</h3>
@@ -471,7 +502,6 @@ export default {
 
     async fetchAnalyticsData() {
       try {
-        // Fetch work reports
         const workRes = await axios.get('https://employees.archenterprises.co.in/api/api/employee-reports', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
@@ -485,7 +515,6 @@ export default {
           completionRate: tasks.length ? Math.round((completed / tasks.length) * 100) : 0
         }
 
-        // Fetch expenses
         const expenseRes = await axios.get('https://employees.archenterprises.co.in/api/api/expenses', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
@@ -500,7 +529,6 @@ export default {
           return acc
         }, {})
 
-        // Fetch attendance
         const attendanceRes = await axios.get('https://employees.archenterprises.co.in/api/api/attendance', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
@@ -516,7 +544,6 @@ export default {
           total: attendance.length
         }
 
-        // Fetch leaves
         const leaveRes = await axios.get('https://employees.archenterprises.co.in/api/api/leave-requests', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
@@ -528,7 +555,6 @@ export default {
           rejected: leaves.filter(l => l.status === 'Rejected').length
         }
 
-        // Fetch top performers
         const perfRes = await axios.get('https://employees.archenterprises.co.in/api/api/performance/history', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
@@ -559,7 +585,6 @@ export default {
 
       } catch (err) {
         console.error('Error fetching analytics:', err)
-        // Set default demo data
         this.setDefaultAnalyticsData()
       }
     },
@@ -864,6 +889,12 @@ export default {
     },
     goToSalaryAdvances() {
       this.$router.push('/salaryadvances')
+    },
+    goToOfferLetters() {
+      this.$router.push('/offerletter')
+    },
+    goToMyApps() {
+      this.$router.push('/myapps')
     }
   },
 
@@ -932,7 +963,49 @@ export default {
   flex: 1;
   background: transparent;
   overflow-x: auto;
-      
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mobile-title i {
+  color: var(--primary);
+}
+
+.mobile-user-badge {
+  background: var(--primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 /* Dashboard Slider */
@@ -950,7 +1023,7 @@ export default {
 
 .dashboard-card {
   min-width: 200px;
-  background:#ffffff;
+  background: #ffffff;
   border-radius: 10px;
   padding: 20px;
   cursor: pointer;
@@ -969,6 +1042,7 @@ export default {
 
 .card-icon {
   font-size: 32px;
+  flex-shrink: 0;
 }
 
 .label {
@@ -1001,6 +1075,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .section-header h3 {
@@ -1011,7 +1087,7 @@ export default {
 
 .period-selector {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: #f1f1f1;
   padding: 4px;
   border-radius: 40px;
@@ -1019,36 +1095,20 @@ export default {
 }
 
 .period-selector button {
-  padding: 6px 16px;
-  font-size: 13px;
+  padding: 4px 12px;
+  font-size: 12px;
   border: none;
   background: transparent;
   border-radius: 32px;
   cursor: pointer;
   color: var(--text-light);
   transition: all 0.2s;
+  font-weight: 500;
 }
 
 .period-selector button.active {
   background: var(--primary);
   color: white;
-}
-
-.view-all {
-  padding: 6px 16px;
-  font-size: 13px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  cursor: pointer;
-  color: var(--primary);
-  transition: all 0.2s;
-}
-
-.view-all:hover {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
 }
 
 .analytics-grid {
@@ -1087,9 +1147,15 @@ export default {
   color: var(--text-light);
 }
 
-.analytics-card canvas {
+.chart-container {
+  position: relative;
   max-height: 160px;
   margin-bottom: 16px;
+}
+
+.analytics-card canvas {
+  max-height: 160px;
+  width: 100% !important;
 }
 
 .stats-row {
@@ -1133,7 +1199,7 @@ export default {
   padding: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   border: 1px solid var(--border);
   transition: all 0.3s;
 }
@@ -1144,8 +1210,8 @@ export default {
 }
 
 .performer-rank {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
   border-radius: 50%;
   display: flex;
@@ -1153,45 +1219,49 @@ export default {
   justify-content: center;
   font-weight: 700;
   color: white;
-  font-size: 14px;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .performer-avatar {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 20px;
+  font-size: 16px;
   color: white;
+  flex-shrink: 0;
 }
 
 .performer-info {
   flex: 1;
+  min-width: 0;
 }
 
 .performer-info h5 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .performer-info p {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
 }
 
 .performer-score {
   text-align: right;
+  flex-shrink: 0;
 }
 
 .score-value {
   display: block;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--primary);
 }
@@ -1201,82 +1271,6 @@ export default {
   color: var(--text-light);
 }
 
-/* Pie Charts */
-.pie-slider-wrapper {
-  margin-bottom: 32px;
-  overflow-x: auto;
-}
-
-.pie-slider {
-  display: flex;
-  gap: 20px;
-  padding-bottom: 8px;
-}
-
-.chart-box {
-  min-width: 280px;
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 20px;
-  border: 1px solid var(--border);
-}
-
-.chart-box h4 {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text);
-}
-
-.pie-chart-wrapper {
-  width: 180px;
-  height: 180px;
-  margin: 0 auto;
-}
-
-.task-details {
-  margin-top: 16px;
-}
-
-.task-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 12px;
-}
-
-.task-label {
-  color: var(--text-light);
-  width: 80px;
-}
-
-.task-progress {
-  flex: 1;
-  background: var(--bg);
-  border-radius: 10px;
-  height: 20px;
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-bar {
-  background: var(--primary);
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.3s;
-}
-
-.task-value {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text);
-}
-
 /* Revenue Section */
 .monthly-revenue-row {
   margin-bottom: 32px;
@@ -1284,7 +1278,7 @@ export default {
 
 .revenue-card {
   background: #f2f5f4;
-  border-radius:10px;
+  border-radius: 10px;
   padding: 24px;
   border: 1px solid #d9dddb;
 }
@@ -1325,26 +1319,26 @@ export default {
 
 .revenue-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
   margin-bottom: 24px;
 }
 
 .kpi {
   background: var(--bg);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 14px;
   text-align: center;
 }
 
 .kpi h4 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   margin-bottom: 4px;
 }
 
-.kip p {
-  font-size: 12px;
+.kpi p {
+  font-size: 11px;
   color: var(--text-light);
 }
 
@@ -1354,32 +1348,32 @@ export default {
 
 .quarter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
   margin-bottom: 24px;
 }
 
 .quarter-card {
   background: var(--bg);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 14px;
   text-align: center;
 }
 
 .quarter-card h4 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .quarter-card p {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 4px;
 }
 
 .quarter-card small {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-light);
 }
 
@@ -1387,12 +1381,12 @@ export default {
 .quarter-card.danger p { color: var(--danger); }
 
 .bar-chart-wrapper {
-  height: 280px;
+  height: 220px;
   margin-bottom: 24px;
 }
 
 .chart-height {
-  height: 280px;
+  height: 220px;
 }
 
 /* Birthday Section */
@@ -1401,7 +1395,6 @@ export default {
 }
 
 .birthday-card {
-  /* background: var(--card); */
   border-radius: var(--radius);
   padding: 24px;
   border: 1px solid var(--border);
@@ -1497,35 +1490,229 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
+    gap: 12px;
   }
 
   .content {
     padding: 0;
   }
 
+  .mobile-header {
+    display: flex;
+  }
+
+  .dashboard-slider {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 4px 0;
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .dashboard-card {
+    min-width: 170px;
+    padding: 16px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+
+  .card-icon {
+    font-size: 28px;
+  }
+
+  .label {
+    font-size: 13px;
+  }
+
+  .tagline {
+    font-size: 11px;
+  }
+
   .analytics-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .analytics-card {
+    padding: 16px;
+  }
+
+  .analytics-card h4 {
+    font-size: 14px;
+  }
+
+  .chart-container {
+    max-height: 140px;
+  }
+
+  .stats-row {
+    gap: 8px;
+  }
+
+  .stat-value {
+    font-size: 18px;
   }
 
   .performers-grid {
     grid-template-columns: 1fr;
   }
 
-  .pie-slider {
-    flex-direction: column;
-  }
-
-  .chart-box {
-    width: 100%;
+  .performer-card {
+    padding: 12px;
   }
 
   .revenue-header {
     flex-direction: column;
+    gap: 12px;
   }
 
   .target-input input {
     width: 100%;
+    max-width: 300px;
+  }
+
+  .revenue-kpis {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .kpi h4 {
+    font-size: 16px;
+  }
+
+  .quarter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bar-chart-wrapper {
+    height: 180px;
+  }
+
+  .chart-height {
+    height: 180px;
+  }
+
+  .birthday-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-birthday-card {
+    padding: 10px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-header h3 {
+    font-size: 16px;
+  }
+
+  .period-selector {
+    width: 100%;
+  }
+
+  .period-selector button {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-user-badge {
+    font-size: 10px;
+    padding: 2px 10px;
+  }
+
+  .dashboard-card {
+    min-width: 150px;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .card-icon {
+    font-size: 24px;
+  }
+
+  .label {
+    font-size: 12px;
+  }
+
+  .tagline {
+    font-size: 10px;
+  }
+
+  .analytics-card {
+    padding: 12px;
+  }
+
+  .analytics-card canvas {
+    max-height: 120px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .revenue-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .quarter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-chart-wrapper {
+    height: 150px;
+  }
+
+  .chart-height {
+    height: 150px;
+  }
+
+  .birthday-card {
+    padding: 16px;
+  }
+
+  .birthday-card h3 {
+    font-size: 16px;
+  }
+
+  .employee-birthday-card img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .emp-name {
+    font-size: 13px;
+  }
+
+  .kpi {
+    padding: 10px;
+  }
+
+  .kpi h4 {
+    font-size: 14px;
+  }
+
+  .quarter-card {
+    padding: 10px;
+  }
+
+  .quarter-card p {
+    font-size: 12px;
   }
 }
 </style>

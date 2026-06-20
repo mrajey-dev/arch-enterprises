@@ -7,18 +7,19 @@
 
       <!-- Leave Form -->
       <div class="leave-form-wrapper" v-if="!isMobile || !isSidebarVisible">
-        <div class="content-header-modern">
-          <div class="header-left">
-            <div class="title-icon">
-              <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div>
-              <h1>Leave Application</h1>
-              <p class="subtitle-modern">Submit your leave request</p>
-            </div>
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+       
+          <div class="mobile-title">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Leave Application</span>
           </div>
+         
         </div>
 
+       
+      
+        
         <form @submit.prevent="submitForm" class="premium-form">
           <div class="form-grid-premium">
             <div class="form-field">
@@ -49,8 +50,8 @@
               <label><i class="fas fa-clock"></i> Time Slot <span class="required">*</span></label>
               <select v-model="form.timeSlot" required>
                 <option disabled value="">Select time</option>
-                <option value="9:30 AM - 2:30 PM">9:30 AM - 1:30 PM</option>
-                <option value="2:30 PM - 5:30 PM">1:30 PM - 5:30 PM</option>
+                <option value="9:30 AM - 1:30 PM">9:30 AM - 1:30 PM</option>
+                <option value="1:30 PM - 5:30 PM">1:30 PM - 5:30 PM</option>
               </select>
             </div>
 
@@ -59,9 +60,10 @@
               <input v-model="form.fromDate" type="date" :min="today" required />
             </div>
 
-            <div class="form-field">
+            <div class="form-field" :class="{ 'disabled-field': isHalfDay }">
               <label><i class="fas fa-calendar-day"></i> To Date</label>
               <input v-model="form.toDate" type="date" :min="form.fromDate || today" :disabled="isHalfDay" :required="!isHalfDay" />
+              <small v-if="isHalfDay" class="field-note">Auto-set to same date for half day</small>
             </div>
 
             <div class="form-field full-width">
@@ -76,7 +78,21 @@
 
             <div class="form-field full-width">
               <label><i class="fas fa-paperclip"></i> Attach Document <small class="optional">(optional)</small></label>
-              <input type="file" @change="handleFileUpload" class="file-input" />
+              <div class="file-upload-wrapper">
+                <input type="file" @change="handleFileUpload" class="file-input" accept=".pdf,.doc,.docx,.jpg,.png" />
+                <div class="file-upload-placeholder" v-if="!form.file">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                  <span>Click to upload or drag & drop</span>
+                </div>
+                <div class="file-uploaded" v-else>
+                  <i class="fas fa-file"></i>
+                  <span>{{ form.file.name }}</span>
+                  <button type="button" class="remove-file" @click="removeFile">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <small class="file-hint">Supported: PDF, DOC, DOCX, JPG, PNG (Max 5MB)</small>
             </div>
           </div>
 
@@ -185,6 +201,24 @@ export default {
   },
 
   methods: {
+    getIconClass(key) {
+      const icons = {
+        casual: 'fas fa-umbrella-beach',
+        sick: 'fas fa-ambulance',
+        pl: 'fas fa-plane-departure',
+        earn: 'fas fa-coins'
+      };
+      return icons[key] || 'fas fa-calendar';
+    },
+    viewLeaveHistory() {
+      // Navigate to leave history or show modal
+      this.$router.push('/leave-history');
+    },
+    removeFile() {
+      this.form.file = null;
+      const input = this.$el.querySelector('.file-input');
+      if (input) input.value = '';
+    },
     findOverlapMessage() {
       if (!this.form.fromDate || !this.form.toDate) return '';
       const clash = this.leaveRequests.find(lv =>
@@ -514,7 +548,9 @@ export default {
       }
     },
 
-    handleFileUpload(e) { this.form.file = e.target.files[0]; },
+    handleFileUpload(e) { 
+      this.form.file = e.target.files[0]; 
+    },
 
     resetForm() {
       Object.assign(this.form, {
@@ -530,16 +566,18 @@ export default {
       this.isSidebarVisible = !this.isMobile;
     },
 
-    toggleSidebar() { this.isSidebarVisible = !this.isSidebarVisible; },
+    toggleSidebar() { 
+      this.isSidebarVisible = !this.isSidebarVisible; 
+    },
 
     beautify(k) {
       const map = {
-        casual: 'Casual Leave',
-        sick: 'Sick Leave',
-        pl: 'PL Leave',
-        earn: 'Earn Leave'
+        casual: 'Casual',
+        sick: 'Sick',
+        pl: 'PL',
+        earn: 'Earn'
       };
-      return map[k.toLowerCase()] || `${k.charAt(0).toUpperCase()}${k.slice(1)} Leave`;
+      return map[k.toLowerCase()] || `${k.charAt(0).toUpperCase()}${k.slice(1)}`;
     },
 
     logout() {
@@ -595,6 +633,57 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-status-badge {
+  background: var(--primary);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-status-badge:hover {
+  transform: scale(1.05);
+}
+
 /* Content Header */
 .content-header-modern {
   display: flex;
@@ -637,6 +726,99 @@ export default {
   color: #6b7280;
   font-size: 14px;
   margin-top: 4px;
+}
+
+/* Leave Balance Summary - Desktop */
+.leave-balance-summary {
+  display: flex;
+  gap: 20px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.balance-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.balance-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.balance-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+/* Leave Balance Cards - Mobile */
+.leave-balance-cards {
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.balance-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 14px;
+  transition: all 0.3s ease;
+}
+
+.balance-card:active {
+  transform: scale(0.97);
+}
+
+.balance-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+}
+
+.balance-icon.casual {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.balance-icon.sick {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.balance-icon.pl {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.balance-icon.earn {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
+
+.balance-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.balance-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.balance-label {
+  font-size: 11px;
+  color: #6b7280;
 }
 
 /* Premium Form */
@@ -704,6 +886,7 @@ export default {
   font-size: 14px;
   transition: all 0.3s ease;
   font-family: inherit;
+  width: 100%;
 }
 
 .form-field input:focus,
@@ -719,16 +902,92 @@ export default {
   cursor: not-allowed;
 }
 
-.file-input {
-  padding: 10px 0;
+.disabled-field {
+  opacity: 0.7;
 }
 
-.warning-text {
-  font-size: 12px;
-  color: var(--warning);
+.field-note {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* File Upload */
+.file-upload-wrapper {
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.file-upload-wrapper:hover {
+  border-color: var(--primary-color);
+  background: #f8faff;
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-upload-placeholder {
+  text-align: center;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-upload-placeholder i {
+  font-size: 32px;
+  color: #9ca3af;
+}
+
+.file-uploaded {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.file-uploaded i {
+  color: var(--primary-color);
+}
+
+.file-uploaded span {
+  flex: 1;
+  font-size: 13px;
+  color: var(--dark);
+  word-break: break-all;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.remove-file:hover {
+  background: #fee2e2;
+}
+
+.file-hint {
+  font-size: 11px;
+  color: #6b7280;
   margin-top: 4px;
 }
 
@@ -783,28 +1042,171 @@ export default {
   cursor: not-allowed;
 }
 
+/* Warning Text */
+.warning-text {
+  font-size: 12px;
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 /* Responsive */
+@media (max-width: 1024px) {
+  .form-grid-premium {
+    gap: 16px;
+  }
+}
+
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .leave-form-wrapper {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
+    display: none;
+  }
+
+  .leave-balance-cards {
+    display: grid;
+  }
+
+  .leave-balance-summary {
+    display: none;
   }
 
   .form-grid-premium {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .form-field.full-width {
     grid-column: span 1;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 10px 12px;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .btn-submit-premium {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+  }
+
+  .file-upload-wrapper {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .leave-form-wrapper {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-status-badge {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .leave-balance-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .balance-card {
+    padding: 10px 12px;
+  }
+
+  .balance-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .balance-value {
+    font-size: 17px;
+  }
+
+  .balance-label {
+    font-size: 10px;
+  }
+
+  .form-field label {
+    font-size: 12px;
+  }
+
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    font-size: 15px;
+    padding: 8px 10px;
+  }
+
+  .btn-submit-premium {
+    font-size: 13px;
+    padding: 12px;
+  }
+
+  .error-alert,
+  .success-alert {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .leave-balance-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-title {
+    font-size: 14px;
+  }
+
+  .mobile-title i {
+    font-size: 16px;
+  }
+}
+
+/* Utility Classes */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
   }
 }
 </style>

@@ -5,8 +5,21 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="sop-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <div class="content-header-modern">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+      
+          <div class="mobile-title">
+            <i class="fas fa-book-open"></i>
+            <span>Company SOPs</span>
+          </div>
+          <div class="mobile-stats-badge">
+            <span>{{ sops.length }}</span>
+          </div>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
+          <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-book-open"></i>
             </div>
@@ -21,23 +34,23 @@
           </div>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-          <div class="stat-card">
+          <div class="stat-card" @click="filterSOPs('all')">
             <i class="fas fa-file-pdf"></i>
             <div class="stat-info">
               <span class="stat-value">{{ sops.length }}</span>
               <span class="stat-label">Total SOPs</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" @click="filterSOPs('recent')">
             <i class="fas fa-cloud-upload-alt"></i>
             <div class="stat-info">
               <span class="stat-value">{{ recentUploads }}</span>
               <span class="stat-label">Recent Uploads</span>
             </div>
           </div>
-          <div class="stat-card" @click="showUploadModal = true">
+          <div class="stat-card add-stat desktop-only" @click="showUploadModal = true">
             <i class="fas fa-plus-circle"></i>
             <div class="stat-info">
               <span class="stat-value action-stat">+ Add New</span>
@@ -46,18 +59,33 @@
           </div>
         </div>
 
-        <!-- SOPs Grid / List -->
+        <!-- SOPs Section -->
         <div class="sops-section">
           <div class="section-title-modern">
-            <i class="fas fa-folder-open"></i>
-            <span>All Standard Operating Procedures</span>
+            <div class="title-left">
+              <i class="fas fa-folder-open"></i>
+              <span>All Standard Operating Procedures</span>
+            </div>
             <button class="btn-add-small" @click="showUploadModal = true">
-              <i class="fas fa-plus"></i> Add SOP
+              <i class="fas fa-plus"></i> <span class="btn-text">Add SOP</span>
             </button>
           </div>
 
-          <div v-if="sops.length" class="sops-grid-premium">
-            <div v-for="(sop, index) in sops" :key="sop.id || index" class="sop-card-premium">
+          <!-- Search/Filter Bar - Mobile -->
+          <div class="search-filter-bar" v-if="isMobile">
+            <div class="search-group">
+              <i class="fas fa-search"></i>
+              <input type="text" v-model="searchQuery" placeholder="Search SOPs..." class="search-input-mobile" />
+            </div>
+            <select v-model="filterDepartment" class="filter-select-mobile">
+              <option value="">All Departments</option>
+              <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
+            </select>
+          </div>
+
+          <!-- SOPs Grid -->
+          <div v-if="filteredSops.length" class="sops-grid-premium">
+            <div v-for="(sop, index) in filteredSops" :key="sop.id || index" class="sop-card-premium">
               <div class="card-accent"></div>
               <div class="sop-header">
                 <div class="sop-icon">
@@ -100,19 +128,20 @@
           <!-- Empty State -->
           <div v-else class="empty-state-premium">
             <i class="fas fa-file-pdf"></i>
-            <h4>No SOPs Uploaded Yet</h4>
-            <p>Click the "Add SOP" button to upload company policies and procedures (PDF format)</p>
+            <h4>{{ searchQuery ? 'No Matching SOPs Found' : 'No SOPs Uploaded Yet' }}</h4>
+            <p v-if="searchQuery">No SOPs match your search criteria</p>
+            <p v-else>Click the "Add SOP" button to upload company policies and procedures (PDF format)</p>
             <button class="btn-primary-empty" @click="showUploadModal = true">
-              <i class="fas fa-cloud-upload-alt" style="height: 12px;"></i> Upload First SOP
+              <i class="fas fa-cloud-upload-alt"></i> Upload First SOP
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Upload Modal -->
+    <!-- Upload Modal - Mobile Optimized -->
     <div v-if="showUploadModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-container-premium">
+      <div class="modal-container-premium" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-icon">
             <i class="fas fa-cloud-upload-alt"></i>
@@ -135,14 +164,10 @@
                 <label><i class="fas fa-building"></i> Department</label>
                 <input type="text" v-model="newSop.department" placeholder="e.g., HR, IT, Operations">
               </div>
-              <!-- <div class="form-group half">
-                <label><i class="fas fa-code-branch"></i> Version</label>
-                <input type="text" v-model="newSop.version" placeholder="e.g., 1.0, 2.1">
-              </div> -->
             </div>
             <div class="form-group">
               <label><i class="fas fa-file-pdf"></i> PDF File * (max 15MB)</label>
-              <div class="file-dropzone" :class="{ 'drag-over': dragActive }" @dragover.prevent="dragActive = true" @dragleave.prevent="dragActive = false" @drop.prevent="handleFileDrop">
+              <div class="file-dropzone" :class="{ 'drag-over': dragActive, 'mobile-dropzone': isMobile }" @dragover.prevent="dragActive = true" @dragleave.prevent="dragActive = false" @drop.prevent="handleFileDrop">
                 <input type="file" ref="fileInput" @change="handleFileSelect" accept=".pdf" style="display: none">
                 <i class="fas fa-cloud-upload-alt fa-2x"></i>
                 <p v-if="!selectedFile">Drag & drop PDF here or <span class="browse-link" @click="triggerFileInput">browse</span></p>
@@ -150,7 +175,7 @@
               </div>
               <div v-if="uploadError" class="error-message">{{ uploadError }}</div>
             </div>
-            <div class="modal-actions">
+            <div class="modal-actions" :class="{ 'mobile-actions': isMobile }">
               <button type="button" class="btn-secondary" @click="closeModal">Cancel</button>
               <button type="submit" class="btn-primary" :disabled="uploading">
                 <i v-if="uploading" class="fas fa-spinner fa-pulse"></i>
@@ -180,7 +205,7 @@ export default {
   },
   data() {
     return {
-        sopsFileBaseUrl: 'https://employees.archenterprises.co.in/backend/storage/app/public/sops/',
+      sopsFileBaseUrl: 'https://employees.archenterprises.co.in/backend/storage/app/public/sops/',
       isMobile: false,
       isSidebarVisible: true,
       sops: [],
@@ -195,7 +220,10 @@ export default {
       dragActive: false,
       uploading: false,
       uploadError: '',
-      apiBaseUrl: 'https://employees.archenterprises.co.in' // Your API base URL
+      apiBaseUrl: 'https://employees.archenterprises.co.in',
+      searchQuery: '',
+      filterDepartment: '',
+      filterType: 'all'
     }
   },
   computed: {
@@ -203,6 +231,40 @@ export default {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       return this.sops.filter(sop => new Date(sop.uploadDate) >= sevenDaysAgo).length;
+    },
+    departments() {
+      const depts = new Set();
+      this.sops.forEach(sop => {
+        if (sop.department) depts.add(sop.department);
+      });
+      return Array.from(depts);
+    },
+    filteredSops() {
+      let filtered = this.sops;
+      
+      // Search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(sop => 
+          sop.title.toLowerCase().includes(query) ||
+          (sop.description && sop.description.toLowerCase().includes(query)) ||
+          (sop.department && sop.department.toLowerCase().includes(query))
+        );
+      }
+      
+      // Department filter
+      if (this.filterDepartment) {
+        filtered = filtered.filter(sop => sop.department === this.filterDepartment);
+      }
+      
+      // Recent filter
+      if (this.filterType === 'recent') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        filtered = filtered.filter(sop => new Date(sop.uploadDate) >= sevenDaysAgo);
+      }
+      
+      return filtered;
     }
   },
   mounted() {
@@ -221,24 +283,25 @@ export default {
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
     },
-    
+    filterSOPs(type) {
+      this.filterType = type;
+      if (type === 'all') {
+        this.searchQuery = '';
+        this.filterDepartment = '';
+      }
+    },
     async loadSops() {
       try {
         const res = await fetch(`${this.apiBaseUrl}/api/api/sops`)
         const data = await res.json()
-        
-        // Debug: Log the API response to see the structure
         console.log("API Response:", data)
         console.log("SOPs data:", data.data)
-        
         this.sops = data.data || []
         
-        // Debug: Log each SOP to check for file path properties
         this.sops.forEach((sop, index) => {
           console.log(`SOP ${index + 1}:`, {
             id: sop.id,
             title: sop.title,
-            // Log all possible file path fields
             filePath: sop.filePath,
             file_path: sop.file_path,
             fileUrl: sop.fileUrl,
@@ -249,7 +312,6 @@ export default {
             document_path: sop.document_path,
             path: sop.path,
             url: sop.url,
-            // Log the entire object to see all properties
             fullObject: sop
           })
         })
@@ -259,32 +321,27 @@ export default {
       }
     },
     
-    // Helper method to get the file URL from SOP object
-  getFileUrl(sop) {
-  // Try to get the filename from different possible property names
-  let fileName = sop.file_name || 
-                 sop.filename || 
-                 sop.filePath || 
-                 sop.file_path || 
-                 sop.file;
-  
-  if (!fileName) {
-    // If there's a full path, extract just the filename
-    let fullPath = sop.fileUrl || sop.url || sop.path;
-    if (fullPath) {
-      fileName = fullPath.split('/').pop();
-    }
-  }
-  
-  if (!fileName) {
-    console.error("No file name found in SOP:", sop);
-    return null;
-  }
-  
-  // Construct the full URL using your base path
-  return `${this.sopsFileBaseUrl}${fileName}`;
-},
-
+    getFileUrl(sop) {
+      let fileName = sop.file_name || 
+                     sop.filename || 
+                     sop.filePath || 
+                     sop.file_path || 
+                     sop.file;
+      
+      if (!fileName) {
+        let fullPath = sop.fileUrl || sop.url || sop.path;
+        if (fullPath) {
+          fileName = fullPath.split('/').pop();
+        }
+      }
+      
+      if (!fileName) {
+        console.error("No file name found in SOP:", sop);
+        return null;
+      }
+      
+      return `${this.sopsFileBaseUrl}${fileName}`;
+    },
     
     formatDate(dateString) {
       if (!dateString) return 'N/A';
@@ -353,7 +410,7 @@ export default {
         console.log("Upload response:", data)
         
         if(data.status){
-          await this.loadSops() // Reload to get updated list with file paths
+          await this.loadSops()
           this.closeModal()
           toastSuccess("SOP Uploaded Successfully")
         } else {
@@ -365,66 +422,58 @@ export default {
       }
     },
     
-  viewSop(sop) {
-  console.log("Viewing SOP:", sop);
-  
-  const fileUrl = this.getFileUrl(sop);
-  
-  if (fileUrl) {
-    console.log("Opening PDF URL:", fileUrl);
-    window.open(fileUrl, '_blank');
-    toastSuccess(`Opening: ${sop.title}`);
-  } else {
-    console.error("Could not construct file URL from SOP:", sop);
-    toastError('PDF file URL not available. File name not found in the SOP data.');
-  }
-},
-
-  downloadSop(sop) {
-  const fileUrl = this.getFileUrl(sop);
-  
-  if (fileUrl) {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = sop.file_name || sop.filename || `${sop.title.replace(/\s/g, '_')}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toastSuccess(`Downloading: ${sop.title}`);
-  } else {
-    toastError('File not available for download');
-  }
-},
-
-    
-async confirmDelete(sop) {
-  if (confirm(`Are you sure you want to delete "${sop.title}"? This action cannot be undone.`)) {
-    try {
-      // Call your backend API to delete the SOP
-      const response = await fetch(`${this.apiBaseUrl}/api/api/sops/${sop.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add any authentication headers if needed
-          // 'Authorization': `Bearer ${yourToken}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.status) {
-        // Remove from local array only after successful backend deletion
-        this.sops = this.sops.filter(s => s.id !== sop.id);
-        toastSuccess('SOP deleted successfully');
+    viewSop(sop) {
+      console.log("Viewing SOP:", sop);
+      const fileUrl = this.getFileUrl(sop);
+      if (fileUrl) {
+        console.log("Opening PDF URL:", fileUrl);
+        window.open(fileUrl, '_blank');
+        toastSuccess(`Opening: ${sop.title}`);
       } else {
-        toastError(data.message || 'Failed to delete SOP');
+        console.error("Could not construct file URL from SOP:", sop);
+        toastError('PDF file URL not available. File name not found in the SOP data.');
       }
-    } catch(error) {
-      console.error("Delete error:", error);
-      toastError('Failed to delete SOP. Please try again.');
-    }
-  }
-},
+    },
+
+    downloadSop(sop) {
+      const fileUrl = this.getFileUrl(sop);
+      if (fileUrl) {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = sop.file_name || sop.filename || `${sop.title.replace(/\s/g, '_')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toastSuccess(`Downloading: ${sop.title}`);
+      } else {
+        toastError('File not available for download');
+      }
+    },
+    
+    async confirmDelete(sop) {
+      if (confirm(`Are you sure you want to delete "${sop.title}"? This action cannot be undone.`)) {
+        try {
+          const response = await fetch(`${this.apiBaseUrl}/api/api/sops/${sop.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.status) {
+            this.sops = this.sops.filter(s => s.id !== sop.id);
+            toastSuccess('SOP deleted successfully');
+          } else {
+            toastError(data.message || 'Failed to delete SOP');
+          }
+        } catch(error) {
+          console.error("Delete error:", error);
+          toastError('Failed to delete SOP. Please try again.');
+        }
+      }
+    },
     
     closeModal() {
       this.showUploadModal = false;
@@ -439,7 +488,6 @@ async confirmDelete(sop) {
 </script>
 
 <style scoped>
-/* Keep all your existing styles exactly as they were */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 /* Variables */
@@ -479,6 +527,53 @@ async confirmDelete(sop) {
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-stats-badge {
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 /* Header */
@@ -556,9 +651,12 @@ async confirmDelete(sop) {
   cursor: pointer;
 }
 
-.stat-card:last-child:hover {
+.stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.add-stat:hover {
   background: linear-gradient(135deg, #eef2ff, #e0e7ff);
 }
 
@@ -605,6 +703,12 @@ async confirmDelete(sop) {
   justify-content: space-between;
 }
 
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .btn-add-small {
   background: var(--primary);
   border: none;
@@ -623,6 +727,55 @@ async confirmDelete(sop) {
 .btn-add-small:hover {
   opacity: 0.9;
   transform: scale(0.97);
+}
+
+/* Search/Filter Bar - Mobile */
+.search-filter-bar {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 16px;
+}
+
+.search-group {
+  position: relative;
+  flex: 1;
+}
+
+.search-group i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.search-input-mobile {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.search-input-mobile:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.filter-select-mobile {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  appearance: auto;
 }
 
 /* SOPs Grid */
@@ -675,10 +828,12 @@ async confirmDelete(sop) {
   justify-content: center;
   color: #dc2626;
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .sop-title-wrap {
   flex: 1;
+  min-width: 0;
 }
 
 .sop-title-wrap h3 {
@@ -686,6 +841,7 @@ async confirmDelete(sop) {
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 6px;
+  word-break: break-word;
 }
 
 .sop-meta {
@@ -693,6 +849,7 @@ async confirmDelete(sop) {
   gap: 12px;
   font-size: 11px;
   color: #6c757d;
+  flex-wrap: wrap;
 }
 
 .sop-meta i {
@@ -702,6 +859,7 @@ async confirmDelete(sop) {
 .sop-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .action-btn {
@@ -733,11 +891,17 @@ async confirmDelete(sop) {
   align-items: flex-start;
 }
 
+.sop-description i {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
 .sop-footer {
   padding: 12px 18px;
   display: flex;
   gap: 12px;
   background: #f9fafb;
+  flex-wrap: wrap;
 }
 
 .badge-department, .badge-version {
@@ -768,6 +932,18 @@ async confirmDelete(sop) {
   opacity: 0.5;
 }
 
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
 .btn-primary-empty {
   margin-top: 20px;
   background: var(--primary);
@@ -777,6 +953,15 @@ async confirmDelete(sop) {
   color: white;
   font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary-empty:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(42, 82, 152, 0.3);
 }
 
 /* Modals */
@@ -792,6 +977,7 @@ async confirmDelete(sop) {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal-container-premium {
@@ -801,6 +987,17 @@ async confirmDelete(sop) {
   border-radius: 32px;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-container-premium::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modal-container-premium::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
 }
 
 .modal-header {
@@ -817,12 +1014,25 @@ async confirmDelete(sop) {
   color: var(--primary-color);
 }
 
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a2e;
+  flex: 1;
+  margin-left: 12px;
+}
+
 .close-modal {
   background: none;
   border: none;
   font-size: 28px;
   cursor: pointer;
   color: #6b7280;
+  transition: 0.2s;
+}
+
+.close-modal:hover {
+  color: #1a1a2e;
 }
 
 .modal-body {
@@ -840,6 +1050,7 @@ async confirmDelete(sop) {
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 14px;
+  color: #1a1a2e;
 }
 
 .form-group input, .form-group textarea {
@@ -849,6 +1060,13 @@ async confirmDelete(sop) {
   border-radius: 14px;
   font-family: inherit;
   transition: 0.2s;
+  font-size: 14px;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
 }
 
 .form-row {
@@ -868,19 +1086,29 @@ async confirmDelete(sop) {
   cursor: pointer;
 }
 
+.file-dropzone:hover {
+  border-color: var(--primary-color);
+  background: #f8faff;
+}
+
 .drag-over {
   border-color: var(--primary-color);
   background: #eff6ff;
 }
 
 .browse-link {
-  color: blue;
+  color: var(--primary-color);
   font-weight: 600;
   cursor: pointer;
 }
 
+.browse-link:hover {
+  text-decoration: underline;
+}
+
 .file-selected {
   color: #10b981;
+  font-weight: 500;
 }
 
 .error-message {
@@ -902,6 +1130,10 @@ async confirmDelete(sop) {
   font-weight: 500;
   cursor: pointer;
   border: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-primary {
@@ -909,15 +1141,268 @@ async confirmDelete(sop) {
   color: white;
 }
 
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(42, 82, 152, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-secondary {
   background: #e2e8f0;
   color: #1e293b;
 }
 
+.btn-secondary:hover {
+  background: #cbd5e1;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sops-grid-premium {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
-  .main-content { flex-direction: column; padding: 12px; }
-  .sop-board-premium { padding: 16px; }
-  .sops-grid-premium { grid-template-columns: 1fr; }
-  .form-row { flex-direction: column; gap: 0; }
+  .main-content {
+    flex-direction: column;
+    padding: 12px;
+  }
+  
+  .sop-board-premium {
+    padding: 16px;
+    border-radius: 20px;
+  }
+  
+  .mobile-header {
+    display: flex;
+  }
+  
+  .content-header-modern {
+    display: none;
+  }
+  
+  .stats-bar {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 14px;
+    gap: 10px;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .stat-card i {
+    font-size: 24px;
+  }
+  
+  .stat-value {
+    font-size: 22px;
+  }
+  
+  .action-stat {
+    font-size: 16px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+  
+  .sops-grid-premium {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .search-filter-bar {
+    display: flex;
+  }
+  
+  .section-title-modern {
+    font-size: 14px;
+  }
+  
+  .btn-text {
+    display: none;
+  }
+  
+  .btn-add-small {
+    padding: 6px 12px;
+  }
+  
+  .sop-header {
+    padding: 14px;
+    flex-wrap: wrap;
+  }
+  
+  .sop-title-wrap h3 {
+    font-size: 15px;
+  }
+  
+  .sop-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+  
+  .modal-container-premium {
+    width: 95%;
+    max-height: 95vh;
+    border-radius: 24px;
+  }
+  
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-header h2 {
+    font-size: 17px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  
+  .modal-actions .btn-primary,
+  .modal-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .empty-state-premium {
+    padding: 40px 16px;
+  }
+  
+  .empty-state-premium i {
+    font-size: 48px;
+  }
+  
+  .empty-state-premium h4 {
+    font-size: 16px;
+  }
+  
+  .empty-state-premium p {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+  
+  .sop-board-premium {
+    padding: 12px;
+    border-radius: 16px;
+  }
+  
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+  }
+  
+  .stat-card i {
+    font-size: 20px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+  }
+  
+  .mobile-title {
+    font-size: 16px;
+  }
+  
+  .mobile-stats-badge {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .sop-card-premium {
+    border-radius: 16px;
+  }
+  
+  .sop-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .sop-title-wrap h3 {
+    font-size: 14px;
+  }
+  
+  .sop-meta {
+    font-size: 10px;
+    gap: 8px;
+  }
+  
+  .sop-description {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+  
+  .sop-footer {
+    padding: 10px 14px;
+  }
+  
+  .modal-container-premium {
+    border-radius: 20px;
+  }
+  
+  .modal-header h2 {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+  }
+  
+  .form-group input, 
+  .form-group textarea {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .file-dropzone {
+    padding: 20px;
+  }
+}
+
+/* Utility Classes */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
 }
 </style>

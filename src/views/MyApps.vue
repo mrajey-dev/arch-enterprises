@@ -4,8 +4,20 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="apps-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <!-- Header Section -->
-        <div class="content-header-modern">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-mobile-alt"></i>
+            <span>My Apps</span>
+          </div>
+          <button class="mobile-add-btn" @click="scrollToAddForm">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-mobile-alt"></i>
@@ -21,13 +33,13 @@
           </div>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
           <div class="stat-card">
             <i class="fab fa-google-play"></i>
             <div class="stat-info">
               <span class="stat-value">{{ stats.total_apps || 0 }}</span>
-              <span class="stat-label">Total Apps</span>
+              <span class="stat-label">Total</span>
             </div>
           </div>
           <div class="stat-card">
@@ -41,13 +53,13 @@
             <i class="fas fa-download"></i>
             <div class="stat-info">
               <span class="stat-value">{{ formatNumber(stats.total_downloads) }}</span>
-              <span class="stat-label">Total Downloads</span>
+              <span class="stat-label">Downloads</span>
             </div>
           </div>
           <div class="stat-card" @click="scrollToAddForm">
             <i class="fas fa-plus-circle"></i>
             <div class="stat-info">
-              <span class="stat-value action-stat">+ Add New</span>
+              <span class="stat-value action-stat">+ Add</span>
               <span class="stat-label">Submit App</span>
             </div>
           </div>
@@ -61,7 +73,7 @@
               type="text" 
               v-model="searchQuery" 
               @input="debouncedSearch"
-              placeholder="Search by app name, technology, or description..."
+              placeholder="Search apps..."
               class="search-input"
             >
             <button v-if="searchQuery" @click="clearSearch" class="clear-search">
@@ -70,15 +82,9 @@
           </div>
         </div>
 
-        <!-- Apps Grid -->
+        <!-- Apps Grid - Mobile Optimized -->
         <div class="apps-section">
-          <div class="section-title-modern">
-            <i class="fas fa-star"></i>
-            <span>All Published Applications</span>
-            <button class="btn-add-small" @click="scrollToAddForm">
-              <i class="fas fa-plus"></i> Add App
-            </button>
-          </div>
+          
 
           <div v-if="loading" class="loading-state">
             <i class="fas fa-spinner fa-pulse"></i>
@@ -86,28 +92,28 @@
           </div>
 
           <div v-else-if="apps.length" class="apps-grid-premium">
-            <div v-for="app in apps" :key="app.id" class="app-card-premium">
+            <div v-for="app in apps" :key="app.id" class="app-card-premium" :class="{ 'mobile-card': isMobile }">
               <div class="card-accent" :style="{ background: app.accent_color || 'linear-gradient(135deg, #1e3c72, #2a5298)' }"></div>
               
-              <div class="app-header">
+              <div class="app-header" :class="{ 'mobile-header': isMobile }">
                 <div class="app-logo-wrapper">
-                  <img v-if="app.logo_url" :src="app.logo_url" class="app-logo" :alt="app.name">
-                  <div v-else class="app-logo-placeholder">
+                  <img v-if="app.logo_url" :src="app.logo_url" class="app-logo" :class="{ 'mobile-logo': isMobile }" :alt="app.name">
+                  <div v-else class="app-logo-placeholder" :class="{ 'mobile-logo': isMobile }">
                     <i class="fas fa-app-store"></i>
                   </div>
                 </div>
                 <div class="app-title-wrap">
-                  <h3>{{ app.name }}</h3>
+                  <h3>{{ truncateText(app.name, isMobile ? 20 : 30) }}</h3>
                   <div class="app-meta">
-                    <span><i class="fas fa-code-branch"></i> {{ app.package_name }}</span>
+                    <span><i class="fas fa-code-branch"></i> {{ truncateText(app.package_name, isMobile ? 15 : 25) }}</span>
                     <span><i class="fas fa-calendar-alt"></i> {{ formatDate(app.release_date) }}</span>
                   </div>
                 </div>
-                <div class="app-actions">
-                  <a v-if="app.play_store_link" :href="app.play_store_link" target="_blank" class="action-btn playstore-btn" title="View on Play Store">
+                <div class="app-actions" :class="{ 'mobile-actions': isMobile }">
+                  <a v-if="app.play_store_link" :href="app.play_store_link" target="_blank" class="action-btn playstore-btn" title="Play Store">
                     <i class="fab fa-google-play"></i>
                   </a>
-                  <a v-if="app.github_link" :href="app.github_link" target="_blank" class="action-btn github-btn" title="GitHub Repository">
+                  <a v-if="app.github_link" :href="app.github_link" target="_blank" class="action-btn github-btn" title="GitHub">
                     <i class="fab fa-github"></i>
                   </a>
                   <button class="action-btn edit-btn" @click="editApp(app)" title="Edit">
@@ -119,41 +125,38 @@
                 </div>
               </div>
 
-              <div class="tech-stack" v-if="app.technologies">
+              <div class="tech-stack" v-if="app.technologies" :class="{ 'mobile-tech': isMobile }">
                 <div class="tech-label">
                   <i class="fas fa-microchip"></i> Technologies
                 </div>
                 <div class="tech-badges">
-                  <span v-for="tech in app.technologies.split(',')" :key="tech" class="tech-badge">
+                  <span v-for="tech in app.technologies.split(',')" :key="tech" class="tech-badge" :class="{ 'mobile-badge': isMobile }">
                     {{ tech.trim() }}
                   </span>
                 </div>
               </div>
 
-              <div class="short-description">
+              <div class="short-description" :class="{ 'mobile-desc': isMobile }">
                 <i class="fas fa-align-left"></i>
-                <span>{{ app.short_description }}</span>
+                <span>{{ truncateText(app.short_description, isMobile ? 80 : 120) }}</span>
               </div>
 
-              <div class="revenue-structure" v-if="app.revenue_model">
+              <div class="revenue-structure" v-if="app.revenue_model" :class="{ 'mobile-revenue': isMobile }">
                 <i class="fas fa-chart-line"></i>
                 <span class="revenue-label">Revenue:</span>
-                <span class="revenue-value">{{ app.revenue_model }}</span>
+                <span class="revenue-value">{{ truncateText(app.revenue_model, isMobile ? 20 : 30) }}</span>
               </div>
 
-              <!-- Documentation Section -->
+              <!-- Documentation Section - Mobile Optimized -->
               <div class="documentation-section" v-if="hasDocumentationContent(app)">
                 <div class="doc-header" @click="toggleDocumentation(app.id)">
                   <i class="fas fa-book-open"></i>
                   <span>Documentation</span>
                   <i :class="expandedDocumentation[app.id] ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="doc-toggle-icon"></i>
                 </div>
-                <div v-show="expandedDocumentation[app.id]" class="doc-content">
-                  <!-- Rich text documentation content -->
-                 <!-- In the documentation section, update the doc-text div -->
-<div class="doc-text" v-html="renderDocumentation(app.documentation)" style="white-space: pre-line;"></div>
+                <div v-show="expandedDocumentation[app.id]" class="doc-content" :class="{ 'mobile-doc': isMobile }">
+                  <div class="doc-text" v-html="renderDocumentation(app.documentation)" style="white-space: pre-line;"></div>
                   
-                  <!-- Documentation URL link -->
                   <div v-if="app.documentation_url && app.documentation_url.trim()" class="doc-link">
                     <i class="fas fa-external-link-alt"></i>
                     <a :href="app.documentation_url" target="_blank" rel="noopener noreferrer">
@@ -161,13 +164,12 @@
                     </a>
                   </div>
 
-                  <!-- Quick actions -->
-                  <div class="doc-actions" v-if="hasDocumentationContent(app)">
+                  <div class="doc-actions" :class="{ 'mobile-doc-actions': isMobile }" v-if="hasDocumentationContent(app)">
                     <button v-if="app.documentation_url" class="doc-action-btn" @click="openDocumentationUrl(app.documentation_url)">
                       <i class="fas fa-external-link-alt"></i> Open
                     </button>
                     <button class="doc-action-btn copy-btn" @click="copyDocumentationLink(app)" v-if="app.documentation_url">
-                      <i class="fas fa-copy"></i> Copy Link
+                      <i class="fas fa-copy"></i> Copy
                     </button>
                   </div>
                 </div>
@@ -183,7 +185,7 @@
                 </div>
               </div>
 
-              <div class="app-footer">
+              <div class="app-footer" :class="{ 'mobile-footer': isMobile }">
                 <div class="badge-version" v-if="app.version">
                   <i class="fas fa-tag"></i> v{{ app.version }}
                 </div>
@@ -194,32 +196,32 @@
                   <i class="fas fa-star"></i> {{ app.rating }}
                 </div>
                 <div class="badge-docs" v-if="hasDocumentationContent(app)">
-                  <i class="fas fa-book"></i> Docs Available
+                  <i class="fas fa-book"></i> Docs
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-else class="empty-state-premium">
+          <div v-else class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
             <i class="fas fa-rocket"></i>
             <h4>No Apps Found</h4>
             <p>{{ searchQuery ? 'Try a different search term' : 'Click the "Add App" button to showcase your applications' }}</p>
             <button class="btn-primary-empty" @click="scrollToAddForm">
-              <i class="fas fa-plus-circle"></i> {{ searchQuery ? 'Clear Search & Add App' : 'Add Your First App' }}
+              <i class="fas fa-plus-circle"></i> {{ searchQuery ? 'Clear & Add' : 'Add Your First App' }}
             </button>
           </div>
         </div>
 
-        <!-- Add/Edit Form Section -->
+        <!-- Add/Edit Form Section - Mobile Optimized -->
         <div id="addAppSection" class="form-section-premium">
           <div class="section-title-modern">
             <i class="fas fa-edit"></i>
             <span>{{ editingApp ? 'Edit Application' : 'Add New Application' }}</span>
           </div>
           
-          <div class="app-form-container">
+          <div class="app-form-container" :class="{ 'mobile-form': isMobile }">
             <form @submit.prevent="handleAppSubmit">
-              <div class="form-row-grid">
+              <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
                 <div class="form-group">
                   <label><i class="fas fa-heading"></i> App Name *</label>
                   <input type="text" v-model="formData.name" placeholder="e.g., TaskFlow Pro" required>
@@ -230,7 +232,7 @@
                 </div>
               </div>
 
-              <div class="form-row-grid">
+              <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
                 <div class="form-group">
                   <label><i class="fas fa-image"></i> App Logo URL</label>
                   <input type="url" v-model="formData.logo_url" placeholder="https://.../logo.png">
@@ -241,7 +243,7 @@
                 </div>
               </div>
 
-              <div class="form-row-grid">
+              <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
                 <div class="form-group">
                   <label><i class="fab fa-google-play"></i> Play Store Link</label>
                   <input type="url" v-model="formData.play_store_link" placeholder="https://play.google.com/store/apps/details?id=...">
@@ -261,40 +263,38 @@
               <div class="form-group">
                 <label><i class="fas fa-link"></i> Documentation URL</label>
                 <input type="url" v-model="formData.documentation_url" placeholder="https://yourdomain.com/docs/app-name">
-                <small class="form-hint">Link to hosted documentation (GitHub Wiki, ReadTheDocs, etc.)</small>
+                <small class="form-hint">Link to hosted documentation</small>
               </div>
 
               <div class="form-group">
                 <label><i class="fas fa-tag"></i> Documentation Link Label</label>
-                <input type="text" v-model="formData.documentation_url_label" placeholder="e.g., API Reference, User Guide, Setup Instructions">
-                <small class="form-hint">Custom text for the documentation link button</small>
+                <input type="text" v-model="formData.documentation_url_label" placeholder="e.g., API Reference, User Guide">
+                <small class="form-hint">Custom text for the documentation link</small>
               </div>
 
               <div class="form-group">
-                <label><i class="fas fa-file-alt"></i> Documentation Content (Rich Text)</label>
+                <label><i class="fas fa-file-alt"></i> Documentation Content</label>
                 <div class="rich-text-editor">
-                  <div class="editor-toolbar">
+                  <div class="editor-toolbar" :class="{ 'mobile-toolbar': isMobile }">
                     <button type="button" @click="formatDocText('bold')" title="Bold"><i class="fas fa-bold"></i></button>
                     <button type="button" @click="formatDocText('italic')" title="Italic"><i class="fas fa-italic"></i></button>
                     <button type="button" @click="formatDocText('underline')" title="Underline"><i class="fas fa-underline"></i></button>
-                    <button type="button" @click="formatDocText('h2')" title="Heading 2"><i class="fas fa-heading"></i> H2</button>
-                    <button type="button" @click="formatDocText('h3')" title="Heading 3"><i class="fas fa-heading"></i> H3</button>
-                    <button type="button" @click="formatDocText('link')" title="Insert Link"><i class="fas fa-link"></i></button>
-                    <button type="button" @click="formatDocText('ul')" title="Unordered List"><i class="fas fa-list-ul"></i></button>
-                    <button type="button" @click="formatDocText('ol')" title="Ordered List"><i class="fas fa-list-ol"></i></button>
-                    <button type="button" @click="formatDocText('code')" title="Inline Code"><i class="fas fa-code"></i></button>
-                    <button type="button" @click="formatDocText('pre')" title="Code Block"><i class="fas fa-code-branch"></i></button>
+                    <button type="button" @click="formatDocText('h2')" title="H2"><i class="fas fa-heading"></i> H2</button>
+                    <button type="button" @click="formatDocText('h3')" title="H3"><i class="fas fa-heading"></i> H3</button>
+                    <button type="button" @click="formatDocText('link')" title="Link"><i class="fas fa-link"></i></button>
+                    <button type="button" @click="formatDocText('ul')" title="List"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" @click="formatDocText('code')" title="Code"><i class="fas fa-code"></i></button>
                   </div>
                   <textarea 
                     v-model="formData.documentation" 
-                    placeholder="Write detailed documentation here. You can use HTML tags for formatting (e.g., &lt;strong&gt;bold&lt;/strong&gt;, &lt;ul&gt;&lt;li&gt;item&lt;/li&gt;&lt;/ul&gt;)."
+                    placeholder="Write detailed documentation here..."
                     rows="8"
                     class="doc-textarea"
+                    :class="{ 'mobile-textarea': isMobile }"
                   ></textarea>
                 </div>
                 <small class="form-hint">
-                  <i class="fas fa-info-circle"></i> 
-                  Supports HTML formatting. You can add installation steps, API references, configuration guides, etc.
+                  <i class="fas fa-info-circle"></i> Supports HTML formatting
                 </small>
               </div>
 
@@ -308,10 +308,10 @@
                 <textarea v-model="formData.long_description" rows="4" placeholder="Detailed description, features, use cases..."></textarea>
               </div>
 
-              <div class="form-row-grid">
+              <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
                 <div class="form-group">
                   <label><i class="fas fa-chart-line"></i> Revenue Model</label>
-                  <input type="text" v-model="formData.revenue_model" placeholder="e.g., Freemium, Subscription, One-time purchase">
+                  <input type="text" v-model="formData.revenue_model" placeholder="e.g., Freemium, Subscription">
                 </div>
                 <div class="form-group">
                   <label><i class="fas fa-tag"></i> Version</label>
@@ -319,7 +319,7 @@
                 </div>
               </div>
 
-              <div class="form-row-grid">
+              <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
                 <div class="form-group">
                   <label><i class="fas fa-download"></i> Download Count</label>
                   <input type="number" v-model.number="formData.download_count" placeholder="1000">
@@ -335,12 +335,12 @@
                 <input type="color" v-model="formData.accent_color" class="color-picker">
               </div>
 
-              <div class="modal-actions">
+              <div class="modal-actions" :class="{ 'mobile-actions': isMobile }">
                 <button type="button" class="btn-secondary" @click="resetForm">Cancel</button>
                 <button type="submit" class="btn-primary" :disabled="submitting">
                   <i v-if="submitting" class="fas fa-spinner fa-pulse"></i>
                   <i v-else class="fas fa-save"></i>
-                  {{ submitting ? 'Saving...' : (editingApp ? 'Update App' : 'Add App') }}
+                  {{ submitting ? 'Saving...' : (editingApp ? 'Update' : 'Add') }}
                 </button>
               </div>
             </form>
@@ -349,9 +349,9 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete Confirmation Modal - Mobile Optimized -->
     <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
-      <div class="modal-container-premium">
+      <div class="modal-container-premium" :class="{ 'mobile-modal': isMobile }">
         <div class="modal-header">
           <div class="modal-icon">
             <i class="fas fa-trash-alt" style="color: #ef4444;"></i>
@@ -360,12 +360,12 @@
           <button class="close-modal" @click="showDeleteModal = false">&times;</button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you want to delete <strong>{{ appToDelete?.name }}</strong>? This action cannot be undone.</p>
-          <div class="modal-actions" style="margin-top: 24px;">
+          <p>Delete <strong>{{ appToDelete?.name }}</strong>? This cannot be undone.</p>
+          <div class="modal-actions" style="margin-top: 24px;" :class="{ 'mobile-actions': isMobile }">
             <button class="btn-secondary" @click="showDeleteModal = false">Cancel</button>
             <button class="btn-danger" @click="deleteApp" :disabled="deleting">
               <i v-if="deleting" class="fas fa-spinner fa-pulse"></i>
-              Delete Permanently
+              Delete
             </button>
           </div>
         </div>
@@ -386,7 +386,6 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 
-// Update this to your actual API endpoint
 const API_BASE = 'https://employees.archenterprises.co.in/api/api';
 
 export default {
@@ -450,11 +449,17 @@ export default {
     window.removeEventListener('resize', this.checkIfMobile);
   },
   methods: {
+    truncateText(text, length) {
+      if (!text) return '';
+      return text.length > length ? text.substring(0, length) + '...' : text;
+    },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
     },
-
+    toggleSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible;
+    },
     async loadApps() {
       this.loading = true;
       try {
@@ -528,29 +533,24 @@ export default {
              (app.documentation_url && app.documentation_url.trim());
     },
 
-renderDocumentation(content) {
-        if (!content) return '';
-        
-        // First, sanitize HTML to prevent XSS attacks
-        let sanitized = content.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-        
-        // If content contains HTML tags, render as-is
-        if (/<[^>]+>/g.test(sanitized)) {
-            return sanitized;
-        }
-        
-        // Otherwise, convert plain text line breaks to HTML
-        // This preserves line breaks and spaces
-        sanitized = sanitized
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>')  // Convert new lines to <br>
-            .replace(/\s\s/g, ' &nbsp;'); // Preserve double spaces
-        
+    renderDocumentation(content) {
+      if (!content) return '';
+      
+      let sanitized = content.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+      
+      if (/<[^>]+>/g.test(sanitized)) {
         return sanitized;
+      }
+      
+      sanitized = sanitized
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>')
+        .replace(/\s\s/g, ' &nbsp;');
+      
+      return sanitized;
     },
-
 
     openDocumentationUrl(url) {
       if (url) {
@@ -562,7 +562,7 @@ renderDocumentation(content) {
       if (app.documentation_url) {
         try {
           await navigator.clipboard.writeText(app.documentation_url);
-          this.showToast('Documentation link copied to clipboard!', 'success');
+          this.showToast('Documentation link copied!', 'success');
         } catch (err) {
           this.showToast('Failed to copy link', 'error');
         }
@@ -603,14 +603,8 @@ renderDocumentation(content) {
         case 'ul':
           formattedText = `<ul>\n  <li>${selectedText || 'list item'}</li>\n</ul>`;
           break;
-        case 'ol':
-          formattedText = `<ol>\n  <li>${selectedText || 'list item'}</li>\n</ol>`;
-          break;
         case 'code':
           formattedText = `<code>${selectedText || 'code here'}</code>`;
-          break;
-        case 'pre':
-          formattedText = `<pre><code>${selectedText || '// Your code here'}</code></pre>`;
           break;
         default:
           return;
@@ -675,12 +669,10 @@ renderDocumentation(content) {
     },
 
     editApp(app) {
-      console.log('Editing app:', app); // Debug log
+      console.log('Editing app:', app);
       
-      // Set editing flag
       this.editingApp = app;
       
-      // Populate form data with all fields including documentation
       this.formData = {
         id: app.id || null,
         name: app.name || '',
@@ -702,9 +694,7 @@ renderDocumentation(content) {
         documentation_url_label: app.documentation_url_label || ''
       };
       
-      // Scroll to form
       this.scrollToAddForm();
-      
       this.showToast('Loading app data for editing...', 'info');
     },
 
@@ -722,7 +712,6 @@ renderDocumentation(content) {
         
         const method = this.editingApp ? 'PUT' : 'POST';
         
-        // Prepare data for submission
         const submitData = {
           name: this.formData.name,
           package_name: this.formData.package_name,
@@ -757,8 +746,8 @@ renderDocumentation(content) {
         if (data.success) {
           this.showToast(this.editingApp ? 'App updated successfully!' : 'App added successfully!', 'success');
           this.resetForm();
-          await this.loadApps(); // Wait for apps to reload
-          await this.loadStats(); // Wait for stats to reload
+          await this.loadApps();
+          await this.loadStats();
         } else {
           this.showToast(data.message || 'Operation failed', 'error');
         }
@@ -806,68 +795,7 @@ renderDocumentation(content) {
 </script>
 
 <style scoped>
-/* All existing styles remain the same */
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #6b7280;
-}
-
-.loading-state i {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.search-section {
-  margin-bottom: 32px;
-}
-
-.search-wrapper {
-  position: relative;
-  max-width: 500px;
-}
-
-.search-wrapper i {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-}
-
-.search-input {
-  width: 100%;
-  padding: 12px 16px 12px 42px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  background: #f9fafb;
-  transition: all 0.2s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #2a5298;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
-}
-
-.clear-search {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 4px;
-}
-
-.clear-search:hover {
-  color: #ef4444;
-}
-
+/* All existing styles with mobile additions */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 :root {
@@ -906,6 +834,58 @@ renderDocumentation(content) {
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
 }
 
 .content-header-modern {
@@ -1016,6 +996,56 @@ renderDocumentation(content) {
   color: #6b7280;
 }
 
+.search-section {
+  margin-bottom: 32px;
+}
+
+.search-wrapper {
+  position: relative;
+  max-width: 500px;
+}
+
+.search-wrapper i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background: #f9fafb;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #2a5298;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+}
+
+.clear-search {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.clear-search:hover {
+  color: #ef4444;
+}
+
 .section-title-modern {
   display: flex;
   align-items: center;
@@ -1027,6 +1057,12 @@ renderDocumentation(content) {
   font-size: 16px;
   color: #1a1a2e;
   justify-content: space-between;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .btn-add-small {
@@ -1047,6 +1083,21 @@ renderDocumentation(content) {
 .btn-add-small:hover {
   opacity: 0.9;
   transform: scale(0.97);
+}
+
+.btn-text {
+  display: inline;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.loading-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
 }
 
 .apps-grid-premium {
@@ -1071,6 +1122,10 @@ renderDocumentation(content) {
   box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.12);
 }
 
+.app-card-premium.mobile-card {
+  border-radius: 16px;
+}
+
 .card-accent {
   position: absolute;
   top: 0;
@@ -1089,6 +1144,13 @@ renderDocumentation(content) {
   border-bottom: 1px solid #eef2f6;
 }
 
+.app-header.mobile-header {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 14px;
+}
+
 .app-logo-wrapper {
   flex-shrink: 0;
 }
@@ -1100,6 +1162,11 @@ renderDocumentation(content) {
   object-fit: cover;
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
+}
+
+.app-logo.mobile-logo {
+  width: 48px;
+  height: 48px;
 }
 
 .app-logo-placeholder {
@@ -1114,8 +1181,18 @@ renderDocumentation(content) {
   color: var(--primary-color);
 }
 
+.app-logo-placeholder.mobile-logo {
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+}
+
 .app-title-wrap {
   flex: 1;
+}
+
+.mobile-header .app-title-wrap {
+  width: 100%;
 }
 
 .app-title-wrap h3 {
@@ -1140,6 +1217,14 @@ renderDocumentation(content) {
 .app-actions {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
+}
+
+.app-actions.mobile-actions {
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  margin-top: 8px;
 }
 
 .action-btn {
@@ -1172,6 +1257,10 @@ renderDocumentation(content) {
   border-bottom: 1px solid #f0f0f0;
 }
 
+.tech-stack.mobile-tech {
+  padding: 10px 14px;
+}
+
 .tech-label {
   font-size: 11px;
   font-weight: 600;
@@ -1194,6 +1283,11 @@ renderDocumentation(content) {
   font-weight: 500;
 }
 
+.tech-badge.mobile-badge {
+  font-size: 10px;
+  padding: 3px 8px;
+}
+
 .short-description {
   padding: 14px 18px;
   font-size: 13px;
@@ -1205,6 +1299,11 @@ renderDocumentation(content) {
   align-items: flex-start;
 }
 
+.short-description.mobile-desc {
+  padding: 10px 14px;
+  font-size: 12px;
+}
+
 .revenue-structure {
   padding: 10px 18px;
   font-size: 12px;
@@ -1214,6 +1313,11 @@ renderDocumentation(content) {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.revenue-structure.mobile-revenue {
+  padding: 8px 14px;
+  font-size: 11px;
 }
 
 .revenue-label {
@@ -1261,6 +1365,10 @@ renderDocumentation(content) {
   padding: 16px 18px;
   border-top: 1px solid #eef2f6;
   animation: slideDown 0.3s ease;
+}
+
+.doc-content.mobile-doc {
+  padding: 12px 14px;
 }
 
 @keyframes slideDown {
@@ -1364,6 +1472,11 @@ renderDocumentation(content) {
   border-top: 1px solid #eef2f6;
 }
 
+.doc-actions.mobile-doc-actions {
+  flex-direction: column;
+  gap: 8px;
+}
+
 .doc-action-btn {
   background: white;
   border: 1px solid #e2e8f0;
@@ -1378,6 +1491,12 @@ renderDocumentation(content) {
   color: #4b5563;
 }
 
+.mobile-doc-actions .doc-action-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 8px;
+}
+
 .doc-action-btn:hover {
   background: #f1f5f9;
   border-color: var(--primary-color);
@@ -1388,15 +1507,145 @@ renderDocumentation(content) {
   color: var(--primary-color);
 }
 
-.badge-docs {
+.long-description {
+  padding: 8px 18px 14px;
+}
+
+.toggle-desc-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.long-desc-content {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.app-footer {
+  padding: 12px 18px;
+  display: flex;
+  gap: 12px;
+  background: #f9fafb;
+  flex-wrap: wrap;
+}
+
+.app-footer.mobile-footer {
+  padding: 10px 14px;
+  gap: 8px;
+}
+
+.badge-version, .badge-downloads, .badge-rating, .badge-docs {
   font-size: 11px;
   padding: 4px 10px;
   border-radius: 30px;
+  background: #eef2ff;
+  color: #1e40af;
+}
+
+.mobile-footer .badge-version,
+.mobile-footer .badge-downloads,
+.mobile-footer .badge-rating,
+.mobile-footer .badge-docs {
+  font-size: 10px;
+  padding: 3px 8px;
+}
+
+.badge-downloads {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-rating {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-docs {
   background: #e0e7ff;
   color: #3730a3;
-  display: inline-flex;
+}
+
+/* Form Section */
+.form-section-premium {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.app-form-container {
+  background: #f9fafb;
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.app-form-container.mobile-form {
+  padding: 16px;
+}
+
+.form-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.form-row-grid.mobile-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group input, .form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  font-family: inherit;
+  transition: 0.2s;
+  font-size: 14px;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  ring: 2px solid var(--primary-color);
+}
+
+.color-picker {
+  height: 48px;
+  padding: 4px;
+}
+
+.form-hint {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 5px;
+  display: block;
 }
 
 .form-section-divider {
@@ -1426,6 +1675,11 @@ renderDocumentation(content) {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.editor-toolbar.mobile-toolbar {
+  gap: 3px;
+  padding: 6px 8px;
+}
+
 .editor-toolbar button {
   background: white;
   border: 1px solid #e5e7eb;
@@ -1434,6 +1688,11 @@ renderDocumentation(content) {
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s;
+}
+
+.editor-toolbar.mobile-toolbar button {
+  padding: 4px 8px;
+  font-size: 10px;
 }
 
 .editor-toolbar button:hover {
@@ -1451,8 +1710,173 @@ renderDocumentation(content) {
   line-height: 1.5;
 }
 
+.doc-textarea.mobile-textarea {
+  font-size: 15px;
+  padding: 10px 12px;
+}
+
 .doc-textarea:focus {
   outline: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-actions.mobile-actions {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-actions.mobile-actions button {
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  padding: 10px 24px;
+  border-radius: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.empty-state-premium {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  background: #fafbfc;
+  border-radius: 28px;
+}
+
+.empty-state-premium.empty-mobile {
+  padding: 40px 16px;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-mobile .empty-state-premium i {
+  font-size: 48px;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-mobile .empty-state-premium h4 {
+  font-size: 16px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+.empty-mobile .empty-state-premium p {
+  font-size: 13px;
+}
+
+.btn-primary-empty {
+  margin-top: 20px;
+  background: var(--primary);
+  border: none;
+  padding: 10px 24px;
+  border-radius: 40px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container-premium {
+  background: white;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+
+.modal-container-premium.mobile-modal {
+  border-radius: 24px;
+  max-width: 95%;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.mobile-modal .modal-header {
+  padding: 16px 20px;
+}
+
+.modal-icon {
+  font-size: 28px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+}
+
+.mobile-modal .modal-header h2 {
+  font-size: 17px;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.mobile-modal .modal-body {
+  padding: 16px;
 }
 
 .toast-container {
@@ -1531,227 +1955,248 @@ renderDocumentation(content) {
   }
 }
 
-.long-description {
-  padding: 8px 18px 14px;
-}
-
-.toggle-desc-btn {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 6px 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.long-desc-content {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #4b5563;
-  line-height: 1.5;
-  padding: 10px;
-  background: #f9fafb;
-  border-radius: 12px;
-}
-
-.app-footer {
-  padding: 12px 18px;
-  display: flex;
-  gap: 12px;
-  background: #f9fafb;
-  flex-wrap: wrap;
-}
-
-.badge-version, .badge-downloads, .badge-rating {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 30px;
-  background: #eef2ff;
-  color: #1e40af;
-}
-
-.badge-downloads {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.badge-rating {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.form-section-premium {
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 2px solid #e5e7eb;
-}
-
-.app-form-container {
-  background: #f9fafb;
-  border-radius: 24px;
-  padding: 24px;
-}
-
-.form-row-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.form-group input, .form-group textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 14px;
-  font-family: inherit;
-  transition: 0.2s;
-  font-size: 14px;
-}
-
-.form-group input:focus, .form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  ring: 2px solid var(--primary-color);
-}
-
-.color-picker {
-  height: 48px;
-  padding: 4px;
-}
-
-.form-hint {
-  font-size: 11px;
-  color: #6b7280;
-  margin-top: 5px;
-  display: block;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.btn-primary, .btn-secondary, .btn-danger {
-  padding: 10px 24px;
-  border-radius: 40px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
-}
-
-.btn-secondary {
-  background: #e2e8f0;
-  color: #1e293b;
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-
-.empty-state-premium {
-  text-align: center;
-  padding: 60px 20px;
-  color: #9ca3af;
-  background: #fafbfc;
-  border-radius: 28px;
-}
-
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.btn-primary-empty {
-  margin-top: 20px;
-  background: var(--primary);
-  border: none;
-  padding: 10px 24px;
-  border-radius: 40px;
-  color: white;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-container-premium {
-  background: white;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 32px;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.modal-icon {
-  font-size: 28px;
-}
-
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-  color: #6b7280;
-}
-
-.modal-body {
-  padding: 24px;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-  .main-content { flex-direction: column; padding: 12px; }
-  .apps-board-premium { padding: 16px; }
-  .apps-grid-premium { grid-template-columns: 1fr; }
-  .form-row-grid { grid-template-columns: 1fr; gap: 0; }
-  .editor-toolbar { flex-wrap: wrap; }
+  .main-content {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .apps-board-premium {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+
+  .content-header-modern {
+    display: none;
+  }
+
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .stat-card i {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .action-stat {
+    font-size: 16px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .apps-grid-premium {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .app-card-premium.mobile-card {
+    border-radius: 14px;
+  }
+
+  .app-header.mobile-header {
+    padding: 12px;
+  }
+
+  .app-actions.mobile-actions {
+    gap: 4px;
+  }
+
+  .action-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+
+  .btn-text {
+    display: none;
+  }
+
+  .btn-add-small {
+    padding: 6px 12px;
+  }
+
+  .search-section {
+    margin-bottom: 20px;
+  }
+
+  .empty-state-premium.empty-mobile {
+    padding: 30px 16px;
+  }
+
+  .form-section-premium {
+    margin-top: 32px;
+    padding-top: 16px;
+  }
+
+  .app-form-container.mobile-form {
+    padding: 12px;
+  }
+
+  .form-row-grid.mobile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-container-premium.mobile-modal {
+    border-radius: 20px;
+  }
+
+  .modal-actions.mobile-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions.mobile-actions button {
+    width: 100%;
+  }
+
+  .editor-toolbar.mobile-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .toast {
+    min-width: auto;
+    max-width: 90vw;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .apps-board-premium {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card i {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .app-title-wrap h3 {
+    font-size: 15px;
+  }
+
+  .app-meta {
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  .tech-stack.mobile-tech {
+    padding: 8px 12px;
+  }
+
+  .short-description.mobile-desc {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .doc-content.mobile-doc {
+    padding: 10px 12px;
+  }
+
+  .doc-text {
+    font-size: 12px;
+  }
+
+  .doc-actions.mobile-doc-actions {
+    flex-direction: column;
+  }
+
+  .doc-action-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .app-footer.mobile-footer {
+    gap: 6px;
+  }
+
+  .badge-version,
+  .badge-downloads,
+  .badge-rating,
+  .badge-docs {
+    font-size: 9px;
+    padding: 2px 8px;
+  }
+
+  .search-input {
+    font-size: 13px;
+    padding: 10px 12px 10px 36px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+
+  .doc-textarea.mobile-textarea {
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+
+  .modal-header h2 {
+    font-size: 16px;
+  }
+
+  .modal-icon {
+    font-size: 24px;
+  }
+
+  .empty-state-premium i {
+    font-size: 40px;
+  }
+
+  .empty-state-premium h4 {
+    font-size: 15px;
+  }
 }
 </style>

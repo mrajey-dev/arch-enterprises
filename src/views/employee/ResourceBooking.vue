@@ -5,8 +5,21 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <div class="content-header-modern">
-          <div class="header-left">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+          
+          <div class="mobile-title">
+            <i class="fas fa-calendar-check"></i>
+            <span>Book Resource</span>
+          </div>
+          <div class="mobile-stats-badge">
+            <span>{{ resources.length }}</span>
+          </div>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
+          <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-calendar-check"></i>
             </div>
@@ -21,34 +34,37 @@
           </div>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-          <div class="stat-card">
+          <div class="stat-card" @click="filterBookings('all')">
             <i class="fas fa-bookmark"></i>
             <div class="stat-info">
               <span class="stat-value">{{ bookings.length }}</span>
               <span class="stat-label">My Bookings</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" @click="filterBookings('active')">
             <i class="fas fa-clock"></i>
             <div class="stat-info">
               <span class="stat-value">{{ activeBookings }}</span>
-              <span class="stat-label">Active Bookings</span>
+              <span class="stat-label">Active</span>
             </div>
           </div>
         </div>
 
-        <!-- Booking Form Card -->
+        <!-- Booking Form Card - Mobile Optimized -->
         <div class="card-premium">
-          <div class="card-header-premium">
+          <div class="card-header-premium" @click="toggleForm">
             <div class="section-title-modern">
-              <i class="fas fa-plus-circle"></i>
-              <span>{{ editId ? 'Edit Booking' : 'Create New Booking' }}</span>
+              <div class="title-left">
+                <i class="fas fa-plus-circle"></i>
+                <span>{{ editId ? 'Edit Booking' : 'Create New Booking' }}</span>
+              </div>
+              <i class="fas fa-chevron-down form-toggle" :class="{ 'rotated': formVisible }"></i>
             </div>
           </div>
 
-          <div class="form-section">
+          <div class="form-section" :class="{ 'form-hidden': !formVisible }">
             <div class="form-grid-premium">
               <div class="form-field">
                 <label><i class="fas fa-cube"></i> Resource Type <span class="required">*</span></label>
@@ -72,7 +88,7 @@
               </div>
 
               <div class="form-field">
-                <label><i class="fas fa-calendar-alt"></i> From Date & Time <span class="required">*</span></label>
+                <label><i class="fas fa-calendar-alt"></i> From <span class="required">*</span></label>
                 <div class="field-wrapper">
                   <i class="fas fa-calendar field-icon"></i>
                   <input type="datetime-local" v-model="form.from_date" required />
@@ -80,7 +96,7 @@
               </div>
 
               <div class="form-field">
-                <label><i class="fas fa-calendar-alt"></i> To Date & Time <span class="required">*</span></label>
+                <label><i class="fas fa-calendar-alt"></i> To <span class="required">*</span></label>
                 <div class="field-wrapper">
                   <i class="fas fa-calendar-check field-icon"></i>
                   <input type="datetime-local" v-model="form.to_date" required />
@@ -94,7 +110,7 @@
                   <i class="fas fa-spinner fa-spin"></i> Processing...
                 </span>
                 <span v-else>
-                  <i class="fas fa-save"></i> {{ editId ? 'Update Booking' : 'Book Resource' }}
+                  <i class="fas fa-save"></i> {{ editId ? 'Update' : 'Book' }}
                 </span>
               </button>
             </div>
@@ -105,16 +121,78 @@
         <div class="card-premium">
           <div class="card-header-premium">
             <div class="section-title-modern">
-              <i class="fas fa-list-ul"></i>
-              <span>My Bookings</span>
+              <div class="title-left">
+                <i class="fas fa-list-ul"></i>
+                <span>My Bookings</span>
+                <span class="record-count-mobile" v-if="isMobile">{{ filteredBookings.length }}</span>
+              </div>
             </div>
-            <div class="table-info">
+            <div class="table-info desktop-only">
               <i class="fas fa-file-alt"></i>
               <span>{{ bookings.length }} records</span>
             </div>
           </div>
 
-          <div class="table-wrapper-premium">
+          <!-- Mobile Search -->
+          <div class="search-bar-mobile" v-if="isMobile && bookings.length > 0">
+            <div class="search-group-mobile">
+              <i class="fas fa-search"></i>
+              <input type="text" v-model="searchQuery" placeholder="Search bookings..." class="search-input-mobile" />
+            </div>
+          </div>
+
+          <!-- Mobile Card View -->
+          <div class="mobile-cards" v-if="isMobile">
+            <div v-for="b in filteredBookings" :key="b.id" class="booking-card">
+              <div class="card-header">
+                <div class="card-resource">
+                  <span class="resource-badge-mobile">
+                    <i class="fas fa-cube"></i>
+                    {{ b.resource_type }}
+                  </span>
+                </div>
+                <div class="card-actions">
+                  <button class="action-btn-mobile edit" @click="editBooking(b)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="action-btn-mobile delete" @click="deleteBooking(b.id)">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-calendar-alt"></i> From</span>
+                  <span class="card-value">
+                    <span class="date">{{ formatDate(b.from_date) }}</span>
+                    <span class="time">{{ formatTime(b.from_date) }}</span>
+                  </span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-calendar-check"></i> To</span>
+                  <span class="card-value">
+                    <span class="date">{{ formatDate(b.to_date) }}</span>
+                    <span class="time">{{ formatTime(b.to_date) }}</span>
+                  </span>
+                </div>
+                <div class="card-row" v-if="b.purpose">
+                  <span class="card-label"><i class="fas fa-comment"></i> Purpose</span>
+                  <span class="card-value purpose-text">{{ b.purpose }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <div v-if="filteredBookings.length === 0" class="empty-state-mobile">
+              <i class="fas fa-calendar-times"></i>
+              <h4>{{ searchQuery ? 'No Matching Bookings' : 'No Bookings Found' }}</h4>
+              <p>{{ searchQuery ? 'Try adjusting your search' : 'Create your first booking using the form above' }}</p>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="table-wrapper-premium" v-else>
             <table class="booking-table-premium">
               <thead>
                 <tr>
@@ -126,7 +204,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="b in bookings" :key="b.id" class="booking-row">
+                <tr v-for="b in filteredBookings" :key="b.id" class="booking-row">
                   <td class="resource-cell">
                     <span class="resource-badge">
                       <i class="fas fa-cube"></i>
@@ -160,8 +238,8 @@
                   </td>
                 </tr>
 
-                <!-- Empty State -->
-                <tr v-if="bookings.length === 0" class="empty-row">
+                <!-- Desktop Empty State -->
+                <tr v-if="filteredBookings.length === 0" class="empty-row">
                   <td colspan="5">
                     <div class="empty-state-premium">
                       <i class="fas fa-calendar-times"></i>
@@ -203,6 +281,9 @@ export default {
     return {
       isMobile: false,
       isSidebarVisible: true,
+      formVisible: false,
+      searchQuery: '',
+      filterType: 'all',
       resources: [],
       bookings: [],
       editId: null,
@@ -221,10 +302,38 @@ export default {
     activeBookings() {
       const now = new Date();
       return this.bookings.filter(b => new Date(b.to_date) > now).length;
+    },
+    filteredBookings() {
+      let filtered = this.bookings;
+      
+      // Status filter
+      if (this.filterType === 'active') {
+        const now = new Date();
+        filtered = filtered.filter(b => new Date(b.to_date) > now);
+      }
+      
+      // Search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(b => 
+          b.resource_type.toLowerCase().includes(query) ||
+          (b.purpose && b.purpose.toLowerCase().includes(query))
+        );
+      }
+      
+      return filtered;
     }
   },
 
   methods: {
+    toggleForm() {
+      if (this.isMobile) {
+        this.formVisible = !this.formVisible;
+      }
+    },
+    filterBookings(type) {
+      this.filterType = this.filterType === type ? 'all' : type;
+    },
     truncateText(text, length) {
       if (!text) return '—';
       return text.length > length ? text.substring(0, length) + '...' : text;
@@ -265,7 +374,7 @@ export default {
         this.bookings = res.data
       } catch (e) {
         console.error('Fetch failed', e)
-        toastError(' No bookings found for your account')
+        toastError('No bookings found for your account')
       }
     },
 
@@ -292,6 +401,9 @@ export default {
 
         this.resetForm()
         this.fetchBookings()
+        if (this.isMobile) {
+          this.formVisible = false
+        }
       } catch (e) {
         toastError(e.response?.data?.message || 'Something went wrong')
       } finally {
@@ -307,6 +419,10 @@ export default {
         from_date: b.from_date.replace(' ', 'T'),
         to_date: b.to_date.replace(' ', 'T'),
         purpose: b.purpose || ''
+      }
+      if (this.isMobile) {
+        this.formVisible = true
+        this.searchQuery = ''
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
     },
@@ -386,7 +502,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -396,7 +511,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .content {
@@ -407,6 +521,53 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   margin-top: 0;
   overflow-x: auto;
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-stats-badge {
+  background: var(--primary);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 /* Content Header */
@@ -481,11 +642,16 @@ export default {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 20px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:active {
+  transform: scale(0.97);
 }
 
 .stat-card i {
@@ -528,16 +694,38 @@ export default {
   gap: 12px;
 }
 
+.card-header-premium {
+  cursor: pointer;
+}
+
 .section-title-modern {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   font-weight: 600;
   color: #1a1a2e;
+  width: 100%;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .section-title-modern i {
   color: var(--primary-color);
+}
+
+.form-toggle {
+  transition: transform 0.3s ease;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.form-toggle.rotated {
+  transform: rotate(180deg);
 }
 
 .table-info {
@@ -548,11 +736,25 @@ export default {
   color: #6b7280;
 }
 
+.record-count-mobile {
+  background: var(--primary);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
 /* Form Section */
 .form-section {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  transition: all 0.3s ease;
+}
+
+.form-section.form-hidden {
+  display: none;
 }
 
 .form-grid-premium {
@@ -660,6 +862,41 @@ export default {
 .btn-submit-premium:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Search Bar - Mobile */
+.search-bar-mobile {
+  display: none;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.search-group-mobile {
+  position: relative;
+  flex: 1;
+}
+
+.search-group-mobile i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.search-input-mobile {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.search-input-mobile:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 /* Table Styles */
@@ -775,8 +1012,7 @@ export default {
 }
 
 .action-icon.edit:hover {
-  /* background: var(--primary-color); */
-  color: rgb(17, 3, 3);
+  background: #c7d2fe;
   transform: translateY(-2px);
 }
 
@@ -786,12 +1022,137 @@ export default {
 }
 
 .action-icon.delete:hover {
-  /* background: var(--danger); */
-  color: rgb(19, 8, 8);
+  background: #fecaca;
   transform: translateY(-2px);
 }
 
-/* Empty State */
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px;
+}
+
+.booking-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-resource {
+  flex: 1;
+}
+
+.resource-badge-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn-mobile {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn-mobile.edit {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.action-btn-mobile.edit:active {
+  transform: scale(0.9);
+}
+
+.action-btn-mobile.delete {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.action-btn-mobile.delete:active {
+  transform: scale(0.9);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 50px;
+}
+
+.card-value {
+  font-size: 13px;
+  color: var(--dark);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.card-value .date {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.card-value .time {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.purpose-text {
+  font-size: 12px;
+  color: #6b7280;
+  max-width: 60%;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Empty States */
 .empty-state-premium {
   text-align: center;
   padding: 60px 20px;
@@ -814,6 +1175,28 @@ export default {
   font-size: 14px;
 }
 
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile h4 {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.empty-state-mobile p {
+  font-size: 13px;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .form-grid-premium {
@@ -832,54 +1215,223 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .stats-badge-header {
-    align-self: flex-start;
+    display: none;
   }
 
   .stats-bar {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
-  .booking-table-premium {
-    min-width: 650px;
-  }
-
-  .purpose-cell {
-    max-width: 120px;
-  }
-
-  .action-group {
+  .stat-card {
+    padding: 14px;
     flex-direction: column;
+    text-align: center;
+    gap: 6px;
   }
 
-  .action-icon {
-    width: 100%;
+  .stat-card i {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .card-premium {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .form-grid-premium {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .form-field.full-width {
+    grid-column: span 1;
+  }
+
+  .field-wrapper input,
+  .field-wrapper select,
+  .field-wrapper textarea {
+    font-size: 16px;
+    padding: 10px 12px 10px 36px;
   }
 
   .form-actions {
-    flex-direction: column;
+    justify-content: stretch;
   }
 
   .btn-submit-premium {
+    width: 100%;
     justify-content: center;
+  }
+
+  .search-bar-mobile {
+    display: block;
+  }
+
+  .table-wrapper-premium {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: flex;
+  }
+
+  .card-header-premium {
+    margin-bottom: 12px;
+  }
+
+  .section-title-modern {
+    font-size: 14px;
+  }
+
+  .table-info {
+    display: none;
+  }
+
+  .booking-card {
+    padding: 14px;
+  }
+
+  .card-row {
+    flex-wrap: wrap;
+  }
+
+  .purpose-text {
+    max-width: 100%;
+    text-align: left;
   }
 }
 
 @media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-card i {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-stats-badge {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .card-premium {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .card-actions {
+    align-self: flex-end;
+  }
+
+  .card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .card-value {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .purpose-text {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .field-wrapper input,
+  .field-wrapper select,
+  .field-wrapper textarea {
+    font-size: 15px;
+    padding: 8px 10px 8px 34px;
+  }
+
+  .search-input-mobile {
+    font-size: 15px;
+    padding: 8px 10px 8px 34px;
+  }
+
+  .empty-state-mobile i {
+    font-size: 40px;
+  }
+
+  .empty-state-mobile h4 {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 380px) {
   .stats-bar {
     grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    flex-direction: row;
+    text-align: left;
+  }
+}
+
+/* Utility Classes */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
   }
 }
 </style>

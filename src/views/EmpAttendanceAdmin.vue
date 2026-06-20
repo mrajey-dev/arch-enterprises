@@ -6,7 +6,25 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <div class="content-header-modern">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-calendar-check"></i>
+            <span>Attendance</span>
+          </div>
+          <div class="mobile-actions">
+            <button class="mobile-action-btn" @click="showMarkAttendancePopup = true">
+              <i class="fas fa-fingerprint"></i>
+            </button>
+            <button class="mobile-action-btn secondary" @click="showPopupsalary = true">
+              <i class="fas fa-calculator"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-calendar-check"></i>
@@ -28,27 +46,27 @@
           </div>
         </div>
 
-        <!-- Stats Bar -->
+        <!-- Stats Bar - Mobile Optimized -->
         <div class="stats-bar">
-          <div class="stat-card">
+          <div class="stat-card desktop-only" @click="filterByStatus('all')">
             <i class="fas fa-users"></i>
             <div class="stat-info">
               <span class="stat-value">{{ attendanceRecords.length }}</span>
-              <span class="stat-label">Total Records</span>
+              <span class="stat-label">Total</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('Present')">
             <i class="fas fa-check-circle"></i>
             <div class="stat-info">
               <span class="stat-value">{{ presentCount }}</span>
               <span class="stat-label">Present</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" @click="filterByStatus('Late')">
             <i class="fas fa-clock"></i>
             <div class="stat-info">
               <span class="stat-value">{{ lateCount }}</span>
-              <span class="stat-label">Late Arrivals</span>
+              <span class="stat-label">Late</span>
             </div>
           </div>
         </div>
@@ -59,20 +77,85 @@
           <span>{{ currentDate }}</span>
         </div>
 
-        <!-- Attendance Table -->
+        <!-- Search - Mobile -->
+        <div class="search-bar-mobile" v-if="isMobile && attendanceRecords.length > 0">
+          <div class="search-group-mobile">
+            <i class="fas fa-search"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search employees..." class="search-input-mobile" />
+          </div>
+        </div>
+
+        <!-- Attendance Table - Mobile Optimized -->
         <div class="table-wrapper-premium">
           <div class="table-header">
             <div class="section-title-modern">
-              <i class="fas fa-list-ul"></i>
-              <span>Attendance Records</span>
+              <div class="title-left">
+                <i class="fas fa-list-ul"></i>
+                <span>Attendance Records</span>
+                <span class="record-count-mobile" v-if="isMobile">{{ filteredRecords.length }}</span>
+              </div>
             </div>
-            <div class="table-info">
+            <div class="table-info desktop-only">
               <i class="fas fa-clock"></i>
               <span>Last updated: {{ lastUpdated }}</span>
             </div>
           </div>
 
-          <div class="table-container">
+          <!-- Mobile Card View -->
+          <div class="mobile-cards" v-if="isMobile">
+            <div v-for="record in filteredRecords" :key="record.id" class="attendance-card">
+              <div class="card-header">
+                <div class="employee-info-card">
+                  <div class="employee-avatar">
+                    {{ getInitials(record.name) }}
+                  </div>
+                  <span class="employee-name">{{ record.name }}</span>
+                </div>
+                <span :class="['status-badge-mobile', getStatusClass(record.status)]">
+                  <i :class="getStatusIcon(record.status)"></i>
+                  {{ record.status || 'Not Marked' }}
+                </span>
+              </div>
+
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-clock"></i> Clock In</span>
+                  <span class="card-value">{{ record.clock_in || '—' }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-clock"></i> Clock Out</span>
+                  <span class="card-value">{{ record.clock_out || '—' }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-hourglass-half"></i> Required</span>
+                  <span class="card-value">{{ record.required_time || '—' }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-hourglass-end"></i> Actual</span>
+                  <span class="card-value actual-time">{{ record.actual_time || '—' }}</span>
+                </div>
+                <div v-if="record.status === 'Present' && record.clock_in" class="card-row">
+                  <span class="card-label"></span>
+                  <span v-if="isLate(record.clock_in)" class="late-warning-mobile">
+                    <i class="fas fa-exclamation-triangle"></i> {{ calculateLateTime(record.clock_in) }} Late
+                  </span>
+                  <span v-else-if="isEarly(record.clock_in)" class="early-info-mobile">
+                    <i class="fas fa-star"></i> {{ calculateEarlyTime(record.clock_in) }} Early
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <div v-if="filteredRecords.length === 0" class="empty-state-mobile">
+              <i class="fas fa-calendar-times"></i>
+              <h4>{{ searchQuery ? 'No Matching Records' : 'No Attendance Records' }}</h4>
+              <p>{{ searchQuery ? 'Try adjusting your search' : 'No attendance data found for today' }}</p>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="table-container" v-else>
             <table class="attendance-table-premium">
               <thead>
                 <tr>
@@ -85,7 +168,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="record in attendanceRecords" :key="record.id">
+                <tr v-for="record in filteredRecords" :key="record.id">
                   <td class="employee-cell">
                     <div class="employee-info">
                       <div class="employee-avatar">
@@ -115,7 +198,7 @@
                   <td class="time-cell">{{ record.required_time || '—' }}</td>
                   <td class="time-cell">{{ record.actual_time || '—' }}</td>
                 </tr>
-                <tr v-if="attendanceRecords.length === 0" class="empty-row">
+                <tr v-if="filteredRecords.length === 0" class="empty-row">
                   <td colspan="6">
                     <div class="empty-state-premium">
                       <i class="fas fa-calendar-times"></i>
@@ -131,10 +214,10 @@
       </section>
     </div>
 
-    <!-- Mark Attendance Modal - Premium -->
+    <!-- Mark Attendance Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div v-if="showMarkAttendancePopup" class="modal-backdrop" @click.self="showMarkAttendancePopup = false">
-        <div class="premium-modal" @click.stop>
+        <div class="premium-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -142,7 +225,7 @@
               <i class="fas fa-fingerprint"></i>
             </div>
             <div class="header-text">
-              <h2>Mark Attendance</h2>
+              <h2>{{ isMobile ? 'Mark Attendance' : 'Mark Attendance' }}</h2>
               <p>Record employee attendance</p>
             </div>
             <button class="close-btn-premium" @click="showMarkAttendancePopup = false">
@@ -225,22 +308,22 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button class="btn-cancel-premium" @click="showMarkAttendancePopup = false">
               <i class="fas fa-times"></i> Cancel
             </button>
             <button class="btn-submit-premium" @click="submitMarkedAttendance">
-              <i class="fas fa-save"></i> Save Attendance
+              <i class="fas fa-save"></i> Save
             </button>
           </div>
         </div>
       </div>
     </transition>
 
-    <!-- Salary Calculation Modal -->
+    <!-- Salary Calculation Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div v-if="showPopupsalary" class="modal-backdrop" @click.self="showPopupsalary = false">
-        <div class="premium-modal salary-modal" @click.stop>
+        <div class="premium-modal salary-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -248,7 +331,7 @@
               <i class="fas fa-rupee-sign"></i>
             </div>
             <div class="header-text">
-              <h2>Salary Calculation</h2>
+              <h2>{{ isMobile ? 'Salary' : 'Salary Calculation' }}</h2>
               <p>Calculate monthly salaries</p>
             </div>
             <button class="close-btn-premium" @click="showPopupsalary = false">
@@ -258,7 +341,32 @@
 
           <div class="modal-body-premium">
             <div class="table-wrapper-salary">
-              <table class="salary-table-premium">
+              <!-- Mobile Salary Cards -->
+              <div class="mobile-salary-cards" v-if="isMobile">
+                <div v-for="employee in employees" :key="employee.id" class="salary-card">
+                  <div class="salary-card-header">
+                    <div class="employee-info-small">
+                      <div class="employee-avatar-small">
+                        {{ getInitials(employee.name) }}
+                      </div>
+                      <span class="employee-name">{{ employee.name }}</span>
+                    </div>
+                  </div>
+                  <div class="salary-card-body">
+                    <div v-if="employee.salary" class="salary-amount-mobile">
+                      <i class="fas fa-rupee-sign"></i> {{ formatSalary(employee.salary) }}
+                    </div>
+                    <button v-else class="calculate-btn-mobile" @click="calculateSalaryOnClick(employee)" :disabled="employee.calculating">
+                      <i v-if="employee.calculating" class="fas fa-spinner fa-spin"></i>
+                      <i v-else class="fas fa-calculator"></i>
+                      {{ employee.calculating ? "Calculating..." : "Calculate" }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Desktop Salary Table -->
+              <table class="salary-table-premium" v-else>
                 <thead>
                   <tr>
                     <th>Employee</th>
@@ -293,7 +401,7 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button class="btn-submit-premium" @click="showPopupsalary = false">
               <i class="fas fa-check"></i> Close
             </button>
@@ -302,10 +410,10 @@
       </div>
     </transition>
 
-    <!-- Monthly Attendance Modal -->
+    <!-- Monthly Attendance Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div v-if="showPopup" class="modal-backdrop" @click.self="showPopup = false">
-        <div class="premium-modal monthly-modal" @click.stop>
+        <div class="premium-modal monthly-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -322,11 +430,6 @@
           </div>
 
           <div class="modal-body-premium">
-            <!-- <div class="attendance-score-badge">
-              <i class="fas fa-chart-line"></i>
-              <span>Attendance Score: <strong>{{ quarterlyPresentQuarter }}%</strong></span>
-            </div> -->
-
             <div class="month-navigation">
               <button @click="goToPreviousMonth" class="nav-btn">
                 <i class="fas fa-chevron-left"></i>
@@ -364,7 +467,7 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button class="btn-submit-premium" @click="showPopup = false">
               <i class="fas fa-check"></i> Close
             </button>
@@ -373,10 +476,10 @@
       </div>
     </transition>
 
-    <!-- Salary Result Popup -->
+    <!-- Salary Result Popup - Mobile Optimized -->
     <transition name="modal-fade">
       <div v-if="salaryPopup.show" class="modal-backdrop" @click.self="salaryPopup.show = false">
-        <div class="premium-modal result-modal" @click.stop>
+        <div class="premium-modal result-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -406,7 +509,7 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium">
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button class="btn-submit-premium" @click="salaryPopup.show = false">
               <i class="fas fa-check"></i> Done
             </button>
@@ -443,6 +546,8 @@ export default {
       currentMonth: new Date().getMonth(),
       currentYear: new Date().getFullYear(),
       today: '',
+      searchQuery: '',
+      statusFilter: 'all',
       markAttendance: {
         employee: '',
         status: '',
@@ -481,12 +586,31 @@ export default {
     lastUpdated() {
       return new Date().toLocaleTimeString()
     },
-    quarterlyPresentQuarter() {
-      // Calculate quarterly percentage
-      return 75 // Placeholder
+    filteredRecords() {
+      let filtered = this.attendanceRecords;
+      
+      // Status filter
+      if (this.statusFilter === 'Present') {
+        filtered = filtered.filter(r => r.status === 'Present');
+      } else if (this.statusFilter === 'Late') {
+        filtered = filtered.filter(r => r.isLate === true);
+      }
+      
+      // Search filter
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(r => 
+          r.name.toLowerCase().includes(query)
+        );
+      }
+      
+      return filtered;
     }
   },
   methods: {
+    filterByStatus(status) {
+      this.statusFilter = this.statusFilter === status ? 'all' : status;
+    },
     getInitials(name) {
       if (!name) return '?'
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -791,7 +915,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -800,7 +923,6 @@ export default {
   display: flex;
   gap: 20px;
   padding: 20px;
-   ;
   min-height: 100vh;
 }
 
@@ -810,6 +932,67 @@ export default {
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mobile-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-action-btn:active {
+  transform: scale(0.9);
+}
+
+.mobile-action-btn.secondary {
+  background: linear-gradient(135deg, #10b981, #059669);
 }
 
 /* Content Header */
@@ -900,11 +1083,16 @@ export default {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 20px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:active {
+  transform: scale(0.97);
 }
 
 .stat-card i {
@@ -945,6 +1133,40 @@ export default {
   font-size: 16px;
 }
 
+/* Search Bar - Mobile */
+.search-bar-mobile {
+  display: none;
+  margin-bottom: 16px;
+}
+
+.search-group-mobile {
+  position: relative;
+  flex: 1;
+}
+
+.search-group-mobile i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.search-input-mobile {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.search-input-mobile:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
 /* Table Styles */
 .table-wrapper-premium {
   background: white;
@@ -970,8 +1192,23 @@ export default {
   color: #1a1a2e;
 }
 
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .section-title-modern i {
   color: var(--primary-color);
+}
+
+.record-count-mobile {
+  background: var(--primary);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 4px;
 }
 
 .table-info {
@@ -1016,6 +1253,167 @@ export default {
 
 .attendance-table-premium tbody tr:hover {
   background: #fafbfc;
+}
+
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.attendance-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.employee-info-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.employee-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.employee-name {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.status-badge-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge-mobile.present {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-mobile.onsite {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.status-badge-mobile.halfday {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.status-badge-mobile.absent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge-mobile.traveling {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-mobile.leave {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-value {
+  font-size: 13px;
+  color: var(--dark);
+  text-align: right;
+}
+
+.card-value.actual-time {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.late-warning-mobile {
+  font-size: 11px;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.early-info-mobile {
+  font-size: 11px;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Empty State Mobile */
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile h4 {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.empty-state-mobile p {
+  font-size: 13px;
 }
 
 /* Employee Cell */
@@ -1146,6 +1544,12 @@ export default {
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
+.premium-modal.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+  max-height: 90vh;
+}
+
 .premium-modal.salary-modal {
   max-width: 600px;
 }
@@ -1188,6 +1592,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-header-premium {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .header-icon-premium {
   width: 52px;
   height: 52px;
@@ -1198,6 +1607,12 @@ export default {
   justify-content: center;
   color: white;
   font-size: 24px;
+}
+
+.mobile-modal .header-icon-premium {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
 }
 
 .header-icon-premium.success-icon {
@@ -1215,10 +1630,18 @@ export default {
   color: #1a1a2e;
 }
 
+.mobile-modal .header-text h2 {
+  font-size: 18px;
+}
+
 .header-text p {
   font-size: 13px;
   color: #6b7280;
   margin: 4px 0 0;
+}
+
+.mobile-modal .header-text p {
+  font-size: 12px;
 }
 
 .close-btn-premium {
@@ -1245,6 +1668,10 @@ export default {
   overflow-y: auto;
   padding: 28px;
   background: #fafbfc;
+}
+
+.mobile-modal .modal-body-premium {
+  padding: 16px;
 }
 
 .modal-body-premium::-webkit-scrollbar {
@@ -1309,6 +1736,13 @@ export default {
   font-family: inherit;
 }
 
+.mobile-modal .field-wrapper input,
+.mobile-modal .field-wrapper select,
+.mobile-modal .field-wrapper textarea {
+  font-size: 16px;
+  padding: 10px 12px 10px 36px;
+}
+
 .field-wrapper input:focus,
 .field-wrapper select:focus,
 .field-wrapper textarea:focus {
@@ -1323,6 +1757,10 @@ export default {
   gap: 16px;
 }
 
+.mobile-modal .two-col-grid {
+  grid-template-columns: 1fr;
+}
+
 /* Modal Footer */
 .modal-footer-premium {
   display: flex;
@@ -1330,6 +1768,11 @@ export default {
   padding: 20px 28px;
   background: white;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.modal-footer-premium.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
 }
 
 .btn-cancel-premium,
@@ -1346,6 +1789,11 @@ export default {
   gap: 8px;
   font-size: 14px;
   border: none;
+}
+
+.mobile-footer .btn-cancel-premium,
+.mobile-footer .btn-submit-premium {
+  padding: 14px;
 }
 
 .btn-cancel-premium {
@@ -1397,6 +1845,35 @@ export default {
   border-bottom: 1px solid #f0f0f0;
 }
 
+/* Mobile Salary Cards */
+.mobile-salary-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.salary-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.salary-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.employee-info-small {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .employee-avatar-small {
   width: 32px;
   height: 32px;
@@ -1408,6 +1885,44 @@ export default {
   color: white;
   font-weight: 600;
   font-size: 12px;
+}
+
+.salary-card-body {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.salary-amount-mobile {
+  font-weight: 600;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+}
+
+.calculate-btn-mobile {
+  background: #e0e7ff;
+  color: var(--primary-color);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+
+.calculate-btn-mobile:active {
+  transform: scale(0.97);
+}
+
+.calculate-btn-mobile:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .salary-amount {
@@ -1433,7 +1948,7 @@ export default {
 
 .calculate-btn:hover:not(:disabled) {
   background: var(--primary-color);
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
 .calculate-btn:disabled {
@@ -1477,6 +1992,10 @@ export default {
   color: white;
 }
 
+.nav-btn:active {
+  transform: scale(0.9);
+}
+
 .legend-grid {
   display: flex;
   flex-wrap: wrap;
@@ -1495,6 +2014,11 @@ export default {
   font-size: 12px;
   padding: 4px 12px;
   border-radius: 20px;
+}
+
+.mobile-modal .legend-item {
+  font-size: 10px;
+  padding: 2px 8px;
 }
 
 .legend-item.present { background: #d1fae5; color: #065f46; }
@@ -1521,10 +2045,20 @@ export default {
   color: #6b7280;
 }
 
+.mobile-modal .calendar-premium th {
+  padding: 6px 4px;
+  font-size: 11px;
+}
+
 .calendar-premium td {
   padding: 12px;
   border: 1px solid #e5e7eb;
   transition: all 0.2s ease;
+}
+
+.mobile-modal .calendar-premium td {
+  padding: 6px 4px;
+  font-size: 11px;
 }
 
 .calendar-premium td:hover {
@@ -1544,6 +2078,10 @@ export default {
   padding: 20px;
 }
 
+.mobile-modal .salary-result {
+  padding: 12px;
+}
+
 .salary-amount-large {
   font-size: 48px;
   font-weight: 800;
@@ -1555,8 +2093,16 @@ export default {
   margin-bottom: 12px;
 }
 
+.mobile-modal .salary-amount-large {
+  font-size: 36px;
+}
+
 .salary-amount-large i {
   font-size: 40px;
+}
+
+.mobile-modal .salary-amount-large i {
+  font-size: 30px;
 }
 
 .month-text {
@@ -1609,32 +2155,76 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-buttons {
-    flex-direction: column;
-  }
-
-  .register-btn-modern {
-    justify-content: center;
+    display: none;
   }
 
   .stats-bar {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
 
-  .two-col-grid {
-    grid-template-columns: 1fr;
+  .stat-card {
+    padding: 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .stat-card i {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .search-bar-mobile {
+    display: block;
+  }
+
+  .mobile-cards {
+    display: flex;
+  }
+
+  .table-container {
+    display: none;
+  }
+
+  .table-header {
+    padding: 12px 16px;
+  }
+
+  .section-title-modern {
+    font-size: 14px;
+  }
+
+  .table-info {
+    display: none;
+  }
+
+  .mobile-salary-cards {
+    display: flex;
+  }
+
+  .salary-table-premium {
+    display: none;
   }
 
   .premium-modal {
@@ -1654,6 +2244,10 @@ export default {
     flex-direction: column;
   }
 
+  .two-col-grid {
+    grid-template-columns: 1fr;
+  }
+
   .legend-grid {
     gap: 8px;
   }
@@ -1662,10 +2256,103 @@ export default {
     font-size: 10px;
     padding: 2px 8px;
   }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
+  }
+
+  .content {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .mobile-title {
+    font-size: 16px;
+  }
+
+  .mobile-action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card i {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .attendance-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .card-value {
+    text-align: left;
+  }
+
+  .status-badge-mobile {
+    align-self: flex-start;
+  }
+
+  .search-input-mobile {
+    font-size: 15px;
+    padding: 8px 10px 8px 34px;
+  }
+
+  .salary-card {
+    padding: 10px;
+  }
+
+  .salary-amount-mobile {
+    font-size: 14px;
+  }
+
+  .calculate-btn-mobile {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .salary-amount-large {
+    font-size: 30px;
+  }
+
+  .salary-amount-large i {
+    font-size: 24px;
+  }
 
   .calendar-premium td {
-    padding: 8px 4px;
-    font-size: 12px;
+    padding: 4px 2px;
+    font-size: 10px;
+  }
+
+  .calendar-premium th {
+    padding: 4px 2px;
+    font-size: 10px;
   }
 }
 </style>

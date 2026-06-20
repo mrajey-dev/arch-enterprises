@@ -6,7 +6,20 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <div class="content-header-modern">
+        <!-- Mobile Header -->
+        <div class="mobile-header" v-if="isMobile">
+         
+          <div class="mobile-title">
+            <i class="fas fa-receipt"></i>
+            <span>Expenses</span>
+          </div>
+          <button class="mobile-add-btn" @click="openExpenseModal">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-receipt"></i>
@@ -22,7 +35,7 @@
           </button>
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Summary Cards - Mobile Optimized -->
         <div class="stats-bar">
           <div class="stat-card">
             <i class="fas fa-wallet"></i>
@@ -31,29 +44,33 @@
               <span class="stat-label">Total Expenses</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card desktop-only">
             <i class="fas fa-chart-line"></i>
             <div class="stat-info">
               <span class="stat-value">{{ expenses.length }}</span>
-              <span class="stat-label">Total Transactions</span>
+              <span class="stat-label">Transactions</span>
             </div>
           </div>
           <div class="stat-card">
             <i class="fas fa-calendar-alt"></i>
             <div class="stat-info">
-              <span class="stat-value">{{ currentMonth }}</span>
+              <span class="stat-value">{{ currentMonthShort }}</span>
               <span class="stat-label">Current Month</span>
             </div>
           </div>
         </div>
 
-        <!-- Categories Filter -->
-        <div class="section-title-modern">
-          <i class="fas fa-filter"></i>
-          <span>Filter by Category</span>
+        <!-- Categories Filter - Mobile Optimized -->
+        <div class="section-title-modern" @click="toggleCategories">
+          <div class="title-left">
+            <i class="fas fa-filter"></i>
+            <span>Filter by Category</span>
+            <span class="active-filter-count" v-if="selectedCategory">({{ selectedCategory }})</span>
+          </div>
+          <i class="fas fa-chevron-down filter-toggle" :class="{ 'rotated': categoriesVisible }"></i>
         </div>
         
-        <div class="categories-grid">
+        <div class="categories-grid" :class="{ 'categories-hidden': !categoriesVisible }">
           <div
             class="category-card-modern"
             :class="{ active: selectedCategory === 'Electricity' }"
@@ -84,7 +101,7 @@
             @click="filterByCategory('Office Supplies')"
           >
             <i class="fas fa-print"></i>
-            <span>Office Supplies</span>
+            <span>Supplies</span>
           </div>
           <div
             class="category-card-modern"
@@ -100,7 +117,7 @@
             @click="filterByCategory('Miscellaneous')"
           >
             <i class="fas fa-file-invoice"></i>
-            <span>Miscellaneous</span>
+            <span>Misc</span>
           </div>
           <div
             v-if="selectedCategory"
@@ -108,24 +125,75 @@
             @click="clearFilter"
           >
             <i class="fas fa-times-circle"></i>
-            <span>Clear Filter</span>
+            <span>Clear</span>
           </div>
         </div>
 
-        <!-- Expense List -->
+        <!-- Expense List - Mobile Optimized -->
         <div class="table-wrapper-premium">
           <div class="table-header">
             <div class="section-title-modern">
-              <i class="fas fa-list-ul"></i>
-              <span>Expense List</span>
+              <div class="title-left">
+                <i class="fas fa-list-ul"></i>
+                <span>Expense List</span>
+                <span class="record-count-mobile" v-if="isMobile">{{ filteredExpenses.length }}</span>
+              </div>
             </div>
-            <div class="table-info">
+            <div class="table-info desktop-only">
               <i class="fas fa-clock"></i>
               <span>Showing {{ filteredExpenses.length }} entries</span>
             </div>
           </div>
 
-          <div class="table-container">
+          <!-- Mobile Card View -->
+          <div class="mobile-cards" v-if="isMobile">
+            <div v-for="(expense, index) in filteredExpenses" :key="expense.id" class="expense-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i class="fas fa-tag"></i>
+                  <span class="expense-title-text">{{ expense.title }}</span>
+                </div>
+                <span class="category-badge-mobile" :class="getCategoryClass(expense.category)">
+                  <i :class="getCategoryIcon(expense.category)"></i>
+                  {{ expense.category }}
+                </span>
+              </div>
+
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-rupee-sign"></i> Amount</span>
+                  <span class="card-value amount">₹ {{ formatAmount(expense.amount) }}</span>
+                </div>
+                <div class="card-row" v-if="expense.remarks">
+                  <span class="card-label"><i class="fas fa-align-left"></i> Description</span>
+                  <span class="card-value description">{{ truncateText(expense.remarks, 50) }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-calendar-alt"></i> Date</span>
+                  <span class="card-value">{{ formatDate(expense.expense_date) }}</span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="card-action-btn edit" @click="editExpense(expense)">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="card-action-btn delete" @click="deleteExpense(expense.id)">
+                  <i class="fas fa-trash-alt"></i> Delete
+                </button>
+              </div>
+            </div>
+
+            <!-- Mobile Empty State -->
+            <div v-if="filteredExpenses.length === 0" class="empty-state-mobile">
+              <i class="fas fa-receipt"></i>
+              <h4>No Expenses Found</h4>
+              <p>{{ selectedCategory ? 'No expenses in this category' : 'Click "Add Expense" to record your first expense' }}</p>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="table-container" v-else>
             <table class="expense-table-premium">
               <thead>
                 <tr>
@@ -186,10 +254,10 @@
       </section>
     </div>
 
-    <!-- Add/Edit Expense Modal - Premium Design -->
+    <!-- Add/Edit Expense Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showExpenseModal" @click.self="closeExpenseModal">
-        <div class="premium-modal" @click.stop>
+        <div class="premium-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
           <div class="modal-header-premium">
@@ -197,7 +265,7 @@
               <i class="fas fa-plus-circle"></i>
             </div>
             <div class="header-text">
-              <h2>{{ expenseForm.id ? 'Edit Expense' : 'Add New Expense' }}</h2>
+              <h2>{{ expenseForm.id ? 'Edit Expense' : 'Add Expense' }}</h2>
               <p>{{ expenseForm.id ? 'Update expense information' : 'Record a new office expense' }}</p>
             </div>
             <button class="close-btn-premium" @click="closeExpenseModal">
@@ -215,7 +283,7 @@
                     <input 
                       v-model="expenseForm.title" 
                       type="text" 
-                      placeholder="e.g., Office Supplies Purchase"
+                      placeholder="e.g., Office Supplies"
                       required 
                     />
                   </div>
@@ -264,12 +332,12 @@
                 </div>
               </div>
 
-              <div class="modal-footer-premium">
+              <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
                 <button type="button" class="btn-cancel-premium" @click="closeExpenseModal">
                   <i class="fas fa-times"></i> Cancel
                 </button>
                 <button type="submit" class="btn-submit-premium">
-                  <i class="fas fa-save"></i> {{ expenseForm.id ? 'Update' : 'Save' }} Expense
+                  <i class="fas fa-save"></i> {{ expenseForm.id ? 'Update' : 'Save' }}
                 </button>
               </div>
             </form>
@@ -295,6 +363,7 @@ export default {
     return {
       isMobile: false,
       isSidebarVisible: true,
+      categoriesVisible: true,
       showExpenseModal: false,
       allExpenses: [],
       expenses: [],
@@ -323,10 +392,23 @@ export default {
     currentMonth() {
       const date = new Date()
       return date.toLocaleString('default', { month: 'long', year: 'numeric' })
+    },
+    currentMonthShort() {
+      const date = new Date()
+      return date.toLocaleString('default', { month: 'short' })
     }
   },
 
   methods: {
+    toggleCategories() {
+      if (this.isMobile) {
+        this.categoriesVisible = !this.categoriesVisible
+      }
+    },
+    truncateText(text, length) {
+      if (!text) return '—'
+      return text.length > length ? text.substring(0, length) + '...' : text
+    },
     formatAmount(amount) {
       if (!amount) return '0'
       return parseFloat(amount).toLocaleString('en-IN', {
@@ -477,6 +559,11 @@ export default {
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
+      if (this.isMobile) {
+        this.categoriesVisible = false
+      } else {
+        this.categoriesVisible = true
+      }
     },
 
     toggleSidebar() {
@@ -524,7 +611,6 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -534,7 +620,6 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
-   ;
 }
 
 .content {
@@ -543,6 +628,58 @@ export default {
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Header */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--dark);
+  padding: 8px;
+  cursor: pointer;
+}
+
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.mobile-title i {
+  color: var(--primary-color);
+}
+
+.mobile-add-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-add-btn:active {
+  transform: scale(0.9);
 }
 
 /* Content Header */
@@ -656,6 +793,7 @@ export default {
 .section-title-modern {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   margin-bottom: 20px;
   padding-bottom: 12px;
@@ -663,11 +801,35 @@ export default {
   font-weight: 600;
   font-size: 16px;
   color: #1a1a2e;
+  cursor: pointer;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .section-title-modern i {
   color: var(--primary-color);
   font-size: 18px;
+}
+
+.active-filter-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--primary-color);
+  background: #e0e7ff;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.filter-toggle {
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle.rotated {
+  transform: rotate(180deg);
 }
 
 /* Categories Grid */
@@ -676,6 +838,11 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 16px;
   margin-bottom: 32px;
+  transition: all 0.3s ease;
+}
+
+.categories-grid.categories-hidden {
+  display: none;
 }
 
 .category-card-modern {
@@ -689,6 +856,10 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid transparent;
+}
+
+.category-card-modern:active {
+  transform: scale(0.95);
 }
 
 .category-card-modern i {
@@ -754,6 +925,15 @@ export default {
   gap: 8px;
   font-size: 13px;
   color: #6b7280;
+}
+
+.record-count-mobile {
+  background: var(--primary);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: 4px;
 }
 
 .table-container {
@@ -872,6 +1052,217 @@ export default {
   font-size: 12px;
 }
 
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.expense-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.card-title i {
+  color: var(--primary-color);
+}
+
+.expense-title-text {
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 14px;
+}
+
+.category-badge-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.category-badge-mobile.electricity {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.category-badge-mobile.internet {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.category-badge-mobile.maintenance {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.category-badge-mobile.supplies {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.category-badge-mobile.travel {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.category-badge-mobile.misc {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-value {
+  font-size: 13px;
+  color: var(--dark);
+  text-align: right;
+}
+
+.card-value.amount {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.card-value.description {
+  max-width: 60%;
+  word-break: break-word;
+  text-align: right;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.card-action-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.card-action-btn.edit {
+  background: #e0e7ff;
+  color: var(--primary-color);
+}
+
+.card-action-btn.edit:active {
+  transform: scale(0.97);
+}
+
+.card-action-btn.delete {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.card-action-btn.delete:active {
+  transform: scale(0.97);
+}
+
+/* Empty States */
+.empty-state-cell {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state-premium {
+  text-align: center;
+  color: #9ca3af;
+}
+
+.empty-state-premium i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-premium h4 {
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.empty-state-premium p {
+  font-size: 14px;
+}
+
+.empty-state-mobile {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-mobile i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-mobile h4 {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.empty-state-mobile p {
+  font-size: 13px;
+}
+
 /* Action Group */
 .action-group {
   display: flex;
@@ -942,6 +1333,12 @@ export default {
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
+.premium-modal.mobile-modal {
+  max-width: 95%;
+  border-radius: 24px;
+  max-height: 90vh;
+}
+
 @keyframes modalSlideIn {
   from {
     opacity: 0;
@@ -972,6 +1369,11 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.mobile-modal .modal-header-premium {
+  padding: 16px 20px;
+  gap: 12px;
+}
+
 .header-icon-premium {
   width: 52px;
   height: 52px;
@@ -982,6 +1384,12 @@ export default {
   justify-content: center;
   color: white;
   font-size: 24px;
+}
+
+.mobile-modal .header-icon-premium {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
 }
 
 .header-text {
@@ -995,10 +1403,18 @@ export default {
   color: #1a1a2e;
 }
 
+.mobile-modal .header-text h2 {
+  font-size: 18px;
+}
+
 .header-text p {
   font-size: 13px;
   color: #6b7280;
   margin: 4px 0 0;
+}
+
+.mobile-modal .header-text p {
+  font-size: 12px;
 }
 
 .close-btn-premium {
@@ -1025,6 +1441,10 @@ export default {
   overflow-y: auto;
   padding: 28px;
   background: #fafbfc;
+}
+
+.mobile-modal .modal-body-premium {
+  padding: 16px;
 }
 
 .modal-body-premium::-webkit-scrollbar {
@@ -1056,6 +1476,10 @@ export default {
 
 .form-field.full-width {
   grid-column: span 2;
+}
+
+.mobile-modal .form-field.full-width {
+  grid-column: span 1;
 }
 
 .form-field label {
@@ -1098,6 +1522,13 @@ export default {
   font-family: inherit;
 }
 
+.mobile-modal .field-wrapper input,
+.mobile-modal .field-wrapper select,
+.mobile-modal .field-wrapper textarea {
+  font-size: 16px;
+  padding: 10px 12px 10px 36px;
+}
+
 .field-wrapper textarea {
   padding-top: 12px;
   resize: vertical;
@@ -1121,6 +1552,11 @@ export default {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.modal-footer-premium.mobile-footer {
+  flex-direction: column;
+  padding: 16px 20px;
+}
+
 .btn-cancel-premium,
 .btn-submit-premium {
   flex: 1;
@@ -1135,6 +1571,11 @@ export default {
   gap: 8px;
   font-size: 14px;
   border: none;
+}
+
+.mobile-footer .btn-cancel-premium,
+.mobile-footer .btn-submit-premium {
+  padding: 14px;
 }
 
 .btn-cancel-premium {
@@ -1156,33 +1597,6 @@ export default {
   box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Empty State */
-.empty-state-cell {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.empty-state-premium {
-  text-align: center;
-  color: #9ca3af;
-}
-
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state-premium h4 {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.empty-state-premium p {
-  font-size: 14px;
-}
-
 /* Modal Fade */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
@@ -1198,62 +1612,168 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
   }
 
   .content-header-modern {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .register-btn-modern {
-    justify-content: center;
+    display: none;
   }
 
   .stats-bar {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+
+  .stat-card i {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 10px;
   }
 
   .categories-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .categories-grid.categories-hidden {
+    display: none;
+  }
+
+  .section-title-modern {
+    font-size: 14px;
+  }
+
+  .mobile-cards {
+    display: flex;
+  }
+
+  .table-container {
+    display: none;
+  }
+
+  .table-header {
+    padding: 12px 16px;
+  }
+
+  .table-info {
+    display: none;
   }
 
   .premium-modal {
     max-width: 95%;
   }
+}
 
-  .modal-header-premium {
-    padding: 16px 20px;
+@media (max-width: 480px) {
+  .main-content {
+    padding: 8px;
   }
 
-  .modal-body-premium {
-    padding: 16px;
+  .content {
+    padding: 12px;
+    border-radius: 16px;
   }
 
-  .modal-footer-premium {
-    padding: 16px 20px;
-    flex-direction: column;
+  .mobile-title {
+    font-size: 16px;
   }
 
-  .action-group {
-    flex-direction: column;
+  .mobile-add-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
   }
 
-  .action-btn {
-    width: 100%;
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
-  .expense-table-premium th,
-  .expense-table-premium td {
+  .stat-card {
+    padding: 10px;
+  }
+
+  .stat-card i {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .category-card-modern {
     padding: 12px;
   }
 
-  .description-cell {
-    max-width: 120px;
+  .category-card-modern i {
+    font-size: 20px;
+  }
+
+  .category-card-modern span {
+    font-size: 12px;
+  }
+
+  .expense-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .card-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .card-value {
+    text-align: left;
+  }
+
+  .card-value.description {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .modal-footer-premium.mobile-footer {
+    flex-direction: column;
+  }
+
+  .modal-footer-premium.mobile-footer button {
+    width: 100%;
   }
 }
 </style>

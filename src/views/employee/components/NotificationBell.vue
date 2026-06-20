@@ -1,5 +1,5 @@
 <template>
-  <div class="notification-bell-wrapper" @click="handleNotificationClick">
+  <div class="notification-bell-wrapper mobile-only" @click="handleNotificationClick">
 
     <i class="fas fa-bell"></i>
 
@@ -172,7 +172,9 @@ this.poller = setInterval(() => {
   padding: 2px 6px;
   border-radius: 50%;
 }
-
+.mobile-only {
+  display: none!important;
+}
 /* Latest message below the icon */
 .latest-message {
   position: absolute;

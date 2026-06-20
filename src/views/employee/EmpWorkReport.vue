@@ -8,7 +8,7 @@
       <div class="main-content-work-report">
         <section class="report-container">
           <div class="content-header-modern">
-            <div class="header-left">
+            <div class="header-left desktop-only">
               <div class="title-icon">
                 <i class="fas fa-file-alt"></i>
               </div>
