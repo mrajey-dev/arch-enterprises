@@ -51,7 +51,7 @@ import EmpWorkReport from '../views/employee/EmpWorkReport.vue'
 import RequestDeskemp from '../views/employee/Request.vue'
 import ResourceBookingEmp from '../views/employee/ResourceBooking.vue'
 import ArchCalendarEmp from '../views/employee/ArchCalendarEmp.vue'
-
+import LiteraTure from '../views/employee/LiteraTure.vue'
 
 import AssignTask from '../views/AssignTask.vue'
 import Announcement from '../views/Announcement.vue'
@@ -196,7 +196,10 @@ const routes = [
   { path: '/employee/viewkra', name: 'ViewKra', component: ViewKra, meta: { requiresAuth: true } },  // Add this line
   { path: '/employee/report', name: 'Report', component: Report, meta: { requiresAuth: true } },
   { path: '/employee/customerregistrations', name: 'CustomerRegistrations', component: CustomerRegistrations, meta: { requiresAuth: true } },
+  { path: '/employee/literature' , name: 'LiteraTure' , component: LiteraTure, meta: { requiresAuth: true } },
   { path: '/employee/visitschedule', name: 'VisitSchedule', component: VisitSchedule, meta: { requiresAuth: true } },
+  { path: '/employee/MobileAppLifeCycle', name: 'MobileAppLifeCycle', component: () => import('../views/employee/MobileAppLifeCycle.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
+  { path: '/employee/SpinTheWheel', name: 'SpinTheWheel', component: () => import('../views/employee/SpinTheWheel.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
 { path: '/employee/Request', name: 'RequestDeskemp', component: RequestDeskemp, meta: { requiresAuth: true } },
 { path: '/employee/Resourcebooking', name: 'ResourceBookingEmp', component: ResourceBookingEmp, meta: { requiresAuth: true } },
   // 🔔 Bell hidden here also

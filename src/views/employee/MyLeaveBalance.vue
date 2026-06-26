@@ -1,813 +1,1116 @@
-<template>
-  <div class="layout">
+  <template>
+    <div class="layout">
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <!-- Main Content -->
+      <div class="main-content">
+        <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-      <div class="kra-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <!-- Mobile Header -->
-        <div class="mobile-header" v-if="isMobile">
-         
-          <div class="mobile-title">
-            <i class="fas fa-umbrella-beach"></i>
-            <span>Leave Balance</span>
-          </div>
-          <div class="mobile-stats-badge">
-            <span>{{ totalRemaining }}</span>
-          </div>
-        </div>
-
-        <!-- Desktop Header -->
-        <div class="content-header-modern" v-else>
-          <div class="header-left desktop-only">
-            <div class="title-icon">
+        <div class="kra-board-premium" v-if="!isMobile || !isSidebarVisible">
+          <!-- Mobile Header -->
+          <div class="mobile-header" v-if="isMobile">
+          
+            <div class="mobile-title">
               <i class="fas fa-umbrella-beach"></i>
+              <span>Leave Balance</span>
             </div>
-            <div>
-              <h1>My Leave Balance</h1>
-              <p class="subtitle-modern">Remaining & Total Leave Quota (Financial Year)</p>
+            <div class="mobile-stats-badge">
+              <span>{{ totalRemaining }}</span>
             </div>
           </div>
-          <div class="stats-badge-header">
-            <i class="fas fa-calendar-alt"></i>
-            <span>{{ getFinancialYearRange() }}</span>
-          </div>
-        </div>
 
-        <!-- Summary Cards - Mobile Optimized -->
-        <div class="stats-bar">
-          <div class="stat-card" v-for="(value, type) in leaveSummary" :key="type">
-            <i :class="getLeaveIcon(type)"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ value.remaining }}</span>
-              <span class="stat-label">{{ formatLeaveType(type) }}</span>
-              <span class="stat-sub">Total: {{ value.total }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Total Summary Card - Mobile Optimized -->
-        <div class="total-summary-card">
-          <div class="total-summary-content">
-            <div class="total-item" @click="scrollToSection('remaining')">
-              <i class="fas fa-calendar-check"></i>
+          <!-- Desktop Header -->
+          <div class="content-header-modern" v-else>
+            <div class="header-left desktop-only">
+              <div class="title-icon">
+                <i class="fas fa-umbrella-beach"></i>
+              </div>
               <div>
-                <span class="total-label">Remaining</span>
-                <span class="total-value">{{ totalRemaining }}</span>
+                <h1>My Leave Balance</h1>
+                <p class="subtitle-modern">Remaining & Total Leave Quota (Financial Year)</p>
               </div>
             </div>
-            <div class="total-item" @click="scrollToSection('used')">
-              <i class="fas fa-check-circle"></i>
-              <div>
-                <span class="total-label">Used</span>
-                <span class="total-value">{{ totalUsed }}</span>
-              </div>
+            <div class="stats-badge-header">
+              <i class="fas fa-calendar-alt"></i>
+              <span>{{ getFinancialYearRange() }}</span>
             </div>
-            <div class="total-item" @click="scrollToSection('allocated')">
-              <i class="fas fa-chart-bar"></i>
-              <div>
-                <span class="total-label">Allocated</span>
-                <span class="total-value">{{ totalAllocated }}</span>
-              </div>
-            </div>
-            <div class="total-item" @click="scrollToSection('unpaid')">
-              <i class="fas fa-hourglass-half"></i>
-              <div>
-                <span class="total-label">Unpaid</span>
-                <span class="total-value">{{ unpaidLeaveDays }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Half Day Info Card - Mobile Optimized -->
-        <div v-if="halfDayLeaves.length" class="halfday-info-card" :class="{ 'mobile-card': isMobile }">
-          <div class="halfday-info-header" @click="toggleHalfDayDetails">
-            <div class="header-left-half">
-              <i class="fas fa-sun"></i>
-              <h4>Half Day Leaves</h4>
-            </div>
-            <i class="fas fa-chevron-down" :class="{ 'rotated': halfDayVisible }"></i>
-          </div>
-          <div class="halfday-info-body" :class="{ 'halfday-hidden': !halfDayVisible }">
-            <div class="halfday-detail">
-              <span class="label">Total Half Days Taken:</span>
-              <span class="value">{{ halfDayLeaves.length }} half day(s)</span>
-            </div>
-            <div class="halfday-detail">
-              <span class="label">Converted to Full Days:</span>
-              <span class="value">{{ Math.floor(halfDayLeaves.length / 2) }} day(s)</span>
-            </div>
-            <div class="halfday-detail">
-              <span class="label">Remaining Half Days:</span>
-              <span class="value">{{ halfDayLeaves.length % 2 }} half day(s)</span>
-            </div>
-            <div class="halfday-note">
-              <i class="fas fa-info-circle"></i>
-              <span>Note: 2 half days = 1 full casual leave</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Leave Details Table - Mobile Optimized -->
-        <div class="kras-section">
-          <div class="section-title-modern">
-            <i class="fas fa-list-ul"></i>
-            <span>Leave Breakdown</span>
           </div>
 
-          <div v-if="leaveDetails.length" class="leave-table-container">
-            <!-- Mobile Card View -->
-            <div class="mobile-leave-cards" v-if="isMobile">
-              <div v-for="(item, index) in leaveDetails" :key="index" class="leave-detail-card">
-                <div class="card-header">
-                  <div class="leave-type-cell">
-                    <i :class="getLeaveIcon(item.type)"></i>
-                    <span>{{ formatLeaveType(item.type) }}</span>
-                  </div>
-                  <span class="status-badge" :class="getStatusClass(item.remaining, item.total)">
-                    {{ getStatusText(item.remaining, item.total) }}
-                  </span>
-                </div>
-                <div class="card-body">
-                  <div class="card-row">
-                    <span class="card-label">Total</span>
-                    <span class="card-value">{{ item.total }}</span>
-                  </div>
-                  <div class="card-row">
-                    <span class="card-label">Used</span>
-                    <span class="card-value">{{ item.used }}</span>
-                  </div>
-                  <div class="card-row">
-                    <span class="card-label">Remaining</span>
-                    <span class="card-value" :class="getRemainingClass(item.remaining)">{{ item.remaining }}</span>
-                  </div>
-                  <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" 
-                         :style="{ width: getUsagePercentage(item.used, item.total) + '%' }"
-                         :class="getProgressClass(item.remaining, item.total)">
-                    </div>
-                  </div>
+          <!-- Summary Cards - Mobile Optimized -->
+          <div class="stats-bar">
+            <div class="stat-card" v-for="(value, type) in leaveSummary" :key="type">
+              <i :class="getLeaveIcon(type)"></i>
+              <div class="stat-info">
+                <span class="stat-value">{{ value.remaining }}</span>
+                <span class="stat-label">{{ formatLeaveType(type) }}</span>
+                <span class="stat-sub">Total: {{ value.total }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Summary Card - Mobile Optimized -->
+          <div class="total-summary-card">
+            <div class="total-summary-content">
+              <div class="total-item" @click="scrollToSection('remaining')">
+                <i class="fas fa-calendar-check"></i>
+                <div>
+                  <span class="total-label">Remaining</span>
+                  <span class="total-value">{{ totalRemaining }}</span>
                 </div>
               </div>
-            </div>
-
-            <!-- Desktop Table View -->
-            <table class="leave-table" v-else>
-              <thead>
-                <tr>
-                  <th>Leave Type</th>
-                  <th>Total Days</th>
-                  <th>Used Days</th>
-                  <th>Remaining Days</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in leaveDetails" :key="index">
-                  <td class="leave-type-cell">
-                    <i :class="getLeaveIcon(item.type)"></i>
-                    <span>{{ formatLeaveType(item.type) }}</span>
-                  </td>
-                  <td class="total-cell">{{ item.total }}</td>
-                  <td class="used-cell">{{ item.used }}</td>
-                  <td class="remaining-cell" :class="getRemainingClass(item.remaining)">
-                    <strong>{{ item.remaining }}</strong>
-                  </td>
-                  <td>
-                    <span class="status-badge" :class="getStatusClass(item.remaining, item.total)">
-                      {{ getStatusText(item.remaining, item.total) }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Half Day Leave Requests List - Mobile Optimized -->
-        <div class="halfday-leaves-section" v-if="halfDayLeaves.length">
-          <div class="section-title-modern" @click="toggleHalfDayList">
-            <div class="title-left">
-              <i class="fas fa-sun"></i>
-              <span>Half Day Requests</span>
-              <span class="count-badge">{{ halfDayLeaves.length }}</span>
-            </div>
-            <i class="fas fa-chevron-down" :class="{ 'rotated': halfDayListVisible }"></i>
-          </div>
-          <div class="halfday-leaves-container" :class="{ 'list-hidden': !halfDayListVisible }">
-            <div v-for="(leave, index) in halfDayLeaves" :key="index" class="halfday-leave-card" :class="{ 'mobile-item': isMobile }">
-              <div class="leave-header">
-                <i class="fas fa-sun"></i>
-                <span class="leave-type">Half Day</span>
-                <span class="leave-dates">{{ formatDate(leave.fromDate) }}</span>
-              </div>
-              <div class="leave-body">
-                <div class="leave-duration">
-                  <i class="fas fa-clock"></i>
-                  <span>0.5 day (Casual Leave)</span>
+              <div class="total-item" @click="scrollToSection('used')">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                  <span class="total-label">Used</span>
+                  <span class="total-value">{{ totalUsed }}</span>
                 </div>
-                <div class="leave-reason" v-if="leave.reason">
-                  <i class="fas fa-comment"></i>
-                  <span>{{ truncateText(leave.reason, isMobile ? 30 : 50) }}</span>
+              </div>
+              <div class="total-item" @click="scrollToSection('allocated')">
+                <i class="fas fa-chart-bar"></i>
+                <div>
+                  <span class="total-label">Allocated</span>
+                  <span class="total-value">{{ totalAllocated }}</span>
+                </div>
+              </div>
+              <div class="total-item" @click="scrollToSection('unpaid')">
+                <i class="fas fa-hourglass-half"></i>
+                <div>
+                  <span class="total-label">Unpaid</span>
+                  <span class="total-value">{{ unpaidLeaveDays }}</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Approved Leave Requests List - Mobile Optimized -->
-        <div class="approved-leaves-section" v-if="approvedLeaves.length">
-          <div class="section-title-modern" @click="toggleApprovedList">
-            <div class="title-left">
-              <i class="fas fa-check-circle"></i>
-              <span>Approved Leaves</span>
-              <span class="count-badge">{{ approvedLeaves.length }}</span>
+          <!-- Late Marks Summary Card -->
+        <!-- Late Marks Summary Card -->
+  <div class="late-marks-summary-card" :class="{ 'mobile-card': isMobile }">
+    <div class="late-marks-header" @click="toggleLateMarksDetails">
+      <div class="header-left-late">
+        <i class="fas fa-clock"></i>
+        <h4>Late Marks</h4>
+        <span class="late-count-badge" :class="{ 'has-penalty': totalPenaltiesApplied > 0 }">
+          {{ totalLateMarks }}
+        </span>
+      </div>
+      <div class="header-right-late">
+        <span v-if="totalPenaltiesApplied > 0" class="penalty-badge">
+          <i class="fas fa-exclamation-triangle"></i> 
+          {{ totalPenaltiesApplied }} Penalty(ies) Applied
+        </span>
+        <i class="fas fa-chevron-down" :class="{ 'rotated': lateMarksVisible }"></i>
+      </div>
+    </div>
+    
+    <div class="late-marks-body" :class="{ 'late-marks-hidden': !lateMarksVisible }">
+      <!-- Late Marks Summary Stats -->
+      <div class="late-marks-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Late Marks</span>
+          <span class="stat-value" :class="{ 'warning': totalLateMarks >= penaltyThreshold }">
+            {{ totalLateMarks }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Penalty Threshold</span>
+          <span class="stat-value">{{ penaltyThreshold }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Penalties Calculated</span>
+          <span class="stat-value">{{ penaltiesCalculated }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Penalties Applied</span>
+          <span class="stat-value" :class="{ 'penalty-applied': totalPenaltiesApplied > 0 }">
+            {{ totalPenaltiesApplied }}
+          </span>
+        </div>
+        <div class="stat-item" v-if="pendingPenalties > 0">
+          <span class="stat-label">Pending Penalties</span>
+          <span class="stat-value warning">{{ pendingPenalties }}</span>
+        </div>
+        <div class="stat-item" v-if="totalPenaltyAmount > 0">
+          <span class="stat-label">Total Deduction</span>
+          <span class="stat-value penalty-amount">
+            {{ totalPenaltyAmount }} CL ({{ getFullDaysDeduction() }})
+          </span>
+        </div>
+      </div>
+
+      <!-- Penalty Info Message -->
+      <div class="penalty-info-box">
+        <i class="fas fa-info-circle"></i>
+        <span>
+          <strong>Rule:</strong> Every {{ penaltyThreshold }} late marks = 1 penalty ({{ penaltyPerUnit }} CL deduction)
+          <span v-if="totalLateMarks >= penaltyThreshold">
+            <br>
+            <strong>Your {{ totalLateMarks }} late marks</strong> = {{ penaltiesCalculated }} penalty(ies) = {{ totalPenaltyAmount }} CL deduction
+            <span v-if="pendingPenalties > 0" class="pending-warning">
+              ⚠️ {{ pendingPenalties }} penalty(ies) pending to be applied
+            </span>
+          </span>
+        </span>
+      </div>
+
+      <!-- Late Marks Table -->
+      <div v-if="lateMarks.length > 0" class="late-marks-table-container">
+        <div class="section-title-modern small">
+          <i class="fas fa-list"></i>
+          <span>Late Marks Details ({{ lateMarks.length }})</span>
+        </div>
+        
+        <!-- Mobile Card View -->
+        <div class="mobile-late-cards" v-if="isMobile">
+          <div v-for="(mark, index) in lateMarks" :key="index" class="late-mark-card">
+            <div class="late-mark-header">
+              <span class="late-date">{{ formatDate(mark.date) }}</span>
+              <span class="late-time">{{ mark.clock_in }}</span>
             </div>
-            <i class="fas fa-chevron-down" :class="{ 'rotated': approvedListVisible }"></i>
-          </div>
-          <div class="approved-leaves-container" :class="{ 'list-hidden': !approvedListVisible }">
-            <div v-for="(leave, index) in approvedLeaves" :key="index" class="approved-leave-card" :class="{ 'mobile-item': isMobile }">
-              <div class="leave-header">
-                <i :class="getLeaveIcon(leave.leaveType)"></i>
-                <span class="leave-type">{{ formatLeaveType(leave.leaveType) }}</span>
-                <span class="leave-dates">{{ formatDate(leave.fromDate) }} - {{ formatDate(leave.toDate) }}</span>
-              </div>
-              <div class="leave-body">
-                <div class="leave-duration">
-                  <i class="fas fa-clock"></i>
-                  <span>{{ leave.duration }} day(s)</span>
-                </div>
-                <div class="leave-reason" v-if="leave.reason">
-                  <i class="fas fa-comment"></i>
-                  <span>{{ truncateText(leave.reason, isMobile ? 30 : 50) }}</span>
-                </div>
-              </div>
+            <div class="late-mark-body">
+              <span class="late-status">{{ mark.status }}</span>
+              <span class="late-number">#{{ index + 1 }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Unpaid Leave Records - Mobile Optimized -->
-        <div class="unpaid-leaves-section" v-if="unpaidAttendanceRecords.length">
-          <div class="section-title-modern" @click="toggleUnpaidList">
-            <div class="title-left">
-              <i class="fas fa-hourglass-half"></i>
-              <span>Unpaid Leave Records</span>
-              <span class="count-badge">{{ unpaidAttendanceRecords.length }}</span>
-            </div>
-            <i class="fas fa-chevron-down" :class="{ 'rotated': unpaidListVisible }"></i>
-          </div>
-          <div class="unpaid-leaves-container" :class="{ 'list-hidden': !unpaidListVisible }">
-            <div v-for="(record, index) in unpaidAttendanceRecords" :key="index" class="unpaid-leave-card" :class="{ 'mobile-item': isMobile }">
-              <div class="leave-header">
-                <i class="fas fa-user-clock"></i>
-                <span class="leave-type">Unpaid Leave (Absent)</span>
-                <span class="leave-dates">{{ formatDate(record.date) }}</span>
-              </div>
-              <div class="leave-body">
-                <div class="leave-duration">
-                  <i class="fas fa-clock"></i>
-                  <span>1 day</span>
-                </div>
-                <div class="leave-reason">
-                  <i class="fas fa-info-circle"></i>
-                  <span>Marked as Absent in attendance</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Desktop Table View -->
+        <table class="late-marks-table" v-else>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Clock In</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(mark, index) in lateMarks" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td>{{ formatDate(mark.date) }}</td>
+              <td>{{ mark.clock_in }}</td>
+              <td>
+                <span class="status-badge late">{{ mark.status }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        <!-- Leave Usage Progress Bars - Mobile Optimized -->
-        <div class="progress-section" v-if="leaveDetails.length">
-          <div class="section-title-modern">
-            <i class="fas fa-chart-line"></i>
-            <span>Leave Usage Overview</span>
-          </div>
-          <div class="progress-bars">
-            <div v-for="(item, index) in leaveDetails" :key="index" class="progress-item">
-              <div class="progress-header">
-                <span class="progress-label">{{ formatLeaveType(item.type) }}</span>
-                <span class="progress-stats">{{ item.used }} / {{ item.total }} ({{ getUsagePercentage(item.used, item.total) }}%)</span>
-              </div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill" 
-                     :style="{ width: getUsagePercentage(item.used, item.total) + '%' }"
-                     :class="getProgressClass(item.remaining, item.total)">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- No late marks message -->
+      <div v-if="lateMarks.length === 0" class="no-late-marks">
+        <i class="fas fa-check-circle"></i>
+        <span>No late marks this month. Great job! 👏</span>
+      </div>
 
-        <!-- Financial Year Selector - Mobile Optimized -->
-        <div class="leave-footer" :class="{ 'mobile-footer': isMobile }">
-          <div class="year-selector">
-            <label><i class="fas fa-calendar-week"></i> Financial Year:</label>
-            <select v-model="selectedFinancialYear" @change="fetchLeaveBalance">
-              <option v-for="year in availableYears" :key="year" :value="year">{{ year }} - {{ year + 1 }}</option>
-            </select>
-          </div>
-          <div class="footer-note">
-            <i class="fas fa-info-circle"></i>
-            <span>FY: Apr - Mar</span>
-          </div>
+      <!-- Monthly Late Marks Summary -->
+      <div v-if="monthlyLateSummary.length > 0" class="monthly-late-summary">
+        <div class="section-title-modern small">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Monthly Late Marks Summary</span>
         </div>
-
-        <!-- Empty State - Mobile Optimized -->
-        <div v-if="!leaveDetails.length && !loading && !approvedLeaves.length && !unpaidAttendanceRecords.length && !halfDayLeaves.length" class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
-          <i class="fas fa-calendar-times"></i>
-          <h4>No Leave Data Found</h4>
-          <p>No leave requests or absent records found</p>
-        </div>
-
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-state">
-          <i class="fas fa-spinner fa-spin"></i>
-          <span>Loading leave balance...</span>
+        <div class="monthly-summary-grid" :class="{ 'mobile-grid': isMobile }">
+          <div v-for="(item, index) in monthlyLateSummary" :key="index" 
+              class="monthly-summary-item"
+              :class="{ 
+                'has-penalty': item.penalties_applied > 0,
+                'pending-penalty': item.pending_penalties > 0
+              }">
+            <span class="month-name">{{ item.month_name }}</span>
+            <span class="month-count">{{ item.late_count }}</span>
+            <span v-if="item.penalties_applied > 0" class="penalty-indicator" :title="`${item.penalties_applied} penalties applied (${item.penalty_amount} CL)`">
+              <i class="fas fa-check-circle"></i> {{ item.penalties_applied }}
+            </span>
+            <span v-if="item.pending_penalties > 0" class="pending-indicator" :title="`${item.pending_penalties} penalties pending`">
+              <i class="fas fa-clock"></i> {{ item.pending_penalties }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</template>
 
-<script>
-import Sidebar from './components/Sidebar.vue'
-import axios from 'axios'
-import {
-  toastSuccess,
-  toastError,
-} from "@/utils/toast.js";
+          <!-- Half Day Info Card - Mobile Optimized -->
+          <div v-if="halfDayLeaves.length" class="halfday-info-card" :class="{ 'mobile-card': isMobile }">
+            <div class="halfday-info-header" @click="toggleHalfDayDetails">
+              <div class="header-left-half">
+                <i class="fas fa-sun"></i>
+                <h4>Half Day Leaves</h4>
+              </div>
+              <i class="fas fa-chevron-down" :class="{ 'rotated': halfDayVisible }"></i>
+            </div>
+            <div class="halfday-info-body" :class="{ 'halfday-hidden': !halfDayVisible }">
+              <div class="halfday-detail">
+                <span class="label">Total Half Days Taken:</span>
+                <span class="value">{{ halfDayLeaves.length }} half day(s)</span>
+              </div>
+              <div class="halfday-detail">
+                <span class="label">Converted to Full Days:</span>
+                <span class="value">{{ Math.floor(halfDayLeaves.length / 2) }} day(s)</span>
+              </div>
+              <div class="halfday-detail">
+                <span class="label">Remaining Half Days:</span>
+                <span class="value">{{ halfDayLeaves.length % 2 }} half day(s)</span>
+              </div>
+              <div class="halfday-note">
+                <i class="fas fa-info-circle"></i>
+                <span>Note: 2 half days = 1 full casual leave</span>
+              </div>
+            </div>
+          </div>
 
-export default {
-  name: "LeaveBalance",
-  components: {
-    Sidebar
-  },
-  data() {
-    return {
-      username: '',
-      userId: null,
-      isMobile: false,
-      isSidebarVisible: true,
-      loading: false,
-      selectedFinancialYear: new Date().getFullYear(),
-      availableYears: [],
-      approvedLeaves: [],
-      halfDayLeaves: [],
-      unpaidAttendanceRecords: [],
-      leaveDetails: [],
-      leaveAllocations: {
-        privilege: 0,
-        casual: 0,
-        sick: 0
-      },
-      leaveUsed: {
-        privilege: 0,
-        casual: 0,
-        sick: 0
-      },
-      unpaidLeaveDays: 0,
-      holidayWorkCredits: 0,
-      halfDayVisible: true,
-      halfDayListVisible: false,
-      approvedListVisible: false,
-      unpaidListVisible: false
-    }
-  },
-  computed: {
-    leaveSummary() {
+          <!-- Leave Details Table - Mobile Optimized -->
+          <div class="kras-section">
+            <div class="section-title-modern">
+              <i class="fas fa-list-ul"></i>
+              <span>Leave Breakdown</span>
+            </div>
+
+            <div v-if="leaveDetails.length" class="leave-table-container">
+              <!-- Mobile Card View -->
+              <div class="mobile-leave-cards" v-if="isMobile">
+                <div v-for="(item, index) in leaveDetails" :key="index" class="leave-detail-card">
+                  <div class="card-header">
+                    <div class="leave-type-cell">
+                      <i :class="getLeaveIcon(item.type)"></i>
+                      <span>{{ formatLeaveType(item.type) }}</span>
+                    </div>
+                    <span class="status-badge" :class="getStatusClass(item.remaining, item.total)">
+                      {{ getStatusText(item.remaining, item.total) }}
+                    </span>
+                  </div>
+                  <div class="card-body">
+                    <div class="card-row">
+                      <span class="card-label">Total</span>
+                      <span class="card-value">{{ item.total }}</span>
+                    </div>
+                    <div class="card-row">
+                      <span class="card-label">Used</span>
+                      <span class="card-value">{{ item.used }}</span>
+                    </div>
+                    <div class="card-row">
+                      <span class="card-label">Remaining</span>
+                      <span class="card-value" :class="getRemainingClass(item.remaining)">{{ item.remaining }}</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill" 
+                          :style="{ width: getUsagePercentage(item.used, item.total) + '%' }"
+                          :class="getProgressClass(item.remaining, item.total)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Desktop Table View -->
+              <table class="leave-table" v-else>
+                <thead>
+                  <tr>
+                    <th>Leave Type</th>
+                    <th>Total Days</th>
+                    <th>Used Days</th>
+                    <th>Remaining Days</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in leaveDetails" :key="index">
+                    <td class="leave-type-cell">
+                      <i :class="getLeaveIcon(item.type)"></i>
+                      <span>{{ formatLeaveType(item.type) }}</span>
+                    </td>
+                    <td class="total-cell">{{ item.total }}</td>
+                    <td class="used-cell">{{ item.used }}</td>
+                    <td class="remaining-cell" :class="getRemainingClass(item.remaining)">
+                      <strong>{{ item.remaining }}</strong>
+                    </td>
+                    <td>
+                      <span class="status-badge" :class="getStatusClass(item.remaining, item.total)">
+                        {{ getStatusText(item.remaining, item.total) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Half Day Leave Requests List - Mobile Optimized -->
+          <div class="halfday-leaves-section" v-if="halfDayLeaves.length">
+            <div class="section-title-modern" @click="toggleHalfDayList">
+              <div class="title-left">
+                <i class="fas fa-sun"></i>
+                <span>Half Day Requests</span>
+                <span class="count-badge">{{ halfDayLeaves.length }}</span>
+              </div>
+              <i class="fas fa-chevron-down" :class="{ 'rotated': halfDayListVisible }"></i>
+            </div>
+            <div class="halfday-leaves-container" :class="{ 'list-hidden': !halfDayListVisible }">
+              <div v-for="(leave, index) in halfDayLeaves" :key="index" class="halfday-leave-card" :class="{ 'mobile-item': isMobile }">
+                <div class="leave-header">
+                  <i class="fas fa-sun"></i>
+                  <span class="leave-type">Half Day</span>
+                  <span class="leave-dates">{{ formatDate(leave.fromDate) }}</span>
+                </div>
+                <div class="leave-body">
+                  <div class="leave-duration">
+                    <i class="fas fa-clock"></i>
+                    <span>0.5 day (Casual Leave)</span>
+                  </div>
+                  <div class="leave-reason" v-if="leave.reason">
+                    <i class="fas fa-comment"></i>
+                    <span>{{ truncateText(leave.reason, isMobile ? 30 : 50) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Approved Leave Requests List - Mobile Optimized -->
+          <div class="approved-leaves-section" v-if="approvedLeaves.length">
+            <div class="section-title-modern" @click="toggleApprovedList">
+              <div class="title-left">
+                <i class="fas fa-check-circle"></i>
+                <span>Approved Leaves</span>
+                <span class="count-badge">{{ approvedLeaves.length }}</span>
+              </div>
+              <i class="fas fa-chevron-down" :class="{ 'rotated': approvedListVisible }"></i>
+            </div>
+            <div class="approved-leaves-container" :class="{ 'list-hidden': !approvedListVisible }">
+              <div v-for="(leave, index) in approvedLeaves" :key="index" class="approved-leave-card" :class="{ 'mobile-item': isMobile }">
+                <div class="leave-header">
+                  <i :class="getLeaveIcon(leave.leaveType)"></i>
+                  <span class="leave-type">{{ formatLeaveType(leave.leaveType) }}</span>
+                  <span class="leave-dates">{{ formatDate(leave.fromDate) }} - {{ formatDate(leave.toDate) }}</span>
+                </div>
+                <div class="leave-body">
+                  <div class="leave-duration">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ leave.duration }} day(s)</span>
+                  </div>
+                  <div class="leave-reason" v-if="leave.reason">
+                    <i class="fas fa-comment"></i>
+                    <span>{{ truncateText(leave.reason, isMobile ? 30 : 50) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unpaid Leave Records - Mobile Optimized -->
+          <div class="unpaid-leaves-section" v-if="unpaidAttendanceRecords.length">
+            <div class="section-title-modern" @click="toggleUnpaidList">
+              <div class="title-left">
+                <i class="fas fa-hourglass-half"></i>
+                <span>Unpaid Leave Records</span>
+                <span class="count-badge">{{ unpaidAttendanceRecords.length }}</span>
+              </div>
+              <i class="fas fa-chevron-down" :class="{ 'rotated': unpaidListVisible }"></i>
+            </div>
+            <div class="unpaid-leaves-container" :class="{ 'list-hidden': !unpaidListVisible }">
+              <div v-for="(record, index) in unpaidAttendanceRecords" :key="index" class="unpaid-leave-card" :class="{ 'mobile-item': isMobile }">
+                <div class="leave-header">
+                  <i class="fas fa-user-clock"></i>
+                  <span class="leave-type">Unpaid Leave (Absent)</span>
+                  <span class="leave-dates">{{ formatDate(record.date) }}</span>
+                </div>
+                <div class="leave-body">
+                  <div class="leave-duration">
+                    <i class="fas fa-clock"></i>
+                    <span>1 day</span>
+                  </div>
+                  <div class="leave-reason">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Marked as Absent in attendance</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leave Usage Progress Bars - Mobile Optimized -->
+          <div class="progress-section" v-if="leaveDetails.length">
+            <div class="section-title-modern">
+              <i class="fas fa-chart-line"></i>
+              <span>Leave Usage Overview</span>
+            </div>
+            <div class="progress-bars">
+              <div v-for="(item, index) in leaveDetails" :key="index" class="progress-item">
+                <div class="progress-header">
+                  <span class="progress-label">{{ formatLeaveType(item.type) }}</span>
+                  <span class="progress-stats">{{ item.used }} / {{ item.total }} ({{ getUsagePercentage(item.used, item.total) }}%)</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" 
+                      :style="{ width: getUsagePercentage(item.used, item.total) + '%' }"
+                      :class="getProgressClass(item.remaining, item.total)">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Year Selector - Mobile Optimized -->
+          <div class="leave-footer" :class="{ 'mobile-footer': isMobile }">
+            <div class="year-selector">
+              <label><i class="fas fa-calendar-week"></i> Financial Year:</label>
+              <select v-model="selectedFinancialYear" @change="fetchLeaveBalance">
+                <option v-for="year in availableYears" :key="year" :value="year">{{ year }} - {{ year + 1 }}</option>
+              </select>
+            </div>
+            <div class="footer-note">
+              <i class="fas fa-info-circle"></i>
+              <span>FY: Apr - Mar</span>
+            </div>
+          </div>
+
+          <!-- Empty State - Mobile Optimized -->
+          <div v-if="!leaveDetails.length && !loading && !approvedLeaves.length && !unpaidAttendanceRecords.length && !halfDayLeaves.length" class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
+            <i class="fas fa-calendar-times"></i>
+            <h4>No Leave Data Found</h4>
+            <p>No leave requests or absent records found</p>
+          </div>
+
+          <!-- Loading State -->
+          <div v-if="loading" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading leave balance...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+  import Sidebar from './components/Sidebar.vue'
+  import axios from 'axios'
+  import {
+    toastSuccess,
+    toastError,
+  } from "@/utils/toast.js";
+
+  export default {
+    name: "LeaveBalance",
+    components: {
+      Sidebar
+    },
+    data() {
       return {
-        privilege: { 
-          remaining: Math.max(0, this.leaveAllocations.privilege - this.leaveUsed.privilege), 
-          total: this.leaveAllocations.privilege 
-        },
-        casual: { 
-          remaining: Math.max(0, this.leaveAllocations.casual - this.leaveUsed.casual), 
-          total: this.leaveAllocations.casual 
-        },
-        sick: { 
-          remaining: Math.max(0, this.leaveAllocations.sick - this.leaveUsed.sick), 
-          total: this.leaveAllocations.sick 
-        }
-      };
-    },
-    totalRemaining() {
-      return Object.values(this.leaveSummary).reduce((sum, item) => sum + Math.max(0, (item.remaining || 0)), 0);
-    },
-    totalUsed() {
-      return Object.values(this.leaveUsed).reduce((sum, item) => sum + (item || 0), 0);
-    },
-    totalAllocated() {
-      return Object.values(this.leaveAllocations).reduce((sum, item) => sum + (item || 0), 0);
-    }
-  },
-  mounted() {
-    this.checkIfMobile();
-    window.addEventListener('resize', this.checkIfMobile);
-    this.initFinancialYears();
-    this.validateAuth();
-    this.getUserInfo();
-  },
-  beforeUnmount() {
-    window.removeEventListener('resize', this.checkIfMobile);
-  },
-  methods: {
-    truncateText(text, length) {
-      if (!text) return '';
-      return text.length > length ? text.substring(0, length) + '...' : text;
-    },
-    toggleHalfDayDetails() {
-      if (this.isMobile) {
-        this.halfDayVisible = !this.halfDayVisible;
-      }
-    },
-    toggleHalfDayList() {
-      if (this.isMobile) {
-        this.halfDayListVisible = !this.halfDayListVisible;
-      }
-    },
-    toggleApprovedList() {
-      if (this.isMobile) {
-        this.approvedListVisible = !this.approvedListVisible;
-      }
-    },
-    toggleUnpaidList() {
-      if (this.isMobile) {
-        this.unpaidListVisible = !this.unpaidListVisible;
-      }
-    },
-    scrollToSection(section) {
-      // Scroll to relevant section on mobile
-      const element = document.querySelector(`.${section}-section`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    },
-    checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
-      this.isSidebarVisible = !this.isMobile;
-      if (this.isMobile) {
-        this.halfDayVisible = false;
-        this.halfDayListVisible = false;
-        this.approvedListVisible = false;
-        this.unpaidListVisible = false;
-      } else {
-        this.halfDayVisible = true;
-        this.halfDayListVisible = true;
-        this.approvedListVisible = true;
-        this.unpaidListVisible = true;
-      }
-    },
-    toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible;
-    },
-    validateAuth() {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        this.$router.push('/auth');
-      }
-    },
-    getUserInfo() {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user && user.name) {
-        this.username = user.name;
-        this.userId = user.id;
-        this.fetchLeaveBalance();
-      } else {
-        toastError('User information not found');
-      }
-    },
-    initFinancialYears() {
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth();
-      let startYear;
-      if (currentMonth >= 3) {
-        startYear = currentYear;
-      } else {
-        startYear = currentYear - 1;
-      }
-      this.availableYears = [startYear - 1, startYear, startYear + 1];
-      this.selectedFinancialYear = startYear;
-    },
-    getFinancialYearRange() {
-      const startYear = this.selectedFinancialYear;
-      const endYear = startYear + 1;
-      return `Apr ${startYear} - Mar ${endYear}`;
-    },
-    getFinancialYearDates(year) {
-      const startDate = `${year}-04-01`;
-      const endDate = `${year + 1}-03-31`;
-      return { startDate, endDate };
-    },
-    isDateInFinancialYear(date, financialYear) {
-      if (!date) return false;
-      const leaveDate = new Date(date);
-      const financialYearStart = new Date(financialYear, 3, 1);
-      const financialYearEnd = new Date(financialYear + 1, 2, 31);
-      return leaveDate >= financialYearStart && leaveDate <= financialYearEnd;
-    },
-    calculateDaysBetweenDates(startDate, endDate, isHalfDay = false) {
-      if (isHalfDay) {
-        return 0.5;
-      }
-      
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffTime = Math.abs(end - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      
-      return diffDays;
-    },
-    mapLeaveType(leaveType) {
-      const typeMap = {
-        'PL': 'privilege',
-        'PL Leave': 'privilege',
-        'Privilege': 'privilege',
-        'Privilege Leave': 'privilege',
-        'CL': 'casual',
-        'Casual': 'casual',
-        'Casual Leave': 'casual',
-        'SL': 'sick',
-        'Sick': 'sick',
-        'Sick Leave': 'sick',
-        'Medical': 'sick'
-      };
-      return typeMap[leaveType] || 'casual';
-    },
-    async fetchLeaveBalance() {
-      if (!this.userId) {
-        toastError('User information not available');
-        return;
-      }
-
-      this.loading = true;
-
-      try {
-        this.leaveUsed = {
+        username: '',
+        userId: null,
+        isMobile: false,
+        isSidebarVisible: true,
+        loading: false,
+        selectedFinancialYear: new Date().getFullYear(),
+        availableYears: [],
+        approvedLeaves: [],
+        halfDayLeaves: [],
+        unpaidAttendanceRecords: [],
+        leaveDetails: [],
+        leaveAllocations: {
           privilege: 0,
           casual: 0,
           sick: 0
-        };
-        
-        this.approvedLeaves = [];
-        this.halfDayLeaves = [];
-        this.unpaidAttendanceRecords = [];
-
-        const balanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-balances/user/${this.userId}`, {
-          params: { 
-            year: this.selectedFinancialYear
-          },
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('Leave Balance Response:', balanceResponse.data);
-
-        if (balanceResponse.data && balanceResponse.data.success && balanceResponse.data.data) {
-          const balanceData = balanceResponse.data.data;
-          
-          this.leaveAllocations = {
-            privilege: parseFloat(balanceData.pl_leave) || 0,
-            casual: parseFloat(balanceData.casual_leave) || 0,
-            sick: parseFloat(balanceData.sick_leave) || 0
-          };
-          
-          this.leaveUsed = {
-            privilege: parseFloat(balanceData.used_pl_leave) || 0,
-            casual: parseFloat(balanceData.used_cl_leave) || 0,
-            sick: parseFloat(balanceData.used_sick_leave) || 0
-          };
-          
-          const remainingPL = parseFloat(balanceData.remaining_pl_leave) || 0;
-          const remainingCL = parseFloat(balanceData.remaining_cl_leave) || 0;
-          const remainingSick = parseFloat(balanceData.remaining_sick_leave) || 0;
-          
-          this.unpaidLeaveDays = parseFloat(balanceData.used_unpaid_leave) || 0;
-          
-          console.log('Leave Data from DB:', {
-            allocations: this.leaveAllocations,
-            used: this.leaveUsed,
-            remaining: { privilege: remainingPL, casual: remainingCL, sick: remainingSick },
-            unpaidLeave: this.unpaidLeaveDays
-          });
-          
-          this.leaveDetails = [
-            { 
-              type: 'privilege', 
-              total: this.leaveAllocations.privilege, 
-              used: this.leaveUsed.privilege, 
-              remaining: remainingPL
-            },
-            { 
-              type: 'casual', 
-              total: this.leaveAllocations.casual, 
-              used: this.leaveUsed.casual, 
-              remaining: remainingCL
-            },
-            { 
-              type: 'sick', 
-              total: this.leaveAllocations.sick, 
-              used: this.leaveUsed.sick, 
-              remaining: remainingSick
-            }
-          ];
-          
-        } else {
-          this.leaveAllocations = {
-            privilege: 0,
-            casual: 0,
-            sick: 0
-          };
-          
-          this.leaveUsed = {
-            privilege: 0,
-            casual: 0,
-            sick: 0
-          };
-          
-          this.leaveDetails = [
-            { type: 'privilege', total: 0, used: 0, remaining: 0 },
-            { type: 'casual', total: 0, used: 0, remaining: 0 },
-            { type: 'sick', total: 0, used: 0, remaining: 0 }
-          ];
-          
-          this.unpaidLeaveDays = 0;
-        }
-
-        const response = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-requests`, {
-          params: { 
-            name: this.username,
-            year: this.selectedFinancialYear
-          },
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('Leave Requests Response:', response.data);
-
-        if (response.data) {
-          let allLeaves = [];
-          if (Array.isArray(response.data)) {
-            allLeaves = response.data;
-          } else if (response.data.data && Array.isArray(response.data.data)) {
-            allLeaves = response.data.data;
-          } else if (response.data.success && response.data.data) {
-            allLeaves = response.data.data;
-          } else {
-            allLeaves = [];
-          }
-          
-          const filteredLeaves = allLeaves.filter(leave => 
-            this.isDateInFinancialYear(leave.fromDate, this.selectedFinancialYear) &&
-            leave.status === 'Approved'
-          );
-          
-          filteredLeaves.forEach(leave => {
-            const isHalfDay = leave.is_half_day === 1 || leave.leave_duration === 'half';
-            
-            let duration = 0;
-            
-            if (isHalfDay) {
-              duration = 0.5;
-              this.halfDayLeaves.push({
-                ...leave,
-                duration: 0.5
-              });
-            } else {
-              duration = this.calculateDaysBetweenDates(leave.fromDate, leave.toDate, false);
-              this.approvedLeaves.push({
-                ...leave,
-                duration: duration
-              });
-            }
-          });
-        }
-
-        const { startDate, endDate } = this.getFinancialYearDates(this.selectedFinancialYear);
-        
-        const attendanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/attendances`, {
-          params: {
-            name: this.username,
-            status: 'Absent',
-            from_date: startDate,
-            to_date: endDate
-          },
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('Attendance Response:', attendanceResponse.data);
-
-        if (attendanceResponse.data) {
-          let allAttendances = [];
-          if (Array.isArray(attendanceResponse.data)) {
-            allAttendances = attendanceResponse.data;
-          } else if (attendanceResponse.data.data && Array.isArray(attendanceResponse.data.data)) {
-            allAttendances = attendanceResponse.data.data;
-          } else {
-            allAttendances = [];
-          }
-
-          this.unpaidAttendanceRecords = allAttendances.filter(record => 
-            record.status === 'Absent' && 
-            this.isDateInFinancialYear(record.date, this.selectedFinancialYear)
-          );
-          this.unpaidLeaveDays = this.unpaidAttendanceRecords.length;
-        }
-        
-        this.loading = false;
-        toastSuccess(`Leave balance loaded for ${this.getFinancialYearRange()}`);
-        
-      } catch (error) {
-        console.error('Failed to load leave balance:', error);
-        if (error.response) {
-          console.error('Error response:', error.response.data);
-          if (error.response.status === 404) {
-            toastError('No leave balance record found. Please contact HR.');
-          } else if (error.response.status === 422) {
-            toastError('Please select a valid financial year');
-          } else {
-            toastError(error.response.data.message || 'Could not fetch leave data. Please try again.');
-          }
-        } else {
-          toastError('Could not fetch leave data. Please try again.');
-        }
-        this.loading = false;
+        },
+        leaveUsed: {
+          privilege: 0,
+          casual: 0,
+          sick: 0
+        },
+        unpaidLeaveDays: 0,
+        holidayWorkCredits: 0,
+        halfDayVisible: true,
+        halfDayListVisible: false,
+        approvedListVisible: false,
+        unpaidListVisible: false,
+        // Late marks data
+        lateMarks: [],
+      monthlyLateSummary: [],
+      totalLateMarks: 0,
+      totalPenaltiesApplied: 0,
+      totalPenaltyAmount: 0,
+      penaltiesCalculated: 0,
+      pendingPenalties: 0,
+      hasLatePenalty: false,
+      lateMarksVisible: true,
+      lateMarksLoading: false,
+      penaltyPerUnit: 0.5,
+      penaltyThreshold: 3
       }
     },
-    formatDate(date) {
-      if (!date) return '';
-      const d = new Date(date);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    },
-    getLeaveIcon(type) {
-      const icons = {
-        privilege: 'fas fa-crown',
-        casual: 'fas fa-coffee',
-        sick: 'fas fa-thermometer-half',
-        absent: 'fas fa-hourglass-half',
-        'half day': 'fas fa-sun',
-        default: 'fas fa-calendar-check'
+    computed: {
+      leaveSummary() {
+        return {
+          privilege: { 
+            remaining: Math.max(0, this.leaveAllocations.privilege - this.leaveUsed.privilege), 
+            total: this.leaveAllocations.privilege 
+          },
+          casual: { 
+            remaining: Math.max(0, this.leaveAllocations.casual - this.leaveUsed.casual), 
+            total: this.leaveAllocations.casual 
+          },
+          sick: { 
+            remaining: Math.max(0, this.leaveAllocations.sick - this.leaveUsed.sick), 
+            total: this.leaveAllocations.sick 
+          }
+        };
+      },
+      totalRemaining() {
+        return Object.values(this.leaveSummary).reduce((sum, item) => sum + Math.max(0, (item.remaining || 0)), 0);
+      },
+      totalUsed() {
+        return Object.values(this.leaveUsed).reduce((sum, item) => sum + (item || 0), 0);
+      },
+      totalAllocated() {
+        return Object.values(this.leaveAllocations).reduce((sum, item) => sum + (item || 0), 0);
+      },
+      getFullDaysDeduction() {
+      return function() {
+        if (this.totalPenaltyAmount === 0) return '0 days';
+        const fullDays = Math.floor(this.totalPenaltyAmount / 0.5);
+        const remainingHalf = this.totalPenaltyAmount % 0.5;
+        
+        if (remainingHalf === 0) {
+          return `${fullDays} full day(s)`;
+        } else {
+          return `${fullDays} full day(s) + ${remainingHalf} half day`;
+        }
       };
-      return icons[type?.toLowerCase()] || icons.default;
+    }
+    
     },
-    formatLeaveType(type) {
-      const types = {
-        privilege: 'Privilege',
-        casual: 'Casual',
-        sick: 'Sick / Medical',
-        absent: 'Unpaid (Absent)',
-        'half day': 'Half Day'
-      };
-      return types[type?.toLowerCase()] || type;
+    mounted() {
+      this.checkIfMobile();
+      window.addEventListener('resize', this.checkIfMobile);
+      this.initFinancialYears();
+      this.validateAuth();
+      this.getUserInfo();
     },
-    getRemainingClass(remaining) {
-      if (remaining <= 0) return 'critical';
-      if (remaining <= 2) return 'warning';
-      return 'good';
+    beforeUnmount() {
+      window.removeEventListener('resize', this.checkIfMobile);
     },
-    getUsagePercentage(used, total) {
-      if (total === 0) return 0;
-      return Math.round((used / total) * 100);
-    },
-    getProgressClass(remaining, total) {
-      const used = total - remaining;
-      const percentage = (used / total) * 100;
-      if (percentage >= 90) return 'progress-critical';
-      if (percentage >= 70) return 'progress-warning';
-      return 'progress-good';
-    },
-    getStatusClass(remaining, total) {
-      if (total === 0) return 'neutral';
-      if (remaining <= 0) return 'critical';
-      if (remaining <= 2) return 'warning';
-      return 'good';
-    },
-    getStatusText(remaining, total) {
-      if (total === 0) return 'N/A';
-      if (remaining <= 0) return 'Exhausted';
-      if (remaining <= 2) return 'Low Balance';
-      return 'Available';
-    },
-    logout() {
-      axios.post('https://employees.archenterprises.co.in/api/logout', {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      }).finally(() => {
-        localStorage.removeItem('token');
-        this.$router.push('/auth');
+    methods: {
+      truncateText(text, length) {
+        if (!text) return '';
+        return text.length > length ? text.substring(0, length) + '...' : text;
+      },
+      toggleLateMarksDetails() {
+        if (this.isMobile) {
+          this.lateMarksVisible = !this.lateMarksVisible;
+        }
+      },
+      toggleHalfDayDetails() {
+        if (this.isMobile) {
+          this.halfDayVisible = !this.halfDayVisible;
+        }
+      },
+      toggleHalfDayList() {
+        if (this.isMobile) {
+          this.halfDayListVisible = !this.halfDayListVisible;
+        }
+      },
+      toggleApprovedList() {
+        if (this.isMobile) {
+          this.approvedListVisible = !this.approvedListVisible;
+        }
+      },
+      toggleUnpaidList() {
+        if (this.isMobile) {
+          this.unpaidListVisible = !this.unpaidListVisible;
+        }
+      },
+      scrollToSection(section) {
+        const element = document.querySelector(`.${section}-section`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      },
+      checkIfMobile() {
+        this.isMobile = window.innerWidth <= 768;
+        this.isSidebarVisible = !this.isMobile;
+        if (this.isMobile) {
+          this.halfDayVisible = false;
+          this.halfDayListVisible = false;
+          this.approvedListVisible = false;
+          this.unpaidListVisible = false;
+          this.lateMarksVisible = false;
+        } else {
+          this.halfDayVisible = true;
+          this.halfDayListVisible = true;
+          this.approvedListVisible = true;
+          this.unpaidListVisible = true;
+          this.lateMarksVisible = true;
+        }
+      },
+      toggleSidebar() {
+        this.isSidebarVisible = !this.isSidebarVisible;
+      },
+      validateAuth() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          this.$router.push('/auth');
+        }
+      },
+      getUserInfo() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.name) {
+          this.username = user.name;
+          this.userId = user.id;
+          this.fetchLeaveBalance();
+          this.fetchLateMarks();
+        } else {
+          toastError('User information not found');
+        }
+      },
+      initFinancialYears() {
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        let startYear;
+        if (currentMonth >= 3) {
+          startYear = currentYear;
+        } else {
+          startYear = currentYear - 1;
+        }
+        this.availableYears = [startYear - 1, startYear, startYear + 1];
+        this.selectedFinancialYear = startYear;
+      },
+      getFinancialYearRange() {
+        const startYear = this.selectedFinancialYear;
+        const endYear = startYear + 1;
+        return `Apr ${startYear} - Mar ${endYear}`;
+      },
+      getFinancialYearDates(year) {
+        const startDate = `${year}-04-01`;
+        const endDate = `${year + 1}-03-31`;
+        return { startDate, endDate };
+      },
+      isDateInFinancialYear(date, financialYear) {
+        if (!date) return false;
+        const leaveDate = new Date(date);
+        const financialYearStart = new Date(financialYear, 3, 1);
+        const financialYearEnd = new Date(financialYear + 1, 2, 31);
+        return leaveDate >= financialYearStart && leaveDate <= financialYearEnd;
+      },
+      calculateDaysBetweenDates(startDate, endDate, isHalfDay = false) {
+        if (isHalfDay) {
+          return 0.5;
+        }
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        return diffDays;
+      },
+      mapLeaveType(leaveType) {
+        const typeMap = {
+          'PL': 'privilege',
+          'PL Leave': 'privilege',
+          'Privilege': 'privilege',
+          'Privilege Leave': 'privilege',
+          'CL': 'casual',
+          'Casual': 'casual',
+          'Casual Leave': 'casual',
+          'SL': 'sick',
+          'Sick': 'sick',
+          'Sick Leave': 'sick',
+          'Medical': 'sick'
+        };
+        return typeMap[leaveType] || 'casual';
+      },
+ async fetchLateMarks() {
+  if (!this.username) return;
+  
+  this.lateMarksLoading = true;
+  
+  try {
+    const token = localStorage.getItem('token');
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    
+    // Fetch attendance records for current month
+    const response = await axios.get(
+      `https://employees.archenterprises.co.in/api/api/attendance/late-marks`,
+      {
+        params: {
+          name: this.username,
+          month: currentMonth,
+          year: currentYear
+        },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    console.log('Late Marks Response:', response.data);
+    
+    if (response.data && response.data.success) {
+      const data = response.data.data;
+      
+      // FILTER: Only include late marks where status is 'Present' or 'P'
+      const allLateRecords = data.late_records || [];
+      const filteredLateRecords = allLateRecords.filter(record => 
+        record.status && (record.status.toLowerCase() === 'present' || record.status.toLowerCase() === 'p')
+      );
+      
+      this.lateMarks = filteredLateRecords;
+      this.totalLateMarks = filteredLateRecords.length;
+      
+      // Recalculate penalties based on filtered late marks
+      const threshold = data.threshold || 3;
+      const penaltyPerUnit = data.penalty_per_unit || 0.5;
+      
+      // Calculate penalties based on filtered records
+      this.penaltiesCalculated = Math.floor(filteredLateRecords.length / threshold);
+      
+      // For penalties_applied - we need to check if penalties were actually applied
+      // This should come from the backend or we calculate based on existing logic
+      this.totalPenaltiesApplied = Math.min(
+        this.penaltiesCalculated,
+        data.penalties_applied || 0
+      );
+      
+      this.totalPenaltyAmount = this.totalPenaltiesApplied * penaltyPerUnit;
+      this.pendingPenalties = this.penaltiesCalculated - this.totalPenaltiesApplied;
+      this.hasLatePenalty = this.totalPenaltiesApplied > 0;
+      this.penaltyPerUnit = penaltyPerUnit;
+      this.penaltyThreshold = threshold;
+    }
+    
+    // Fetch monthly summary
+    const summaryResponse = await axios.get(
+      `https://employees.archenterprises.co.in/api/api/attendance/late-marks-summary`,
+      {
+        params: {
+          name: this.username,
+          year: currentYear
+        },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    if (summaryResponse.data && summaryResponse.data.success) {
+      const data = summaryResponse.data.data;
+      
+      // Filter monthly summary to only include Present status
+      const monthlySummary = data.monthly_summary || {};
+      const filteredMonthlySummary = {};
+      
+      Object.keys(monthlySummary).forEach(monthKey => {
+        const monthData = monthlySummary[monthKey];
+        // If month data has records, filter by status
+        if (monthData.records) {
+          const presentRecords = monthData.records.filter(record => 
+            record.status && (record.status.toLowerCase() === 'present' || record.status.toLowerCase() === 'p')
+          );
+          filteredMonthlySummary[monthKey] = {
+            ...monthData,
+            late_count: presentRecords.length,
+            records: presentRecords
+          };
+        } else {
+          filteredMonthlySummary[monthKey] = monthData;
+        }
       });
+      
+      this.monthlyLateSummary = Object.values(filteredMonthlySummary);
+      
+      // Recalculate total late marks from filtered summary
+      this.totalLateMarks = this.monthlyLateSummary.reduce((sum, item) => sum + (item.late_count || 0), 0);
+      
+      // Recalculate penalties based on filtered data
+      const threshold = data.threshold || 3;
+      this.penaltiesCalculated = Math.floor(this.totalLateMarks / threshold);
+      this.totalPenaltiesApplied = Math.min(
+        this.penaltiesCalculated,
+        data.total_penalties_applied || 0
+      );
+      this.totalPenaltyAmount = this.totalPenaltiesApplied * (data.penalty_per_unit || 0.5);
+    }
+    
+    this.lateMarksLoading = false;
+    
+  } catch (error) {
+    console.error('Error fetching late marks:', error);
+    this.lateMarksLoading = false;
+  }
+},
+      async fetchLeaveBalance() {
+        if (!this.userId) {
+          toastError('User information not available');
+          return;
+        }
+
+        this.loading = true;
+
+        try {
+          this.leaveUsed = {
+            privilege: 0,
+            casual: 0,
+            sick: 0
+          };
+          
+          this.approvedLeaves = [];
+          this.halfDayLeaves = [];
+          this.unpaidAttendanceRecords = [];
+
+          const balanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-balances/user/${this.userId}`, {
+            params: { 
+              year: this.selectedFinancialYear
+            },
+            headers: { 
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log('Leave Balance Response:', balanceResponse.data);
+
+          if (balanceResponse.data && balanceResponse.data.success && balanceResponse.data.data) {
+            const balanceData = balanceResponse.data.data;
+            
+            this.leaveAllocations = {
+              privilege: parseFloat(balanceData.pl_leave) || 0,
+              casual: parseFloat(balanceData.casual_leave) || 0,
+              sick: parseFloat(balanceData.sick_leave) || 0
+            };
+            
+            this.leaveUsed = {
+              privilege: parseFloat(balanceData.used_pl_leave) || 0,
+              casual: parseFloat(balanceData.used_cl_leave) || 0,
+              sick: parseFloat(balanceData.used_sick_leave) || 0
+            };
+            
+            const remainingPL = parseFloat(balanceData.remaining_pl_leave) || 0;
+            const remainingCL = parseFloat(balanceData.remaining_cl_leave) || 0;
+            const remainingSick = parseFloat(balanceData.remaining_sick_leave) || 0;
+            
+            this.unpaidLeaveDays = parseFloat(balanceData.used_unpaid_leave) || 0;
+            
+            console.log('Leave Data from DB:', {
+              allocations: this.leaveAllocations,
+              used: this.leaveUsed,
+              remaining: { privilege: remainingPL, casual: remainingCL, sick: remainingSick },
+              unpaidLeave: this.unpaidLeaveDays
+            });
+            
+            this.leaveDetails = [
+              { 
+                type: 'privilege', 
+                total: this.leaveAllocations.privilege, 
+                used: this.leaveUsed.privilege, 
+                remaining: remainingPL
+              },
+              { 
+                type: 'casual', 
+                total: this.leaveAllocations.casual, 
+                used: this.leaveUsed.casual, 
+                remaining: remainingCL
+              },
+              { 
+                type: 'sick', 
+                total: this.leaveAllocations.sick, 
+                used: this.leaveUsed.sick, 
+                remaining: remainingSick
+              }
+            ];
+            
+          } else {
+            this.leaveAllocations = {
+              privilege: 0,
+              casual: 0,
+              sick: 0
+            };
+            
+            this.leaveUsed = {
+              privilege: 0,
+              casual: 0,
+              sick: 0
+            };
+            
+            this.leaveDetails = [
+              { type: 'privilege', total: 0, used: 0, remaining: 0 },
+              { type: 'casual', total: 0, used: 0, remaining: 0 },
+              { type: 'sick', total: 0, used: 0, remaining: 0 }
+            ];
+            
+            this.unpaidLeaveDays = 0;
+          }
+
+          const response = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-requests`, {
+            params: { 
+              name: this.username,
+              year: this.selectedFinancialYear
+            },
+            headers: { 
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log('Leave Requests Response:', response.data);
+
+          if (response.data) {
+            let allLeaves = [];
+            if (Array.isArray(response.data)) {
+              allLeaves = response.data;
+            } else if (response.data.data && Array.isArray(response.data.data)) {
+              allLeaves = response.data.data;
+            } else if (response.data.success && response.data.data) {
+              allLeaves = response.data.data;
+            } else {
+              allLeaves = [];
+            }
+            
+            const filteredLeaves = allLeaves.filter(leave => 
+              this.isDateInFinancialYear(leave.fromDate, this.selectedFinancialYear) &&
+              leave.status === 'Approved'
+            );
+            
+            filteredLeaves.forEach(leave => {
+              const isHalfDay = leave.is_half_day === 1 || leave.leave_duration === 'half';
+              
+              let duration = 0;
+              
+              if (isHalfDay) {
+                duration = 0.5;
+                this.halfDayLeaves.push({
+                  ...leave,
+                  duration: 0.5
+                });
+              } else {
+                duration = this.calculateDaysBetweenDates(leave.fromDate, leave.toDate, false);
+                this.approvedLeaves.push({
+                  ...leave,
+                  duration: duration
+                });
+              }
+            });
+          }
+
+          const { startDate, endDate } = this.getFinancialYearDates(this.selectedFinancialYear);
+          
+          const attendanceResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/attendances`, {
+            params: {
+              name: this.username,
+              status: 'Absent',
+              from_date: startDate,
+              to_date: endDate
+            },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log('Attendance Response:', attendanceResponse.data);
+
+          if (attendanceResponse.data) {
+            let allAttendances = [];
+            if (Array.isArray(attendanceResponse.data)) {
+              allAttendances = attendanceResponse.data;
+            } else if (attendanceResponse.data.data && Array.isArray(attendanceResponse.data.data)) {
+              allAttendances = attendanceResponse.data.data;
+            } else {
+              allAttendances = [];
+            }
+
+            this.unpaidAttendanceRecords = allAttendances.filter(record => 
+              record.status === 'Absent' && 
+              this.isDateInFinancialYear(record.date, this.selectedFinancialYear)
+            );
+            this.unpaidLeaveDays = this.unpaidAttendanceRecords.length;
+          }
+          
+          this.loading = false;
+          toastSuccess(`Leave balance loaded for ${this.getFinancialYearRange()}`);
+          
+        } catch (error) {
+          console.error('Failed to load leave balance:', error);
+          if (error.response) {
+            console.error('Error response:', error.response.data);
+            if (error.response.status === 404) {
+              toastError('No leave balance record found. Please contact HR.');
+            } else if (error.response.status === 422) {
+              toastError('Please select a valid financial year');
+            } else {
+              toastError(error.response.data.message || 'Could not fetch leave data. Please try again.');
+            }
+          } else {
+            toastError('Could not fetch leave data. Please try again.');
+          }
+          this.loading = false;
+        }
+      },
+      formatDate(date) {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      },
+      getLeaveIcon(type) {
+        const icons = {
+          privilege: 'fas fa-crown',
+          casual: 'fas fa-coffee',
+          sick: 'fas fa-thermometer-half',
+          absent: 'fas fa-hourglass-half',
+          'half day': 'fas fa-sun',
+          default: 'fas fa-calendar-check'
+        };
+        return icons[type?.toLowerCase()] || icons.default;
+      },
+      formatLeaveType(type) {
+        const types = {
+          privilege: 'Privilege',
+          casual: 'Casual',
+          sick: 'Sick / Medical',
+          absent: 'Unpaid (Absent)',
+          'half day': 'Half Day'
+        };
+        return types[type?.toLowerCase()] || type;
+      },
+      getRemainingClass(remaining) {
+        if (remaining <= 0) return 'critical';
+        if (remaining <= 2) return 'warning';
+        return 'good';
+      },
+      getUsagePercentage(used, total) {
+        if (total === 0) return 0;
+        return Math.round((used / total) * 100);
+      },
+      getProgressClass(remaining, total) {
+        const used = total - remaining;
+        const percentage = (used / total) * 100;
+        if (percentage >= 90) return 'progress-critical';
+        if (percentage >= 70) return 'progress-warning';
+        return 'progress-good';
+      },
+      getStatusClass(remaining, total) {
+        if (total === 0) return 'neutral';
+        if (remaining <= 0) return 'critical';
+        if (remaining <= 2) return 'warning';
+        return 'good';
+      },
+      getStatusText(remaining, total) {
+        if (total === 0) return 'N/A';
+        if (remaining <= 0) return 'Exhausted';
+        if (remaining <= 2) return 'Low Balance';
+        return 'Available';
+      },
+      logout() {
+        axios.post('https://employees.archenterprises.co.in/api/logout', {}, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }).finally(() => {
+          localStorage.removeItem('token');
+          this.$router.push('/auth');
+        });
+      }
     }
   }
-}
-</script>
+  </script>
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
@@ -822,6 +1125,7 @@ export default {
   --warning: #f59e0b;
   --info: #3b82f6;
   --unpaid: #f59e0b;
+  --late-color: #dc2626;
 }
 
 * {
@@ -1048,6 +1352,298 @@ export default {
 .total-value {
   font-size: 24px;
   font-weight: 700;
+}
+
+/* Late Marks Card */
+.late-marks-summary-card {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 28px;
+  border: 1px solid #fca5a5;
+}
+
+.late-marks-summary-card.mobile-card {
+  padding: 16px;
+}
+
+.late-marks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #fca5a5;
+  cursor: pointer;
+}
+
+.header-left-late {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.late-marks-header i:first-child {
+  font-size: 24px;
+  color: #dc2626;
+}
+
+.late-marks-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #991b1b;
+  margin: 0;
+}
+
+.late-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dc2626;
+  color: white;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.late-count-badge.has-penalty {
+  background: #f59e0b;
+}
+
+.header-right-late {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.penalty-badge {
+  background: #f59e0b;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.penalty-badge i {
+  font-size: 11px;
+  margin-right: 4px;
+}
+
+.late-marks-header .fa-chevron-down {
+  transition: transform 0.3s ease;
+  color: #991b1b;
+}
+
+.late-marks-header .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
+.late-marks-body {
+  transition: all 0.3s ease;
+}
+
+.late-marks-body.late-marks-hidden {
+  display: none;
+}
+
+.late-marks-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.late-marks-stats .stat-item {
+  background: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.late-marks-stats .stat-item .stat-label {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.late-marks-stats .stat-item .stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-top: 4px;
+}
+
+.late-marks-stats .stat-item .stat-value.warning {
+  color: #dc2626;
+}
+
+.late-marks-stats .stat-item .stat-value.penalty-applied {
+  color: #f59e0b;
+}
+
+.late-marks-stats .stat-item .stat-value.no-penalty {
+  color: #10b981;
+}
+
+.late-marks-stats .stat-item .stat-value.penalty-amount {
+  color: #f59e0b;
+}
+
+.late-marks-table-container {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.section-title-modern.small {
+  font-size: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+/* Mobile Late Cards */
+.mobile-late-cards {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.late-mark-card {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px;
+  border-left: 3px solid #dc2626;
+}
+
+.late-mark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.late-date {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--dark);
+}
+
+.late-time {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.late-mark-body .late-status {
+  font-size: 12px;
+  color: #4b5563;
+  background: #f1f5f9;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* Late Marks Table */
+.late-marks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.late-marks-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.late-marks-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #4b5563;
+}
+
+.late-marks-table tr:last-child td {
+  border-bottom: none;
+}
+
+.status-badge.late {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.no-late-marks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10b981;
+  font-size: 14px;
+  padding: 12px 0;
+}
+
+.no-late-marks i {
+  font-size: 20px;
+}
+
+/* Monthly Late Summary */
+.monthly-late-summary {
+  margin-top: 16px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.monthly-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.monthly-summary-grid.mobile-grid {
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+}
+
+.monthly-summary-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.monthly-summary-item.has-penalty {
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+}
+
+.month-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.month-count {
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.monthly-summary-item.has-penalty .month-count {
+  color: #f59e0b;
+}
+
+.penalty-indicator {
+  color: #f59e0b;
+  font-size: 12px;
 }
 
 .halfday-info-card {
@@ -1723,6 +2319,27 @@ export default {
     font-size: 20px;
   }
 
+  .late-marks-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .late-marks-header {
+    flex-wrap: wrap;
+  }
+
+  .header-right-late {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .mobile-late-cards {
+    display: flex;
+  }
+
+  .late-marks-table {
+    display: none;
+  }
+
   .mobile-leave-cards {
     display: flex;
   }
@@ -1770,6 +2387,15 @@ export default {
   .leave-footer.mobile-footer {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .monthly-summary-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+
+  .monthly-summary-item {
+    font-size: 11px;
+    padding: 4px 8px;
   }
 }
 
@@ -1823,6 +2449,34 @@ export default {
 
   .total-value {
     font-size: 18px;
+  }
+
+  .late-marks-summary-card.mobile-card {
+    padding: 12px;
+  }
+
+  .late-marks-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .late-marks-stats .stat-item {
+    padding: 8px 12px;
+  }
+
+  .late-marks-stats .stat-item .stat-value {
+    font-size: 20px;
+  }
+
+  .late-count-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .penalty-badge {
+    font-size: 10px;
+    padding: 2px 8px;
   }
 
   .halfday-info-card.mobile-card {
@@ -1893,6 +2547,127 @@ export default {
   .year-selector select {
     font-size: 12px;
     padding: 6px 10px;
+  }
+
+  .monthly-summary-grid {
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 4px;
+  }
+
+  .monthly-summary-item {
+    font-size: 10px;
+    padding: 4px 6px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .month-count {
+    font-size: 14px;
+  }
+}
+/* Penalty Info Box */
+.penalty-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #1e40af;
+}
+
+.penalty-info-box i {
+  font-size: 18px;
+  margin-top: 2px;
+  color: #3b82f6;
+}
+
+.penalty-info-box .pending-warning {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Pending Penalty Indicator */
+.pending-indicator {
+  color: #dc2626;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.monthly-summary-item.pending-penalty {
+  border: 1px solid #dc2626;
+  background: #fef2f2;
+}
+
+.monthly-summary-item .month-count {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.monthly-summary-item.has-penalty .month-count {
+  color: #f59e0b;
+}
+
+.monthly-summary-item.pending-penalty .month-count {
+  color: #dc2626;
+}
+
+/* Late Number */
+.late-number {
+  font-size: 10px;
+  color: #9ca3af;
+  background: #f1f5f9;
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .late-marks-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .penalty-info-box {
+    font-size: 12px;
+    padding: 10px 12px;
+    flex-direction: column;
+  }
+  
+  .penalty-info-box i {
+    font-size: 16px;
+  }
+  
+  .monthly-summary-item {
+    font-size: 11px;
+  }
+  
+  .monthly-summary-item .month-count {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .late-marks-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  
+  .late-marks-stats .stat-item {
+    padding: 6px 10px;
+  }
+  
+  .late-marks-stats .stat-item .stat-value {
+    font-size: 18px;
+  }
+  
+  .penalty-info-box {
+    font-size: 11px;
+    padding: 8px 10px;
   }
 }
 </style>

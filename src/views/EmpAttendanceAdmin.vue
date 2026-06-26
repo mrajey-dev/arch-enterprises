@@ -8,7 +8,6 @@
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
         <!-- Mobile Header -->
         <div class="mobile-header" v-if="isMobile">
-         
           <div class="mobile-title">
             <i class="fas fa-calendar-check"></i>
             <span>Attendance</span>
@@ -62,11 +61,12 @@
               <span class="stat-label">Present</span>
             </div>
           </div>
-          <div class="stat-card" @click="filterByStatus('Late')">
-            <i class="fas fa-clock"></i>
+          
+          <div class="stat-card" @click="showLateMarksModal = true">
+            <i class="fas fa-exclamation-triangle"></i>
             <div class="stat-info">
-              <span class="stat-value">{{ lateCount }}</span>
-              <span class="stat-label">Late</span>
+              <span class="stat-value">{{ totalLateMarks }}</span>
+              <span class="stat-label">Total Late</span>
             </div>
           </div>
         </div>
@@ -210,6 +210,131 @@
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Late Marks Summary Section -->
+        <div class="late-marks-summary-wrapper" v-if="lateMarksData.length > 0 || totalLateMarks > 0">
+          <div class="section-title-modern">
+          &nbsp;  <i class="fas fa-clock"></i>
+            <span> Late Marks Summary</span>
+            <span class="info-badge">Threshold: 9:40 AM</span>
+          </div>
+          
+          <!-- Mobile Late Cards -->
+          <div class="mobile-late-cards" v-if="isMobile">
+            <div v-for="(item, index) in lateMarksData" :key="index" class="late-mark-card">
+              <div class="late-mark-header">
+                <div class="employee-info-small">
+                  <div class="employee-avatar-small">
+                    {{ getInitials(item.name) }}
+                  </div>
+                  <span class="employee-name">{{ item.name }}</span>
+                </div>
+                <span class="late-count-badge" :class="getLateCountClass(item.late_count)">
+                  {{ item.late_count }}
+                </span>
+              </div>
+              <div class="late-mark-body">
+                <div class="late-detail">
+                  <span class="detail-label">Late Count</span>
+                  <span class="detail-value">{{ item.late_count }}</span>
+                </div>
+                <div class="late-detail">
+                  <span class="detail-label">Penalties Applied</span>
+                  <span class="detail-value" :class="{ 'has-penalty': item.penalties_applied > 0 }">
+                    {{ item.penalties_applied }}
+                  </span>
+                </div>
+                <div class="late-detail" v-if="item.penalty_amount > 0">
+                  <span class="detail-label">CL Deduction</span>
+                  <span class="detail-value penalty-amount">{{ item.penalty_amount }}</span>
+                </div>
+                <div class="late-progress">
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" 
+                         :style="{ width: Math.min((item.late_count / 10) * 100, 100) + '%' }"
+                         :class="getLateProgressClass(item.late_count)">
+                    </div>
+                  </div>
+                  <span class="progress-label">{{ item.late_count }} / 10</span>
+                </div>
+                <div class="late-detail" v-if="item.pending_penalties > 0">
+                  <span class="detail-label pending">⏳ Pending Penalties</span>
+                  <span class="detail-value warning">{{ item.pending_penalties }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Late Table -->
+          <div class="table-container" v-else>
+            <table class="attendance-table-premium">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Late Count</th>
+                  <th>Penalties Applied</th>
+                  <th>CL Deduction</th>
+                  <th>Pending Penalties</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in lateMarksData" :key="item.name">
+                  <td class="employee-cell">
+                    <div class="employee-info">
+                      <div class="employee-avatar">
+                        {{ getInitials(item.name) }}
+                      </div>
+                      <span class="employee-name">{{ item.name }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="late-count-badge" :class="getLateCountClass(item.late_count)">
+                      {{ item.late_count }}
+                    </span>
+                  </td>
+                  <td>
+                    <span :class="['penalty-badge', { 'has-penalty': item.penalties_applied > 0 }]">
+                      {{ item.penalties_applied }}
+                    </span>
+                  </td>
+                  <td>
+                    <span v-if="item.penalty_amount > 0" class="penalty-amount">
+                      {{ item.penalty_amount }} CL
+                    </span>
+                    <span v-else class="no-penalty">—</span>
+                  </td>
+                  <td>
+                    <span v-if="item.pending_penalties > 0" class="pending-badge">
+                      <i class="fas fa-clock"></i> {{ item.pending_penalties }}
+                    </span>
+                    <span v-else class="no-pending">✓</span>
+                  </td>
+                  <td>
+                    <span :class="['status-badge-premium', getLateStatusClass(item)]">
+                      <i :class="getLateStatusIcon(item)"></i>
+                      {{ getLateStatusText(item) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Penalty Info -->
+          <div class="penalty-info-box">
+           
+            <span>
+              <strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rule:</strong> Every 3 late marks (after 9:40 AM) = 1 penalty (0.5 CL deduction)
+            </span>
+          </div>
+        </div>
+
+        <!-- No Late Marks Message -->
+        <div v-else-if="!lateMarksLoading && employees.length > 0" class="no-late-marks">
+          <i class="fas fa-check-circle"></i>
+          <span>No late marks recorded. All employees are on time! 👏</span>
         </div>
       </section>
     </div>
@@ -517,6 +642,79 @@
         </div>
       </div>
     </transition>
+
+    <!-- Late Marks Details Modal -->
+    <transition name="modal-fade">
+      <div v-if="showLateMarksModal" class="modal-backdrop" @click.self="showLateMarksModal = false">
+        <div class="premium-modal late-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium warning-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="header-text">
+              <h2>Late Marks Details</h2>
+              <p>Monthly late marks and penalties (Threshold: 9:40 AM)</p>
+            </div>
+            <button class="close-btn-premium" @click="showLateMarksModal = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="modal-body-premium">
+            <div class="late-summary-stats">
+              <div class="late-stat-card">
+                <span class="stat-number">{{ totalLateMarks }}</span>
+                <span class="stat-label">Total Late Marks</span>
+              </div>
+              <div class="late-stat-card">
+                <span class="stat-number">{{ totalPenaltiesApplied }}</span>
+                <span class="stat-label">Total Penalties</span>
+              </div>
+              <div class="late-stat-card">
+                <span class="stat-number">{{ totalPenaltyAmount }}</span>
+                <span class="stat-label">CL Deducted</span>
+              </div>
+            </div>
+
+            <div class="monthly-late-list" v-if="monthlyLateSummary.length > 0">
+              <h4>Monthly Breakdown</h4>
+              <div v-for="item in monthlyLateSummary" :key="item.month" class="monthly-late-item">
+                <div class="month-info">
+                  <span class="month-name">{{ item.month_name }}</span>
+                  <span class="month-count">{{ item.late_count }} late marks</span>
+                </div>
+                <div class="month-penalties">
+                  <span v-if="item.penalties_applied > 0" class="penalty-applied">
+                    <i class="fas fa-check-circle"></i> {{ item.penalties_applied }} penalty(ies)
+                  </span>
+                  <span v-if="item.pending_penalties > 0" class="pending-penalty">
+                    <i class="fas fa-clock"></i> {{ item.pending_penalties }} pending
+                  </span>
+                  <span v-else-if="item.penalties_applied === 0 && item.late_count > 0" class="no-penalty">
+                    <i class="fas fa-info-circle"></i> Below threshold
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="penalty-info-box">
+              
+              <span>
+                <strong>&nbsp; Rule:</strong> Every 3 late marks (after 9:40 AM) = 1 penalty (0.5 CL deduction)
+              </span>
+            </div>
+          </div>
+
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
+            <button class="btn-submit-premium" @click="showLateMarksModal = false">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -540,6 +738,7 @@ export default {
       showMarkAttendancePopup: false,
       showPopupsalary: false,
       showPopup: false,
+      showLateMarksModal: false,
       scoreSaved: false,
       selectedEmployee: null,
       employeeMonthlyData: [],
@@ -573,7 +772,14 @@ export default {
         Leave: 0
       },
       attendanceByMonth: {},
-      holidays: []
+      holidays: [],
+      // Late marks data
+      lateMarksData: [],
+      monthlyLateSummary: [],
+      totalLateMarks: 0,
+      totalPenaltiesApplied: 0,
+      totalPenaltyAmount: 0,
+      lateMarksLoading: false
     }
   },
   computed: {
@@ -581,7 +787,7 @@ export default {
       return this.attendanceRecords.filter(r => r.status === 'Present').length
     },
     lateCount() {
-      return this.attendanceRecords.filter(r => r.isLate).length
+      return this.attendanceRecords.filter(r => r.isLate === true).length
     },
     lastUpdated() {
       return new Date().toLocaleTimeString()
@@ -648,10 +854,11 @@ export default {
         default: return 'fas fa-tag'
       }
     },
+    // LATE THRESHOLD: 9:40 AM (matches backend)
     isLate(clockIn) {
       if (!clockIn) return false
       const lateThreshold = new Date()
-      lateThreshold.setHours(10, 0, 0)
+      lateThreshold.setHours(9, 40, 0)
       const clockInParts = clockIn.split(':').map(Number)
       const clockInDate = new Date()
       clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
@@ -668,7 +875,7 @@ export default {
     },
     calculateLateTime(clockIn) {
       const lateThreshold = new Date()
-      lateThreshold.setHours(10, 0, 0)
+      lateThreshold.setHours(9, 40, 0)
       const clockInParts = clockIn.split(':').map(Number)
       const clockInDate = new Date()
       clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
@@ -713,6 +920,7 @@ export default {
         this.showMarkAttendancePopup = false
         this.markAttendance = { employee: '', status: '', date: '', time: '', site_name: '', travel_from: '', travel_to: '' }
         this.fetchAttendance()
+        this.fetchLateMarksSummary()
       } catch (error) {
         console.error('Error saving attendance:', error)
         toastError('Failed to save attendance')
@@ -739,6 +947,157 @@ export default {
       } catch (error) {
         console.error('Error fetching attendance:', error)
       }
+    },
+    async fetchLateMarksSummary() {
+      this.lateMarksLoading = true;
+      try {
+        const token = localStorage.getItem('token');
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+        
+        // If no employees, return
+        if (this.employees.length === 0) {
+          this.lateMarksLoading = false;
+          return;
+        }
+        
+        const employeeNames = this.employees.map(emp => emp.name);
+        const lateData = [];
+        let totalLate = 0;
+        let totalPenalties = 0;
+        let totalPenaltyAmt = 0;
+        let allMonthlySummary = [];
+        
+        // Fetch late marks for each employee for the current month
+        for (const name of employeeNames) {
+          try {
+            // First try to get current month's late marks
+            const response = await axios.get(
+              `https://employees.archenterprises.co.in/api/api/attendance/late-marks`,
+              {
+                params: {
+                  name: name,
+                  month: currentMonth,
+                  year: currentYear
+                },
+                headers: { 
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            console.log(`Late marks for ${name}:`, response.data);
+            
+            if (response.data && response.data.success) {
+              const data = response.data.data;
+              const lateCount = data.late_count || 0;
+              
+              // Always include employees with late marks, even if 0 (for debugging)
+              if (lateCount > 0) {
+                const penaltiesCalculated = Math.floor(lateCount / 3);
+                const penaltiesApplied = data.penalties_applied || 0;
+                const penaltyAmount = data.penalty_amount_applied || 0;
+                
+                lateData.push({
+                  name: name,
+                  late_count: lateCount,
+                  penalties_applied: penaltiesApplied,
+                  penalty_amount: penaltyAmount,
+                  pending_penalties: Math.max(0, penaltiesCalculated - penaltiesApplied)
+                });
+                
+                totalLate += lateCount;
+                totalPenalties += penaltiesApplied;
+                totalPenaltyAmt += penaltyAmount;
+              }
+            }
+          } catch (e) {
+            console.error(`Error fetching late marks for ${name}:`, e);
+          }
+        }
+        
+        // If we have data, also fetch yearly summary for the modal
+        if (lateData.length > 0) {
+          try {
+            const summaryResponse = await axios.get(
+              `https://employees.archenterprises.co.in/api/api/attendance/late-marks-summary`,
+              {
+                params: {
+                  name: this.employees[0]?.name || '',
+                  year: currentYear
+                },
+                headers: { 
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            if (summaryResponse.data && summaryResponse.data.success) {
+              const data = summaryResponse.data.data;
+              if (data.monthly_summary) {
+                allMonthlySummary = Object.values(data.monthly_summary);
+                // Update totals from summary
+                totalLate = data.total_late_marks || totalLate;
+                totalPenalties = data.total_penalties_applied || totalPenalties;
+                totalPenaltyAmt = data.total_penalty_amount || totalPenaltyAmt;
+              }
+            }
+          } catch (e) {
+            console.error('Error fetching summary:', e);
+          }
+        }
+        
+        this.lateMarksData = lateData;
+        this.monthlyLateSummary = allMonthlySummary;
+        this.totalLateMarks = totalLate;
+        this.totalPenaltiesApplied = totalPenalties;
+        this.totalPenaltyAmount = totalPenaltyAmt;
+        
+        console.log('Late Marks Data:', {
+          lateData: this.lateMarksData,
+          totalLate: this.totalLateMarks,
+          totalPenalties: this.totalPenaltiesApplied,
+          totalPenaltyAmount: this.totalPenaltyAmount,
+          monthlySummary: this.monthlyLateSummary
+        });
+        
+        this.lateMarksLoading = false;
+      } catch (error) {
+        console.error('Error fetching late marks summary:', error);
+        this.lateMarksLoading = false;
+      }
+    },
+    getLateProgressClass(count) {
+      if (count >= 9) return 'critical';
+      if (count >= 6) return 'warning';
+      if (count >= 3) return 'moderate';
+      return 'good';
+    },
+    getLateCountClass(count) {
+      if (count >= 9) return 'critical';
+      if (count >= 6) return 'warning';
+      if (count >= 3) return 'moderate';
+      return 'good';
+    },
+    getLateStatusClass(item) {
+      if (item.pending_penalties > 0) return 'pending';
+      if (item.penalties_applied > 0) return 'penalty-applied';
+      if (item.late_count >= 3) return 'warning';
+      return 'good';
+    },
+    getLateStatusIcon(item) {
+      if (item.pending_penalties > 0) return 'fas fa-clock';
+      if (item.penalties_applied > 0) return 'fas fa-check-circle';
+      if (item.late_count >= 3) return 'fas fa-exclamation-triangle';
+      return 'fas fa-check';
+    },
+    getLateStatusText(item) {
+      if (item.pending_penalties > 0) return 'Pending';
+      if (item.penalties_applied > 0) return 'Penalty Applied';
+      if (item.late_count >= 3) return 'Needs Action';
+      return 'Good';
     },
     async calculateSalaryOnClick(record) {
       record.calculating = true
@@ -882,6 +1241,10 @@ export default {
     this.currentDate = this.formatDate(new Date())
     this.fetchAllEmployees()
     this.fetchAttendance()
+    // Wait for employees to load before fetching late marks
+    setTimeout(() => {
+      this.fetchLateMarksSummary()
+    }, 500)
     const token = localStorage.getItem('token')
     if (!token) {
       this.$router.push('/auth')
@@ -893,7 +1256,361 @@ export default {
 }
 </script>
 
+
 <style scoped>
+.late-marks-summary-wrapper {
+  margin-top: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.mobile-late-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.late-mark-card {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.late-mark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.late-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.late-count-badge.critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.late-count-badge.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.late-count-badge.moderate {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.late-count-badge.good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.late-mark-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.late-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.late-detail .detail-label {
+  color: #6b7280;
+}
+
+.late-detail .detail-value {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.late-detail .detail-value.has-penalty {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.late-detail .detail-value.penalty-amount {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.late-detail .detail-value.warning {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.late-detail .detail-label.pending {
+  color: #d97706;
+}
+
+.late-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.late-progress .progress-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.late-progress .progress-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+.late-progress .progress-bar-fill.good {
+  background: #10b981;
+}
+
+.late-progress .progress-bar-fill.moderate {
+  background: #f59e0b;
+}
+
+.late-progress .progress-bar-fill.warning {
+  background: #f97316;
+}
+
+.late-progress .progress-bar-fill.critical {
+  background: #ef4444;
+}
+
+.late-progress .progress-label {
+  font-size: 11px;
+  color: #6b7280;
+  min-width: 50px;
+  text-align: right;
+}
+
+.penalty-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.penalty-badge.has-penalty {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.penalty-amount {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.no-penalty {
+  color: #9ca3af;
+}
+
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #d97706;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.no-pending {
+  color: #10b981;
+}
+
+.status-badge-premium.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-premium.penalty-applied {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge-premium.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-premium.good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Late Marks Modal Styles */
+.warning-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+}
+
+.late-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.late-stat-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.late-stat-card .stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.late-stat-card .stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.monthly-late-list {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.monthly-late-list h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+}
+
+.monthly-late-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.monthly-late-item:last-child {
+  border-bottom: none;
+}
+
+.month-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.month-name {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.month-count {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.month-penalties {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.penalty-applied {
+  color: #dc2626;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pending-penalty {
+  color: #d97706;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.month-penalties .no-penalty {
+  font-size: 12px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mobile-late-cards {
+    display: flex;
+  }
+  
+  .late-summary-stats {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .late-stat-card {
+    padding: 10px;
+  }
+  
+  .late-stat-card .stat-number {
+    font-size: 18px;
+  }
+  
+  .monthly-late-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .month-penalties {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .late-summary-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .late-stat-card {
+    padding: 8px;
+  }
+  
+  .late-stat-card .stat-number {
+    font-size: 16px;
+  }
+}
+
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 /* Variables */

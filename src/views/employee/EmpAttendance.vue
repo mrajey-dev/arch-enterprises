@@ -51,6 +51,44 @@
             </div>
           </div>
 
+          <!-- Animated Working Hours Counter with Progress Bar -->
+          <div class="working-hours-counter">
+            <div class="counter-container">
+             
+              <div class="counter-content">
+                <div class="counter-header">
+                  <span class="counter-label">Total Working Hours</span>
+                  <span class="counter-status" v-if="isClockedIn">
+                    <i class="fas fa-circle pulse-dot"></i>
+                    Live
+                  </span>
+                </div>
+                <div class="counter-value-wrapper">
+                  <span class="counter-value">{{ formattedWorkingHours }}</span>
+                  <span class="counter-target">/ 8:00:00</span>
+                </div>
+                
+            
+
+                <!-- Working Hours Status Badge -->
+                <div class="working-status-badge" :class="getWorkingStatusClass">
+                  <div class="status-icon">
+                    <i :class="getWorkingStatusIcon"></i>
+                  </div>
+                  <div class="status-info">
+                    <span class="status-title">{{ getWorkingStatusText }}</span>
+                    <span class="status-description">{{ getWorkingStatusDescription }}</span>
+                  </div>
+                  <div class="status-progress-mini">
+                    <div class="mini-bar">
+                      <div class="mini-bar-fill" :style="{ width: getWorkingStatusProgress + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="attendance-table-wrapper">
             <!-- Mobile Card View -->
             <div class="mobile-attendance-cards" v-if="isMobile">
@@ -373,7 +411,11 @@ export default {
         isLate: false,
         isEarly: false,
         leaveBalance: userLeaveBalance
-      }
+      },
+      // Working hours counter properties
+      workingHoursInterval: null,
+      workingHours: 0, // in seconds
+      targetHours: 8 * 3600 // 8 hours in seconds
     }
   },
   computed: {
@@ -385,6 +427,111 @@ export default {
       if (this.isSunday) return ['OnSite', 'Traveling'];
       if (this.isMobile) return ['OnSite', 'Traveling', 'HalfDay'];
       return ['Present', 'OnSite', 'Traveling'];
+    },
+    // Check if user is currently clocked in
+    isClockedIn() {
+      return this.user.clockIn && !this.user.clockOut;
+    },
+    // Format working hours for display - updates in real-time
+    formattedWorkingHours() {
+      if (!this.user.clockIn) return '00:00:00';
+      
+      let totalSeconds = this.workingHours;
+      
+      // If clocked in and not clocked out, calculate elapsed time
+      if (this.isClockedIn) {
+        const clockInTime = this.parseTimeToDate(this.user.clockIn);
+        if (clockInTime) {
+          const now = new Date();
+          const elapsed = Math.floor((now - clockInTime) / 1000);
+          totalSeconds = Math.max(this.workingHours, elapsed);
+        }
+      }
+      
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    },
+    // Get total working hours in hours (decimal)
+    totalWorkingHours() {
+      if (!this.user.clockIn) return 0;
+      
+      let totalSeconds = this.workingHours;
+      
+      if (this.isClockedIn) {
+        const clockInTime = this.parseTimeToDate(this.user.clockIn);
+        if (clockInTime) {
+          const now = new Date();
+          const elapsed = Math.floor((now - clockInTime) / 1000);
+          totalSeconds = Math.max(this.workingHours, elapsed);
+        }
+      }
+      
+      return totalSeconds / 3600;
+    },
+    // Calculate work progress percentage
+    workProgress() {
+      if (!this.user.clockIn) return 0;
+      
+      let totalSeconds = this.workingHours;
+      
+      if (this.isClockedIn) {
+        const clockInTime = this.parseTimeToDate(this.user.clockIn);
+        if (clockInTime) {
+          const now = new Date();
+          const elapsed = Math.floor((now - clockInTime) / 1000);
+          totalSeconds = Math.max(this.workingHours, elapsed);
+        }
+      }
+      
+      const progress = (totalSeconds / this.targetHours) * 100;
+      return Math.min(progress, 100);
+    },
+    // Get progress class for color changes
+    getProgressClass() {
+      const progress = this.workProgress;
+      if (progress >= 100) return 'completed';
+      if (progress >= 75) return 'excellent';
+      if (progress >= 50) return 'good';
+      if (progress >= 25) return 'moderate';
+      return 'starting';
+    },
+    // Working Hours Status
+    getWorkingStatusClass() {
+      const hours = this.totalWorkingHours;
+      if (!this.user.clockIn) return 'not-started';
+      if (hours >= 7.5) return 'full-day';
+      if (hours >= 3) return 'half-day';
+      return 'absent';
+    },
+    getWorkingStatusText() {
+      const hours = this.totalWorkingHours;
+      if (!this.user.clockIn) return 'Not Started';
+      if (hours >= 7.5) return '✅ Full Day';
+      if (hours >= 3) return '🕒 Half Day';
+      return '❌ Absent';
+    },
+    getWorkingStatusDescription() {
+      const hours = this.totalWorkingHours;
+      if (!this.user.clockIn) return 'Clock in to start tracking';
+      if (hours >= 7.5) return `Great! You've completed ${hours.toFixed(1)} hours`;
+      if (hours >= 3) return `${hours.toFixed(1)} hours completed. Need 7.5 hours for Full Day`;
+      return `${hours.toFixed(1)} hours completed. Need at least 3 hours for Half Day`;
+    },
+    getWorkingStatusIcon() {
+      const hours = this.totalWorkingHours;
+      if (!this.user.clockIn) return 'fas fa-clock';
+      if (hours >= 7.5) return 'fas fa-check-circle';
+      if (hours >= 3) return 'fas fa-hourglass-half';
+      return 'fas fa-times-circle';
+    },
+    getWorkingStatusProgress() {
+      const hours = this.totalWorkingHours;
+      if (!this.user.clockIn) return 0;
+      if (hours >= 7.5) return 100;
+      if (hours >= 3) return ((hours - 3) / 4.5) * 100;
+      return (hours / 3) * 100;
     }
   },
   methods: {
@@ -422,8 +569,51 @@ export default {
         hour12: false
       });
     },
+    // Parse time string to Date object
+    parseTimeToDate(timeStr) {
+      if (!timeStr) return null;
+      const now = new Date();
+      const parts = timeStr.split(':').map(Number);
+      if (parts.length !== 3) return null;
+      const date = new Date(now);
+      date.setHours(parts[0], parts[1], parts[2], 0);
+      return date;
+    },
+    // Get particle style for animation
+    getParticleStyle(index) {
+      const positions = [
+        { top: '10%', left: '20%', delay: '0s' },
+        { top: '5%', left: '50%', delay: '1s' },
+        { top: '15%', left: '80%', delay: '2s' },
+        { top: '0%', left: '35%', delay: '0.5s' },
+        { top: '20%', left: '65%', delay: '1.5s' }
+      ];
+      const pos = positions[index % positions.length];
+      return {
+        top: pos.top,
+        left: pos.left,
+        animationDelay: pos.delay
+      };
+    },
     calculateActualTime(user) {
-      if (!user.clockIn || !user.clockOut) return '';
+      if (!user.clockIn || !user.clockOut) {
+        // If clocked in but not out, calculate running total
+        if (user.clockIn && !user.clockOut) {
+          const now = new Date();
+          const clockInTime = this.parseTimeToDate(user.clockIn);
+          if (clockInTime) {
+            const diffMs = now - clockInTime;
+            if (diffMs <= 0) return '00:00:00';
+            const totalSeconds = Math.floor(diffMs / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          }
+        }
+        return '';
+      }
+      
       const parseTime = (timeStr) => {
         const parts = timeStr.split(':').map(Number);
         return { hours: parts[0] || 0, minutes: parts[1] || 0, seconds: parts[2] || 0 };
@@ -442,6 +632,35 @@ export default {
       const seconds = totalSeconds % 60;
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     },
+    // Start the working hours counter with real-time updates
+    startWorkingHoursCounter() {
+      // Clear any existing interval
+      if (this.workingHoursInterval) {
+        clearInterval(this.workingHoursInterval);
+        this.workingHoursInterval = null;
+      }
+      
+      // Calculate base working hours from clockIn to now
+      if (this.user.clockIn && !this.user.clockOut) {
+        const clockInTime = this.parseTimeToDate(this.user.clockIn);
+        if (clockInTime) {
+          const now = new Date();
+          this.workingHours = Math.floor((now - clockInTime) / 1000);
+        }
+        
+        // Start interval to update every second
+        this.workingHoursInterval = setInterval(() => {
+          if (this.user.clockIn && !this.user.clockOut) {
+            // Recalculate from clockIn time to now
+            const clockInTime = this.parseTimeToDate(this.user.clockIn);
+            if (clockInTime) {
+              const now = new Date();
+              this.workingHours = Math.floor((now - clockInTime) / 1000);
+            }
+          }
+        }, 1000);
+      }
+    },
     async saveAttendance() {
       const now = new Date();
       const formattedTime = this.getCurrentTime();
@@ -451,7 +670,7 @@ export default {
       const earlyThreshold = new Date(now);
       earlyThreshold.setHours(9, 30, 0, 0);
       const lateThreshold = new Date(now);
-      lateThreshold.setHours(10, 0, 0, 0);
+      lateThreshold.setHours(9, 40, 0, 0);
       const halfDayThreshold = new Date(now);
       halfDayThreshold.setHours(13, 0, 0, 0);
       this.user.isEarly = now < earlyThreshold;
@@ -481,6 +700,9 @@ export default {
       }
       const key = `attendance_${today}_${this.user.name}`;
       localStorage.setItem(key, JSON.stringify(this.user));
+      
+      // Start the working hours counter immediately
+      this.startWorkingHoursCounter();
     },
     updateStatus() {
       if (this.user.status === 'OnSite') {
@@ -548,6 +770,18 @@ export default {
         .catch(err => console.error('Error updating punch out:', err));
       const key = `attendance_${this.currentDate}_${user.name}`;
       localStorage.setItem(key, JSON.stringify(user));
+      
+      // Stop the counter
+      if (this.workingHoursInterval) {
+        clearInterval(this.workingHoursInterval);
+        this.workingHoursInterval = null;
+      }
+      
+      // Set final working hours
+      if (user.actualTime) {
+        const parts = user.actualTime.split(':').map(Number);
+        this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+      }
     },
     async fetchTodayStatus() {
       const token = localStorage.getItem('token');
@@ -570,6 +804,17 @@ export default {
           this.user.statusLocked = false;
           const key = `attendance_${this.currentDate}_${this.user.name}`;
           localStorage.setItem(key, JSON.stringify(this.user));
+          
+          // Start counter if clocked in and not clocked out
+          if (this.user.clockIn && !this.user.clockOut) {
+            this.startWorkingHoursCounter();
+          }
+          
+          // Set working hours if already clocked out
+          if (this.user.clockOut && this.user.actualTime) {
+            const parts = this.user.actualTime.split(':').map(Number);
+            this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+          }
         } else {
           this.disableStatusSelect = false;
         }
@@ -847,6 +1092,14 @@ export default {
     const savedData = localStorage.getItem(key);
     if (savedData) {
       this.user = JSON.parse(savedData);
+      // Restore working hours from saved data
+      if (this.user.clockIn && !this.user.clockOut) {
+        this.startWorkingHoursCounter();
+      }
+      if (this.user.clockOut && this.user.actualTime) {
+        const parts = this.user.actualTime.split(':').map(Number);
+        this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+      }
     } else {
       this.fetchTodayStatus();
     }
@@ -858,6 +1111,11 @@ export default {
   
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
+    // Clean up interval
+    if (this.workingHoursInterval) {
+      clearInterval(this.workingHoursInterval);
+      this.workingHoursInterval = null;
+    }
   }
 }
 </script>
@@ -1022,6 +1280,446 @@ export default {
 
 .toggle-view-btn:active {
   transform: scale(0.95);
+}
+
+/* Animated Working Hours Counter */
+.working-hours-counter {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8faff, #f0f4ff);
+  border-bottom: 2px solid #e5e7eb;
+  position: relative;
+  overflow: hidden;
+}
+
+.working-hours-counter::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+  animation: shimmer 10s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { transform: translateX(-30%) translateY(-20%); }
+  50% { transform: translateX(30%) translateY(20%); }
+}
+
+.counter-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.counter-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--primary);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  flex-shrink: 0;
+  animation: iconPulse 3s ease-in-out infinite;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.counter-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.counter-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.counter-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.counter-status {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  background: #d1fae5;
+  border-radius: 12px;
+}
+
+.pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+  font-size: 8px;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+}
+
+.counter-value-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.counter-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.counter-target {
+  font-size: 16px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Progress Bar */
+.progress-wrapper {
+  position: relative;
+}
+
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+  position: relative;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+.progress-bar-fill.starting {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+
+.progress-bar-fill.moderate {
+  background: linear-gradient(90deg, #34d399, #10b981);
+}
+
+.progress-bar-fill.good {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.progress-bar-fill.excellent {
+  background: linear-gradient(90deg, #f472b6, #ec4899);
+}
+
+.progress-bar-fill.completed {
+  background: linear-gradient(90deg, #34d399, #10b981);
+  animation: completedPulse 2s ease-in-out infinite;
+}
+
+@keyframes completedPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.6); }
+}
+
+.progress-glow {
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: glowMove 2s ease-in-out infinite;
+}
+
+@keyframes glowMove {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-percentage {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 44px;
+  text-align: right;
+}
+
+/* Particles */
+.progress-particles {
+  position: relative;
+  height: 0;
+  overflow: visible;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  opacity: 0;
+  animation: particleFloat 3s ease-in-out infinite;
+}
+
+.particle:nth-child(1) { animation-delay: 0s; }
+.particle:nth-child(2) { animation-delay: 0.6s; }
+.particle:nth-child(3) { animation-delay: 1.2s; }
+.particle:nth-child(4) { animation-delay: 1.8s; }
+.particle:nth-child(5) { animation-delay: 2.4s; }
+
+@keyframes particleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  20% {
+    opacity: 0.8;
+    transform: translateY(-10px) scale(1);
+  }
+  80% {
+    opacity: 0.8;
+    transform: translateY(-30px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0);
+  }
+}
+
+/* Milestones */
+.milestones {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.milestone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.3;
+  transition: all 0.5s ease;
+}
+
+.milestone.achieved {
+  opacity: 1;
+}
+
+.milestone-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  transition: all 0.5s ease;
+}
+
+.milestone.achieved .milestone-dot {
+  background: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+  animation: dotPop 0.5s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@keyframes dotPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+.milestone-label {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.milestone.achieved .milestone-label {
+  color: #10b981;
+}
+
+/* Working Status Badge */
+.working-status-badge {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  transition: all 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.working-status-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.1;
+  transition: all 0.5s ease;
+}
+
+.working-status-badge.absent {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.working-status-badge.absent::before {
+  background: #ef4444;
+}
+
+.working-status-badge.half-day {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.working-status-badge.half-day::before {
+  background: #f59e0b;
+}
+
+.working-status-badge.full-day {
+  background: #f0fdf4;
+  border-color: #6ee7b7;
+}
+
+.working-status-badge.full-day::before {
+  background: #10b981;
+}
+
+.working-status-badge.not-started {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.working-status-badge.not-started::before {
+  background: #9ca3af;
+}
+
+.status-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.working-status-badge.absent .status-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.working-status-badge.half-day .status-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.working-status-badge.full-day .status-icon {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.working-status-badge.not-started .status-icon {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.status-info {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.status-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.status-description {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+.status-progress-mini {
+  width: 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.mini-bar {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.working-status-badge.absent .mini-bar-fill {
+  background: #ef4444;
+}
+
+.working-status-badge.half-day .mini-bar-fill {
+  background: #f59e0b;
+}
+
+.working-status-badge.full-day .mini-bar-fill {
+  background: #10b981;
+}
+
+.working-status-badge.not-started .mini-bar-fill {
+  background: #9ca3af;
 }
 
 /* Attendance Card */
@@ -1876,6 +2574,79 @@ export default {
     font-size: 12px;
     padding: 6px 0;
   }
+
+  /* Working Hours Counter Mobile */
+  .working-hours-counter {
+    padding: 16px;
+  }
+  
+  .counter-container {
+    gap: 12px;
+  }
+  
+  .counter-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  
+  .counter-value {
+    font-size: 24px;
+  }
+  
+  .counter-target {
+    font-size: 14px;
+  }
+  
+  .counter-label {
+    font-size: 12px;
+  }
+  
+  .counter-status {
+    font-size: 10px;
+    padding: 1px 8px;
+  }
+  
+  .progress-bar-track {
+    height: 6px;
+  }
+  
+  .progress-percentage {
+    font-size: 12px;
+    min-width: 36px;
+  }
+  
+  .milestone-label {
+    font-size: 8px;
+  }
+  
+  .milestone-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .working-status-badge {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .status-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .status-title {
+    font-size: 13px;
+  }
+
+  .status-description {
+    font-size: 11px;
+  }
+
+  .status-progress-mini {
+    width: 60px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2017,6 +2788,85 @@ export default {
   
   .clock-time {
     font-size: 12px;
+  }
+
+  /* Working Hours Counter Mobile Small */
+  .working-hours-counter {
+    padding: 12px;
+  }
+  
+  .counter-container {
+    gap: 10px;
+  }
+  
+  .counter-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .counter-value {
+    font-size: 18px;
+  }
+  
+  .counter-target {
+    font-size: 12px;
+  }
+  
+  .counter-label {
+    font-size: 10px;
+  }
+  
+  .counter-status {
+    font-size: 8px;
+    padding: 1px 6px;
+  }
+  
+  .progress-bar-track {
+    height: 5px;
+  }
+  
+  .progress-percentage {
+    font-size: 10px;
+    min-width: 30px;
+  }
+  
+  .milestones {
+    gap: 2px;
+  }
+  
+  .milestone-label {
+    font-size: 7px;
+  }
+  
+  .milestone-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .working-status-badge {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .status-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .status-title {
+    font-size: 12px;
+  }
+
+  .status-description {
+    font-size: 10px;
+  }
+
+  .status-progress-mini {
+    width: 100%;
+    margin-top: 4px;
   }
 }
 

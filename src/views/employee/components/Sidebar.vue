@@ -95,6 +95,9 @@
             <li @click="goTo('archapps')">
   <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
 </li>
+<li @click="goTo('employee/mobileapplifecycle')">
+  <i class="fas fa-mobile-alt"></i> <span>Mobile App Life Cycle</span>
+</li>
             <li 
               class="desktop-only"
               @click="goTo('employee/visitschedule')"
@@ -126,13 +129,20 @@
             <li @click="goTo('employee/viewkra')">
               <i class="fas fa-tasks"></i> <span>View KRA</span>
             </li>
+            <li @click="goTo('employee/literature')">
+            <i class="fas fa-suitcase"></i><span>Literature </span>
+            </li>
             <li @click="goTo('employee/sop')">
               <i class="fas fa-book"></i><span> SOP</span>
             </li>
             <li @click="goTo('employee/mydsi')">
               <i class="fas fa-tasks"></i><span> DSI</span>
             </li>
-            
+            <li @click="goTo('employee/spinthewheel')"
+              class="desktop-only"
+            >
+              <i class="fas fa-cogs"></i><span> Spin The Wheel</span>
+            </li>
             <li @click="goTo('employee/myprofile')">
               <i class="fa-solid fa-user"></i><span> My Profile</span>
             </li>

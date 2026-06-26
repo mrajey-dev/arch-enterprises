@@ -1047,9 +1047,7 @@
           <p>Annual Maintenance Contract</p>
           <span class="card-tag">Manage Visits</span>
         </div>
-        <div class="card-arrow">
-          <i class="fas fa-chevron-right"></i>
-        </div>
+       
       </div>
 
       <div class="po-action-card" @click="openServicePopup">
@@ -1061,9 +1059,7 @@
           <p>Service & maintenance requests</p>
           <span class="card-tag">Assign Service</span>
         </div>
-        <div class="card-arrow">
-          <i class="fas fa-chevron-right"></i>
-        </div>
+       
       </div>
 
       <div class="po-action-card" @click="openSupplyPopup">
@@ -1075,9 +1071,7 @@
           <p>Supply chain & delivery management</p>
           <span class="card-tag">Track Supply</span>
         </div>
-        <div class="card-arrow">
-          <i class="fas fa-chevron-right"></i>
-        </div>
+       
       </div>
     </div>
 
@@ -1100,10 +1094,7 @@
     </div>
 
     <!-- Footer Note -->
-    <div class="modal-footer-note">
-      <i class="fas fa-info-circle"></i>
-      <span>Select an option above to manage purchase orders</span>
-    </div>
+    
   </div>
 </div>
 </div>
@@ -7919,7 +7910,7 @@ setTimeout(() => {
 
 
 
-<style scoped>
+<<style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 .save-shipp-address{
       background-color: #d9e3e3;
@@ -8339,7 +8330,6 @@ width: 100%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   animation: modalSlideIn 0.4s ease-out;
   position: relative;
-  overflow: hidden;
 }
 
 @keyframes modalSlideIn {
@@ -8653,20 +8643,20 @@ width: 100%;
 }
 
 .service-ord {
-   background-color: #3498db; color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
+   background-color: #3498db; z-index: 9999;  color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
 }
 .service-ord:hover {
    background-color: #2679b1; color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
 }
 .amc-ord{
-   background-color: #2ecc71; color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
+   background-color: #2ecc71; z-index: 9999;color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
 }
 .amc-ord:hover{
    background-color: #209751; color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
 }
 .material-del{
 background-color: #7e2e7e;
- color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold;  border: #ffffff;  cursor: pointer;
+ color: white; z-index: 9999; overflow: scroll; padding: 8px 15px; border-radius: 6px; font-weight: bold;  border: #ffffff;  cursor: pointer;
 }
 .material-del:hover{
 background-color: #6f256f;
@@ -9370,7 +9360,6 @@ input:focus, select:focus, textarea:focus {
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-  overflow-y: auto;
   max-height: 90vh;
 }
 
@@ -9518,7 +9507,6 @@ input, select, textarea {
   padding: 20px;
   width: 450px;
   max-height: 90vh;
-  overflow-y: auto;
   border-radius: 10px;
   position: relative;
 }
@@ -10254,7 +10242,6 @@ margin-left: 8px;
   width: 80%;
   /* max-width: 700px; */
   max-height: 90vh;
-  overflow-y: auto;
   box-shadow: 0 10px 25px rgba(0,0,0,0.3);
   animation: fadeIn 0.3s ease-out;
 }
@@ -10687,7 +10674,6 @@ flex-wrap: wrap;
   animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
-  overflow: hidden;
 }
 
 .modal-card::before {
@@ -11072,6 +11058,7 @@ flex-wrap: wrap;
 
 .search-input {
   border: none;
+  color: white;
   outline: none;
   font-size: 14px;
   width: 100%;
@@ -11481,7 +11468,6 @@ h2 {
   box-shadow: 0 20px 50px rgba(0,0,0,0.2);
 
   max-height: 86vh;
-  overflow-y: auto;
 
   animation: slideDown 0.4s ease forwards;
   position: relative;
@@ -11985,7 +11971,6 @@ h2 {
   width: auto;
   /* max-width: 900px; */
   max-height: 90vh;
-  overflow-y: auto;
   border-radius: 18px;
   padding: 25px 30px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -12369,7 +12354,6 @@ justify-self: center;
 
   /* 🔽 Scroll settings */
   max-height: 90vh;
-  overflow-y: auto;
 
   border-radius: 12px;
   padding: 20px;
@@ -13281,6 +13265,7 @@ transform:scale(1.05);
 .search-input {
   border: none;
   outline: none;
+  color: white;
   flex: 1;
   font-size: 14px;
   background: transparent;
@@ -13584,7 +13569,7 @@ transform:scale(1.05);
 
 
   .search-input {
-    color: #fff;
+    color: #fff!important;
   }
 
   .search-input::placeholder {
@@ -13632,10 +13617,9 @@ transform:scale(1.05);
   background: linear-gradient(145deg, #ffffff, #f8fafc);
   border-radius: 24px;
   padding: 32px;
-  max-width: 900px;
+  /* max-width: 900px; */
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
   animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
   position: relative;
@@ -13820,7 +13804,6 @@ transform:scale(1.05);
 .po-action-card .card-content h3 {
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a2e;
   margin: 0 0 2px 0;
 }
 
@@ -13842,7 +13825,7 @@ transform:scale(1.05);
 }
 
 .po-action-card:hover .card-tag {
-  background: #e2e8f0;
+  background: #333;
 }
 
 .po-action-card .card-arrow {
@@ -14090,12 +14073,12 @@ transform:scale(1.05);
   }
 
   .po-action-card {
-    background: #334155;
+    background: #fff;
     border-color: #475569;
   }
 
   .po-action-card .card-content h3 {
-    color: #f1f5f9;
+    color: #333;
   }
 
   .po-action-card .card-content p {
@@ -14108,7 +14091,7 @@ transform:scale(1.05);
   }
 
   .po-quick-stats {
-    background: #334155;
+    background: #022557;
   }
 
   .stat-number {
@@ -14163,14 +14146,14 @@ transform:scale(1.05);
 .modal-card {
   background: #ffffff;
   width: 100%;
-  max-width: 820px;
-  max-height: 90vh;
+  max-width: 85%;
+  max-height: 85%;
   border-radius: 28px;
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
   padding: 1.5rem 1.75rem 2rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: scroll!important;
   animation: slideUp 0.3s ease;
 }
 
@@ -14499,3 +14482,4 @@ transform:scale(1.05);
   }
 }
 </style>
+>
