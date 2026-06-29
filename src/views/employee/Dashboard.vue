@@ -55,18 +55,9 @@
       <span class="progress-text">Manage customers & add PO</span>
     </div>
   </div>
-  <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/sop')">
-    <div class="card-icon crm-icon">
-      <i class="fas fa-file-alt"></i>
-    </div>
-    <div class="card-info">
-      <p class="label">SOP</p>
-      <span class="progress-text">Standard Operating Procedures</span>
-    </div>
-    </div>
+ 
     <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/viewallpo')">
-      <div class="new-tag">New</div>
-      <div class="card-icon crm-icon">
+      <div class="card-icon po-icon">
         <i class="fas fa-file-invoice"></i>
       </div>
       <div class="card-info">
@@ -75,6 +66,16 @@
       </div>
       </div>  
    
+        <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/weeklyworkingschedule')">
+      <div class="new-tag">New</div>
+      <div class="card-icon todo-icon">
+        <i class="fas fa-list-ul"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Weekly To-Do list</p>
+        <span class="progress-text">Set your weekly goal</span>
+      </div>
+      </div>
 
   <!-- Mobile Only Cards - Grouped by Category -->
   <div class="mobile-section-title">
@@ -1290,6 +1291,9 @@ export default {
 .mentions-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
 .visits-icon { background: linear-gradient(135deg, #f97316, #ea580c); }
 .crm-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.po-icon { background: linear-gradient(135deg, #c023d1, #a51ab4); }
+.todo-icon { background: linear-gradient(135deg, #2b2b2a, #686866); }
+
 .calendar-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .balance-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .visit-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }

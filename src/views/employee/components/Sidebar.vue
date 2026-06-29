@@ -92,6 +92,9 @@
               <i class="fas fa-chalkboard-teacher"></i>
               <span>ETP Session</span>  
             </li>
+            <li @click="goTo('employee/weeklyworkingschedule')">
+              <i class="fas fa-chalkboard-teacher"></i><span>My Weekly Schedule</span>
+            </li>
             <li @click="goTo('archapps')">
   <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
 </li>

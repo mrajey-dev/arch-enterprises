@@ -394,7 +394,7 @@ export default {
 
 /* Variables */
 :root {
-  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
   --primary-color: #667eea;
   --dark: #1a1a2e;
   --success: #10b981;
@@ -410,7 +410,7 @@ export default {
 
 .layout {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  /* background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%); */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 

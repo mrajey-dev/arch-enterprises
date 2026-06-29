@@ -1117,7 +1117,7 @@
 
 /* Variables */
 :root {
-  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
   --primary-color: #667eea;
   --dark: #1a1a2e;
   --success: #10b981;
@@ -1307,7 +1307,7 @@
 }
 
 .total-summary-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 28px;

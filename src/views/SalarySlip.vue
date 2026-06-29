@@ -1179,7 +1179,7 @@ export default {
 
 /* Variables and Base Styles (same as before) */
 :root {
-  --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
   --primary-color: #667eea;
   --secondary-color: #10b981;
   --dark: #1a1a2e;
@@ -1533,7 +1533,7 @@ export default {
 }
 
 .salary-slip-premium.arch-enterprises-theme .top-accent {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
 }
 
 .salary-slip-premium.arch-it-solutions-theme .top-accent {

@@ -71,8 +71,8 @@ import Help from '../views/employee/Help.vue'
 import QuotationReport from '../views/QuotationReport.vue';
 import SalaryAdvances from '../views/SalaryAdvances.vue';
 import MySalaryAdvances from '../views/employee/MySalaryAdvances.vue';
-import MyProfile from '../views/employee/MyProfile.vue'
-
+import MyProfile from '../views/employee/MyProfile.vue';
+import WeeklyWorkingSchedule from '../views/employee/WeeklyWorkingSchedule.vue';
 
 
 
@@ -183,7 +183,7 @@ const routes = [
   // ───── EMPLOYEE SECTION ─────
   { path: '/employee/dashboard', name: 'EmployeeDashboard', component: EmployeeDashboard, meta: { requiresAuth: true } },
   { path: '/employee/mytask', name: 'MyTask', component: MyTask, meta: { requiresAuth: true } },
-
+{ path : '/employee/weeklyworkingschedule', name: 'WeeklyWorkingSchedule', component: WeeklyWorkingSchedule, meta: {requiresAuth: true} },
   { path: '/employee/applyleave', name: 'ApplyLeave', component: ApplyLeave, meta: { requiresAuth: true } },
   { path: '/employee/viewannouncement', name: 'ViewAnnouncement', component: ViewAnnouncement, meta: { requiresAuth: true } },
 
