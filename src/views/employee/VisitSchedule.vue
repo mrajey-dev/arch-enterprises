@@ -1031,7 +1031,7 @@ export default {
 }
 
 .view-report-btn:hover {
-  background: var(--primary-color);
+ background: #aaacb3;
   color: white;
 }
 

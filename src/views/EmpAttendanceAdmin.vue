@@ -19,6 +19,9 @@
             <button class="mobile-action-btn secondary" @click="showPopupsalary = true">
               <i class="fas fa-calculator"></i>
             </button>
+            <button class="mobile-action-btn tertiary" @click="openDatePickerModal">
+              <i class="fas fa-calendar-day"></i>
+            </button>
           </div>
         </div>
 
@@ -42,6 +45,7 @@
               <i class="fas fa-calculator"></i>
               <span>Calculate Salary</span>
             </button>
+           
           </div>
         </div>
 
@@ -50,7 +54,7 @@
           <div class="stat-card desktop-only" @click="filterByStatus('all')">
             <i class="fas fa-users"></i>
             <div class="stat-info">
-              <span class="stat-value">{{ attendanceRecords.length }}</span>
+              <span class="stat-value">{{ displayRecords.length }}</span>
               <span class="stat-label">Total</span>
             </div>
           </div>
@@ -71,14 +75,26 @@
           </div>
         </div>
 
-        <!-- Current Date -->
-        <div class="current-date-badge">
-          <i class="fas fa-calendar-day"></i>
-          <span>{{ currentDate }}</span>
+        <!-- Date Navigation -->
+        <div class="date-navigation-main">
+          <button @click="changeDisplayDate(-1)" class="nav-date-btn">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="current-date-display" @click="openDatePickerModal">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{{ displayDateFormatted }}</span>
+          </div>
+          <button @click="changeDisplayDate(1)" class="nav-date-btn">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <button @click="goToTodayDisplay" class="nav-date-btn today-btn">
+            <i class="fas fa-calendar-day"></i>
+            <span>Today</span>
+          </button>
         </div>
 
         <!-- Search - Mobile -->
-        <div class="search-bar-mobile" v-if="isMobile && attendanceRecords.length > 0">
+        <div class="search-bar-mobile" v-if="isMobile && displayRecords.length > 0">
           <div class="search-group-mobile">
             <i class="fas fa-search"></i>
             <input type="text" v-model="searchQuery" placeholder="Search employees..." class="search-input-mobile" />
@@ -92,7 +108,7 @@
               <div class="title-left">
                 <i class="fas fa-list-ul"></i>
                 <span>Attendance Records</span>
-                <span class="record-count-mobile" v-if="isMobile">{{ filteredRecords.length }}</span>
+                <span class="record-count-mobile" v-if="isMobile">{{ filteredDisplayRecords.length }}</span>
               </div>
             </div>
             <div class="table-info desktop-only">
@@ -103,7 +119,7 @@
 
           <!-- Mobile Card View -->
           <div class="mobile-cards" v-if="isMobile">
-            <div v-for="record in filteredRecords" :key="record.id" class="attendance-card">
+            <div v-for="record in filteredDisplayRecords" :key="record.id" class="attendance-card">
               <div class="card-header">
                 <div class="employee-info-card">
                   <div class="employee-avatar">
@@ -147,10 +163,10 @@
             </div>
 
             <!-- Mobile Empty State -->
-            <div v-if="filteredRecords.length === 0" class="empty-state-mobile">
+            <div v-if="filteredDisplayRecords.length === 0" class="empty-state-mobile">
               <i class="fas fa-calendar-times"></i>
               <h4>{{ searchQuery ? 'No Matching Records' : 'No Attendance Records' }}</h4>
-              <p>{{ searchQuery ? 'Try adjusting your search' : 'No attendance data found for today' }}</p>
+              <p>{{ searchQuery ? 'Try adjusting your search' : 'No attendance data found for ' + displayDateFormatted }}</p>
             </div>
           </div>
 
@@ -168,7 +184,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="record in filteredRecords" :key="record.id">
+                <tr v-for="record in filteredDisplayRecords" :key="record.id">
                   <td class="employee-cell">
                     <div class="employee-info">
                       <div class="employee-avatar">
@@ -198,12 +214,12 @@
                   <td class="time-cell">{{ record.required_time || '—' }}</td>
                   <td class="time-cell">{{ record.actual_time || '—' }}</td>
                 </tr>
-                <tr v-if="filteredRecords.length === 0" class="empty-row">
+                <tr v-if="filteredDisplayRecords.length === 0" class="empty-row">
                   <td colspan="6">
                     <div class="empty-state-premium">
                       <i class="fas fa-calendar-times"></i>
                       <h4>No Attendance Records</h4>
-                      <p>No attendance data found for today</p>
+                      <p>No attendance data found for {{ displayDateFormatted }}</p>
                     </div>
                   </td>
                 </tr>
@@ -338,6 +354,214 @@
         </div>
       </section>
     </div>
+
+    <!-- Attendance by Date Modal -->
+    <transition name="modal-fade">
+      <div v-if="showDatePickerModal" class="modal-backdrop" @click.self="showDatePickerModal = false">
+        <div class="premium-modal yesterday-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
+          <div class="modal-decoration"></div>
+          
+          <div class="modal-header-premium">
+            <div class="header-icon-premium yesterday-icon">
+              <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="header-text">
+              <h2>Attendance Details</h2>
+              <p>View attendance for any date</p>
+            </div>
+            <button class="close-btn-premium" @click="showDatePickerModal = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="modal-body-premium">
+            <!-- Date Navigation -->
+            <div class="date-navigation-modal">
+              <button @click="changeModalDate(-1)" class="nav-btn-modal">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <div class="date-display-modal" @click="showDatePickerInput">
+                <i class="fas fa-calendar-alt"></i>
+                <span>{{ modalDateFormatted }}</span>
+              </div>
+              <button @click="changeModalDate(1)" class="nav-btn-modal">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+              <button @click="goToTodayModal" class="nav-btn-modal today-btn-modal">
+                <i class="fas fa-calendar-day"></i> Today
+              </button>
+            </div>
+
+            <!-- Hidden Date Input -->
+            <input 
+              type="date" 
+              ref="datePickerInput"
+              v-model="modalSelectedDate" 
+              @change="fetchModalAttendanceByDate" 
+              class="date-picker-input-hidden"
+              :max="today"
+            />
+
+            <!-- Loading State -->
+            <div v-if="modalLoading" class="loading-state">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Loading attendance...</p>
+            </div>
+
+            <!-- Summary Stats -->
+            <div v-else-if="modalAttendanceData.length > 0" class="stats-summary-modal">
+              <div class="stat-item">
+                <span class="stat-number">{{ modalAttendanceData.length }}</span>
+                <span class="stat-label">Total Employees</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">{{ modalAttendanceData.filter(r => r.status === 'Present').length }}</span>
+                <span class="stat-label">Present</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">{{ modalAttendanceData.filter(r => r.is_late).length }}</span>
+                <span class="stat-label">Late</span>
+              </div>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div v-else-if="isMobile" class="mobile-cards">
+              <div v-for="record in modalAttendanceData" :key="record.id || record.name" class="attendance-card">
+                <div class="card-header">
+                  <div class="employee-info-card">
+                    <div class="employee-avatar">
+                      {{ getInitials(record.name) }}
+                    </div>
+                    <span class="employee-name">{{ record.name }}</span>
+                  </div>
+                  <span :class="['status-badge-mobile', getStatusClass(record.status)]">
+                    <i :class="getStatusIcon(record.status)"></i>
+                    {{ record.status || 'Not Marked' }}
+                  </span>
+                </div>
+                <div class="card-body">
+                  <div class="card-row">
+                    <span class="card-label"><i class="fas fa-clock"></i> Clock In</span>
+                    <span class="card-value">
+                      <span v-if="record.clock_in" class="clock-in-time">
+                        <i class="fas fa-sign-in-alt"></i> {{ formatTime(record.clock_in) }}
+                      </span>
+                      <span v-else>—</span>
+                    </span>
+                  </div>
+                  <div class="card-row">
+                    <span class="card-label"><i class="fas fa-clock"></i> Clock Out</span>
+                    <span class="card-value">
+                      <span v-if="record.clock_out" class="clock-out-time">
+                        <i class="fas fa-sign-out-alt"></i> {{ formatTime(record.clock_out) }}
+                      </span>
+                      <span v-else>—</span>
+                    </span>
+                  </div>
+                  <div class="card-row">
+                    <span class="card-label"><i class="fas fa-hourglass-end"></i> Actual Time</span>
+                    <span class="card-value actual-time">{{ record.actual_time || '—' }}</span>
+                  </div>
+                  <div class="card-row" v-if="record.status === 'Present'">
+                    <span class="card-label"></span>
+                    <span v-if="record.is_late" class="late-warning-mobile">
+                      <i class="fas fa-exclamation-triangle"></i> Late Arrival
+                    </span>
+                    <span v-else-if="record.clock_in" class="early-info-mobile">
+                      <i class="fas fa-check-circle"></i> On Time
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div v-if="modalAttendanceData.length === 0" class="empty-state-mobile">
+                <i class="fas fa-calendar-times"></i>
+                <h4>No Records</h4>
+                <p>No attendance data found for {{ modalDateFormatted }}</p>
+              </div>
+            </div>
+
+            <!-- Desktop Table -->
+            <div v-else class="table-container">
+              <table class="attendance-table-premium">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Status</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Actual Time</th>
+                    <th>Late</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="record in modalAttendanceData" :key="record.id || record.name">
+                    <td class="employee-cell">
+                      <div class="employee-info">
+                        <div class="employee-avatar">
+                          {{ getInitials(record.name) }}
+                        </div>
+                        <span class="employee-name">{{ record.name }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span :class="['status-badge-premium', getStatusClass(record.status)]">
+                        <i :class="getStatusIcon(record.status)"></i>
+                        {{ record.status || 'Not Marked' }}
+                      </span>
+                    </td>
+                    <td class="time-cell">
+                      <span v-if="record.clock_in" class="clock-in-time">
+                        {{ formatTime(record.clock_in) }}
+                      </span>
+                      <span v-else class="no-time">—</span>
+                    </td>
+                    <td class="time-cell">
+                      <span v-if="record.clock_out" class="clock-out-time">
+                        {{ formatTime(record.clock_out) }}
+                      </span>
+                      <span v-else class="no-time">—</span>
+                    </td>
+                    <td class="time-cell">
+                      <span v-if="record.actual_time" class="actual-time-value">
+                        {{ record.actual_time }}
+                      </span>
+                      <span v-else class="no-time">—</span>
+                    </td>
+                    <td>
+                      <template v-if="record.status === 'Present'">
+                        <span v-if="record.is_late" class="late-warning">
+                          <i class="fas fa-exclamation-triangle"></i> Yes
+                        </span>
+                        <span v-else-if="record.clock_in" class="early-info">
+                          <i class="fas fa-check-circle"></i> No
+                        </span>
+                        <span v-else class="no-time">—</span>
+                      </template>
+                      <span v-else class="no-time">—</span>
+                    </td>
+                  </tr>
+                  <tr v-if="modalAttendanceData.length === 0" class="empty-row">
+                    <td colspan="6">
+                      <div class="empty-state-premium">
+                        <i class="fas fa-calendar-times"></i>
+                        <h4>No Attendance Records</h4>
+                        <p>No attendance data found for {{ modalDateFormatted }}</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
+            <button class="btn-submit-premium" @click="showDatePickerModal = false">
+              <i class="fas fa-check"></i> Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- Mark Attendance Modal - Mobile Optimized -->
     <transition name="modal-fade">
@@ -739,6 +963,20 @@ export default {
       showPopupsalary: false,
       showPopup: false,
       showLateMarksModal: false,
+      showDatePickerModal: false,
+      
+      // Main display data
+      displayDate: '',
+      displayDateFormatted: '',
+      displayRecords: [],
+      displayLoading: false,
+      
+      // Modal data
+      modalAttendanceData: [],
+      modalLoading: false,
+      modalSelectedDate: '',
+      modalDateFormatted: '',
+      
       scoreSaved: false,
       selectedEmployee: null,
       employeeMonthlyData: [],
@@ -758,6 +996,7 @@ export default {
       },
       employees: [],
       attendanceRecords: [],
+      allAttendanceCache: [],
       salaryPopup: {
         show: false,
         employeeName: '',
@@ -773,7 +1012,6 @@ export default {
       },
       attendanceByMonth: {},
       holidays: [],
-      // Late marks data
       lateMarksData: [],
       monthlyLateSummary: [],
       totalLateMarks: 0,
@@ -784,29 +1022,27 @@ export default {
   },
   computed: {
     presentCount() {
-      return this.attendanceRecords.filter(r => r.status === 'Present').length
+      return this.displayRecords.filter(r => r.status === 'Present').length
     },
     lateCount() {
-      return this.attendanceRecords.filter(r => r.isLate === true).length
+      return this.displayRecords.filter(r => r.isLate === true).length
     },
     lastUpdated() {
       return new Date().toLocaleTimeString()
     },
-    filteredRecords() {
-      let filtered = this.attendanceRecords;
+    filteredDisplayRecords() {
+      let filtered = this.displayRecords;
       
-      // Status filter
       if (this.statusFilter === 'Present') {
         filtered = filtered.filter(r => r.status === 'Present');
       } else if (this.statusFilter === 'Late') {
         filtered = filtered.filter(r => r.isLate === true);
       }
       
-      // Search filter
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         filtered = filtered.filter(r => 
-          r.name.toLowerCase().includes(query)
+          r.name && r.name.toLowerCase().includes(query)
         );
       }
       
@@ -827,6 +1063,26 @@ export default {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       })
+    },
+    formatTime(time) {
+      if (!time) return '—';
+      if (time.match(/^\d{2}:\d{2}:\d{2}$/)) {
+        return time;
+      }
+      try {
+        const date = new Date(`2000-01-01 ${time}`);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+        }
+      } catch (e) {
+        return time;
+      }
+      return time;
     },
     getStatusClass(status) {
       if (!status) return ''
@@ -854,7 +1110,6 @@ export default {
         default: return 'fas fa-tag'
       }
     },
-    // LATE THRESHOLD: 9:40 AM (matches backend)
     isLate(clockIn) {
       if (!clockIn) return false
       const lateThreshold = new Date()
@@ -901,6 +1156,288 @@ export default {
       const seconds = totalSeconds % 60
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
     },
+    
+    // Main Display Date Methods
+    changeDisplayDate(days) {
+      const date = new Date(this.displayDate);
+      date.setDate(date.getDate() + days);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      this.displayDate = `${year}-${month}-${day}`;
+      this.fetchDisplayAttendance();
+    },
+    goToTodayDisplay() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      this.displayDate = `${year}-${month}-${day}`;
+      this.fetchDisplayAttendance();
+    },
+    async fetchDisplayAttendance() {
+      if (!this.displayDate) return;
+      
+      this.displayLoading = true;
+      try {
+        const dateObj = new Date(this.displayDate);
+        this.displayDateFormatted = dateObj.toLocaleDateString('en-IN', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        // Try main API first
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance');
+        const allRecords = response.data || [];
+        
+        const filteredRecords = allRecords.filter(record => {
+          if (!record.date) return false;
+          let recordDate = record.date;
+          if (recordDate.includes('T')) {
+            recordDate = recordDate.split('T')[0];
+          }
+          if (recordDate.includes(' ')) {
+            recordDate = recordDate.split(' ')[0];
+          }
+          if (recordDate.includes('/')) {
+            const parts = recordDate.split('/');
+            recordDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+          }
+          return recordDate === this.displayDate;
+        });
+        
+        this.displayRecords = filteredRecords.map(record => ({
+          name: record.name || 'Unknown',
+          status: record.status || 'Not Marked',
+          is_late: record.is_late || false,
+          clock_in: record.clock_in || null,
+          clock_out: record.clock_out || null,
+          actual_time: record.actual_time || null,
+          date: record.date,
+          id: record.id
+        }));
+        
+        // If no records found, try monthly API
+        if (this.displayRecords.length === 0) {
+          await this.fetchDisplayAttendanceFromMonthly();
+        }
+        
+      } catch (error) {
+        console.error('Error fetching display attendance:', error);
+      } finally {
+        this.displayLoading = false;
+      }
+    },
+    async fetchDisplayAttendanceFromMonthly() {
+      try {
+        const token = localStorage.getItem('token');
+        const dateParts = this.displayDate.split('-');
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]);
+        
+        if (this.employees.length === 0) {
+          await this.fetchAllEmployees();
+        }
+        
+        const employeeNames = this.employees.map(emp => emp.name);
+        const allRecords = [];
+        
+        const promises = employeeNames.map(name => 
+          axios.get(
+            `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(name)}?month=${month}&year=${year}`,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).catch(() => ({ data: { data: [] } }))
+        );
+        
+        const results = await Promise.all(promises);
+        
+        results.forEach((response, index) => {
+          if (response.data && response.data.data) {
+            const monthlyData = response.data.data;
+            const dayRecords = monthlyData.filter(record => {
+              if (!record.date) return false;
+              let recordDate = record.date;
+              if (recordDate.includes('T')) {
+                recordDate = recordDate.split('T')[0];
+              }
+              if (recordDate.includes(' ')) {
+                recordDate = recordDate.split(' ')[0];
+              }
+              return recordDate === this.displayDate;
+            });
+            
+            dayRecords.forEach(record => {
+              allRecords.push({
+                name: employeeNames[index] || 'Unknown',
+                status: record.status || 'Not Marked',
+                is_late: record.is_late || false,
+                clock_in: record.clock_in || null,
+                clock_out: record.clock_out || null,
+                actual_time: record.actual_time || null,
+                date: record.date,
+                id: record.id
+              });
+            });
+          }
+        });
+        
+        this.displayRecords = allRecords;
+      } catch (error) {
+        console.error('Error fetching from monthly API:', error);
+      }
+    },
+    
+    // Modal Methods
+    openDatePickerModal() {
+      this.showDatePickerModal = true;
+      this.modalSelectedDate = this.displayDate;
+      this.modalDateFormatted = this.displayDateFormatted;
+      this.fetchModalAttendanceByDate();
+    },
+    showDatePickerInput() {
+      this.$refs.datePickerInput.click();
+    },
+    changeModalDate(days) {
+      const date = new Date(this.modalSelectedDate);
+      date.setDate(date.getDate() + days);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      this.modalSelectedDate = `${year}-${month}-${day}`;
+      this.fetchModalAttendanceByDate();
+    },
+    goToTodayModal() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      this.modalSelectedDate = `${year}-${month}-${day}`;
+      this.fetchModalAttendanceByDate();
+    },
+    async fetchModalAttendanceByDate() {
+      if (!this.modalSelectedDate) return;
+      
+      this.modalLoading = true;
+      try {
+        const dateObj = new Date(this.modalSelectedDate);
+        this.modalDateFormatted = dateObj.toLocaleDateString('en-IN', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance');
+        const allRecords = response.data || [];
+        
+        const filteredRecords = allRecords.filter(record => {
+          if (!record.date) return false;
+          let recordDate = record.date;
+          if (recordDate.includes('T')) {
+            recordDate = recordDate.split('T')[0];
+          }
+          if (recordDate.includes(' ')) {
+            recordDate = recordDate.split(' ')[0];
+          }
+          if (recordDate.includes('/')) {
+            const parts = recordDate.split('/');
+            recordDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+          }
+          return recordDate === this.modalSelectedDate;
+        });
+        
+        this.modalAttendanceData = filteredRecords.map(record => ({
+          name: record.name || 'Unknown',
+          status: record.status || 'Not Marked',
+          is_late: record.is_late || false,
+          clock_in: record.clock_in || null,
+          clock_out: record.clock_out || null,
+          actual_time: record.actual_time || null,
+          date: record.date,
+          id: record.id
+        }));
+        
+        if (this.modalAttendanceData.length === 0) {
+          await this.fetchModalAttendanceFromMonthly();
+        }
+        
+      } catch (error) {
+        console.error('Error fetching modal attendance:', error);
+      } finally {
+        this.modalLoading = false;
+      }
+    },
+    async fetchModalAttendanceFromMonthly() {
+      try {
+        const token = localStorage.getItem('token');
+        const dateParts = this.modalSelectedDate.split('-');
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]);
+        
+        if (this.employees.length === 0) {
+          await this.fetchAllEmployees();
+        }
+        
+        const employeeNames = this.employees.map(emp => emp.name);
+        const allRecords = [];
+        
+        const promises = employeeNames.map(name => 
+          axios.get(
+            `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(name)}?month=${month}&year=${year}`,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).catch(() => ({ data: { data: [] } }))
+        );
+        
+        const results = await Promise.all(promises);
+        
+        results.forEach((response, index) => {
+          if (response.data && response.data.data) {
+            const monthlyData = response.data.data;
+            const dayRecords = monthlyData.filter(record => {
+              if (!record.date) return false;
+              let recordDate = record.date;
+              if (recordDate.includes('T')) {
+                recordDate = recordDate.split('T')[0];
+              }
+              if (recordDate.includes(' ')) {
+                recordDate = recordDate.split(' ')[0];
+              }
+              return recordDate === this.modalSelectedDate;
+            });
+            
+            dayRecords.forEach(record => {
+              allRecords.push({
+                name: employeeNames[index] || 'Unknown',
+                status: record.status || 'Not Marked',
+                is_late: record.is_late || false,
+                clock_in: record.clock_in || null,
+                clock_out: record.clock_out || null,
+                actual_time: record.actual_time || null,
+                date: record.date,
+                id: record.id
+              });
+            });
+          }
+        });
+        
+        this.modalAttendanceData = allRecords;
+      } catch (error) {
+        console.error('Error fetching modal from monthly API:', error);
+      }
+    },
+    
     async submitMarkedAttendance() {
       if (!this.markAttendance.employee || !this.markAttendance.status || !this.markAttendance.date) {
         toastWarning('Please fill all required fields')
@@ -919,7 +1456,8 @@ export default {
         toastSuccess('Attendance saved successfully')
         this.showMarkAttendancePopup = false
         this.markAttendance = { employee: '', status: '', date: '', time: '', site_name: '', travel_from: '', travel_to: '' }
-        this.fetchAttendance()
+        this.fetchAllEmployees()
+        this.fetchDisplayAttendance()
         this.fetchLateMarksSummary()
       } catch (error) {
         console.error('Error saving attendance:', error)
@@ -943,7 +1481,11 @@ export default {
     async fetchAttendance() {
       try {
         const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance')
-        this.attendanceRecords = response.data.filter(record => record.status?.trim()?.toUpperCase() !== 'N/A')
+        const records = response.data.filter(record => {
+          return record.name && record.name.trim() !== '';
+        });
+        this.attendanceRecords = records
+        this.allAttendanceCache = records
       } catch (error) {
         console.error('Error fetching attendance:', error)
       }
@@ -955,7 +1497,6 @@ export default {
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth() + 1;
         
-        // If no employees, return
         if (this.employees.length === 0) {
           this.lateMarksLoading = false;
           return;
@@ -966,102 +1507,68 @@ export default {
         let totalLate = 0;
         let totalPenalties = 0;
         let totalPenaltyAmt = 0;
-        let allMonthlySummary = [];
         
-        // Fetch late marks for each employee for the current month
-        for (const name of employeeNames) {
-          try {
-            // First try to get current month's late marks
-            const response = await axios.get(
-              `https://employees.archenterprises.co.in/api/api/attendance/late-marks`,
-              {
-                params: {
-                  name: name,
-                  month: currentMonth,
-                  year: currentYear
-                },
-                headers: { 
-                  Authorization: `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
+        const promises = employeeNames.map(name => 
+          axios.get(
+            `https://employees.archenterprises.co.in/api/api/attendance/late-marks`,
+            {
+              params: {
+                name: name,
+                month: currentMonth,
+                year: currentYear
+              },
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
               }
-            );
+            }
+          ).catch(() => ({ data: { success: false } }))
+        );
+        
+        const results = await Promise.all(promises);
+        
+        results.forEach((response, index) => {
+          if (response.data && response.data.success) {
+            const data = response.data.data;
+            const lateCount = data.late_count || 0;
             
-            console.log(`Late marks for ${name}:`, response.data);
-            
-            if (response.data && response.data.success) {
-              const data = response.data.data;
-              const lateCount = data.late_count || 0;
+            if (lateCount > 0) {
+              const penaltiesCalculated = Math.floor(lateCount / 3);
+              const penaltiesApplied = data.penalties_applied || 0;
+              const penaltyAmount = data.penalty_amount_applied || 0;
               
-              // Always include employees with late marks, even if 0 (for debugging)
-              if (lateCount > 0) {
-                const penaltiesCalculated = Math.floor(lateCount / 3);
-                const penaltiesApplied = data.penalties_applied || 0;
-                const penaltyAmount = data.penalty_amount_applied || 0;
-                
-                lateData.push({
-                  name: name,
-                  late_count: lateCount,
-                  penalties_applied: penaltiesApplied,
-                  penalty_amount: penaltyAmount,
-                  pending_penalties: Math.max(0, penaltiesCalculated - penaltiesApplied)
-                });
-                
-                totalLate += lateCount;
-                totalPenalties += penaltiesApplied;
-                totalPenaltyAmt += penaltyAmount;
-              }
+              lateData.push({
+                name: employeeNames[index],
+                late_count: lateCount,
+                penalties_applied: penaltiesApplied,
+                penalty_amount: penaltyAmount,
+                pending_penalties: Math.max(0, penaltiesCalculated - penaltiesApplied)
+              });
+              
+              totalLate += lateCount;
+              totalPenalties += penaltiesApplied;
+              totalPenaltyAmt += penaltyAmount;
             }
-          } catch (e) {
-            console.error(`Error fetching late marks for ${name}:`, e);
           }
-        }
-        
-        // If we have data, also fetch yearly summary for the modal
-        if (lateData.length > 0) {
-          try {
-            const summaryResponse = await axios.get(
-              `https://employees.archenterprises.co.in/api/api/attendance/late-marks-summary`,
-              {
-                params: {
-                  name: this.employees[0]?.name || '',
-                  year: currentYear
-                },
-                headers: { 
-                  Authorization: `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              }
-            );
-            
-            if (summaryResponse.data && summaryResponse.data.success) {
-              const data = summaryResponse.data.data;
-              if (data.monthly_summary) {
-                allMonthlySummary = Object.values(data.monthly_summary);
-                // Update totals from summary
-                totalLate = data.total_late_marks || totalLate;
-                totalPenalties = data.total_penalties_applied || totalPenalties;
-                totalPenaltyAmt = data.total_penalty_amount || totalPenaltyAmt;
-              }
-            }
-          } catch (e) {
-            console.error('Error fetching summary:', e);
-          }
-        }
+        });
         
         this.lateMarksData = lateData;
-        this.monthlyLateSummary = allMonthlySummary;
         this.totalLateMarks = totalLate;
         this.totalPenaltiesApplied = totalPenalties;
         this.totalPenaltyAmount = totalPenaltyAmt;
         
-        console.log('Late Marks Data:', {
-          lateData: this.lateMarksData,
-          totalLate: this.totalLateMarks,
-          totalPenalties: this.totalPenaltiesApplied,
-          totalPenaltyAmount: this.totalPenaltyAmount,
-          monthlySummary: this.monthlyLateSummary
-        });
+        if (lateData.length > 0) {
+          this.monthlyLateSummary = [{
+            month: currentMonth,
+            month_name: this.getMonthName(currentMonth - 1),
+            late_count: totalLate,
+            penalties_applied: totalPenalties,
+            penalty_amount: totalPenaltyAmt,
+            pending_penalties: lateData.reduce((sum, item) => sum + item.pending_penalties, 0)
+          }];
+        } else {
+          this.monthlyLateSummary = [];
+        }
         
         this.lateMarksLoading = false;
       } catch (error) {
@@ -1237,11 +1744,12 @@ export default {
     const mm = String(now.getMonth() + 1).padStart(2, '0')
     const dd = String(now.getDate()).padStart(2, '0')
     this.today = `${yyyy}-${mm}-${dd}`
+    this.displayDate = this.today
     this.markAttendance.date = this.today
-    this.currentDate = this.formatDate(new Date())
+    this.currentDate = this.formatDate(now)
     this.fetchAllEmployees()
     this.fetchAttendance()
-    // Wait for employees to load before fetching late marks
+    this.fetchDisplayAttendance()
     setTimeout(() => {
       this.fetchLateMarksSummary()
     }, 500)
@@ -1256,8 +1764,188 @@ export default {
 }
 </script>
 
-
 <style scoped>
+/* Date Navigation Main Styles */
+.date-navigation-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+}
+
+.nav-date-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nav-date-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+.nav-date-btn:active {
+  transform: scale(0.95);
+}
+
+.nav-date-btn.today-btn {
+  width: auto;
+  padding: 0 16px;
+  border-radius: 20px;
+  gap: 6px;
+  background: var(--primary);
+  color: white;
+}
+
+.nav-date-btn.today-btn:hover {
+  background: #7c3aed;
+}
+
+.current-date-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--dark);
+  min-width: 200px;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.current-date-display:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.current-date-display i {
+  color: var(--primary-color);
+}
+
+/* Date Navigation Modal Styles */
+.date-navigation-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.nav-btn-modal {
+  padding: 8px 12px;
+  border: none;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nav-btn-modal:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.nav-btn-modal.today-btn-modal {
+  background: var(--primary);
+  color: white;
+}
+
+.nav-btn-modal.today-btn-modal:hover {
+  background: #7c3aed;
+}
+
+.date-display-modal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--dark);
+  min-width: 180px;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.date-display-modal:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.date-display-modal i {
+  color: var(--primary-color);
+}
+
+.date-picker-input-hidden {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Stats Summary Modal */
+.stats-summary-modal {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-item .stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-item .stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Rest of existing styles... */
 .late-marks-summary-wrapper {
   margin-top: 24px;
   border: 1px solid #e5e7eb;
@@ -1463,7 +2151,566 @@ export default {
   color: #065f46;
 }
 
-/* Late Marks Modal Styles */
+.warning-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+}
+
+.late-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.late-stat-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.late-stat-card .stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.late-stat-card .stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.monthly-late-list {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.monthly-late-list h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+}
+
+.monthly-late-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.monthly-late-item:last-child {
+  border-bottom: none;
+}
+
+.month-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.month-name {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.month-count {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.month-penalties {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.penalty-applied {
+  color: #dc2626;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pending-penalty {
+  color: #d97706;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.month-penalties .no-penalty {
+  font-size: 12px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mobile-late-cards {
+    display: flex;
+  }
+  
+  .late-summary-stats {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .late-stat-card {
+    padding: 10px;
+  }
+  
+  .late-stat-card .stat-number {
+    font-size: 18px;
+  }
+  
+  .monthly-late-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .month-penalties {
+    flex-wrap: wrap;
+  }
+  
+  .date-navigation-main {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  
+  .current-date-display {
+    min-width: 120px;
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .nav-date-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  .nav-date-btn.today-btn {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  
+  .date-navigation-modal {
+    gap: 8px;
+  }
+  
+  .date-display-modal {
+    min-width: 120px;
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .nav-btn-modal {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .stats-summary-modal {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  
+  .stat-item .stat-number {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .late-summary-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .late-stat-card {
+    padding: 8px;
+  }
+  
+  .late-stat-card .stat-number {
+    font-size: 16px;
+  }
+  
+  .date-navigation-main {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .current-date-display {
+    min-width: 100px;
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+  
+  .date-navigation-modal {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .date-display-modal {
+    min-width: 100px;
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+  
+  .stats-summary-modal {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Add tertiary button styles */
+.register-btn-modern.tertiary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.register-btn-modern.tertiary:hover {
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+}
+
+.mobile-action-btn.tertiary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.yesterday-icon {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.loading-state i {
+  font-size: 36px;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+}
+
+.loading-state p {
+  font-size: 14px;
+}
+
+.yesterday-modal .modal-body-premium {
+  max-height: 60vh;
+}
+
+.clock-in-time {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.clock-out-time {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.actual-time-value {
+  color: #8b5cf6;
+  font-weight: 600;
+}
+
+.no-time {
+  color: #9ca3af;
+}
+
+.clock-in-time i, .clock-out-time i {
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+/* Import Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+
+:root {
+  --primary: linear-gradient(135deg, #667eea 0%, #7c3aed 100%);
+  --primary-color: #667eea;
+  --dark: #1a1a2e;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+}
+.register-btn-modern.tertiary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.register-btn-modern.tertiary:hover {
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+}
+
+.mobile-action-btn.tertiary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+/* Yesterday's Attendance Modal Styles */
+.yesterday-icon {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.loading-state i {
+  font-size: 36px;
+  color: var(--primary-color);
+  margin-bottom: 12px;
+}
+
+.loading-state p {
+  font-size: 14px;
+}
+
+.yesterday-modal .modal-body-premium {
+  max-height: 60vh;
+}
+
+/* Clock time styles */
+.clock-in-time {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.clock-out-time {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.actual-time-value {
+  color: #8b5cf6;
+  font-weight: 600;
+}
+
+.no-time {
+  color: #9ca3af;
+}
+
+.clock-in-time i, .clock-out-time i {
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+/* Rest of your existing styles remain the same */
+.late-marks-summary-wrapper {
+  margin-top: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.mobile-late-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.late-mark-card {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.late-mark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.late-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.late-count-badge.critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.late-count-badge.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.late-count-badge.moderate {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.late-count-badge.good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.late-mark-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.late-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.late-detail .detail-label {
+  color: #6b7280;
+}
+
+.late-detail .detail-value {
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.late-detail .detail-value.has-penalty {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.late-detail .detail-value.penalty-amount {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.late-detail .detail-value.warning {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.late-detail .detail-label.pending {
+  color: #d97706;
+}
+
+.late-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.late-progress .progress-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.late-progress .progress-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+.late-progress .progress-bar-fill.good {
+  background: #10b981;
+}
+
+.late-progress .progress-bar-fill.moderate {
+  background: #f59e0b;
+}
+
+.late-progress .progress-bar-fill.warning {
+  background: #f97316;
+}
+
+.late-progress .progress-bar-fill.critical {
+  background: #ef4444;
+}
+
+.late-progress .progress-label {
+  font-size: 11px;
+  color: #6b7280;
+  min-width: 50px;
+  text-align: right;
+}
+
+.penalty-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.penalty-badge.has-penalty {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.penalty-amount {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.no-penalty {
+  color: #9ca3af;
+}
+
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #d97706;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.no-pending {
+  color: #10b981;
+}
+
+.status-badge-premium.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-premium.penalty-applied {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge-premium.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge-premium.good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
 .warning-icon {
   background: linear-gradient(135deg, #f59e0b, #d97706) !important;
 }
@@ -1613,9 +2860,8 @@ export default {
 
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-/* Variables */
 :root {
-  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  --primary: linear-gradient(135deg, #667eea 0%, #7c3aed 100%);
   --primary-color: #667eea;
   --dark: #1a1a2e;
   --success: #10b981;
@@ -1635,7 +2881,6 @@ export default {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Main Content */
 .main-content {
   display: flex;
   gap: 20px;
@@ -1651,7 +2896,6 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-/* Mobile Header */
 .mobile-header {
   display: none;
   align-items: center;
@@ -1661,15 +2905,6 @@ export default {
   border-radius: 16px;
   margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark);
-  padding: 8px;
-  cursor: pointer;
 }
 
 .mobile-title {
@@ -1712,7 +2947,10 @@ export default {
   background: linear-gradient(135deg, #10b981, #059669);
 }
 
-/* Content Header */
+.mobile-action-btn.tertiary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
 .content-header-modern {
   display: flex;
   justify-content: space-between;
@@ -1779,12 +3017,19 @@ export default {
   background: linear-gradient(135deg, #10b981, #059669);
 }
 
+.register-btn-modern.tertiary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
 .register-btn-modern:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
 }
 
-/* Stats Bar */
+.register-btn-modern.tertiary:hover {
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+}
+
 .stats-bar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1833,7 +3078,6 @@ export default {
   color: #6b7280;
 }
 
-/* Current Date Badge */
 .current-date-badge {
   display: inline-flex;
   align-items: center;
@@ -1850,7 +3094,6 @@ export default {
   font-size: 16px;
 }
 
-/* Search Bar - Mobile */
 .search-bar-mobile {
   display: none;
   margin-bottom: 16px;
@@ -1884,7 +3127,6 @@ export default {
   border-color: var(--primary-color);
 }
 
-/* Table Styles */
 .table-wrapper-premium {
   background: white;
   border-radius: 20px;
@@ -1972,7 +3214,6 @@ export default {
   background: #fafbfc;
 }
 
-/* Mobile Cards */
 .mobile-cards {
   display: none;
   flex-direction: column;
@@ -2110,7 +3351,6 @@ export default {
   gap: 4px;
 }
 
-/* Empty State Mobile */
 .empty-state-mobile {
   text-align: center;
   padding: 40px 20px;
@@ -2133,7 +3373,6 @@ export default {
   font-size: 13px;
 }
 
-/* Employee Cell */
 .employee-cell {
   min-width: 180px;
 }
@@ -2144,25 +3383,11 @@ export default {
   gap: 12px;
 }
 
-.employee-avatar {
-  width: 36px;
-  height: 36px;
-  background: var(--primary);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 13px;
-}
-
 .employee-name {
   font-weight: 500;
   color: #1a1a2e;
 }
 
-/* Status Badge */
 .status-container {
   display: flex;
   flex-direction: column;
@@ -2231,7 +3456,6 @@ export default {
   font-family: monospace;
 }
 
-/* Modal Styles */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -2279,6 +3503,10 @@ export default {
   max-width: 450px;
 }
 
+.premium-modal.yesterday-modal {
+  max-width: 850px;
+}
+
 @keyframes modalSlideIn {
   from {
     opacity: 0;
@@ -2299,7 +3527,6 @@ export default {
   background: var(--primary);
 }
 
-/* Modal Header */
 .modal-header-premium {
   display: flex;
   align-items: center;
@@ -2334,6 +3561,10 @@ export default {
 
 .header-icon-premium.success-icon {
   background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.header-icon-premium.yesterday-icon {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
 }
 
 .header-text {
@@ -2379,7 +3610,6 @@ export default {
   transform: rotate(90deg);
 }
 
-/* Modal Body */
 .modal-body-premium {
   flex: 1;
   overflow-y: auto;
@@ -2405,7 +3635,6 @@ export default {
   border-radius: 10px;
 }
 
-/* Form Section */
 .form-section {
   display: flex;
   flex-direction: column;
@@ -2478,7 +3707,6 @@ export default {
   grid-template-columns: 1fr;
 }
 
-/* Modal Footer */
 .modal-footer-premium {
   display: flex;
   gap: 12px;
@@ -2532,7 +3760,6 @@ export default {
   box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Salary Table */
 .table-wrapper-salary {
   max-height: 400px;
   overflow-y: auto;
@@ -2562,7 +3789,6 @@ export default {
   border-bottom: 1px solid #f0f0f0;
 }
 
-/* Mobile Salary Cards */
 .mobile-salary-cards {
   display: none;
   flex-direction: column;
@@ -2673,7 +3899,6 @@ export default {
   cursor: not-allowed;
 }
 
-/* Monthly Modal Styles */
 .attendance-score-badge {
   display: inline-flex;
   align-items: center;
@@ -2789,7 +4014,6 @@ export default {
 .cal-traveling { background: #fef3c7 !important; color: #d97706; }
 .cal-leave { background: #f3e8ff !important; color: #7e22ce; }
 
-/* Salary Result */
 .salary-result {
   text-align: center;
   padding: 20px;
@@ -2838,7 +4062,6 @@ export default {
   color: #065f46;
 }
 
-/* Empty State */
 .empty-state-premium {
   text-align: center;
   padding: 60px 20px;
@@ -2857,7 +4080,6 @@ export default {
   margin-bottom: 8px;
 }
 
-/* Modal Fade */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 0.3s ease;

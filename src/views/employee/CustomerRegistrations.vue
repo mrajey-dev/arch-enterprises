@@ -3450,7 +3450,9 @@ Edit
 
       <div class="crm-form-row">
         <div class="crm-input-group">
-          <label>Company Name *</label>
+        <label>
+  Company Name <span class="required">*</span>
+</label>
           <input 
             type="text" 
             v-model="customer.company_name" 
@@ -3460,7 +3462,7 @@ Edit
         </div>
 
     <div class="crm-input-group">
-  <label>Contact Number *</label>
+  <label>Contact Number <span class="required">*</span></label>
   <input 
     type="tel"
     v-model="customer.contact_number"
@@ -3477,7 +3479,7 @@ Edit
 
       <div class="crm-form-row">
         <div class="crm-input-group">
-          <label>Contact Person Name *</label>
+          <label>Contact Person Name <span class="required">*</span></label>
           <input 
             type="text" 
             v-model="customer.contact_person" 
@@ -3503,7 +3505,7 @@ Edit
 
       <div class="crm-form-row">
   <div class="crm-input-group crm-full-width">
-    <label>Billing Address *</label>
+    <label>Billing Address <span class="required">*</span></label>
     <textarea
       v-model="customer.billing_address"
       maxlength="500"
@@ -3516,7 +3518,7 @@ Edit
 
 <div class="crm-form-row">
   <div class="crm-input-group crm-full-width">
-    <label>Shipping Address *</label>
+    <label>Shipping Address <span class="required">*</span></label>
     <textarea
       v-model="customer.shipping_address"
       maxlength="500"
@@ -3535,7 +3537,7 @@ Edit
         </div>
 
 <div class="crm-input-group">
-  <label>Email ID</label>
+  <label>Email ID <span class="required">*</span></label>
 
   <input
     type="text"
@@ -3623,7 +3625,7 @@ Edit
       >
         <h3>
           {{ type }} Details
-          <button type="button" class="crm-add-btn" @click="addEquipment(type)">➕</button>
+          <button type="button" class="crm-add-btn" @click="addEquipment(type)">+</button>
         </h3>
 
         <div
@@ -8243,12 +8245,11 @@ font-family: cursive;
 ================================ */
 .crm-add-btn {
  background: linear-gradient(135deg, #ffffff, #ffffff);
-    color: #ffffff;
-    border: revert-layer;
+    color: #0f0f0f;
     padding: 6px 12px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 24px;
     transition: all .2s ease;
 }
 
@@ -14780,5 +14781,9 @@ transform:scale(1.05);
   .report-table td {
     padding: 0.4rem 0.6rem;
   }
+}
+.required {
+  color: red;
+  font-size: medium;
 }
 </style>

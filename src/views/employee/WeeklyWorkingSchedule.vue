@@ -146,7 +146,7 @@
           </select>
           <select v-model="employeeFilter" class="filter-select">
             <option value="">All Employees</option>
-            <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+            <option v-for="emp in itEmployees" :key="emp.id" :value="emp.id">
               {{ formatName(emp.name) }}
             </option>
           </select>
@@ -281,6 +281,7 @@ export default {
       showModal: false,
       weekDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
       employees: [],
+      itEmployees: [], // Added: Store only IT employees
       form: {
         title: '',
         description: '',
@@ -296,8 +297,18 @@ export default {
   computed: {
     filteredTasks() {
       let filtered = this.tasks;
-      if (this.statusFilter) filtered = filtered.filter(t => t.status === this.statusFilter);
-      if (this.employeeFilter) filtered = filtered.filter(t => t.assigned_to === this.employeeFilter);
+      
+      // Filter by status
+      if (this.statusFilter) {
+        filtered = filtered.filter(t => t.status === this.statusFilter);
+      }
+      
+      // Filter by employee (only IT employees)
+      if (this.employeeFilter) {
+        filtered = filtered.filter(t => t.assigned_to === this.employeeFilter);
+      }
+      
+      // Search filter
       if (this.searchQuery) {
         const q = this.searchQuery.toLowerCase();
         filtered = filtered.filter(t => 
@@ -306,6 +317,7 @@ export default {
           this.getEmployeeName(t.assigned_to).toLowerCase().includes(q)
         );
       }
+      
       return filtered.sort((a, b) => {
         return new Date(a.created_at) - new Date(b.created_at);
       });
@@ -391,7 +403,6 @@ export default {
      * Generate WhatsApp report message
      */
     generateReportMessage() {
-    //   const userName = localStorage.getItem('user_name') || 'Team Member';
       const weekRange = this.getWeekRange();
       const totalTasks = this.tasks.length;
       const completed = this.tasks.filter(t => t.status === 'Completed').length;
@@ -403,7 +414,6 @@ export default {
       let message = `WEEKLY TASK REPORT\n`;
       message += `═══════════════════════════════════════\n\n`;
       
-    //   message += `Employee: ${this.formatName(userName)}\n`;
       message += `Week: ${weekRange}\n`;
       message += `Report Date: ${new Date().toLocaleString('en-IN', { 
         day: '2-digit', 
@@ -608,6 +618,17 @@ export default {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         this.employees = res.data;
+        
+        // Filter employees with department 'IT'
+        this.itEmployees = this.employees.filter(emp => 
+          emp.department && emp.department.toUpperCase() === 'IT' || 'Marketing'
+        );
+        
+        // If no IT employees found, show all employees (fallback)
+        if (this.itEmployees.length === 0) {
+          console.warn('No IT employees found. Showing all employees.');
+          this.itEmployees = [...this.employees];
+        }
       } catch (error) {
         console.error('Error fetching employees:', error);
         toastError('Failed to load employees');
@@ -675,22 +696,26 @@ export default {
       }
     },
 
-    async fetchTasks() {
-      this.loading = true;
-      try {
-        const res = await axios.get('/api/weekly-tasks', {
-          params: { week_offset: this.currentWeekOffset },
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        this.tasks = res.data;
-      } catch (error) {
-        console.error('Fetch tasks error:', error);
-        toastError('Failed to load tasks');
-        this.tasks = [];
-      } finally {
-        this.loading = false;
-      }
-    },
+  async fetchTasks() {
+  this.loading = true;
+  try {
+    const res = await axios.get('/api/weekly-tasks', {
+      params: { week_offset: this.currentWeekOffset },
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    
+    // ✅ SHOW ALL TASKS TO ALL USERS
+    // Just assign all tasks directly without filtering
+    this.tasks = res.data;
+    
+  } catch (error) {
+    console.error('Fetch tasks error:', error);
+    toastError('Failed to load tasks');
+    this.tasks = [];
+  } finally {
+    this.loading = false;
+  }
+},
 
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;

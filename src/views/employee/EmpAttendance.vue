@@ -415,10 +415,15 @@ export default {
       // Working hours counter properties
       workingHoursInterval: null,
       workingHours: 0, // in seconds
-      targetHours: 8 * 3600 // 8 hours in seconds
+      targetHours: 8 * 3600, // 8 hours in seconds
+      // New property to track if previous day was Traveling or OnSite
+      previousDayStatus: null
     }
   },
   computed: {
+    isTimerRunning() {
+    return this.workingHoursInterval !== null;
+  },
     isSunday() {
       const date = new Date(this.currentDate);
       return date.getDay() === 0;
@@ -433,26 +438,31 @@ export default {
       return this.user.clockIn && !this.user.clockOut;
     },
     // Format working hours for display - updates in real-time
-    formattedWorkingHours() {
-      if (!this.user.clockIn) return '00:00:00';
-      
-      let totalSeconds = this.workingHours;
-      
-      // If clocked in and not clocked out, calculate elapsed time
-      if (this.isClockedIn) {
-        const clockInTime = this.parseTimeToDate(this.user.clockIn);
-        if (clockInTime) {
-          const now = new Date();
-          const elapsed = Math.floor((now - clockInTime) / 1000);
-          totalSeconds = Math.max(this.workingHours, elapsed);
-        }
-      }
-      
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    },
+  formattedWorkingHours() {
+  if (!this.user.clockIn) return '00:00:00';
+  
+  let totalSeconds = this.workingHours;
+  
+  // If clocked in and not clocked out, calculate elapsed time
+  if (this.isClockedIn) {
+    const clockInTime = this.parseTimeToDate(this.user.clockIn);
+    if (clockInTime) {
+      const now = new Date();
+      const elapsed = Math.floor((now - clockInTime) / 1000);
+      totalSeconds = Math.max(this.workingHours, elapsed);
+    }
+  }
+  
+  // Ensure we have a valid number
+  if (isNaN(totalSeconds) || totalSeconds < 0) {
+    totalSeconds = 0;
+  }
+  
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+},
     // Get total working hours in hours (decimal)
     totalWorkingHours() {
       if (!this.user.clockIn) return 0;
@@ -535,6 +545,27 @@ export default {
     }
   },
   methods: {
+    debugTimer() {
+  console.log('=== DEBUG TIMER ===');
+  console.log('workingHours:', this.workingHours);
+  console.log('formattedWorkingHours:', this.formattedWorkingHours);
+  console.log('user.clockIn:', this.user.clockIn);
+  console.log('user.clockOut:', this.user.clockOut);
+  console.log('isClockedIn:', this.isClockedIn);
+  console.log('workingHoursInterval:', this.workingHoursInterval);
+  
+  // Try to restart the counter
+  this.startWorkingHoursCounter();
+  
+  // Force update
+  this.$forceUpdate();
+  
+  // Log after force update
+  this.$nextTick(() => {
+    console.log('After force update - workingHours:', this.workingHours);
+    console.log('After force update - formattedWorkingHours:', this.formattedWorkingHours);
+  });
+},
     getStatusLabel(status) {
       const labels = {
         Present: '✅ Present',
@@ -570,15 +601,66 @@ export default {
       });
     },
     // Parse time string to Date object
-    parseTimeToDate(timeStr) {
-      if (!timeStr) return null;
-      const now = new Date();
-      const parts = timeStr.split(':').map(Number);
-      if (parts.length !== 3) return null;
-      const date = new Date(now);
-      date.setHours(parts[0], parts[1], parts[2], 0);
-      return date;
-    },
+parseTimeToDate(timeStr) {
+  if (!timeStr) {
+    console.warn('parseTimeToDate: No time string provided');
+    return null;
+  }
+  
+  console.log('parseTimeToDate: Input time:', timeStr, 'Type:', typeof timeStr);
+  
+  try {
+    const now = new Date();
+    let hours = 0, minutes = 0, seconds = 0;
+    
+    // Try different time formats
+    if (typeof timeStr === 'string') {
+      // Format: "HH:MM:SS" (24-hour)
+      const timeParts = timeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (timeParts) {
+        hours = parseInt(timeParts[1]);
+        minutes = parseInt(timeParts[2]);
+        seconds = parseInt(timeParts[3] || 0);
+        console.log('Parsed from HH:MM:SS format:', { hours, minutes, seconds });
+      } else {
+        // Try parsing as full date
+        const dateObj = new Date(timeStr);
+        if (!isNaN(dateObj.getTime())) {
+          hours = dateObj.getHours();
+          minutes = dateObj.getMinutes();
+          seconds = dateObj.getSeconds();
+          console.log('Parsed from Date object:', { hours, minutes, seconds });
+        } else {
+          console.error('parseTimeToDate: Could not parse time string:', timeStr);
+          return null;
+        }
+      }
+    }
+    
+    // Validate hours, minutes, seconds
+    if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+      console.error('parseTimeToDate: Invalid time components:', { hours, minutes, seconds });
+      return null;
+    }
+    
+    // Create date with current date and the time from the string
+    const date = new Date(now);
+    date.setHours(hours, minutes, seconds, 0);
+    
+    console.log('parseTimeToDate: Created date:', date.toISOString());
+    console.log('parseTimeToDate: Created date (local):', date.toLocaleString());
+    
+    if (isNaN(date.getTime())) {
+      console.error('parseTimeToDate: Invalid date created');
+      return null;
+    }
+    
+    return date;
+  } catch (error) {
+    console.error('parseTimeToDate: Error parsing time:', error);
+    return null;
+  }
+},
     // Get particle style for animation
     getParticleStyle(index) {
       const positions = [
@@ -633,77 +715,175 @@ export default {
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     },
     // Start the working hours counter with real-time updates
-    startWorkingHoursCounter() {
-      // Clear any existing interval
-      if (this.workingHoursInterval) {
-        clearInterval(this.workingHoursInterval);
-        this.workingHoursInterval = null;
-      }
-      
-      // Calculate base working hours from clockIn to now
-      if (this.user.clockIn && !this.user.clockOut) {
-        const clockInTime = this.parseTimeToDate(this.user.clockIn);
-        if (clockInTime) {
-          const now = new Date();
-          this.workingHours = Math.floor((now - clockInTime) / 1000);
-        }
-        
-        // Start interval to update every second
-        this.workingHoursInterval = setInterval(() => {
-          if (this.user.clockIn && !this.user.clockOut) {
-            // Recalculate from clockIn time to now
-            const clockInTime = this.parseTimeToDate(this.user.clockIn);
-            if (clockInTime) {
-              const now = new Date();
-              this.workingHours = Math.floor((now - clockInTime) / 1000);
-            }
-          }
-        }, 1000);
-      }
-    },
-    async saveAttendance() {
+startWorkingHoursCounter() {
+  console.log('=== STARTING COUNTER ===');
+  console.log('ClockIn:', this.user.clockIn);
+  console.log('ClockOut:', this.user.clockOut);
+  console.log('Current Date:', new Date().toISOString());
+  
+  // Clear any existing interval
+  if (this.workingHoursInterval) {
+    clearInterval(this.workingHoursInterval);
+    this.workingHoursInterval = null;
+  }
+  
+  // Calculate base working hours from clockIn to now
+  if (this.user.clockIn && !this.user.clockOut) {
+    const clockInTime = this.parseTimeToDate(this.user.clockIn);
+    console.log('Parsed clockInTime:', clockInTime);
+    console.log('Parsed time as ISO:', clockInTime ? clockInTime.toISOString() : 'Invalid');
+    
+    if (clockInTime) {
       const now = new Date();
-      const formattedTime = this.getCurrentTime();
-      this.user.clockIn = formattedTime;
-      this.user.clockOut = '';
-      this.user.actualTime = '';
-      const earlyThreshold = new Date(now);
-      earlyThreshold.setHours(9, 30, 0, 0);
-      const lateThreshold = new Date(now);
-      lateThreshold.setHours(9, 40, 0, 0);
-      const halfDayThreshold = new Date(now);
-      halfDayThreshold.setHours(13, 0, 0, 0);
-      this.user.isEarly = now < earlyThreshold;
-      this.user.isLate = now > lateThreshold;
-      if (now > halfDayThreshold && this.user.status === 'Present') {
-        this.user.status = 'HalfDay';
-      }
-      const token = localStorage.getItem('token');
-      const today = this.currentDate;
-      try {
-        await axios.post('https://employees.archenterprises.co.in/api/api/attendance/store', {
-          name: this.user.name,
-          status: this.user.status,
-          clock_in: this.user.clockIn,
-          clock_out: this.user.clockOut,
-          required_time: this.user.requiredTime,
-          actual_time: this.user.actualTime,
-          site_name: this.user.status === 'OnSite' ? this.user.siteName : null,
-          travel_from: this.user.travelFrom,
-          travel_to: this.user.travelTo,
-          date: today
-        }, { headers: { Authorization: `Bearer ${token}` } });
-        toastSuccess('Attendance saved successfully');
-      } catch (err) {
-        console.error('Attendance save failed', err);
-        toastError('Failed to save attendance');
-      }
-      const key = `attendance_${today}_${this.user.name}`;
-      localStorage.setItem(key, JSON.stringify(this.user));
+      console.log('Now:', now.toISOString());
+      console.log('Now (local):', now.toLocaleString());
       
-      // Start the working hours counter immediately
-      this.startWorkingHoursCounter();
+      const elapsed = Math.floor((now - clockInTime) / 1000);
+      console.log('Elapsed seconds:', elapsed);
+      
+      // Ensure we have a valid number
+      if (!isNaN(elapsed) && elapsed > 0) {
+        this.workingHours = elapsed;
+        console.log('Working hours set to:', this.workingHours);
+      } else {
+        console.warn('Invalid elapsed time, using 0');
+        this.workingHours = 0;
+      }
+      
+      // Force initial update
+      this.$forceUpdate();
+      console.log('Force update called');
+      
+      // Start interval to update every second
+      this.workingHoursInterval = setInterval(() => {
+        if (this.user.clockIn && !this.user.clockOut) {
+          const clockInTime = this.parseTimeToDate(this.user.clockIn);
+          if (clockInTime) {
+            const now = new Date();
+            const elapsed = Math.floor((now - clockInTime) / 1000);
+            if (!isNaN(elapsed) && elapsed > 0) {
+              this.workingHours = elapsed;
+            }
+            this.$forceUpdate();
+          }
+        } else {
+          clearInterval(this.workingHoursInterval);
+          this.workingHoursInterval = null;
+          console.log('Counter stopped - user clocked out');
+        }
+      }, 1000);
+      
+      console.log('Interval started, ID:', this.workingHoursInterval);
+    } else {
+      console.error('Failed to parse clockIn time:', this.user.clockIn);
+    }
+  } else {
+    console.log('Not starting counter - conditions not met');
+    console.log('ClockIn exists?', !!this.user.clockIn);
+    console.log('Not clocked out?', !this.user.clockOut);
+  }
+},
+    // NEW METHOD: Check previous day's status
+    async checkPreviousDayStatus() {
+      const token = localStorage.getItem('token');
+      // Get yesterday's date
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      try {
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance/today', {
+          params: { 
+            name: this.user.name, 
+            date: yesterdayStr 
+          },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const record = response.data?.data;
+        if (record && record.status) {
+          const status = record.status.toLowerCase();
+          // Check if previous day was Traveling or OnSite
+          if (status === 'traveling' || status === 'onsite') {
+            this.previousDayStatus = status;
+            console.log(`Previous day (${yesterdayStr}) status: ${status} - Override active for today`);
+          } else {
+            this.previousDayStatus = null;
+          }
+        } else {
+          this.previousDayStatus = null;
+        }
+      } catch (err) {
+        console.error('Error fetching previous day attendance:', err);
+        this.previousDayStatus = null;
+      }
     },
+  async saveAttendance() {
+  const now = new Date();
+  
+  // Subtract 2 minutes from current time for CLOCK-IN only
+  const adjustedTime = new Date(now);
+  adjustedTime.setMinutes(now.getMinutes() - 2);
+  
+  // Format the adjusted time for clock-in
+  const formattedTime = adjustedTime.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  this.user.clockIn = formattedTime;
+  this.user.clockOut = '';
+  this.user.actualTime = '';
+  
+  // Use adjusted time for early/late checks
+  const earlyThreshold = new Date(adjustedTime);
+  earlyThreshold.setHours(9, 30, 0, 0);
+  const lateThreshold = new Date(adjustedTime);
+  lateThreshold.setHours(9, 40, 0, 0);
+  const halfDayThreshold = new Date(adjustedTime);
+  halfDayThreshold.setHours(13, 0, 0, 0);
+  
+  this.user.isEarly = adjustedTime < earlyThreshold;
+  this.user.isLate = adjustedTime > lateThreshold;
+  
+  // MODIFIED LOGIC: Check if previous day was Traveling or OnSite
+  const isPreviousDayTravelingOrOnSite = this.previousDayStatus !== null;
+  
+  if (this.user.status === 'Present' && adjustedTime > halfDayThreshold) {
+    if (!isPreviousDayTravelingOrOnSite) {
+      this.user.status = 'HalfDay';
+    } else {
+      console.log(`Keeping as Present due to previous day status: ${this.previousDayStatus}`);
+    }
+  }
+  
+  const token = localStorage.getItem('token');
+  const today = this.currentDate;
+  try {
+    await axios.post('https://employees.archenterprises.co.in/api/api/attendance/store', {
+      name: this.user.name,
+      status: this.user.status,
+      clock_in: this.user.clockIn,
+      clock_out: this.user.clockOut,
+      required_time: this.user.requiredTime,
+      actual_time: this.user.actualTime,
+      site_name: this.user.status === 'OnSite' ? this.user.siteName : null,
+      travel_from: this.user.travelFrom,
+      travel_to: this.user.travelTo,
+      date: today
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    toastSuccess('Attendance saved successfully');
+  } catch (err) {
+    console.error('Attendance save failed', err);
+    toastError('Failed to save attendance');
+  }
+  const key = `attendance_${today}_${this.user.name}`;
+  localStorage.setItem(key, JSON.stringify(this.user));
+  
+  this.startWorkingHoursCounter();
+},
     updateStatus() {
       if (this.user.status === 'OnSite') {
         this.showOnSitePopup = true;
@@ -783,46 +963,96 @@ export default {
         this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
       }
     },
-    async fetchTodayStatus() {
-      const token = localStorage.getItem('token');
-      const today = this.currentDate;
-      try {
-        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance/today', {
-          params: { name: this.user.name, date: today },
-          headers: { Authorization: `Bearer ${token}` }
+convertToLocalTime(timeStr) {
+  if (!timeStr) return timeStr;
+  
+  try {
+    // If time is in UTC format (has 'Z' or '+00:00')
+    if (timeStr.includes('Z') || timeStr.includes('+')) {
+      const date = new Date(timeStr);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
         });
-        const record = response.data?.data;
-        if (record && record.status) {
-          this.user.status = record.status;
-          this.user.clockIn = record.clock_in || '';
-          this.user.clockOut = record.clock_out || '';
-          this.user.siteName = record.site_name || '';
-          this.user.travelFrom = record.travel_from || '';
-          this.user.travelTo = record.travel_to || '';
-          this.user.actualTime = record.actual_time || '';
-          this.disableStatusSelect = false;
-          this.user.statusLocked = false;
-          const key = `attendance_${this.currentDate}_${this.user.name}`;
-          localStorage.setItem(key, JSON.stringify(this.user));
-          
-          // Start counter if clocked in and not clocked out
-          if (this.user.clockIn && !this.user.clockOut) {
-            this.startWorkingHoursCounter();
-          }
-          
-          // Set working hours if already clocked out
-          if (this.user.clockOut && this.user.actualTime) {
-            const parts = this.user.actualTime.split(':').map(Number);
-            this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
-          }
-        } else {
-          this.disableStatusSelect = false;
-        }
-      } catch (err) {
-        console.error('Error fetching today\'s attendance:', err);
-        this.disableStatusSelect = false;
       }
-    },
+    }
+    
+    // If it's already in HH:MM:SS format, return as is
+    if (timeStr.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      return timeStr;
+    }
+    
+    // If it's a date string, try to parse it
+    const date = new Date(timeStr);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    }
+    
+    return timeStr;
+  } catch (error) {
+    console.error('Error converting time:', error);
+    return timeStr;
+  }
+},
+async fetchTodayStatus() {
+  const token = localStorage.getItem('token');
+  const today = this.currentDate;
+  try {
+    const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance/today', {
+      params: { name: this.user.name, date: today },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const record = response.data?.data;
+    if (record && record.status) {
+      this.user.status = record.status;
+      
+      // Handle time conversion if needed
+    this.user.clockIn = this.convertToLocalTime(record.clock_in || '');
+this.user.clockOut = this.convertToLocalTime(record.clock_out || ''); // ✅ Add this
+      this.user.siteName = record.site_name || '';
+      this.user.travelFrom = record.travel_from || '';
+      this.user.travelTo = record.travel_to || '';
+      this.user.actualTime = record.actual_time || '';
+      this.disableStatusSelect = false;
+      this.user.statusLocked = false;
+      
+      // Save to localStorage
+      const key = `attendance_${this.currentDate}_${this.user.name}`;
+      localStorage.setItem(key, JSON.stringify(this.user));
+      
+      // Start counter if clocked in and not clocked out
+      if (this.user.clockIn && !this.user.clockOut) {
+        // Small delay to ensure data is fully loaded
+        setTimeout(() => {
+          this.startWorkingHoursCounter();
+          console.log('Counter started after fetching from database');
+          this.$forceUpdate();
+        }, 100);
+      }
+      
+      // Set working hours if already clocked out
+      if (this.user.clockOut && this.user.actualTime) {
+        const parts = this.user.actualTime.split(':').map(Number);
+        this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+      }
+      
+      this.$forceUpdate();
+    } else {
+      this.disableStatusSelect = false;
+    }
+  } catch (err) {
+    console.error('Error fetching today\'s attendance:', err);
+    this.disableStatusSelect = false;
+  }
+},
     async fetchAttendance() {
       const token = localStorage.getItem('token');
       const name = encodeURIComponent(this.user.name);
@@ -1084,30 +1314,85 @@ export default {
     }
   },
   
-  mounted() {
-    this.checkIfMobile();
-    window.addEventListener('resize', this.checkIfMobile);
-    this.currentDate = new Date().toISOString().split('T')[0];
-    const key = `attendance_${this.currentDate}_${this.user.name}`;
-    const savedData = localStorage.getItem(key);
-    if (savedData) {
-      this.user = JSON.parse(savedData);
-      // Restore working hours from saved data
-      if (this.user.clockIn && !this.user.clockOut) {
-        this.startWorkingHoursCounter();
-      }
-      if (this.user.clockOut && this.user.actualTime) {
-        const parts = this.user.actualTime.split(':').map(Number);
-        this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
-      }
-    } else {
-      this.fetchTodayStatus();
-    }
-    const token = localStorage.getItem('token');
-    if (!token) {
-      this.$router.push('/auth');
+  watch: {
+  'user.clockIn'(newVal) {
+    if (newVal && !this.user.clockOut) {
+      this.startWorkingHoursCounter();
     }
   },
+  workingHours(newVal) {
+    // This will trigger when workingHours changes
+    console.log('Working hours updated:', newVal);
+  }
+},
+
+mounted() {
+  console.log('=== COMPONENT MOUNTED ===');
+  console.log('Environment:', window.location.hostname);
+  
+  this.checkIfMobile();
+  window.addEventListener('resize', this.checkIfMobile);
+  this.currentDate = new Date().toISOString().split('T')[0];
+  console.log('Current date:', this.currentDate);
+  
+  // NEW: Check previous day's status first
+  this.checkPreviousDayStatus().then(() => {
+    const key = `attendance_${this.currentDate}_${this.user.name}`;
+    console.log('LocalStorage key:', key);
+    const savedData = localStorage.getItem(key);
+    console.log('Saved data from localStorage:', savedData);
+    
+    if (savedData) {
+      try {
+        this.user = JSON.parse(savedData);
+        console.log('Parsed user data:', this.user);
+        console.log('ClockIn value:', this.user.clockIn);
+        console.log('ClockOut value:', this.user.clockOut);
+        
+        // Restore working hours from saved data
+        if (this.user.clockIn && !this.user.clockOut) {
+          console.log('Condition met - starting counter from localStorage');
+          // This will start the counter and calculate from clock-in time
+          this.startWorkingHoursCounter();
+          console.log('Counter started from localStorage data');
+        } else if (this.user.clockOut && this.user.actualTime) {
+          console.log('User already clocked out, setting final hours');
+          const parts = this.user.actualTime.split(':').map(Number);
+          this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+          console.log('Working hours set to:', this.workingHours);
+        } else {
+          console.log('No clock in or clock out data found');
+        }
+        
+        // Force update after data load
+        this.$forceUpdate();
+        this.$nextTick(() => {
+          this.$forceUpdate();
+          console.log('After force update - formatted hours:', this.formattedWorkingHours);
+        });
+      } catch (error) {
+        console.error('Error parsing saved data:', error);
+        this.fetchTodayStatus();
+      }
+    } else {
+      console.log('No saved data, fetching from database');
+      this.fetchTodayStatus().then(() => {
+        // After fetching, if user is clocked in, start the counter
+        if (this.user.clockIn && !this.user.clockOut) {
+          console.log('Condition met - starting counter from database');
+          this.startWorkingHoursCounter();
+          console.log('Counter started from database data');
+        }
+        this.$forceUpdate();
+      });
+    }
+  });
+  
+  const token = localStorage.getItem('token');
+  if (!token) {
+    this.$router.push('/auth');
+  }
+},
   
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);

@@ -10,57 +10,77 @@
     class="content"
     :class="{ 'hide-content': isMobile && isSidebarVisible }"
   >
-  <!-- <h2>Customers & PO</h2> -->
-<div class="search-bar">
-  <!-- Search Input -->
-  <div class="search-container" :class="{ active: searchFocused || searchQuery }">
-    <i class="fas fa-search search-icon"></i>
-    <input
-      type="text"
-      v-model="searchQuery"
-      @focus="searchFocused = true"
-      @blur="searchFocused = false"
-      placeholder="Search customers..."
-      class="search-input"
-    />
-    <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''; searchFocused = false">
-      <i class="fas fa-times-circle"></i>
-    </button>
-  </div>
+  <section class="page-header">
+    <div class="header-top">
+      <div>
+        <p class="eyebrow">CRM Dashboard</p>
+        <h1>Customers & Purchase Orders</h1>
+        <p class="page-description">Manage customers, quotations and order flows from a polished, responsive workspace.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" @click="openAssignPoForm">
+          <i class="fas fa-tasks"></i>
+          Manage PO
+        </button>
+        <button class="btn btn-outline" @click="showViewAllQuotationPopup = true">
+          <i class="fas fa-file-invoice"></i>
+          Quotations
+        </button>
+        <button class="btn btn-outline" @click="goTo('employee/followup')">
+          <i class="fas fa-phone-alt"></i>
+          Follow Up
+        </button>
+        <button class="btn btn-outline" @click="showEmailModal = true">
+          <i class="fas fa-envelope"></i>
+          Emails
+        </button>
+        <button class="btn btn-primary" @click="openRegisterForm()">
+          <i class="fas fa-plus"></i>
+          New Customer
+        </button>
+      </div>
+    </div>
 
-  <!-- Action Buttons -->
-  <div class="button-row">
-    <button class="assign-btn primary desktop-only" @click="openAssignPoForm">
-      <i class="fas fa-tasks"></i>
-      <span class="btn-text">Manage PO</span>
-    </button>
-    
-    <button class="assign-btn info desktop-only" @click="showViewAllQuotationPopup=true">
-      <i class="fas fa-file-invoice"></i>
-      <span class="btn-text">Quotations</span>
-    </button>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Customers</span>
+        <span class="stat-value">{{ customers.length }}</span>
+        <span class="stat-note">Active records</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Open Quotations</span>
+        <span class="stat-value">{{ quotations.length }}</span>
+        <span class="stat-note">Loaded from backend</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Supplies</span>
+        <span class="stat-value">{{ supplies.length }}</span>
+        <span class="stat-note">Material orders</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Assigned Visits</span>
+        <span class="stat-value">{{ visit_assign.length }}</span>
+        <span class="stat-note">AMC schedule</span>
+      </div>
+    </div>
 
-    <button class="assign-btn warning" @click="goTo('employee/followup')">
-      <i class="fas fa-phone-alt"></i>
-      <span class="btn-text">Follow Up</span>
-    </button>
-    
-    <button class="assign-btn secondary" @click="goTo('employee/amcrecord')">
-      <i class="fas fa-file-alt"></i>
-      <span class="btn-text">AMC</span>
-    </button>
-    
-    <button class="assign-btn dark" @click="showEmailModal = true">
-      <i class="fas fa-envelope"></i>
-      <span class="btn-text">Emails</span>
-    </button>
-
-    <button class="assign-btn add-btn" @click="openRegisterForm()">
-      <i class="fas fa-plus"></i>
-      <span class="btn-text">New</span>
-    </button>
-  </div>
-</div>
+    <div class="search-section">
+      <div class="search-field">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          v-model="searchQuery"
+          @focus="searchFocused = true"
+          @blur="searchFocused = false"
+          placeholder="Search customers, company or customer number"
+        />
+        <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''; searchFocused = false">
+          <i class="fas fa-times-circle"></i>
+        </button>
+      </div>
+      
+    </div>
+  </section>
 
 <!-- Duplicate Quotation - Company Selection Modal -->
 <div v-if="showDuplicateCompanySelection" class="modal-backdrop">
@@ -1123,18 +1143,22 @@
   </div>
 </div>
 </div>
-<tbody v-if="isLoadingCustomers">
-  <tr>
-    <td colspan="4" class="loader-cell">
-      <div class="table-loader"></div>
-      <span>Loading customers...</span>
-    </td>
-  </tr>
-</tbody>
-
+<div v-if="isLoadingCustomers" class="table-state">
+  <div class="loader-panel">
+    <span class="spinner"></span>
+    <p>Loading customers...</p>
+  </div>
+</div>
 
 <!-- Table Section - Replace your existing table with this -->
-<div class="table-container">
+<div v-if="!isLoadingCustomers && filteredCustomers.length === 0" class="table-empty-state">
+  <div class="empty-card">
+    <h3>No customers found</h3>
+    <p>Try adjusting your search or filters to locate the customer record.</p>
+  </div>
+</div>
+
+<div v-if="!isLoadingCustomers && filteredCustomers.length > 0" class="table-container">
   <!-- Desktop Table View -->
   <table v-if="!isMobile" class="styled-customer-table user-table">
     <thead>
@@ -1163,21 +1187,21 @@
           <button class="tooltip-btn btn-view-po"
             data-tooltip="View Purchase Order"
             @click="openviewPoModal(cust.company_name)">
-            <i class="fa fa-eye" style="font-size:13px"></i> View PO
+            <i class="fa fa-eye" style="font-size:13px"></i>
           </button>
           <button
             class="tooltip-btn btn-followup"
             data-tooltip="Create Quotation"
             @click="openQuotationlist(cust)"
           >
-            <i class="fa fa-file-text-o" style="font-size:13px;"></i> Quotation
+            <i class="fa fa-file-text-o" style="font-size:13px;"></i>
           </button>
           <button
             class="tooltip-btn btn-followup"
             data-tooltip="View Report"
             @click="openWelcomeModal(cust.company_name)"
           >
-            <i class='fas fa-file-invoice' style='font-size:13px'></i> Reports
+            <i class='fas fa-file-invoice' style='font-size:13px'></i>
           </button>
         </td>
       </tr>
@@ -3426,7 +3450,9 @@ Edit
 
       <div class="crm-form-row">
         <div class="crm-input-group">
-          <label>Company Name *</label>
+        <label>
+  Company Name <span class="required">*</span>
+</label>
           <input 
             type="text" 
             v-model="customer.company_name" 
@@ -3436,7 +3462,7 @@ Edit
         </div>
 
     <div class="crm-input-group">
-  <label>Contact Number *</label>
+  <label>Contact Number <span class="required">*</span></label>
   <input 
     type="tel"
     v-model="customer.contact_number"
@@ -3453,7 +3479,7 @@ Edit
 
       <div class="crm-form-row">
         <div class="crm-input-group">
-          <label>Contact Person Name *</label>
+          <label>Contact Person Name <span class="required">*</span></label>
           <input 
             type="text" 
             v-model="customer.contact_person" 
@@ -3479,7 +3505,7 @@ Edit
 
       <div class="crm-form-row">
   <div class="crm-input-group crm-full-width">
-    <label>Billing Address *</label>
+    <label>Billing Address <span class="required">*</span></label>
     <textarea
       v-model="customer.billing_address"
       maxlength="500"
@@ -3492,7 +3518,7 @@ Edit
 
 <div class="crm-form-row">
   <div class="crm-input-group crm-full-width">
-    <label>Shipping Address *</label>
+    <label>Shipping Address <span class="required">*</span></label>
     <textarea
       v-model="customer.shipping_address"
       maxlength="500"
@@ -3511,7 +3537,7 @@ Edit
         </div>
 
 <div class="crm-input-group">
-  <label>Email ID</label>
+  <label>Email ID <span class="required">*</span></label>
 
   <input
     type="text"
@@ -3599,7 +3625,7 @@ Edit
       >
         <h3>
           {{ type }} Details
-          <button type="button" class="crm-add-btn" @click="addEquipment(type)">➕</button>
+          <button type="button" class="crm-add-btn" @click="addEquipment(type)">+</button>
         </h3>
 
         <div
@@ -8219,12 +8245,11 @@ font-family: cursive;
 ================================ */
 .crm-add-btn {
  background: linear-gradient(135deg, #ffffff, #ffffff);
-    color: #ffffff;
-    border: revert-layer;
+    color: #0f0f0f;
     padding: 6px 12px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 24px;
     transition: all .2s ease;
 }
 
@@ -8281,11 +8306,13 @@ font-family: cursive;
 }
 
 .btn-followup{
-  background-color: #07160f;
+  background-color:   #f3f3f3;
+  color: rgb(0, 0, 0)!important;
 }
 
 .btn-followup:hover{
-  background-color: #353837;
+  background-color: #d3cece;
+  color: rgb(0, 0, 0)!important;
 }
 
 .approved-row {
@@ -8560,6 +8587,209 @@ width: 100%;
   cursor: not-allowed;
   transform: none !important;
   box-shadow: none !important;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--dark);
+  border: 1px solid rgba(58, 66, 86, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(58, 66, 86, 0.06);
+}
+
+.btn-outline:hover {
+  background: rgba(102, 126, 234, 0.08);
+  border-color: rgba(102, 126, 234, 0.35);
+}
+
+.page-header {
+  background: linear-gradient(180deg, #ffffff 0%, #f6f8ff 100%);
+  border-radius: 24px;
+  padding: 26px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+}
+
+.page-header .header-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.page-header .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  margin-bottom: 10px;
+  color: #6b7280;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.page-header .page-description {
+  max-width: 620px;
+  color: #4b5563;
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+.page-header .header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.page-header .header-actions .btn {
+  min-width: 140px;
+}
+
+.page-header .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 14px;
+  margin: 24px 0 18px;
+}
+
+.page-header .stat-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.page-header .stat-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.page-header .stat-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.page-header .stat-note {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.page-header .search-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-header .search-field {
+  flex: 1;
+  min-width: 260px;
+  max-width: 540px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.page-header .search-field i {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.page-header .search-field input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.95rem;
+  color: #111827;
+  background: transparent;
+}
+
+.page-header .search-field input::placeholder {
+  color: #9ca3af;
+}
+
+.page-header .quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.page-header .quick-actions .btn {
+  min-width: 140px;
+}
+
+.table-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  min-height: 160px;
+}
+
+.loader-panel {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  padding: 18px 22px;
+  border-radius: 18px;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.table-container {
+  width: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.table-container .styled-customer-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+@media (max-width: 900px) {
+  .page-header .stats-grid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    padding: 20px;
+  }
+
+  .page-header .header-actions,
+  .page-header .search-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header .search-field,
+  .page-header .quick-actions .btn {
+    width: 100%;
+  }
 }
 
 /* Specific Modal Types */
@@ -8894,29 +9124,31 @@ background-color: #6f256f;
   display: flex;
   justify-content: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .btn-view-po, .btn-edit, .btn-delete, .btn-followup {
   border: none;
-  padding: 7px 0px;
-  border-radius: 6px;
+  padding: 9px 10px;
+  border-radius: 5px!important;
   font-size: 13px;
-  width: 97px;
+   min-width: 50px!important;
+ width: max-content!important;
   cursor: pointer;
-  letter-spacing: 1px;
-font-size: 11px;
-  font-weight: 500;
-  transition: 0.3s;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  transition: transform 0.2s ease, background-color 0.2s ease;
   color: #fff;
 }
 
-/* Individual Buttons Design */
 .btn-view-po {
-  background-color: var(--text);
+  background-color: #f1f1f1;
+  color: #333;
 }
 
 .btn-view-po:hover {
-  background-color: var(--primary);
+  background-color: #ded9d9;
+  transform: translateY(-1px);
 }
 
 .btn-edit {
@@ -11649,7 +11881,8 @@ h2 {
   /* flex: 1; */
   padding: 14px 15px;
   font-size: 0.8rem;
-  border-radius: 4px;
+  width: max-content;
+  border-radius: 7px;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
@@ -12454,11 +12687,6 @@ justify-self: center;
    MODAL CLOSE BUTTON
 ================================ */
 .crm-modal-close {
-  position: fixed;
-  top: 7%;
-    right: 13%;
-  width: 38px;
-  height: 38px;
   border-radius: 50%;
   border: none;
   background: #f3f4f6;
@@ -12466,8 +12694,7 @@ justify-self: center;
   font-size: 20px;
   font-weight: 600;
   cursor: pointer;
-  align-items: center;
-  justify-content: center;
+  
 }
 
 .crm-modal-close:hover {
@@ -14554,5 +14781,9 @@ transform:scale(1.05);
   .report-table td {
     padding: 0.4rem 0.6rem;
   }
+}
+.required {
+  color: red;
+  font-size: medium;
 }
 </style>

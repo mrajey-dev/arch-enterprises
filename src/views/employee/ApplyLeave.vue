@@ -34,7 +34,7 @@
 
             <div class="form-field">
               <label><i class="fas fa-tag"></i> Leave Type <span class="required">*</span></label>
-              <select v-model="form.leaveType" required>
+              <select v-model="form.leaveType" required @change="onLeaveTypeChange">
                 <option disabled value="">Select leave type</option>
                 <option v-for="type in leaveTypes" :key="type.id" :value="type.leave_name">
                   {{ type.leave_name }}
@@ -57,12 +57,26 @@
 
             <div class="form-field">
               <label><i class="fas fa-calendar-day"></i> From Date <span class="required">*</span></label>
-              <input v-model="form.fromDate" type="date" :min="today" required />
+              <input 
+                v-model="form.fromDate" 
+                type="date" 
+                :min="dateMin" 
+                required 
+                @change="onDateChange"
+              />
+              <small v-if="isSickLeave" class="field-note">Previous dates allowed for sick leave</small>
             </div>
 
             <div class="form-field" :class="{ 'disabled-field': isHalfDay }">
               <label><i class="fas fa-calendar-day"></i> To Date</label>
-              <input v-model="form.toDate" type="date" :min="form.fromDate || today" :disabled="isHalfDay" :required="!isHalfDay" />
+              <input 
+                v-model="form.toDate" 
+                type="date" 
+                :min="toDateMin" 
+                :disabled="isHalfDay" 
+                :required="!isHalfDay" 
+                @change="onDateChange"
+              />
               <small v-if="isHalfDay" class="field-note">Auto-set to same date for half day</small>
             </div>
 
@@ -169,8 +183,30 @@ export default {
     isCasualLeave() {
       return (this.form.leaveType || '').toLowerCase().includes('casual');
     },
+    isSickLeave() {
+      return (this.form.leaveType || '').toLowerCase().includes('sick') || 
+             (this.form.leaveType || '').toLowerCase().includes('medical');
+    },
     overlapWarning() {
       return this.findOverlapMessage();
+    },
+    // Dynamic min date based on leave type
+    dateMin() {
+      // If sick leave, allow any date (no min restriction)
+      if (this.isSickLeave) {
+        return null; // No minimum date
+      }
+      // For other leaves, restrict to today
+      return this.today;
+    },
+    // Dynamic min date for "To Date" field
+    toDateMin() {
+      if (this.isSickLeave && this.form.fromDate) {
+        // For sick leave, allow from the selected fromDate or earlier
+        return this.form.fromDate;
+      }
+      // For other leaves, min is today
+      return this.today;
     }
   },
 
@@ -470,7 +506,81 @@ export default {
       return lv.name === this.userName && lv.department === this.userDept;
     },
 
+    // Handle leave type change
+    onLeaveTypeChange() {
+      // Clear date fields when leave type changes
+      this.form.fromDate = '';
+      this.form.toDate = '';
+      this.submitError = '';
+      this.leaveWarning = '';
+      
+      // If sick leave, we allow previous dates, so no validation needed
+      // For other leaves, ensure dates are today or future
+    },
+
+    // Handle date change
+    onDateChange() {
+      // For non-sick leaves, validate that dates are not in the past
+      if (!this.isSickLeave) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (this.form.fromDate) {
+          const fromDate = new Date(this.form.fromDate);
+          fromDate.setHours(0, 0, 0, 0);
+          
+          if (fromDate < today) {
+            this.submitError = '❌ For this leave type, you cannot select a past date.';
+            this.form.fromDate = '';
+            toastWarning('Past dates are not allowed for this leave type.');
+            return;
+          }
+        }
+        
+        if (this.form.toDate) {
+          const toDate = new Date(this.form.toDate);
+          toDate.setHours(0, 0, 0, 0);
+          
+          if (toDate < today) {
+            this.submitError = '❌ For this leave type, you cannot select a past date.';
+            this.form.toDate = '';
+            toastWarning('Past dates are not allowed for this leave type.');
+            return;
+          }
+        }
+      }
+      
+      // Clear any previous errors
+      this.submitError = '';
+    },
+
     async submitForm() {
+      // For non-sick leaves, validate dates are not in the past
+      if (!this.isSickLeave) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (this.form.fromDate) {
+          const fromDate = new Date(this.form.fromDate);
+          fromDate.setHours(0, 0, 0, 0);
+          if (fromDate < today) {
+            this.submitError = '❌ Past dates are not allowed for this leave type.';
+            toastWarning(this.submitError);
+            return;
+          }
+        }
+        
+        if (this.form.toDate) {
+          const toDate = new Date(this.form.toDate);
+          toDate.setHours(0, 0, 0, 0);
+          if (toDate < today) {
+            this.submitError = '❌ Past dates are not allowed for this leave type.';
+            toastWarning(this.submitError);
+            return;
+          }
+        }
+      }
+
       if (!this.isHalfDay && this.form.fromDate && this.form.toDate && new Date(this.form.fromDate) > new Date(this.form.toDate)) {
         this.submitError = 'From date cannot be after to date.';
         toastWarning(this.submitError);
