@@ -818,15 +818,15 @@ startWorkingHoursCounter() {
         this.previousDayStatus = null;
       }
     },
-  async saveAttendance() {
+async saveAttendance() {
   const now = new Date();
   
-  // Subtract 2 minutes from current time for CLOCK-IN only
-  const adjustedTime = new Date(now);
-  adjustedTime.setMinutes(now.getMinutes() - 2);
+  // REMOVED: Subtracting 2 minutes logic
+  // const adjustedTime = new Date(now);
+  // adjustedTime.setMinutes(now.getMinutes() - 2);
   
-  // Format the adjusted time for clock-in
-  const formattedTime = adjustedTime.toLocaleTimeString('en-GB', {
+  // Use the actual current time
+  const formattedTime = now.toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -837,21 +837,21 @@ startWorkingHoursCounter() {
   this.user.clockOut = '';
   this.user.actualTime = '';
   
-  // Use adjusted time for early/late checks
-  const earlyThreshold = new Date(adjustedTime);
+  // Use actual current time for early/late checks
+  const earlyThreshold = new Date(now);
   earlyThreshold.setHours(9, 30, 0, 0);
-  const lateThreshold = new Date(adjustedTime);
+  const lateThreshold = new Date(now);
   lateThreshold.setHours(9, 40, 0, 0);
-  const halfDayThreshold = new Date(adjustedTime);
+  const halfDayThreshold = new Date(now);
   halfDayThreshold.setHours(13, 0, 0, 0);
   
-  this.user.isEarly = adjustedTime < earlyThreshold;
-  this.user.isLate = adjustedTime > lateThreshold;
+  this.user.isEarly = now < earlyThreshold;
+  this.user.isLate = now > lateThreshold;
   
   // MODIFIED LOGIC: Check if previous day was Traveling or OnSite
   const isPreviousDayTravelingOrOnSite = this.previousDayStatus !== null;
   
-  if (this.user.status === 'Present' && adjustedTime > halfDayThreshold) {
+  if (this.user.status === 'Present' && now > halfDayThreshold) {
     if (!isPreviousDayTravelingOrOnSite) {
       this.user.status = 'HalfDay';
     } else {
@@ -1157,7 +1157,7 @@ this.user.clockOut = this.convertToLocalTime(record.clock_out || ''); // ✅ Add
         });
       }
       
-      const publicHolidays = ['01-26', '05-01', '08-15', '10-02', '12-25'];
+      const publicHolidays = ['01-26', '05-01', '08-15', '10-02', '12-25', '07-08'];
       
       const calendar = [];
       let week = [];

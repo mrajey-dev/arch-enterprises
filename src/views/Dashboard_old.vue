@@ -8,30 +8,17 @@
       <!-- Content -->
       <section
         class="content"
-        v-if="(!isMobile || !isSidebarVisible)"
+        v-if="!isMobile || !isSidebarVisible"
         :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
       >
         <!-- Mobile Header -->
         <div class="mobile-header" v-if="isMobile">
+         
           <div class="mobile-title">
             <i class="fas fa-chart-pie"></i>
             <span>Dashboard</span>
           </div>
-        </div>
-
-        <!-- Welcome Hero -->
-        <div class="welcome-hero">
-          <div class="hero-pattern"></div>
-          <div class="hero-main">
-            <div class="hero-avatar">{{ userInitial }}</div>
-            <div class="hero-copy">
-              <p class="hero-eyebrow">{{ todayLabel }}</p>
-              <h1 class="hero-title">{{ greeting }}, {{ formattedUserName }} <span class="wave">👋</span></h1>
-              <p class="hero-subtitle">Here's what's happening across your organization today.</p>
-            </div>
-          </div>
-
-         
+        
         </div>
 
         <!-- Dashboard Cards -->
@@ -41,6 +28,7 @@
               v-for="n in skeletonCount"
               :key="n"
               class="dashboard-card skeleton-card"
+              :class="{ 'crm-skeleton': currentUserName === 'crm' }"
             >
               <div class="skeleton-label"></div>
               <div class="skeleton-text"></div>
@@ -49,107 +37,239 @@
 
           <!-- Scrollable Card Section - Mobile Optimized -->
           <div v-else class="dashboard-slider" ref="slider">
-            <div class="dashboard-card clickable-card temp leavetype" @click="goTo('employees')">
-              <div class="card-icon icon-amber">👨🏻‍💼</div>
+            <div class="dashboard-card clickable-card temp leavetype" @click="goTo('employees')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">👨🏻‍💼</div>
               <div>
                 <p class="label label-emp">Employees</p>
                 <p class="tagline">Manage employees</p>
               </div>
             </div>
 
+            <div class="dashboard-card clickable-card leavetype leavetype" v-if="currentUserName !== 'hr'" @click="goTo('Customerregistration')">
+              <div class="card-icon">🤝</div>
+              <div>
+                <p class="label label-cust">Customers & PO</p>
+                <p class="tagline">Our clients & Purchase Orders</p>
+              </div>
+            </div>
 
+            <div class="dashboard-card clickable-card temp leavetype" @click="goTo('employee/followup')" v-if="currentUserName !== 'hr'">
+              <div class="card-icon">📞</div>
+              <div>
+                <p class="label label-emp">Follow-up</p>
+                <p class="tagline">Quotations follow-up</p>
+              </div>
+            </div>
 
-            <div class="dashboard-card clickable-card leavetype" @click="goTo('workreport')">
-              <div class="card-icon icon-blue">📋</div>
+            <div class="dashboard-card clickable-card Leaves leavetype" @click="goTo('employee/amcrecord')" v-if="currentUserName !== 'hr'">
+              <div class="card-icon">📄</div>
+              <div>
+                <p class="label label-leave">AMC Record</p>
+                <p class="tagline">Service status</p>
+              </div>
+            </div>
+
+            <div class="dashboard-card clickable-card leavetype" v-if="currentUserName !== 'crm'" @click="goTo('workreport')">
+              <div class="card-icon">📋</div>
               <div>
                 <p class="label label-cust">Work Reports</p>
                 <p class="tagline">Tasks Management</p>
               </div>
             </div>
 
-            <div class="dashboard-card clickable-card leavetype" @click="goTo('expensemanage')">
-              <div class="card-icon icon-green">💰</div>
+            <div class="dashboard-card clickable-card leavetype" v-if="currentUserName !== 'crm'" @click="goTo('expensemanage')">
+              <div class="card-icon">💰</div>
               <div>
                 <p class="label label-cust">Expenses</p>
                 <p class="tagline">Manage expenses</p>
               </div>
             </div>
 
-            <div class="dashboard-card clickable-card leavetype" @click="goTo('resourcebooking')">
-              <div class="card-icon icon-blue"></div>
+            <div class="dashboard-card clickable-card leavetype" v-if="currentUserName !== 'crm'" @click="goTo('resourcebooking')">
+              <div class="card-icon">📅</div>
               <div>
                 <p class="label label-cust">Resources</p>
                 <p class="tagline">Book meeting rooms</p>
               </div>
             </div>
 
+            <div class="dashboard-card clickable-card attendance leavetype" @click="goTo('rcahelp')" v-if="currentUserName !== 'hr'">
+              <div class="card-icon">🗪</div>
+              <div>
+                <p class="label label-att">RCA</p>
+                <p class="tagline">Root Cause Analysis</p>
+              </div>
+            </div>
 
-            <div class="dashboard-card clickable-card attendance leavetype" @click="goTo('empattendanceadmin')">
-              <div class="card-icon icon-sky">🗓️</div>
+            <div class="dashboard-card clickable-card attendance leavetype" @click="goTo('empattendanceadmin')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">🗓️</div>
               <div>
                 <p class="label label-att">Attendance</p>
                 <p class="tagline">{{ attendanceRate }}% today</p>
               </div>
             </div>
 
-            <div class="dashboard-card clickable-card leavetype" @click="goTo('announcement')">
-              <div class="card-icon icon-orange">📢</div>
+            <div class="dashboard-card clickable-card leavetype" @click="goTo('announcement')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">📢</div>
               <div>
                 <p class="label label-ann">Announcements</p>
                 <p class="tagline">Share news & updates</p>
               </div>
             </div>
 
-            <div class="dashboard-card clickable-card dept leavetype" @click="goTo('managedepartments')">
-              <div class="card-icon icon-emerald">🏛️</div>
+            <div class="dashboard-card clickable-card dept leavetype" @click="goTo('managedepartments')" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">🏛️</div>
               <div>
                 <p class="label label-dept">Departments</p>
                 <p class="tagline">Organize teams</p>
               </div>
             </div>
 
-            <div class="dashboard-card clickable-card Leaves leavetype" @click="goToLeaveApplications">
-              <div class="card-icon icon-rose">🏖️</div>
+            <div class="dashboard-card clickable-card Leaves leavetype" @click="goToLeaveApplications" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">🏖️</div>
               <div>
                 <p class="label label-leave">Leaves</p>
                 <p class="tagline">Manage leaves</p>
               </div>
             </div>
-
-            <div class="dashboard-card clickable-card Leaves leavetype mobile-only" @click="goToOfferLetters">
-              <div class="card-icon icon-indigo">📄</div>
+            <div class="dashboard-card clickable-card Leaves leavetype mobile-only" @click="goToOfferLetters" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">📄</div>
               <div>
                 <p class="label label-leave">Offer Letters</p>
                 <p class="tagline">Manage offer letters</p>
               </div>
             </div>
-
-            <div class="dashboard-card clickable-card Leaves leavetype mobile-only" @click="goToMyApps">
-              <div class="card-icon icon-teal">📊</div>
+            <div class="dashboard-card clickable-card Leaves leavetype mobile-only" @click="goToMyApps" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">📊</div>
               <div>
                 <p class="label label-leave">Applications</p>
                 <p class="tagline">View application status</p>
               </div>
-            </div>
-
-            <div class="dashboard-card clickable-card Leaves leavetype" @click="goToSalaryAdvances">
-              <div class="card-icon icon-green">💰</div>
+</div>
+            <div class="dashboard-card clickable-card Leaves leavetype" @click="goToSalaryAdvances" v-if="currentUserName !== 'crm'">
+              <div class="card-icon">💰</div>
               <div>
                 <p class="label label-leave">Salary Advances</p>
                 <p class="tagline">Manage salary advances</p>
               </div>
             </div>
-            
-          </div>  
+          </div>
         </div>
 
         <!-- Performance Analytics Section - Mobile Optimized -->
         <div class="analytics-section">
-       
+          <div class="section-header">
+            <h3>📊 Performance Analytics</h3>
+            <div class="period-selector">
+              <button :class="{ active: period === 'week' }" @click="period = 'week'">W</button>
+              <button :class="{ active: period === 'month' }" @click="period = 'month'">M</button>
+              <button :class="{ active: period === 'quarter' }" @click="period = 'quarter'">Q</button>
+            </div>
+          </div>
+
+          <div class="analytics-grid">
+            <!-- Work Report Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>📝 Work Reports</h4>
+                <span class="badge">{{ workReportStats.total }} Tasks</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="workReportChart"></canvas>
+              </div>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">{{ workReportStats.completed }}</span>
+                  <span class="stat-label">Completed</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ workReportStats.pending }}</span>
+                  <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ workReportStats.completionRate }}%</span>
+                  <span class="stat-label">Rate</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expense Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>💵 Expense Breakdown</h4>
+                <span class="badge">This {{ period }}</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="expenseChart"></canvas>
+              </div>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">₹{{ formatNumber(expenseStats.total) }}</span>
+                  <span class="stat-label">Total</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ expenseStats.categories }}</span>
+                  <span class="stat-label">Categories</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Attendance Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>✅ Attendance</h4>
+                <span class="badge">{{ period }}</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="attendanceChart"></canvas>
+              </div>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">{{ attendanceStats.present }}%</span>
+                  <span class="stat-label">Present</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ attendanceStats.late }}%</span>
+                  <span class="stat-label">Late</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ attendanceStats.absent }}%</span>
+                  <span class="stat-label">Absent</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Leave Chart -->
+            <div class="analytics-card">
+              <div class="card-header">
+                <h4>🏖️ Leave Distribution</h4>
+                <span class="badge">{{ leaveStats.total }} Requests</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="leaveChart"></canvas>
+              </div>
+              <div class="stats-row">
+                <div class="stat">
+                  <span class="stat-value">{{ leaveStats.approved }}</span>
+                  <span class="stat-label">Approved</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ leaveStats.pending }}</span>
+                  <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-value">{{ leaveStats.rejected }}</span>
+                  <span class="stat-label">Rejected</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
+      
+
         <!-- Monthly Revenue Section - Mobile Optimized -->
-        <div class="monthly-revenue-row">
+        <div class="monthly-revenue-row" v-if="currentUserName !== 'crm'">
           <div class="revenue-card">
             <div class="revenue-header">
               <div class="revenue-title">
@@ -200,7 +320,7 @@
             </div>
 
             <div class="analytics-card">
-              <h4><i class="fas fa-chart-line"></i> Cumulative Revenue vs Target</h4>
+              <h4>📈 Cumulative Revenue vs Target</h4>
               <div class="chart-height">
                 <canvas id="cumulativeChart"></canvas>
               </div>
@@ -257,7 +377,7 @@ export default {
       leaveChart: null,
       yearlyTarget: 77000000,
       showSkeleton: true,
-      currentUserName: 'Mansi',
+      currentUserName: '',
       isMobile: false,
       isSidebarVisible: true,
       selectedMonth: new Date().getMonth(),
@@ -345,7 +465,8 @@ export default {
     },
 
     skeletonCount() {
-      return 8 // Show all cards for HR
+      if (this.currentUserName === 'crm') return 4
+      return 8
     },
 
     financialYear() {
@@ -362,37 +483,6 @@ export default {
 
     pendingLeaves() {
       return this.leaveStats.pending || ''
-    },
-
-    // Capitalizes each word of the signed-in HR's name, e.g. "mansi patil" -> "Mansi Patil"
-    formattedUserName() {
-      if (!this.currentUserName) return 'Mansi'
-      return this.currentUserName
-        .split(' ')
-        .filter(Boolean)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-    },
-
-    userInitial() {
-      return this.formattedUserName.charAt(0).toUpperCase()
-    },
-
-    // Time-of-day aware greeting for the welcome banner
-    greeting() {
-      const hour = new Date().getHours()
-      if (hour < 12) return 'Good morning'
-      if (hour < 17) return 'Good afternoon'
-      return 'Good evening'
-    },
-
-    todayLabel() {
-      return new Date().toLocaleDateString('en-IN', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
     }
   },
 
@@ -430,7 +520,7 @@ export default {
         })
         const expenses = expenseRes.data || []
         this.expenseStats.total = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
-
+        
         const categories = new Set(expenses.map(e => e.category))
         this.expenseStats.categories = categories.size
         this.expenseStats.data = expenses.reduce((acc, e) => {
@@ -523,7 +613,7 @@ export default {
       const ctx = document.getElementById('workReportChart')
       if (!ctx) return
       if (this.workReportChart) this.workReportChart.destroy()
-
+      
       this.workReportChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -546,10 +636,10 @@ export default {
       const ctx = document.getElementById('expenseChart')
       if (!ctx) return
       if (this.expenseChart) this.expenseChart.destroy()
-
+      
       const labels = Object.keys(this.expenseStats.data)
       const values = Object.values(this.expenseStats.data)
-
+      
       this.expenseChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -557,7 +647,7 @@ export default {
           datasets: [{
             label: 'Amount (₹)',
             data: values,
-            backgroundColor: '#4f46e5',
+            backgroundColor: '#3b82f6',
             borderRadius: 8
           }]
         },
@@ -574,7 +664,7 @@ export default {
       const ctx = document.getElementById('attendanceChart')
       if (!ctx) return
       if (this.attendanceChart) this.attendanceChart.destroy()
-
+      
       this.attendanceChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -601,7 +691,7 @@ export default {
       const ctx = document.getElementById('leaveChart')
       if (!ctx) return
       if (this.leaveChart) this.leaveChart.destroy()
-
+      
       this.leaveChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -629,7 +719,7 @@ export default {
       let cumRevenue = 0
       let cumTarget = 0
       const monthsFY = ['April','May','June','July','August','September','October','November','December','January','February','March']
-
+      
       monthsFY.forEach(month => {
         cumRevenue += this.monthlyRevenueData[month] || 0
         cumTarget += this.monthlyTargetData[month] || 0
@@ -819,11 +909,8 @@ export default {
 
     axios.get('https://employees.archenterprises.co.in/api/api/admin-info', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    }).then(res => {
-      if (res.data && res.data.name) {
-        this.currentUserName = res.data.name
-      }
-    }).catch(err => console.error('Error fetching admin info:', err))
+    }).then(res => { this.currentUserName = res.data.name.toLowerCase() })
+      .catch(err => console.error('Error fetching admin info:', err))
 
     const savedTarget = localStorage.getItem('yearlyTarget')
     if (savedTarget) this.yearlyTarget = Number(savedTarget)
@@ -838,12 +925,10 @@ export default {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary: #4f46e5;
-  --primary-dark: #4338ca;
-  --primary-light: #eef2ff;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
   --secondary: #64748b;
   --success: #22c55e;
   --warning: #f59e0b;
@@ -851,14 +936,12 @@ export default {
   --info: #3b82f6;
   --text: #1e293b;
   --text-light: #64748b;
-  --bg: #f7f8fc;
+  --bg: #f8fafc;
   --card: #ffffff;
-  --border: #e7e9f2;
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 12px 24px -8px rgba(79, 70, 229, 0.16), 0 4px 8px -2px rgba(15, 23, 42, 0.06);
-  --radius: 14px;
-  --font-display: 'Sora', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --border: #e2e8f0;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius: 12px;
 }
 
 .layout {
@@ -866,8 +949,7 @@ export default {
   flex-direction: column;
   background: var(--bg);
   min-height: 100vh;
-  font-family: var(--font-body);
-  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .main-content {
@@ -911,7 +993,6 @@ export default {
   font-size: 18px;
   font-weight: 600;
   color: var(--text);
-  font-family: var(--font-display);
 }
 
 .mobile-title i {
@@ -927,133 +1008,6 @@ export default {
   font-weight: 500;
 }
 
-/* Welcome Hero */
-.welcome-hero {
-  position: relative;
-  overflow: hidden;
-  border-radius: 20px;
-  background: linear-gradient(120deg, #4338ca 0%, #4f46e5 45%, #7c6cf0 100%);
-  padding: 28px 32px;
-  margin-bottom: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-  box-shadow: var(--shadow-lg);
-}
-
-.hero-pattern {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1.5px, transparent 1.5px);
-  background-size: 18px 18px;
-  mask-image: linear-gradient(to right, black, transparent 75%);
-  pointer-events: none;
-}
-
-.hero-main {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-avatar {
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(6px);
-}
-
-.hero-eyebrow {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.hero-title {
-  font-family: var(--font-display);
-  color: #ffffff;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 6px;
-}
-
-.wave {
-  display: inline-block;
-  animation: wave-hand 2.2s ease-in-out infinite;
-  transform-origin: 70% 70%;
-}
-
-@keyframes wave-hand {
-  0%, 60%, 100% { transform: rotate(0deg); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-8deg); }
-  30% { transform: rotate(14deg); }
-  40% { transform: rotate(-4deg); }
-}
-
-.hero-subtitle {
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 14px;
-}
-
-.hero-stats {
-  display: flex;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-  flex-wrap: wrap;
-}
-
-.hero-stat {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 14px;
-  padding: 10px 16px;
-  backdrop-filter: blur(6px);
-}
-
-.hero-stat i {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
-}
-
-.hero-stat-value {
-  display: block;
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 1.1;
-}
-
-.hero-stat-label {
-  display: block;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 11px;
-  margin-top: 2px;
-}
-
 /* Dashboard Slider */
 .dashboard-slider-container {
   width: 100%;
@@ -1062,7 +1016,7 @@ export default {
 
 .dashboard-slider {
   display: flex;
-  gap: 18px;
+  gap: 20px;
   flex-wrap: wrap;
   padding: 4px;
 }
@@ -1070,47 +1024,28 @@ export default {
 .dashboard-card {
   min-width: 200px;
   background: #ffffff;
-  border-radius: var(--radius);
+  border-radius: 10px;
   padding: 20px;
   cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid var(--border);
+  border: 1px solid #edecec;
   box-shadow: var(--shadow);
 }
 
 .dashboard-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
-  border-color: rgba(79, 70, 229, 0.25);
 }
 
 .card-icon {
-  width: 48px;
-  height: 48px;
+  font-size: 32px;
   flex-shrink: 0;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
 }
 
-.icon-amber { background: #fef3c7; }
-.icon-blue { background: #dbeafe; }
-.icon-green { background: #dcfce7; }
-.icon-violet { background: #ede9fe; }
-.icon-sky { background: #e0f2fe; }
-.icon-orange { background: #ffedd5; }
-.icon-emerald { background: #d1fae5; }
-.icon-rose { background: #ffe4e6; }
-.icon-indigo { background: #e0e7ff; }
-.icon-teal { background: #ccfbf1; }
-
 .label {
-  font-family: var(--font-display);
   font-weight: 600;
   font-size: 14px;
   color: var(--text);
@@ -1145,24 +1080,15 @@ export default {
 }
 
 .section-header h3 {
-  font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-header h3 i {
-  color: var(--primary);
-  font-size: 16px;
 }
 
 .period-selector {
   display: flex;
   gap: 6px;
-  background: #eef0f6;
+  background: #f1f1f1;
   padding: 4px;
   border-radius: 40px;
   border: 1px solid var(--border);
@@ -1183,7 +1109,6 @@ export default {
 .period-selector button.active {
   background: var(--primary);
   color: white;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
 }
 
 .analytics-grid {
@@ -1193,10 +1118,10 @@ export default {
 }
 
 .analytics-card {
-  background: #ffffff;
-  border-radius: var(--radius);
+  background: #f3f5f4e0;
+  border-radius: 10px;
   padding: 20px;
-  border: 1px solid var(--border);
+  border: 1px solid rgb(208, 206, 206);
   box-shadow: var(--shadow);
 }
 
@@ -1208,26 +1133,18 @@ export default {
 }
 
 .analytics-card h4 {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.analytics-card h4 i {
-  color: var(--primary);
 }
 
 .badge {
-  background: var(--primary-light);
-  color: var(--primary-dark);
+  background: var(--bg);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--text-light);
 }
 
 .chart-container {
@@ -1255,7 +1172,6 @@ export default {
 
 .stat-value {
   display: block;
-  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
   color: var(--text);
@@ -1361,11 +1277,10 @@ export default {
 }
 
 .revenue-card {
-  background: #ffffff;
-  border-radius: var(--radius);
+  background: #f2f5f4;
+  border-radius: 10px;
   padding: 24px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  border: 1px solid #d9dddb;
 }
 
 .revenue-header {
@@ -1378,9 +1293,8 @@ export default {
 }
 
 .revenue-title h3 {
-  font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 4px;
 }
 
@@ -1415,11 +1329,9 @@ export default {
   border-radius: var(--radius);
   padding: 14px;
   text-align: center;
-  border: 1px solid var(--border);
 }
 
 .kpi h4 {
-  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 4px;
@@ -1446,7 +1358,6 @@ export default {
   border-radius: var(--radius);
   padding: 14px;
   text-align: center;
-  border: 1px solid var(--border);
 }
 
 .quarter-card h4 {
@@ -1484,17 +1395,14 @@ export default {
 }
 
 .birthday-card {
-  background: #ffffff;
   border-radius: var(--radius);
   padding: 24px;
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
 }
 
 .birthday-card h3 {
-  font-family: var(--font-display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 20px;
 }
 
@@ -1511,7 +1419,6 @@ export default {
   padding: 12px;
   background: var(--bg);
   border-radius: var(--radius);
-  border: 1px solid var(--border);
 }
 
 .employee-birthday-card img {
@@ -1595,26 +1502,6 @@ export default {
     display: flex;
   }
 
-  .welcome-hero {
-    padding: 20px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .hero-title {
-    font-size: 20px;
-  }
-
-  .hero-stats {
-    width: 100%;
-  }
-
-  .hero-stat {
-    flex: 1;
-    min-width: 0;
-    padding: 8px 10px;
-  }
-
   .dashboard-slider {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -1632,9 +1519,7 @@ export default {
   }
 
   .card-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
+    font-size: 28px;
   }
 
   .label {
@@ -1751,29 +1636,6 @@ export default {
     padding: 2px 10px;
   }
 
-  .welcome-hero {
-    padding: 16px;
-  }
-
-  .hero-avatar {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
-    border-radius: 12px;
-  }
-
-  .hero-title {
-    font-size: 18px;
-  }
-
-  .hero-subtitle {
-    font-size: 13px;
-  }
-
-  .hero-stat-value {
-    font-size: 14px;
-  }
-
   .dashboard-card {
     min-width: 150px;
     padding: 14px;
@@ -1781,9 +1643,7 @@ export default {
   }
 
   .card-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+    font-size: 24px;
   }
 
   .label {

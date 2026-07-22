@@ -454,21 +454,27 @@ export default {
     filteredTasks() {
       const todayStr = new Date().toISOString().substr(0, 10);
       const filtered = this.tasks.filter(task => {
+        // Show all tasks including "Task Assigned" where assigned_by matches current user
+        // Don't filter out "Task Assigned" tasks anymore
         if (task.isVisit && task.status === 'Completed') return false;
+        
         const taskDate = task.isVisit ? task.deadline : task.dueDate;
         if (!taskDate) return false;
+        
         const dateStr = new Date(taskDate).toISOString().substr(0, 10);
         const taskMonth = new Date(taskDate).getMonth() + 1;
         const isIncomplete = task.status !== 'Completed';
         const matchDate = !this.filters.date || (isIncomplete && this.filters.date === todayStr) || dateStr === this.filters.date;
         const matchMonth = !this.filters.month || taskMonth === Number(this.filters.month);
         const matchStatus = !this.filters.status || task.status === this.filters.status;
+        
         return matchDate && matchMonth && matchStatus;
       }).sort((a, b) => {
         const dateA = new Date(a.isVisit ? a.deadline : a.dueDate);
         const dateB = new Date(b.isVisit ? b.deadline : b.dueDate);
         return dateB - dateA;
       });
+      
       this.totalFilteredTasks = filtered.length;
       return filtered.slice(0, this.visibleTaskCount);
     }
@@ -643,38 +649,48 @@ export default {
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
     },
-    async fetchTasks() {
-      try {
-        const response = await axios.get('https://employees.archenterprises.co.in/api/api/tasks', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        this.tasks = response.data.filter(task => task.user_id === this.currentUser.id).map(task => ({
-          id: task.id,
-          title: task.title,
-          dueDate: task.due_date,
-          deadline: task.deadline_date,
-          priority: task.priority,
-          description: task.description,
-          comment: task.comment,
-          status: task.status,
-          completedAt: task.completed_at,
-          createdAt: task.created_at,
-          assignedTo: task.user_name,
-          modules: task.modules
-        }));
-        const today = new Date();
-        this.upcomingTasks = this.tasks.filter(task => {
-          if (!task.dueDate) return false;
-          if (task.status === 'Completed') return false;
-          const due = new Date(task.dueDate);
-          const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-          return diffDays >= 0 && diffDays <= 2;
-        });
-      } catch (error) {
-        console.error('Failed to fetch tasks:', error);
-        toastError('Could not load tasks');
+async fetchTasks() {
+  try {
+    // Use the new getAllTasks endpoint
+    const response = await axios.get(
+      'https://employees.archenterprises.co.in/api/api/tasks/all',
+      {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       }
-    },
+    );
+    
+    this.tasks = response.data.map(task => ({
+      id: task.id,
+      title: task.title,
+      dueDate: task.due_date,
+      deadline: task.deadline_date,
+      priority: task.priority,
+      description: task.description,
+      comment: task.comment,
+      status: task.status,
+      completedAt: task.completed_at,
+      createdAt: task.created_at,
+      assignedTo: task.user_name,
+      modules: task.modules,
+      assigned_by: task.assigned_by,
+      assign_by_name: task.assign_by_name
+    }));
+    
+    // Calculate upcoming tasks
+    const today = new Date();
+    this.upcomingTasks = this.tasks.filter(task => {
+      if (!task.dueDate) return false;
+      if (task.status === 'Completed') return false;
+      const due = new Date(task.dueDate);
+      const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 2;
+    });
+    
+  } catch (error) {
+    console.error('Failed to fetch tasks:', error);
+    toastError('Could not load tasks');
+  }
+},
     deleteTask(task) {
       if (confirm(`Are you sure you want to delete the task "${task.title}"?`)) {
         axios.delete(`https://employees.archenterprises.co.in/api/api/tasks/${task.id}`)
@@ -773,6 +789,7 @@ export default {
         modules: this.newTask.modules,
         user_id: this.currentUser.id,
         user_name: this.currentUser.username,
+        assigned_by: this.currentUser.id, // Add assigned_by field
         completed_at: this.newTask.status === 'Completed' ? new Date().toISOString() : null
       };
       const url = this.isEditTaskMode
@@ -840,7 +857,6 @@ export default {
   }
 }
 </script>
-
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 

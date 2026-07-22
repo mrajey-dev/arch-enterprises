@@ -1272,9 +1272,6 @@ openFileInNewTab(item) {
 </script>
 
 <style scoped>
-/* ... All existing styles remain the same ... */
-/* (Include all the CSS from previous version) */
-
 /* Additional styles for the new tab viewer */
 .file-preview-container {
   max-width: 1200px;

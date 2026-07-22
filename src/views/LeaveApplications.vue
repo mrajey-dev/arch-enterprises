@@ -95,12 +95,12 @@
           <div class="mobile-cards" v-if="isMobile">
             <div v-for="leave in visibleLeaves" :key="leave.id" class="leave-card">
               <div class="card-header">
-                <div class="employee-info-card">
+                <div class="employee-info-card" @click="openLeaveBalancePopup(leave.name)">
                   <div class="employee-avatar">
                     {{ getInitials(leave.name) }}
                   </div>
                   <div>
-                    <div class="employee-name">{{ formatName(leave.name) }}</div>
+                    <div class="employee-name clickable">{{ formatName(leave.name) }}</div>
                     <span class="dept-badge-mobile">{{ leave.department }}</span>
                   </div>
                 </div>
@@ -185,11 +185,11 @@
               <tbody>
                 <tr v-for="leave in visibleLeaves" :key="leave.id">
                   <td class="employee-cell">
-                    <div class="employee-info">
-                      <div class="employee-avatar">
+                    <div class="employee-info" @click="openLeaveBalancePopup(leave.name)">
+                      <div class="employee-avatar clickable">
                         {{ getInitials(leave.name) }}
                       </div>
-                      <span class="employee-name">{{ formatName(leave.name) }}</span>
+                      <span class="employee-name clickable">{{ formatName(leave.name) }}</span>
                     </div>
                   </td>
                   <td>
@@ -265,6 +265,115 @@
         </div>
       </section>
     </div>
+
+    <!-- Leave Balance Popup -->
+    <div v-if="showBalancePopup" class="popup-overlay" @click="closeLeaveBalancePopup">
+      <div class="popup-content" @click.stop>
+        <div class="popup-header">
+          <div class="popup-title">
+            <i class="fas fa-umbrella-beach"></i>
+            <h2>Leave Balance</h2>
+          </div>
+          <button class="popup-close" @click="closeLeaveBalancePopup">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="popup-body">
+          <div class="employee-info-popup">
+            <div class="employee-avatar-large">
+              {{ selectedUser ? getInitials(selectedUser) : '?' }}
+            </div>
+            <div class="employee-details">
+              <h3>{{ selectedUser ? formatName(selectedUser) : 'Loading...' }}</h3>
+              <p class="employee-dept">{{ selectedUserDepartment || 'Department' }}</p>
+            </div>
+          </div>
+
+          <div v-if="loadingBalance" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading leave balance...</span>
+          </div>
+
+          <div v-else-if="popupLeaveDetails.length" class="popup-leave-details">
+            <div class="popup-summary-cards">
+              <div class="popup-stat-card" v-for="(value, type) in popupLeaveSummary" :key="type">
+                <i :class="getLeaveIcon(type)"></i>
+                <div class="stat-info">
+                  <span class="stat-value">{{ value.remaining }}</span>
+                  <span class="stat-label">{{ formatLeaveType(type) }}</span>
+                  <span class="stat-sub">Total: {{ value.total }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="popup-total-summary">
+              <div class="total-item">
+                <i class="fas fa-calendar-check"></i>
+                <div>
+                  <span class="total-label">Remaining</span>
+                  <span class="total-value">{{ popupTotalRemaining }}</span>
+                </div>
+              </div>
+              <div class="total-item">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                  <span class="total-label">Used</span>
+                  <span class="total-value">{{ popupTotalUsed }}</span>
+                </div>
+              </div>
+              <div class="total-item">
+                <i class="fas fa-chart-bar"></i>
+                <div>
+                  <span class="total-label">Allocated</span>
+                  <span class="total-value">{{ popupTotalAllocated }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="popup-table-wrapper">
+              <table class="popup-leave-table">
+                <thead>
+                  <tr>
+                    <th>Leave Type</th>
+                    <th>Total</th>
+                    <th>Used</th>
+                    <th>Remaining</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in popupLeaveDetails" :key="index">
+                    <td class="leave-type-cell">
+                      <i :class="getLeaveIcon(item.type)"></i>
+                      <span>{{ formatLeaveType(item.type) }}</span>
+                    </td>
+                    <td>{{ item.total }}</td>
+                    <td>{{ item.used }}</td>
+                    <td :class="getRemainingClass(item.remaining)">{{ item.remaining }}</td>
+                    <td>
+                      <span class="status-badge" :class="getStatusClass(item.remaining, item.total)">
+                        {{ getStatusText(item.remaining, item.total) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div v-if="popupUnpaidLeaveDays > 0" class="popup-unpaid-info">
+              <i class="fas fa-hourglass-half"></i>
+              <span>Unpaid Leave Days: {{ popupUnpaidLeaveDays }}</span>
+            </div>
+          </div>
+
+          <div v-else class="popup-empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <p>No leave balance data available</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -290,6 +399,25 @@ export default {
       loggedInUserName: '',
       searchQuery: '',
       statusFilter: '',
+      // Popup data
+      showBalancePopup: false,
+      selectedUser: null,
+      selectedUserDepartment: null,
+      loadingBalance: false,
+      popupLeaveDetails: [],
+      popupLeaveAllocations: {
+        privilege: 0,
+        casual: 0,
+        sick: 0
+      },
+      popupLeaveUsed: {
+        privilege: 0,
+        casual: 0,
+        sick: 0
+      },
+      popupUnpaidLeaveDays: 0,
+      popupUserId: null,
+      popupFinancialYear: new Date().getFullYear(),
     }
   },
 
@@ -327,6 +455,31 @@ export default {
     },
     rejectedCount() {
       return this.leaveRequests.filter(l => l.status === 'Rejected').length
+    },
+    popupLeaveSummary() {
+      return {
+        privilege: { 
+          remaining: Math.max(0, this.popupLeaveAllocations.privilege - this.popupLeaveUsed.privilege), 
+          total: this.popupLeaveAllocations.privilege 
+        },
+        casual: { 
+          remaining: Math.max(0, this.popupLeaveAllocations.casual - this.popupLeaveUsed.casual), 
+          total: this.popupLeaveAllocations.casual 
+        },
+        sick: { 
+          remaining: Math.max(0, this.popupLeaveAllocations.sick - this.popupLeaveUsed.sick), 
+          total: this.popupLeaveAllocations.sick 
+        }
+      };
+    },
+    popupTotalRemaining() {
+      return Object.values(this.popupLeaveSummary).reduce((sum, item) => sum + Math.max(0, (item.remaining || 0)), 0);
+    },
+    popupTotalUsed() {
+      return Object.values(this.popupLeaveUsed).reduce((sum, item) => sum + (item || 0), 0);
+    },
+    popupTotalAllocated() {
+      return Object.values(this.popupLeaveAllocations).reduce((sum, item) => sum + (item || 0), 0);
     }
   },
 
@@ -994,6 +1147,158 @@ export default {
       }
     },
 
+    // Leave Balance Popup Methods
+    async openLeaveBalancePopup(userName) {
+      if (!userName) return;
+      
+      this.selectedUser = userName;
+      this.showBalancePopup = true;
+      this.loadingBalance = true;
+      this.popupLeaveDetails = [];
+      this.popupLeaveAllocations = {
+        privilege: 0,
+        casual: 0,
+        sick: 0
+      };
+      this.popupLeaveUsed = {
+        privilege: 0,
+        casual: 0,
+        sick: 0
+      };
+      this.popupUnpaidLeaveDays = 0;
+      this.popupUserId = null;
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('No auth token found');
+
+        // Get user ID from name
+        const userResponse = await axios.get(
+          `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(userName)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        const userId = userResponse.data.id;
+        this.popupUserId = userId;
+        
+        // Get user details for department
+        if (userResponse.data.department) {
+          this.selectedUserDepartment = userResponse.data.department;
+        }
+
+        // Get leave balance for the user
+        const currentYear = new Date().getFullYear();
+        const balanceResponse = await axios.get(
+          `https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`,
+          { 
+            params: { year: currentYear },
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        if (balanceResponse.data && balanceResponse.data.success && balanceResponse.data.data) {
+          const balanceData = balanceResponse.data.data;
+          
+          this.popupLeaveAllocations = {
+            privilege: parseFloat(balanceData.pl_leave) || 0,
+            casual: parseFloat(balanceData.casual_leave) || 0,
+            sick: parseFloat(balanceData.sick_leave) || 0
+          };
+          
+          this.popupLeaveUsed = {
+            privilege: parseFloat(balanceData.used_pl_leave) || 0,
+            casual: parseFloat(balanceData.used_cl_leave) || 0,
+            sick: parseFloat(balanceData.used_sick_leave) || 0
+          };
+          
+          const remainingPL = parseFloat(balanceData.remaining_pl_leave) || 0;
+          const remainingCL = parseFloat(balanceData.remaining_cl_leave) || 0;
+          const remainingSick = parseFloat(balanceData.remaining_sick_leave) || 0;
+          
+          this.popupUnpaidLeaveDays = parseFloat(balanceData.used_unpaid_leave) || 0;
+          
+          this.popupLeaveDetails = [
+            { 
+              type: 'privilege', 
+              total: this.popupLeaveAllocations.privilege, 
+              used: this.popupLeaveUsed.privilege, 
+              remaining: remainingPL
+            },
+            { 
+              type: 'casual', 
+              total: this.popupLeaveAllocations.casual, 
+              used: this.popupLeaveUsed.casual, 
+              remaining: remainingCL
+            },
+            { 
+              type: 'sick', 
+              total: this.popupLeaveAllocations.sick, 
+              used: this.popupLeaveUsed.sick, 
+              remaining: remainingSick
+            }
+          ];
+        }
+
+        this.loadingBalance = false;
+        
+      } catch (error) {
+        console.error('Error fetching leave balance for popup:', error);
+        toastError('Could not fetch leave balance for this user');
+        this.loadingBalance = false;
+        this.popupLeaveDetails = [];
+      }
+    },
+
+    closeLeaveBalancePopup() {
+      this.showBalancePopup = false;
+      this.selectedUser = null;
+      this.selectedUserDepartment = null;
+      this.popupUserId = null;
+      this.popupLeaveDetails = [];
+    },
+
+    // Reused methods from leave balance component
+    getLeaveIcon(type) {
+      const icons = {
+        privilege: 'fas fa-crown',
+        casual: 'fas fa-coffee',
+        sick: 'fas fa-thermometer-half',
+        absent: 'fas fa-hourglass-half',
+        'half day': 'fas fa-sun',
+        default: 'fas fa-calendar-check'
+      };
+      return icons[type?.toLowerCase()] || icons.default;
+    },
+
+    formatLeaveType(type) {
+      const types = {
+        privilege: 'Privilege',
+        casual: 'Casual',
+        sick: 'Sick / Medical',
+        absent: 'Unpaid (Absent)',
+        'half day': 'Half Day'
+      };
+      return types[type?.toLowerCase()] || type;
+    },
+
+    getRemainingClass(remaining) {
+      if (remaining <= 0) return 'critical';
+      if (remaining <= 2) return 'warning';
+      return 'good';
+    },
+
+    getUsagePercentage(used, total) {
+      if (total === 0) return 0;
+      return Math.round((used / total) * 100);
+    },
+
+    getStatusText(remaining, total) {
+      if (total === 0) return 'N/A';
+      if (remaining <= 0) return 'Exhausted';
+      if (remaining <= 2) return 'Low Balance';
+      return 'Available';
+    },
+
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -1043,6 +1348,497 @@ export default {
 </script>
 
 <style scoped>
+/* Popup Styles */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+.popup-content {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 700px;
+  width: 92%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 2px solid #f0f2f5;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+.popup-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.popup-title i {
+  font-size: 24px;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.popup-title h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.popup-close {
+  background: #f3f4f6;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+}
+
+.popup-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+.popup-body {
+  padding: 24px;
+}
+
+.employee-info-popup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.employee-avatar-large {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.employee-details h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.employee-details .employee-dept {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.popup-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.popup-stat-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.popup-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.popup-stat-card i {
+  font-size: 20px;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 8px;
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-stat-card .stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-stat-card .stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.popup-stat-card .stat-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.popup-stat-card .stat-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.popup-total-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.popup-total-summary .total-item {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.popup-total-summary .total-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.popup-total-summary .total-item i {
+  font-size: 18px;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 8px;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-total-summary .total-item .total-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  display: block;
+}
+
+.popup-total-summary .total-item .total-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.popup-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.popup-leave-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.popup-leave-table thead {
+  background: #f8fafc;
+}
+
+.popup-leave-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.popup-leave-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.popup-leave-table tr:last-child td {
+  border-bottom: none;
+}
+
+.popup-leave-table .leave-type-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popup-leave-table .leave-type-cell i {
+  font-size: 14px;
+  color: #4f46e5;
+}
+
+.popup-leave-table .critical {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.popup-leave-table .warning {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.popup-leave-table .good {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.popup-leave-table .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.popup-leave-table .status-badge.good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.popup-leave-table .status-badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.popup-leave-table .status-badge.critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.popup-leave-table .status-badge.neutral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.popup-unpaid-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border-radius: 10px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.popup-unpaid-info i {
+  font-size: 18px;
+}
+
+.popup-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+}
+
+.popup-empty-state i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  color: #cbd5e1;
+}
+
+.popup-empty-state p {
+  font-size: 16px;
+  margin: 0;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: #64748b;
+}
+
+.loading-state i {
+  font-size: 24px;
+  color: #4f46e5;
+}
+
+/* Clickable styles */
+.clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.clickable:hover {
+  color: #4f46e5 !important;
+}
+
+.employee-info {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.employee-info-card {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.employee-name.clickable:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+/* Mobile responsiveness for popup */
+@media (max-width: 768px) {
+  .popup-content {
+    max-width: 95%;
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .popup-header {
+    padding: 16px;
+  }
+  
+  .popup-title h2 {
+    font-size: 17px;
+  }
+  
+  .popup-body {
+    padding: 16px;
+  }
+  
+  .popup-summary-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .popup-total-summary {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  
+  .popup-total-summary .total-item {
+    padding: 10px;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .popup-total-summary .total-item i {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .popup-total-summary .total-item .total-value {
+    font-size: 16px;
+  }
+  
+  .popup-leave-table {
+    font-size: 12px;
+  }
+  
+  .popup-leave-table th,
+  .popup-leave-table td {
+    padding: 8px 10px;
+  }
+  
+  .employee-info-popup {
+    padding: 12px 16px;
+  }
+  
+  .employee-avatar-large {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+}
+
+/* Scrollbar styles */
+.popup-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.popup-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.popup-content::-webkit-scrollbar-thumb {
+  background: #c1c7d0;
+  border-radius: 10px;
+}
+
+.popup-content::-webkit-scrollbar-thumb:hover {
+  background: #a0a8b4;
+}
+
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
 /* Variables */

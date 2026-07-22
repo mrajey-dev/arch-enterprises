@@ -53,6 +53,8 @@
           <label><i class="fas fa-user-check"></i> Recommended By</label>
           <input type="text" v-model="filters.recommended_by" placeholder="Filter by recommender..." class="filter-input" @input="applyFilters">
         </div>
+        <!-- Value Sort with Arrows -->
+       
         <div class="filter-group filter-actions">
           <button class="clear-filters-btn" @click="clearFilters">
             <i class="fas fa-undo"></i> Clear All
@@ -96,6 +98,33 @@
         <div class="filter-group">
           <label><i class="fas fa-user-check"></i> Recommended</label>
           <input type="text" v-model="filters.recommended_by" placeholder="Recommender..." class="filter-input" @input="applyFilters">
+        </div>
+        <!-- Mobile Sort Controls -->
+        <div class="filter-group value-sort-group">
+          <label><i class="fas fa-rupee-sign"></i> Sort by Value</label>
+          <div class="sort-controls mobile-sort-controls">
+            <button 
+              class="sort-btn" 
+              :class="{ active: sortOrder === 'asc' }"
+              @click="setSortOrder('asc')"
+            >
+              <i class="fas fa-arrow-up"></i> Low to High
+            </button>
+            <button 
+              class="sort-btn" 
+              :class="{ active: sortOrder === 'desc' }"
+              @click="setSortOrder('desc')"
+            >
+              <i class="fas fa-arrow-down"></i> High to Low
+            </button>
+            <button 
+              v-if="sortOrder" 
+              class="sort-btn clear-sort"
+              @click="clearSort"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
         </div>
         <button class="clear-filters-btn mobile-clear" @click="clearFilters">
           <i class="fas fa-undo"></i> Clear All
@@ -230,7 +259,14 @@
               <th>Engine Serial</th>
               <th>Engine Model</th>
               <th class="description-col">Brief Description</th>
-              <th>Initial Value</th>
+              <th>
+                Initial Value
+                <span class="sort-indicator-th" @click="toggleSort">
+                  <i class="fas fa-sort"></i>
+                  <span v-if="sortOrder === 'asc'" class="sort-arrow">↑</span>
+                  <span v-else-if="sortOrder === 'desc'" class="sort-arrow">↓</span>
+                </span>
+              </th>
               <th>Disc.(%)</th>
               <th>Created By</th>
               <th>Recommended By</th>
@@ -320,6 +356,7 @@ export default {
       showAdvancedFilters: true,
       financialYear: "2025-26",
       followUpQuotations: [],
+      sortOrder: null, // 'asc' or 'desc' or null
       filters: {
         created_by: '',
         party_name: '',
@@ -336,7 +373,8 @@ export default {
              this.filters.party_name !== '' ||
              this.filters.engine_serial !== '' ||
              this.filters.engine_model !== '' ||
-             this.filters.recommended_by !== '';
+             this.filters.recommended_by !== '' ||
+             this.sortOrder !== null;
     },
     sortedQuotations() {
       return [...this.followUpQuotations].sort((a, b) => {
@@ -377,7 +415,19 @@ export default {
         list = list.filter(q => q.recommended_by && q.recommended_by.toLowerCase().includes(search));
       }
       
-      return [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      // Apply sorting by value
+      if (this.sortOrder) {
+        list = [...list].sort((a, b) => {
+          const valueA = this.calculateTaxableValue(a.items);
+          const valueB = this.calculateTaxableValue(b.items);
+          return this.sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+        });
+      } else {
+        // Default sort by date (newest first)
+        list = [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+      
+      return list;
     },
     pendingCount() {
       return this.followUpQuotations.filter(q => q.status === 'pending').length;
@@ -393,9 +443,29 @@ export default {
     }
   },
   methods: {
+    setSortOrder(order) {
+      if (this.sortOrder === order) {
+        // Toggle off if same order clicked
+        this.sortOrder = null;
+      } else {
+        this.sortOrder = order;
+      }
+    },
+    clearSort() {
+      this.sortOrder = null;
+      toastInfo("Sorting cleared");
+    },
+    toggleSort() {
+      if (this.sortOrder === null) {
+        this.sortOrder = 'asc';
+      } else if (this.sortOrder === 'asc') {
+        this.sortOrder = 'desc';
+      } else {
+        this.sortOrder = null;
+      }
+    },
     applyFilters() {
       // Filters are applied reactively through computed property
-      // This method exists for the @input event binding
     },
     clearFilters() {
       this.selectedStatus = '';
@@ -404,8 +474,9 @@ export default {
       this.filters.engine_serial = '';
       this.filters.engine_model = '';
       this.filters.recommended_by = '';
+      this.sortOrder = null;
       this.filterOpen = false;
-      toastInfo("All filters cleared");
+      toastInfo("All filters and sorting cleared");
     },
     toggleFilter() {
       this.filterOpen = !this.filterOpen;
@@ -738,6 +809,104 @@ export default {
   color: white;
 }
 
+/* Value Sort Styles */
+.value-sort-group {
+  grid-column: span 1;
+}
+
+.sort-controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sort-btn {
+  padding: 6px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: #f8f9ff;
+}
+
+.sort-btn.active {
+  border-color: #667eea;
+  background: #667eea;
+  color: white;
+}
+
+.sort-btn.active:hover {
+  background: #5a6fd6;
+  border-color: #5a6fd6;
+}
+
+.sort-btn.clear-sort {
+  border-color: #dc3545;
+  color: #dc3545;
+  padding: 6px 12px;
+}
+
+.sort-btn.clear-sort:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.sort-indicator {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.sort-preview {
+  background: #e8f0fe;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #1a1a2e;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-preview i {
+  color: #667eea;
+}
+
+/* Table Header Sort Indicator */
+.sort-indicator-th {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.sort-indicator-th:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sort-arrow {
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffd700;
+}
+
 /* Mobile Filter Bar */
 .mobile-filter-bar {
   display: none;
@@ -751,7 +920,7 @@ export default {
 }
 
 .mobile-filter-bar.filter-open {
-  max-height: 600px;
+  max-height: 800px;
   padding: 16px;
 }
 
@@ -799,6 +968,17 @@ export default {
 .mobile-advanced-filters .filter-input {
   font-size: 14px;
   padding: 10px 12px;
+}
+
+.mobile-advanced-filters .sort-controls {
+  flex-direction: column;
+  width: 100%;
+}
+
+.mobile-advanced-filters .sort-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 10px;
 }
 
 .mobile-clear {
@@ -1268,6 +1448,10 @@ export default {
   .filter-grid {
     grid-template-columns: 1fr;
   }
+
+  .value-sort-group {
+    grid-column: span 1;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1330,6 +1514,11 @@ export default {
   .filter-chip {
     font-size: 11px;
     padding: 4px 12px;
+  }
+
+  .sort-btn {
+    font-size: 11px;
+    padding: 8px 10px;
   }
 }
 </style>

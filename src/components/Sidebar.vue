@@ -2,162 +2,127 @@
   <div class="layout">
     <!-- Sidebar -->
     <aside
-  class="sidebar"
-  :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
-  @mouseenter="handleMouseEnter"
-  @mouseleave="handleMouseLeave"
->
+      class="sidebar"
+      :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
+    >
+      <!-- Profile Section -->
+      <div class="profile-section">
+        <img
+          :src="profileImage"
+          alt="Profile Picture"
+          class="profile-pic"
+        />
+      </div>
 
-
-  <!-- Profile Section -->
-  <div class="profile-section">
-   <img
-  :src="profileImage"
-  alt="Profile Picture"
-  class="profile-pic"
-/>
-
-  </div>
-<!-- <h2 class="sidebar-title">{{ adminName }}</h2> -->
-
-
-  <!-- NEW WRAPPER ADDED HERE -->
- <div class="menu-scroll">
-
-     <!-- <div class="search-bar" v-if="adminName && adminName.toLowerCase() !== 'hr'">
-      <input
-        type="text"
-        placeholder="Search..."
-        v-model="searchQuery"
-        @input="handleSearch"
-      />
-      <i class="fas fa-search"></i>
-    </div> -->
-    <ul class="sidebar-menu">
-      <li @click="goTo('dashboard')">
-        <i class="fas fa-tachometer-alt"></i>  <span>Dashboard</span>
-      </li>
-      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('archcalendar')">
-  <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
-</li>
-<li @click="goTo('rcahelp')">
+      <div class="menu-scroll">
+        <ul class="sidebar-menu">
+          <li @click="goTo('dashboard')">
+            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+          </li>
+          
+          <li @click="goTo('archcalendar')">
+            <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
+          </li>
+          
+          <li @click="goTo('rcahelp')">
             <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
           </li>
-                <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('ScheduleMeeting')">
-  <i class="fas fa-headset"></i> <span>Schedule Meeting</span>
-</li>
-      <!-- Leaves Dropdown -->
-      <li class="dropdown" v-if="adminName && adminName.toLowerCase() !== 'crm'">
-        <div class="" @click="toggleDropdown">
-          <i class="fas fa-calendar-alt"></i> <span>Leaves</span>
-          <i class="fas fa-caret-down" style="margin-left:auto;"></i>
-        </div>
-  
-        <ul v-if="dropdownOpen" class="dropdown-menu">
-          <li @click="goTo('leaveapplications')">
-            <i class="fas fa-list"></i><span> All Leaves</span>
+          
+          <li @click="goTo('ScheduleMeeting')">
+            <i class="fas fa-headset"></i> <span>Schedule Meeting</span>
           </li>
-          <li @click="goTo('approvedleaves')">
-            <i class="fas fa-check-circle"></i><span> Approved Leaves</span>
+          
+          <!-- Leaves Dropdown -->
+          <li class="dropdown">
+            <div class="" @click="toggleDropdown">
+              <i class="fas fa-calendar-alt"></i> <span>Leaves</span>
+              <i class="fas fa-caret-down" style="margin-left:auto;"></i>
+            </div>
+      
+            <ul v-if="dropdownOpen" class="dropdown-menu">
+              <li @click="goTo('leaveapplications')">
+                <i class="fas fa-list"></i><span> All Leaves</span>
+              </li>
+              <li @click="goTo('approvedleaves')">
+                <i class="fas fa-check-circle"></i><span> Approved Leaves</span>
+              </li>
+              <li @click="goTo('rejectedleaves')">
+                <i class="fas fa-times-circle"></i><span> Rejected Leaves</span>
+              </li>
+              <li @click="goTo('pendingleaves')">
+                <i class="fas fa-hourglass-half"></i><span> Pending Leaves</span>
+              </li>
+            </ul>
           </li>
-          <li @click="goTo('rejectedleaves')">
-            <i class="fas fa-times-circle"></i><span> Rejected Leaves</span>
+      
+          <li @click="goTo('workflow')">
+            <i class="fas fa-tasks"></i> <span>Work Flow</span>
           </li>
-          <li @click="goTo('pendingleaves')">
-            <i class="fas fa-hourglass-half"></i><span> Pending Leaves</span>
+
+          <li @click="goTo('offerletter')">
+            <i class="far fa-file-alt"></i> <span>Offer Letter</span>
           </li>
-        </ul>
-      </li>
-  
-      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('workflow')">
-  <i class="fas fa-tasks"></i> <span>Work Flow</span>
-</li>
+          
+          <li @click="goTo('myapps')">
+            <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
+          </li>
+          
+          <li @click="goTo('salaryslip')">
+            <i class="far fa-file-alt"></i> <span>Salary Slip</span>
+          </li>
 
-<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('offerletter')">
-  <i class="	far fa-file-alt"></i> <span>Offer Letter</span>
-</li>
-<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('myapps')">
-  <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
-</li>
-<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('salaryslip')">
-  <i class="far fa-file-alt"></i> <span>Salary Slip</span>
-</li>
+          <li @click="goTo('requestdesk')">
+            <i class="fas fa-headset"></i> <span>Request Desk</span>
+          </li>
 
-<!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('joiningletter')">
-  <i class="fas fa-money-bill-wave"></i> <span>Joining Letter</span>
-</li> -->
+          <li @click="goTo('recruitmentsection')">
+            <i class="fas fa-user-tie"></i><span> Recruitment</span>
+          </li>
 
-<!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('resourcebooking')">
-  <i class="fa-solid fa-calendar"></i><span>Resource Booking</span>
-</li> -->
+        
 
-<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('requestdesk')">
-  <i class="fas fa-headset"></i> <span>Request Desk</span>
-</li>
-
-<li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('recruitmentsection')">
-  <i class="fas fa-user-tie"></i><span> Recruitment</span>
-</li>
-
-<li v-if="adminName && adminName.toLowerCase() !== 'hr'" @click="goTo('employee/followup')">
-  <i class="fas fa-calendar-check"></i><span> follow-up</span>
-</li>
-
-<li v-if="adminName && adminName.toLowerCase() !== 'hr'" @click="goTo('employee/amcrecord')">
-  <i class="fas fa-file-alt"></i><span> AMC Record Data</span>
-</li>
-
-
-
-        <!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('timesheet')">
-       <i class="fas fa-users"></i> Time Sheet
-     </li> -->
-
-      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('manageleavetype')">
-        <i class="fas fa-sliders-h"></i><span> Manage Leave Type</span>
-      </li>
-
-      <!-- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('workreport')">
-        <i class="fas fa-clipboard-list"></i> Work Report & Task
-      </li> -->
- <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('empdsi')">
+          <li @click="goTo('manageleavetype')">
+            <i class="fas fa-sliders-h"></i><span> Manage Leave Type</span>
+          </li>
+          
+          <li @click="goTo('empdsi')">
             <i class="fas fa-tasks"></i> <span>View DSI</span>
           </li>
            
-      <li v-if="adminName && adminName.toLowerCase() !== 'crm'" @click="goTo('performance')">
-        <i class="fas fa-chart-line"></i><span> Performance</span>
-      </li>
+          <li @click="goTo('performance')">
+            <i class="fas fa-chart-line"></i><span> Performance</span>
+          </li>
 
-      <li @click="logout" class="danger-bg">
-        <i class="fas fa-sign-out-alt"></i><span> Logout</span>
-      </li>
-       <li>
-      <!-- <label class="theme-label"><span>🎨 Theme</span></label> -->
-
-      <select
-        class="theme-select"
-        @change="changeTheme"
-        :value="currentTheme"
-      >
-        <option value="default">⚪</option>
-        <option value="blue">🟦</option>
-        <option value="green">🟩</option>
-        <option value="orange">🟧</option>
-        <option value="red">🟥</option>
-        <option value="teal">🟦</option>
-        <option value="purple">🟥</option>
-      </select><span> Theme</span>
-    </li>
-    </ul>
-  </div>
-</aside>
-<div
-  v-if="isMobileOpen"
-  class="mobile-overlay"
-  @click="isMobileOpen = false"
-></div>
-
-
+          <li @click="logout" class="danger-bg">
+            <i class="fas fa-sign-out-alt"></i><span> Logout</span>
+          </li>
+          
+          <li>
+            <select
+              class="theme-select"
+              @change="changeTheme"
+              :value="currentTheme"
+            >
+              <option value="default">⚪</option>
+              <option value="blue">🟦</option>
+              <option value="green">🟩</option>
+              <option value="orange">🟧</option>
+              <option value="red">🟥</option>
+              <option value="teal">🟦</option>
+              <option value="purple">🟥</option>
+            </select><span> Theme</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+    
+    <div
+      v-if="isMobileOpen"
+      class="mobile-overlay"
+      @click="isMobileOpen = false"
+    ></div>
 
     <!-- Main Content -->
     <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '260px' }">
@@ -165,105 +130,102 @@
     </main>
 
     <!-- Performance Modal -->
-   <div v-if="showPerformanceModal" class="performance-modal-overlay">
-  <div class="performance-modal-card">
+    <div v-if="showPerformanceModal" class="performance-modal-overlay">
+      <div class="performance-modal-card">
+        <h2 class="performance-title">
+          QUARTERLY PERFORMANCE EVALUATION 🏅
+        </h2>
 
-    <h2 class="performance-title">
-      QUARTERLY PERFORMANCE EVALUATION 🏅
-    </h2>
+        <!-- Employee -->
+        <div class="performance-field">
+          <label>Employee</label>
+          <select v-model="selectedEmployee" class="performance-select">
+            <option disabled value="">Select an Employee</option>
+            <option v-for="user in users" :key="user.id" :value="user">
+              {{ user.name }}
+            </option>
+          </select>
+        </div>
 
-    <!-- Employee -->
-    <div class="performance-field">
-      <label>Employee</label>
-      <select v-model="selectedEmployee" class="performance-select">
-        <option disabled value="">Select an Employee</option>
-        <option v-for="user in users" :key="user.id" :value="user">
-          {{ user.name }}
-        </option>
-      </select>
-    </div>
+        <!-- Attendance -->
+        <div class="performance-field">
+          <label>Attendance Score</label>
+          <input
+            type="number"
+            v-model="attendance"
+            readonly
+            class="performance-input readonly"
+          />
+        </div>
 
-    <!-- Attendance -->
-    <div class="performance-field">
-      <label>Attendance Score</label>
-      <input
-        type="number"
-        v-model="attendance"
-        readonly
-        class="performance-input readonly"
-      />
-    </div>
+        <!-- Targets -->
+        <div class="performance-row" v-if="!isSpecialEmployee">
+          <div class="performance-field">
+            <label>Target Achieved</label>
+            <input
+              type="number"
+              v-model="targetAchieved"
+              placeholder="e.g. 12"
+              class="performance-input"
+            />
+          </div>
 
-    <!-- Targets -->
-    <div class="performance-row" v-if="!isSpecialEmployee">
-      <div class="performance-field">
-        <label>Target Achieved</label>
-        <input
-          type="number"
-          v-model="targetAchieved"
-          placeholder="e.g. 12"
-          class="performance-input"
-        />
+          <div class="performance-field">
+            <label>Total Target</label>
+            <input
+              type="number"
+              v-model="targetTotal"
+              placeholder="e.g. 20"
+              class="performance-input"
+            />
+          </div>
+        </div>
+
+        <!-- Manager Review -->
+        <div class="performance-field">
+          <label>Manager Review</label>
+          <div class="performance-stars">
+            <i
+              v-for="star in 10"
+              :key="star"
+              class="fa"
+              :class="star <= reviewStars ? 'fa-star active' : 'fa-star-o'"
+              @click="reviewStars = star"
+            ></i>
+          </div>
+          <div v-if="reviewStars > 0" class="performance-percentage">
+            {{ reviewStars * 10 }}%
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="performance-actions">
+          <button class="btn-primary" @click="calculatePerformance" :disabled="loading">
+            <span v-if="loading">
+              <i class="fas fa-spinner fa-spin"></i> Calculating...
+            </span>
+            <span v-else>Calculate</span>
+          </button>
+
+          <button
+            v-if="performanceScore !== null"
+            class="btn-success"
+            @click="savePerformance"
+          >
+            Save
+          </button>
+
+          <button class="btn-outline" @click="showPerformanceModal = false">
+            Close
+          </button>
+        </div>
+
+        <!-- Result -->
+        <div v-if="performanceScore !== null" class="performance-result">
+          Performance Score: <span>{{ performanceScoreDisplay }}</span>
+        </div>
       </div>
-
-      <div class="performance-field">
-        <label>Total Target</label>
-        <input
-          type="number"
-          v-model="targetTotal"
-          placeholder="e.g. 20"
-          class="performance-input"
-        />
-      </div>
     </div>
-
-    <!-- Manager Review -->
-    <div class="performance-field">
-      <label>Manager Review</label>
-      <div class="performance-stars">
-        <i
-          v-for="star in 10"
-          :key="star"
-          class="fa"
-          :class="star <= reviewStars ? 'fa-star active' : 'fa-star-o'"
-          @click="reviewStars = star"
-        ></i>
-      </div>
-      <div v-if="reviewStars > 0" class="performance-percentage">
-        {{ reviewStars * 10 }}%
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="performance-actions">
-      <button class="btn-primary" @click="calculatePerformance" :disabled="loading">
-        <span v-if="loading">
-          <i class="fas fa-spinner fa-spin"></i> Calculating...
-        </span>
-        <span v-else>Calculate</span>
-      </button>
-
-      <button
-        v-if="performanceScore !== null"
-        class="btn-success"
-        @click="savePerformance"
-      >
-        Save
-      </button>
-
-      <button class="btn-outline" @click="showPerformanceModal = false">
-        Close
-      </button>
-    </div>
-
-    <!-- Result -->
-    <div v-if="performanceScore !== null" class="performance-result">
-      Performance Score: <span>{{ performanceScoreDisplay }}</span>
-    </div>
-
-  </div>
-</div>
-
 
     <!-- 🔐 Vault Login Modal -->
     <div v-if="showVaultLogin" class="vault-theme-overlay vault-login-overlay">
@@ -377,100 +339,99 @@
     </div>
 
     <!-- 👥 Grant File Access Modal (Topmost Layer) -->
-   <div
-  v-if="showAccessModal"
-  class="vault-theme-overlay vault-access-overlay"
-  style="z-index: 9999"
->
-  <div class="vault-theme-content vault-access-content">
-    <h3 class="vault-theme-title">👥 Grant File Access</h3>
-    <p class="vault-theme-subtext">
-      Assign access for <strong>{{ selectedFileForAccess?.filename }}</strong>
-    </p>
+    <div
+      v-if="showAccessModal"
+      class="vault-theme-overlay vault-access-overlay"
+      style="z-index: 9999"
+    >
+      <div class="vault-theme-content vault-access-content">
+        <h3 class="vault-theme-title">👥 Grant File Access</h3>
+        <p class="vault-theme-subtext">
+          Assign access for <strong>{{ selectedFileForAccess?.filename }}</strong>
+        </p>
 
-    <div class="vault-access-user">
-      <label>Select User</label>
-      <select v-model="selectedUserForAccess" class="vault-theme-input">
-        <option disabled value="">-- Choose User --</option>
-        <option v-for="u in users" :key="u.id" :value="u.id">
-          {{ u.name }}
-        </option>
-      </select>
-    </div>
+        <div class="vault-access-user">
+          <label>Select User</label>
+          <select v-model="selectedUserForAccess" class="vault-theme-input">
+            <option disabled value="">-- Choose User --</option>
+            <option v-for="u in users" :key="u.id" :value="u.id">
+              {{ u.name }}
+            </option>
+          </select>
+        </div>
 
-    <div class="vault-access-type">
-      <label>Access Type</label>
-      <select v-model="selectedAccessType" class="vault-theme-input">
-        <option disabled value="">-- Choose Access Type --</option>
-        <option value="read">Read Only</option>
-        <option value="write">Read & Write</option>
-      </select>
-    </div>
+        <div class="vault-access-type">
+          <label>Access Type</label>
+          <select v-model="selectedAccessType" class="vault-theme-input">
+            <option disabled value="">-- Choose Access Type --</option>
+            <option value="read">Read Only</option>
+            <option value="write">Read & Write</option>
+          </select>
+        </div>
 
-    <!-- Show Selected User Info -->
-    <div v-if="selectedUserForAccess" class="vault-selected-user">
-      <p class="vault-selected-text">
-        🔒 You are granting access to:
-        <strong>
-          {{
-            users.find(u => u.id === selectedUserForAccess)?.name ||
-            "Unknown User"
-          }}
-        </strong>
-        for file:
-        <strong>{{ selectedFileForAccess?.filename }}</strong>
-      </p>
-    </div>
+        <!-- Show Selected User Info -->
+        <div v-if="selectedUserForAccess" class="vault-selected-user">
+          <p class="vault-selected-text">
+            🔒 You are granting access to:
+            <strong>
+              {{
+                users.find(u => u.id === selectedUserForAccess)?.name ||
+                "Unknown User"
+              }}
+            </strong>
+            for file:
+            <strong>{{ selectedFileForAccess?.filename }}</strong>
+          </p>
+        </div>
 
-    <div class="vault-theme-actions">
-      <button
-        @click="submitAccessChange"
-        :disabled="accessLoading"
-        class="vault-theme-btn"
-      >
-        <span v-if="accessLoading">
-          <i class="fas fa-spinner fa-spin"></i> Saving...
-        </span>
-        <span v-else>Save Access</span>
-      </button>
-      <button class="vault-theme-close-btn" @click="closeAccessModal">
-        Cancel
-      </button>
+        <div class="vault-theme-actions">
+          <button
+            @click="submitAccessChange"
+            :disabled="accessLoading"
+            class="vault-theme-btn"
+          >
+            <span v-if="accessLoading">
+              <i class="fas fa-spinner fa-spin"></i> Saving...
+            </span>
+            <span v-else>Save Access</span>
+          </button>
+          <button class="vault-theme-close-btn" @click="closeAccessModal">
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-
-  </div>
+  
   <!-- Popup for search results -->
-<div v-if="showPopup" class="popup-backdrop" @click.self="closePopup">
-  <div class="popup">
-    <h3>Search Results</h3>
-    <div class="table-container">
-      <table v-if="results.length" class="results-table">
-        <thead>
-          <tr>
-            <th>Company Name</th>
-            <th>PO Type</th>
-            <th>PO Number</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in results" :key="item.id">
-            <td>{{ item.company_name }}</td>
-            <td>{{ item.po_type }}</td>
-            <td>{{ item.po_number }}</td>
-            <td>{{ item.status }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-else class="no-results">No results found.</p>
+  <div v-if="showPopup" class="popup-backdrop" @click.self="closePopup">
+    <div class="popup">
+      <h3>Search Results</h3>
+      <div class="table-container">
+        <table v-if="results.length" class="results-table">
+          <thead>
+            <tr>
+              <th>Company Name</th>
+              <th>PO Type</th>
+              <th>PO Number</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in results" :key="item.id">
+              <td>{{ item.company_name }}</td>
+              <td>{{ item.po_type }}</td>
+              <td>{{ item.po_number }}</td>
+              <td>{{ item.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else class="no-results">No results found.</p>
+      </div>
+      <button class="close-btn" @click="closePopup">Close</button>
     </div>
-    <button class="close-btn" @click="closePopup">Close</button>
   </div>
-</div>
 </template>
-
 
 <script>
 import axios from 'axios'
@@ -485,36 +446,35 @@ export default {
   data() {
     return {
       isMobileOpen: false,
-       isCollapsed: false,
+      isCollapsed: false,
       currentTheme: localStorage.getItem("theme") || "default",
-       adminEmail: '',
-         adminName: '',
-        searchQuery: "",
+      adminEmail: '',
+      adminName: '',
+      searchQuery: "",
       results: [],
       showPopup: false,
-            showAccessModal: false,
+      showAccessModal: false,
       selectedFileForAccess: null,
       selectedUserForAccess: "",
       selectedAccessType: "",
       accessLoading: false,
       showVaultOtp: false,
-vaultOtp: "",
-verifyingOtp: false,
-vaultToken: null,
-
+      vaultOtp: "",
+      verifyingOtp: false,
+      vaultToken: null,
       showVaultLogin: false,
-vaultLogin: {
-  email: "",
-  password: "",
-},
-loadingVaultLogin: false,
-    showVaultModal: false,
-selectedFile: null,
-uploading: false,
-vaultFiles: [],
-       user: {
-      profile_picture: "https://cdn-icons-png.freepik.com/256/6024/6024190.png"
-    },
+      vaultLogin: {
+        email: "",
+        password: "",
+      },
+      loadingVaultLogin: false,
+      showVaultModal: false,
+      selectedFile: null,
+      uploading: false,
+      vaultFiles: [],
+      user: {
+        profile_picture: "https://cdn-icons-png.freepik.com/256/6024/6024190.png"
+      },
       dropdownOpen: false,
       showPerformanceModal: false,
       users: [],
@@ -524,71 +484,65 @@ vaultFiles: [],
       targetTotal: '',
       reviewStars: 0,
       performanceScore: null,
-       performanceScoreDisplay: '',
+      performanceScoreDisplay: '',
       loading: false
     }
   },
-watch: {
-  showVaultModal(newVal) {
-    if (newVal) this.fetchVaultFiles();
+  watch: {
+    showVaultModal(newVal) {
+      if (newVal) this.fetchVaultFiles();
+    },
+    selectedEmployee(newVal) {
+      if (newVal && newVal.quarter_score !== undefined) {
+        this.attendance = newVal.quarter_score;
+      } else {
+        this.attendance = null;
+      }
+    }
   },
-  selectedEmployee(newVal) {
-    if (newVal && newVal.quarter_score !== undefined) {
-      this.attendance = newVal.quarter_score;
-    } else {
-      this.attendance = null;
+  computed: {
+    isSpecialEmployee() {
+      const specialEmployees = ["DIPESH SANJAY BAVISKAR", "AJAY ANANDRAO WATPADE"];
+      return this.selectedEmployee && specialEmployees.includes(this.selectedEmployee.name);
+    },
+    profileImage() {
+      if (!this.adminName) {
+        return "https://img.icons8.com/fluency/96/user-male-circle.png";
+      }
+
+      const name = this.adminName.toLowerCase();
+
+      if (name === "hr") {
+        return "https://i.pinimg.com/736x/03/82/e8/0382e829a8b19c46cabfe9abf8c80d8b.jpg";
+      }
+
+      // Removed CRM condition - now uses default profile picture
+      return (
+        this.user.profile_picture ||
+        "https://img.icons8.com/fluency/96/user-male-circle.png"
+      );
     }
-  }
-},
-computed: {
- isSpecialEmployee() {
-    const specialEmployees = ["DIPESH SANJAY BAVISKAR", "AJAY ANANDRAO WATPADE"];
-    return this.selectedEmployee && specialEmployees.includes(this.selectedEmployee.name);
   },
-  profileImage() {
-    if (!this.adminName) {
-      return "https://img.icons8.com/fluency/96/user-male-circle.png";
-    }
-
-    const name = this.adminName.toLowerCase();
-
-    if (name === "hr") {
-      return "https://i.pinimg.com/736x/03/82/e8/0382e829a8b19c46cabfe9abf8c80d8b.jpg";
-    }
-
-    if (name === "crm") {
-      return "https://thumbs.dreamstime.com/b/crm-customer-relationship-management-icon-isolated-white-background-crm-customer-relationship-management-icon-isolated-white-406601841.jpg";
-    }
-
-    // fallback to user's uploaded profile picture or default
-    return (
-      this.user.profile_picture ||
-      "https://img.icons8.com/fluency/96/user-male-circle.png"
-    );
-  }
-},
-
-
 
   methods: {
-  handleMouseEnter() {
-    if (window.innerWidth > 768) {
-      this.isCollapsed = false; // expand on hover
-    }
-  },
-  handleMouseLeave() {
-    if (window.innerWidth > 768) {
-      this.isCollapsed = false; // shrink back
-    }
-  },
+    handleMouseEnter() {
+      if (window.innerWidth > 768) {
+        this.isCollapsed = false;
+      }
+    },
+    handleMouseLeave() {
+      if (window.innerWidth > 768) {
+        this.isCollapsed = false;
+      }
+    },
 
-  toggleSidebar() {
-    // keep mobile toggle working
-    if (window.innerWidth <= 768) {
-      this.isMobileOpen = !this.isMobileOpen;
-    }
-  },
-     changeTheme(e) {
+    toggleSidebar() {
+      if (window.innerWidth <= 768) {
+        this.isMobileOpen = !this.isMobileOpen;
+      }
+    },
+    
+    changeTheme(e) {
       const theme = e.target.value
       this.currentTheme = theme
 
@@ -601,27 +555,26 @@ computed: {
       }, 400)
     },
 
-async fetchAdmin() {
-  try {
-    const res = await axios.get(
-      "https://employees.archenterprises.co.in/api/api/admin-info",
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
+    async fetchAdmin() {
+      try {
+        const res = await axios.get(
+          "https://employees.archenterprises.co.in/api/api/admin-info",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }
+        );
+
+        this.adminName = res.data.name;
+        this.adminEmail = res.data.email;
+
+      } catch (error) {
+        console.error("Admin info error:", error);
       }
-    );
+    },
 
-    this.adminName = res.data.name;
-    this.adminEmail = res.data.email;
-
-  } catch (error) {
-    console.error("Admin info error:", error);
-  }
-},
-
-
-     handleSearch() {
+    handleSearch() {
       if (this.searchQuery.length < 1) {
         this.results = [];
         this.showPopup = false;
@@ -636,10 +589,11 @@ async fetchAdmin() {
         })
         .catch((err) => console.error(err));
     },
+    
     closePopup() {
       this.showPopup = false;
     },
-     // 🔹 Open the Give Access modal
+    
     openAccessModal(file) {
       this.selectedFileForAccess = file;
       this.showAccessModal = true;
@@ -652,342 +606,327 @@ async fetchAdmin() {
       this.selectedFileForAccess = null;
     },
 
-    // 🔹 Submit the selected access to backend
- async submitAccessChange() {
-    if (!this.selectedUserForAccess || !this.selectedAccessType) {
-      toastWarning("please select both user and access type!");
-      return;
-    }
+    async submitAccessChange() {
+      if (!this.selectedUserForAccess || !this.selectedAccessType) {
+        toastWarning("please select both user and access type!");
+        return;
+      }
 
-    this.accessLoading = true;
+      this.accessLoading = true;
 
-    try {
-      const selectedUser = this.users.find(
-        (u) => u.id === this.selectedUserForAccess
-      );
-      const fileId = this.selectedFileForAccess?.id;
+      try {
+        const selectedUser = this.users.find(
+          (u) => u.id === this.selectedUserForAccess
+        );
+        const fileId = this.selectedFileForAccess?.id;
 
-      // 1️⃣ Update file access permission
-      await axios.post("/api/vault/grant-access", {
-        file_id: fileId,
-        user_id: this.selectedUserForAccess,
-        access_type: this.selectedAccessType,
-      });
+        await axios.post("/api/vault/grant-access", {
+          file_id: fileId,
+          user_id: this.selectedUserForAccess,
+          access_type: this.selectedAccessType,
+        });
 
-      // 2️⃣ Update `uploaded_by` in vault_files
-      await axios.put(`/api/vault/update-uploaded-by/${fileId}`, {
-        uploaded_by: selectedUser?.name || "Unknown User",
-      });
+        await axios.put(`/api/vault/update-uploaded-by/${fileId}`, {
+          uploaded_by: selectedUser?.name || "Unknown User",
+        });
 
-      toastSuccess(
-        `✅ Access granted to ${selectedUser.name} for file "${this.selectedFileForAccess.filename}"`
-      );
+        toastSuccess(
+          `✅ Access granted to ${selectedUser.name} for file "${this.selectedFileForAccess.filename}"`
+        );
 
-      this.closeAccessModal();
-    } catch (error) {
-      console.error("Error saving access:", error);
-      toastSuccess("❌ Failed to update access or uploaded_by field.");
-    } finally {
-      this.accessLoading = false;
-    }
-  },
+        this.closeAccessModal();
+      } catch (error) {
+        console.error("Error saving access:", error);
+        toastSuccess("❌ Failed to update access or uploaded_by field.");
+      } finally {
+        this.accessLoading = false;
+      }
+    },
 
     async deleteFile(fileId) {
-  if (!confirm("Are you sure you want to delete this file?")) return;
+      if (!confirm("Are you sure you want to delete this file?")) return;
 
-  const token = localStorage.getItem("vault_token");
-  try {
-    const response = await axios.delete(
-      `https://employees.archenterprises.co.in/api/api/admin/delete-vault-file/${fileId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const token = localStorage.getItem("vault_token");
+      try {
+        const response = await axios.delete(
+          `https://employees.archenterprises.co.in/api/api/admin/delete-vault-file/${fileId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-    if (response.data.success) {
-      this.vaultFiles = this.vaultFiles.filter(f => f.id !== fileId);
-      toastSuccess("File deleted successfully!");
-    }
-  } catch (error) {
-    console.error("Delete failed:", error);
-    toastError("Failed to delete file. Please try again.");
-  }
-},
-async updateAccess(file) {
-  const token = localStorage.getItem("vault_token");
-  console.log("Updating access for file:", file);
+        if (response.data.success) {
+          this.vaultFiles = this.vaultFiles.filter(f => f.id !== fileId);
+          toastSuccess("File deleted successfully!");
+        }
+      } catch (error) {
+        console.error("Delete failed:", error);
+        toastError("Failed to delete file. Please try again.");
+      }
+    },
+    
+    async updateAccess(file) {
+      const token = localStorage.getItem("vault_token");
+      console.log("Updating access for file:", file);
 
-  try {
-    const response = await axios.post(
-      "https://employees.archenterprises.co.in/api/api/admin/update-vault-access",
-      {
-        file_id: file.id,
-        access: file.access
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      try {
+        const response = await axios.post(
+          "https://employees.archenterprises.co.in/api/api/admin/update-vault-access",
+          {
+            file_id: file.id,
+            access: file.access
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-    if (response.data.success) {
-      toastSuccess(`Access for ${file.filename} updated to ${file.access}`);
-    } else {
-      toastSuccess(response.data.message);
-    }
-  } catch (error) {
-    console.error("Access update failed:", error);
-    toastError("Failed to update file access.");
-  }
-},
-
-
+        if (response.data.success) {
+          toastSuccess(`Access for ${file.filename} updated to ${file.access}`);
+        } else {
+          toastSuccess(response.data.message);
+        }
+      } catch (error) {
+        console.error("Access update failed:", error);
+        toastError("Failed to update file access.");
+      }
+    },
 
     async verifyVaultOtp() {
-  if (!this.vaultOtp) {
-    toastWarning("please enter the OTP.");
-    return;
-  }
-
-  this.verifyingOtp = true;
-  try {
-    const response = await axios.post(
-      "https://employees.archenterprises.co.in/api/api/admin/verify-vault-otp",
-      {
-        forgot_email: this.vaultLogin.email,
-        otp: this.vaultOtp,
+      if (!this.vaultOtp) {
+        toastWarning("please enter the OTP.");
+        return;
       }
-    );
 
-    if (response.data.success) {
-      this.vaultToken = response.data.token;
-      localStorage.setItem("vault_token", this.vaultToken);
+      this.verifyingOtp = true;
+      try {
+        const response = await axios.post(
+          "https://employees.archenterprises.co.in/api/api/admin/verify-vault-otp",
+          {
+            forgot_email: this.vaultLogin.email,
+            otp: this.vaultOtp,
+          }
+        );
 
-      toastSuccess("✅ OTP verified successfully!");
+        if (response.data.success) {
+          this.vaultToken = response.data.token;
+          localStorage.setItem("vault_token", this.vaultToken);
+
+          toastSuccess("✅ OTP verified successfully!");
+          this.showVaultOtp = false;
+          this.showVaultModal = true;
+        } else {
+          toastSuccess(response.data.message || "Invalid OTP. Please try again.");
+        }
+      } catch (error) {
+        console.error("OTP verification error:", error);
+        toastSuccess(error.response?.data?.message || "OTP verification failed.");
+      } finally {
+        this.verifyingOtp = false;
+      }
+    },
+
+    cancelVaultOtp() {
       this.showVaultOtp = false;
-      this.showVaultModal = true;
-    } else {
-      toastSuccess(response.data.message || "Invalid OTP. Please try again.");
-    }
-  } catch (error) {
-    console.error("OTP verification error:", error);
-    toastSuccess(error.response?.data?.message || "OTP verification failed.");
-  } finally {
-    this.verifyingOtp = false;
-  }
-},
-
-cancelVaultOtp() {
-  this.showVaultOtp = false;
-  this.vaultOtp = "";
-},
+      this.vaultOtp = "";
+    },
 
     openVaultLogin() {
-  this.showVaultLogin = true;
-},
+      this.showVaultLogin = true;
+    },
 
-async submitVaultLogin() {
-  if (!this.vaultLogin.email || !this.vaultLogin.password) {
-    toastWarning("please enter both email and password.");
-    return;
-  }
-
-  this.loadingVaultLogin = true;
-
-  try {
-    const response = await axios.post(
-      "https://employees.archenterprises.co.in/api/api/admin/vault-login",
-      {
-        forgot_email: this.vaultLogin.email,
-        password: this.vaultLogin.password,
+    async submitVaultLogin() {
+      if (!this.vaultLogin.email || !this.vaultLogin.password) {
+        toastWarning("please enter both email and password.");
+        return;
       }
-    );
 
-    if (response.data.success) {
-      toastSuccess("✅ OTP sent to your email. Please verify.");
-      this.showVaultLogin = false;
-      this.showVaultOtp = true;
-    } else {
-      toastSuccess(response.data.message || "Login failed.");
-    }
-  } catch (error) {
-    console.error("Login error:", error);
-    toastSuccess(error.response?.data?.message || "Login failed. Please try again.");
-  } finally {
-    this.loadingVaultLogin = false;
-  }
-},
+      this.loadingVaultLogin = true;
+
+      try {
+        const response = await axios.post(
+          "https://employees.archenterprises.co.in/api/api/admin/vault-login",
+          {
+            forgot_email: this.vaultLogin.email,
+            password: this.vaultLogin.password,
+          }
+        );
+
+        if (response.data.success) {
+          toastSuccess("✅ OTP sent to your email. Please verify.");
+          this.showVaultLogin = false;
+          this.showVaultOtp = true;
+        } else {
+          toastSuccess(response.data.message || "Login failed.");
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        toastSuccess(error.response?.data?.message || "Login failed. Please try again.");
+      } finally {
+        this.loadingVaultLogin = false;
+      }
+    },
 
     handleFileUpload(event) {
-  this.selectedFile = event.target.files[0];
-},
+      this.selectedFile = event.target.files[0];
+    },
 
-async uploadFile() {
-  if (!this.selectedFile) {
-    toastWarning("please select a file first!");
-    return;
-  }
-
-  const token = localStorage.getItem("vault_token");
-
-  const formData = new FormData();
-  formData.append("file", this.selectedFile);
-
-  this.uploading = true;
-
-  try {
-    const response = await axios.post(
-      "https://employees.archenterprises.co.in/api/api/admin/upload-vault-file",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+    async uploadFile() {
+      if (!this.selectedFile) {
+        toastWarning("please select a file first!");
+        return;
       }
-    );
 
-    if (response.data.success) {
-      const uploadedFile = response.data.file; // make sure backend returns uploaded file info
-      // Add default access property
-      uploadedFile.access = "read";
+      const token = localStorage.getItem("vault_token");
 
-      // Push to vaultFiles array so table updates immediately
-      this.vaultFiles.push(uploadedFile);
+      const formData = new FormData();
+      formData.append("file", this.selectedFile);
 
-      toastSuccess("File uploaded successfully!");
-      this.selectedFile = null;
-    }
-  } catch (error) {
-    console.error("Upload failed:", error);
-    toastSuccess("File upload failed. Please try again.");
-  } finally {
-    this.uploading = false;
-  }
-},
+      this.uploading = true;
 
-async fetchVaultFiles() {
-  const token = localStorage.getItem("vault_token");
-  try {
-    const response = await axios.get(
-      "https://employees.archenterprises.co.in/api/api/admin/vault-files",
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    this.vaultFiles = response.data.files || [];
-  } catch (error) {
-    console.error("Failed to fetch vault files:", error);
-  }
-},
+      try {
+        const response = await axios.post(
+          "https://employees.archenterprises.co.in/api/api/admin/upload-vault-file",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
- async fetchAttendanceForEmployee(name) {
-  const token = localStorage.getItem('token');
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
-
-  try {
-    const response = await axios.get(`https://employees.archenterprises.co.in/api/api/attendance`, {
-      params: {
-        name: name,
-        month: currentMonth,
-        year: currentYear
-      },
-      headers: {
-        Authorization: `Bearer ${token}`
+        if (response.data.success) {
+          const uploadedFile = response.data.file;
+          uploadedFile.access = "read";
+          this.vaultFiles.push(uploadedFile);
+          toastSuccess("File uploaded successfully!");
+          this.selectedFile = null;
+        }
+      } catch (error) {
+        console.error("Upload failed:", error);
+        toastSuccess("File upload failed. Please try again.");
+      } finally {
+        this.uploading = false;
       }
-    });
+    },
 
-    if (Array.isArray(response.data) && response.data.length > 0) {
-      const matchedRecord = response.data.find(att => att.name === name);
-      if (matchedRecord) {
-        this.attendance = matchedRecord.present_quarter || '';
-      } else {
+    async fetchVaultFiles() {
+      const token = localStorage.getItem("vault_token");
+      try {
+        const response = await axios.get(
+          "https://employees.archenterprises.co.in/api/api/admin/vault-files",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        this.vaultFiles = response.data.files || [];
+      } catch (error) {
+        console.error("Failed to fetch vault files:", error);
+      }
+    },
+
+    async fetchAttendanceForEmployee(name) {
+      const token = localStorage.getItem('token');
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+
+      try {
+        const response = await axios.get(`https://employees.archenterprises.co.in/api/api/attendance`, {
+          params: {
+            name: name,
+            month: currentMonth,
+            year: currentYear
+          },
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const matchedRecord = response.data.find(att => att.name === name);
+          if (matchedRecord) {
+            this.attendance = matchedRecord.present_quarter || '';
+          } else {
+            this.attendance = '';
+          }
+        } else {
+          this.attendance = '';
+        }
+      } catch (error) {
+        console.error('Error fetching attendance:', error);
         this.attendance = '';
       }
-    } else {
-      this.attendance = '';
-    }
-  } catch (error) {
-    console.error('Error fetching attendance:', error);
-    this.attendance = '';
-  }
-},
-
-
+    },
 
     async savePerformance() {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('No token found. User might not be logged in.');
-    this.error = 'Authentication required. Please log in again.';
-    return;
-  }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found. User might not be logged in.');
+        this.error = 'Authentication required. Please log in again.';
+        return;
+      }
 
-  try {
-    // 1. Save performance review
-    await axios.post(
-      'https://employees.archenterprises.co.in/api/api/performance-reviews',
-      {
-        user_id: this.selectedEmployee.id,
+      try {
+        await axios.post(
+          'https://employees.archenterprises.co.in/api/api/performance-reviews',
+          {
+            user_id: this.selectedEmployee.id,
+            attendance: this.attendance,
+            target_achieved: this.targetAchieved,
+            target_total: this.targetTotal,
+            review_stars: this.reviewStars,
+            performance_score: parseFloat(this.performanceScore)
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
 
-        attendance: this.attendance,
-        target_achieved: this.targetAchieved,
-        target_total: this.targetTotal,
-        review_stars: this.reviewStars,
-        performance_score: parseFloat(this.performanceScore)
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+
+        await axios.post(
+          'https://employees.archenterprises.co.in/api/api/update-performance-percentage',
+          {
+            user_id: this.selectedEmployee?.id || 0,
+            name: this.selectedEmployee?.name || "",
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+            performance_percentage: isNaN(Number(this.performanceScore)) ? 0 : Number(this.performanceScore),
+            present_quarter: isNaN(Number(this.attendance)) ? 0 : Number(this.attendance)
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        toastSuccess('Performance review saved and attendance updated!');
+        this.showPerformanceModal = false;
+        this.resetFields();
+      } catch (error) {
+        if (error.response && error.response.status === 422) {
+          console.error('Validation failed:', error.response.data);
+          toastSuccess('Validation failed: ' + JSON.stringify(error.response.data.errors, null, 2));
+        } else {
+          toastSuccess('Performance review saved and attendance updated!');
         }
       }
-    );
+    },
 
-    // 2. Save to attendance table
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-
-    await axios.post(
-  'https://employees.archenterprises.co.in/api/api/update-performance-percentage',
-  {
-    user_id: this.selectedEmployee?.id || 0,
-    name: this.selectedEmployee?.name || "",
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
-    performance_percentage: isNaN(Number(this.performanceScore)) ? 0 : Number(this.performanceScore),
-    present_quarter: isNaN(Number(this.attendance)) ? 0 : Number(this.attendance)
-  },
-  {
-    headers: { Authorization: `Bearer ${token}` }
-  }
-);
-
-
-
-    toastSuccess('Performance review saved and attendance updated!');
-    this.showPerformanceModal = false;
-    this.resetFields();
-  } catch (error) {
-  if (error.response && error.response.status === 422) {
-    console.error('Validation failed:', error.response.data);
-    toastSuccess('Validation failed: ' + JSON.stringify(error.response.data.errors, null, 2));
-  } else {
-    // console.error('Error saving performance review:', error);
-    toastSuccess('Performance review saved and attendance updated!');
-  }
-}
-
-},
-
- resetFields() {
-    this.selectedEmployee = '';
-    this.attendance = '';
-    this.targetAchieved = '';
-    this.targetTotal = '';
-    this.reviewStars = 0;
-    this.performanceScore = null;
-  },
+    resetFields() {
+      this.selectedEmployee = '';
+      this.attendance = '';
+      this.targetAchieved = '';
+      this.targetTotal = '';
+      this.reviewStars = 0;
+      this.performanceScore = null;
+    },
 
     toggleDropdown() {
       this.dropdownOpen = !this.dropdownOpen
     },
+    
     goTo(route) {
       this.$router.push(`/${route}`)
     },
+    
     logout() {
       const token = localStorage.getItem('token')
       axios.post('https://employees.archenterprises.co.in/api/api/logout', {}, {
@@ -997,79 +936,70 @@ async fetchVaultFiles() {
         this.$router.push('/auth')
       })
     },
-   async fetchUsers() {
-  const token = localStorage.getItem('token');
-  try {
-    const res = await axios.get('https://employees.archenterprises.co.in/api/api/users', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    console.log("User response:", res.data); // <-- check structure here
-    this.users = res.data.users || res.data || [];
-  } catch (error) {
-    console.error('Failed to load users:', error);
-  }
-},
-
-calculatePerformance() {
-  if (!this.attendance || !this.reviewStars) return;
-
-  this.loading = true;
-
-  setTimeout(() => {
-    const attendanceValue = parseFloat(this.attendance);
-    const reviewValue = parseFloat(this.reviewStars);
-
-    const specialEmployees = ["DIPESH SANJAY BAVISKAR", "AJAY ANANDRAO WATPADE"];
     
-    if (specialEmployees.includes(this.selectedEmployee.name)) {
-      // ✅ Special employees: Attendance counts for 50% directly (not 25%)
-      const attendancePercent = attendanceValue; // keep original %
-      const reviewPercent = (reviewValue / 10) * 100;
+    async fetchUsers() {
+      const token = localStorage.getItem('token');
+      try {
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/users', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("User response:", res.data);
+        this.users = res.data.users || res.data || [];
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      }
+    },
 
-      const finalScore = ((attendancePercent * 2) + (reviewPercent * 0.5)).toFixed(2);
-      this.performanceScore = parseFloat(finalScore);
-      this.performanceScoreDisplay = finalScore + '%';
-      this.loading = false;
-      return;
+    calculatePerformance() {
+      if (!this.attendance || !this.reviewStars) return;
+
+      this.loading = true;
+
+      setTimeout(() => {
+        const attendanceValue = parseFloat(this.attendance);
+        const reviewValue = parseFloat(this.reviewStars);
+
+        const specialEmployees = ["DIPESH SANJAY BAVISKAR", "AJAY ANANDRAO WATPADE"];
+        
+        if (specialEmployees.includes(this.selectedEmployee.name)) {
+          const attendancePercent = attendanceValue;
+          const reviewPercent = (reviewValue / 10) * 100;
+
+          const finalScore = ((attendancePercent * 2) + (reviewPercent * 0.5)).toFixed(2);
+          this.performanceScore = parseFloat(finalScore);
+          this.performanceScoreDisplay = finalScore + '%';
+          this.loading = false;
+          return;
+        }
+
+        if (!this.targetAchieved || !this.targetTotal || this.targetTotal == 0) {
+          this.performanceScore = 'Invalid target input';
+          this.loading = false;
+          return;
+        }
+
+        const targetAchievedValue = parseFloat(this.targetAchieved);
+        const targetTotalValue = parseFloat(this.targetTotal);
+
+        const attendanceScore = attendanceValue * 0.25;
+        const targetScore = ((targetAchievedValue / targetTotalValue) * 100) * 0.5;
+        const reviewScore = ((reviewValue / 10) * 100) * 0.25;
+
+        const finalScore = (attendanceScore + targetScore + reviewScore).toFixed(2);
+        this.performanceScore = parseFloat(finalScore);
+        this.performanceScoreDisplay = finalScore + '%';
+        this.loading = false;
+
+      }, 1000);
     }
-
-    // ✅ Normal employees: Attendance 25%, Target 50%, Review 25%
-    if (!this.targetAchieved || !this.targetTotal || this.targetTotal == 0) {
-      this.performanceScore = 'Invalid target input';
-      this.loading = false;
-      return;
-    }
-
-    const targetAchievedValue = parseFloat(this.targetAchieved);
-    const targetTotalValue = parseFloat(this.targetTotal);
-
-    const attendanceScore = attendanceValue * 0.25;
-    const targetScore = ((targetAchievedValue / targetTotalValue) * 100) * 0.5;
-    const reviewScore = ((reviewValue / 10) * 100) * 0.25;
-
-    const finalScore = (attendanceScore + targetScore + reviewScore).toFixed(2);
-    this.performanceScore = parseFloat(finalScore);
-    this.performanceScoreDisplay = finalScore + '%';
-    this.loading = false;
-
-  }, 1000);
-}
-
-
-
-
-
-
-
-
-
   },
+  
   mounted() {
     document.documentElement.setAttribute(
       "data-theme",
       this.currentTheme
-    ),
-      this.fetchAdmin();
+    );
+    this.fetchAdmin();
     const token = localStorage.getItem('token');
     if (!token) {
       this.$router.push('/auth');
