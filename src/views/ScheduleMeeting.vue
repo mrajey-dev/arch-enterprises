@@ -1,8 +1,6 @@
 
 <template>
   <div class="layout">
-
-
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
@@ -10,26 +8,25 @@
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
         <div class="schedule-container">
           <div class="schedule-header">
-              <h1>Schedule a meeting</h1>
-              <p class="subtitle">Create and schedule a new meeting</p>
-            </div>
+            <h1>Schedule a meeting</h1>
+            <p class="subtitle">Create and schedule a new meeting</p>
+          </div>
 
-            <!-- Tabs -->
+          <!-- Tabs -->
           <div class="tabs">
-  <button
-    :class="['tab', { active: activeTab === 'offline' }]"
-    @click="selectTab('offline')"
-  >
-    Offline
-  </button>
-
-  <button
-    :class="['tab', { active: activeTab === 'online' }]"
-    @click="selectTab('online')"
-  >
-    Online
-  </button>
-</div>
+            <button
+              :class="['tab', { active: activeTab === 'offline' }]"
+              @click="selectTab('offline')"
+            >
+              Offline
+            </button>
+            <button
+              :class="['tab', { active: activeTab === 'online' }]"
+              @click="selectTab('online')"
+            >
+              Online
+            </button>
+          </div>
 
           <!-- Success Message -->
           <div v-if="successMessage" class="alert alert-success alert-dismissible fade show">
@@ -61,11 +58,6 @@
                   <textarea id="offlineDescription" v-model="offlineForm.description" class="form-control textarea" rows="3" maxlength="5000" placeholder="Describe the meeting"></textarea>
                 </div>
 
-                <!-- <div class="form-group">
-                  <label for="importantPoints" class="form-label"><i class="fas fa-thumbtack"></i> Important Points</label>
-                  <textarea id="importantPoints" v-model="offlineForm.importantPoints" class="form-control textarea" rows="3" maxlength="500" placeholder="Add important points or agenda"></textarea>
-                </div> -->
-
                 <div class="form-row">
                   <div class="form-group flex-1">
                     <label for="offlineDate" class="form-label"><i class="fas fa-calendar"></i> Date</label>
@@ -77,6 +69,7 @@
                   </div>
                 </div>
 
+                <!-- Invitations Section with Team Checkboxes -->
                 <div class="form-group">
                   <label class="form-label"><i class="fas fa-envelope"></i> Invitations</label>
                   <div class="radio-group">
@@ -84,276 +77,283 @@
                       <input type="checkbox" v-model="offlineForm.inviteAll" />
                       <span class="radio-label">Invite all employees (send email to everyone)</span>
                     </label>
+                    <label class="radio-item">
+                      <input type="checkbox" v-model="offlineForm.inviteIT" />
+                      <span class="radio-label">Invite IT Team</span>
+                    </label>
+                    <label class="radio-item">
+                      <input type="checkbox" v-model="offlineForm.inviteService" />
+                      <span class="radio-label">Invite Service Team</span>
+                    </label>
                   </div>
                 </div>
               </div>
 
-              <!-- Online Form (existing) -->
+              <!-- Online Form -->
               <div v-if="activeTab === 'online'">
-              <!-- Meeting Title -->
-              <div class="form-group">
-                <label for="meetingTitle" class="form-label">
-                  <i class="fas fa-heading"></i> Meeting Title
-                </label>
-                <input
-                  type="text"
-                  id="meetingTitle"
-                  v-model="formData.title"
-                  class="form-control"
-                  placeholder="Enter meeting title"
-                  maxlength="100"
-                />
-                <small class="char-count">{{ formData.title.length }}/100</small>
-              </div>
-
-              <!-- Description -->
-              <div class="form-group">
-                <label for="description" class="form-label">
-                  <i class="fas fa-align-left"></i> Description
-                </label>
-                <textarea
-                  id="description"
-                  v-model="formData.description"
-                  class="form-control textarea"
-                  placeholder="Add optional details about your meeting"
-                  rows="4"
-                  maxlength="500"
-                ></textarea>
-                <small class="char-count">{{ formData.description.length }}/500</small>
-              </div>
-
-              <!-- Date -->
-              <div class="form-row">
-                <div class="form-group flex-1">
-                  <label for="meetingDate" class="form-label">
-                    <i class="fas fa-calendar"></i> Date
+                <!-- Meeting Title -->
+                <div class="form-group">
+                  <label for="meetingTitle" class="form-label">
+                    <i class="fas fa-heading"></i> Meeting Title
                   </label>
                   <input
-                    type="date"
-                    id="meetingDate"
-                    v-model="formData.date"
+                    type="text"
+                    id="meetingTitle"
+                    v-model="formData.title"
                     class="form-control"
-                    :min="today"
+                    placeholder="Enter meeting title"
+                    maxlength="100"
                   />
+                  <small class="char-count">{{ formData.title.length }}/100</small>
                 </div>
 
-                <!-- Time -->
-                <div class="form-group flex-1">
-                  <label for="meetingTime" class="form-label">
-                    <i class="fas fa-clock"></i> Time
+                <!-- Description -->
+                <div class="form-group">
+                  <label for="description" class="form-label">
+                    <i class="fas fa-align-left"></i> Description
                   </label>
-                  <input
-                    type="time"
-                    id="meetingTime"
-                    v-model="formData.time"
-                    class="form-control"
-                  />
+                  <textarea
+                    id="description"
+                    v-model="formData.description"
+                    class="form-control textarea"
+                    placeholder="Add optional details about your meeting"
+                    rows="4"
+                    maxlength="500"
+                  ></textarea>
+                  <small class="char-count">{{ formData.description.length }}/500</small>
                 </div>
-              </div>
 
-              <!-- Duration -->
-              <div class="form-group">
-                <label for="duration" class="form-label">
-                  <i class="fas fa-hourglass-end"></i> Duration
-                </label>
-                <div class="duration-selector">
-                  <select v-model="formData.duration" class="form-control">
-                    <option value="15">15 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="45">45 minutes</option>
-                    <option value="60">1 hour</option>
-                    <option value="90">1.5 hours</option>
-                    <option value="120">2 hours</option>
-                    <option value="180">3 hours</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Meeting Privacy -->
-              <div class="form-group">
-                <label class="form-label">
-                  <i class="fas fa-lock"></i> Meeting Access
-                </label>
-                <div class="radio-group">
-                  <label class="radio-item">
+                <!-- Date -->
+                <div class="form-row">
+                  <div class="form-group flex-1">
+                    <label for="meetingDate" class="form-label">
+                      <i class="fas fa-calendar"></i> Date
+                    </label>
                     <input
-                      type="radio"
-                      v-model="formData.accessType"
-                      value="anyone"
-                    />
-                    <span class="radio-label">Anyone with the link</span>
-                  </label>
-                  <label class="radio-item">
-                    <input
-                      type="radio"
-                      v-model="formData.accessType"
-                      value="invited"
-                    />
-                    <span class="radio-label">Only invited guests</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right Column -->
-            <div class="form-right">
-              <!-- Preview Card (only for online meetings) -->
-              <div v-if="activeTab === 'online'" class="preview-card">
-                <div class="preview-header">
-                  <i class="fas fa-video"></i>
-                  <span>Meeting Preview</span>
-                </div>
-
-                <!-- Meeting Details Preview -->
-                <div class="preview-details">
-                  <div class="preview-item">
-                    <span class="preview-label">Title:</span>
-                    <span class="preview-value">
-                      {{ formData.title || "Untitled meeting" }}
-                    </span>
-                  </div>
-
-                  <div class="preview-item">
-                    <span class="preview-label">Date & Time:</span>
-                    <span class="preview-value">
-                      {{
-                        formData.date && formData.time
-                          ? formatDateTime()
-                          : "Not set"
-                      }}
-                    </span>
-                  </div>
-
-                  <div class="preview-item">
-                    <span class="preview-label">Duration:</span>
-                    <span class="preview-value">{{ formData.duration }} mins</span>
-                  </div>
-
-                  <div class="preview-item">
-                    <span class="preview-label">Access:</span>
-                    <span class="preview-value capitalize">
-                      {{ formData.accessType === 'anyone' ? 'Anyone with link' : 'Invited only' }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Meeting Link -->
-                <div class="meeting-link-section">
-                  <div class="meeting-link-label">Meeting Link</div>
-                  <div class="meeting-link-box">
-                   <a :href="meetingLink" target="_blank" class="meeting-link-input">
-  {{ meetingLink }}
-</a>
-
-                    <button
-                      class="copy-btn"
-                      @click="copyToClipboard"
-                      :title="copyTooltip"
-                    >
-                      <i class="fas fa-copy"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Guests Section -->
-                <div class="guests-section">
-                  <div class="guests-label">Add Guests</div>
-                  <div class="guest-input-group">
-                    <input
-                      type="email"
-                      v-model="guestEmail"
+                      type="date"
+                      id="meetingDate"
+                      v-model="formData.date"
                       class="form-control"
-                      placeholder="Add guest email"
-                      @keyup.enter="addGuest"
+                      :min="today"
                     />
-                    <button class="btn-add-guest" @click="addGuest">
-                      <i class="fas fa-plus"></i>
-                    </button>
                   </div>
 
-                  <!-- Guest List -->
-                  <div v-if="formData.guests.length > 0" class="guest-list">
-                    <div v-for="(guest, index) in formData.guests" :key="index" class="guest-item">
-                      <div class="guest-info">
-                        <div class="guest-avatar">
-                          {{ guest.charAt(0).toUpperCase() }}
-                        </div>
-                        <div class="guest-details">
-                          <div class="guest-email">{{ guest }}</div>
-                          <div class="guest-status">Awaiting response</div>
-                        </div>
-                      </div>
+                  <!-- Time -->
+                  <div class="form-group flex-1">
+                    <label for="meetingTime" class="form-label">
+                      <i class="fas fa-clock"></i> Time
+                    </label>
+                    <input
+                      type="time"
+                      id="meetingTime"
+                      v-model="formData.time"
+                      class="form-control"
+                    />
+                  </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="form-group">
+                  <label for="duration" class="form-label">
+                    <i class="fas fa-hourglass-end"></i> Duration
+                  </label>
+                  <div class="duration-selector">
+                    <select v-model="formData.duration" class="form-control">
+                      <option value="15">15 minutes</option>
+                      <option value="30">30 minutes</option>
+                      <option value="45">45 minutes</option>
+                      <option value="60">1 hour</option>
+                      <option value="90">1.5 hours</option>
+                      <option value="120">2 hours</option>
+                      <option value="180">3 hours</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Meeting Privacy -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <i class="fas fa-lock"></i> Meeting Access
+                  </label>
+                  <div class="radio-group">
+                    <label class="radio-item">
+                      <input
+                        type="radio"
+                        v-model="formData.accessType"
+                        value="anyone"
+                      />
+                      <span class="radio-label">Anyone with the link</span>
+                    </label>
+                    <label class="radio-item">
+                      <input
+                        type="radio"
+                        v-model="formData.accessType"
+                        value="invited"
+                      />
+                      <span class="radio-label">Only invited guests</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column -->
+              <div class="form-right">
+                <!-- Preview Card (only for online meetings) -->
+                <div v-if="activeTab === 'online'" class="preview-card">
+                  <div class="preview-header">
+                    <i class="fas fa-video"></i>
+                    <span>Meeting Preview</span>
+                  </div>
+
+                  <!-- Meeting Details Preview -->
+                  <div class="preview-details">
+                    <div class="preview-item">
+                      <span class="preview-label">Title:</span>
+                      <span class="preview-value">
+                        {{ formData.title || "Untitled meeting" }}
+                      </span>
+                    </div>
+
+                    <div class="preview-item">
+                      <span class="preview-label">Date & Time:</span>
+                      <span class="preview-value">
+                        {{
+                          formData.date && formData.time
+                            ? formatDateTime()
+                            : "Not set"
+                        }}
+                      </span>
+                    </div>
+
+                    <div class="preview-item">
+                      <span class="preview-label">Duration:</span>
+                      <span class="preview-value">{{ formData.duration }} mins</span>
+                    </div>
+
+                    <div class="preview-item">
+                      <span class="preview-label">Access:</span>
+                      <span class="preview-value capitalize">
+                        {{ formData.accessType === 'anyone' ? 'Anyone with link' : 'Invited only' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Meeting Link -->
+                  <div class="meeting-link-section">
+                    <div class="meeting-link-label">Meeting Link</div>
+                    <div class="meeting-link-box">
+                      <a :href="meetingLink" target="_blank" class="meeting-link-input">
+                        {{ meetingLink }}
+                      </a>
                       <button
-                        class="btn-remove-guest"
-                        @click="removeGuest(index)"
-                        title="Remove guest"
+                        class="copy-btn"
+                        @click="copyToClipboard"
+                        :title="copyTooltip"
                       >
-                        <i class="fas fa-times"></i>
+                        <i class="fas fa-copy"></i>
                       </button>
                     </div>
                   </div>
-                </div>
 
-                <!-- Meeting Settings -->
-                <div class="settings-section">
-                  <div class="settings-label">Meeting Settings</div>
-                  <div class="toggle-item">
-                    <div class="toggle-info">
-                      <i class="fas fa-microphone"></i>
-                      <span>Host video</span>
+                  <!-- Guests Section -->
+                  <div class="guests-section">
+                    <div class="guests-label">Add Guests</div>
+                    <div class="guest-input-group">
+                      <input
+                        type="email"
+                        v-model="guestEmail"
+                        class="form-control"
+                        placeholder="Add guest email"
+                        @keyup.enter="addGuest"
+                      />
+                      <button class="btn-add-guest" @click="addGuest">
+                        <i class="fas fa-plus"></i>
+                      </button>
                     </div>
-                    <label class="toggle-switch">
-                      <input type="checkbox" v-model="formData.hostVideo" />
-                      <span class="slider"></span>
-                    </label>
+
+                    <!-- Guest List -->
+                    <div v-if="formData.guests.length > 0" class="guest-list">
+                      <div v-for="(guest, index) in formData.guests" :key="index" class="guest-item">
+                        <div class="guest-info">
+                          <div class="guest-avatar">
+                            {{ guest.charAt(0).toUpperCase() }}
+                          </div>
+                          <div class="guest-details">
+                            <div class="guest-email">{{ guest }}</div>
+                            <div class="guest-status">Awaiting response</div>
+                          </div>
+                        </div>
+                        <button
+                          class="btn-remove-guest"
+                          @click="removeGuest(index)"
+                          title="Remove guest"
+                        >
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div class="toggle-item">
-                    <div class="toggle-info">
-                      <i class="fas fa-headphones"></i>
-                      <span>Guest video</span>
+                  <!-- Meeting Settings -->
+                  <div class="settings-section">
+                    <div class="settings-label">Meeting Settings</div>
+                    <div class="toggle-item">
+                      <div class="toggle-info">
+                        <i class="fas fa-microphone"></i>
+                        <span>Host video</span>
+                      </div>
+                      <label class="toggle-switch">
+                        <input type="checkbox" v-model="formData.hostVideo" />
+                        <span class="slider"></span>
+                      </label>
                     </div>
-                    <label class="toggle-switch">
-                      <input type="checkbox" v-model="formData.guestVideo" />
-                      <span class="slider"></span>
-                    </label>
-                  </div>
 
-                  <div class="toggle-item">
-                    <div class="toggle-info">
-                      <i class="fas fa-hand-paper"></i>
-                      <span>Require participants to turn on video</span>
+                    <div class="toggle-item">
+                      <div class="toggle-info">
+                        <i class="fas fa-headphones"></i>
+                        <span>Guest video</span>
+                      </div>
+                      <label class="toggle-switch">
+                        <input type="checkbox" v-model="formData.guestVideo" />
+                        <span class="slider"></span>
+                      </label>
                     </div>
-                    <label class="toggle-switch">
-                      <input type="checkbox" v-model="formData.requireVideo" />
-                      <span class="slider"></span>
-                    </label>
+
+                    <div class="toggle-item">
+                      <div class="toggle-info">
+                        <i class="fas fa-hand-paper"></i>
+                        <span>Require participants to turn on video</span>
+                      </div>
+                      <label class="toggle-switch">
+                        <input type="checkbox" v-model="formData.requireVideo" />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Action Buttons -->
-          <div class="action-buttons">
-            <button class="btn btn-secondary" @click="resetForm">
-              <i class="fas fa-redo"></i> Clear
-            </button>
-            <button
-              class="btn btn-primary"
-              @click="activeTab === 'online' ? scheduleMeeting() : scheduleOffline()"
-              :disabled="!isFormValid || isSubmitting"
-            >
-              <span v-if="!isSubmitting">
-                <i class="fas fa-calendar-check"></i>
-                {{ activeTab === 'online' ? 'Schedule Meeting' : 'Schedule Offline Meeting' }}
-              </span>
-              <span v-else>
-                <i class="fas fa-spinner fa-spin"></i>
-                Scheduling...
-              </span>
-            </button>
-          </div>
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+              <button class="btn btn-secondary" @click="resetForm">
+                <i class="fas fa-redo"></i> Clear
+              </button>
+              <button
+                class="btn btn-primary"
+                @click="activeTab === 'online' ? scheduleMeeting() : scheduleOffline()"
+                :disabled="!isFormValid || isSubmitting"
+              >
+                <span v-if="!isSubmitting">
+                  <i class="fas fa-calendar-check"></i>
+                  {{ activeTab === 'online' ? 'Schedule Meeting' : 'Schedule Offline Meeting' }}
+                </span>
+                <span v-else>
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Scheduling...
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -364,84 +364,81 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import axios from 'axios'
-import {
-  toastSuccess,
-  toastError,
-  toastWarning,
-  toastInfo
-} from "@/utils/toast.js";
+
 export default {
   components: { Sidebar },
 
- data() {
-  return {
-     meetingType: 'offline',
-     activeTab: 'offline',
-    meetingId: Math.random().toString(36).substring(2, 15) + Date.now().toString(36),
-    isMobile: false,
-    isSidebarVisible: true,
-    isSubmitting: false,
-    successMessage: '',
-    errorMessage: '',
-    copyTooltip: 'Copy link',
-    guestEmail: '',
-    today: new Date().toISOString().split('T')[0],
-    // Online meeting form (existing)
-    formData: {
-      title: '',
-      description: '',
-      date: '',
-      time: '',
-      duration: '60',
-      accessType: 'invited',
-      guests: [],
-      hostVideo: true,
-      guestVideo: true,
-      requireVideo: false
-    },
-    // Offline meeting form (new)
-    offlineForm: {
-      title: '',
-      description: '',
-      importantPoints: '',
-      date: '',
-      time: '',
-      inviteAll: false
+  data() {
+    return {
+      meetingType: 'offline',
+      activeTab: 'offline',
+      meetingId: Math.random().toString(36).substring(2, 15) + Date.now().toString(36),
+      isMobile: false,
+      isSidebarVisible: true,
+      isSubmitting: false,
+      successMessage: '',
+      errorMessage: '',
+      copyTooltip: 'Copy link',
+      guestEmail: '',
+      today: new Date().toISOString().split('T')[0],
+      
+      // Online meeting form
+      formData: {
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        duration: '60',
+        accessType: 'invited',
+        guests: [],
+        hostVideo: true,
+        guestVideo: true,
+        requireVideo: false
+      },
+      
+      // Offline meeting form with team checkboxes
+      offlineForm: {
+        title: '',
+        description: '',
+        importantPoints: '',
+        date: '',
+        time: '',
+        inviteAll: false,
+        inviteIT: false,      // ✅ Added this
+        inviteService: false  // ✅ Added this
+      }
     }
-  }
-},
+  },
 
+  computed: {
+    meetingLink() {
+      const token = localStorage.getItem('token')
+      return `${window.location.origin}/meeting/${this.meetingId}?token=${token}`
+    },
 
-computed: {
-  meetingLink() {
-  const token = localStorage.getItem('token')
-  return `${window.location.origin}/meeting/${this.meetingId}?token=${token}`
-},
-
-  isFormValid() {
-    if (this.activeTab === 'online') {
+    isFormValid() {
+      if (this.activeTab === 'online') {
+        return (
+          this.formData.title.trim() !== '' &&
+          this.formData.date &&
+          this.formData.time
+        )
+      }
+      // offline
       return (
-        this.formData.title.trim() !== '' &&
-        this.formData.date &&
-        this.formData.time
+        this.offlineForm.title.trim() !== '' &&
+        this.offlineForm.date &&
+        this.offlineForm.time
       )
     }
-
-    // offline
-    return (
-      this.offlineForm.title.trim() !== '' &&
-      this.offlineForm.date &&
-      this.offlineForm.time
-    )
-  }
-},
-
+  },
 
   methods: {
-     selectTab(type) {
-    this.activeTab = type
-    this.meetingType = type   // 👈 THIS is the key line
-  },
+    selectTab(type) {
+      this.activeTab = type
+      this.meetingType = type
+    },
+
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -505,7 +502,7 @@ computed: {
     },
 
     resetForm() {
-        this.meetingId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
+      this.meetingId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
 
       this.formData = {
         title: '',
@@ -519,15 +516,18 @@ computed: {
         guestVideo: true,
         requireVideo: false
       }
-      // reset offline form as well
+      
       this.offlineForm = {
         title: '',
         description: '',
         importantPoints: '',
         date: '',
         time: '',
-        inviteAll: false
+        inviteAll: false,
+        inviteIT: false,
+        inviteService: false
       }
+      
       this.guestEmail = ''
       this.errorMessage = ''
       this.successMessage = ''
@@ -539,21 +539,60 @@ computed: {
         return
       }
 
+      // Check if at least one invitation option is selected
+      if (!this.offlineForm.inviteAll && !this.offlineForm.inviteIT && !this.offlineForm.inviteService) {
+        this.errorMessage = 'Please select at least one invitation option'
+        return
+      }
+
       this.isSubmitting = true
       this.errorMessage = ''
 
       try {
-        // If inviteAll is checked, fetch all user emails from backend
         let guests = []
+
+        // If inviteAll is checked, fetch all user emails
         if (this.offlineForm.inviteAll) {
           try {
             const resp = await axios.get('/api/users')
             const users = resp.data || []
             guests = users.map(u => u.email).filter(Boolean)
           } catch (e) {
-            // continue without guests if fetching fails
             console.warn('Failed to fetch users for invitations', e)
           }
+        } else {
+          // Fetch team-specific users
+          const departmentCodes = []
+          
+          if (this.offlineForm.inviteIT) {
+            departmentCodes.push('DM', 'OW001', 'IT')
+          }
+          
+          if (this.offlineForm.inviteService) {
+            departmentCodes.push('SALE01', 'ACC01', 'SERVICE01', 'MANG01', 'OW001')
+          }
+
+          if (departmentCodes.length > 0) {
+            try {
+              // Fetch users by department codes
+              const resp = await axios.post('/api/users/by-department-codes', {
+                department_codes: departmentCodes
+              })
+              const users = resp.data || []
+              guests = users.map(u => u.email).filter(Boolean)
+            } catch (e) {
+              console.warn('Failed to fetch users by departments', e)
+            }
+          }
+        }
+
+        // Remove duplicates
+        guests = [...new Set(guests)]
+
+        if (guests.length === 0) {
+          this.errorMessage = 'No users found for the selected invitation options'
+          this.isSubmitting = false
+          return
         }
 
         const meetingData = {
@@ -568,15 +607,13 @@ computed: {
           email_body: `Offline meeting schedule\n\nTitle: ${this.offlineForm.title}\nDescription: ${this.offlineForm.description || '-'}\nDate: ${this.offlineForm.date}\nTime: ${this.offlineForm.time}`
         }
 
-
         const response = await axios.post('/api/meetings/schedule', meetingData)
 
-        this.successMessage = 'Offline meeting scheduled successfully!'
+        this.successMessage = `Offline meeting scheduled successfully! Invitations sent to ${guests.length} user(s).`
 
-        // Reset form after short delay
         setTimeout(() => {
           this.resetForm()
-        }, 1500)
+        }, 3000)
       } catch (error) {
         console.error('Error scheduling offline meeting:', error)
         this.errorMessage = error.response?.data?.message || 'Failed to schedule meeting. Please try again.'
@@ -595,32 +632,28 @@ computed: {
       this.errorMessage = ''
 
       try {
-       const meetingData = {
-  meeting_id: this.meetingId,
-  meeting_link: this.meetingLink,
-  title: this.formData.title,
-  description: this.formData.description,
-  meeting_date: this.formData.date,  // ✅ matches backend
-  meeting_time: this.formData.time,  // ✅ matches backend
-  duration: this.formData.duration,
-  access_type: this.formData.accessType,
-  guests: this.formData.guests,      // optional emails
-  host_video: this.formData.hostVideo,
-  guest_video: this.formData.guestVideo,
-  require_video: this.formData.requireVideo
-}
+        const meetingData = {
+          meeting_id: this.meetingId,
+          meeting_link: this.meetingLink,
+          title: this.formData.title,
+          description: this.formData.description,
+          meeting_date: this.formData.date,
+          meeting_time: this.formData.time,
+          duration: this.formData.duration,
+          access_type: this.formData.accessType,
+          guests: this.formData.guests,
+          host_video: this.formData.hostVideo,
+          guest_video: this.formData.guestVideo,
+          require_video: this.formData.requireVideo
+        }
 
-
-
-        // Send to backend API
         const response = await axios.post('/api/meetings/schedule', meetingData)
 
         this.successMessage = `Meeting scheduled successfully! Link: ${this.meetingLink}`
         
-        // Reset form after 2 seconds
         setTimeout(() => {
           this.resetForm()
-        }, 2000)
+        }, 3000)
       } catch (error) {
         console.error('Error scheduling meeting:', error)
         this.errorMessage = error.response?.data?.message || 'Failed to schedule meeting. Please try again.'
@@ -639,7 +672,6 @@ computed: {
       this.$router.push('/auth')
     }
 
-    // Set today's date as minimum
     this.today = new Date().toISOString().split('T')[0]
   },
 
