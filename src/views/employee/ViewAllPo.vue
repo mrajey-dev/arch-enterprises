@@ -644,7 +644,7 @@ export default {
         this.applyFilters();
       } catch(error) {
         console.error("❌ Error loading POs:", error);
-        toastError(`Failed to load purchase orders: ${error.message}`);
+        toastError(`Failed to load purchase orders`);
       } finally {
         this.loading = false;
       }
@@ -905,7 +905,7 @@ export default {
           this.closeModal();
           toastSuccess(this.editingPO ? "PO Updated Successfully" : "PO Created Successfully");
         } else {
-          toastError(data.message || "Operation failed");
+          toastError("Operation failed");
         }
       } catch(error) {
         console.error("Submit error:", error);
@@ -931,7 +931,7 @@ export default {
             await this.loadAllPOs();
             toastSuccess('PO deleted successfully');
           } else {
-            toastError(data.message || 'Failed to delete PO');
+            toastError('Failed to delete PO');
           }
         } catch(error) {
           console.error("Delete error:", error);

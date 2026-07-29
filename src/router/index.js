@@ -12,7 +12,7 @@ import ScheduleMeeting from '../views/ScheduleMeeting.vue'
 import SupplyItems from '../views/SupplyItems.vue';
 import SalarySlip from '../views/SalarySlip.vue';
 import sop from '../views/employee/sop.vue';
-
+import holiday from '../views/holiday.vue';
 
 
 
@@ -104,6 +104,7 @@ const routes = [
 
 
 {path:'/ScheduleMeeting',name:'ScheduleMeeting',component:ScheduleMeeting,meta:{requiresAuth: true, adminOnly: true, hideBell:true,  hideMenu: true,}},
+{path: '/holidays', name: 'Holiday', component: holiday, meta: { requiresAuth: true, adminOnly: true, hideBell:true,  hideMenu: true, }},
   { path: '/employees', name: 'ManageEmp', component: Employee, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
   { path: '/workflow', name: 'WorkFlow', component: WorkFlow, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
   { path: '/ExpenseManage', name: 'ExpenseManage', component: ExpenseManage, meta: {requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },

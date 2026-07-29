@@ -858,7 +858,7 @@ export default {
     this.resetForm();
     this.fetchUsers();
   } catch (error) {
-    toastError(error.response?.data?.message || "Operation failed");
+    toastError("Operation failed");
   } finally {
     this.loading = false;
   }

@@ -30,8 +30,6 @@
               <p class="hero-subtitle">Here's what's happening across your organization today.</p>
             </div>
           </div>
-
-         
         </div>
 
         <!-- Dashboard Cards -->
@@ -42,8 +40,11 @@
               :key="n"
               class="dashboard-card skeleton-card"
             >
-              <div class="skeleton-label"></div>
-              <div class="skeleton-text"></div>
+              <div class="card-icon skeleton-icon"></div>
+              <div>
+                <p class="label skeleton-label"></p>
+                <p class="tagline skeleton-tagline"></p>
+              </div>
             </div>
           </div>
 
@@ -56,8 +57,6 @@
                 <p class="tagline">Manage employees</p>
               </div>
             </div>
-
-
 
             <div class="dashboard-card clickable-card leavetype" @click="goTo('workreport')">
               <div class="card-icon icon-blue">📋</div>
@@ -82,7 +81,6 @@
                 <p class="tagline">Book meeting rooms</p>
               </div>
             </div>
-
 
             <div class="dashboard-card clickable-card attendance leavetype" @click="goTo('empattendanceadmin')">
               <div class="card-icon icon-sky">🗓️</div>
@@ -139,16 +137,22 @@
                 <p class="tagline">Manage salary advances</p>
               </div>
             </div>
-            
+
+            <div class="dashboard-card clickable-card Leaves leavetype" @click="goToHoliday">
+              <div class="card-icon icon-orange">🌴</div>
+              <div>
+                <p class="label label-leave">Holidays</p>
+                <p class="tagline">Manage holidays</p>
+              </div>
+            </div>
           </div>  
         </div>
 
         <!-- Performance Analytics Section - Mobile Optimized -->
         <div class="analytics-section">
-       
         </div>
 
-        <!-- Monthly Revenue Section - Mobile Optimized -->
+        <!-- Monthly Revenue Section - Enhanced with Company Breakdown -->
         <div class="monthly-revenue-row">
           <div class="revenue-card">
             <div class="revenue-header">
@@ -167,6 +171,7 @@
               </div>
             </div>
 
+            <!-- KPI Summary Cards -->
             <div class="revenue-kpis">
               <div class="kpi success">
                 <h4>₹ {{ totalRevenueFY.toLocaleString() }}</h4>
@@ -180,8 +185,46 @@
                 <h4>{{ overallAchievement }}%</h4>
                 <p>Achievement</p>
               </div>
+              <div class="kpi primary">
+                <h4>{{ topCompanies.length }}</h4>
+                <p>Active Companies</p>
+              </div>
             </div>
 
+            <!-- Top 5 Companies Revenue Breakdown -->
+            <div class="companies-breakdown">
+              <h4 class="breakdown-title">🏢 Top 5 Companies Revenue (Closed Orders)</h4>
+              <div class="companies-grid">
+                <div 
+                  v-for="(company, index) in topCompanies" 
+                  :key="company.name"
+                  class="company-card"
+                  :class="getCompanyClass(index)"
+                >
+                  <div class="company-rank">{{ index + 1 }}</div>
+                  <div class="company-info">
+                    <div class="company-name">{{ company.name }}</div>
+                    <div class="company-details">
+                      <span class="company-revenue">₹ {{ company.revenue.toLocaleString() }}</span>
+                      <span class="company-percent">{{ company.percentage }}%</span>
+                      <span class="company-orders">📦 {{ company.orderCount }} orders</span>
+                    </div>
+                  </div>
+                  <div class="company-bar">
+                    <div 
+                      class="company-bar-fill"
+                      :style="{ width: company.percentage + '%' }"
+                      :class="getBarColor(index)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+              <p v-if="topCompanies.length === 0" class="no-data-message">
+                No closed orders found for the current financial year
+              </p>
+            </div>
+
+            <!-- Quarter Grid -->
             <div class="quarter-grid">
               <div
                 v-for="q in ['Q1','Q2','Q3','Q4']"
@@ -195,6 +238,7 @@
               </div>
             </div>
 
+            <!-- Charts -->
             <div class="bar-chart-wrapper">
               <canvas id="monthlyRevenueBarChart"></canvas>
             </div>
@@ -237,12 +281,6 @@
 import axios from 'axios'
 import Sidebar from '../components/Sidebar.vue'
 import Chart from "chart.js/auto";
-import {
-  toastSuccess,
-  toastError,
-  toastWarning,
-  toastInfo
-} from "@/utils/toast.js";
 
 export default {
   name: 'Dashboard',
@@ -294,7 +332,11 @@ export default {
       expenseStats: { total: 0, categories: 0, data: {} },
       attendanceStats: { present: 0, late: 0, absent: 0, total: 0 },
       leaveStats: { total: 0, approved: 0, pending: 0, rejected: 0 },
-      topPerformers: []
+      topPerformers: [],
+      topCompanies: [],
+      poData: [],
+      isLoading: false,
+      closedOrdersCount: 0
     }
   },
 
@@ -345,7 +387,7 @@ export default {
     },
 
     skeletonCount() {
-      return 8 // Show all cards for HR
+      return 10
     },
 
     financialYear() {
@@ -364,7 +406,6 @@ export default {
       return this.leaveStats.pending || ''
     },
 
-    // Capitalizes each word of the signed-in HR's name, e.g. "mansi patil" -> "Mansi Patil"
     formattedUserName() {
       if (!this.currentUserName) return 'Mansi'
       return this.currentUserName
@@ -378,7 +419,6 @@ export default {
       return this.formattedUserName.charAt(0).toUpperCase()
     },
 
-    // Time-of-day aware greeting for the welcome banner
     greeting() {
       const hour = new Date().getHours()
       if (hour < 12) return 'Good morning'
@@ -402,6 +442,16 @@ export default {
       if (num >= 100000) return (num / 100000).toFixed(1) + 'L'
       if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
       return num
+    },
+
+    getCompanyClass(index) {
+      const classes = ['gold', 'silver', 'bronze']
+      return classes[index] || ''
+    },
+
+    getBarColor(index) {
+      const colors = ['bar-gold', 'bar-silver', 'bar-bronze', 'bar-blue', 'bar-green', 'bar-purple', 'bar-pink', 'bar-indigo', 'bar-teal', 'bar-orange']
+      return colors[index % colors.length] || 'bar-blue'
     },
 
     getProgressPercent(value, tasks) {
@@ -642,7 +692,7 @@ export default {
           labels: cumulativeData.map(d => d.month),
           datasets: [
             { label: 'Cumulative Target', data: cumulativeData.map(d => d.cumTarget), borderColor: '#94a3b8', borderDash: [6, 6], tension: 0.4, fill: false },
-            { label: 'Cumulative Revenue', data: cumulativeData.map(d => d.cumRevenue), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)', fill: true, tension: 0.4 }
+            { label: 'Cumulative Revenue (Closed Orders)', data: cumulativeData.map(d => d.cumRevenue), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)', fill: true, tension: 0.4 }
           ]
         },
         options: {
@@ -711,28 +761,107 @@ export default {
       })
     },
 
-    async generateMonthlyRevenue() {
+    /**
+     * Fetch monthly revenue data from API
+     */
+    async fetchMonthlyRevenueData() {
       try {
-        const response = await axios.get('https://employees.archenterprises.co.in/api/api/graph/monthly-revenue')
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/graph/monthly-revenue', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        
         const apiData = response.data || []
         const fyMonths = ['April','May','June','July','August','September','October','November','December','January','February','March']
         this.monthlyRevenueData = {}
-        fyMonths.forEach(monthName => {
-          const monthIndex = this.months.indexOf(monthName) + 1
-          const found = apiData.find(d => Number(d.month) === monthIndex)
-          this.monthlyRevenueData[monthName] = found ? Number(found.total_revenue) : 0
+        
+        // Initialize all months with 0
+        fyMonths.forEach(month => {
+          this.monthlyRevenueData[month] = 0
         })
+        
+        // Map API data to months (1 = January, 2 = February, etc.)
+        apiData.forEach(item => {
+          const monthIndex = parseInt(item.month) - 1 // 0-based index
+          const monthName = this.months[monthIndex]
+          if (monthName && this.monthlyRevenueData[monthName] !== undefined) {
+            this.monthlyRevenueData[monthName] = parseFloat(item.total_revenue) || 0
+          }
+        })
+        
+        console.log('Monthly revenue data:', this.monthlyRevenueData)
+        
+      } catch (err) {
+        console.error("Error fetching monthly revenue:", err)
+        // Initialize with zeros
+        const fyMonths = ['April','May','June','July','August','September','October','November','December','January','February','March']
+        this.monthlyRevenueData = {}
+        fyMonths.forEach(month => {
+          this.monthlyRevenueData[month] = 0
+        })
+      }
+    },
+
+    /**
+     * Fetch top 5 companies from API
+     */
+    async fetchTopCompanies() {
+      try {
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/graph/top-companies', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        
+        const data = response.data || []
+        
+        if (data.length === 0) {
+          console.log('No top companies data found')
+          this.topCompanies = []
+          return
+        }
+        
+        // Calculate total revenue for percentage
+        const totalRevenue = data.reduce((sum, item) => sum + parseFloat(item.total_revenue || 0), 0)
+        
+        this.topCompanies = data.map(item => ({
+          name: item.company_name || 'Unknown',
+          revenue: parseFloat(item.total_revenue) || 0,
+          orderCount: parseInt(item.order_count) || 0,
+          percentage: totalRevenue > 0 ? Math.round((parseFloat(item.total_revenue) / totalRevenue) * 100) : 0
+        }))
+        
+        console.log('Top 5 Companies:', this.topCompanies)
+        
+      } catch (err) {
+        console.error("Error fetching top companies:", err)
+        this.topCompanies = []
+      }
+    },
+
+    /**
+     * Fetch all data for dashboard
+     */
+    async fetchPORevenueData() {
+      this.isLoading = true
+      try {
+        // Fetch monthly revenue data
+        await this.fetchMonthlyRevenueData()
+        
+        // Fetch top 5 companies
+        await this.fetchTopCompanies()
+        
+        // Render charts
         this.$nextTick(() => {
           this.renderRevenueBarChart()
           this.renderCumulativeChart()
         })
+        
       } catch (err) {
-        console.error("Error fetching monthly revenue:", err)
+        console.error("Error fetching PO revenue data:", err)
+      } finally {
+        this.isLoading = false
       }
     },
 
     renderRevenueBarChart() {
-      if (!this.monthlyRevenueData || !Object.keys(this.monthlyRevenueData).length) return
       const ctx = document.getElementById('monthlyRevenueBarChart')
       if (!ctx) return
       if (this.chartRevenueInstance) this.chartRevenueInstance.destroy()
@@ -744,15 +873,116 @@ export default {
         data: {
           labels,
           datasets: [
-            { label: 'Target', data: labels.map(m => this.monthlyTargetData[m] || 0), backgroundColor: 'rgba(203, 213, 225, 0.7)', borderRadius: 10 },
-            { label: 'Revenue', data: labels.map(m => this.monthlyRevenueData[m] || 0), backgroundColor: labels.map(m => (this.monthlyRevenueData[m] || 0) >= (this.monthlyTargetData[m] || 0) ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)'), borderRadius: 12 }
+            { 
+              label: 'Target', 
+              data: labels.map(m => this.monthlyTargetData[m] || 0), 
+              backgroundColor: 'rgba(203, 213, 225, 0.7)', 
+              borderRadius: 10 
+            },
+            { 
+              label: 'Revenue (Closed Orders)', 
+              data: labels.map(m => this.monthlyRevenueData[m] || 0), 
+              backgroundColor: labels.map(m => {
+                const revenue = this.monthlyRevenueData[m] || 0
+                const target = this.monthlyTargetData[m] || 0
+                return revenue >= target ? 'rgba(34,197,94,0.9)' : 'rgba(239,68,68,0.9)'
+              }),
+              borderRadius: 12 
+            }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => `₹ ${ctx.raw.toLocaleString()}` } } },
-          scales: { y: { beginAtZero: true, ticks: { callback: v => `₹ ${v / 100000} L` } } }
+          plugins: { 
+            legend: { position: 'top' }, 
+            tooltip: { 
+              callbacks: { 
+                label: function(ctx) {
+                  return `₹ ${ctx.raw.toLocaleString()}`
+                } 
+              } 
+            } 
+          },
+          scales: { 
+            y: { 
+              beginAtZero: true, 
+              ticks: { 
+                callback: function(v) {
+                  if (v >= 10000000) return `₹ ${(v / 10000000).toFixed(1)} Cr`
+                  if (v >= 100000) return `₹ ${(v / 100000).toFixed(1)} L`
+                  return `₹ ${v.toLocaleString()}`
+                }
+              } 
+            } 
+          }
+        }
+      })
+    },
+
+    renderCumulativeChart() {
+      const ctx = document.getElementById('cumulativeChart')
+      if (!ctx) return
+      if (this.cumulativeChartInstance) this.cumulativeChartInstance.destroy()
+
+      const cumulativeData = []
+      let cumRevenue = 0
+      let cumTarget = 0
+      const monthsFY = ['April','May','June','July','August','September','October','November','December','January','February','March']
+
+      monthsFY.forEach(month => {
+        cumRevenue += this.monthlyRevenueData[month] || 0
+        cumTarget += this.monthlyTargetData[month] || 0
+        cumulativeData.push({ month, cumRevenue, cumTarget })
+      })
+
+      this.cumulativeChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: cumulativeData.map(d => d.month),
+          datasets: [
+            { 
+              label: 'Cumulative Target', 
+              data: cumulativeData.map(d => d.cumTarget), 
+              borderColor: '#94a3b8', 
+              borderDash: [6, 6], 
+              tension: 0.4, 
+              fill: false 
+            },
+            { 
+              label: 'Cumulative Revenue (Closed Orders)', 
+              data: cumulativeData.map(d => d.cumRevenue), 
+              borderColor: '#22c55e', 
+              backgroundColor: 'rgba(34,197,94,0.15)', 
+              fill: true, 
+              tension: 0.4 
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { position: 'top' }, 
+            tooltip: { 
+              callbacks: { 
+                label: function(ctx) {
+                  return `₹ ${ctx.raw.toLocaleString()}`
+                } 
+              } 
+            } 
+          },
+          scales: { 
+            y: { 
+              ticks: { 
+                callback: function(v) {
+                  if (v >= 10000000) return `₹ ${(v / 10000000).toFixed(1)} Cr`
+                  if (v >= 100000) return `₹ ${(v / 100000).toFixed(1)} L`
+                  return `₹ ${v.toLocaleString()}`
+                }
+              } 
+            } 
+          }
         }
       })
     },
@@ -800,6 +1030,9 @@ export default {
     goToSalaryAdvances() {
       this.$router.push('/salaryadvances')
     },
+    goToHoliday() {
+      this.$router.push('/holidays')
+    },
     goToOfferLetters() {
       this.$router.push('/offerletter')
     },
@@ -828,7 +1061,9 @@ export default {
     const savedTarget = localStorage.getItem('yearlyTarget')
     if (savedTarget) this.yearlyTarget = Number(savedTarget)
 
-    this.generateMonthlyRevenue()
+    // MAIN: Fetch PO data from database for revenue (only closed orders)
+    this.fetchPORevenueData()
+    
     this.fetchAnalyticsData()
     this.fetchAllTimePieData()
     this.fetchBirthdayReminders()
@@ -1130,6 +1365,63 @@ export default {
 .leavetype { border-bottom: 3px solid var(--primary); }
 .announcement { border-bottom: 3px solid #f97316; }
 
+/* Skeleton Styles */
+.skeleton-wrapper {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 4px;
+}
+
+.skeleton-card {
+  min-width: 200px;
+  background: #ffffff;
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  background-image: linear-gradient(
+    90deg,
+    #f0f0f0 0px,
+    #e0e0e0 40px,
+    #f0f0f0 80px
+  );
+  background-size: 300px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #e0e0e0;
+}
+
+.skeleton-label {
+  width: 120px;
+  height: 16px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.skeleton-tagline {
+  width: 100px;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -300px 0; }
+  100% { background-position: 300px 0; }
+}
+
 /* Analytics Section */
 .analytics-section {
   margin-bottom: 32px;
@@ -1266,96 +1558,7 @@ export default {
   color: var(--text-light);
 }
 
-/* Performance Section */
-.performance-section {
-  margin-bottom: 32px;
-}
-
-.performers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.performer-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--border);
-  transition: all 0.3s;
-}
-
-.performer-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-}
-
-.performer-rank {
-  width: 28px;
-  height: 28px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: white;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-.performer-avatar {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 16px;
-  color: white;
-  flex-shrink: 0;
-}
-
-.performer-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.performer-info h5 {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 2px;
-}
-
-.performer-info p {
-  font-size: 11px;
-  color: var(--text-light);
-}
-
-.performer-score {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.score-value {
-  display: block;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.score-label {
-  font-size: 10px;
-  color: var(--text-light);
-}
-
-/* Revenue Section */
+/* Revenue Section - Enhanced */
 .monthly-revenue-row {
   margin-bottom: 32px;
 }
@@ -1416,6 +1619,11 @@ export default {
   padding: 14px;
   text-align: center;
   border: 1px solid var(--border);
+  transition: transform 0.2s;
+}
+
+.kpi:hover {
+  transform: translateY(-2px);
 }
 
 .kpi h4 {
@@ -1433,7 +1641,147 @@ export default {
 .kpi.success h4 { color: var(--success); }
 .kpi.info h4 { color: var(--info); }
 .kpi.warning h4 { color: var(--warning); }
+.kpi.primary h4 { color: var(--primary); }
 
+/* Companies Breakdown */
+.companies-breakdown {
+  margin-bottom: 24px;
+}
+
+.breakdown-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.companies-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.company-card {
+  display: grid;
+  grid-template-columns: 32px 1fr 120px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: all 0.3s;
+}
+
+.company-card:hover {
+  background: white;
+  box-shadow: var(--shadow);
+  border-color: var(--primary-light);
+}
+
+.company-card.gold {
+  background: linear-gradient(135deg, #fff9e6, #fef3c7);
+  border-color: #fbbf24;
+}
+
+.company-card.silver {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-color: #94a3b8;
+}
+
+.company-card.bronze {
+  background: linear-gradient(135deg, #fff7ed, #fed7aa);
+  border-color: #fb923c;
+}
+
+.company-rank {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-light);
+  text-align: center;
+}
+
+.company-card.gold .company-rank { color: #d97706; }
+.company-card.silver .company-rank { color: #64748b; }
+.company-card.bronze .company-rank { color: #ea580c; }
+
+.company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.company-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.company-details {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.company-revenue {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.company-percent {
+  font-size: 11px;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.company-orders {
+  font-size: 11px;
+  color: var(--text-light);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.company-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.company-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+.bar-gold { background: linear-gradient(90deg, #fbbf24, #d97706); }
+.bar-silver { background: linear-gradient(90deg, #94a3b8, #64748b); }
+.bar-bronze { background: linear-gradient(90deg, #fb923c, #ea580c); }
+.bar-blue { background: linear-gradient(90deg, #60a5fa, #2563eb); }
+.bar-green { background: linear-gradient(90deg, #34d399, #059669); }
+.bar-purple { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+.bar-pink { background: linear-gradient(90deg, #f472b6, #db2777); }
+.bar-indigo { background: linear-gradient(90deg, #818cf8, #4f46e5); }
+.bar-teal { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+.bar-orange { background: linear-gradient(90deg, #fb923c, #ea580c); }
+
+.no-data-message {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-light);
+  font-size: 14px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+}
+
+/* Quarter Grid */
 .quarter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -1543,42 +1891,6 @@ export default {
   padding: 32px;
 }
 
-/* Skeleton */
-.skeleton-wrapper {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.skeleton-card {
-  min-width: 200px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: var(--radius);
-  padding: 20px;
-}
-
-.skeleton-label {
-  width: 70%;
-  height: 16px;
-  background: #e0e0e0;
-  border-radius: 4px;
-  margin-bottom: 12px;
-}
-
-.skeleton-text {
-  width: 50%;
-  height: 12px;
-  background: #e0e0e0;
-  border-radius: 4px;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .main-content {
@@ -1631,10 +1943,31 @@ export default {
     scroll-snap-align: start;
   }
 
+  .skeleton-card {
+    min-width: 170px;
+    padding: 16px;
+    flex-shrink: 0;
+  }
+
   .card-icon {
     width: 40px;
     height: 40px;
     font-size: 18px;
+  }
+
+  .skeleton-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .skeleton-label {
+    width: 100px;
+    height: 14px;
+  }
+
+  .skeleton-tagline {
+    width: 80px;
+    height: 11px;
   }
 
   .label {
@@ -1689,12 +2022,29 @@ export default {
   }
 
   .revenue-kpis {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
 
   .kpi h4 {
     font-size: 16px;
+  }
+
+  .company-card {
+    grid-template-columns: 28px 1fr 100px;
+    padding: 8px 12px;
+  }
+
+  .company-name {
+    font-size: 13px;
+  }
+
+  .company-revenue {
+    font-size: 12px;
+  }
+
+  .company-orders {
+    font-size: 10px;
   }
 
   .quarter-grid {
@@ -1780,10 +2130,31 @@ export default {
     gap: 12px;
   }
 
+  .skeleton-card {
+    min-width: 150px;
+    padding: 14px;
+    gap: 12px;
+  }
+
   .card-icon {
     width: 36px;
     height: 36px;
     font-size: 16px;
+  }
+
+  .skeleton-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .skeleton-label {
+    width: 80px;
+    height: 12px;
+  }
+
+  .skeleton-tagline {
+    width: 70px;
+    height: 10px;
   }
 
   .label {
@@ -1807,11 +2178,49 @@ export default {
   }
 
   .revenue-kpis {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .kpi h4 {
+    font-size: 14px;
+  }
+
+  .company-card {
+    grid-template-columns: 24px 1fr;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .company-name {
+    font-size: 12px;
+  }
+
+  .company-revenue {
+    font-size: 11px;
+  }
+
+  .company-percent {
+    font-size: 10px;
+  }
+
+  .company-orders {
+    font-size: 10px;
+  }
+
+  .company-bar {
+    grid-column: 1 / -1;
   }
 
   .quarter-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quarter-card {
+    padding: 10px;
+  }
+
+  .quarter-card p {
+    font-size: 12px;
   }
 
   .bar-chart-wrapper {
@@ -1853,6 +2262,10 @@ export default {
 
   .quarter-card p {
     font-size: 12px;
+  }
+
+  .breakdown-title {
+    font-size: 14px;
   }
 }
 </style>

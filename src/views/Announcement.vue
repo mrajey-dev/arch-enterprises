@@ -321,7 +321,7 @@ export default {
         await this.fetchAnnouncements();
       } catch (error) {
         console.error('Error:', error.response?.data || error.message);
-        toastError(error.response?.data?.message || 'Failed to save announcement');
+        toastError('Failed to save announcement');
       } finally {
         this.isLoading = false;
       }

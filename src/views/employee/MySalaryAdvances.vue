@@ -723,7 +723,7 @@ export default {
         this.fetchSalaryAdvances()
       } catch (err) {
         console.error('Submission error:', err)
-        toastError(err.response?.data?.message || 'Failed to submit request')
+        toastError('Failed to submit request')
       } finally {
         this.submitting = false
       }

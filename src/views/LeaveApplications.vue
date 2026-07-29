@@ -711,7 +711,7 @@ export default {
 
       } catch (error) {
         console.error('Approve leave failed:', error)
-        toastError(error.response?.data?.message || error.message || 'Could not approve leave')
+        toastError( 'Could not approve leave')
       } finally {
         this.busyLeave = { id: null, action: null }
       }
@@ -796,7 +796,7 @@ export default {
 
       } catch (error) {
         console.error('Reject failed:', error)
-        toastError(error.response?.data?.message || error.message || 'Could not reject leave')
+        toastError('Could not reject leave')
       } finally {
         this.busyLeave = { id: null, action: null }
       }
@@ -1138,8 +1138,7 @@ export default {
         }
 
         toastError(
-          error.response?.data?.message ||
-          error.message ||
+          
           'Error loading leave requests'
         )
       } finally {

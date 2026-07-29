@@ -172,7 +172,7 @@ export default {
       },
       leaveTypes: [],
       today: new Date().toISOString().split('T')[0],
-      holidayMMDD: ['01-26', '08-15', '10-02'],
+      holidayMMDD: ['01-26', '08-15', '10-02', '07-25'],
     }
   },
 

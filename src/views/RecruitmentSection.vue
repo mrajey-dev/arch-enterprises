@@ -1329,7 +1329,7 @@ export default {
       } catch (error) {
         console.error('Error fetching candidates:', error)
         if (error.response) {
-          toastError(error.response.data.message || 'Failed to load candidates')
+          toastError( 'Failed to load candidates')
         } else if (error.request) {
           toastError('Cannot connect to the server. Please check your connection.')
         } else {

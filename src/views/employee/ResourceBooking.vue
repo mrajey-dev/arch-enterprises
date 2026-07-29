@@ -405,7 +405,7 @@ export default {
           this.formVisible = false
         }
       } catch (e) {
-        toastError(e.response?.data?.message || 'Something went wrong')
+        toastError('Something went wrong')
       } finally {
         this.loading = false
       }
@@ -435,7 +435,7 @@ export default {
         this.fetchBookings()
         toastSuccess('Booking deleted successfully!')
       } catch (e) {
-        toastError(e.response?.data?.message || 'Delete failed')
+        toastError('Delete failed')
       }
     },
 

@@ -414,7 +414,7 @@ export default {
           this.closeModal()
           toastSuccess("SOP Uploaded Successfully")
         } else {
-          toastError(data.message || "Upload failed")
+          toastError("Upload failed")
         }
       } catch(error){
         console.error("Upload error:", error)
@@ -466,7 +466,7 @@ export default {
             this.sops = this.sops.filter(s => s.id !== sop.id);
             toastSuccess('SOP deleted successfully');
           } else {
-            toastError(data.message || 'Failed to delete SOP');
+            toastError('Failed to delete SOP');
           }
         } catch(error) {
           console.error("Delete error:", error);

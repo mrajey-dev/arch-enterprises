@@ -540,7 +540,7 @@ export default {
   } catch (err) {
     console.error('Profile update failed:', err)
     console.error('Error response:', err.response?.data) // Log detailed error
-    toastError(err.response?.data?.message || 'Failed to update profile')
+    toastError('Failed to update profile')
   }
 },
 

@@ -42,21 +42,9 @@
 
     <!-- Main Content Area -->
     <div class="main-content-area" :class="{ 'no-margin': $route.meta.hideHeader }">
-  <router-view />
-</div>
-    
-    <!-- ⚠️ Idle Warning Modal -->
-    <div v-if="showWarning" class="idle-modal">
-      <div class="idle-box">
-        <h3>Session Expiring</h3>
-        <p>
-          You will be logged out in
-          <strong>{{ countdown }}</strong> seconds due to inactivity.
-        </p>
-        <button @click="stayLoggedIn">Stay Logged In</button>
-      </div>
+      <router-view />
     </div>
-
+    
     <!-- Overlay -->
     <div v-if="sidebarOpen" class="sidebar-overlay" @click="toggleSidebar"></div>
 
@@ -225,13 +213,6 @@ export default {
         'salary': 'Salary is calculated based on attendance, approved leave, and company rules.',
       },
       selectedHelp: null,
-      idleTimer: null,
-      warningTimer: null,
-      idleTimeLimit: 9 * 60 * 60 * 1000,
-      warningTime: (9 * 60 * 60 - 10) * 1000,
-      showWarning: false,
-      countdown: 10,
-      countdownInterval: null
     } 
   },
 
@@ -255,14 +236,7 @@ export default {
 
   mounted() {
     this.loadUser()
-    this.checkSessionExpiry()
-    this.startIdleTimers()
     this.fetchNotifications()
-
-    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
-    events.forEach(event => {
-      window.addEventListener(event, this.resetIdleTimers)
-    })
 
     window.addEventListener('keydown', this.handleEscape)
     
@@ -277,14 +251,8 @@ export default {
   },
 
   beforeUnmount() {
-    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
-    events.forEach(event => {
-      window.removeEventListener(event, this.resetIdleTimers)
-    })
-
     window.removeEventListener('keydown', this.handleEscape)
     document.removeEventListener('click', this.closeNotificationPanel)
-    this.clearAllTimers()
     if (this.focusTimer) {
       clearTimeout(this.focusTimer)
     }
@@ -438,53 +406,6 @@ export default {
       } else {
         document.body.style.overflow = ''
       }
-    },
-
-    checkSessionExpiry() {
-      const loginTime = localStorage.getItem('loginTime')
-      if (!loginTime) return
-      const now = Date.now()
-      const diff = now - parseInt(loginTime)
-      const threeHours = 3 * 60 * 60 * 1000
-      if (diff > threeHours) {
-        this.logout()
-      }
-    },
-
-    startIdleTimers() {
-      this.warningTimer = setTimeout(() => {
-        this.showWarning = true
-        this.startCountdown()
-      }, this.warningTime)
-      this.idleTimer = setTimeout(() => {
-        this.logout()
-      }, this.idleTimeLimit)
-    },
-
-    resetIdleTimers() {
-      this.clearAllTimers()
-      this.showWarning = false
-      this.countdown = 10
-      this.startIdleTimers()
-    },
-
-    startCountdown() {
-      this.countdownInterval = setInterval(() => {
-        this.countdown--
-        if (this.countdown <= 0) {
-          clearInterval(this.countdownInterval)
-        }
-      }, 1000)
-    },
-
-    clearAllTimers() {
-      clearTimeout(this.warningTimer)
-      clearTimeout(this.idleTimer)
-      clearInterval(this.countdownInterval)
-    },
-
-    stayLoggedIn() {
-      this.resetIdleTimers()
     },
     
     logout() {
@@ -869,40 +790,6 @@ export default {
 .main-content-area::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: 10px;
-}
-
-/* Idle Modal */
-.idle-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.idle-box {
-  background: #fff;
-  padding: 24px 30px;
-  border-radius: 10px;
-  text-align: center;
-  max-width: 360px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.idle-box h3 {
-  margin-bottom: 10px;
-}
-
-.idle-box button {
-  margin-top: 15px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  background: #2563eb;
-  color: #fff;
-  cursor: pointer;
 }
 
 /* Sidebar Styles */

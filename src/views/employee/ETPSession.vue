@@ -780,7 +780,7 @@ export default {
           await this.loadSessions();
           await this.loadLeaderboard();
         } else {
-          toastError(data.message || 'Failed to submit rating');
+          toastError('Failed to submit rating');
         }
       } catch (error) {
         console.error('Error submitting rating:', error);
@@ -850,7 +850,7 @@ export default {
           await this.loadSessions();
           await this.loadLeaderboard();
         } else {
-          toastError(data.message || 'Operation failed');
+          toastError('Operation failed');
         }
       } catch (error) {
         console.error('Error saving session:', error);
@@ -883,7 +883,7 @@ export default {
           this.showDeleteModal = false;
           this.sessionToDelete = null;
         } else {
-          toastError(data.message || 'Delete failed');
+          toastError('Delete failed');
         }
       } catch (error) {
         console.error('Error deleting session:', error);

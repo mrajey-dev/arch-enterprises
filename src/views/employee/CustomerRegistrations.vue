@@ -808,32 +808,67 @@
       </div>
 
       <!-- HSN -->
-      <div class="quotation-form-group">
-        <label>HSN / SAC Code *</label>
-        <select
-          v-model="item.hsn"
-          :class="{ 'input-error': !item.hsn }"
-        >
-          <option disabled value="">Select HSN Code</option>
-          <option
+    <!-- HSN -->
+<!-- HSN -->
+<div class="quotation-form-group">
+    <label>HSN / SAC Code *</label>
+    <select
+        v-model="item.hsn"
+        :class="{ 'input-error': !item.hsn }"
+        @change="onHsnSelect(item)"
+    >
+        <option disabled value="">Select HSN Code</option>
+        <option
             v-for="hsn in hsnList"
             :key="hsn.id"
             :value="hsn.hsn"
-          >
+        >
             {{ hsn.item_name }} - {{ hsn.hsn }}
-          </option>
-          <option value="manual">➕ Enter HSN Manually</option>
-        </select>
+        </option>
+        <option value="manual">➕ Enter HSN Manually</option>
+    </select>
 
-        <div v-if="item.hsn === 'manual'" style="margin-top:8px;">
-          <input
-            v-model="item.manual_hsn"
-            type="number"
-            placeholder="Enter HSN Code"
-            class="form-control"
-          />
+    <!-- Manual HSN Entry -->
+    <div v-if="item.hsn === 'manual'" style="margin-top:10px;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <input
+                v-model="item.manual_hsn"
+                type="text"
+                placeholder="Enter HSN Code *"
+                class="form-control"
+                maxlength="8"
+                style="flex: 1; min-width: 150px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+            />
+            <input
+                v-model="item.manual_hsn_name"
+                type="text"
+                placeholder="Item Name (Optional)"
+                class="form-control"
+                style="flex: 1; min-width: 150px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+            />
+            <button
+                type="button"
+                @click="saveManualHsn(item)"
+                class="btn btn-success"
+                style="padding: 8px 16px; white-space: nowrap; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                :disabled="!item.manual_hsn"
+            >
+                <i class="fa fa-save"></i> Save HSN
+            </button>
+            <button
+                type="button"
+                @click="clearManualHsn(item)"
+                class="btn btn-secondary"
+                style="padding: 8px 12px; white-space: nowrap; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"
+            >
+                <i class="fa fa-times"></i>
+            </button>
         </div>
-      </div>
+        <small style="color: #666; font-size: 11px; display: block; margin-top: 5px;">
+            💡 Enter HSN code (4-8 digits) and optional item name, then click "Save HSN" to add to database
+        </small>
+    </div>
+</div>
       
       <!-- QTY -->
       <div class="quotation-form-group">
@@ -3721,6 +3756,7 @@ import { saveAs } from "file-saver"
     },
     data() {
       return {
+          hsnList: [],
        // New equipment-related properties
         equipmentInputMode: 'select',
     equipmentTypes: [
@@ -4677,6 +4713,89 @@ filterCompany(newCompany) {
   // Watch for currency changes in calculation rows
 
  methods: {
+async saveManualHsn(item) {
+    try {
+        if (!item.manual_hsn) {
+            if (this.$toast) {
+                this.$toast.error('Please enter HSN code first');
+            }
+            return;
+        }
+
+        // Validate HSN format (4-8 digits)
+        const hsnStr = String(item.manual_hsn).trim();
+        if (!/^[0-9]{4,8}$/.test(hsnStr)) {
+            if (this.$toast) {
+                this.$toast.error('HSN code must be 4 to 8 digits');
+            }
+            return;
+        }
+        
+        console.log('Saving HSN:', hsnStr); // Debug log
+        
+        // Check if HSN already exists
+        const checkResponse = await axios.get(`/api/hsn-check/${hsnStr}`);
+        console.log('Check response:', checkResponse.data); // Debug log
+        
+        if (checkResponse.data.exists) {
+            if (this.$toast) {
+                this.$toast.info('HSN code already exists in database');
+            }
+            item.hsn = hsnStr;
+            const existingHsn = this.hsnList.find(h => h.hsn === hsnStr);
+            if (existingHsn) {
+                item.manual_hsn_name = existingHsn.item_name;
+            }
+            item.manual_hsn = '';
+            return;
+        }
+        
+        // Save new HSN
+        const saveData = {
+            hsn: hsnStr,
+            item_name: item.manual_hsn_name || `HSN ${hsnStr}`,
+            sac: ''
+        };
+        console.log('Saving data:', saveData); // Debug log
+        
+        const saveResponse = await axios.post('/api/hsn-save', saveData);
+        console.log('Save response:', saveResponse.data); // Debug log
+        
+        if (saveResponse.data.success) {
+            if (this.$toast) {
+                this.$toast.success('HSN code saved successfully');
+            }
+            
+            await this.fetchHsnList();
+            item.hsn = hsnStr;
+            item.manual_hsn = '';
+            item.manual_hsn_name = '';
+        }
+    } catch (error) {
+        console.error('Error saving HSN - Full error:', error);
+        console.error('Error response:', error.response?.data);
+        if (this.$toast) {
+            const errorMsg = error.response?.data?.message || 'Failed to save HSN code';
+            this.$toast.error(errorMsg);
+        }
+    }
+},
+async fetchHsnList() {
+        try {
+            const response = await axios.get('/api/hsn-list');
+            this.hsnList = response.data;
+        } catch (error) {
+            console.error('Error fetching HSN list:', error);
+            // Optional: Show error toast
+            if (this.$toast) {
+                this.$toast.error('Failed to load HSN codes');
+            }
+        }
+    },
+     clearManualHsn(item) {
+        item.manual_hsn = '';
+        item.manual_hsn_name = '';
+    },
   updateManualFields() {
     // Update the form fields when manual inputs change
     this.form.engine_serial = this.manualSerialNumbers;
@@ -4761,7 +4880,7 @@ addManualRow() {
     } catch (error) {
       console.error(`Error fetching ${equipmentType}:`, error);
       this.equipmentList[equipmentType] = [];
-      toastError(`Failed to load ${this.getEquipmentLabel(equipmentType)} data`);
+      toastError(`Failed to load data`);
     }
   },
   
@@ -4850,7 +4969,7 @@ addManualRow() {
     } catch (error) {
       console.error(`Error fetching ${equipmentType}:`, error);
       this.equipmentList[equipmentType] = [];
-      toastError(`Failed to load ${this.getEquipmentLabel(equipmentType)} data`);
+      toastError(`Failed to load data`);
     }
   },
   

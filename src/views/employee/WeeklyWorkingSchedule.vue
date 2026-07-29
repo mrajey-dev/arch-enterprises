@@ -608,7 +608,7 @@ export default {
       } catch (error) {
         this.isSendingEmail = false;
         console.error('Email send error:', error);
-        toastError(error.response?.data?.message || 'Failed to send email report');
+        toastError('Failed to send email report');
       }
     },
 
@@ -657,7 +657,7 @@ export default {
         if (this.isMobile) this.formVisible = false;
       } catch (error) {
         console.error('Submit error:', error);
-        toastError(error.response?.data?.message || 'Failed to save task');
+        toastError('Failed to save task');
       } finally {
         this.isSubmitting = false;
       }

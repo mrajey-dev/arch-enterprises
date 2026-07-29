@@ -1036,7 +1036,7 @@ export default {
       } catch (error) {
         console.error(error)
         const errorMessage = error.response?.data?.message || error.response?.data?.errors || error.message;
-        toastError("Something went wrong: " + JSON.stringify(errorMessage))
+        toastError("Something went wrong: ")
       }
     }
   },

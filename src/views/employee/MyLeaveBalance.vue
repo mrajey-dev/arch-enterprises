@@ -1038,7 +1038,7 @@
             } else if (error.response.status === 422) {
               toastError('Please select a valid financial year');
             } else {
-              toastError(error.response.data.message || 'Could not fetch leave data. Please try again.');
+              toastError('Could not fetch leave data. Please try again.');
             }
           } else {
             toastError('Could not fetch leave data. Please try again.');

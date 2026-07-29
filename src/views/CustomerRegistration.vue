@@ -4761,7 +4761,7 @@ addManualRow() {
     } catch (error) {
       console.error(`Error fetching ${equipmentType}:`, error);
       this.equipmentList[equipmentType] = [];
-      toastError(`Failed to load ${this.getEquipmentLabel(equipmentType)} data`);
+      toastError(`Failed to load data`);
     }
   },
   
@@ -4850,7 +4850,7 @@ addManualRow() {
     } catch (error) {
       console.error(`Error fetching ${equipmentType}:`, error);
       this.equipmentList[equipmentType] = [];
-      toastError(`Failed to load ${this.getEquipmentLabel(equipmentType)} data`);
+      toastError(`Failed to load data`);
     }
   },
   

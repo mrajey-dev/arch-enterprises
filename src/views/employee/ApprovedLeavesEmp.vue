@@ -316,7 +316,7 @@ export default {
       } catch (error) {
         console.error('Register error:', error);
         if (error.response && error.response.data && error.response.data.message) {
-          toastError(`Operation failed: ${error.response.data.message}`);
+          toastError(`Something went wrong`);
         } else {
           toastError('Operation failed due to network or server error.');
         }
