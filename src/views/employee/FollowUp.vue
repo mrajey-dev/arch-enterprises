@@ -1,331 +1,410 @@
 <template>
-  <div class="announcement-board" v-if="!isMobile || !isSidebarVisible">
-    <!-- Mobile Header -->
-    <div class="mobile-header" v-if="isMobile">
-      <div class="mobile-title">
-        <i class="fas fa-file-invoice"></i>
-        <span>Quotations</span>
-      </div>
-      <div class="mobile-filter-btn" @click="toggleFilter">
-        <i class="fas fa-filter"></i>
-        <span v-if="selectedStatus || hasActiveFilters" class="filter-badge">•</span>
-      </div>
-    </div>
+  <div class="pro-followup-container" v-if="!isMobile || !isSidebarVisible">
+    <!-- Desktop & Tablet Hero Header -->
+    <div class="pro-followup-hero">
+      <div class="pro-hero-top">
+        <div class="pro-hero-left">
+          <div class="pro-hero-icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+          </div>
+          <div>
+            <div class="pro-hero-title-row">
+              <h2 class="pro-hero-title">Quotation & Order Sheet</h2>
+              <span class="pro-hero-badge">
+                {{ filteredAndSortedQuotations.length }} Quotes
+              </span>
+            </div>
+            <p class="pro-hero-subtitle">
+              Track quotation lifecycle, client follow-up remarks, negotiations, and status conversions
+            </p>
+          </div>
+        </div>
 
-    <!-- Desktop Header -->
-    <div class="header-section desktop-only">
-      <h2>📊 Quotation & Order Sheet</h2>
-      <div class="desktop-filter-group">
-        <select v-model="selectedStatus" class="filter-select">
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="followup">Follow Up</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <button class="filter-toggle-btn" @click="showAdvancedFilters = !showAdvancedFilters">
-          <i class="fas fa-sliders-h"></i> Filters
-          <span v-if="hasActiveFilters" class="filter-dot"></span>
-        </button>
-      </div>
-    </div>
+        <div class="pro-hero-actions">
+          <button 
+            type="button" 
+            class="pro-hero-btn" 
+            :class="{ active: showAdvancedFilters }" 
+            @click="showAdvancedFilters = !showAdvancedFilters"
+            :title="showAdvancedFilters ? 'Click to collapse filters' : 'Click to expand filters'"
+          >
+            <i class="fas fa-sliders-h"></i>
+            <span>{{ showAdvancedFilters ? 'Hide Filters' : 'Filters' }}</span>
+            <i class="fas" :class="showAdvancedFilters ? 'fa-chevron-up' : 'fa-chevron-down'" style="font-size: 0.72rem; opacity: 0.85;"></i>
+            <span v-if="hasActiveFilters" class="pro-filter-dot"></span>
+          </button>
+          
+          <button 
+            type="button" 
+            class="pro-hero-btn" 
+            :class="{ active: sortOrder }" 
+            @click="toggleSort"
+            title="Sort by Total Taxable Value"
+          >
+            <i class="fas fa-sort-amount-down" v-if="sortOrder === 'desc'"></i>
+            <i class="fas fa-sort-amount-up" v-else-if="sortOrder === 'asc'"></i>
+            <i class="fas fa-arrow-down-wide-short" v-else></i>
+            <span>Value {{ sortOrder ? (sortOrder === 'asc' ? 'Low→High' : 'High→Low') : 'Sort' }}</span>
+          </button>
 
-    <!-- Advanced Filters - Desktop -->
-    <div class="advanced-filters" v-if="showAdvancedFilters && !isMobile">
-      <div class="filter-grid">
-        <div class="filter-group">
-          <label><i class="fas fa-user"></i> Created By</label>
-          <input type="text" v-model="filters.created_by" placeholder="Filter by creator..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-building"></i> Party Name</label>
-          <input type="text" v-model="filters.party_name" placeholder="Filter by party..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-cog"></i> Engine Serial</label>
-          <input type="text" v-model="filters.engine_serial" placeholder="Filter by serial..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-microchip"></i> Engine Model</label>
-          <input type="text" v-model="filters.engine_model" placeholder="Filter by model..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-user-check"></i> Recommended By</label>
-          <input type="text" v-model="filters.recommended_by" placeholder="Filter by recommender..." class="filter-input" @input="applyFilters">
-        </div>
-        <!-- Value Sort with Arrows -->
-       
-        <div class="filter-group filter-actions">
-          <button class="clear-filters-btn" @click="clearFilters">
-            <i class="fas fa-undo"></i> Clear All
+          <button 
+            type="button" 
+            class="pro-hero-btn pro-hero-btn-clear" 
+            v-if="hasActiveFilters" 
+            @click="clearFilters"
+            title="Reset All Filters"
+          >
+            <i class="fas fa-rotate-left"></i> Reset
           </button>
         </div>
       </div>
-    </div>
 
-    <!-- Mobile Filter Bar -->
-    <div class="mobile-filter-bar" v-if="isMobile" :class="{ 'filter-open': filterOpen }">
-      <div class="filter-options">
+      <!-- Quick Status Filter Pills in Hero Banner -->
+      <div class="pro-status-chips-strip">
         <button 
-          v-for="status in ['', 'pending', 'followup', 'approved', 'rejected']" 
-          :key="status"
-          class="filter-chip"
-          :class="{ active: selectedStatus === status }"
-          @click="selectedStatus = status; filterOpen = false"
+          type="button" 
+          class="pro-chip-btn" 
+          :class="{ active: selectedStatus === '' }" 
+          @click="selectedStatus = ''"
         >
-          {{ status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All' }}
+          <span class="chip-label">All Quotes</span>
+          <span class="chip-count">{{ followUpQuotations.length }}</span>
         </button>
-      </div>
-      
-      <!-- Mobile Advanced Filters -->
-      <div class="mobile-advanced-filters">
-        <div class="filter-group">
-          <label><i class="fas fa-user"></i> Created By</label>
-          <input type="text" v-model="filters.created_by" placeholder="Creator..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-building"></i> Party</label>
-          <input type="text" v-model="filters.party_name" placeholder="Party name..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-cog"></i> Engine Serial</label>
-          <input type="text" v-model="filters.engine_serial" placeholder="Serial..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-microchip"></i> Model</label>
-          <input type="text" v-model="filters.engine_model" placeholder="Model..." class="filter-input" @input="applyFilters">
-        </div>
-        <div class="filter-group">
-          <label><i class="fas fa-user-check"></i> Recommended</label>
-          <input type="text" v-model="filters.recommended_by" placeholder="Recommender..." class="filter-input" @input="applyFilters">
-        </div>
-        <!-- Mobile Sort Controls -->
-        <div class="filter-group value-sort-group">
-          <label><i class="fas fa-rupee-sign"></i> Sort by Value</label>
-          <div class="sort-controls mobile-sort-controls">
-            <button 
-              class="sort-btn" 
-              :class="{ active: sortOrder === 'asc' }"
-              @click="setSortOrder('asc')"
-            >
-              <i class="fas fa-arrow-up"></i> Low to High
-            </button>
-            <button 
-              class="sort-btn" 
-              :class="{ active: sortOrder === 'desc' }"
-              @click="setSortOrder('desc')"
-            >
-              <i class="fas fa-arrow-down"></i> High to Low
-            </button>
-            <button 
-              v-if="sortOrder" 
-              class="sort-btn clear-sort"
-              @click="clearSort"
-            >
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-        <button class="clear-filters-btn mobile-clear" @click="clearFilters">
-          <i class="fas fa-undo"></i> Clear All
+
+        <button 
+          type="button" 
+          class="pro-chip-btn chip-pending" 
+          :class="{ active: selectedStatus === 'pending' }" 
+          @click="selectedStatus = selectedStatus === 'pending' ? '' : 'pending'"
+        >
+          <i class="fas fa-clock"></i>
+          <span class="chip-label">Pending</span>
+          <span class="chip-count">{{ pendingCount }}</span>
+        </button>
+
+        <button 
+          type="button" 
+          class="pro-chip-btn chip-followup" 
+          :class="{ active: selectedStatus === 'followup' }" 
+          @click="selectedStatus = selectedStatus === 'followup' ? '' : 'followup'"
+        >
+          <i class="fas fa-comments"></i>
+          <span class="chip-label">Follow Up</span>
+          <span class="chip-count">{{ followupCount }}</span>
+        </button>
+
+        <button 
+          type="button" 
+          class="pro-chip-btn chip-approved" 
+          :class="{ active: selectedStatus === 'approved' }" 
+          @click="selectedStatus = selectedStatus === 'approved' ? '' : 'approved'"
+        >
+          <i class="fas fa-check-circle"></i>
+          <span class="chip-label">Approved</span>
+          <span class="chip-count">{{ approvedCount }}</span>
+        </button>
+
+        <button 
+          type="button" 
+          class="pro-chip-btn chip-rejected" 
+          :class="{ active: selectedStatus === 'rejected' }" 
+          @click="selectedStatus = selectedStatus === 'rejected' ? '' : 'rejected'"
+        >
+          <i class="fas fa-times-circle"></i>
+          <span class="chip-label">Rejected</span>
+          <span class="chip-count">{{ rejectedCount }}</span>
         </button>
       </div>
     </div>
 
-    <!-- Stats - Mobile -->
-    <div class="stats-row-mobile" v-if="isMobile">
-      <div class="stat-chip" :class="{ active: selectedStatus === '' }" @click="selectedStatus = ''">
-        <span class="stat-count">{{ filteredAndSortedQuotations.length }}</span>
-        <span class="stat-label">Filtered</span>
-      </div>
-      <div class="stat-chip pending" :class="{ active: selectedStatus === 'pending' }" @click="selectedStatus = 'pending'">
-        <span class="stat-count">{{ pendingCount }}</span>
-        <span class="stat-label">Pending</span>
-      </div>
-      <div class="stat-chip followup" :class="{ active: selectedStatus === 'followup' }" @click="selectedStatus = 'followup'">
-        <span class="stat-count">{{ followupCount }}</span>
-        <span class="stat-label">Follow Up</span>
-      </div>
-      <div class="stat-chip approved" :class="{ active: selectedStatus === 'approved' }" @click="selectedStatus = 'approved'">
-        <span class="stat-count">{{ approvedCount }}</span>
-        <span class="stat-label">Approved</span>
-      </div>
-      <div class="stat-chip rejected" :class="{ active: selectedStatus === 'rejected' }" @click="selectedStatus = 'rejected'">
-        <span class="stat-count">{{ rejectedCount }}</span>
-        <span class="stat-label">Rejected</span>
-      </div>
-    </div>
-
-    <div class="content">
-      <div class="table-scroll-wrapper">
-        <!-- Mobile Card View -->
-        <div class="mobile-cards" v-if="isMobile">
-          <div v-for="(q, index) in filteredAndSortedQuotations" :key="q.id" 
-               class="quotation-card"
-               :class="{
-                 'approved-card': q.status === 'approved',
-                 'pending-card': q.status === 'pending',
-                 'rejected-card': q.status === 'rejected',
-                 'followup-card': q.status === 'followup',
-               }">
-            <div class="card-header">
-              <div class="card-title">
-                <span class="quotation-number" @click="openQuotation(q)">
-                  Quotation-{{ q.id }}-{{ formatCompanyName(q.company_name) }}
-                </span>
-                <span :class="['status-badge-mobile', `status-${q.status}`]">
-                  {{ q.status || 'Pending' }}
-                </span>
-              </div>
-            </div>
-
-            <div class="card-body">
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-calendar"></i> Date</span>
-                <span class="card-value">{{ formatDate(q.created_at) }}</span>
-              </div>
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-building"></i> Party</span>
-                <span class="card-value">{{ q.company_name }}</span>
-              </div>
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-cog"></i> Engine</span>
-                <span class="card-value">{{ q.engine_serial }} / {{ q.model_no }}</span>
-              </div>
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-tag"></i> Value</span>
-                <span class="card-value">₹{{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}</span>
-              </div>
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-percent"></i> Discount</span>
-                <span class="card-value">{{ getDiscountPercent(q.items) }}%</span>
-              </div>
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-user"></i> Created</span>
-                <span class="card-value">{{ q.created_by || '—' }}</span>
-              </div>
-              <div class="card-row" v-if="q.recommended_by">
-                <span class="card-label"><i class="fas fa-user-check"></i> Recommended</span>
-                <span class="card-value">{{ q.recommended_by }}</span>
-              </div>
-              
-              <!-- Items -->
-              <div class="card-items">
-                <div class="card-label"><i class="fas fa-list"></i> Items</div>
-                <ul :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 3 }">
-                  <li v-for="(item, idx) in q.items" :key="item.sr" 
-                      v-show="idx < 3 || expandedQuotations[q.id]">
-                    {{ item.description }}
-                  </li>
-                </ul>
-                <button v-if="q.items.length > 3" @click="toggleSeeMore(q.id)" class="see-more-btn">
-                  {{ expandedQuotations[q.id] ? "See Less" : "See More" }}
-                </button>
-              </div>
-
-              <!-- Status Dropdown -->
-              <div class="card-status-row">
-                <span class="card-label"><i class="fas fa-tasks"></i> Status</span>
-                <select v-model="q.status" class="status-select-mobile" :class="`status-${q.status || 'default'}`" @change="updateQuotationStatus(q)">
-                  <option value="pending">Pending</option>
-                  <option value="followup">Follow Up</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-
-              <!-- Remarks -->
-              <div class="card-remarks">
-                <span class="card-label"><i class="fas fa-comment"></i> Remarks</span>
-                <textarea v-model="q.remarks" placeholder="Add follow-up notes..." class="remark-textarea-mobile" rows="3" @input="debounceSave(q)"></textarea>
-              </div>
+    <!-- Advanced Collapsible Filter Panel -->
+    <transition name="pro-slide">
+      <div class="pro-filter-panel" v-if="showAdvancedFilters">
+        <div class="pro-filter-panel-header">
+          <div class="pro-filter-panel-title">
+            <i class="fas fa-filter text-indigo"></i> Advanced Search & Filter
+          </div>
+          <button type="button" class="pro-btn-close-filter" @click="showAdvancedFilters = false" title="Collapse Filters">
+            <i class="fas fa-chevron-up"></i> Collapse
+          </button>
+        </div>
+        <div class="pro-filter-grid">
+          <div class="pro-filter-box">
+            <label><i class="fas fa-user-pen"></i> Created By</label>
+            <div class="pro-filter-input-wrap">
+              <input type="text" v-model="filters.created_by" placeholder="Search creator..." class="pro-filter-input" @input="applyFilters">
             </div>
           </div>
+          <div class="pro-filter-box">
+            <label><i class="fas fa-building"></i> Party / Customer</label>
+            <div class="pro-filter-input-wrap">
+              <input type="text" v-model="filters.party_name" placeholder="Search company name..." class="pro-filter-input" @input="applyFilters">
+            </div>
+          </div>
+          <div class="pro-filter-box">
+            <label><i class="fas fa-barcode"></i> Engine Serial</label>
+            <div class="pro-filter-input-wrap">
+              <input type="text" v-model="filters.engine_serial" placeholder="Serial number..." class="pro-filter-input" @input="applyFilters">
+            </div>
+          </div>
+          <div class="pro-filter-box">
+            <label><i class="fas fa-microchip"></i> Engine Model</label>
+            <div class="pro-filter-input-wrap">
+              <input type="text" v-model="filters.engine_model" placeholder="Model number..." class="pro-filter-input" @input="applyFilters">
+            </div>
+          </div>
+          <div class="pro-filter-box">
+            <label><i class="fas fa-user-check"></i> Recommended By</label>
+            <div class="pro-filter-input-wrap">
+              <input type="text" v-model="filters.recommended_by" placeholder="Recommender name..." class="pro-filter-input" @input="applyFilters">
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
 
-          <div v-if="filteredAndSortedQuotations.length === 0" class="no-data-mobile">
-            <i class="fas fa-inbox"></i>
-            <p>No quotations match your filters</p>
+    <!-- Main Content / Table Card -->
+    <div class="pro-table-card">
+      <!-- Mobile Cards View -->
+      <div class="mobile-cards" v-if="isMobile">
+        <div v-for="(q, index) in filteredAndSortedQuotations" :key="q.id" 
+             class="pro-mobile-card"
+             :class="`border-status-${q.status || 'pending'}`">
+          <div class="pro-mcard-header">
+            <button class="pro-quote-link-btn" @click="openQuotation(q)">
+              <i class="fas fa-file-invoice"></i>
+              <span>Q-{{ q.id }} - {{ q.company_name }}</span>
+            </button>
+            <span :class="['pro-status-badge', `status-${q.status || 'pending'}`]">
+              {{ q.status || 'Pending' }}
+            </span>
+          </div>
+
+          <div class="pro-mcard-body">
+            <div class="mcard-row">
+              <span class="mcard-label"><i class="fas fa-calendar"></i> Date</span>
+              <span class="mcard-value">{{ formatDate(q.created_at) }}</span>
+            </div>
+            <div class="mcard-row">
+              <span class="mcard-label"><i class="fas fa-cog"></i> Engine</span>
+              <span class="mcard-value">{{ q.engine_serial || '—' }} / {{ q.model_no || '—' }}</span>
+            </div>
+            <div class="mcard-row">
+              <span class="mcard-label"><i class="fas fa-indian-rupee-sign"></i> Taxable Value</span>
+              <span class="mcard-value font-bold text-emerald">₹ {{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}</span>
+            </div>
+            <div class="mcard-row">
+              <span class="mcard-label"><i class="fas fa-percent"></i> Discount</span>
+              <span class="mcard-value">{{ getDiscountPercent(q.items) }}%</span>
+            </div>
+            <div class="mcard-row">
+              <span class="mcard-label"><i class="fas fa-user"></i> Created By</span>
+              <span class="mcard-value">{{ q.created_by || '—' }}</span>
+            </div>
+            
+            <!-- Items -->
+            <div class="mcard-items" v-if="q.items && q.items.length">
+              <div class="mcard-label"><i class="fas fa-list"></i> Items ({{ q.items.length }})</div>
+              <ul class="pro-items-list" :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 2 }">
+                <li v-for="(item, idx) in q.items" :key="item.sr" v-show="idx < 2 || expandedQuotations[q.id]">
+                  <span class="bullet-dot">•</span> {{ item.description }}
+                </li>
+              </ul>
+              <button v-if="q.items.length > 2" @click="toggleSeeMore(q.id)" class="pro-btn-see-more">
+                {{ expandedQuotations[q.id] ? "See Less" : `+${q.items.length - 2} More Items` }}
+              </button>
+            </div>
+
+            <!-- Status Dropdown -->
+            <div class="mcard-row mcard-status-select-row">
+              <span class="mcard-label"><i class="fas fa-tasks"></i> Status</span>
+              <select v-model="q.status" class="pro-status-select" :class="`status-theme-${q.status || 'pending'}`" @change="updateQuotationStatus(q)">
+                <option value="pending">⏳ Pending</option>
+                <option value="followup">💬 Follow Up</option>
+                <option value="approved">✔ Approved</option>
+                <option value="rejected">✖ Rejected</option>
+              </select>
+            </div>
+
+            <!-- Remarks -->
+            <div class="mcard-remarks">
+              <span class="mcard-label"><i class="fas fa-comment-dots"></i> Follow-up Remarks</span>
+              <textarea v-model="q.remarks" placeholder="Add follow-up notes..." class="pro-remark-box" rows="2" @input="debounceSave(q)"></textarea>
+            </div>
           </div>
         </div>
 
-        <!-- Desktop Table View -->
-        <table class="styled-customer-table" v-else>
+        <div v-if="filteredAndSortedQuotations.length === 0" class="no-data-mobile">
+          <i class="fas fa-inbox"></i>
+          <p>No quotations match your filters</p>
+        </div>
+      </div>
+
+      <!-- Desktop Table View -->
+      <div class="table-scroll-wrapper" v-else>
+        <table class="pro-styled-table">
           <thead>
             <tr>
-              <th>Sr. No.</th>
-              <th>QUOTATION NO.</th>
-              <th>Quote Date</th>
-              <th>Party Name</th>
-              <th>Engine Serial</th>
-              <th>Engine Model</th>
-              <th class="description-col">Brief Description</th>
-              <th>
-                Initial Value
-                <span class="sort-indicator-th" @click="toggleSort">
-                  <i class="fas fa-sort"></i>
-                  <span v-if="sortOrder === 'asc'" class="sort-arrow">↑</span>
-                  <span v-else-if="sortOrder === 'desc'" class="sort-arrow">↓</span>
+              <th style="width: 45px; text-align: center;">#</th>
+              <th style="width: 170px;">QUOTATION NO.</th>
+              <th style="width: 110px;">QUOTE DATE</th>
+              <th style="width: 180px;">PARTY NAME</th>
+              <th style="width: 150px;">ENGINE DETAILS</th>
+              <th style="min-width: 220px;">ITEMS & DESCRIPTION</th>
+              <th style="width: 130px; text-align: right;">
+                <span class="pro-th-sortable" @click="toggleSort">
+                  TAXABLE VALUE
+                  <i class="fas fa-sort" v-if="!sortOrder"></i>
+                  <i class="fas fa-arrow-up text-emerald" v-else-if="sortOrder === 'asc'"></i>
+                  <i class="fas fa-arrow-down text-emerald" v-else></i>
                 </span>
               </th>
-              <th>Disc.(%)</th>
-              <th>Created By</th>
-              <th>Recommended By</th>
-              <th class="remarks-col">Remarks</th>
-              <th>Status</th>
+              <th style="width: 85px; text-align: center;">DISC.(%)</th>
+              <th style="width: 125px;">STAFF</th>
+              <th style="min-width: 180px;">FOLLOW-UP REMARKS</th>
+              <th style="width: 130px; text-align: center;">STATUS</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(q, index) in filteredAndSortedQuotations" :key="q.id"
-                :class="{
-                  'approved-row': q.status === 'approved',
-                  'pending-row': q.status === 'pending',
-                  'rejected-row': q.status === 'rejected',
-                  'followup-row': q.status === 'followup',
-                }">
-              <td>{{ index + 1 }}</td>
+            <tr 
+              v-for="(q, index) in filteredAndSortedQuotations" 
+              :key="q.id"
+              class="pro-table-row"
+              :class="`row-status-${q.status || 'pending'}`"
+            >
+              <!-- Index -->
+              <td class="cell-index text-center">{{ index + 1 }}</td>
+
+              <!-- Quotation Link -->
               <td>
-                <span class="quotation-link" @click="openQuotation(q)">
-                  Quotation-{{ q.id }}-{{ formatCompanyName(q.company_name) }}
-                </span>
-              </td>
-              <td>{{ formatDate(q.created_at) }}</td>
-              <td>{{ q.company_name }}</td>
-              <td>{{ q.engine_serial }}</td>
-              <td>{{ q.model_no }}</td>
-              <td class="description-col" style="font-size: 10px;">
-                <ul :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 3 }">
-                  <li v-for="(item, idx) in q.items" :key="item.sr" 
-                      v-show="idx < 3 || expandedQuotations[q.id]">
-                    {{ item.description }}
-                  </li>
-                </ul>
-                <button v-if="q.items.length > 3" @click="toggleSeeMore(q.id)" class="see-more-btn">
-                  {{ expandedQuotations[q.id] ? "See Less" : "See More" }}
+                <button 
+                  type="button" 
+                  class="pro-quote-link-btn" 
+                  @click="openQuotation(q)"
+                  title="Open Quotation"
+                >
+                  <i class="fas fa-file-invoice"></i>
+                  <span class="quote-text">Q-{{ q.id }}-{{ formatCompanyName(q.company_name) }}</span>
+                  <i class="fas fa-arrow-up-right-from-square text-xs opacity-75"></i>
                 </button>
               </td>
-              <td>{{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}</td>
+
+              <!-- Date -->
               <td>
-                <span v-if="Number(q.discount) === 0">No Discount</span>
-                <span v-else>{{ getDiscountPercent(q.items) }}%</span>
+                <div class="pro-cell-date">
+                  <i class="fas fa-calendar-day text-slate"></i>
+                  <span>{{ formatDate(q.created_at) }}</span>
+                </div>
               </td>
-              <td>{{ q.created_by || '—' }}</td>
-              <td>{{ q.recommended_by || '—' }}</td>
-              <td class="remarks-col">
-                <textarea v-model="q.remarks" placeholder="Add follow-up notes..." class="remark-textarea" rows="5" @input="debounceSave(q)"></textarea>
-              </td>
+
+              <!-- Party Name -->
               <td>
-                <div class="status-wrapper">
-                  <select v-model="q.status" class="status-select" :class="`status-${q.status || 'default'}`" @change="updateQuotationStatus(q)">
-                    <option value="pending">Pending</option>
-                    <option value="followup">Follow Up</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
+                <div class="pro-cell-party">
+                  <i class="fas fa-building text-slate"></i>
+                  <span class="party-name">{{ q.company_name }}</span>
+                </div>
+              </td>
+
+              <!-- Engine Info -->
+              <td>
+                <div class="pro-engine-info-wrap">
+                  <span class="pro-engine-pill serial" v-if="q.engine_serial" title="Engine Serial">
+                    <i class="fas fa-barcode"></i> {{ q.engine_serial }}
+                  </span>
+                  <span class="pro-engine-pill model" v-if="q.model_no" title="Engine Model">
+                    <i class="fas fa-microchip"></i> {{ q.model_no }}
+                  </span>
+                  <span v-if="!q.engine_serial && !q.model_no" class="text-muted text-xs">—</span>
+                </div>
+              </td>
+
+              <!-- Description Items -->
+              <td>
+                <div class="pro-items-desc-wrap" v-if="q.items && q.items.length">
+                  <ul class="pro-items-list" :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 2 }">
+                    <li v-for="(item, idx) in q.items" :key="item.sr" v-show="idx < 2 || expandedQuotations[q.id]">
+                      <span class="bullet-dot">•</span> {{ item.description }}
+                    </li>
+                  </ul>
+                  <button v-if="q.items.length > 2" @click="toggleSeeMore(q.id)" class="pro-btn-see-more">
+                    {{ expandedQuotations[q.id] ? "See Less" : `+${q.items.length - 2} More Items` }}
+                  </button>
+                </div>
+                <span v-else class="text-muted text-xs">—</span>
+              </td>
+
+              <!-- Value -->
+              <td class="text-right">
+                <span class="pro-cell-value">
+                  ₹ {{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}
+                </span>
+              </td>
+
+              <!-- Discount -->
+              <td class="text-center">
+                <span v-if="Number(q.discount) === 0 || getDiscountPercent(q.items) == 0" class="pro-no-disc-tag">
+                  0%
+                </span>
+                <span v-else class="pro-disc-badge">
+                  {{ getDiscountPercent(q.items) }}%
+                </span>
+              </td>
+
+              <!-- Staff Info -->
+              <td>
+                <div class="pro-staff-wrap">
+                  <div class="staff-row" v-if="q.created_by" title="Created By">
+                    <i class="fas fa-user-edit text-blue"></i>
+                    <span>{{ q.created_by }}</span>
+                  </div>
+                  <div class="staff-row recommender" v-if="q.recommended_by" title="Recommended By">
+                    <i class="fas fa-user-check text-emerald"></i>
+                    <span>{{ q.recommended_by }}</span>
+                  </div>
+                  <span v-if="!q.created_by && !q.recommended_by" class="text-muted text-xs">—</span>
+                </div>
+              </td>
+
+              <!-- Remarks -->
+              <td>
+                <textarea 
+                  v-model="q.remarks" 
+                  placeholder="Add follow-up notes..." 
+                  class="pro-remark-box" 
+                  rows="2" 
+                  @input="debounceSave(q)"
+                ></textarea>
+              </td>
+
+              <!-- Status -->
+              <td class="text-center">
+                <div class="pro-status-dropdown-wrap">
+                  <select 
+                    v-model="q.status" 
+                    class="pro-status-select" 
+                    :class="`status-theme-${q.status || 'pending'}`" 
+                    @change="updateQuotationStatus(q)"
+                  >
+                    <option value="pending">⏳ Pending</option>
+                    <option value="followup">💬 Follow Up</option>
+                    <option value="approved">✔ Approved</option>
+                    <option value="rejected">✖ Rejected</option>
                   </select>
                 </div>
               </td>
             </tr>
+
+            <!-- Empty Row -->
             <tr v-if="filteredAndSortedQuotations.length === 0">
-              <td colspan="13" class="no-data">No quotations match your filters</td>
+              <td colspan="11" class="pro-table-empty">
+                <div class="pro-empty-card">
+                  <div class="empty-icon-wrap">
+                    <i class="fas fa-folder-open"></i>
+                  </div>
+                  <h4>No Quotations Found</h4>
+                  <p>No quotation records matched your current filter criteria.</p>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -353,7 +432,7 @@ export default {
       isMobile: false,
       isSidebarVisible: true,
       filterOpen: false,
-      showAdvancedFilters: true,
+      showAdvancedFilters: false,
       financialYear: "2025-26",
       followUpQuotations: [],
       sortOrder: null, // 'asc' or 'desc' or null
@@ -594,931 +673,819 @@ export default {
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-/* Mobile Header */
-.mobile-header {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: white;
-  border-radius: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark, #1a1a2e);
-  padding: 8px;
-  cursor: pointer;
-}
-
-.mobile-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--dark, #1a1a2e);
-}
-
-.mobile-title i {
-  color: #667eea;
-}
-
-.mobile-filter-btn {
-  position: relative;
-  background: #f3f4f6;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mobile-filter-btn:active {
-  transform: scale(0.9);
-}
-
-.filter-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #667eea;
-  color: white;
-  font-size: 14px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 16px;
-  text-align: center;
-  font-weight: bold;
-}
-
-/* Desktop Header */
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.header-section h2 {
-  margin: 0;
-  color: #fff;
-  font-size: 19px;
-}
-
-.desktop-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.filter-select {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-weight: 500;
-  background: white;
-  cursor: pointer;
-  min-width: 140px;
-}
-
-.filter-toggle-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid #667eea;
-  background: white;
-  color: #667eea;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: relative;
-}
-
-.filter-toggle-btn:hover {
-  background: #667eea;
-  color: white;
-}
-
-.filter-dot {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 10px;
-  height: 10px;
-  background: #dc3545;
-  border-radius: 50%;
-  border: 2px solid white;
-}
-
-/* Advanced Filters */
-.advanced-filters {
-  background: white;
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 30px;
-  align-items: end;
-}
-
-.filter-group {
+/* =========================================================
+   PRO FOLLOW-UP PAGE STYLING
+   ========================================================= */
+.pro-followup-container {
+  padding: 1.5rem 2rem;
+  background: #f1f5f9;
+  min-height: calc(100vh - 60px);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1.25rem;
 }
 
-.filter-group label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.filter-input {
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 13px;
-  transition: all 0.3s ease;
-  background: #fafafa;
-  width: 100%;
-}
-
-.filter-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  background: white;
-}
-
-.filter-actions {
-  justify-content: flex-end;
-}
-
-.clear-filters-btn {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 8px;
-  background: #f3f4f6;
-  color: #6b7280;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  width: 100%;
-  justify-content: center;
-}
-
-.clear-filters-btn:hover {
-  background: #dc3545;
-  color: white;
-}
-
-/* Value Sort Styles */
-.value-sort-group {
-  grid-column: span 1;
-}
-
-.sort-controls {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.sort-btn {
-  padding: 6px 14px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sort-btn:hover {
-  border-color: #667eea;
-  color: #667eea;
-  background: #f8f9ff;
-}
-
-.sort-btn.active {
-  border-color: #667eea;
-  background: #667eea;
-  color: white;
-}
-
-.sort-btn.active:hover {
-  background: #5a6fd6;
-  border-color: #5a6fd6;
-}
-
-.sort-btn.clear-sort {
-  border-color: #dc3545;
-  color: #dc3545;
-  padding: 6px 12px;
-}
-
-.sort-btn.clear-sort:hover {
-  background: #dc3545;
-  color: white;
-  border-color: #dc3545;
-}
-
-.sort-indicator {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #6b7280;
-}
-
-.sort-preview {
-  background: #e8f0fe;
-  padding: 2px 12px;
-  border-radius: 12px;
-  font-weight: 600;
-  color: #1a1a2e;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sort-preview i {
-  color: #667eea;
-}
-
-/* Table Header Sort Indicator */
-.sort-indicator-th {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  color: #fff;
-}
-
-.sort-indicator-th:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.sort-arrow {
-  font-size: 12px;
-  font-weight: bold;
-  color: #ffd700;
-}
-
-/* Mobile Filter Bar */
-.mobile-filter-bar {
-  display: none;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.4s ease;
-  margin-bottom: 12px;
-  background: white;
-  border-radius: 16px;
-  padding: 0 16px;
-}
-
-.mobile-filter-bar.filter-open {
-  max-height: 800px;
-  padding: 16px;
-}
-
-.filter-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.filter-chip {
-  padding: 6px 14px;
+/* =========================================================
+   HERO HEADER & STATUS CHIPS STRIP
+   ========================================================= */
+.pro-followup-hero {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
   border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.filter-chip:active {
-  transform: scale(0.95);
-}
-
-.filter-chip.active {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
-
-/* Mobile Advanced Filters */
-.mobile-advanced-filters {
+  padding: 1.5rem 2rem;
+  color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(49, 46, 129, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 1.25rem;
 }
 
-.mobile-advanced-filters .filter-group {
-  width: 100%;
+.pro-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
 }
 
-.mobile-advanced-filters .filter-input {
-  font-size: 14px;
-  padding: 10px 12px;
+.pro-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.mobile-advanced-filters .sort-controls {
-  flex-direction: column;
-  width: 100%;
-}
-
-.mobile-advanced-filters .sort-btn {
-  width: 100%;
+.pro-hero-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 10px;
+  font-size: 1.5rem;
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
 }
 
-.mobile-clear {
-  margin-top: 4px;
-  width: 100%;
-  padding: 10px;
+.pro-hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-/* Stats Row - Mobile */
-.stats-row-mobile {
-  display: none;
-  gap: 6px;
-  margin-bottom: 12px;
-  overflow-x: auto;
-  padding: 4px 0;
-  -webkit-overflow-scrolling: touch;
+.pro-hero-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #ffffff;
 }
 
-.stat-chip {
-  flex: 0 0 auto;
-  padding: 8px 14px;
-  border-radius: 12px;
-  background: #f3f4f6;
-  text-align: center;
-  min-width: 60px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-}
-
-.stat-chip:active {
-  transform: scale(0.95);
-}
-
-.stat-chip.active {
-  border-color: #667eea;
-  background: #e0e7ff;
-}
-
-.stat-chip.pending.active { border-color: #856404; background: #fff3cd; }
-.stat-chip.followup.active { border-color: #004085; background: #cce5ff; }
-.stat-chip.approved.active { border-color: #155724; background: #d4edda; }
-.stat-chip.rejected.active { border-color: #721c24; background: #f8d7da; }
-
-.stat-count {
-  display: block;
-  font-size: 18px;
+.pro-hero-badge {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 700;
+  color: #e0e7ff;
 }
 
-.stat-label {
-  font-size: 10px;
-  color: #6b7280;
+.pro-hero-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 0.82rem;
+  color: #c7d2fe;
 }
 
-.announcement-board {
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #04085b;
+.pro-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.pro-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  position: relative;
+}
+
+.pro-hero-btn:hover, .pro-hero-btn.active {
+  background: #ffffff;
+  color: #312e81;
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.pro-hero-btn-clear {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.pro-hero-btn-clear:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.pro-filter-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+/* Status Chips Strip */
+.pro-status-chips-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 1rem;
+}
+
+.pro-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e7ff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 14px;
+  border-radius: 25px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pro-chip-btn .chip-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 7px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-size: 0.72rem;
 }
 
-.content {
-  margin-top: 12px;
+.pro-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.pro-chip-btn.active {
+  background: #ffffff;
+  color: #1e1b4b;
+  border-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pro-chip-btn.active .chip-count {
+  background: #1e1b4b;
+  color: #ffffff;
+}
+
+/* Specific Active Pill Styles */
+.pro-chip-btn.chip-pending.active {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+.pro-chip-btn.chip-pending.active .chip-count {
+  background: #92400e;
+  color: #ffffff;
+}
+
+.pro-chip-btn.chip-followup.active {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-color: #c7d2fe;
+}
+.pro-chip-btn.chip-followup.active .chip-count {
+  background: #3730a3;
+  color: #ffffff;
+}
+
+.pro-chip-btn.chip-approved.active {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+.pro-chip-btn.chip-approved.active .chip-count {
+  background: #065f46;
+  color: #ffffff;
+}
+
+.pro-chip-btn.chip-rejected.active {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+.pro-chip-btn.chip-rejected.active .chip-count {
+  background: #991b1b;
+  color: #ffffff;
+}
+
+/* =========================================================
+   COLLAPSIBLE ADVANCED FILTERS PANEL
+   ========================================================= */
+.pro-filter-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pro-slide-enter-active,
+.pro-slide-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pro-slide-enter-from,
+.pro-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.pro-filter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pro-filter-panel-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pro-btn-close-filter {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.pro-btn-close-filter:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.pro-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.pro-filter-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pro-filter-box label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pro-filter-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  color: #1e293b;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.pro-filter-input:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* =========================================================
+   TABLE CARD & STYLED DATA TABLE
+   ========================================================= */
+.pro-table-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
 .table-scroll-wrapper {
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 280px);
   overflow-x: auto;
   overflow-y: auto;
-  border-radius: 10px;
-  background: white;
 }
 
-/* Mobile Cards */
-.mobile-cards {
-  display: none;
-  flex-direction: column;
-  gap: 16px;
-  padding: 8px;
+.pro-styled-table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
 }
 
-.quotation-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border-left: 4px solid #ccc;
+.pro-styled-table thead {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-.quotation-card.approved-card { border-left-color: #28a745; }
-.quotation-card.pending-card { border-left-color: #ffc107; }
-.quotation-card.rejected-card { border-left-color: #dc3545; }
-.quotation-card.followup-card { border-left-color: #007bff; }
-
-.card-header {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+.pro-styled-table th {
+  padding: 0.9rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid #e2e8f0;
+  background: #f8fafc;
 }
 
-.card-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.quotation-number {
-  cursor: pointer;
-  color: #034081;
-  font-weight: 600;
-  font-size: 13px;
-  text-decoration: underline;
-  word-break: break-word;
-}
-
-.quotation-number:active {
-  color: #0b5ed7;
-}
-
-.status-badge-mobile {
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-badge-mobile.status-pending {
-  background: #fff3cd;
-  color: #856404;
-}
-.status-badge-mobile.status-followup {
-  background: #cce5ff;
-  color: #004085;
-}
-.status-badge-mobile.status-approved {
-  background: #d4edda;
-  color: #155724;
-}
-.status-badge-mobile.status-rejected {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.card-row {
-  display: flex;
-  justify-content: space-between;
+.pro-th-sortable {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.15s;
 }
 
-.card-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
+.pro-th-sortable:hover {
+  color: #4f46e5;
+}
+
+.pro-styled-table td {
+  padding: 0.9rem 1rem;
+  font-size: 0.85rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.pro-table-row {
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+/* Status-Specific Row Backgrounds & Accents (Deeper / More Vibrant Colors) */
+.pro-table-row.row-status-pending {
+  background: #fef08a !important;
+  border-left: 5.5px solid #d97706 !important;
+}
+.pro-table-row.row-status-pending:hover {
+  background: #fde047 !important;
+}
+
+.pro-table-row.row-status-followup {
+  background: #bae6fd !important;
+  border-left: 5.5px solid #0284c7 !important;
+}
+.pro-table-row.row-status-followup:hover {
+  background: #93c5fd !important;
+}
+
+.pro-table-row.row-status-approved {
+  background: #bbf7d0 !important;
+  border-left: 5.5px solid #16a34a !important;
+}
+.pro-table-row.row-status-approved:hover {
+  background: #86efac !important;
+}
+
+.pro-table-row.row-status-rejected {
+  background: #fecaca !important;
+  border-left: 5.5px solid #dc2626 !important;
+}
+.pro-table-row.row-status-rejected:hover {
+  background: #fca5a5 !important;
+}
+
+.cell-index {
+  font-weight: 800;
+  color: #334155;
+  font-size: 0.8rem;
+}
+
+/* Quotation Link Button */
+.pro-quote-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  max-width: 100%;
+}
+
+.pro-quote-link-btn .quote-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 155px;
+}
+
+.pro-quote-link-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.2);
+}
+
+/* Cell Elements */
+.pro-cell-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.pro-cell-party {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.card-value {
-  font-size: 13px;
-  color: #1a1a2e;
-  text-align: right;
-  word-break: break-word;
-  max-width: 55%;
+.pro-cell-party .party-name {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.85rem;
 }
 
-.card-items {
-  margin-top: 4px;
-}
-
-.card-items ul {
-  padding-left: 20px;
-  margin: 4px 0;
-  list-style-type: disc;
-  font-size: 12px;
-  color: #4b5563;
-}
-
-.card-items ul.collapsed {
-  max-height: 3.2em;
-  overflow: hidden;
-}
-
-.see-more-btn {
-  background: none;
-  border: none;
-  color: #007bff;
-  cursor: pointer;
-  padding: 0;
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-.see-more-btn:active {
-  opacity: 0.7;
-}
-
-.card-status-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.status-select-mobile {
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 12px;
-  border: none;
-  cursor: pointer;
-  outline: none;
-  background: #f3f4f6;
-  color: #383d41;
-  min-width: 120px;
-}
-
-.status-select-mobile.status-pending {
-  background: #fff3cd;
-  color: #856404;
-}
-.status-select-mobile.status-followup {
-  background: #cce5ff;
-  color: #004085;
-}
-.status-select-mobile.status-approved {
-  background: #d4edda;
-  color: #155724;
-}
-.status-select-mobile.status-rejected {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.card-remarks {
+/* Engine Info Badges */
+.pro-engine-info-wrap {
   display: flex;
   flex-direction: column;
+  gap: 3px;
+}
+
+.pro-engine-pill {
+  display: inline-flex;
+  align-items: center;
   gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
 }
 
-.remark-textarea-mobile {
+.pro-engine-pill.serial {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.pro-engine-pill.model {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+/* Description Items */
+.pro-items-desc-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pro-items-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  color: #334155;
+}
+
+.pro-items-list li {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.pro-items-list .bullet-dot {
+  color: #6366f1;
+  font-weight: bold;
+}
+
+.pro-btn-see-more {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-weight: 700;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+
+.pro-btn-see-more:hover {
+  color: #312e81;
+  text-decoration: underline;
+}
+
+/* Cell Value & Discount */
+.pro-cell-value {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #059669;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.pro-disc-badge {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.pro-no-disc-tag {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Staff Column */
+.pro-staff-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.staff-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.staff-row.recommender {
+  color: #059669;
+}
+
+/* Remarks Textarea */
+.pro-remark-box {
   width: 100%;
   resize: vertical;
-  padding: 8px 10px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 0.78rem;
+  color: #1e293b;
   font-family: inherit;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  font-size: 12px;
-  transition: 0.2s ease;
-  background: #fafafa;
-  min-height: 60px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  min-height: 48px;
 }
 
-.remark-textarea-mobile:focus {
+.pro-remark-box:focus {
   outline: none;
-  border-color: #3498db;
-  background: #fff;
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
 }
 
-.no-data-mobile {
-  text-align: center;
-  padding: 40px 20px;
-  color: #9ca3af;
-}
-
-.no-data-mobile i {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.no-data-mobile p {
-  font-size: 14px;
-}
-
-/* Desktop Table */
-.styled-customer-table {
-  width: 100%;
-  min-width: 1200px;
-  border-collapse: collapse;
-}
-
-.styled-customer-table thead {
-  background-color: #1a1a2e;
-  color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.styled-customer-table th,
-.styled-customer-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 3px solid #ffffff;
-  font-size: 11px;
-}
-
-.styled-customer-table .no-data {
-  text-align: center;
-  padding: 30px 0;
-  color: #888;
-  font-style: italic;
-}
-
-/* Row Colors */
-.approved-row { background-color: #92e8a6 !important; }
-.pending-row { background-color: #00bcd466 !important; }
-.rejected-row { background-color: #ff0a208f !important; }
-.followup-row { background-color: #fff30bd1 !important; }
-
-/* Remarks Column */
-.remarks-col {
-  min-width: 240px;
-  width: 240px;
-}
-
-.remark-textarea {
-  width: 100%;
-  resize: vertical;
-  padding: 8px 0px;
-  font-family: math;
-  border-radius: 8px;
-  border: 1px solid #605e6a;
-  font-size: 13px;
-  transition: 0.2s ease;
-  background: #fafafa;
-}
-
-.remark-textarea:focus {
-  outline: none;
-  border-color: #3498db;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
-}
-
-/* Status Select */
-.status-wrapper {
+/* Status Dropdown */
+.pro-status-dropdown-wrap {
   display: flex;
   justify-content: center;
 }
 
-.status-select {
-  padding: 6px 14px;
-  border-radius: 7px;
-  font-weight: 600;
-  font-size: 13px;
-  border: none;
+.pro-status-select {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
   outline: none;
-  appearance: none;
+  border: 1.5px solid transparent;
+  transition: all 0.2s;
   text-align: center;
-  min-width: 110px;
 }
 
-.status-pending {
-  background: #ffffff;
-  color: #856404;
-}
-.status-followup {
-  background: #ffffff;
-  color: #004085;
-}
-.status-approved {
-  background: #ffffff;
-  color: #155724;
-}
-.status-rejected {
-  background: #ffffff;
-  color: #721c24;
-}
-.status-default {
-  background: #ffffff;
-  color: #383d41;
+.pro-status-select.status-theme-pending {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
 }
 
-.status-select:hover {
-  filter: brightness(0.95);
+.pro-status-select.status-theme-followup {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
 }
 
-.quotation-link {
-  cursor: pointer;
-  color: #034081;
-  font-weight: 600;
-  text-decoration: underline;
+.pro-status-select.status-theme-approved {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
 }
 
-.quotation-link:hover {
-  color: #0b5ed7;
+.pro-status-select.status-theme-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
 }
 
-.description-col ul {
-  padding-left: 16px;
+/* Table Empty State */
+.pro-table-empty {
+  padding: 4rem 1rem !important;
+  text-align: center;
+}
+
+.pro-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #94a3b8;
+}
+
+.pro-empty-card h4 {
   margin: 0;
-  list-style-type: disc;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.description-col ul.collapsed {
-  max-height: 3.2em;
-  overflow: hidden;
+.pro-empty-card p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
 }
 
-/* Scrollbar */
-.table-scroll-wrapper::-webkit-scrollbar {
-  height: 8px;
-  width: 6px;
+/* =========================================================
+   MOBILE CARDS & RESPONSIVENESS
+   ========================================================= */
+.mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 4px;
+.pro-mobile-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: all 0.2s ease;
 }
 
-.table-scroll-wrapper::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.pro-mobile-card.border-status-pending { background: #fef08a; border-left: 5.5px solid #d97706; }
+.pro-mobile-card.border-status-followup { background: #bae6fd; border-left: 5.5px solid #0284c7; }
+.pro-mobile-card.border-status-approved { background: #bbf7d0; border-left: 5.5px solid #16a34a; }
+.pro-mobile-card.border-status-rejected { background: #fecaca; border-left: 5.5px solid #dc2626; }
+
+.pro-mcard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-/* Responsive */
+.pro-status-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.pro-status-badge.status-pending { background: #fef3c7; color: #92400e; }
+.pro-status-badge.status-followup { background: #ede9fe; color: #5b21b6; }
+.pro-status-badge.status-approved { background: #dcfce7; color: #15803d; }
+.pro-status-badge.status-rejected { background: #fee2e2; color: #991b1b; }
+
+.pro-mcard-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.mcard-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.mcard-label {
+  color: #64748b;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mcard-value {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.mcard-items {
+  margin-top: 4px;
+}
+
+.mcard-remarks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
 @media (max-width: 768px) {
-  .announcement-board {
-    padding: 12px;
+  .pro-followup-container {
+    padding: 1rem;
   }
 
-  .mobile-header {
-    display: flex;
-  }
-
-  .header-section {
-    display: none;
-  }
-
-  .mobile-filter-bar {
-    display: block;
-  }
-
-  .stats-row-mobile {
-    display: flex;
-  }
-
-  .mobile-cards {
-    display: flex;
-  }
-
-  .styled-customer-table {
-    display: none;
-  }
-
-  .table-scroll-wrapper {
-    max-height: none;
-    overflow: visible;
-    background: transparent;
-  }
-  
-  .filter-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .value-sort-group {
-    grid-column: span 1;
-  }
-}
-
-@media (max-width: 480px) {
-  .announcement-board {
-    padding: 8px;
-  }
-
-  .mobile-title {
-    font-size: 14px;
-  }
-
-  .mobile-filter-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .stat-chip {
-    padding: 6px 12px;
-    min-width: 50px;
-  }
-
-  .stat-count {
-    font-size: 15px;
-  }
-
-  .stat-label {
-    font-size: 8px;
-  }
-
-  .quotation-card {
-    padding: 12px;
-  }
-
-  .card-title {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .card-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  .card-value {
-    text-align: left;
-    max-width: 100%;
-  }
-
-  .card-status-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .status-select-mobile {
-    width: 100%;
-  }
-
-  .filter-chip {
-    font-size: 11px;
-    padding: 4px 12px;
-  }
-
-  .sort-btn {
-    font-size: 11px;
-    padding: 8px 10px;
+  .pro-followup-hero {
+    padding: 1.25rem;
   }
 }
 </style>
