@@ -1205,15 +1205,32 @@ export default {
 
 /* Welcome Banner */
 .welcome-banner {
-  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);
   border-radius: 24px;
-  padding: 1.5rem 2rem;
+  padding: 2rem 2.5rem;
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: white;
-  box-shadow: 0 10px 25px -5px rgba(67, 97, 238, 0.3);
+  box-shadow: 0 15px 35px -10px rgba(124, 58, 237, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+  animation: rotateGlow 15s linear infinite;
+  pointer-events: none;
+}
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .banner-content h1 {
@@ -1247,23 +1264,27 @@ export default {
 }
 
 .dashboard-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 20px;
-  padding: 1.25rem;
+  padding: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  transition: all 0.25s ease;
+  gap: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   position: relative;
+  overflow: hidden;
 }
 
 .dashboard-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 20px 25px -12px rgba(0,0,0,0.1);
-  border-color: transparent;
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 .card-icon {
@@ -1306,22 +1327,24 @@ export default {
 }
 
 .label {
-  font-size: 1.2rem;
-  color: var(--primary);
-  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--dark);
+  font-weight: 700;
   margin-bottom: 0.25rem;
+  letter-spacing: -0.01em;
 }
 
 .value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: red;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary);
   margin-bottom: 0.5rem;
 }
 
 .progress-text {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--gray);
+  font-weight: 500;
 }
 
 .arrow-icon {
@@ -1338,10 +1361,13 @@ export default {
 }
 
 .chart-card, .upcoming-card, .recent-leaves-card, .birthday-widget {
-  background: white;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 20px;
-  padding: 1.25rem;
-  border: 1px solid var(--border);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
 }
 
 .card-header {

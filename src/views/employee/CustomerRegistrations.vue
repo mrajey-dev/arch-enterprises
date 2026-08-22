@@ -1391,25 +1391,24 @@
 <div v-if="showVisitPopup" class="modal-backdrop">
   <div class="modal-card large">
 
-    <!-- TOP BUTTON ROW -->
-    <div style="display:flex; justify-content: flex-start; gap: 7px; justify-content: space-between; align-items:center; margin-bottom:-4%;">
-      
-      <button 
-        class="btn btn-dark" 
-        @click="showVisitPopup = false"
-      >
+    <!-- MODAL HEADER -->
+    <div class="modal-header-custom">
+      <button class="btn-back" @click="showVisitPopup = false">
         ⬅ Back
       </button>
 
-     <button class="amc-ord"
-  @click="openAssignedVisits"
->
-  <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Visits
-</button>
+      <div class="modal-title-wrapper">
+        <div class="modal-icon-badge" style="background: linear-gradient(135deg, #10b981, #047857);">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <h2 class="modal-title">AMC Pending & Assigned Visits</h2>
+        <p class="modal-subtitle">Manage upcoming and ongoing visits</p>
+      </div>
 
+      <button class="amc-ord" @click="openAssignedVisits">
+        <i class="fa fa-check-square-o"></i> Completed Visits
+      </button>
     </div>
-
-    <h2>AMC Pending & Assigned Visits</h2>
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <!-- Search -->
@@ -1437,6 +1436,7 @@
 
 
     <!-- Visit Table -->
+   <div class="table-scroll-container">
    <table class="styled-table">
   <thead>
     <tr>
@@ -1493,6 +1493,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
   </div>
 </div>
@@ -1502,19 +1503,22 @@
 <div v-if="showVisitsPopup" class="modal-backdrop">
   <div class="modal-card large">
 
-    <!-- Close Button (same as Services popup) -->
-    <div
-      style="display:flex; justify-content:space-between; align-items:center; margin-bottom:-4%;"
-    >
-      <button 
-        class="btn btn-dark" 
-        @click="showVisitsPopup = false"
-      >
+    <!-- MODAL HEADER -->
+    <div class="modal-header-custom">
+      <button class="btn-back" @click="showVisitsPopup = false">
         ⬅ Back
       </button>
-    </div>
 
-    <h2>Completed Visits</h2>
+      <div class="modal-title-wrapper">
+        <div class="modal-icon-badge" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <h2 class="modal-title">Completed Visits</h2>
+        <p class="modal-subtitle">Review all finished assignments</p>
+      </div>
+      
+      <div style="width: 80px;"></div>
+    </div>
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <!-- Search -->
@@ -1542,6 +1546,7 @@
 </div>
 
     <!-- Table (same style as styled-table) -->
+   <div class="table-scroll-container">
    <table class="styled-table">
   <thead>
     <tr>
@@ -1595,6 +1600,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
 
 
@@ -1605,23 +1611,24 @@
 <!-- SERVICE ORDERS POPUP -->
 <div v-if="showServicePopup" class="modal-backdrop">
   <div class="modal-card large">
-    <div style="display:flex; justify-content: flex-start; gap: 7px; justify-content: space-between; align-items:center; margin-bottom:-4%;">
-      
-      <button 
-        class="btn btn-dark" 
-        @click="showServicePopup = false"
-      >
+    <!-- MODAL HEADER -->
+    <div class="modal-header-custom">
+      <button class="btn-back" @click="showServicePopup = false">
         ⬅ Back
       </button>
 
-      <button class="service-ord"
-  @click="openAssignedServicePopup"
->
- <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Services
-</button>
-
+      <div class="modal-title-wrapper">
+        <div class="modal-icon-badge" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+          <i class="fas fa-tools"></i>
+        </div>
+        <h2 class="modal-title">Pending & Assign Service Orders</h2>
+        <p class="modal-subtitle">Manage upcoming and ongoing service visits</p>
       </div>
-    <h2>Pending & Assign Service Orders</h2>
+
+      <button class="service-ord" @click="openAssignedServicePopup">
+        <i class="fa fa-check-square-o"></i> Completed Services
+      </button>
+    </div>
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <!-- Search -->
@@ -1648,6 +1655,7 @@
 
 </div>
 
+  <div class="table-scroll-container">
   <table class="styled-table">
   <thead>
     <tr>
@@ -1716,6 +1724,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
     <!-- <pre>{{ filteredServicePoList }}</pre> -->
   </div>
@@ -1724,18 +1733,22 @@
 <div v-if="showAssignedServicePopup" class="modal-backdrop">
   <div class="modal-card large">
 
-    <div style="display:flex; align-items:center; margin-bottom:-4%;">
-      
-      <button 
-        class="btn btn-dark" 
-        @click="showAssignedServicePopup = false"
-      >
+    <!-- MODAL HEADER -->
+    <div class="modal-header-custom">
+      <button class="btn-back" @click="showAssignedServicePopup = false">
         ⬅ Back
       </button>
 
+      <div class="modal-title-wrapper">
+        <div class="modal-icon-badge" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <h2 class="modal-title">Completed Service Orders</h2>
+        <p class="modal-subtitle">Review all finished service assignments</p>
+      </div>
+      
+      <div style="width: 80px;"></div>
     </div>
-
-    <h2>Completed Service Orders</h2>
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <!-- Search -->
@@ -1764,6 +1777,7 @@
 
 </div>
 
+   <div class="table-scroll-container">
    <table class="styled-table">
   <thead>
     <tr>
@@ -1825,7 +1839,7 @@
     </tr>
   </tbody>
 </table>
-
+</div>
 
   </div>
 </div>
@@ -1834,24 +1848,24 @@
 <!-- MATERIAL SUPPLY POPUP -->
 <div v-if="showSupplyPopup" class="modal-backdrop">
   <div class="modal-card large">
-   <div style="display:flex; justify-content: flex-start; gap: 7px;justify-content: space-between; align-items:center; margin-bottom:-4%;">
-      
-      <button  
-        class="btn btn-dark" 
-        @click="showSupplyPopup = false"
-      >
+    <!-- MODAL HEADER -->
+    <div class="modal-header-custom">
+      <button class="btn-back" @click="showSupplyPopup = false">
         ⬅ Back
       </button>
 
-      <button class="material-del"
-  @click="openDeliveredPopup"
->
-   <i class="fa fa-check-square-o" style="font-size:13px"></i> Material Delivered
-
-</button>
-
+      <div class="modal-title-wrapper">
+        <div class="modal-icon-badge" style="background: linear-gradient(135deg, #a855f7, #7e22ce);">
+          <i class="fas fa-box-open"></i>
+        </div>
+        <h2 class="modal-title">Material Supply</h2>
+        <p class="modal-subtitle">Track dispatches and deliveries</p>
       </div>
-    <h2>Material Supply</h2>
+
+      <button class="material-del" @click="openDeliveredPopup">
+        <i class="fa fa-check-square-o"></i> Material Delivered
+      </button>
+    </div>
     <!-- FILTER BAR -->
 <div class="filter-bar">
   <!-- Search -->
@@ -1882,6 +1896,7 @@
 
 </div>
 
+<div class="table-scroll-container">
 <table class="styled-table">
   <thead>
     <tr>
@@ -1970,6 +1985,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
 
 
@@ -8172,16 +8188,34 @@ font-family: cursive;
 
 .filter-bar {
   display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #f8fafc, #eff6ff);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #4f46e5;
+  flex-wrap: wrap;
 }
 
 .filter-input,
 .filter-select {
-  padding: 7px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  min-width: 200px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  min-width: 220px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .reopen-btn{
@@ -8720,12 +8754,67 @@ width: 100%;
   border-color: rgba(102, 126, 234, 0.35);
 }
 
+/* Page Header Buttons (Glassmorphism on Dark Gradient) */
+.page-header .btn-outline {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.page-header .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.page-header .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.page-header .btn-primary {
+  background: white;
+  color: #7c3aed;
+  border: none;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.page-header .btn-primary:hover {
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
 .page-header {
-  background: linear-gradient(180deg, #ffffff 0%, #f6f8ff 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);
   border-radius: 24px;
-  padding: 26px 28px;
+  padding: 30px 32px;
   margin-bottom: 24px;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 15px 35px -10px rgba(124, 58, 237, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+  animation: rotateGlow 15s linear infinite;
+  pointer-events: none;
 }
 
 .page-header .header-top {
@@ -8734,6 +8823,8 @@ width: 100%;
   gap: 22px;
   align-items: flex-start;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header .eyebrow {
@@ -8741,21 +8832,23 @@ width: 100%;
   letter-spacing: 0.18em;
   font-size: 12px;
   margin-bottom: 10px;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
 }
 
 .page-header h1 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   margin-bottom: 8px;
-  color: #111827;
+  color: #ffffff;
   line-height: 1.1;
+  font-weight: 800;
 }
 
 .page-header .page-description {
   max-width: 620px;
-  color: #4b5563;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .page-header .header-actions {
@@ -8772,37 +8865,52 @@ width: 100%;
 .page-header .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(140px, 1fr));
-  gap: 14px;
-  margin: 24px 0 18px;
+  gap: 16px;
+  margin: 28px 0 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header .stat-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 18px 20px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 20px 22px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.page-header .stat-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .page-header .stat-label {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .page-header .stat-value {
   display: block;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #ffffff;
   margin-bottom: 4px;
 }
 
 .page-header .stat-note {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .page-header .search-section {
@@ -8811,6 +8919,8 @@ width: 100%;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .page-header .search-field {
@@ -8819,30 +8929,39 @@ width: 100%;
   max-width: 540px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: white;
-  border: 1px solid #d1d5db;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 16px;
-  padding: 10px 14px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  padding: 12px 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.page-header .search-field:focus-within {
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .page-header .search-field i {
-  color: #6b7280;
-  font-size: 14px;
+  color: #4b5563;
+  font-size: 16px;
 }
 
 .page-header .search-field input {
   border: none;
   outline: none;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #111827;
   background: transparent;
+  font-weight: 500;
 }
 
 .page-header .search-field input::placeholder {
   color: #9ca3af;
+  font-weight: 400;
 }
 
 .page-header .quick-actions {
@@ -9065,24 +9184,61 @@ width: 100%;
 }
 
 .service-ord {
-   background-color: #3498db; z-index: 9999;  color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  transition: all 0.2s ease;
 }
 .service-ord:hover {
-   background-color: #2679b1; color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
+  background-color: #dbeafe;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
-.amc-ord{
-   background-color: #2ecc71; z-index: 9999;color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
+.amc-ord {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  transition: all 0.2s ease;
 }
-.amc-ord:hover{
-   background-color: #209751; color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold; border: #ffffff;   cursor: pointer;
+.amc-ord:hover {
+  background-color: #d1fae5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
 }
-.material-del{
-background-color: #7e2e7e;
- color: white; z-index: 9999; overflow: scroll; padding: 8px 15px; border-radius: 6px; font-weight: bold;  border: #ffffff;  cursor: pointer;
+.material-del {
+  background-color: #f3e8ff;
+  color: #9333ea;
+  border: 1px solid #d8b4fe;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  transition: all 0.2s ease;
 }
-.material-del:hover{
-background-color: #6f256f;
- color: white; padding: 8px 15px; border-radius: 6px; font-weight: bold;  border: #ffffff;  cursor: pointer;
+.material-del:hover {
+  background-color: #e9d5ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15);
 }
 .quotation-edit-btn,
 .quotation-delete-btn {
@@ -9154,61 +9310,58 @@ background-color: #6f256f;
 /* Table Container */
 .styled-customer-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 10px;
+  border-collapse: collapse;
   font-family: 'Poppins', sans-serif;
 }
 
 /* Header */
 .styled-customer-table thead tr {
-      height: 44px;
-  background: var(--primary);
-  color: #ffffff;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-.styled-customer-table {
-  padding: 14px;
-  text-align: center;
-  /* border-left: ridge; */
-  white-space: nowrap;
-  /* width: max-content!important; */
-  font-size: 16px;
-  border-radius: 6px;
+.styled-customer-table th {
+  padding: 16px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  text-align: left;
 }
 
 /* Rows */
 .styled-customer-table tbody tr {
   background: #ffffff;
-  text-align: center;
-  transition: 0.3s ease;
-  box-shadow: 0px 6px 12px rgba(0,0,0,0.08);
-  border-radius: 10px;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .styled-customer-table tbody tr:hover {
-  background-color: #cbcbcb;
+  background-color: #f8fafc;
 }
 
 /* Cells */
 .styled-customer-table td {
-  padding: 12px;
+  padding: 16px 20px;
   font-size: 14px;
-  color: var(--text);
+  color: #334155;
   text-align: left;
-  border-left: ridge;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
 /* Company Name */
 .company-link {
-  font-weight: 500;
-  color: #147b6b;
+  font-weight: 600;
+  color: #4f46e5;
   text-decoration: none;
+  transition: color 0.2s;
 }
 
 .company-link:hover {
-  color: #0e5c52;
-  text-decoration: none;
+  color: #3730a3;
+  text-decoration: underline;
 }
 
 /* Tooltip */
@@ -9241,49 +9394,60 @@ background-color: #6f256f;
 /* Buttons Styling */
 .action-btns {
   display: flex;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .btn-view-po, .btn-edit, .btn-delete, .btn-followup {
   border: none;
-  padding: 9px 10px;
-  border-radius: 5px!important;
-  font-size: 13px;
-   min-width: 50px!important;
- width: max-content!important;
+  padding: 6px 12px;
+  border-radius: 8px !important;
+  font-size: 12px;
+  min-width: 44px !important;
+  width: max-content !important;
   cursor: pointer;
   letter-spacing: 0.02em;
-  font-weight: 600;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  color: #fff;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .btn-view-po {
-  background-color: #f1f1f1;
-  color: #333;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
 .btn-view-po:hover {
-  background-color: #ded9d9;
+  background-color: #e2e8f0;
+  color: #334155;
   transform: translateY(-1px);
 }
 
 .btn-edit {
-  background-color: #03884a;
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
 }
 
 .btn-edit:hover {
-  background-color: #0d9e5a;
+  background-color: #bbf7d0;
+  transform: translateY(-1px);
 }
 
 .btn-delete {
-  background-color: #d9534f;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 .btn-delete:hover {
-  background-color: #b92f2c;
+  background-color: #fecaca;
+  transform: translateY(-1px);
 }
 
 /* Responsive */
@@ -10812,61 +10976,101 @@ margin-left: 8px;
 /* .completed-btn:hover {
   background-color: #025c11;
 } */
-.delevered{
-   background-color: #030e8800;
-  color: #030e88;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  /* font-weight: bold; */
+.delevered {
+  background-color: #e0e7ff;
+  color: #1e40af;
+  padding: 4px 12px;
+  border: 1px solid #c7d2fe;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 11px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  display: inline-block;
 }
-/* .delevered:hover {
-  background-color: #020b6f;
-} */
+.delevered:hover {
+  background-color: #c7d2fe;
+  transform: translateY(-1px);
+}
+
 .pending-btn {
-  background-color: #f39d1200;
-  color: #f39c12;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  /* font-weight: bold; */
+  background-color: #fef3c7;
+  color: #b45309;
+  padding: 4px 12px;
+  border: 1px solid #fde68a;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 11px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  display: inline-block;
 }
-/* .pending-btn:hover {
-  background-color: #d68910;
-} */
+.pending-btn:hover {
+  background-color: #fde68a;
+  transform: translateY(-1px);
+}
+.table-scroll-container {
+  max-height: 50vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+.table-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
 .styled-table {
-  border-collapse: collapse;
-  margin: 0 auto;
   width: 100%;
-  font-size: 12px;
+  border-collapse: collapse;
+  margin: 0; /* Remove margin since wrapper has it */
+  font-size: 13px;
   min-width: 500px;
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background: #ffffff;
 }
 
 .styled-table th, 
 .styled-table td {
- text-align: left;
-    font-weight: 600 !important;
-    border: 1px solid #000000;
-    color: rgb(0, 0, 0);
-    /* background-color: var(--sidebar); */
-    padding: 6px 20px;
+  text-align: left;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
 }
 
-.styled-table thead {
-  background-color: #adb3b2;
+.styled-table td {
+  font-weight: 500;
+}
+
+.styled-table th {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
   color: #ffffff;
-  /* font-weight: bold; */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+  border-bottom: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-/* .styled-table tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
-} */
+.styled-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+}
 
 
 .modal-overlay {
@@ -14034,15 +14238,16 @@ transform:scale(1.05);
 
 /* Modal Card */
 .modal-card.large.po-management-modal {
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border-radius: 24px;
+  background: #ffffff;
+  border-radius: 20px;
   padding: 32px;
-  /* max-width: 900px; */
   width: 100%;
+  max-width: 800px;
   max-height: 90vh;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
-  animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border: 1px solid #f1f5f9;
 }
 
 .modal-card.large.po-management-modal::-webkit-scrollbar {
@@ -14150,39 +14355,25 @@ transform:scale(1.05);
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 20px;
-  background: white;
-  border-radius: 16px;
-  border: 2px solid #f1f5f9;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
-.po-action-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.po-action-card:hover::before {
-  opacity: 1;
-}
-
 .po-action-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
 .po-action-card:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 /* Card Variants */
@@ -14261,12 +14452,9 @@ transform:scale(1.05);
 }
 
 /* Card Hover Colors */
-.po-action-card:hover {
-  border-color: #667eea;
-}
-
-.po-action-card:hover::before {
-  background: linear-gradient(90deg, #667eea, #764ba2);
+.po-action-card:hover .card-arrow {
+  color: #3b82f6;
+  transform: translateX(4px);
 }
 
 /* Quick Stats */

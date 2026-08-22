@@ -513,13 +513,17 @@ export default {
   color: var(--text);
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
+  border-radius: 20px;
   position: fixed;
   top: 95px;
   left: 22px;
   height: 86vh;
-  transition: width 0.35s ease;
-  box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   z-index: 100;
 }
 
@@ -542,12 +546,21 @@ export default {
 }
 
 .profile-pic {
-  width: 70px;
-  height: 70px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #38bdf8;
+  padding: 3px;
+  background: white;
+  box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-pic:hover {
+  transform: scale(1.08) rotate(5deg);
+  box-shadow: 0 8px 25px rgba(56, 189, 248, 0.6);
 }
 
 .sidebar-title {
@@ -590,15 +603,15 @@ export default {
   padding: 12px 18px;
   display: flex;
   align-items: center;
-  background-color: #05010100;
+  background-color: transparent;
   gap: 14px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.25s ease, padding 0.3s ease;
-  border-radius: 8px;
-  margin: 4px 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  margin: 6px 12px;
   flex-wrap: wrap;
-  transition: all 0.75s ease;
 }
 
 .sidebar-menu li i {
@@ -610,6 +623,8 @@ export default {
 /* Hover */
 .sidebar-menu li:hover {
   background: rgba(56, 189, 248, 0.15);
+  transform: translateX(5px);
+  color: #0284c7;
 }
 
 /* Active / Danger */
