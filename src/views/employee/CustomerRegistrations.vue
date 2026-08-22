@@ -3576,260 +3576,453 @@
 </div>
 
 </div>
-<!-- Customer Registration Modal -->
-<div class="crm-modal-overlay" v-if="showCustomerModal">
-  <div class="crm-modal-container">
+<!-- Customer Registration / Edit Modal -->
+<div class="pro-modal-backdrop-top crm-modal-overlay" v-if="showCustomerModal" @click.self="closeCustomerModal">
+  <div class="crm-modal-container pro-cust-modal">
 
+    <!-- Modal Header -->
+    <div class="pro-modal-header" :class="editingCustomerId ? 'header-amber' : 'header-blue'">
+      <div class="pro-header-left">
+        <div class="pro-header-icon" :class="editingCustomerId ? 'icon-amber' : 'icon-blue'">
+          <i :class="editingCustomerId ? 'fas fa-user-pen' : 'fas fa-user-plus'"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">{{ editingCustomerId ? 'Edit Customer Profile' : 'New Customer Registration' }}</h2>
+            <span class="pro-status-pill" :class="editingCustomerId ? 'pill-amber' : 'pill-cyan'">
+              {{ editingCustomerId ? 'Editing Record' : 'New Registration' }}
+            </span>
+          </div>
+          <p class="pro-modal-subtitle">
+            {{ editingCustomerId ? 'Update company details, addresses, tax IDs, and equipment inventory.' : 'Register new customer profile, contact details, and linked machinery.' }}
+          </p>
+        </div>
+      </div>
 
-    <div class="crm-modal-header">
-          <button
-  type="button"
-  class="crm-modal-close"
-  @click="closeCustomerModal"
-  aria-label="Close modal"
->
-  ✕
-</button>
-      <h2>Customer Registration</h2>
+      <div class="pro-header-actions">
+        <button type="button" class="pro-btn-header-close" @click="closeCustomerModal" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
     </div>
 
-    <form class="crm-form" @submit.prevent="submitCustomerForm">
+    <!-- Modal Form Body -->
+    <form class="pro-modal-body crm-cust-body" @submit.prevent="submitCustomerForm">
 
-      <div class="crm-form-row">
-        <div class="crm-input-group">
-        <label>
-  Company Name <span class="required">*</span>
-</label>
-          <input 
-            type="text" 
-            v-model="customer.company_name" 
-            @input="customer.company_name = customer.company_name.replace(/[^a-zA-Z0-9\s:.,&]/g, '')"
-            required
+      <!-- SECTION 1: COMPANY & CONTACT DETAILS -->
+      <div class="pro-card-section">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-blue"><i class="fas fa-building-user"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Company & Contact Information</h3>
+            <span>Basic corporate particulars, primary contacts, and communication channels</span>
+          </div>
+        </div>
+
+        <div class="pro-grid-2col">
+          <!-- Company Name -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-building"></i> Company Name <span class="req-star">*</span>
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-city pro-field-icon"></i>
+              <input
+                type="text"
+                v-model="customer.company_name"
+                @input="customer.company_name = customer.company_name.replace(/[^a-zA-Z0-9\s:.,&]/g, '')"
+                required
+                placeholder="e.g. Acme Corporation Pvt. Ltd."
+                class="pro-input pro-with-icon"
+              />
+            </div>
+          </div>
+
+          <!-- Contact Person Name -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-user-tie"></i> Contact Person Name <span class="req-star">*</span>
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-user-pen pro-field-icon"></i>
+              <input
+                type="text"
+                v-model="customer.contact_person"
+                @input="customer.contact_person = customer.contact_person.replace(/[^a-zA-Z\s]/g, '')"
+                required
+                placeholder="e.g. John Doe"
+                class="pro-input pro-with-icon"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="pro-grid-2col mt-3">
+          <!-- Contact Number -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-phone-volume"></i> Primary Contact Number <span class="req-star">*</span>
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-phone pro-field-icon"></i>
+              <input
+                type="tel"
+                v-model="customer.contact_number"
+                @input="customer.contact_number = formatPlusNumber(customer.contact_number)"
+                required
+                placeholder="+91 9876543210"
+                pattern="^\+\d{4,14}$"
+                title="Only numbers allowed, with + at the beginning (e.g. +91 9876543210)"
+                class="pro-input pro-with-icon"
+              />
+            </div>
+            <span class="pro-field-hint">Include country code (e.g. +91)</span>
+          </div>
+
+          <!-- Secondary Contact Number -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-mobile-screen"></i> Secondary Contact Number
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-phone-flip pro-field-icon"></i>
+              <input
+                type="tel"
+                v-model="customer.secondary_contact_number"
+                @input="customer.secondary_contact_number = formatPlusNumber(customer.secondary_contact_number)"
+                placeholder="+91 9876543211"
+                pattern="^\+\d{4,14}$"
+                title="Only numbers allowed, with + at the beginning (e.g. +91 9876543211)"
+                class="pro-input pro-with-icon"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="pro-grid-2col mt-3">
+          <!-- Email ID -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-envelope"></i> Email Address <span class="req-star">*</span>
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-at pro-field-icon"></i>
+              <input
+                type="text"
+                v-model="customer.email"
+                placeholder="contact@company.com"
+                @input="validateEmail"
+                required
+                class="pro-input pro-with-icon"
+                :class="{ 'pro-input-error': emailError }"
+              />
+            </div>
+            <span v-if="emailError" class="pro-error-text">
+              <i class="fas fa-circle-exclamation"></i> {{ emailError }}
+            </span>
+          </div>
+
+          <!-- Customer Unique Number -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-fingerprint"></i> Customer Unique Number
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-id-badge pro-field-icon"></i>
+              <input
+                type="text"
+                v-model="customer.customer_number"
+                disabled
+                placeholder="Auto-generated upon registration"
+                class="pro-input pro-with-icon pro-readonly"
+              />
+            </div>
+            <span class="pro-field-hint">System-generated identifier</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: ADDRESSES & POLICY -->
+      <div class="pro-card-section">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-amber"><i class="fas fa-location-dot"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Addresses & Operational Policy</h3>
+            <span>Registered billing, shipping logistics destinations, and company policy</span>
+          </div>
+        </div>
+
+        <div class="pro-grid-2col">
+          <!-- Billing Address -->
+          <div class="pro-field-wrap">
+            <div class="pro-field-header-row">
+              <label class="pro-label">
+                <i class="fas fa-file-invoice"></i> Billing Address <span class="req-star">*</span>
+              </label>
+              <span class="pro-char-badge">{{ (customer.billing_address || '').length }}/500</span>
+            </div>
+            <textarea
+              v-model="customer.billing_address"
+              maxlength="500"
+              @input="customer.billing_address = customer.billing_address.slice(0, 500)"
+              required
+              rows="3"
+              placeholder="Enter official billing address including street, city, state, and pin code..."
+              class="pro-input pro-textarea"
+            ></textarea>
+          </div>
+
+          <!-- Shipping Address -->
+          <div class="pro-field-wrap">
+            <div class="pro-field-header-row">
+              <label class="pro-label">
+                <i class="fas fa-truck-fast"></i> Shipping Address <span class="req-star">*</span>
+              </label>
+              <div class="pro-addr-actions">
+                <button
+                  type="button"
+                  class="pro-btn-copy-addr"
+                  @click="copyBillingAddress"
+                  title="Copy Billing Address"
+                >
+                  <i class="fas fa-copy"></i> Same as Billing
+                </button>
+                <span class="pro-char-badge">{{ (customer.shipping_address || '').length }}/500</span>
+              </div>
+            </div>
+            <textarea
+              v-model="customer.shipping_address"
+              maxlength="500"
+              @input="customer.shipping_address = customer.shipping_address.slice(0, 500)"
+              required
+              rows="3"
+              placeholder="Enter site / shipping delivery address..."
+              class="pro-input pro-textarea"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="pro-grid-2col mt-3">
+          <!-- Office Policy -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-leaf"></i> Office Policy
+            </label>
+            <div class="pro-select-wrap">
+              <select v-model="customer.office_policy" class="pro-select">
+                <option value="">-- Select Office Policy --</option>
+                <option value="Green Office Policy">🌿 Green Office Policy</option>
+                <option value="Paper based office policy">📄 Paper based office policy</option>
+              </select>
+              <i class="fas fa-chevron-down pro-arrow"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: TAX & FINANCIAL IDENTIFIERS -->
+      <div class="pro-card-section">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-emerald"><i class="fas fa-receipt"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Tax & Financial Identifiers</h3>
+            <span>Statutory registration credentials and vendor reference codes</span>
+          </div>
+        </div>
+
+        <div class="pro-grid-3col">
+          <!-- GST Number -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-stamp"></i> GST Number
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-hashtag pro-field-icon"></i>
+              <input
+                type="text"
+                v-model="customer.gst_number"
+                minlength="8"
+                maxlength="15"
+                placeholder="22AAAAA0000A1Z5"
+                @input="customer.gst_number = customer.gst_number.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20)"
+                pattern="^[A-Z0-9]{5,20}$"
+                title="Tax number must be 5–20 characters (letters and numbers only)"
+                class="pro-input pro-with-icon uppercase-input"
+              />
+            </div>
+          </div>
+
+          <!-- PAN Number -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-id-card"></i> PAN Number
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-credit-card pro-field-icon"></i>
+              <input
+                type="text"
+                v-model="customer.pan_number"
+                minlength="10"
+                maxlength="10"
+                placeholder="ABCDE1234F"
+                @input="customer.pan_number = customer.pan_number.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)"
+                pattern="^[A-Z0-9]{10}$"
+                title="Tax ID must be exactly 10 characters (letters and numbers only)"
+                class="pro-input pro-with-icon uppercase-input"
+              />
+            </div>
+          </div>
+
+          <!-- Vendor Number -->
+          <div class="pro-field-wrap">
+            <label class="pro-label">
+              <i class="fas fa-barcode"></i> Vendor Number
+            </label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-tag pro-field-icon"></i>
+              <input
+                type="text"
+                v-model="customer.vendor_number"
+                placeholder="e.g. VEND-8902"
+                class="pro-input pro-with-icon"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: EQUIPMENT SPECIFICATIONS -->
+      <div class="pro-card-section">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-purple"><i class="fas fa-gears"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Equipment Specifications & Inventory</h3>
+            <span>Customer-linked machinery breakdown (Engine, Pump, Controller, Motor, Jockey Pump)</span>
+          </div>
+        </div>
+
+        <div class="pro-equipment-accordion">
+          <div
+            v-for="(equipmentList, type) in customer.equipment_details"
+            :key="type"
+            class="pro-equip-box"
           >
+            <!-- Equipment Category Header -->
+            <div class="pro-equip-box-head">
+              <div class="pro-equip-head-left">
+                <div class="pro-equip-icon-wrap">
+                  <i :class="getEquipmentIcon(type)"></i>
+                </div>
+                <span class="pro-equip-cat-title">{{ formatEquipmentTitle(type) }}</span>
+                <span class="pro-equip-count-pill">
+                  {{ equipmentList.length }} {{ equipmentList.length === 1 ? 'Unit' : 'Units' }}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                class="pro-btn-add-equip-row"
+                @click="addEquipment(type)"
+              >
+                <i class="fas fa-plus"></i> Add {{ formatEquipmentTitle(type) }}
+              </button>
+            </div>
+
+            <!-- Equipment Rows List -->
+            <div class="pro-equip-rows-list">
+              <div
+                v-for="(equipment, index) in equipmentList"
+                :key="index"
+                class="pro-equip-row-card"
+              >
+                <div class="pro-equip-row-index">
+                  <span>#{{ index + 1 }}</span>
+                </div>
+
+                <div class="pro-equip-fields-grid">
+                  <!-- Make -->
+                  <div class="pro-field-wrap">
+                    <label class="pro-sub-label">Make / Brand</label>
+                    <input
+                      type="text"
+                      v-model="equipment.make"
+                      maxlength="50"
+                      @input="equipment.make = equipment.make.slice(0, 50)"
+                      placeholder="e.g. Kirloskar, Cummins"
+                      class="pro-input pro-input-sm"
+                    />
+                  </div>
+
+                  <!-- Model No -->
+                  <div class="pro-field-wrap">
+                    <label class="pro-sub-label">Model No.</label>
+                    <input
+                      type="text"
+                      v-model="equipment.model_no"
+                      maxlength="25"
+                      @input="equipment.model_no = equipment.model_no.slice(0, 25)"
+                      placeholder="e.g. MOD-400X"
+                      class="pro-input pro-input-sm"
+                    />
+                  </div>
+
+                  <!-- Serial No -->
+                  <div class="pro-field-wrap">
+                    <label class="pro-sub-label">Serial No.</label>
+                    <input
+                      type="text"
+                      v-model="equipment.serial_no"
+                      maxlength="20"
+                      @input="equipment.serial_no = equipment.serial_no.slice(0, 20)"
+                      placeholder="e.g. SN-892348"
+                      class="pro-input pro-input-sm"
+                    />
+                  </div>
+                </div>
+
+                <!-- Delete Row Button -->
+                <div class="pro-equip-row-actions">
+                  <button
+                    type="button"
+                    class="pro-btn-del-equip"
+                    @click="removeEquipment(type, index)"
+                    v-if="equipmentList.length > 1"
+                    title="Remove this item"
+                  >
+                    <i class="fas fa-trash-can"></i>
+                  </button>
+                  <div v-else class="pro-equip-del-placeholder"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-    <div class="crm-input-group">
-  <label>Contact Number <span class="required">*</span></label>
-  <input 
-    type="tel"
-    v-model="customer.contact_number"
-    @input="customer.contact_number = formatPlusNumber(customer.contact_number)"
-    required
-    placeholder="+91 1234567890"
-    pattern="^\+\d{4,14}$"
-    title="Only numbers allowed, with + at the beginning (e.g. +91 1234567890)"
-  >
-</div>
-
-
       </div>
 
-      <div class="crm-form-row">
-        <div class="crm-input-group">
-          <label>Contact Person Name <span class="required">*</span></label>
-          <input 
-            type="text" 
-            v-model="customer.contact_person" 
-            @input="customer.contact_person = customer.contact_person.replace(/[^a-zA-Z\s]/g, '')"
-            required
-          >
+      <!-- STICKY ACTION FOOTER -->
+      <div class="pro-modal-footer">
+        <div class="pro-footer-left">
+          <div class="pro-footer-stat">
+            <span class="pro-stat-tag">Total Equipment:</span>
+            <span class="pro-stat-number">{{ getTotalEquipmentCount() }} Units</span>
+          </div>
         </div>
 
-      <div class="crm-input-group">
-  <label>Secondary Contact Number</label>
-  <input 
-    type="tel"
-    v-model="customer.secondary_contact_number"
-    @input="customer.secondary_contact_number = formatPlusNumber(customer.secondary_contact_number)"
-    placeholder="+91 1234567890"
-    pattern="^\+\d{4,14}$"
-    title="Only numbers allowed, with + at the beginning (e.g. +91 1234567890)"
-  >
-</div>
-
-
-      </div>
-
-      <div class="crm-form-row">
-  <div class="crm-input-group crm-full-width">
-    <label>Billing Address <span class="required">*</span></label>
-    <textarea
-      v-model="customer.billing_address"
-      maxlength="500"
-      @input="customer.billing_address = customer.billing_address.slice(0, 500)"
-      required
-      placeholder="Maximum 500 characters"
-    ></textarea>
-  </div>
-</div>
-
-<div class="crm-form-row">
-  <div class="crm-input-group crm-full-width">
-    <label>Shipping Address <span class="required">*</span></label>
-    <textarea
-      v-model="customer.shipping_address"
-      maxlength="500"
-      @input="customer.shipping_address = customer.shipping_address.slice(0, 500)"
-      required
-      placeholder="Maximum 500 characters"
-    ></textarea>
-  </div>
-</div>
-
-
-      <div class="crm-form-row">
-        <div class="crm-input-group">
-          <label>Customer Unique Number</label>
-          <input type="text" v-model="customer.customer_number" disabled>
-        </div>
-
-<div class="crm-input-group">
-  <label>Email ID <span class="required">*</span></label>
-
-  <input
-    type="text"
-    v-model="customer.email"
-    placeholder="example@domain.com"
-    @input="validateEmail"
-    required
-  />
-
-  <span v-if="emailError" class="error-text">
-    {{ emailError }}
-  </span>
-</div>
-
-
-
-
-
-      </div>
-
-      <div class="crm-form-row">
-
-  <!-- TAX / GST NUMBER -->
-  <div class="crm-input-group">
-  <label>GST Number</label>
-  <input
-    type="text"
-    v-model="customer.gst_number"
-    minlength="8"
-    maxlength="15"
-    placeholder="Enter Tax Number"
-    @input="customer.gst_number = customer.gst_number
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '')
-      .slice(0, 20)"
-    pattern="^[A-Z0-9]{5,20}$"
-    title="Tax number must be 5–20 characters (letters and numbers only)"
-  >
-</div>
-
-<!-- PAN / TAX ID -->
-<div class="crm-input-group">
-  <label>PAN Number</label>
-  <input
-    type="text"
-    v-model="customer.pan_number"
-    minlength="10"
-    maxlength="10"
-    placeholder="Enter Tax ID"
-    @input="customer.pan_number = customer.pan_number
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '')
-      .slice(0, 10)"
-    pattern="^[A-Z0-9]{10}$"
-    title="Tax ID must be exactly 10 characters (letters and numbers only)"
-  >
-</div>
-
-
-
-</div>
-
-
-      <div class="crm-form-row">
-        <div class="crm-input-group">
-          <label>Vendor Number</label>
-          <input type="text" v-model="customer.vendor_number">
-        </div>
-      <div class="crm-input-group">
-  <label>Office Policy</label>
-  <select v-model="customer.office_policy">
-    <option value="">Select Office Policy</option>
-    <option value="Green Office Policy">Green Office Policy</option>
-    <option value="Paper based office policy">Paper based office policy</option>
-  </select>
-</div>  
-      </div>
-
-      <h2>Equipment Details</h2>
-
-      <div
-        v-for="(equipmentList, type) in customer.equipment_details"
-        :key="type"
-        class="crm-equipment-group"
-      >
-        <h3>
-          {{ type }} Details
-          <button type="button" class="crm-add-btn" @click="addEquipment(type)">+</button>
-        </h3>
-
-        <div
-          v-for="(equipment, index) in equipmentList"
-          :key="index"
-          class="crm-form-row crm-equipment-entry"
-        >
-          <div class="crm-input-group">
-  <label>Make</label>
-  <input
-    type="text"
-    v-model="equipment.make"
-    maxlength="50"
-    @input="equipment.make = equipment.make.slice(0, 50)"
-    placeholder="Maximum 50 characters"
-  >
-</div>
-
-
-         <div class="crm-input-group">
-  <label>Model No.</label>
-  <input
-    type="text"
-    v-model="equipment.model_no"
-    maxlength="25"
-    @input="equipment.model_no = equipment.model_no.slice(0, 25)"
-    placeholder="Maximum 25 characters"
-  >
-</div>
-
-
-         <div class="crm-input-group">
-  <label>Serial No.</label>
-  <input
-    type="text"
-    v-model="equipment.serial_no"
-    maxlength="20"
-    @input="equipment.serial_no = equipment.serial_no.slice(0, 20)"
-    placeholder="Maximum 20 characters"
-  >
-</div>
-
+        <div class="pro-footer-actions">
+          <button type="button" class="pro-btn-footer-cancel" @click="closeCustomerModal">
+            Cancel
+          </button>
 
           <button
-            type="button"
-            class="crm-remove-btn"
-            @click="removeEquipment(type, index)"
-            v-if="equipmentList.length > 1"
+            type="submit"
+            class="quotation-submit-btn pro-btn-footer-submit"
+            :disabled="isSavingCustomer"
           >
-            ❌
+            <span v-if="isSavingCustomer" class="pro-spinner-sm"></span>
+            <i v-else :class="editingCustomerId ? 'fas fa-check' : 'fas fa-user-plus'"></i>
+            <span>{{ isSavingCustomer ? 'Saving...' : (editingCustomerId ? 'Update Customer' : 'Register Customer') }}</span>
           </button>
         </div>
-      </div>
-
-      <div class="crm-modal-actions">
-        <button type="submit" class="btn btn-primary">Click To Submit</button>
-        <!-- <button type="button" class="btn btn-secondary" @click="closeCustomerModal">Cancel</button> -->
       </div>
 
     </form>
@@ -4149,6 +4342,7 @@ PODate: "",
       
     },
     showCustomerModal: false,
+    isSavingCustomer: false,
       
       
 
@@ -8165,12 +8359,45 @@ setTimeout(() => {
 
     // Customer form modal
     openRegisterForm() {
+      this.resetCustomerForm();
       this.showCustomerModal = true;
     },
 
     closeCustomerModal() {
       this.showCustomerModal = false;
-        // window.location.reload();
+    },
+
+    copyBillingAddress() {
+      if (this.customer.billing_address && this.customer.billing_address.trim()) {
+        this.customer.shipping_address = this.customer.billing_address;
+        toastInfo('Shipping address copied from billing address');
+      } else {
+        toastWarning('Please enter a billing address first.');
+      }
+    },
+
+    getTotalEquipmentCount() {
+      if (!this.customer.equipment_details) return 0;
+      return Object.values(this.customer.equipment_details).reduce(
+        (total, arr) => total + (Array.isArray(arr) ? arr.length : 0),
+        0
+      );
+    },
+
+    getEquipmentIcon(type) {
+      switch (type) {
+        case 'Engine': return 'fas fa-gauge-high';
+        case 'Pump': return 'fas fa-water';
+        case 'Controller': return 'fas fa-microchip';
+        case 'Motor': return 'fas fa-bolt';
+        case 'JockeyPump': return 'fas fa-fan';
+        default: return 'fas fa-cog';
+      }
+    },
+
+    formatEquipmentTitle(type) {
+      if (type === 'JockeyPump') return 'Jockey Pump';
+      return type;
     },
 
     // Equipment handling
@@ -8183,46 +8410,48 @@ setTimeout(() => {
     },
 
     // Submit customer form
- submitCustomerForm() {
-    // block submit if invalid
-    if (this.emailError) {
-      return;
-    }
+    submitCustomerForm() {
+      // block submit if invalid
+      if (this.emailError) {
+        toastWarning('Please provide a valid email address.');
+        return;
+      }
 
-    const token = localStorage.getItem('token');
-    const method = this.editingCustomerId ? 'put' : 'post';
-    const url = this.editingCustomerId
-      ? `https://employees.archenterprises.co.in/api/api/customers/${this.editingCustomerId}`
-      : 'https://employees.archenterprises.co.in/api/api/customers';
+      this.isSavingCustomer = true;
+      const token = localStorage.getItem('token');
+      const method = this.editingCustomerId ? 'put' : 'post';
+      const url = this.editingCustomerId
+        ? `https://employees.archenterprises.co.in/api/api/customers/${this.editingCustomerId}`
+        : 'https://employees.archenterprises.co.in/api/api/customers';
 
-    const payload = {
-      ...this.customer,
-      equipment_details: this.customer.equipment_details
-    };
+      const payload = {
+        ...this.customer,
+        equipment_details: this.customer.equipment_details
+      };
 
-    axios[method](url, payload, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(() => {
-      toastSuccess(this.editingCustomerId ? 'Customer updated!' : 'Customer registered!');
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000); // 2000 ms = 2 seconds
-    })
-    .catch(() => {
-      toastError('Failed to save customer.');
-    });
-  },
-
-
+      axios[method](url, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(() => {
+        toastSuccess(this.editingCustomerId ? 'Customer updated successfully!' : 'Customer registered successfully!');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      })
+      .catch(() => {
+        toastError('Failed to save customer.');
+      })
+      .finally(() => {
+        this.isSavingCustomer = false;
+      });
+    },
 
     // Reset customer form
     resetCustomerForm() {
       this.customer = {
         company_name: '',
-        // address: '',
         billing_address: '',
-        shipping_address:'',
+        shipping_address: '',
         contact_person: '',
         contact_number: '',
         secondary_contact_number: '',
@@ -8384,227 +8613,368 @@ font-family: cursive;
 }
 
 /* ===============================
-   CRM MODAL OVERLAY
+   CRM MODAL OVERLAY & PRO CONTAINER
 ================================ */
 .crm-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 9999;
-}
-
-/* ===============================
-   MODAL CONTAINER
-================================ */
-.crm-modal-container {
-  background: #ffffff;
-  width: 78%;
-  max-width: 1200px;
-  max-height: 86vh;            /* Enables scrolling */
-  padding: 35px 45px;
-  border-radius: 18px;
+  padding: 2.5vh 1rem;
   overflow-y: auto;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
-  animation: crmModalIn 0.4s ease;
-  scrollbar-width: thin;
-  scrollbar-color: #4e73df #f1f1f1;
 }
 
-/* ===============================
-   MODAL ANIMATION
-================================ */
-@keyframes crmModalIn {
-  from {
-    transform: translateY(-25px) scale(0.96);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-/* ===============================
-   SCROLLBAR (WEBKIT)
-================================ */
-.crm-modal-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.crm-modal-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.crm-modal-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #4e73df, #224abe);
-  border-radius: 10px;
-}
-
-.crm-modal-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #224abe, #1a3fb4);
-}
-
-/* ===============================
-   MODAL HEADER
-================================ */
-
-
-/* ===============================
-   FORM STRUCTURE
-================================ */
-.crm-form {
+.crm-modal-container.pro-cust-modal {
+  background: #f8fafc;
+  width: 95%;
+  max-width: 1040px;
+  max-height: 92vh;
+  margin: 0 auto;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  overflow: hidden !important;
+  animation: proModalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.crm-form-row {
-  display: flex;
-  gap: 20px;
-}
-
-.crm-full-width {
-  flex: 100%;
-}
-
-/* ===============================
-   INPUT GROUPS
-================================ */
-.crm-input-group {
-  flex: 1;
+.crm-cust-body {
+  padding: 1.5rem 1.75rem !important;
+  overflow-y: auto;
+  max-height: calc(92vh - 140px);
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+  background: #f8fafc;
 }
 
-.crm-input-group label {
-  font-size: 14px;
+/* Header Variations */
+.header-blue {
+  background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%) !important;
+}
+
+.header-amber {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+}
+
+.icon-blue {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.icon-amber {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Input with Icon */
+.pro-input-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.pro-field-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  pointer-events: none;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+
+.pro-input.pro-with-icon {
+  padding-left: 42px !important;
+}
+
+.pro-input-icon-wrap:focus-within .pro-field-icon {
+  color: #2563eb;
+}
+
+.pro-field-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 4px;
+  display: block;
+}
+
+.pro-error-text {
+  font-size: 0.78rem;
+  color: #ef4444;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-weight: 600;
-  color: var(--text);
-  margin-bottom: 6px;
 }
 
-/* Inputs */
-.crm-input-group input,
-.crm-input-group textarea {
-  padding: 11px 14px;
-  font-size: 14px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  transition: all 0.2s ease;
+.pro-input-error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
 
-.crm-input-group textarea {
-  min-height: 90px;
-  resize: vertical;
-}
-
-.crm-input-group input:focus,
-.crm-input-group textarea:focus {
-  outline: none;
-  border-color: #4e73df;
-  box-shadow: 0 0 0 2px rgba(78, 115, 223, 0.15);
-}
-
-/* Disabled field */
-.crm-input-group input:disabled {
-  background: #f3f4f6;
-  cursor: not-allowed;
-}
-
-/* ===============================
-   EQUIPMENT SECTION
-================================ */
-.crm-equipment-group {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 20px;
-  margin-top: 10px;
-}
-
-.crm-equipment-group h3 {
+/* Header row inside fields */
+.pro-field-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 15px;
+  margin-bottom: 0.35rem;
 }
 
-.crm-equipment-entry {
+.pro-field-header-row .pro-label {
+  margin-bottom: 0 !important;
+}
+
+.pro-char-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.pro-addr-actions {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 8px;
 }
 
-/* ===============================
-   BUTTONS
-================================ */
-.crm-add-btn {
- background: linear-gradient(135deg, #ffffff, #ffffff);
-    color: #0f0f0f;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 24px;
-    transition: all .2s ease;
-}
-
-.crm-add-btn:hover {
-  transform: scale(1.05);
-}
-
-.crm-remove-btn {
-  background: var(--sidebar);
-  color: #ffffff;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 8px;
+.pro-btn-copy-addr {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  padding: 3px 9px;
+  border-radius: 6px;
   cursor: pointer;
-  margin-top: 22px;
   transition: all 0.2s ease;
 }
 
-.crm-remove-btn:hover {
-  background: #dc2626;
+.pro-btn-copy-addr:hover {
+  background: #bfdbfe;
+  color: #1e40af;
+  transform: translateY(-1px);
 }
 
-/* ===============================
-   FOOTER ACTIONS
-================================ */
-.crm-modal-actions {
+.uppercase-input {
+  text-transform: uppercase !important;
+  font-family: 'Consolas', 'Courier New', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* Equipment Accordion & Categories */
+.pro-equipment-accordion {
   display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  margin-top: 30px;
-  flex-direction: column-reverse;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* ===============================
-   RESPONSIVE
-================================ */
-@media (max-width: 992px) {
-  .crm-modal-container {
-    width: 90%;
-    padding: 30px;
-  }
+.pro-equip-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.pro-equip-box:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.pro-equip-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pro-equip-head-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pro-equip-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #ede9fe;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.pro-equip-cat-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pro-equip-count-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.pro-btn-add-equip-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4338ca;
+  background: #e0e7ff;
+  border: 1px solid #c7d2fe;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pro-btn-add-equip-row:hover {
+  background: #c7d2fe;
+  border-color: #a5b4fc;
+  color: #3730a3;
+  transform: translateY(-1px);
+}
+
+.pro-equip-rows-list {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pro-equip-row-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.pro-equip-row-card:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.pro-equip-row-index {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #94a3b8;
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.pro-equip-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  flex: 1;
+}
+
+.pro-sub-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.pro-input-sm {
+  padding: 8px 12px !important;
+  font-size: 0.88rem !important;
+  border-radius: 8px !important;
+}
+
+.pro-equip-row-actions {
+  width: 36px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pro-btn-del-equip {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #fee2e2;
+  background: #fef2f2;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pro-btn-del-equip:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  transform: scale(1.06);
+}
+
+.pro-equip-del-placeholder {
+  width: 32px;
+  height: 32px;
+}
+
+.pro-spinner-sm {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
 }
 
 @media (max-width: 768px) {
-  .crm-modal-container {
-    width: 95%;
-    padding: 25px;
+  .crm-modal-container.pro-cust-modal {
+    width: 98%;
+    max-height: 96vh;
+    border-radius: 14px;
   }
 
-  .crm-form-row,
-  .crm-equipment-entry {
-    flex-direction: column;
+  .crm-cust-body {
+    padding: 1rem !important;
+  }
+
+  .pro-equip-fields-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .pro-equip-row-card {
+    flex-wrap: wrap;
   }
 }
 
