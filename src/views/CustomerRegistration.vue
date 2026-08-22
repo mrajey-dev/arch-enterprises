@@ -10,80 +10,97 @@
     class="content"
     :class="{ 'hide-content': isMobile && isSidebarVisible }"
   >
-  <section class="page-header">
-    <div class="header-top">
-      <div>
-        <p class="eyebrow">CRM Dashboard</p>
-        <h1>Customers & Purchase Orders</h1>
-        <p class="page-description">Manage customers, quotations and order flows from a polished, responsive workspace.</p>
+    <section class="crm-hero-header">
+    <div class="crm-hero-top">
+      <div class="crm-hero-title-area">
+        <div class="crm-eyebrow-pill">
+          <i class="fas fa-chart-line"></i> CRM DASHBOARD
+        </div>
+        <h1 class="crm-main-heading">Customers & Purchase Orders</h1>
+        <p class="crm-sub-heading">Manage registered customers, quotations, and order tracking workflows from a unified workspace.</p>
       </div>
-      <div class="header-actions">
-        <button class="btn btn-secondary" @click="openAssignPoForm">
+
+      <!-- Grouped Modern Action Pills -->
+      <div class="crm-header-action-group">
+        <button class="crm-btn-pill crm-btn-secondary" @click="openAssignPoForm">
           <i class="fas fa-tasks"></i>
-          Manage PO
+          <span>Manage PO</span>
         </button>
-        <button class="btn btn-outline" @click="showViewAllQuotationPopup = true">
-          <i class="fas fa-file-invoice"></i>
-          Quotations
+        <button class="crm-btn-pill crm-btn-outline" @click="showViewAllQuotationPopup = true">
+          <i class="fas fa-file-invoice-dollar"></i>
+          <span>Quotations</span>
         </button>
-        <button class="btn btn-outline" @click="goTo('employee/followup')">
-          <i class="fas fa-phone-alt"></i>
-          Follow Up
+        <button class="crm-btn-pill crm-btn-outline" @click="goTo('employee/followup')">
+          <i class="fas fa-phone-volume"></i>
+          <span>Follow Up</span>
         </button>
-        <button class="btn btn-outline" @click="showEmailModal = true">
+        <button class="crm-btn-pill crm-btn-outline" @click="showEmailModal = true">
           <i class="fas fa-envelope"></i>
-          Emails
+          <span>Emails</span>
         </button>
-        <button class="btn btn-primary" @click="openRegisterForm()">
-          <i class="fas fa-plus"></i>
-          New Customer
+        <button class="crm-btn-pill crm-btn-primary" @click="openRegisterForm()">
+          <i class="fas fa-plus-circle"></i>
+          <span>New Customer</span>
         </button>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-label">Customers</span>
-        <span class="stat-value">{{ customers.length }}</span>
-        <span class="stat-note">Active records</span>
+    <!-- 4 Stats Cards -->
+    <div class="crm-stats-grid">
+      <div class="crm-stat-card card-blue">
+        <div class="crm-stat-icon-wrap"><i class="fas fa-building"></i></div>
+        <div class="crm-stat-content">
+          <span class="crm-stat-count">{{ customers.length }}</span>
+          <span class="crm-stat-label">Total Customers</span>
+        </div>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">Open Quotations</span>
-        <span class="stat-value">{{ quotations.length }}</span>
-        <span class="stat-note">Loaded from backend</span>
+      <div class="crm-stat-card card-amber">
+        <div class="crm-stat-icon-wrap"><i class="fas fa-file-signature"></i></div>
+        <div class="crm-stat-content">
+          <span class="crm-stat-count">{{ quotations.length }}</span>
+          <span class="crm-stat-label">Open Quotations</span>
+        </div>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">Supplies</span>
-        <span class="stat-value">{{ supplies.length }}</span>
-        <span class="stat-note">Material orders</span>
+      <div class="crm-stat-card card-purple">
+        <div class="crm-stat-icon-wrap"><i class="fas fa-truck-ramp-box"></i></div>
+        <div class="crm-stat-content">
+          <span class="crm-stat-count">{{ supplies.length }}</span>
+          <span class="crm-stat-label">Supply Orders</span>
+        </div>
       </div>
-      <div class="stat-card">
-        <span class="stat-label">Assigned Visits</span>
-        <span class="stat-value">{{ visit_assign.length }}</span>
-        <span class="stat-note">AMC schedule</span>
+      <div class="crm-stat-card card-emerald">
+        <div class="crm-stat-icon-wrap"><i class="fas fa-calendar-check"></i></div>
+        <div class="crm-stat-content">
+          <span class="crm-stat-count">{{ visit_assign.length }}</span>
+          <span class="crm-stat-label">AMC Visits</span>
+        </div>
       </div>
     </div>
 
-    <div class="search-section">
-      <div class="search-field">
-        <i class="fas fa-search"></i>
+    <!-- Search & Filter Bar -->
+    <div class="crm-search-bar-wrap">
+      <div class="crm-search-input-box">
+        <i class="fas fa-search crm-search-icon"></i>
         <input
           type="text"
           v-model="searchQuery"
           @focus="searchFocused = true"
           @blur="searchFocused = false"
-          placeholder="Search customers, company or customer number"
+          placeholder="Search customers by company name, contact, or customer number..."
+          class="crm-search-input"
         />
-        <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''; searchFocused = false">
+        <button v-if="searchQuery" class="crm-search-clear" @click="searchQuery = ''; searchFocused = false">
           <i class="fas fa-times-circle"></i>
         </button>
       </div>
-      
+      <div class="crm-search-summary-pill" v-if="filteredCustomers">
+        <span>Showing <strong>{{ filteredCustomers.length }}</strong> of {{ customers.length }} Customers</span>
+      </div>
     </div>
   </section>
 
 <!-- Duplicate Quotation - Company Selection Modal -->
-<div v-if="showDuplicateCompanySelection" class="modal-backdrop">
+<div v-if="showDuplicateCompanySelection" class="modal-backdrop pro-modal-backdrop-top">
   <div class="modal-card medium">
     <div class="modal-header-icon">
       <i class="fas fa-copy"></i>
@@ -230,772 +247,652 @@
   </div>
 </div>
 
-<!-- Quotation Modal -->
-<div v-if="showQuotation" class="quotation-backdrop">
-  <div class="quotation-modal">
-<div class="quotation-header">
-     <h2 style="color: white;">{{ isEdit ? " Edit Quotation" : "Create New Quotation" }}</h2>
-   <div class="quotation-header-actions">
-  
-
-    <button
-  class="quotation-btn-secondary"
-  @click="openViewQuotationPopup(form.company_name)"
->
-  <i class='fas fa-file-invoice' style='font-size:13px'></i> View Quotations
-</button>
-
-       <button class="btn btn-dark" @click="showQuotation = false; refreshForm();">
-  ⬅ Back
-</button>
-
-      </div>
-      </div>
-
-
-<!-- FOLLOW UP POPUP -->
-<div v-if="showFollowUpPopup" class="quotation-backdrop">
-  <div class="quotation-modal" style="max-width: 95%;">
-
-   <div class="fullscreen-page">
-
-    <!-- HEADER -->
-    <div class="quotation-header">
-      <h2 style="color:white;"><i class='fas fa-file-invoice' style='font-size:13px'></i> Quotation & Order Sheet</h2>
-      <button class="quotation-btn-close" @click="$router.back()">⬅ Back</button>
-    </div>
-
-    <!-- TABLE -->
-    <div class="quotation-section-card" style="overflow-x:auto;">
-      <table class="styled-customer-table">
-        <thead>
-  <tr>
-    <th> Sr. No. </th>
-    <th> QUOTATION NO. </th>
-    <th> Quote Date </th>
-    <th> Party Name </th>
-    <th> Engine Serial Number </th>
-    <th> Brief Description of Goods </th>
-    <th> Initial Value (Non-Taxable) </th>
-    <th> Disc.(%) </th>
-    <th> Recommended By</th>
-    <th> Remarks </th>
-    <th> Status of Quotation </th>
-  </tr>
-</thead>
-
-
-        <div v-if="quotationList.length > 0" class="cards-container">
-</div>
-
-    <tbody>
-  <tr
-    v-for="(q, index) in followUpQuotations"
-    :key="q.id"
-    :class="{
-      'approved-row': q.status === 'approved',
-      'pending-row': q.status === 'pending',
-      'rejected-row': q.status === 'rejected',
-      'followup-row': q.status === 'followup',
-    }"
-  >
-    <!-- SR NO -->
-    <td>{{ index + 1 }}</td>
-
-    <td>AE/QUOTE/{{ financialYear }}/{{ q.id }}</td>
-    <td>{{ formatDate(q.quote_date) }}</td>
-    <td>{{ q.company_name }}</td>
-    <td>{{ q.engine_serial }}</td>
-    <td>{{ q.brief_description }}</td>
-
-    <td>
-      {{ calculateInitialValue(q.items).toLocaleString('en-IN') }}
-    </td>
-
-    <td>
-      <span v-if="Number(q.discount) === 0">No Discount</span>
-      <span v-else>{{ getDiscountPercent(q.items) }}%</span>
-    </td>
-
-    <td>{{ q.recommended_by }}</td>
-
-    <!-- REMARKS -->
-    <td>
-      <textarea
-        v-model="q.remarks"
-        placeholder="Enter remarks"
-        class="table-input"
-        rows="2"
-      ></textarea>
-    </td>
-
-    <!-- STATUS -->
-    <td>
-      <select
-        v-model="q.status"
-        class="table-input"
-        @change="updateQuotationStatus(q)"
-      >
-        <option value="">Select</option>
-        <option value="pending">Pending</option>
-        <option value="followup">Follow Up</option>
-        <option value="approved">Approved</option>
-        <option value="rejected">Rejected</option>
-      </select>
-    </td>
-  </tr>
-
-  <tr v-if="followUpQuotations.length === 0">
-    <td colspan="12" style="text-align:center;">No records found</td>
-  </tr>
-</tbody>
-
-
-      </table>
-    </div>
-</div>
-  </div>
-</div>
-
-
-    <!-- BASIC INFO -->
-    <div class="quotation-section-card">
-      <h3 class="quotation-section-title"></h3>
-      <div class="quotation-grid">
-         <div class="quotation-form-group">
-  <label>Company</label>
-  <div class="readonly-field" style="font-weight: 700;
-">
-    {{ form.company_name }}
-  </div>
-</div>
-<div class="quotation-form-group">
-  <label style="display:flex; justify-content:space-between; align-items:center;">
-    <span>Shipping Address (Optional)</span>
-
+<!-- AWESOME QUOTATION MODAL (CREATE / EDIT) -->
+<div v-if="showQuotation" class="quotation-backdrop pro-modal-backdrop-top" @click.self="showQuotation = false; refreshForm();">
+  <div class="quotation-modal pro-quotation-modal">
     
-  </label>
-
-  <textarea
-    v-model="form.shipping_address"
-    rows="3"
-    placeholder="Enter shipping address if different from company address"
-  ></textarea>
- <button
-    type="button"
-    class="save-shipp-address"
-    :disabled="loading"
-    style="padding:4px 10px; font-size:12px;"
-    @click="handleClick"
-  >
-    <span v-if="loading"> Updating...</span>
-    <span v-else><i class="fa fa-refresh fa-spin" style="font-size:11px"></i> Update Address</span>
-  </button>
-</div>
-
-
-        <div class="quotation-form-group">
-          <label>Nature of Sale *</label>
-          <select v-model="form.nature_of_sale">
-            <option value="">Select Nature</option>
-            <option value="Intrastate">Intrastate</option>
-            <option value="Interstate">Interstate</option>
-            <option value="Export">Export</option>
-          </select>
-           <!-- <div v-if="!form.nature_of_sale" class="error-message">
-    ⚠ Nature of Sale is required
-  </div> -->
+    <!-- TOP STICKY HEADER -->
+    <div class="pro-modal-header">
+      <div class="pro-header-left">
+        <div class="pro-header-icon" :class="isEdit ? 'icon-amber' : 'icon-cyan'">
+          <i :class="isEdit ? 'fas fa-file-pen' : 'fas fa-file-circle-plus'"></i>
         </div>
-
-        <div class="quotation-form-group" v-if="form.nature_of_sale === 'Export'">
-          <label>Select Currency</label>
-          <select v-model="form.currency">
-  <option value="">Select Currency</option>
-
-  <option value="AED">AED – United Arab Emirates Dirham</option>
-  <option value="AFN">AFN – Afghan Afghani</option>
-  <option value="ALL">ALL – Albanian Lek</option>
-  <option value="AMD">AMD – Armenian Dram</option>
-  <option value="ANG">ANG – Netherlands Antillean Guilder</option>
-  <option value="AOA">AOA – Angolan Kwanza</option>
-  <option value="ARS">ARS – Argentine Peso</option>
-  <option value="AUD">AUD – Australian Dollar</option>
-  <option value="AWG">AWG – Aruban Florin</option>
-  <option value="AZN">AZN – Azerbaijani Manat</option>
-
-  <option value="BAM">BAM – Bosnia-Herzegovina Convertible Mark</option>
-  <option value="BBD">BBD – Barbadian Dollar</option>
-  <option value="BDT">BDT – Bangladeshi Taka</option>
-  <option value="BGN">BGN – Bulgarian Lev</option>
-  <option value="BHD">BHD – Bahraini Dinar</option>
-  <option value="BIF">BIF – Burundian Franc</option>
-  <option value="BMD">BMD – Bermudian Dollar</option>
-  <option value="BND">BND – Brunei Dollar</option>
-  <option value="BOB">BOB – Bolivian Boliviano</option>
-  <option value="BRL">BRL – Brazilian Real</option>
-  <option value="BSD">BSD – Bahamian Dollar</option>
-  <option value="BTN">BTN – Bhutanese Ngultrum</option>
-  <option value="BWP">BWP – Botswana Pula</option>
-  <option value="BYN">BYN – Belarusian Ruble</option>
-  <option value="BZD">BZD – Belize Dollar</option>
-
-  <option value="CAD">CAD – Canadian Dollar</option>
-  <option value="CDF">CDF – Congolese Franc</option>
-  <option value="CHF">CHF – Swiss Franc</option>
-  <option value="CLP">CLP – Chilean Peso</option>
-  <option value="CNY">CNY – Chinese Yuan</option>
-  <option value="COP">COP – Colombian Peso</option>
-  <option value="CRC">CRC – Costa Rican Colón</option>
-  <option value="CUP">CUP – Cuban Peso</option>
-  <option value="CVE">CVE – Cape Verdean Escudo</option>
-  <option value="CZK">CZK – Czech Koruna</option>
-
-  <option value="DJF">DJF – Djiboutian Franc</option>
-  <option value="DKK">DKK – Danish Krone</option>
-  <option value="DOP">DOP – Dominican Peso</option>
-  <option value="DZD">DZD – Algerian Dinar</option>
-
-  <option value="EGP">EGP – Egyptian Pound</option>
-  <option value="ERN">ERN – Eritrean Nakfa</option>
-  <option value="ETB">ETB – Ethiopian Birr</option>
-  <option value="EUR">EUR – Euro</option>
-
-  <option value="FJD">FJD – Fijian Dollar</option>
-  <option value="FKP">FKP – Falkland Islands Pound</option>
-
-  <option value="GBP">GBP – British Pound Sterling</option>
-  <option value="GEL">GEL – Georgian Lari</option>
-  <option value="GHS">GHS – Ghanaian Cedi</option>
-  <option value="GIP">GIP – Gibraltar Pound</option>
-  <option value="GMD">GMD – Gambian Dalasi</option>
-  <option value="GNF">GNF – Guinean Franc</option>
-  <option value="GTQ">GTQ – Guatemalan Quetzal</option>
-  <option value="GYD">GYD – Guyanese Dollar</option>
-
-  <option value="HKD">HKD – Hong Kong Dollar</option>
-  <option value="HNL">HNL – Honduran Lempira</option>
-  <option value="HRK">HRK – Croatian Kuna</option>
-  <option value="HTG">HTG – Haitian Gourde</option>
-  <option value="HUF">HUF – Hungarian Forint</option>
-
-  <option value="IDR">IDR – Indonesian Rupiah</option>
-  <option value="ILS">ILS – Israeli New Shekel</option>
-  <option value="INR">INR – Indian Rupee</option>
-  <option value="IQD">IQD – Iraqi Dinar</option>
-  <option value="IRR">IRR – Iranian Rial</option>
-  <option value="ISK">ISK – Icelandic Krona</option>
-
-  <option value="JMD">JMD – Jamaican Dollar</option>
-  <option value="JPY">JPY – Japanese Yen</option>
-  <option value="JOD">JOD – Jordanian Dinar</option>
-
-  <option value="KES">KES – Kenyan Shilling</option>
-  <option value="KRW">KRW – South Korean Won</option>
-  <option value="KWD">KWD – Kuwaiti Dinar</option>
-  <option value="KZT">KZT – Kazakhstani Tenge</option>
-
-  <option value="LAK">LAK – Lao Kip</option>
-  <option value="LBP">LBP – Lebanese Pound</option>
-  <option value="LKR">LKR – Sri Lankan Rupee</option>
-  <option value="LRD">LRD – Liberian Dollar</option>
-  <option value="LYD">LYD – Libyan Dinar</option>
-
-  <option value="MAD">MAD – Moroccan Dirham</option>
-  <option value="MXN">MXN – Mexican Peso</option>
-  <option value="MYR">MYR – Malaysian Ringgit</option>
-
-  <option value="NGN">NGN – Nigerian Naira</option>
-  <option value="NOK">NOK – Norwegian Krone</option>
-  <option value="NPR">NPR – Nepalese Rupee</option>
-  <option value="NZD">NZD – New Zealand Dollar</option>
-
-  <option value="OMR">OMR – Omani Rial</option>
-
-  <option value="PHP">PHP – Philippine Peso</option>
-  <option value="PKR">PKR – Pakistani Rupee</option>
-  <option value="PLN">PLN – Polish Złoty</option>
-
-  <option value="QAR">QAR – Qatar</option>
-
-  <option value="RON">RON – Romanian Leu</option>
-  <option value="RUB">RUB – Russian Ruble</option>
-  <option value="RWF">RWF – Rwandan Franc</option>
-
-  <option value="SAR">SAR – Saudi Riyal</option>
-  <option value="SEK">SEK – Swedish Krona</option>
-  <option value="SGD">SGD – Singapore Dollar</option>
-  <option value="THB">THB – Thai Baht</option>
-  <option value="TRY">TRY – Turkish Lira</option>
-  <option value="TZS">TZS – Tanzanian Shilling</option>
-
-  <option value="UAH">UAH – Ukrainian Hryvnia</option>
-  <option value="USD">USD – United States Dollar</option>
-  <option value="UYU">UYU – Uruguayan Peso</option>
-
-  <option value="VND">VND – Vietnamese Dong</option>
-
-  <option value="ZAR">ZAR – South African Rand</option>
-  <option value="ZMW">ZMW – Zambian Kwacha</option>
-</select>
-
-        </div>
-
-      
-
-
-        <div class="quotation-form-group">
-          <label>Recommended By</label>
-          <select v-model="form.recommended_by">
-            <option value="">Select Employee</option>
-            <option v-for="user in users" :key="user.id" :value="user.emp_id">
-              {{ user.emp_id }}
-            </option>
-          </select>
-        </div>
-        <div class="quotation-form-group">
-  <label>Created By</label>
- 
-  <input
-    type="text"
-    v-model="form.created_by"
-    disabled
-    class="readonly-field"
-  />
-</div>
- 
-
-
-        <div class="quotation-form-group">
-          <label>Customer Reference</label>
-          <input v-model="form.customer_reference" type="text" placeholder="Enter reference" />
-        </div>
-      </div>
-    </div>
-
-<!-- ENGINE & TERMS -->
-<div class="quotation-section-card">
-  <h3 class="quotation-section-title">Equipments & Terms</h3>
-  
-  <!-- Equipment Selection Section -->
-  <div class="equipment-selection-section" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-    
-    <!-- Mode Selection Toggle -->
-    <div style="display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6;">
-      <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-        <input 
-          type="radio" 
-          value="select" 
-          v-model="equipmentInputMode"
-          @change="onInputModeChange"
-        />
-        <span>Select from Database</span>
-      </label>
-      <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-        <input 
-          type="radio" 
-          value="manual" 
-          v-model="equipmentInputMode"
-          @change="onInputModeChange"
-        />
-        <span>Manual Entry</span>
-      </label>
-    </div>
-    
-    <!-- Database Selection Mode -->
-    <div v-if="equipmentInputMode === 'select'">
-      <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
-        <div v-for="equipType in equipmentTypes" :key="equipType.key" style="display: flex; align-items: center; gap: 5px;">
-          <input 
-            type="checkbox" 
-            :id="'equip_' + equipType.key"
-            :value="equipType.key"
-            v-model="selectedEquipmentTypes"
-            @change="fetchEquipmentByType(equipType.key)"
-          />
-          <label :for="'equip_' + equipType.key" style="margin: 0; font-weight: normal;">
-            {{ equipType.label }}
-          </label>
-        </div>
-      </div>
-      
-      <!-- Equipment Multi-Select Dropdowns -->
-      <div v-for="equipType in selectedEquipmentTypes" :key="'select_' + equipType" style="margin-bottom: 15px;">
-        <label :for="'equip_select_' + equipType" style="font-size: 13px; display: block; margin-bottom: 5px; font-weight: 500;">
-          Select {{ getEquipmentLabel(equipType) }}(s):
-        </label>
-        <select 
-          :id="'equip_select_' + equipType"
-          v-model="selectedEquipment[equipType]"
-          @change="onEquipmentSelect(equipType)"
-          multiple
-          size="3"
-          style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ddd; width: 100%; max-width: 500px;"
-        >
-          <option 
-            v-for="equip in equipmentList[equipType]" 
-            :key="equip.id" 
-            :value="equip"
-          >
-            {{ equip.model }} - {{ equip.controller }} ({{ equip.make || 'N/A' }})
-          </option>
-        </select>
-        <!-- <small style="color: #666; font-size: 11px;">Hold Ctrl/Cmd to select multiple items</small> -->
-        
-        <!-- Show selected items as chips -->
-        <div v-if="selectedEquipment[equipType] && selectedEquipment[equipType].length" style="margin-top: 8px;">
-          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-            <span 
-              v-for="(equip, idx) in selectedEquipment[equipType]" 
-              :key="idx"
-              style="background: #e9ecef; padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;"
-            >
-              {{ equip.model }} - {{ equip.controller }}
-              <button 
-                type="button"
-                @click="removeSelectedEquipment(equipType, idx)"
-                style="background: none; border: none; cursor: pointer; color: #dc3545; font-weight: bold; padding: 0 3px;"
-              >×</button>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">{{ isEdit ? "Edit Quotation" : "Create New Quotation" }}</h2>
+            <span class="pro-status-pill" :class="isEdit ? 'pill-amber' : 'pill-cyan'">
+              {{ isEdit ? 'Revision' : 'New Quote' }}
             </span>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Manual Entry Mode -->
-    <div v-if="equipmentInputMode === 'manual'">
-      <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-        <div style="flex: 1;">
-          <label style="font-size: 13px; display: block; margin-bottom: 5px; font-weight: 500;">
-            Equipment Serial No
-          </label>
-          <textarea 
-            v-model="manualSerialNumbers"
-            rows="2"
-            placeholder="Enter serial numbers separated by commas&#10;Example: SN12345, SN67890, SN111213"
-            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
-            @input="updateManualFields"
-          ></textarea>
-        </div>
-        <div style="flex: 1;">
-          <label style="font-size: 13px; display: block; margin-bottom: 5px; font-weight: 500;">
-            Model No
-          </label>
-          <textarea 
-            v-model="manualModelNumbers"
-            rows="2"
-            placeholder="Enter model numbers separated by commas&#10;Example: X1000, X2000, X3000"
-            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
-            @input="updateManualFields"
-          ></textarea>
-        </div>
-      </div>
-      <div style="margin-top: 10px; display: flex; gap: 10px;">
-        <button 
-          type="button"
-          @click="addManualRow"
-          style="padding: 5px 10px; font-size: 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;"
-        >
-          + Add Another Equipment
-        </button>
-        <button 
-          type="button"
-          @click="clearManualFields"
-          style="padding: 5px 10px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"
-        >
-          Clear All
-        </button>
-      </div>
-      
-      <!-- Manual Equipment List -->
-      <div v-if="manualEquipmentList.length > 0" style="margin-top: 15px;">
-        <label style="font-size: 13px; display: block; margin-bottom: 8px; font-weight: 500;">
-          Added Equipment:
-        </label>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-          <div 
-            v-for="(item, idx) in manualEquipmentList" 
-            :key="idx"
-            style="background: #e9ecef; padding: 5px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 10px;"
-          >
-            <span><strong>Serial:</strong> {{ item.serial }}</span>
-            <span><strong>Model:</strong> {{ item.model }}</span>
-            <button 
-              type="button"
-              @click="removeManualRow(idx)"
-              style="background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer; padding: 2px 6px;"
-            >×</button>
+          <div class="pro-company-subchip" v-if="form.company_name">
+            <i class="fas fa-building"></i> {{ form.company_name }}
           </div>
         </div>
       </div>
-    </div>
-    
-  </div>
-  
-  <div class="quotation-grid">
-    <div class="quotation-form-group">
-      <label>Equipment Serial No</label>
-      <textarea 
-        v-model="form.engine_serial" 
-        rows="2"
-        :placeholder="equipmentInputMode === 'select' ? 'Auto-filled from selected equipment (comma separated)' : 'Enter serial numbers manually'"
-        :readonly="equipmentInputMode === 'select'"
-        :style="equipmentInputMode === 'select' ? 'background: #f5f5f5;' : ''"
-      ></textarea>
-      <!-- <small style="color: #666;">{{ equipmentInputMode === 'select' ? 'Automatically populated from selected equipment' : 'You can edit these values freely' }}</small> -->
-    </div>
-    <div class="quotation-form-group">
-      <label>Model No</label>
-      <textarea 
-        v-model="form.model_no" 
-        rows="2"
-        :placeholder="equipmentInputMode === 'select' ? 'Auto-filled from selected equipment (comma separated)' : 'Enter model numbers manually'"
-        :readonly="equipmentInputMode === 'select'"
-        :style="equipmentInputMode === 'select' ? 'background: #f5f5f5;' : ''"
-      ></textarea>
-      <!-- <small style="color: #666;">{{ equipmentInputMode === 'select' ? 'Automatically populated from selected equipment' : 'You can edit these values freely' }}</small> -->
-    </div>
-  </div>
-</div>
 
-
-<!-- ITEMS -->
-<div class="quotation-section-card">
-  <h3 class="quotation-section-title">📦 Item Details</h3>
-
-  <div v-for="(item, index) in form.items" :key="index" class="quotation-item-box">
-
-    <!-- ITEM HEADER -->
-    <div class="quotation-item-header">
-      <h4>Item {{ index + 1 }}</h4>
-      <div style="display:flex; width: max-content; align-items:center; gap:8px; flex-wrap:wrap;justify-content: flex-end;">
+      <div class="pro-header-actions">
         <button
           type="button"
-          class="quotation-remove-btn"
-          @click="moveItemUp(index)"
-          :disabled="index === 0"
-          style="padding: 4px 8px;"
-        >↑</button>
-        <button
-          type="button"
-          class="quotation-remove-btn"
-          @click="moveItemDown(index)"
-          :disabled="index === form.items.length - 1"
-          style="padding: 4px 8px;"
-        >↓</button>
-        <select
-          :value="index"
-          @change="moveItem(index, Number($event.target.value))"
-          style="width: max-content; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px;"
+          class="pro-btn-header-action"
+          @click="openViewQuotationPopup(form.company_name)"
         >
-          <option v-for="position in form.items.length" :key="position" :value="position - 1">
-            {{ position }}
-          </option>
-        </select>
-        <button class="quotation-remove-btn" @click="removeItem(index)">✖</button>
-      </div>
-    </div>
+          <i class='fas fa-file-invoice'></i>
+          <span>View Quotations</span>
+        </button>
 
-    <div class="quotation-grid">
-
-      <!-- DESCRIPTION -->
-      <div class="quotation-form-group">
-        <label>Description of Goods *</label>
-        <textarea
-          v-model="item.description"
-          rows="2"
-          :class="{ 'input-error': !item.description }"
-        ></textarea>
-      </div>
-
-      <!-- HSN -->
-      <div class="quotation-form-group">
-        <label>HSN / SAC Code *</label>
-        <select
-          v-model="item.hsn"
-          :class="{ 'input-error': !item.hsn }"
-        >
-          <option disabled value="">Select HSN Code</option>
-          <option
-            v-for="hsn in hsnList"
-            :key="hsn.id"
-            :value="hsn.hsn"
-          >
-            {{ hsn.item_name }} - {{ hsn.hsn }}
-          </option>
-          <option value="manual">➕ Enter HSN Manually</option>
-        </select>
-
-        <div v-if="item.hsn === 'manual'" style="margin-top:8px;">
-          <input
-            v-model="item.manual_hsn"
-            type="number"
-            placeholder="Enter HSN Code"
-            class="form-control"
-          />
-        </div>
-      </div>
-      
-      <!-- QTY -->
-      <div class="quotation-form-group">
-        <label>QTY *</label>
-        <input
-          v-model="item.qty"
-          type="number"
-          min="0"
-          @keydown="preventMinus"
-          @input="validateQty(item)"
-          :class="{ 'input-error': !item.qty }"
-        />
-      </div>
-
-      <!-- UOM -->
-      <div class="quotation-form-group">
-        <label>UOM *</label>
-        <select v-model="item.uom" :class="{ 'input-error': !item.uom }">
-          <option value="">Select UOM</option>
-          <option value="Lit.">Lit.</option>
-          <option value="NOS.">NOS.</option>
-          <option value="Box">Box</option>
-          <option value="Set">Set</option>
-          <option value="K.G.">K.G.</option>
-          <option value="Day">Day</option>
-        </select>
-      </div>
-
-      <!-- RATE -->
-      <div class="quotation-form-group">
-        <label>Rate *</label>
-        <input
-          v-model="item.rate"
-          type="number"
-          min="0"
-          @keydown="preventMinus"
-          @input="validateQty(item)"
-          :class="{ 'input-error': !item.rate }"
-        />
-      </div>
-
-      <!-- DISCOUNT -->
-      <div class="quotation-form-group">
-        <label>Disc. (%)</label>
-        <input
-          v-model.number="item.discount"
-          type="number"
-          min="0"
-          max="100"
-          @keydown="preventInvalidKeys"
-          @input="validateDiscount(item)"
-        />
-      </div>
-
-      <!-- GST SECTION (ITEM LEVEL) -->
-      <template v-if="form.nature_of_sale === 'Intrastate'">
-        <div class="quotation-form-group">
-          <label>CGST (%)</label>
-          <input v-model="item.cgst_rate" type="number" min="0" @keydown="preventMinus" @input="validateQty(item)"/>
-        </div>
-        <div class="quotation-form-group">
-          <label>SGST (%)</label>
-          <input v-model="item.sgst_rate" type="number" min="0" @keydown="preventMinus" @input="validateQty(item)"/>
-        </div>
-      </template>
-
-      <template v-if="form.nature_of_sale === 'Interstate'">
-        <div class="quotation-form-group">
-          <label>IGST (%)</label>
-          <input v-model="item.igst_rate" type="number" min="0" @keydown="preventMinus" @input="validateQty(item)"/>
-        </div>
-      </template>
-      
-      <template v-if="form.nature_of_sale === 'Export'">
-        <div class="quotation-export-note">
-          🌍 GST Not Applicable for Export
-        </div>
-      </template>
-      
-      <!-- LINE TOTAL WITH CALCULATION BUTTON -->
-      <div class="quotation-form-group" style="display: flex; gap: 10px; align-items: flex-end; flex-direction: row;">
-        <div style="flex: 1;">
-          <label>Item Total</label>
-          <div class="readonly-field" style="font-weight: 700;">
-            {{ calculateItemTotal(item).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
-          </div>
-        </div>
-        
-        <!-- Calculation Sheet Button for this specific item -->
-        <button 
-          type="button"
-          class="calculation-item-btn"
-          @click="openCalculationSheetForItem(item, index)"
-          style="padding: 6px 12px; font-size: 12px; height: 38px;"
-        >
-          <i class='fas fa-calculator' style='font-size:13px'></i> Calc
+        <button type="button" class="pro-btn-header-close" @click="showQuotation = false; refreshForm();" title="Close">
+          <i class="fas fa-times"></i>
         </button>
       </div>
     </div>
-  </div>
 
-  <button class="quotation-add-btn" @click="addItem">+ Add Item</button>
+    <!-- SCROLLABLE FORM BODY -->
+    <div class="pro-modal-body">
+
+      <!-- SECTION 1: CUSTOMER & SALE INFO -->
+      <div class="pro-card-section">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-blue"><i class="fas fa-building-user"></i></div>
+          <div class="pro-card-header-title">
+            <h3>General & Sale Information</h3>
+            <span>Customer company, nature of taxation and currency settings</span>
+          </div>
+        </div>
+
+        <!-- Row 1: Company & Reference -->
+        <div class="pro-grid-2col">
+          <div class="pro-field-wrap">
+            <label class="pro-label"><i class="fas fa-building"></i> Customer Company</label>
+            <div class="pro-readonly-badge">
+              <i class="fas fa-check-circle text-emerald"></i>
+              <span class="pro-company-name-text">{{ form.company_name || 'No Company Selected' }}</span>
+            </div>
+          </div>
+
+          <div class="pro-field-wrap">
+            <label class="pro-label"><i class="fas fa-receipt"></i> Customer Reference / RFQ #</label>
+            <input 
+              v-model="form.customer_reference" 
+              type="text" 
+              placeholder="e.g. PO-REF-2026 / RFQ-089" 
+              class="pro-input" 
+            />
+          </div>
+        </div>
+
+        <!-- Row 2: Nature of Sale, Currency, Recommended By, Created By -->
+        <div class="pro-grid-3col mt-3">
+          <div class="pro-field-wrap">
+            <label class="pro-label"><i class="fas fa-tag"></i> Nature of Sale <span class="req-star">*</span></label>
+            <div class="pro-select-wrap">
+              <select v-model="form.nature_of_sale" class="pro-select">
+                <option value="">-- Select Nature of Sale --</option>
+                <option value="Intrastate">Intrastate (Within State - CGST + SGST)</option>
+                <option value="Interstate">Interstate (Outside State - IGST)</option>
+                <option value="Export">Export (International - Zero Tax)</option>
+              </select>
+              <i class="fas fa-chevron-down pro-arrow"></i>
+            </div>
+          </div>
+
+          <div class="pro-field-wrap" v-if="form.nature_of_sale === 'Export'">
+            <label class="pro-label"><i class="fas fa-globe"></i> Billing Currency</label>
+            <div class="pro-select-wrap">
+              <select v-model="form.currency" class="pro-select">
+                <option value="">-- Select Currency --</option>
+                <option value="USD">USD – United States Dollar ($)</option>
+                <option value="EUR">EUR – Euro (€)</option>
+                <option value="GBP">GBP – British Pound Sterling (£)</option>
+                <option value="AED">AED – United Arab Emirates Dirham (AED)</option>
+                <option value="AUD">AUD – Australian Dollar (A$)</option>
+                <option value="CAD">CAD – Canadian Dollar (C$)</option>
+                <option value="SGD">SGD – Singapore Dollar (S$)</option>
+                <option value="INR">INR – Indian Rupee (₹)</option>
+                <option value="JPY">JPY – Japanese Yen (¥)</option>
+                <option value="SAR">SAR – Saudi Riyal (SAR)</option>
+                <option value="QAR">QAR – Qatar Rial (QAR)</option>
+                <option value="OMR">OMR – Omani Rial (OMR)</option>
+                <option value="KWD">KWD – Kuwaiti Dinar (KWD)</option>
+                <option value="BHD">BHD – Bahraini Dinar (BHD)</option>
+                <option value="CHF">CHF – Swiss Franc (CHF)</option>
+                <option value="CNY">CNY – Chinese Yuan (¥)</option>
+                <option value="ZAR">ZAR – South African Rand (R)</option>
+                <option value="MYR">MYR – Malaysian Ringgit (RM)</option>
+                <option value="THB">THB – Thai Baht (฿)</option>
+                <option value="NZD">NZD – New Zealand Dollar (NZ$)</option>
+              </select>
+              <i class="fas fa-chevron-down pro-arrow"></i>
+            </div>
+          </div>
+
+          <div class="pro-field-wrap">
+            <label class="pro-label"><i class="fas fa-user-check"></i> Recommended By</label>
+            <div class="pro-select-wrap">
+              <select v-model="form.recommended_by" class="pro-select">
+                <option value="">-- Select Employee --</option>
+                <option v-for="user in users" :key="user.id" :value="user.emp_id">
+                  {{ user.emp_id }}
+                </option>
+              </select>
+              <i class="fas fa-chevron-down pro-arrow"></i>
+            </div>
+          </div>
+
+          <div class="pro-field-wrap">
+            <label class="pro-label"><i class="fas fa-user-pen"></i> Created By</label>
+            <input
+              type="text"
+              v-model="form.created_by"
+              disabled
+              class="pro-input pro-readonly"
+            />
+          </div>
+        </div>
+
+        <!-- Row 3: Shipping Address -->
+        <div class="pro-field-wrap mt-3">
+          <label class="pro-label"><i class="fas fa-location-dot"></i> Shipping Address (Optional)</label>
+          <div class="pro-shipping-container">
+            <textarea
+              v-model="form.shipping_address"
+              rows="2"
+              placeholder="Enter shipping address if different from default customer billing address..."
+              class="pro-input pro-textarea"
+            ></textarea>
+            <div class="pro-shipping-actions">
+              <button
+                type="button"
+                class="save-shipp-address pro-btn-update-addr"
+                :disabled="loading"
+                @click="handleClick"
+              >
+                <span v-if="loading"><i class="fa fa-refresh fa-spin"></i> Updating...</span>
+                <span v-else><i class="fas fa-arrows-rotate"></i> Update Address</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: EQUIPMENTS & SPECIFICATIONS -->
+      <div class="pro-card-section">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-purple"><i class="fas fa-gears"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Equipment Specifications</h3>
+            <span>Link registered equipment or enter machine details manually</span>
+          </div>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="pro-segmented-switch">
+          <label class="pro-segment-btn" :class="{ active: equipmentInputMode === 'select' }">
+            <input 
+              type="radio" 
+              value="select" 
+              v-model="equipmentInputMode"
+              @change="onInputModeChange"
+              style="display:none;"
+            />
+            <i class="fas fa-database"></i> Select from Database
+          </label>
+          <label class="pro-segment-btn" :class="{ active: equipmentInputMode === 'manual' }">
+            <input 
+              type="radio" 
+              value="manual" 
+              v-model="equipmentInputMode"
+              @change="onInputModeChange"
+              style="display:none;"
+            />
+            <i class="fas fa-keyboard"></i> Manual Key-in
+          </label>
+        </div>
+
+        <!-- DB Selection View -->
+        <div v-if="equipmentInputMode === 'select'" class="pro-db-equip-area">
+          <div class="pro-equip-checkbox-bar">
+            <div 
+              v-for="equipType in equipmentTypes" 
+              :key="equipType.key" 
+              class="pro-equip-check-item"
+            >
+              <input 
+                type="checkbox" 
+                :id="'equip_check_' + equipType.key"
+                :value="equipType.key"
+                v-model="selectedEquipmentTypes"
+                @change="fetchEquipmentByType(equipType.key)"
+                style="display:none;"
+              />
+              <label 
+                :for="'equip_check_' + equipType.key" 
+                class="pro-equip-tag-pill"
+                :class="{ selected: selectedEquipmentTypes.includes(equipType.key) }"
+              >
+                <i :class="selectedEquipmentTypes.includes(equipType.key) ? 'fas fa-check-circle' : 'far fa-circle'"></i>
+                <span>{{ equipType.label }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Multi-select Dropdowns -->
+          <div v-for="equipType in selectedEquipmentTypes" :key="'select_' + equipType" class="pro-equip-dropdown-row">
+            <label :for="'equip_select_' + equipType" class="pro-label">
+              <i class="fas fa-microchip"></i> Select {{ getEquipmentLabel(equipType) }}(s):
+            </label>
+            <select 
+              :id="'equip_select_' + equipType"
+              v-model="selectedEquipment[equipType]"
+              @change="onEquipmentSelect(equipType)"
+              multiple
+              size="3"
+              class="pro-select-multiple"
+            >
+              <option 
+                v-for="equip in equipmentList[equipType]" 
+                :key="equip.id" 
+                :value="equip"
+              >
+                {{ equip.model }} - {{ equip.controller }} ({{ equip.make || 'N/A' }})
+              </option>
+            </select>
+
+            <!-- Selected Chips -->
+            <div v-if="selectedEquipment[equipType] && selectedEquipment[equipType].length" class="pro-chips-wrap">
+              <div 
+                v-for="(equip, idx) in selectedEquipment[equipType]" 
+                :key="idx"
+                class="pro-equip-chip"
+              >
+                <i class="fas fa-cube text-blue"></i>
+                <span>{{ equip.model }} - {{ equip.controller }}</span>
+                <button 
+                  type="button"
+                  @click="removeSelectedEquipment(equipType, idx)"
+                  class="pro-chip-del-btn"
+                  title="Remove"
+                >×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Entry View -->
+        <div v-if="equipmentInputMode === 'manual'" class="pro-manual-equip-area">
+          <div class="pro-grid-2col">
+            <div class="pro-field-wrap">
+              <label class="pro-label">Equipment Serial Numbers</label>
+              <textarea 
+                v-model="manualSerialNumbers"
+                rows="2"
+                placeholder="Enter serial numbers separated by commas (e.g. SN1234, SN5678)"
+                class="pro-input pro-textarea"
+                @input="updateManualFields"
+              ></textarea>
+            </div>
+            <div class="pro-field-wrap">
+              <label class="pro-label">Equipment Model Numbers</label>
+              <textarea 
+                v-model="manualModelNumbers"
+                rows="2"
+                placeholder="Enter model numbers separated by commas (e.g. MOD-100, MOD-200)"
+                class="pro-input pro-textarea"
+                @input="updateManualFields"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="pro-manual-action-bar">
+            <button type="button" @click="addManualRow" class="pro-btn-green">
+              <i class="fas fa-plus"></i> Add Equipment Row
+            </button>
+            <button type="button" @click="clearManualFields" class="pro-btn-gray">
+              <i class="fas fa-eraser"></i> Clear Fields
+            </button>
+          </div>
+
+          <!-- Added Manual List -->
+          <div v-if="manualEquipmentList.length > 0" class="pro-manual-list-card">
+            <span class="pro-label">Added Machine Entries:</span>
+            <div class="pro-chips-wrap">
+              <div v-for="(item, idx) in manualEquipmentList" :key="idx" class="pro-manual-chip">
+                <span><strong>SN:</strong> {{ item.serial }}</span>
+                <span><strong>Model:</strong> {{ item.model }}</span>
+                <button type="button" @click="removeManualRow(idx)" class="pro-chip-del-btn">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Equipment Summaries -->
+        <div class="pro-grid-2col mt-3">
+          <div class="pro-field-wrap">
+            <label class="pro-label"><i class="fas fa-hashtag"></i> Equipment Serial No (Summary)</label>
+            <textarea 
+              v-model="form.engine_serial" 
+              rows="2"
+              :placeholder="equipmentInputMode === 'select' ? 'Auto-filled from selected equipment' : 'Enter serial numbers'"
+              :readonly="equipmentInputMode === 'select'"
+              :class="{'pro-readonly': equipmentInputMode === 'select'}"
+              class="pro-input pro-textarea"
+            ></textarea>
+          </div>
+
+          <div class="pro-field-wrap">
+            <label class="pro-label"><i class="fas fa-box"></i> Model No (Summary)</label>
+            <textarea 
+              v-model="form.model_no" 
+              rows="2"
+              :placeholder="equipmentInputMode === 'select' ? 'Auto-filled from selected equipment' : 'Enter model numbers'"
+              :readonly="equipmentInputMode === 'select'"
+              :class="{'pro-readonly': equipmentInputMode === 'select'}"
+              class="pro-input pro-textarea"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: LINE ITEMS & PRICING -->
+      <div class="pro-card-section">
+        <div class="pro-items-section-header">
+          <div class="pro-card-header-left">
+            <div class="pro-card-header-icon bg-emerald"><i class="fas fa-boxes-stacked"></i></div>
+            <div class="pro-card-header-title">
+              <h3>Line Items & Pricing</h3>
+              <span>Detailed item breakdown, unit rates, quantities and tax calculation</span>
+            </div>
+          </div>
+
+          <div class="pro-items-header-controls">
+            <span class="pro-items-count-pill">
+              <i class="fas fa-cube"></i> {{ form.items.length }} {{ form.items.length === 1 ? 'Item' : 'Items' }}
+            </span>
+            <button type="button" class="pro-btn-add-item-top" @click="addItem">
+              <i class="fas fa-plus"></i> <span>Add Item</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ITEM CARDS LIST -->
+        <div class="pro-item-cards-container">
+          <div v-for="(item, index) in form.items" :key="index" class="pro-item-card">
+            
+            <!-- Item Card Top Header -->
+            <div class="pro-item-header-row">
+              <div class="pro-item-badge-wrap">
+                <span class="pro-item-number-badge">#{{ index + 1 }}</span>
+                <span class="pro-item-title-text">Item #{{ index + 1 }} Details</span>
+              </div>
+
+              <div class="pro-item-actions-wrap">
+                <!-- Move Up / Down / Pos -->
+                <div class="pro-reorder-group">
+                  <button 
+                    type="button" 
+                    class="pro-reorder-btn" 
+                    @click="moveItemUp(index)" 
+                    :disabled="index === 0" 
+                    title="Move Item Up"
+                  >
+                    <i class="fas fa-arrow-up"></i>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="pro-reorder-btn" 
+                    @click="moveItemDown(index)" 
+                    :disabled="index === form.items.length - 1" 
+                    title="Move Item Down"
+                  >
+                    <i class="fas fa-arrow-down"></i>
+                  </button>
+                  <div class="pro-pos-selector">
+                    <span class="pro-pos-label">Pos:</span>
+                    <select :value="index" @change="moveItem(index, Number($event.target.value))" class="pro-pos-select">
+                      <option v-for="pos in form.items.length" :key="pos" :value="pos - 1">{{ pos }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Delete Item -->
+                <button type="button" class="pro-item-delete-btn" @click="removeItem(index)" title="Remove Item">
+                  <i class="fas fa-trash-can"></i> <span>Remove</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- ROW 1: Full-width Description -->
+            <div class="pro-item-desc-full">
+              <label class="pro-label">Description of Goods / Services <span class="req-star">*</span></label>
+              <textarea
+                v-model="item.description"
+                rows="2"
+                placeholder="Enter detailed description of products or services offered..."
+                class="pro-input pro-textarea"
+              ></textarea>
+            </div>
+
+            <!-- ROW 2: Balanced Commercials Strip -->
+            <div class="pro-commercials-strip">
+              <!-- HSN Code -->
+              <div class="pro-strip-col col-hsn">
+                <label class="pro-label">HSN / SAC Code <span class="req-star">*</span></label>
+                <div class="pro-select-wrap">
+                  <select v-model="item.hsn" class="pro-select">
+                    <option disabled value="">Select HSN</option>
+                    <option v-for="hsn in hsnList" :key="hsn.id" :value="hsn.hsn">
+                      {{ hsn.item_name }} ({{ hsn.hsn }})
+                    </option>
+                    <option value="manual">➕ Enter Manually</option>
+                  </select>
+                  <i class="fas fa-chevron-down pro-arrow"></i>
+                </div>
+                <input
+                  v-if="item.hsn === 'manual'"
+                  v-model="item.manual_hsn"
+                  type="number"
+                  placeholder="Enter HSN"
+                  class="pro-input mt-2"
+                />
+              </div>
+
+              <!-- Quantity -->
+              <div class="pro-strip-col col-qty">
+                <label class="pro-label">Quantity <span class="req-star">*</span></label>
+                <input
+                  v-model="item.qty"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  @keydown="preventMinus"
+                  @input="validateQty(item)"
+                  class="pro-input"
+                />
+              </div>
+
+              <!-- UOM -->
+              <div class="pro-strip-col col-uom">
+                <label class="pro-label">UOM <span class="req-star">*</span></label>
+                <div class="pro-select-wrap">
+                  <select v-model="item.uom" class="pro-select">
+                    <option value="">Select UOM</option>
+                    <option value="Lit.">Lit.</option>
+                    <option value="NOS.">NOS.</option>
+                    <option value="Box">Box</option>
+                    <option value="Set">Set</option>
+                    <option value="K.G.">K.G.</option>
+                    <option value="Day">Day</option>
+                  </select>
+                  <i class="fas fa-chevron-down pro-arrow"></i>
+                </div>
+              </div>
+
+              <!-- Rate -->
+              <div class="pro-strip-col col-rate">
+                <label class="pro-label">Unit Rate (₹) <span class="req-star">*</span></label>
+                <input
+                  v-model="item.rate"
+                  type="number"
+                  min="0"
+                  placeholder="0.00"
+                  @keydown="preventMinus"
+                  @input="validateQty(item)"
+                  class="pro-input"
+                />
+              </div>
+
+              <!-- Discount -->
+              <div class="pro-strip-col col-disc">
+                <label class="pro-label">Discount (%)</label>
+                <input
+                  v-model.number="item.discount"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  @keydown="preventInvalidKeys"
+                  @input="validateDiscount(item)"
+                  class="pro-input"
+                />
+              </div>
+
+              <!-- GST Taxes if Intrastate -->
+              <div v-if="form.nature_of_sale === 'Intrastate'" class="pro-strip-col col-tax">
+                <label class="pro-label">CGST (%)</label>
+                <input v-model="item.cgst_rate" type="number" min="0" placeholder="0" @keydown="preventMinus" @input="validateQty(item)" class="pro-input"/>
+              </div>
+
+              <div v-if="form.nature_of_sale === 'Intrastate'" class="pro-strip-col col-tax">
+                <label class="pro-label">SGST (%)</label>
+                <input v-model="item.sgst_rate" type="number" min="0" placeholder="0" @keydown="preventMinus" @input="validateQty(item)" class="pro-input"/>
+              </div>
+
+              <!-- GST Taxes if Interstate -->
+              <div v-if="form.nature_of_sale === 'Interstate'" class="pro-strip-col col-tax">
+                <label class="pro-label">IGST (%)</label>
+                <input v-model="item.igst_rate" type="number" min="0" placeholder="0" @keydown="preventMinus" @input="validateQty(item)" class="pro-input"/>
+              </div>
+            </div>
+
+            <!-- ROW 3: Calculation Ribbon & Item Total -->
+            <div class="pro-item-calc-ribbon">
+              <div class="pro-item-ribbon-left">
+                <div v-if="form.nature_of_sale === 'Export'" class="pro-export-callout">
+                  <i class="fas fa-plane-departure"></i> <span>Export Supply (Zero GST)</span>
+                </div>
+                <div v-else class="pro-formula-hint">
+                  <i class="fas fa-calculator text-blue"></i>
+                  <span>Calculation: (Qty × Rate - Discount) + Taxes</span>
+                </div>
+              </div>
+
+              <div class="pro-item-ribbon-right">
+                <button 
+                  type="button"
+                  class="calculation-item-btn pro-btn-calc-sheet"
+                  @click="openCalculationSheetForItem(item, index)"
+                  title="Open Calculation Sheet"
+                >
+                  <i class='fas fa-calculator'></i> <span>Calc Sheet</span>
+                </button>
+
+                <div class="pro-item-total-badge">
+                  <span class="pro-total-lbl">Item Net Total:</span>
+                  <span class="pro-total-amount">₹ {{ calculateItemTotal(item).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Add Item Bottom Action -->
+        <button type="button" class="pro-btn-add-item-bottom" @click="addItem">
+          <i class="fas fa-plus-circle"></i> <span>Add Another Item</span>
+        </button>
+      </div>
+
+      <!-- SECTION 4: TERMS & CONDITIONS -->
+      <div class="pro-card-section">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-amber"><i class="fas fa-file-contract"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Terms & Conditions</h3>
+            <span>Commercial and payment terms template</span>
+          </div>
+        </div>
+
+        <!-- Terms Template Buttons -->
+        <div class="pro-terms-pill-row">
+          <button
+            type="button"
+            class="pro-terms-pill"
+            :class="{ active: selectedTerms === 'regular' }"
+            @click="setRegularTerms"
+          >
+            <i class="fas fa-file-lines"></i> <span>Regular Terms</span>
+          </button>
+
+          <button
+            type="button"
+            class="pro-terms-pill"
+            :class="{ active: selectedTerms === 'amc' }"
+            @click="setAmcTerms"
+          >
+            <i class="fas fa-shield-halved"></i> <span>AMC Terms</span>
+          </button>
+
+          <button
+            type="button"
+            class="pro-terms-pill"
+            :class="{ active: selectedTerms === 'newengine' }"
+            @click="setNewEngineTerms"
+          >
+            <i class="fas fa-car-battery"></i> <span>New Engine Sales</span>
+          </button>
+        </div>
+
+        <!-- Terms Textarea -->
+        <div class="pro-terms-textarea-wrap">
+          <textarea
+            v-model="form.terms_conditions"
+            rows="8"
+            maxlength="5000"
+            placeholder="Commercial terms and conditions will appear here..."
+            class="pro-input pro-terms-textarea"
+          ></textarea>
+
+          <div class="pro-char-counter">
+            <i class="far fa-keyboard"></i>
+            <span>{{ form.terms_conditions ? form.terms_conditions.length : 0 }} / 5000 characters</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STICKY ACTION FOOTER -->
+    <div class="pro-modal-footer">
+      <div class="pro-footer-left">
+        <div class="pro-footer-stat">
+          <span class="pro-stat-tag">Total Items:</span>
+          <span class="pro-stat-number">{{ form.items.length }}</span>
+        </div>
+      </div>
+
+      <div class="pro-footer-actions">
+        <button type="button" class="pro-btn-footer-cancel" @click="showQuotation = false; refreshForm();">
+          Cancel
+        </button>
+
+        <button type="button" class="quotation-submit-btn pro-btn-footer-submit" @click="submitQuotation">
+          <i class="fa fa-save"></i>
+          <span>{{ isEdit ? "Update Quotation" : "Save Quotation" }}</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
 </div>
-
-
-
-    <!-- TERMS & CONDITIONS -->
-   <div class="quotation-section-card">
-  <h3 class="quotation-section-title">📜 Terms & Conditions</h3>
-
-  <div class="terms-buttons">
-    <button
-      type="button"
-      class="btn"
-      :class="{ active: selectedTerms === 'regular' }"
-      @click="setRegularTerms"
-    >
-      Regular
-    </button>
-
-    <button
-      type="button"
-      class="btn"
-      :class="{ active: selectedTerms === 'amc' }"
-      @click="setAmcTerms"
-    >
-      AMC
-    </button>
-
-    <button
-      type="button"
-      class="btn"
-      :class="{ active: selectedTerms === 'newengine' }"
-      @click="setNewEngineTerms"
-    >
-      New Engine Sales
-    </button>
-  </div>
-
-  <textarea
-    v-model="form.terms_conditions"
-    rows="12"
-    maxlength="5000"
-    placeholder="Terms & Conditions will appear here..."
-  ></textarea>
-
-  <!-- Character Counter -->
-  <div class="char-count">
-    {{ form.terms_conditions ? form.terms_conditions.length : 0 }} / 5000 characters
-  </div>
-</div>
-
-
-
-    <!-- SUBMIT -->
-   <button class="quotation-submit-btn" @click="submitQuotation">
- <i class="fa fa-save" style="font-size:15px"></i>  {{ isEdit ? " Update Quotation" : " Save Quotation" }}
-</button>
-
-  </div>
-</div>
-
 
 <!-- PROFESSIONAL EMAIL MODAL -->
 <div v-if="showEmailModal" class="email-overlay">
@@ -1158,55 +1055,73 @@
   </div>
 </div>
 
-<div v-if="!isLoadingCustomers && filteredCustomers.length > 0" class="table-container">
+<div v-if="!isLoadingCustomers && filteredCustomers.length > 0" class="crm-table-card">
   <!-- Desktop Table View -->
-  <table v-if="!isMobile" class="styled-customer-table user-table">
-    <thead>
-      <tr>
-        <th>Sr.No.</th>
-        <th>Company</th>
-        <th>Cust No</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(cust, index) in filteredCustomers" :key="cust.id">
-        <td style="color: var(--text)">{{ index + 1 }}</td>
-        <td>
-          <a
-            href="#"
-            class="company-link tooltip-link"
-            data-tooltip="View customer & add PO"
-            @click.prevent="viewCustomerDetails(cust)"
-          >
-            {{ formatCompanyName(cust.company_name) }}
-          </a>
-        </td>
-        <td style="color: var(--text);">{{ formatNumber(cust.id) }}</td>
-        <td class="action-btns">
-          <button class="tooltip-btn btn-view-po"
-            data-tooltip="View Purchase Order"
-            @click="openviewPoModal(cust.company_name)">
-            <i class="fa fa-eye" style="font-size:13px"></i>
-          </button>
-          <button
-            class="tooltip-btn btn-followup"
-            data-tooltip="Create Quotation"
-            @click="openQuotationlist(cust)"
-          >
-            <i class="fa fa-file-text-o" style="font-size:13px;"></i>
-          </button>
-          <button
-            class="tooltip-btn btn-followup"
-            data-tooltip="View Report"
-            @click="openWelcomeModal(cust.company_name)"
-          >
-            <i class='fas fa-file-invoice' style='font-size:13px'></i>
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="crm-table-responsive" v-if="!isMobile">
+    <table class="crm-customer-table">
+      <thead>
+        <tr>
+          <th style="width: 8%; text-align: center;">Sr. No.</th>
+          <th style="width: 48%;">Customer Company</th>
+          <th style="width: 16%; text-align: center;">Customer ID</th>
+          <th style="width: 28%; text-align: center;">Quick Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(cust, index) in filteredCustomers" :key="cust.id" class="crm-table-row">
+          <td style="text-align: center;">
+            <span class="crm-sr-badge">#{{ index + 1 }}</span>
+          </td>
+          <td>
+            <div class="crm-company-cell">
+              <div class="crm-company-avatar">
+                <i class="fas fa-building"></i>
+              </div>
+              <a
+                href="#"
+                class="crm-company-link tooltip-link"
+                data-tooltip="View customer & add PO"
+                @click.prevent="viewCustomerDetails(cust)"
+              >
+                {{ formatCompanyName(cust.company_name) }}
+              </a>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <span class="crm-cust-no-badge">{{ formatNumber(cust.id) }}</span>
+          </td>
+          <td style="text-align: center;">
+            <div class="crm-action-buttons-wrap">
+              <button 
+                class="crm-action-btn btn-view-po tooltip-btn"
+                data-tooltip="View Purchase Order"
+                @click="openviewPoModal(cust.company_name)"
+              >
+                <i class="fa fa-eye"></i>
+                <span>View PO</span>
+              </button>
+              <button
+                class="crm-action-btn btn-quotation tooltip-btn"
+                data-tooltip="Create Quotation"
+                @click="openQuotationlist(cust)"
+              >
+                <i class="fa fa-file-text-o"></i>
+                <span>Quote</span>
+              </button>
+              <button
+                class="crm-action-btn btn-report tooltip-btn"
+                data-tooltip="View Report"
+                @click="openWelcomeModal(cust.company_name)"
+              >
+                <i class='fas fa-file-invoice'></i>
+                <span>Reports</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <!-- Mobile Card View -->
   <div v-if="isMobile" class="mobile-cards">
@@ -1237,10 +1152,6 @@
       </div>
     </div>
   </div>
-</div>
-
-
-
 </div>
 
 <div v-if="showWelcomeModal" class="modal-backdrop" @click.self="closeWelcomeModal">
@@ -1352,676 +1263,797 @@
 </div>
   </div>
  
-<!-- VISIT ORDERS POPUP -->
-<div v-if="showVisitPopup" class="modal-backdrop">
-  <div class="modal-card large">
+<!-- VISIT ORDERS POPUP (AMC PENDING & ASSIGNED VISITS) -->
+<div v-if="showVisitPopup" class="pro-modal-backdrop-top" @click.self="showVisitPopup = false">
+  <div class="modal-card pro-table-modal">
 
-    <!-- TOP BUTTON ROW -->
-    <div style="display:flex; justify-content: flex-start; gap: 7px; justify-content: space-between; align-items:center; margin-bottom:-4%;">
-      
-      <button 
-        class="btn btn-dark" 
-        @click="showVisitPopup = false"
-      >
-        ⬅ Back
-      </button>
+    <!-- MODAL HEADER -->
+    <div class="pro-modal-header">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-cyan">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">AMC Pending & Assigned Visits</h2>
+            <span class="pro-status-pill pill-cyan">{{ filteredVisits.length }} Visits</span>
+          </div>
+          <span class="pro-company-subchip">
+            <i class="fas fa-clock"></i> Schedule and assign upcoming AMC customer visits
+          </span>
+        </div>
+      </div>
 
-     <button class="amc-ord"
-  @click="openAssignedVisits"
->
-  <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Visits
-</button>
+      <div class="pro-header-actions">
+        <button class="pro-btn-header-action" @click="openAssignedVisits">
+          <i class="fa fa-check-square-o"></i> <span>Completed Visits</span>
+        </button>
 
+        <button type="button" class="pro-btn-header-close" @click="showVisitPopup = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
     </div>
 
-    <h2>AMC Pending & Assigned Visits</h2>
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <!-- Search -->
-  <input
-    type="text"
-    v-model="filters.search"
-    placeholder="Search Company / PO Number"
-    class="filter-input"
-  />
+    <!-- FILTER BAR -->
+    <div class="pro-filter-toolbar">
+      <div class="pro-search-box">
+        <i class="fas fa-search pro-search-icon"></i>
+        <input
+          type="text"
+          v-model="filters.search"
+          placeholder="Search company or PO number..."
+          class="pro-search-input"
+        />
+        <button v-if="filters.search" class="pro-clear-btn" @click="filters.search = ''">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-<!-- Month Filter -->
-<select v-model="filters.month" class="filter-select">
-  <option :value="null">All Months</option>
-  <option
-    v-for="(m, index) in months"
-    :key="index"
-    :value="index + 1"
-  >
-    {{ m }}
-  </option>
-</select>
-
-
-</div>
-
-
-    <!-- Visit Table -->
-   <table class="styled-table">
-  <thead>
-    <tr>
-      <th>Company Name</th>
-      <!-- <th>PO Number</th> -->
-      <th>Visit Date</th>
-      <th>Assign To</th>
-      <!-- <th>Status</th> -->
-    </tr>
-  </thead>
-
-  <!-- DATA ROWS -->
-  <tbody v-if="visit_assign.length">
-  <tr
-  v-for="(visit, index) in filteredVisits"
-  :key="`${visit.company_name}-${visit.visit_date}-${index}`"
->
-
-    <td>{{ visit.company_name }}</td>
-    <!-- <td>{{ visit.po_number }}</td> -->
-  <td>
-    <input
-      type="date"
-      v-model="visit.visit_date"
-      class="date-input"
-      :placeholder="'Select date'"
-      @change="updateAmcVisitDate(visit)"
-    />
-  </td>
-
-
-
-    <td>
-    <select v-model.number="visit.assign_to" @change="assignVisit(visit)">
-      <option disabled value="">-- Select Employee --</option>
-      <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-        {{ emp.name }}
-      </option>
-    </select>
-  </td>
-
-
-    <!-- <td>{{ visit.status }}</td> -->
-  </tr>
-</tbody>
-
-
-  <!-- NO DATA MESSAGE -->
-  <tbody v-else>
-    <tr>
-      <td colspan="5" class="no-data">
-        No visit assignments found
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-  </div>
-</div>
-
-
-<!-- Assigned Visits Popup -->
-<div v-if="showVisitsPopup" class="modal-backdrop">
-  <div class="modal-card large">
-
-    <!-- Close Button (same as Services popup) -->
-    <div
-      style="display:flex; justify-content:space-between; align-items:center; margin-bottom:-4%;"
-    >
-      <button 
-        class="btn btn-dark" 
-        @click="showVisitsPopup = false"
-      >
-        ⬅ Back
-      </button>
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar-days pro-month-icon"></i>
+        <select v-model="filters.month" class="pro-month-select">
+          <option :value="null">All Months</option>
+          <option
+            v-for="(m, index) in months"
+            :key="index"
+            :value="index + 1"
+          >
+            {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
     </div>
 
-    <h2>Completed Visits</h2>
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <!-- Search -->
-  <input
-    type="text"
-    v-model="completedFilters.search"
-    placeholder="Search Company / PO Number"
-    class="filter-input"
-  />
+    <!-- TABLE AREA -->
+    <div class="pro-table-scroll">
+      <table class="pro-styled-table">
+        <thead>
+          <tr>
+            <th style="width: 40%;">Company Name</th>
+            <th style="width: 30%;">Scheduled Visit Date</th>
+            <th style="width: 30%;">Assign Engineer / Employee</th>
+          </tr>
+        </thead>
 
-  <!-- Month Filter -->
-  <select v-model="completedFilters.month" class="filter-select">
-    <option value="">All Months</option>
-    <option
-      v-for="(m, index) in months"
-      :key="index"
-      :value="index + 1"
-    >
-      {{ m }}
-    </option>
-  </select>
+        <tbody v-if="filteredVisits.length">
+          <tr
+            v-for="(visit, index) in filteredVisits"
+            :key="`${visit.company_name}-${visit.visit_date}-${index}`"
+            class="pro-table-row"
+          >
+            <td>
+              <div class="pro-company-cell">
+                <div class="pro-cell-icon bg-blue"><i class="fas fa-building"></i></div>
+                <span class="pro-company-name">{{ visit.company_name }}</span>
+              </div>
+            </td>
 
-  <!-- Clear -->
- 
-</div>
+            <td>
+              <div class="pro-date-cell-wrap">
+                <i class="fas fa-calendar-day pro-date-icon"></i>
+                <input
+                  type="date"
+                  v-model="visit.visit_date"
+                  class="pro-date-input"
+                  placeholder="Select date"
+                  @change="updateAmcVisitDate(visit)"
+                />
+              </div>
+            </td>
 
-    <!-- Table (same style as styled-table) -->
-   <table class="styled-table">
-  <thead>
-    <tr>
-      <th>Company Name</th>
-      <!-- <th>PO Number</th> -->
-      <th>Visit Date</th>
-      <th>Assigned To</th>
-      <!-- <th>Status</th> -->
-      <th>View Report</th>
-    </tr>
-  </thead>
+            <td>
+              <div class="pro-select-cell-wrap">
+                <i class="fas fa-user-gear pro-user-icon"></i>
+                <select 
+                  v-model.number="visit.assign_to" 
+                  @change="assignVisit(visit)"
+                  class="pro-assign-select"
+                >
+                  <option disabled value="">-- Assign Employee --</option>
+                  <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                    {{ emp.name }}
+                  </option>
+                </select>
+                <i class="fas fa-chevron-down pro-arrow"></i>
+              </div>
+            </td>
+          </tr>
+        </tbody>
 
-  <!-- DATA -->
-  <tbody v-if="completedVisits.length">
-    <tr v-for="row in filteredCompletedVisits" :key="row.id">
-
-      <td>{{ row.company_name }}</td>
-      <!-- <td>{{ row.po_number }}</td> -->
-      <td>{{ row.visit_date }}</td>
-      <td>{{ getUserName(row.assign_to) }}</td>
-
-
-      <!-- <td>
-        <span class="completed-btn">Completed</span>
-      </td> -->
-
-     <td>
-  <div v-if="row.report_path && row.report_path.trim() !== ''">
-    <button
-      v-for="(path, idx) in row.report_path.split(',')"
-      :key="idx"
-      class="view-report-btn"
-      @click="viewReport(path)"
-      style="margin-right: 5px;"
-    >
-      Report {{ idx + 1 }}
-    </button>
-  </div>
-  <span v-else>No Report</span>
-</td>
-
-    </tr>
-  </tbody>
-
-  <!-- NO DATA -->
-  <tbody v-else>
-    <tr>
-      <td colspan="6" class="no-data">
-        No completed visits found
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
+        <!-- NO DATA -->
+        <tbody v-else>
+          <tr>
+            <td colspan="3" class="pro-no-data-cell">
+              <div class="pro-no-data-wrap">
+                <i class="fas fa-calendar-xmark"></i>
+                <p>No AMC visit assignments found matching your search</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
   </div>
 </div>
 
+<!-- ASSIGNED VISITS POPUP (COMPLETED VISITS) -->
+<div v-if="showVisitsPopup" class="pro-modal-backdrop-top" @click.self="showVisitsPopup = false">
+  <div class="modal-card pro-table-modal">
+
+    <!-- MODAL HEADER -->
+    <div class="pro-modal-header header-emerald">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-emerald">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Completed AMC Visits</h2>
+            <span class="pro-status-pill pill-emerald">{{ filteredCompletedVisits.length }} Completed</span>
+          </div>
+          <span class="pro-company-subchip">
+            <i class="fas fa-circle-check"></i> Finished AMC visit records and service reports
+          </span>
+        </div>
+      </div>
+
+      <div class="pro-header-actions">
+        <button type="button" class="pro-btn-header-close" @click="showVisitsPopup = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="pro-filter-toolbar">
+      <div class="pro-search-box">
+        <i class="fas fa-search pro-search-icon"></i>
+        <input
+          type="text"
+          v-model="completedFilters.search"
+          placeholder="Search company or PO number..."
+          class="pro-search-input"
+        />
+        <button v-if="completedFilters.search" class="pro-clear-btn" @click="completedFilters.search = ''">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar-days pro-month-icon"></i>
+        <select v-model="completedFilters.month" class="pro-month-select">
+          <option value="">All Months</option>
+          <option
+            v-for="(m, index) in months"
+            :key="index"
+            :value="index + 1"
+          >
+            {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
+    </div>
+
+    <!-- TABLE AREA -->
+    <div class="pro-table-scroll">
+      <table class="pro-styled-table">
+        <thead>
+          <tr>
+            <th style="width: 35%;">Company Name</th>
+            <th style="width: 25%;">Completed Date</th>
+            <th style="width: 20%;">Assigned Engineer</th>
+            <th style="width: 20%; text-align: center;">Service Report</th>
+          </tr>
+        </thead>
+
+        <tbody v-if="filteredCompletedVisits.length">
+          <tr v-for="row in filteredCompletedVisits" :key="row.id" class="pro-table-row">
+            <td>
+              <div class="pro-company-cell">
+                <div class="pro-cell-icon bg-emerald"><i class="fas fa-building"></i></div>
+                <span class="pro-company-name">{{ row.company_name }}</span>
+              </div>
+            </td>
+
+            <td>
+              <div class="pro-date-display">
+                <i class="fas fa-calendar-check text-emerald"></i>
+                <span>{{ row.visit_date }}</span>
+              </div>
+            </td>
+
+            <td>
+              <div class="pro-user-display">
+                <i class="fas fa-user-check text-blue"></i>
+                <span>{{ getUserName(row.assign_to) }}</span>
+              </div>
+            </td>
+
+            <td style="text-align: center;">
+              <div v-if="row.report_path && row.report_path.trim() !== ''" class="pro-reports-wrap">
+                <button
+                  v-for="(path, idx) in row.report_path.split(',')"
+                  :key="idx"
+                  class="pro-report-btn"
+                  @click="viewReport(path)"
+                >
+                  <i class="fas fa-file-pdf"></i> Report {{ idx + 1 }}
+                </button>
+              </div>
+              <span v-else class="pro-no-report-badge">No Report</span>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- NO DATA -->
+        <tbody v-else>
+          <tr>
+            <td colspan="4" class="pro-no-data-cell">
+              <div class="pro-no-data-wrap">
+                <i class="fas fa-clipboard-question"></i>
+                <p>No completed visits found matching your search</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
 
 <!-- SERVICE ORDERS POPUP -->
-<div v-if="showServicePopup" class="modal-backdrop">
-  <div class="modal-card large">
-    <div style="display:flex; justify-content: flex-start; gap: 7px; justify-content: space-between; align-items:center; margin-bottom:-4%;">
-      
-      <button 
-        class="btn btn-dark" 
-        @click="showServicePopup = false"
-      >
-        ⬅ Back
-      </button>
+<div v-if="showServicePopup" class="pro-modal-backdrop-top" @click.self="showServicePopup = false">
+  <div class="modal-card pro-table-modal">
 
-      <button class="service-ord"
-  @click="openAssignedServicePopup"
->
- <i class="fa fa-check-square-o" style="font-size:13px"></i> Completed Services
-</button>
-
+    <!-- MODAL HEADER -->
+    <div class="pro-modal-header header-indigo">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-indigo">
+          <i class="fas fa-screwdriver-wrench"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Pending & Assign Service Orders</h2>
+            <span class="pro-status-pill pill-indigo">{{ filteredServicePoList.length }} Services</span>
+          </div>
+          <span class="pro-company-subchip">
+            <i class="fas fa-tools"></i> Assign service personnel to active customer service orders
+          </span>
+        </div>
       </div>
-    <h2>Pending & Assign Service Orders</h2>
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <!-- Search -->
-  <input
-    type="text"
-    v-model="serviceFilters.search"
-    placeholder="Search Company / PO Number"
-    class="filter-input"
-  />
 
-  <!-- Month Filter -->
-  <select v-model="serviceFilters.month" class="filter-select">
-    <option value="">All Months</option>
-    <option
-      v-for="(m, index) in months"
-      :key="index"
-      :value="index + 1"
-    >
-      {{ m }}
-    </option>
-  </select>
+      <div class="pro-header-actions">
+        <button class="pro-btn-header-action" @click="openAssignedServicePopup">
+          <i class="fa fa-check-square-o"></i> <span>Completed Services</span>
+        </button>
 
-  <!-- Clear -->
-
-</div>
-
-  <table class="styled-table">
-  <thead>
-    <tr>
-      <th>Company Name</th>
-<th>PO Number</th>
-      <th>Visit Date</th>
-      <th>Type</th>
-      <th>Assign To</th>
-      <!-- <th>Status</th> -->
-    </tr>
-  </thead>
-
-  <!-- DATA ROWS -->
-  <tbody v-if="filteredServicePoList.length">
-    <tr v-for="order in filteredServicePoList" :key="order.id">
-      <td>{{ order.company_name }}</td>
-     
-      <td>{{ order.po_number }}</td>
-      <!-- <td>{{ order.date }}</td> -->
-<td>
-  <input
-    type="date"
-    class="date-input"
-    v-model="order.service_date"
-    @change="updateServiceDate(order)"
-  />
-</td>
-
-
-
-
-
-      <td>{{ order.type_of_service }}</td>
-
-  
-
-       <td>
-  <select
-  v-model="order.assign_to"
-  @change="onAssignChange(order)"
->
-  <option disabled value="">-- Select Employee --</option>
-  <option
-    v-for="emp in employees"
-    :key="emp.id"
-    :value="emp.id"
-  >
-    {{ emp.name }}
-  </option>
-</select>
-
-    </td>
-
-      <!-- <td>
-        <span class="pending-btn">Pending</span>
-      </td> -->
-    </tr>
-  </tbody>
-
-  <!-- NO DATA MESSAGE -->
-  <tbody v-else>
-    <tr>
-      <td colspan="8" class="no-data">
-        No service PO records found
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-    <!-- <pre>{{ filteredServicePoList }}</pre> -->
-  </div>
-</div>
-<!-- ASSIGNED SERVICES POPUP -->
-<div v-if="showAssignedServicePopup" class="modal-backdrop">
-  <div class="modal-card large">
-
-    <div style="display:flex; align-items:center; margin-bottom:-4%;">
-      
-      <button 
-        class="btn btn-dark" 
-        @click="showAssignedServicePopup = false"
-      >
-        ⬅ Back
-      </button>
-
+        <button type="button" class="pro-btn-header-close" @click="showServicePopup = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
     </div>
 
-    <h2>Completed Service Orders</h2>
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <!-- Search -->
-  <input
-    type="text"
-    v-model="assignedServiceFilters.search"
-    placeholder="Search Company / PO Number"
-    class="filter-input"
-  />
+    <!-- FILTER BAR -->
+    <div class="pro-filter-toolbar">
+      <div class="pro-search-box">
+        <i class="fas fa-search pro-search-icon"></i>
+        <input
+          type="text"
+          v-model="serviceFilters.search"
+          placeholder="Search company or PO number..."
+          class="pro-search-input"
+        />
+        <button v-if="serviceFilters.search" class="pro-clear-btn" @click="serviceFilters.search = ''">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-  <!-- Month Filter -->
-  <select v-model="assignedServiceFilters.month" class="filter-select">
-    <option value="">All Months</option>
-    <option
-      v-for="(m, index) in months"
-      :key="index"
-      :value="index + 1"
-    >
-      {{ m }}
-    </option>
-  </select>
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar-days pro-month-icon"></i>
+        <select v-model="serviceFilters.month" class="pro-month-select">
+          <option value="">All Months</option>
+          <option
+            v-for="(m, index) in months"
+            :key="index"
+            :value="index + 1"
+          >
+            {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
+    </div>
 
+    <!-- TABLE AREA -->
+    <div class="pro-table-scroll">
+      <table class="pro-styled-table">
+        <thead>
+          <tr>
+            <th style="width: 28%;">Company Name</th>
+            <th style="width: 18%;">PO Number</th>
+            <th style="width: 18%;">Scheduled Date</th>
+            <th style="width: 16%;">Service Type</th>
+            <th style="width: 20%;">Assign Engineer</th>
+          </tr>
+        </thead>
 
+        <tbody v-if="filteredServicePoList.length">
+          <tr v-for="order in filteredServicePoList" :key="order.id" class="pro-table-row">
+            <td>
+              <div class="pro-company-cell">
+                <div class="pro-cell-icon bg-blue"><i class="fas fa-building"></i></div>
+                <span class="pro-company-name">{{ order.company_name }}</span>
+              </div>
+            </td>
 
-  <!-- Clear -->
+            <td>
+              <span class="pro-po-pill">{{ order.po_number }}</span>
+            </td>
 
+            <td>
+              <div class="pro-date-cell-wrap">
+                <i class="fas fa-calendar-day pro-date-icon"></i>
+                <input
+                  type="date"
+                  class="pro-date-input"
+                  v-model="order.service_date"
+                  @change="updateServiceDate(order)"
+                />
+              </div>
+            </td>
+
+            <td>
+              <span class="pro-tag-pill">{{ order.type_of_service }}</span>
+            </td>
+
+            <td>
+              <div class="pro-select-cell-wrap">
+                <i class="fas fa-user-gear pro-user-icon"></i>
+                <select
+                  v-model="order.assign_to"
+                  @change="onAssignChange(order)"
+                  class="pro-assign-select"
+                >
+                  <option disabled value="">-- Assign Employee --</option>
+                  <option
+                    v-for="emp in employees"
+                    :key="emp.id"
+                    :value="emp.id"
+                  >
+                    {{ emp.name }}
+                  </option>
+                </select>
+                <i class="fas fa-chevron-down pro-arrow"></i>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- NO DATA -->
+        <tbody v-else>
+          <tr>
+            <td colspan="5" class="pro-no-data-cell">
+              <div class="pro-no-data-wrap">
+                <i class="fas fa-wrench"></i>
+                <p>No service PO records found matching your search</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
 </div>
 
-   <table class="styled-table">
-  <thead>
-    <tr>
-      <th>Company Name</th>
-     
-      <th>PO Number</th>
-      <th>Visit Date</th>
-      <th>Type</th>
-      <th>Assigned To</th>
-      <!-- <th>Status</th> -->
-      <th>View Report</th>
-    </tr>
-  </thead>
+<!-- ASSIGNED SERVICES POPUP -->
+<div v-if="showAssignedServicePopup" class="pro-modal-backdrop-top" @click.self="showAssignedServicePopup = false">
+  <div class="modal-card pro-table-modal">
 
-  <!-- DATA ROWS -->
-  <tbody v-if="assignedServiceList.length">
-    <tr v-for="item in filteredAssignedServiceList" :key="item.id">
+    <!-- MODAL HEADER -->
+    <div class="pro-modal-header header-emerald">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-emerald">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Completed Service Orders</h2>
+            <span class="pro-status-pill pill-emerald">{{ filteredAssignedServiceList.length }} Completed</span>
+          </div>
+          <span class="pro-company-subchip">
+            <i class="fas fa-circle-check"></i> Finished service logs and reports
+          </span>
+        </div>
+      </div>
 
-      <td>{{ item.company_name }}</td>
-    
-      <td>{{ item.po_number }}</td>
-      <td>{{ item.visit_date }}</td>
-      <td>{{ item.type_of_service }}</td>
-      <td>{{ item.assign_to }}</td>
+      <div class="pro-header-actions">
+        <button type="button" class="pro-btn-header-close" @click="showAssignedServicePopup = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
 
-      <!-- <td>
-        <span v-if="item.status === 'Completed'" class="completed-btn">
-          Completed
-        </span>
-        <span v-else class="pending-btn">
-          Pending
-        </span>
-      </td> -->
+    <!-- FILTER BAR -->
+    <div class="pro-filter-toolbar">
+      <div class="pro-search-box">
+        <i class="fas fa-search pro-search-icon"></i>
+        <input
+          type="text"
+          v-model="assignedServiceFilters.search"
+          placeholder="Search company or PO number..."
+          class="pro-search-input"
+        />
+        <button v-if="assignedServiceFilters.search" class="pro-clear-btn" @click="assignedServiceFilters.search = ''">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-      <td>
-  <div v-if="item.report_path && item.report_path.trim() !== ''">
-    <button
-      v-for="(path, idx) in item.report_path.split(',')"
-      :key="idx"
-      class="view-report-btn"
-      @click="viewReport(path)"
-      style="margin-right:5px;"
-    >
-      Report {{ idx + 1 }}
-    </button>
-  </div>
-  <span v-else>No Report</span>
-</td>
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar-days pro-month-icon"></i>
+        <select v-model="assignedServiceFilters.month" class="pro-month-select">
+          <option value="">All Months</option>
+          <option
+            v-for="(m, index) in months"
+            :key="index"
+            :value="index + 1"
+          >
+            {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
+    </div>
 
-    </tr>
-  </tbody>
+    <!-- TABLE AREA -->
+    <div class="pro-table-scroll">
+      <table class="pro-styled-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Company Name</th>
+            <th style="width: 15%;">PO Number</th>
+            <th style="width: 15%;">Completed Date</th>
+            <th style="width: 15%;">Service Type</th>
+            <th style="width: 15%;">Assigned To</th>
+            <th style="width: 15%; text-align: center;">Report</th>
+          </tr>
+        </thead>
 
-  <!-- NO DATA MESSAGE -->
-  <tbody v-else>
-    <tr>
-      <td colspan="9" class="no-data">
-        No assigned service records found
-      </td>
-    </tr>
-  </tbody>
-</table>
+        <tbody v-if="assignedServiceList.length">
+          <tr v-for="item in filteredAssignedServiceList" :key="item.id" class="pro-table-row">
+            <td>
+              <div class="pro-company-cell">
+                <div class="pro-cell-icon bg-emerald"><i class="fas fa-building"></i></div>
+                <span class="pro-company-name">{{ item.company_name }}</span>
+              </div>
+            </td>
 
+            <td><span class="pro-po-pill">{{ item.po_number }}</span></td>
+            <td>
+              <div class="pro-date-display">
+                <i class="fas fa-calendar-check text-emerald"></i>
+                <span>{{ item.visit_date }}</span>
+              </div>
+            </td>
+            <td><span class="pro-tag-pill">{{ item.type_of_service }}</span></td>
+            <td>
+              <div class="pro-user-display">
+                <i class="fas fa-user-check text-blue"></i>
+                <span>{{ item.assign_to }}</span>
+              </div>
+            </td>
+            <td style="text-align: center;">
+              <div v-if="item.report_path && item.report_path.trim() !== ''" class="pro-reports-wrap">
+                <button
+                  v-for="(path, idx) in item.report_path.split(',')"
+                  :key="idx"
+                  class="pro-report-btn"
+                  @click="viewReport(path)"
+                >
+                  <i class="fas fa-file-pdf"></i> Report {{ idx + 1 }}
+                </button>
+              </div>
+              <span v-else class="pro-no-report-badge">No Report</span>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- NO DATA -->
+        <tbody v-else>
+          <tr>
+            <td colspan="6" class="pro-no-data-cell">
+              <div class="pro-no-data-wrap">
+                <i class="fas fa-clipboard-question"></i>
+                <p>No assigned service records found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
   </div>
 </div>
-
 
 <!-- MATERIAL SUPPLY POPUP -->
-<div v-if="showSupplyPopup" class="modal-backdrop">
-  <div class="modal-card large">
-   <div style="display:flex; justify-content: flex-start; gap: 7px;justify-content: space-between; align-items:center; margin-bottom:-4%;">
-      
-      <button  
-        class="btn btn-dark" 
-        @click="showSupplyPopup = false"
-      >
-        ⬅ Back
-      </button>
+<div v-if="showSupplyPopup" class="pro-modal-backdrop-top" @click.self="showSupplyPopup = false">
+  <div class="modal-card pro-table-modal pro-modal-wide">
 
-      <button class="material-del"
-  @click="openDeliveredPopup"
->
-   <i class="fa fa-check-square-o" style="font-size:13px"></i> Material Delivered
-
-</button>
-
+    <!-- MODAL HEADER -->
+    <div class="pro-modal-header header-purple">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-purple">
+          <i class="fas fa-truck-ramp-box"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Material Supply Orders</h2>
+            <span class="pro-status-pill pill-purple">{{ filteredSupplies.length }} Orders</span>
+          </div>
+          <span class="pro-company-subchip">
+            <i class="fas fa-boxes-packing"></i> Track dispatches, tracking IDs, and delivery terms
+          </span>
+        </div>
       </div>
-    <h2>Material Supply</h2>
+
+      <div class="pro-header-actions">
+        <button class="pro-btn-header-action" @click="openDeliveredPopup">
+          <i class="fa fa-check-square-o"></i> <span>Material Delivered</span>
+        </button>
+
+        <button type="button" class="pro-btn-header-close" @click="showSupplyPopup = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- FILTER BAR -->
-<div class="filter-bar">
-  <!-- Search -->
-  <input
-    type="text"
-    v-model="supplyFilters.search"
-    placeholder="Search Company / PO Number"
-    class="filter-input"
-  />
+    <div class="pro-filter-toolbar">
+      <div class="pro-search-box">
+        <i class="fas fa-search pro-search-icon"></i>
+        <input
+          type="text"
+          v-model="supplyFilters.search"
+          placeholder="Search company or PO number..."
+          class="pro-search-input"
+        />
+        <button v-if="supplyFilters.search" class="pro-clear-btn" @click="supplyFilters.search = ''">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-  <!-- Month Filter -->
-  <select v-model="supplyFilters.month" class="filter-select">
-    <option value="">All Months</option>
-    <option
-      v-for="(m, index) in months"
-      :key="index"
-      :value="index + 1"
-    >
-      {{ m }}
-    </option>
-  </select>
-<!-- Status Filter -->
-<select v-model="supplyFilters.status" class="filter-select">
-  <option value="">All Status</option>
-  <option value="Awaiting Dispatch">Awaiting Dispatch</option>
-  <option value="Dispatched">Dispatched</option>
-</select>
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar-days pro-month-icon"></i>
+        <select v-model="supplyFilters.month" class="pro-month-select">
+          <option value="">All Months</option>
+          <option
+            v-for="(m, index) in months"
+            :key="index"
+            :value="index + 1"
+          >
+            {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
 
-</div>
+      <div class="pro-filter-month-box">
+        <i class="fas fa-truck pro-month-icon"></i>
+        <select v-model="supplyFilters.status" class="pro-month-select">
+          <option value="">All Status</option>
+          <option value="Awaiting Dispatch">Awaiting Dispatch</option>
+          <option value="Dispatched">Dispatched</option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
+    </div>
 
-<table class="styled-table">
-  <thead>
-    <tr>
-      <th>Company</th>
-      <th>PO Number</th>
-      <th>Quotation No.</th>
-      <th>Payment Terms</th>
-      <th>Delivery Terms</th>
-      <th>Delivery Due Date</th>
-      <th>Dipatched Date</th>
-       <th>Tracking ID</th>
-    <th>Courier Name</th>
-      <!-- <th>Current Status</th> -->
-      <th>Action</th>
-    </tr>
-  </thead>
+    <!-- TABLE AREA -->
+    <div class="pro-table-scroll">
+      <table class="pro-styled-table">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>PO Number</th>
+            <th>Quotation No</th>
+            <th>Payment Terms</th>
+            <th>Delivery Terms</th>
+            <th>Due Date</th>
+            <th>Dispatched Date</th>
+            <th>Tracking ID</th>
+            <th>Courier</th>
+            <th style="text-align:center;">Status Action</th>
+          </tr>
+        </thead>
 
-  <!-- DATA ROWS -->
-  <tbody v-if="supplies.length">
-   <tr 
-  v-for="supply in filteredSupplies" 
-  :key="supply.id"
-  :class="getRowClass(supply)"
->
+        <tbody v-if="supplies.length">
+          <tr 
+            v-for="supply in filteredSupplies" 
+            :key="supply.id"
+            :class="getRowClass(supply)"
+            class="pro-table-row"
+          >
+            <td>
+              <div class="pro-company-cell">
+                <span class="pro-company-name">{{ supply.company_name }}</span>
+              </div>
+            </td>
+            <td><span class="pro-po-pill">{{ supply.po_number }}</span></td>
+            <td><span class="pro-text-sub">{{ supply.quotation_against_po || '-' }}</span></td>
+            <td><span class="pro-text-sub">{{ supply.payment_terms || '-' }}</span></td>
+            <td><span class="pro-text-sub">{{ supply.delivery_terms || '-' }}</span></td>
+            <td>
+              <input 
+                type="date"
+                v-model="supply.delivery_due_date"
+                @change="updateDeliveryDate(supply)"
+                class="pro-date-input-sm"
+              />
+            </td>
+            <td><span class="pro-text-sub">{{ supply.closed_date ? supply.closed_date: '-'}}</span></td>
+            <td><span class="pro-tracking-badge">{{ supply.tracking_id ? supply.tracking_id : '-' }}</span></td>
+            <td><span class="pro-text-sub">{{ supply.courier_name ? supply.courier_name : '-' }}</span></td>
+            <td style="text-align:center;">
+              <select
+                :value="supply.material_status || 'Awaiting Dispatch'"
+                @change="handleStatusChange(supply, $event.target.value)"
+                class="pro-status-select"
+                :class="{
+                  'st-awaiting': !supply.material_status || supply.material_status === 'Awaiting Dispatch',
+                  'st-dispatched': supply.material_status === 'Dispatched',
+                  'st-delivered': supply.material_status === 'Delivered'
+                }"
+              >
+                <option value="Awaiting Dispatch" disabled>Awaiting Dispatch</option>
+                <option value="Dispatched">Dispatched</option>
+                <option v-if="supply.material_status === 'Dispatched'" value="Delivered">Delivered</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
 
-
-      <td>{{ supply.company_name }}</td>
-      <td>{{ supply.po_number }}</td>
-      <td>{{ supply.quotation_against_po || '-' }}</td>
-      <td>{{ supply.payment_terms || '-' }}</td>
-      <td>{{ supply.delivery_terms || '-' }}</td>
-    <td>
-  <input 
-    type="date"
-    v-model="supply.delivery_due_date"
-    @change="updateDeliveryDate(supply)"
-    class="table-date-input"
-  />
-</td>
-      <td>{{ supply.closed_date ? supply.closed_date: '-'}}</td>
-       <td>
-      {{ supply.tracking_id ? supply.tracking_id : '-' }}
-    </td>
-
-    <!-- Courier Name -->
-    <td>
-      {{ supply.courier_name ? supply.courier_name : '-' }}
-    </td>
-
-      <!-- <td>
-        {{ supply.material_status || 'Awaiting Dispatch' }}
-      </td> -->
-<td>
-
-
-  <!-- Status Change Dropdown -->
-<select
-  :value="supply.material_status || 'Awaiting Dispatch'"
-  @change="handleStatusChange(supply, $event.target.value)"
->
-  <option value="Awaiting Dispatch" disabled>
-    Awaiting Dispatch
-  </option>
-
-  <option value="Dispatched">Dispatched</option>
-
-  <option
-    v-if="supply.material_status === 'Dispatched'"
-    value="Delivered"
-  >
-    Delivered
-  </option>
-</select>
-
-</td>
-
-    </tr>
-  </tbody>
-
-  <!-- NO DATA MESSAGE -->
-  <tbody v-else>
-    <tr>
-      <td colspan="10" class="no-data">
-        No supply orders found
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
+        <!-- NO DATA -->
+        <tbody v-else>
+          <tr>
+            <td colspan="10" class="pro-no-data-cell">
+              <div class="pro-no-data-wrap">
+                <i class="fas fa-truck-fast"></i>
+                <p>No supply orders found matching your search</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
   </div>
 </div>
 
 <!-- DELIVERED DATE POPUP -->
-<div v-if="showDeliveredDatePopup" class="modal-backdrop">
-  <div class="modal-card small">
-    <h3>Material Delivered</h3>
-
-    <div class="form-group">
-      <label>Select material delivered date <span style="color:red">*</span></label>
-      <input
-        type="date"
-        v-model="deliveredDate"
-        required
-        class="filter-input"
-      />
+<div v-if="showDeliveredDatePopup" class="pro-modal-backdrop-top" @click.self="closeDeliveredPopup">
+  <div class="modal-card pro-table-modal" style="max-width: 500px;">
+    <div class="pro-modal-header header-emerald">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-emerald">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <h3 class="pro-modal-title" style="font-size: 1.15rem;">Material Delivered Date</h3>
+      </div>
+      <button type="button" class="pro-btn-header-close" @click="closeDeliveredPopup" title="Close">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px">
-      <button class="btn btn-secondary" @click="confirmDelivered">
-      <i class="fa fa-save" style="font-size:13px"></i>   Save
-      </button>
-      <button class="btn btn-success" @click="closeDeliveredPopup">
-        <i class="fa fa-close" style="font-size:13px"></i> Cancle
-      </button>
+    <div style="padding: 1.5rem; background: #ffffff;">
+      <div class="pro-field-wrap">
+        <label class="pro-label">Select Material Delivered Date <span class="req-star">*</span></label>
+        <div class="pro-date-cell-wrap" style="max-width: 100%;">
+          <i class="fas fa-calendar-day pro-date-icon"></i>
+          <input
+            type="date"
+            v-model="deliveredDate"
+            required
+            class="pro-date-input"
+          />
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:1.5rem;">
+        <button class="pro-btn-footer-cancel" @click="closeDeliveredPopup">
+          Cancel
+        </button>
+        <button class="pro-btn-footer-submit" @click="confirmDelivered">
+          <i class="fa fa-save"></i> Save Date
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-
 <!-- STATUS POPUP -->
-<div v-if="showStatusPopup" class="modal-overlay-supply">
-  <div class="modal-content-supply">
-
-    <!-- HEADER -->
-    <div class="modal-header-supply">
-      <h3 class="modal-title-supply"><i class="fa fa-save" style="font-size:20px"></i> Update Supply Status</h3>
-      <button class="close-btn-supply" @click="closePopup">&times;</button>
+<div v-if="showStatusPopup" class="pro-modal-backdrop-top" @click.self="closePopup">
+  <div class="modal-card pro-table-modal" style="max-width: 520px;">
+    <div class="pro-modal-header header-purple">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-purple">
+          <i class="fas fa-truck-fast"></i>
+        </div>
+        <h3 class="pro-modal-title" style="font-size: 1.15rem;">Update Supply Status</h3>
+      </div>
+      <button type="button" class="pro-btn-header-close" @click="closePopup" title="Close">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <!-- BODY -->
-    <div class="modal-body-supply">
-
-      <div class="form-group-supply">
-        <label class="label-supply">Tracking ID</label>
+    <div style="padding: 1.5rem; background: #ffffff; display: flex; flex-direction: column; gap: 1rem;">
+      <div class="pro-field-wrap">
+        <label class="pro-label"><i class="fas fa-hashtag"></i> Tracking ID</label>
         <input
           type="text"
           v-model="statusForm.tracking_id"
-          class="input-supply"
-          placeholder="Enter tracking ID"
+          class="pro-input"
+          placeholder="Enter tracking / consignment ID"
         />
       </div>
 
-      <div class="form-group-supply">
-        <label class="label-supply">Courier Name</label>
+      <div class="pro-field-wrap">
+        <label class="pro-label"><i class="fas fa-truck"></i> Courier / Transporter Name</label>
         <input
           type="text"
           v-model="statusForm.courier_name"
-          class="input-supply"
-          placeholder="Enter courier name"
+          class="pro-input"
+          placeholder="Enter courier name (e.g. DTDC, Blue Dart, V-Trans)"
         />
       </div>
 
-      <div class="form-group-supply">
-        <label class="label-supply">Date</label>
-        <input
-          type="date"
-          v-model="statusForm.date"
-          class="input-supply"
-        />
+      <div class="pro-field-wrap">
+        <label class="pro-label"><i class="fas fa-calendar-day"></i> Dispatch Date</label>
+        <div class="pro-date-cell-wrap" style="max-width: 100%;">
+          <i class="fas fa-calendar-day pro-date-icon"></i>
+          <input
+            type="date"
+            v-model="statusForm.date"
+            class="pro-date-input"
+          />
+        </div>
       </div>
 
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:0.75rem;">
+        <button class="pro-btn-footer-cancel" @click="closePopup">
+          Cancel
+        </button>
+        <button class="pro-btn-footer-submit" @click="submitStatus">
+          <i class="fa fa-save"></i> Submit Status
+        </button>
+      </div>
     </div>
-
-    <!-- FOOTER -->
-    <div class="modal-footer-supply">
-      <button class="btn-submit-supply" @click="submitStatus">
-        Submit
-      </button>
-    </div>
-
   </div>
 </div>
-
 
 <!-- Completed Services Modal -->
 <div v-if="showCompletedOrders" class="completed-services-modal-overlay">
@@ -2056,191 +2088,261 @@
   </div>
 </div>
 
-<div v-if="showViewAllQuotationPopup" class="modal-backdrop">
-  <div class="modal-card">
+<!-- ALL QUOTATIONS POPUP (AWESOME & USER-FRIENDLY) -->
+<div v-if="showViewAllQuotationPopup" class="modal-backdrop pro-modal-backdrop-top" @click.self="showViewAllQuotationPopup = false">
+  <div class="modal-card awesome-quotation-modal">
 
-    <!-- Close Button -->
-    <button class="btn btn-dark" style="float: right;" @click="showViewAllQuotationPopup = false">⬅ Back</button>
+    <!-- Modal Header -->
+    <div class="aq-modal-header">
+      <div class="aq-header-left">
+        <div class="aq-icon-badge">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <div class="aq-title-row">
+            <h2 class="aq-modal-title">All Quotations</h2>
+            <span class="aq-count-badge" v-if="filteredAllQuotations">
+              <i class="fas fa-layer-group"></i> {{ filteredAllQuotations.length }} {{ filteredAllQuotations.length === 1 ? 'Quotation' : 'Quotations' }}
+            </span>
+          </div>
+          <p class="aq-modal-subtitle">Browse, filter, and review all customer quotation records</p>
+        </div>
+      </div>
 
-    <h2>All Quotations</h2>
-
-    <!-- Company Filter -->
-  <!-- Filters -->
-<div class="filters-row" style="display:flex; gap:42px; margin-bottom:15px; flex-wrap:wrap; align-items:end;">
-
-  <!-- Company Search -->
-  <div style="flex:1; min-width:220px;">
-    <label style="font-size:1.05em;">Search Company</label>
-    <input
-      type="text"
-      v-model="searchCompany"
-      placeholder="Type company name..."
-      class="input"
-      style="width:100%;"
-    />
-  </div>
-
-  <!-- Status Filter -->
-  <div style="flex:1; min-width:180px;">
-    <label style="font-size:1.05em;">Filter by Status</label>
-    <select v-model="filterStatus" class="input" style="width:100%;">
-      <option value="">All Status</option>
-      <option value="pending">Pending</option>
-      <option value="followup">Follow-up</option>
-      <option value="approved">Approved</option>
-      <option value="rejected">Rejected</option>
-    </select>
-  </div>
-<!-- Month, Year Combined Filter -->
-<div style="flex:1; min-width:260px;">
-  <label style="font-size:1.05em;">Filter by Month, Year</label>
-
-  <div style="display:flex; gap:6px; align-items:center;">
-    <!-- Month -->
-    <select v-model="filterMonth" class="input" style="flex:1;">
-      <option value="">Month</option>
-      <option v-for="(m, index) in months" :key="index" :value="index + 1">
-        {{ m }}
-      </option>
-    </select>
-
-    <span style="font-weight:bold;">,</span>
-
-    <!-- Year -->
-    <select v-model="filterYear" class="input" style="width:110px;">
-      <option value="">Year</option>
-      <option v-for="y in years" :key="y" :value="y">
-        {{ y }}
-      </option>
-    </select>
-  </div>
-</div>
-
-  <!-- Grand Total Card -->
-  <div class="grand-total-card">
-    <div class="grand-total-header">
-      <span class="title">Grand Total</span>
-      <button
-        class="btn gst-toggle"
-        :class="showGstInclusive ? 'btn-success' : 'btn-outline-secondary'"
-        @click="showGstInclusive = !showGstInclusive"
-      >
-        {{ showGstInclusive ? 'GST Included' : 'GST Excluded' }}
-      </button>
+      <div class="aq-header-actions">
+        <button class="aq-btn-close" @click="showViewAllQuotationPopup = false" title="Close">
+          <i class="fas fa-arrow-left"></i> <span>Back</span>
+        </button>
+      </div>
     </div>
 
-    <div class="grand-total-amount">
-     ₹ {{ (totalQuotationAmount ?? 0).toLocaleString('en-IN', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-}) }}
+    <!-- Summary & Grand Total Bar -->
+    <div class="aq-summary-banner">
+      <div class="aq-summary-card inr-card">
+        <div class="aq-summary-icon">
+          <i class="fas fa-wallet"></i>
+        </div>
+        <div class="aq-summary-info">
+          <span class="aq-summary-label">Grand Total (INR)</span>
+          <span class="aq-summary-value">
+            ₹ {{ (totalQuotationAmount ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+          </span>
+        </div>
+      </div>
 
-     
-<br>
- 
-    {{ formatCurrency(currencyTotals.USD ?? 0, 'USD') }}
+      <div class="aq-summary-card usd-card" v-if="currencyTotals?.USD && currencyTotals.USD > 0">
+        <div class="aq-summary-icon">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="aq-summary-info">
+          <span class="aq-summary-label">Grand Total (USD)</span>
+          <span class="aq-summary-value">
+            {{ formatCurrency(currencyTotals.USD ?? 0, 'USD') }}
+          </span>
+        </div>
+      </div>
 
-         </div>
-  </div>
-</div>
-
-    <!-- Loader -->
-    <div v-if="quotationLoading" class="quotation-loader">
-      <span class="spinner"></span>
-      <p>Loading quotations...</p>
+      <div class="aq-gst-toggle-card">
+        <span class="aq-gst-label">Tax Calculation:</span>
+        <button
+          class="aq-gst-btn"
+          :class="showGstInclusive ? 'gst-active' : 'gst-inactive'"
+          @click="showGstInclusive = !showGstInclusive"
+          type="button"
+        >
+          <i :class="showGstInclusive ? 'fas fa-check-circle' : 'fas fa-minus-circle'"></i>
+          {{ showGstInclusive ? 'GST Included' : 'GST Excluded' }}
+        </button>
+      </div>
     </div>
 
+    <!-- Smart Filters Section -->
+    <div class="aq-filters-bar">
+      <!-- Search Company -->
+      <div class="aq-filter-field search-field">
+        <label><i class="fas fa-search"></i> Search Company</label>
+        <div class="aq-input-wrap">
+          <input
+            type="text"
+            v-model="searchCompany"
+            placeholder="Type company name..."
+            class="aq-input"
+          />
+          <button v-if="searchCompany" class="aq-clear-input" @click="searchCompany = ''" title="Clear">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
 
-    <div v-else-if="filteredAllQuotations.length > 0" class="cards-container">
-  <div 
-    v-for="q in filteredAllQuotations" 
-    :key="q.id" 
-    class="quote-card"
-    @click="openQuotationInNewTab(q)"
-  >
-    <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
+      <!-- Filter Status -->
+      <div class="aq-filter-field">
+        <label><i class="fas fa-tag"></i> Filter Status</label>
+        <select v-model="filterStatus" class="aq-select">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="followup">Follow-up</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
 
-     <p>{{ q.company_name }}</p>
+      <!-- Month & Year -->
+      <div class="aq-filter-field date-group-field">
+        <label><i class="fas fa-calendar-alt"></i> Period</label>
+        <div class="aq-date-inputs">
+          <select v-model="filterMonth" class="aq-select month-select">
+            <option value="">All Months</option>
+            <option v-for="(m, index) in months" :key="index" :value="index + 1">
+              {{ m }}
+            </option>
+          </select>
 
-     <!-- ✅ Follow-up Status -->
-  <p class="followup-status">
-    Status : 
-    <span :class="'status-' + q.quotation_followup_status?.toLowerCase()">
-<span
-  :class="{
-    'status-pending': !q.quotation_followup_status,
-    'status-follow-up': q.quotation_followup_status?.toLowerCase() === 'followup',
-    'status-approved': q.quotation_followup_status?.toLowerCase() === 'approved',
-    'status-rejected': q.quotation_followup_status?.toLowerCase() === 'rejected'
-  }"
->
-  {{ q.quotation_followup_status || 'Pending' }}
-</span>
+          <select v-model="filterYear" class="aq-select year-select">
+            <option value="">All Years</option>
+            <option v-for="y in years" :key="y" :value="y">
+              {{ y }}
+            </option>
+          </select>
+        </div>
+      </div>
 
+      <!-- Clear Filters Button -->
+      <div class="aq-filter-field clear-btn-field" v-if="hasQuotationFilters">
+        <label>&nbsp;</label>
+        <button class="aq-btn-reset" @click="clearQuotationFilters" title="Clear all active filters">
+          <i class="fas fa-undo"></i> Reset
+        </button>
+      </div>
+    </div>
 
-    </span>
-  </p>
+    <!-- Modal Body / Content -->
+    <div class="aq-content-body">
+      <!-- Loading state -->
+      <div v-if="quotationLoading" class="aq-loading-state">
+        <div class="aq-spinner"></div>
+        <p class="aq-loading-text">Loading quotations...</p>
+      </div>
 
-  
+      <!-- Cards Grid -->
+      <div v-else-if="filteredAllQuotations && filteredAllQuotations.length > 0" class="aq-grid">
+        <div
+          v-for="q in filteredAllQuotations"
+          :key="q.id"
+          class="aq-card"
+          @click="openQuotationInNewTab(q)"
+        >
+          <!-- Card Header -->
+          <div class="aq-card-top">
+            <div class="aq-quote-id">
+              <i class="fas fa-file-invoice"></i>
+              <span>{{ quotePrefix }}{{ q.id }}</span>
+            </div>
 
-    <!-- <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
-      <i class="fas fa-edit"></i> Edit
-    </button>
+            <!-- Status Badge -->
+            <div
+              class="aq-status-pill"
+              :class="{
+                'status-pending': !q.quotation_followup_status || q.quotation_followup_status.toLowerCase() === 'pending',
+                'status-followup': q.quotation_followup_status?.toLowerCase() === 'followup',
+                'status-approved': q.quotation_followup_status?.toLowerCase() === 'approved',
+                'status-rejected': q.quotation_followup_status?.toLowerCase() === 'rejected'
+              }"
+            >
+              <i v-if="q.quotation_followup_status?.toLowerCase() === 'approved'" class="fas fa-check-circle"></i>
+              <i v-else-if="q.quotation_followup_status?.toLowerCase() === 'rejected'" class="fas fa-times-circle"></i>
+              <i v-else-if="q.quotation_followup_status?.toLowerCase() === 'followup'" class="fas fa-clock"></i>
+              <i v-else class="fas fa-hourglass-half"></i>
+              <span>{{ q.quotation_followup_status || 'Pending' }}</span>
+            </div>
+          </div>
 
-    <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
-      <i class="fas fa-trash"></i> Delete
-    </button> -->
-  </div>
-</div>
+          <!-- Card Body -->
+          <div class="aq-card-main">
+            <h3 class="aq-company-title" :title="q.company_name">
+              <i class="fas fa-building"></i>
+              <span>{{ q.company_name || 'Unnamed Company' }}</span>
+            </h3>
 
+            <!-- Quotation Amount if available -->
+            <div class="aq-card-amount-row" v-if="formatQuotationAmount(q)">
+              <span class="aq-amount-label">Quotation Value:</span>
+              <span class="aq-amount-val">{{ formatQuotationAmount(q) }}</span>
+            </div>
 
-    <!-- Quotation Cards -->
-<div v-else-if="filteredQuotations.length > 0" class="cards-container">
-  <div 
-    v-for="q in filteredQuotations" 
-    :key="q.id" 
-    class="quote-card"
-    @click="openQuotationInNewTab(q)"
-  >
-    <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
+            <!-- Meta details -->
+            <div class="aq-card-meta">
+              <div class="aq-meta-item" v-if="q.engine_serial_number">
+                <i class="fas fa-cog"></i>
+                <span>Engine: <strong>{{ q.engine_serial_number }}</strong></span>
+              </div>
+              <div class="aq-meta-item" v-if="q.created_at">
+                <i class="far fa-calendar-alt"></i>
+                <span>{{ formatDate(q.created_at) }}</span>
+              </div>
+            </div>
+          </div>
 
-    <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
-          <i class="fa fa-edit" style="font-size:13px"></i>
- Edit
-    </button>
+          <!-- Card Footer -->
+          <div class="aq-card-foot">
+            <span class="aq-view-hint">
+              <span>Open Quotation</span>
+              <i class="fas fa-external-link-alt"></i>
+            </span>
+          </div>
+        </div>
+      </div>
 
-    <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
-      <i class="fas fa-trash"></i> Delete
-    </button>
-  </div>
-</div>
-
-
-
-    <!-- No Data Message -->
-    <div v-else-if="filterCompany && !quotationLoading">
-      <p>No quotations found.</p>
+      <!-- Empty State -->
+      <div v-else class="aq-empty-state">
+        <div class="aq-empty-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <h3>No Quotations Found</h3>
+        <p v-if="hasQuotationFilters">No records matched your search criteria. Try adjusting or resetting your filters.</p>
+        <p v-else>There are currently no quotations available.</p>
+        <button v-if="hasQuotationFilters" class="aq-btn-empty-reset" @click="clearQuotationFilters">
+          <i class="fas fa-undo"></i> Reset Filters
+        </button>
+      </div>
     </div>
 
   </div>
 </div>
 
-<!-- VIEW QUOTATIONS POPUP -->
-<div v-if="showViewQuotationPopup" class="modal-backdrop">
-  <div class="modal-card">
+<!-- VIEW SINGLE CUSTOMER QUOTATIONS POPUP -->
+<div v-if="showViewQuotationPopup" class="modal-backdrop pro-modal-backdrop-top" @click.self="showViewQuotationPopup = false">
+  <div class="modal-card awesome-quotation-modal">
 
-    <!-- Close Button -->
-    <button class="btn btn-dark" style="float: right;" @click="showViewQuotationPopup = false">⬅ Back</button>
+    <!-- Modal Header -->
+    <div class="aq-modal-header">
+      <div class="aq-header-left">
+        <div class="aq-icon-badge">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+          <div class="aq-title-row">
+            <h2 class="aq-modal-title">Quotations List</h2>
+            <span class="aq-count-badge" v-if="quotationList">
+              <i class="fas fa-layer-group"></i> {{ quotationList.length }} {{ quotationList.length === 1 ? 'Quotation' : 'Quotations' }}
+            </span>
+          </div>
+          <p class="aq-modal-subtitle">Filter quotations by company or engine serial number</p>
+        </div>
+      </div>
 
-    <h2>All Quotations</h2>
+      <div class="aq-header-actions">
+        <button class="aq-btn-close" @click="showViewQuotationPopup = false" title="Close">
+          <i class="fas fa-arrow-left"></i> <span>Back</span>
+        </button>
+      </div>
+    </div>
 
-    <!-- Company Filter -->
-    <div class="filters-row" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-      
-      <div style="flex: 1; min-width: 150px;">
-        <label style="font-size: 1.1em;">Filter by Company</label>
-        <select v-model="filterCompany" class="input" style="width: 100%;">
-          <option value="">Select Company</option>
+    <!-- Filters Row -->
+    <div class="aq-filters-bar">
+      <div class="aq-filter-field search-field">
+        <label><i class="fas fa-building"></i> Select Company</label>
+        <select v-model="filterCompany" class="aq-select">
+          <option value="">All Companies</option>
           <option 
             v-for="cust in customers" 
             :key="cust.id" 
@@ -2251,61 +2353,104 @@
         </select>
       </div>
 
-      <div style="flex: 1; min-width: 150px;">
-        <label style="font-size: 1.1em;">Engine Serial Number</label>
-        <input 
-          type="text" 
-          v-model="engineSearch" 
-          @input="searchByEngine"
-          placeholder="Enter Engine Serial Number" 
-          class="input" 
-          style="width: 100%;"
-        />
+      <div class="aq-filter-field search-field">
+        <label><i class="fas fa-cog"></i> Engine Serial Number</label>
+        <div class="aq-input-wrap">
+          <input 
+            type="text" 
+            v-model="engineSearch" 
+            @input="searchByEngine"
+            placeholder="Enter Engine Serial Number" 
+            class="aq-input"
+          />
+          <button v-if="engineSearch" class="aq-clear-input" @click="engineSearch = ''; searchByEngine();" title="Clear">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="aq-filter-field clear-btn-field" v-if="filterCompany || engineSearch">
+        <label>&nbsp;</label>
+        <button class="aq-btn-reset" @click="filterCompany = ''; engineSearch = ''; searchByEngine();">
+          <i class="fas fa-undo"></i> Reset
+        </button>
       </div>
     </div>
 
-    <!-- Loader -->
-    <div v-if="quotationLoading" class="quotation-loader">
-      <span class="spinner"></span>
-      <p>Loading quotations...</p>
-    </div>
+    <!-- Modal Body -->
+    <div class="aq-content-body">
+      <!-- Loading State -->
+      <div v-if="quotationLoading" class="aq-loading-state">
+        <div class="aq-spinner"></div>
+        <p class="aq-loading-text">Loading quotations...</p>
+      </div>
 
-    <!-- Quotation Cards -->
-    <div v-else-if="quotationList.length > 0" class="cards-container">
-     <div 
-  v-for="q in quotationList" 
-  :key="q.id" 
-  class="quote-card"
-  @click="openQuotationInNewTab(q)"
->
-  <p><strong>{{ quotePrefix }}{{ q.id }}</strong></p>
+      <!-- Quotation Cards -->
+      <div v-else-if="quotationList && quotationList.length > 0" class="aq-grid">
+        <div 
+          v-for="q in quotationList" 
+          :key="q.id" 
+          class="aq-card"
+          @click="openQuotationInNewTab(q)"
+        >
+          <div class="aq-card-top">
+            <div class="aq-quote-id">
+              <i class="fas fa-file-invoice"></i>
+              <span>{{ quotePrefix }}{{ q.id }}</span>
+            </div>
+          </div>
 
-  <button class="quotation-edit-btn" @click.stop="editQuotation(q)">
-        <i class="fa fa-edit" style="font-size:13px"></i>
-Edit
-  </button>
+          <div class="aq-card-main">
+            <h3 class="aq-company-title" v-if="q.company_name">
+              <i class="fas fa-building"></i>
+              <span>{{ q.company_name }}</span>
+            </h3>
 
-  <button class="quotation-delete-btn" @click.stop="deleteQuotation(q.id)">
-    <i class="fas fa-trash"></i> Delete
-  </button>
-  
-<button class="quotation-duplicate-btn" @click.stop="duplicateQuotation(q)">
-  <i class="fa fa-copy" style="font-size:13px"></i>
-  Duplicate
-</button>
+            <div class="aq-card-amount-row" v-if="formatQuotationAmount(q)">
+              <span class="aq-amount-label">Quotation Value:</span>
+              <span class="aq-amount-val">{{ formatQuotationAmount(q) }}</span>
+            </div>
 
-</div>
+            <div class="aq-card-meta">
+              <div class="aq-meta-item" v-if="q.engine_serial_number">
+                <i class="fas fa-cog"></i>
+                <span>Engine: <strong>{{ q.engine_serial_number }}</strong></span>
+              </div>
+              <div class="aq-meta-item" v-if="q.created_at">
+                <i class="far fa-calendar-alt"></i>
+                <span>{{ formatDate(q.created_at) }}</span>
+              </div>
+            </div>
+          </div>
 
-    </div>
+          <!-- Card Actions in Footer -->
+          <div class="aq-card-actions-foot">
+            <button class="aq-act-btn edit-btn" @click.stop="editQuotation(q)" title="Edit Quotation">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="aq-act-btn dup-btn" @click.stop="duplicateQuotation(q)" title="Duplicate Quotation">
+              <i class="fas fa-copy"></i> Duplicate
+            </button>
+            <button class="aq-act-btn del-btn" @click.stop="deleteQuotation(q.id)" title="Delete Quotation">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+      </div>
 
-    <!-- No Data Message -->
-    <div v-else-if="filterCompany && !quotationLoading">
-      <p>No quotations found.</p>
+      <!-- Empty State -->
+      <div v-else class="aq-empty-state">
+        <div class="aq-empty-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <h3>No Quotations Found</h3>
+        <p v-if="filterCompany || engineSearch">No quotations matched your selected filter.</p>
+        <p v-else>No quotations registered for this customer.</p>
+      </div>
     </div>
 
   </div>
 </div>
-
 
 
 <!-- Open PO Modal -->
@@ -2426,7 +2571,7 @@ Edit
   <div class="modal-contentDetails">
     <h2 class="modal-title">PO Details</h2>
 
-    <table class="po-table">
+            <table class="po-table" v-if="selectedPo">
       <tbody>
         <tr>
           <th>PO Type</th>
@@ -2440,60 +2585,44 @@ Edit
           <th>PO Number</th>
           <td>{{ selectedPo.po_number }}</td>
         </tr>
- <!-- <tr>
-          <th>PO Value</th>
-          <td>{{ selectedPo.value_of_po }}</td>
-        </tr> -->
+      </tbody>
 
-        <!-- AMC Specific -->
-<template v-if="selectedPo.po_type === 'AMC'">
-  <tr>
-    <th>Type of AMC</th>
-    <td>{{ selectedPo.type_of_amc }}</td>
-  </tr>
-  <tr>
-    <th>No of Visits</th>
-    <td>{{ selectedPo.no_of_visits }}</td>
-  </tr>
-  <tr>
-    <th>Start Period</th>
-    <td>{{ formatDate(selectedPo.start_period) }}</td>
-  </tr>
-  <tr>
-    <th>End Period</th>
-    <td>{{ formatDate(selectedPo.end_period) }}</td>
-  </tr>
- 
-  <tr>
+      <!-- AMC Specific -->
+      <tbody v-if="selectedPo.po_type === 'AMC'">
+        <tr>
+          <th>Type of AMC</th>
+          <td>{{ selectedPo.type_of_amc }}</td>
+        </tr>
+        <tr>
+          <th>No of Visits</th>
+          <td>{{ selectedPo.no_of_visits }}</td>
+        </tr>
+        <tr>
+          <th>Start Period</th>
+          <td>{{ formatDate(selectedPo.start_period) }}</td>
+        </tr>
+        <tr>
+          <th>End Period</th>
+          <td>{{ formatDate(selectedPo.end_period) }}</td>
+        </tr>
+        <tr>
           <th>Value Of PO</th>
           <td>{{ selectedPo.value_of_po }}</td>
         </tr>
- <!-- Visits (only show if not null/empty) -->
-<tr v-for="visit in filledVisits" :key="visit.number">
-  <th>Visit {{ visit.number }}</th>
-  <td>
-    {{ formatDate(visit.date) }}
+        <!-- Visits (only show if not null/empty) -->
+        <tr v-for="visit in filledVisits" :key="visit.number">
+          <th>Visit {{ visit.number }}</th>
+          <td>
+            {{ formatDate(visit.date) }}
+            <span v-if="getVisitStatus(visit.date) === 'Completed'" style="color:green; margin-left:6px;">✔</span>
+            <span v-else-if="getVisitStatus(visit.date) === 'Pending'" style="color:orange; margin-left:6px;">⏳</span>
+          </td>
+        </tr>
+      </tbody>
 
-    <!-- Completed -->
-    <span v-if="getVisitStatus(visit.date) === 'Completed'"
-          style="color:green; margin-left:6px;">
-      ✔
-    </span>
-
-    <!-- Pending -->
-    <span v-else-if="getVisitStatus(visit.date) === 'Pending'"
-          style="color:orange; margin-left:6px;">
-      ⏳
-    </span>
-  </td>
-</tr>
-
-
-
-
-</template>
-<template v-if="selectedPo.po_type === 'Service+Supply'">
-   <tr>
+      <!-- Service+Supply Specific -->
+      <tbody v-else-if="selectedPo.po_type === 'Service+Supply'">
+        <tr>
           <th>PO Date</th>
           <td>{{ formatDate(selectedPo.date) }}</td>
         </tr>
@@ -2505,109 +2634,103 @@ Edit
           <th>Value Of PO</th>
           <td>{{ selectedPo.value_of_po }}</td>
         </tr>
-         <tr>
-            <th> Quotation Against PO</th>
-             <td>{{ selectedPo.quotation_against_po }}</td>
-          </tr>
-          <tr>
-            <th>Payment Terms</th>
-            <td>{{ selectedPo.payment_terms }}</td>
-          </tr>
-          <tr>
-            <th>Delivery Terms</th>
-            <td>
-              {{ selectedPo.delivery_terms }}
-            </td>
-          </tr>
-          <tr>
-            <th>Delivery due date</th>
-            <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
-          </tr>
+        <tr>
+          <th>Quotation Against PO</th>
+          <td>{{ selectedPo.quotation_against_po }}</td>
+        </tr>
+        <tr>
+          <th>Payment Terms</th>
+          <td>{{ selectedPo.payment_terms }}</td>
+        </tr>
+        <tr>
+          <th>Delivery Terms</th>
+          <td>{{ selectedPo.delivery_terms }}</td>
+        </tr>
+        <tr>
+          <th>Delivery due date</th>
+          <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
+        </tr>
         <tr>
           <th>Recommended By</th>
           <td>{{ selectedPo.recommended_by }}</td>
         </tr>
+      </tbody>
 
-</template>
-        <!-- Service Specific -->
-        <template v-else-if="selectedPo.po_type === 'Service'">
-         
-          <tr>
-  <th>Assign To</th>
-  <td>{{ selectedPo.assignedUser?.name || '-' }}</td>
-</tr>
-          <tr>
-            <th>Type of Service</th>
-            <td>{{ selectedPo.type_of_service }}</td>
-          </tr>
-          <tr>
-            <th>Value of PO</th>
-            <td>{{ selectedPo.value_of_po }}</td>
-          </tr>
-          <tr>
-            <th>Date</th>
-            <td>{{ formatDate(selectedPo.date) }}</td>
-          </tr>
-          <tr>
-  <th>Service Date</th>
-  <td>
-    <input 
-      type="date" 
-      v-model="selectedPo.service_date"
-      @change="updateServiceDate(selectedPo)"
-      class="form-control"
-    />
-  </td>
-</tr>
-          <tr v-if="selectedPo.files && selectedPo.files.length">
-  <th>PO Files</th>
-  <td>
-  <button class="btn btn-secondary" @click="viewCustomerPo(cust)">View PO</button>
-</td>
-</tr>
-        </template>
+      <!-- Service Specific -->
+      <tbody v-else-if="selectedPo.po_type === 'Service'">
+        <tr>
+          <th>Assign To</th>
+          <td>{{ selectedPo.assignedUser?.name || '-' }}</td>
+        </tr>
+        <tr>
+          <th>Type of Service</th>
+          <td>{{ selectedPo.type_of_service }}</td>
+        </tr>
+        <tr>
+          <th>Value of PO</th>
+          <td>{{ selectedPo.value_of_po }}</td>
+        </tr>
+        <tr>
+          <th>Date</th>
+          <td>{{ formatDate(selectedPo.date) }}</td>
+        </tr>
+        <tr>
+          <th>Service Date</th>
+          <td>
+            <input 
+              type="date" 
+              v-model="selectedPo.service_date"
+              @change="updateServiceDate(selectedPo)"
+              class="form-control"
+            />
+          </td>
+        </tr>
+        <tr v-if="selectedPo.files && selectedPo.files.length">
+          <th>PO Files</th>
+          <td>
+            <button class="btn btn-secondary" @click="viewCustomerPo(cust)">View PO</button>
+          </td>
+        </tr>
+      </tbody>
 
-        <!-- Supply Specific -->
-        <template v-else-if="selectedPo.po_type === 'Service+Supply' || selectedPo.po_type === 'Supply'">
-          <tr>
-            <th>Value of PO</th>
-            <td>{{ selectedPo.value_of_po }}</td>
-          </tr>
-          <tr>
-            <th>PO Received Date</th>
-            <td>{{ formatDate(selectedPo.date) }}</td>
-          </tr>
-          <tr>
-            <th> Quotation Against PO</th>
-             <td>{{ selectedPo.quotation_against_po }}</td>
-          </tr>
-          <tr>
-            <th>Payment Terms</th>
-            <td>{{ selectedPo.payment_terms }}</td>
-          </tr>
-          <tr>
-            <th>Delivery Terms</th>
-            <td>
-              {{ selectedPo.delivery_terms }}
-            </td>
-          </tr>
-          <tr>
-            <th>Delivery due date</th>
-            <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
-          </tr>
-          <tr>
-            <th>Tracking Id</th>
-            <td>{{ selectedPo.tracking_id }}</td>
-          </tr>
-          <tr>
-            <th>Courier Name</th>
-            <td>{{ selectedPo.courier_name }}</td>
-          </tr>
-          <tr>
-            <th>Material Deliverd Date</th>
-            <td>{{ selectedPo.closed_date	 }}</td>
-          </tr>
-        </template>
+      <!-- Supply Specific -->
+      <tbody v-else-if="selectedPo.po_type === 'Supply'">
+        <tr>
+          <th>Value of PO</th>
+          <td>{{ selectedPo.value_of_po }}</td>
+        </tr>
+        <tr>
+          <th>PO Received Date</th>
+          <td>{{ formatDate(selectedPo.date) }}</td>
+        </tr>
+        <tr>
+          <th>Quotation Against PO</th>
+          <td>{{ selectedPo.quotation_against_po }}</td>
+        </tr>
+        <tr>
+          <th>Payment Terms</th>
+          <td>{{ selectedPo.payment_terms }}</td>
+        </tr>
+        <tr>
+          <th>Delivery Terms</th>
+          <td>{{ selectedPo.delivery_terms }}</td>
+        </tr>
+        <tr>
+          <th>Delivery due date</th>
+          <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
+        </tr>
+        <tr>
+          <th>Tracking Id</th>
+          <td>{{ selectedPo.tracking_id }}</td>
+        </tr>
+        <tr>
+          <th>Courier Name</th>
+          <td>{{ selectedPo.courier_name }}</td>
+        </tr>
+        <tr>
+          <th>Material Deliverd Date</th>
+          <td>{{ selectedPo.closed_date }}</td>
+        </tr>
       </tbody>
     </table>
 
@@ -2821,21 +2944,13 @@ Edit
         </label>
         <select v-model="poType" @change="handlePoTypeChange" class="po-type-select">
           <option value="">Select Type</option>
-          <option value="AMC">
-            <i class="fas fa-calendar-alt"></i>
-            AMC (Annual Maintenance Contract)
+          <option value="AMC">AMC (Annual Maintenance Contract)
           </option>
-          <option value="Service">
-            <i class="fas fa-wrench"></i>
-            Service
+          <option value="Service">Service
           </option>
-          <option value="Supply">
-            <i class="fas fa-box"></i>
-            Supply
+          <option value="Supply">Supply
           </option>
-          <option value="Service+Supply">
-            <i class="fas fa-tools"></i>
-            Service + Supply
+          <option value="Service+Supply">Service + Supply
           </option>
         </select>
       </div>
@@ -3349,84 +3464,116 @@ Edit
 
 
 
-<div v-if="showDeliveredPopup" class="modal-backdrop">
-  <div class="modal-card large">
+<!-- DELIVERED MATERIAL LIST POPUP -->
+<div v-if="showDeliveredPopup" class="pro-modal-backdrop-top" @click.self="showDeliveredPopup = false">
+  <div class="modal-card pro-table-modal pro-modal-wide">
 
-    <div style="text-align:right; margin-bottom:-4%;    display: flex;">
-      <button class="btn btn-dark" @click="showDeliveredPopup = false">⬅ Back</button>
+    <!-- MODAL HEADER -->
+    <div class="pro-modal-header header-emerald">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-emerald">
+          <i class="fas fa-boxes-packing"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Delivered Material List</h2>
+            <span class="pro-status-pill pill-emerald">{{ filteredDeliveredSupplies.length }} Delivered</span>
+          </div>
+          <span class="pro-company-subchip">
+            <i class="fas fa-circle-check"></i> Historical delivery records and dispatch information
+          </span>
+        </div>
+      </div>
+
+      <div class="pro-header-actions">
+        <button type="button" class="pro-btn-header-close" @click="showDeliveredPopup = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
     </div>
 
-    <h2>Delivered Material List</h2>
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <!-- Search -->
-  <input
-    type="text"
-    v-model="deliveredFilters.search"
-    placeholder="Search Company / PO Number"
-    class="filter-input"
-  />
+    <!-- FILTER BAR -->
+    <div class="pro-filter-toolbar">
+      <div class="pro-search-box">
+        <i class="fas fa-search pro-search-icon"></i>
+        <input
+          type="text"
+          v-model="deliveredFilters.search"
+          placeholder="Search company or PO number..."
+          class="pro-search-input"
+        />
+        <button v-if="deliveredFilters.search" class="pro-clear-btn" @click="deliveredFilters.search = ''">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-  <!-- Month Filter -->
-  <select v-model="deliveredFilters.month" class="filter-select">
-    <option value="">All Months</option>
-    <option
-      v-for="(m, index) in months"
-      :key="index"
-      :value="index + 1"
-    >
-      {{ m }}
-    </option>
-  </select>
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar-days pro-month-icon"></i>
+        <select v-model="deliveredFilters.month" class="pro-month-select">
+          <option value="">All Months</option>
+          <option
+            v-for="(m, index) in months"
+            :key="index"
+            :value="index + 1"
+          >
+            {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
+    </div>
 
+    <!-- TABLE AREA -->
+    <div class="pro-table-scroll">
+      <table class="pro-styled-table">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>PO Date</th>
+            <th>Dispatched Date</th>
+            <th>Tracking ID</th>
+            <th>Courier Name</th>
+            <th>Material Delivered Date</th>
+          </tr>
+        </thead>
 
-</div>
+        <tbody v-if="deliveredSupplies.length">
+          <tr v-for="supply in filteredDeliveredSupplies" :key="supply.id" class="pro-table-row">
+            <td>
+              <div class="pro-company-cell">
+                <div class="pro-cell-icon bg-emerald"><i class="fas fa-building"></i></div>
+                <span class="pro-company-name">{{ supply.company_name }}</span>
+              </div>
+            </td>
+            <td><span class="pro-text-sub">{{ supply.date }}</span></td>
+            <td><span class="pro-text-sub">{{ supply.closed_date || '-' }}</span></td>
+            <td><span class="pro-tracking-badge">{{ supply.tracking_id || '-' }}</span></td>
+            <td><span class="pro-text-sub">{{ supply.courier_name || '-' }}</span></td>
+            <td>
+              <span class="pro-delivered-badge">
+                <i class="fas fa-circle-check"></i>
+                {{ supply.material_delivered_date ? supply.material_delivered_date.split('T')[0] : '-' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
 
-   <table class="styled-table">
-  <thead>
-    <tr>
-      <th>Company</th>
-      <!-- <th>PO Number</th> -->
-      <th>PO Date</th>
-      <th>Dipatched Date</th>
-      <th>Tracking ID</th>
-      <th>Courier Name</th>
-      <th>Material Delivered Date</th>
-    </tr>
-  </thead>
-
-  <!-- DATA ROWS -->
-  <tbody v-if="deliveredSupplies.length">
-   <tr v-for="supply in filteredDeliveredSupplies" :key="supply.id">
-
-      <td>{{ supply.company_name }}</td>
-      <!-- <td>{{ supply.po_number }}</td> -->
-      <td>{{ supply.date }}</td>
-     <td>{{ supply.closed_date || '-' }}</td>
-      <td>{{ supply.tracking_id || '-' }}</td>
-      <td>{{ supply.courier_name || '-' }}</td>
-        <td>
-  {{ supply.material_delivered_date ? supply.material_delivered_date.split('T')[0] : '-' }}
-</td>
-
-    </tr>
-  </tbody>
-
-  <!-- NO DATA MESSAGE -->
-  <tbody v-else>
-    <tr>
-      <td colspan="7" class="no-data">
-        No delivered supplies found
-      </td>
-    </tr>
-  </tbody>
-</table>
-
+        <!-- NO DATA -->
+        <tbody v-else>
+          <tr>
+            <td colspan="6" class="pro-no-data-cell">
+              <div class="pro-no-data-wrap">
+                <i class="fas fa-boxes-stacked"></i>
+                <p>No delivered supplies found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
   </div>
 </div>
-
-
 
 </div>
 <!-- Customer Registration Modal -->
@@ -3695,10 +3842,7 @@ Edit
 
 
     </div>
-
-
-
-
+  </div>
 </template>
 
   <script>
@@ -4677,6 +4821,43 @@ filterCompany(newCompany) {
   // Watch for currency changes in calculation rows
 
  methods: {
+
+    formatQuotationAmount(q) {
+      if (!q) return '';
+      // Try net_total, total, amount, grand_total, or calculate from items
+      let val = q.grand_total ?? q.net_total ?? q.total_amount ?? q.total ?? q.amount ?? null;
+      
+      if (val === null && Array.isArray(q.items) && q.items.length > 0) {
+        val = q.items.reduce((sum, item) => {
+          const qty = Number(item.qty) || 0;
+          const rate = Number(item.rate) || 0;
+          const discount = Number(item.discount) || 0;
+          const base = (qty * rate) - ((qty * rate * discount) / 100);
+          const cgst = (base * (Number(item.cgst_rate) || 0)) / 100;
+          const sgst = (base * (Number(item.sgst_rate) || 0)) / 100;
+          const igst = (base * (Number(item.igst_rate) || 0)) / 100;
+          return sum + base + cgst + sgst + igst;
+        }, 0);
+      }
+
+      if (val === null || val === undefined || isNaN(Number(val))) {
+        return '';
+      }
+
+      const currency = q.currency ? q.currency.toUpperCase() : 'INR';
+      const num = Number(val);
+
+      if (currency === 'USD') {
+        return '$ ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else if (currency === 'EUR') {
+        return '€ ' + num.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else if (currency === 'GBP') {
+        return '£ ' + num.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else if (currency === 'AED') {
+        return 'AED ' + num.toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      return '₹ ' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
   updateManualFields() {
     // Update the form fields when manual inputs change
     this.form.engine_serial = this.manualSerialNumbers;
@@ -6666,18 +6847,38 @@ moveItemDown(index) {
 fetchQuotationsById(company) {
   this.quotationLoading = true;
   
-  // Make sure we have the company name properly encoded
+  if (!company) {
+    this.quotationList = this.quotations || [];
+    this.quotationLoading = false;
+    return;
+  }
+
+  // First check if we already have it in this.quotations as immediate data
+  const localMatches = (this.quotations || []).filter(q => q.company_name === company);
+  if (localMatches.length > 0) {
+    this.quotationList = localMatches;
+  }
+
   const companyName = encodeURIComponent(company);
   
   axios.get(`/api/quotations/by-company/${companyName}`)
     .then(res => {
       console.log("Quotations fetched:", res.data);
-      this.quotationList = res.data;
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        this.quotationList = res.data;
+      } else if (localMatches.length > 0) {
+        this.quotationList = localMatches;
+      } else {
+        this.quotationList = [];
+      }
     })
     .catch(err => {
       console.error("Quotation fetch error:", err);
-      this.quotationList = [];
-      toastError("Failed to load quotations");
+      if (localMatches.length > 0) {
+        this.quotationList = localMatches;
+      } else {
+        this.quotationList = [];
+      }
     })
     .finally(() => {
       this.quotationLoading = false;
@@ -14785,5 +14986,3000 @@ transform:scale(1.05);
 .required {
   color: red;
   font-size: medium;
+}
+
+
+
+
+
+
+/* =========================================================
+   PRO QUOTATION MODAL - CLEAN, ORGANIZED ENTERPRISE UI/UX
+   ========================================================= */
+
+/* Backdrop */
+.quotation-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 1.25rem;
+  animation: proModalFadeIn 0.2s ease-out;
+}
+
+@keyframes proModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Window */
+.quotation-modal.pro-quotation-modal {
+  background: #f1f5f9;
+  width: 96%;
+  max-width: 1240px;
+  max-height: 94vh;
+  margin: 0 auto;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  animation: proModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes proModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Sticky Header */
+.pro-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+  color: #ffffff;
+  padding: 1.1rem 1.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+  flex-shrink: 0;
+}
+
+.pro-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pro-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.pro-header-icon.icon-cyan {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pro-header-icon.icon-amber {
+  background: rgba(245, 158, 11, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pro-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pro-modal-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.pro-status-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.18rem 0.6rem;
+  border-radius: 20px;
+}
+
+.pro-status-pill.pill-cyan {
+  background: rgba(255, 255, 255, 0.25);
+  color: #e0f2fe;
+}
+
+.pro-status-pill.pill-amber {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.pro-company-subchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #bae6fd;
+  margin-top: 0.15rem;
+}
+
+.pro-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pro-btn-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 0.5rem 1.05rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(4px);
+}
+
+.pro-btn-header-action:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.pro-btn-header-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pro-btn-header-close:hover {
+  background: #ffffff;
+  color: #0f172a;
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.pro-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.pro-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pro-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Section Card */
+.pro-card-section {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 1.35rem 1.6rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.pro-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pro-card-header-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.pro-card-header-icon.bg-blue { background: #e0f2fe; color: #0284c7; }
+.pro-card-header-icon.bg-purple { background: #f3e8ff; color: #7c3aed; }
+.pro-card-header-icon.bg-emerald { background: #dcfce7; color: #059669; }
+.pro-card-header-icon.bg-amber { background: #fef3c7; color: #d97706; }
+
+.pro-card-header-title h3 {
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.pro-card-header-title span {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Form Layout Grids */
+.pro-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.15rem;
+}
+
+.pro-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.15rem;
+}
+
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 0.85rem; }
+
+.pro-field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pro-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.req-star {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.text-emerald { color: #16a34a; }
+.text-blue { color: #0284c7; }
+
+/* Inputs - Clean, High Quality, Never Red on default */
+.pro-input,
+.pro-select {
+  width: 100%;
+  height: 40px;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.86rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+textarea.pro-input {
+  height: auto;
+  min-height: 64px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.pro-input:focus,
+.pro-select:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.pro-readonly {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+  cursor: not-allowed;
+}
+
+.pro-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.pro-select-wrap .pro-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.pro-arrow {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.pro-readonly-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  height: 40px;
+}
+
+.pro-company-name-text {
+  font-weight: 700;
+  color: #15803d;
+  font-size: 0.9rem;
+}
+
+/* Shipping Area */
+.pro-shipping-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem;
+  border-radius: 10px;
+}
+
+.pro-shipping-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pro-btn-update-addr {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.95rem;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pro-btn-update-addr:hover:not(:disabled) {
+  background: #0369a1;
+}
+
+/* Equipment Segmented Switch */
+.pro-segmented-switch {
+  display: inline-flex;
+  background: #e2e8f0;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 4px;
+  margin-bottom: 1.15rem;
+}
+
+.pro-segment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #64748b;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pro-segment-btn.active {
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.pro-equip-checkbox-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.pro-equip-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pro-equip-tag-pill:hover {
+  background: #ffffff;
+  border-color: #94a3b8;
+}
+
+.pro-equip-tag-pill.selected {
+  background: #eff6ff;
+  border-color: #38bdf8;
+  color: #0284c7;
+}
+
+.pro-equip-dropdown-row {
+  margin-bottom: 0.85rem;
+}
+
+.pro-select-multiple {
+  width: 100%;
+  max-width: 580px;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.84rem;
+  outline: none;
+}
+
+.pro-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+}
+
+.pro-equip-chip,
+.pro-manual-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.pro-chip-del-btn {
+  background: #fee2e2;
+  border: none;
+  color: #ef4444;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.pro-chip-del-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.pro-manual-action-bar {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.pro-btn-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pro-btn-green:hover { background: #059669; }
+
+.pro-btn-gray {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pro-btn-gray:hover { background: #e2e8f0; color: #0f172a; }
+
+.pro-manual-list-card {
+  margin-top: 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem;
+  border-radius: 10px;
+}
+
+/* =========================================================
+   SORTED & CLEAN ITEM DETAILS SECTION
+   ========================================================= */
+.pro-items-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pro-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pro-items-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pro-items-count-pill {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid #bae6fd;
+}
+
+.pro-btn-add-item-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1.15rem;
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+}
+
+.pro-btn-add-item-top:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.pro-item-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Individual Item Card */
+.pro-item-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-left: 5px solid #0284c7;
+  border-radius: 14px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pro-item-card:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+}
+
+/* Item Card Header */
+.pro-item-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pro-item-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pro-item-number-badge {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+}
+
+.pro-item-title-text {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pro-item-actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pro-reorder-group {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.pro-reorder-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.pro-reorder-btn:hover:not(:disabled) {
+  background: #ffffff;
+  color: #0284c7;
+}
+
+.pro-reorder-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pro-pos-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  border-left: 1px solid #e2e8f0;
+}
+
+.pro-pos-select {
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+}
+
+.pro-item-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pro-item-delete-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* Row 1: Full Description */
+.pro-item-desc-full {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+/* Row 2: Structured Commercials Strip */
+.pro-commercials-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  border-radius: 10px;
+  align-items: flex-start;
+}
+
+.pro-strip-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pro-strip-col.col-hsn {
+  flex: 2 1 200px;
+  min-width: 180px;
+}
+
+.pro-strip-col.col-qty {
+  flex: 1 1 90px;
+  min-width: 80px;
+}
+
+.pro-strip-col.col-uom {
+  flex: 1.1 1 110px;
+  min-width: 95px;
+}
+
+.pro-strip-col.col-rate {
+  flex: 1.4 1 120px;
+  min-width: 110px;
+}
+
+.pro-strip-col.col-disc {
+  flex: 1 1 95px;
+  min-width: 85px;
+}
+
+.pro-strip-col.col-tax {
+  flex: 1 1 95px;
+  min-width: 85px;
+}
+
+/* Row 3: Calculation Ribbon */
+.pro-item-calc-ribbon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pro-item-ribbon-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pro-export-callout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
+}
+
+.pro-formula-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.pro-item-ribbon-right {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.pro-btn-calc-sheet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pro-btn-calc-sheet:hover {
+  background: #f1f5f9;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+.pro-item-total-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+}
+
+.pro-total-lbl {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #166534;
+}
+
+.pro-total-amount {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #15803d;
+}
+
+/* Add Item Bottom Wide Button */
+.pro-btn-add-item-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem;
+  background: #f0fdf4;
+  border: 2px dashed #86efac;
+  color: #16a34a;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 0.5rem;
+}
+
+.pro-btn-add-item-bottom:hover {
+  background: #dcfce7;
+  border-color: #4ade80;
+  color: #15803d;
+}
+
+/* Terms & Conditions Section */
+.pro-terms-pill-row {
+  display: flex;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.pro-terms-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.15rem;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pro-terms-pill:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.pro-terms-pill.active {
+  background: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+
+.pro-terms-textarea-wrap {
+  position: relative;
+}
+
+.pro-terms-textarea {
+  min-height: 110px;
+  font-family: inherit;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.pro-char-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin-top: 0.35rem;
+  justify-content: flex-end;
+}
+
+/* Sticky Action Footer */
+.pro-modal-footer {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 1rem 1.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 0 0 20px 20px;
+  flex-shrink: 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.pro-footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.pro-footer-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.pro-stat-tag {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pro-stat-number {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.pro-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pro-btn-footer-cancel {
+  padding: 0.65rem 1.35rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pro-btn-footer-cancel:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.pro-btn-footer-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.85rem;
+  background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 3px 10px rgba(2, 132, 199, 0.3);
+}
+
+.pro-btn-footer-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(2, 132, 199, 0.4);
+}
+
+/* Responsive Rules */
+@media (max-width: 768px) {
+  .quotation-modal.pro-quotation-modal {
+    width: 98%;
+    max-height: 96vh;
+    border-radius: 14px;
+  }
+
+  .pro-modal-header {
+    padding: 0.85rem 1rem;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .pro-modal-title {
+    font-size: 1.15rem;
+  }
+
+  .pro-modal-body {
+    padding: 0.85rem;
+    gap: 0.85rem;
+  }
+
+  .pro-card-section {
+    padding: 1rem;
+  }
+
+  .pro-grid-2col,
+  .pro-grid-3col {
+    grid-template-columns: 1fr;
+  }
+
+  .pro-commercials-strip {
+    flex-direction: column;
+  }
+
+  .pro-strip-col {
+    width: 100%;
+  }
+
+  .pro-modal-footer {
+    padding: 0.85rem 1rem;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .pro-footer-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pro-btn-footer-submit,
+  .pro-btn-footer-cancel {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+
+.required {
+  color: red;
+  font-size: medium;
+}
+
+/* =========================================================
+   AWESOME QUOTATIONS MODAL STYLING
+   ========================================================= */
+.modal-card.awesome-quotation-modal {
+  max-width: 1200px;
+  width: 95%;
+  max-height: 90vh;
+  background: #f8fafc;
+  border-radius: 24px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  padding: 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow: hidden !important;
+  animation: aqModalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes aqModalSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.aq-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.aq-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.aq-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.35rem;
+  box-shadow: 0 8px 20px -4px rgba(2, 132, 199, 0.4);
+  flex-shrink: 0;
+}
+
+.aq-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.aq-modal-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.aq-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  border: 1px solid #bae6fd;
+}
+
+.aq-modal-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.2rem 0 0 0;
+}
+
+.aq-btn-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.aq-btn-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+  transform: translateX(-2px);
+}
+
+/* Summary Banner */
+.aq-summary-banner {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.aq-summary-card {
+  flex: 1;
+  min-width: 220px;
+  border-radius: 16px;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.15);
+}
+
+.aq-summary-card.inr-card {
+  background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+}
+
+.aq-summary-card.usd-card {
+  background: linear-gradient(135deg, #059669 0%, #065f46 100%);
+}
+
+.aq-summary-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.aq-summary-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.aq-summary-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+.aq-summary-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.aq-gst-toggle-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 0.75rem 1.1rem;
+  gap: 0.4rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.aq-gst-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.aq-gst-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.aq-gst-btn.gst-active {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.aq-gst-btn.gst-inactive {
+  background: #f8fafc;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+.aq-gst-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Filters Bar */
+.aq-filters-bar {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  background: #ffffff;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
+
+.aq-filter-field {
+  flex: 1;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.aq-filter-field.search-field {
+  min-width: 220px;
+  flex: 1.5;
+}
+
+.aq-filter-field.date-group-field {
+  min-width: 220px;
+  flex: 1.2;
+}
+
+.aq-filter-field.clear-btn-field {
+  flex: 0 0 auto;
+  min-width: auto;
+}
+
+.aq-filter-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.aq-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.aq-input,
+.aq-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.aq-input:focus,
+.aq-select:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.aq-clear-input {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e2e8f0;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.aq-clear-input:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.aq-date-inputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.aq-btn-reset {
+  height: 38px;
+  padding: 0 1rem;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.aq-btn-reset:hover {
+  background: #fecaca;
+  color: #991b1b;
+  transform: translateY(-1px);
+}
+
+/* Content Body & Grid */
+.aq-content-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.4rem;
+  margin-top: 0.25rem;
+  min-height: 240px;
+}
+
+.aq-content-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.aq-content-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.aq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Card Design */
+.aq-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+.aq-card:hover {
+  transform: translateY(-4px);
+  border-color: #38bdf8;
+  box-shadow: 0 14px 28px -6px rgba(2, 132, 199, 0.15), 0 0 0 1px rgba(56, 189, 248, 0.2);
+}
+
+.aq-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.aq-quote-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0284c7;
+  background: #f0f9ff;
+  padding: 0.25rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #e0f2fe;
+}
+
+.aq-quote-id i {
+  font-size: 0.8rem;
+}
+
+/* Status Badges */
+.aq-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+}
+
+.aq-status-pill.status-approved {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.aq-status-pill.status-followup {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.aq-status-pill.status-pending {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.aq-status-pill.status-rejected {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+
+/* Card Main */
+.aq-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.aq-company-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  line-height: 1.35;
+}
+
+.aq-company-title i {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.aq-company-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.aq-card-amount-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.aq-amount-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.aq-amount-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.aq-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.aq-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.aq-meta-item i {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  width: 14px;
+}
+
+/* Card Footer */
+.aq-card-foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 0.6rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.aq-view-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0284c7;
+  transition: gap 0.2s;
+}
+
+.aq-card:hover .aq-view-hint {
+  gap: 0.55rem;
+}
+
+/* Card Action Buttons (Single customer popup) */
+.aq-card-actions-foot {
+  display: flex;
+  gap: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.aq-act-btn {
+  flex: 1;
+  min-width: 70px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.aq-act-btn.edit-btn {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+.aq-act-btn.edit-btn:hover {
+  background: #dbeafe;
+}
+
+.aq-act-btn.dup-btn {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+.aq-act-btn.dup-btn:hover {
+  background: #dcfce7;
+}
+
+.aq-act-btn.del-btn {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+.aq-act-btn.del-btn:hover {
+  background: #fee2e2;
+}
+
+/* Loading & Empty States */
+.aq-loading-state,
+.aq-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1rem;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.aq-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #0284c7;
+  border-radius: 50%;
+  animation: aqSpin 0.7s linear infinite;
+}
+
+@keyframes aqSpin {
+  to { transform: rotate(360deg); }
+}
+
+.aq-loading-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+.aq-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: #94a3b8;
+}
+
+.aq-empty-state h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.aq-empty-state p {
+  font-size: 0.85rem;
+  color: #64748b;
+  max-width: 380px;
+  margin: 0;
+}
+
+.aq-btn-empty-reset {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+.aq-btn-empty-reset:hover {
+  background: #0369a1;
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-card.awesome-quotation-modal {
+    padding: 1.25rem 1rem;
+    border-radius: 20px;
+    width: 98%;
+    max-height: 94vh;
+  }
+
+  .aq-modal-title {
+    font-size: 1.2rem;
+  }
+
+  .aq-summary-banner {
+    flex-direction: column;
+  }
+
+  .aq-summary-card {
+    min-width: 100%;
+  }
+
+  .aq-filters-bar {
+    padding: 0.85rem;
+    gap: 0.65rem;
+  }
+
+  .aq-filter-field {
+    min-width: 100%;
+  }
+
+  .aq-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* =========================================================
+   PRO HIGH Z-INDEX MODAL BACKDROP (ALWAYS IN FRONT OF PO MODAL)
+   ========================================================= */
+
+.pro-modal-backdrop-top {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10500 !important;
+  padding: 1.25rem;
+  animation: proModalFadeIn 0.2s ease-out;
+}
+
+@keyframes proModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card.pro-table-modal {
+  background: #f8fafc;
+  width: 95%;
+  max-width: 1180px;
+  max-height: 92vh;
+  margin: 0 auto;
+  border-radius: 20px;
+  box-shadow: 0 30px 70px -15px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  padding: 0;
+  animation: proModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10501 !important;
+}
+
+.modal-card.pro-table-modal.pro-modal-wide {
+  max-width: 1320px;
+}
+
+@keyframes proModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =========================================================
+   PRO MODAL HEADER STYLES (MATERIAL, VISITS, SERVICES)
+   ========================================================= */
+
+.pro-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+  color: #ffffff;
+  padding: 1.1rem 1.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);
+  flex-shrink: 0;
+}
+
+/* Header Color Variants */
+.pro-modal-header.header-purple {
+  background: linear-gradient(135deg, #7c3aed 0%, #4338ca 100%) !important;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25) !important;
+}
+
+.pro-modal-header.header-emerald {
+  background: linear-gradient(135deg, #059669 0%, #065f46 100%) !important;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.25) !important;
+}
+
+.pro-modal-header.header-indigo {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%) !important;
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25) !important;
+}
+
+.pro-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pro-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.pro-header-icon.icon-cyan {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pro-header-icon.icon-purple {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pro-header-icon.icon-emerald {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pro-header-icon.icon-indigo {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pro-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pro-modal-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.pro-status-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+}
+
+.pro-status-pill.pill-cyan {
+  background: rgba(255, 255, 255, 0.25);
+  color: #e0f2fe;
+}
+
+.pro-status-pill.pill-purple {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ede9fe;
+}
+
+.pro-status-pill.pill-emerald {
+  background: rgba(255, 255, 255, 0.25);
+  color: #d1fae5;
+}
+
+.pro-status-pill.pill-indigo {
+  background: rgba(255, 255, 255, 0.25);
+  color: #e0e7ff;
+}
+
+.pro-company-subchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e0e7ff;
+  margin-top: 0.15rem;
+}
+
+.pro-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pro-btn-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 0.5rem 1.05rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(4px);
+}
+
+.pro-btn-header-action:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.pro-btn-header-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pro-btn-header-close:hover {
+  background: #ffffff;
+  color: #0f172a;
+  transform: rotate(90deg);
+}
+
+/* =========================================================
+   FILTER TOOLBAR & CONTROLS
+   ========================================================= */
+
+.pro-filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 1.75rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.pro-search-box {
+  position: relative;
+  flex: 2 1 280px;
+}
+
+.pro-search-icon {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.pro-search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0.5rem 2.2rem 0.5rem 2.5rem;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.86rem;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.pro-search-input:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.pro-clear-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e2e8f0;
+  border: none;
+  color: #64748b;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.pro-clear-btn:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.pro-filter-month-box {
+  position: relative;
+  flex: 1 1 190px;
+}
+
+.pro-month-icon {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #0284c7;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.pro-month-select {
+  width: 100%;
+  height: 40px;
+  padding: 0.5rem 2rem 0.5rem 2.5rem;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.pro-month-select:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+/* =========================================================
+   TABLE SCROLL & CELLS
+   ========================================================= */
+
+.pro-table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.75rem 1.75rem 1.75rem;
+}
+
+.pro-styled-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.pro-styled-table thead th {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border: none;
+  white-space: nowrap;
+}
+
+.pro-styled-table thead tr th:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.pro-styled-table thead tr th:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.pro-table-row {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.15s ease;
+}
+
+.pro-table-row:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.pro-table-row td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pro-table-row td:first-child {
+  border-left: 1px solid #f1f5f9;
+  border-radius: 10px 0 0 10px;
+}
+
+.pro-table-row td:last-child {
+  border-right: 1px solid #f1f5f9;
+  border-radius: 0 10px 10px 0;
+}
+
+/* Cell Badges & Components */
+.pro-company-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pro-cell-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.pro-cell-icon.bg-blue { background: #e0f2fe; color: #0284c7; }
+.pro-cell-icon.bg-emerald { background: #dcfce7; color: #059669; }
+
+.pro-company-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pro-po-pill {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #1e293b;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+.pro-tag-pill {
+  display: inline-block;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+}
+
+.pro-text-sub {
+  font-size: 0.84rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.pro-tracking-badge {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #bfdbfe;
+}
+
+.pro-delivered-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #86efac;
+}
+
+.pro-date-cell-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 210px;
+}
+
+.pro-date-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #0284c7;
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.pro-date-input {
+  width: 100%;
+  height: 36px;
+  padding: 0.35rem 0.65rem 0.35rem 2.1rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.pro-date-input:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.pro-date-input-sm {
+  width: 135px;
+  height: 34px;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.pro-date-display,
+.pro-user-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.pro-select-cell-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 240px;
+}
+
+.pro-user-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.pro-assign-select {
+  width: 100%;
+  height: 36px;
+  padding: 0.35rem 1.8rem 0.35rem 2.1rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.pro-assign-select:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.pro-status-select {
+  height: 34px;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  outline: none;
+  cursor: pointer;
+}
+
+.pro-status-select.st-awaiting {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.pro-status-select.st-dispatched {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.pro-status-select.st-delivered {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+/* Report Buttons */
+.pro-reports-wrap {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pro-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pro-report-btn:hover {
+  background: #059669;
+  color: #ffffff;
+}
+
+.pro-no-report-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* Empty State */
+.pro-no-data-cell {
+  padding: 3rem 1rem !important;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 12px !important;
+  border: 1px dashed #cbd5e1 !important;
+}
+
+.pro-no-data-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: #94a3b8;
+}
+
+.pro-no-data-wrap i {
+  font-size: 2.2rem;
+  color: #cbd5e1;
+}
+
+.pro-no-data-wrap p {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+
+
+/* =========================================================
+   CRM MAIN SCREEN & CUSTOMER TABLE (PROFESSIONAL ALIGNMENT)
+   ========================================================= */
+
+/* Hero Header */
+.crm-hero-header {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.crm-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.crm-hero-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.crm-eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  width: fit-content;
+}
+
+.crm-main-heading {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.crm-sub-heading {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Header Action Buttons */
+.crm-header-action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.crm-btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.crm-btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+.crm-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+}
+
+.crm-btn-secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.crm-btn-secondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.crm-btn-outline {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.crm-btn-outline:hover {
+  background: #f8fafc;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+/* 4-Column Stats Grid */
+.crm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.crm-stat-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.15s ease;
+}
+
+.crm-stat-card:hover {
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  transform: translateY(-1px);
+}
+
+.crm-stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.crm-stat-card.card-blue .crm-stat-icon-wrap { background: #e0f2fe; color: #0284c7; }
+.crm-stat-card.card-amber .crm-stat-icon-wrap { background: #fef3c7; color: #d97706; }
+.crm-stat-card.card-purple .crm-stat-icon-wrap { background: #ede9fe; color: #7c3aed; }
+.crm-stat-card.card-emerald .crm-stat-icon-wrap { background: #dcfce7; color: #059669; }
+
+.crm-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.crm-stat-count {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.crm-stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+/* Search Bar Wrap */
+.crm-search-bar-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.crm-search-input-box {
+  position: relative;
+  flex: 1;
+  max-width: 620px;
+}
+
+.crm-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.crm-search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0.5rem 2.5rem 0.5rem 2.75rem;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.88rem;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.crm-search-input:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.crm-search-clear {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.crm-search-clear:hover {
+  color: #0f172a;
+}
+
+.crm-search-summary-pill {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+}
+
+/* =========================================================
+   MAIN CUSTOMER TABLE CARD
+   ========================================================= */
+
+.crm-table-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.crm-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.crm-customer-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.crm-customer-table thead th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1rem 1.35rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.crm-table-row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.12s ease;
+}
+
+.crm-table-row:hover {
+  background: #f8fafc;
+}
+
+.crm-table-row td {
+  padding: 1rem 1.35rem;
+  vertical-align: middle;
+}
+
+.crm-sr-badge {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+}
+
+.crm-company-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.crm-company-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.crm-company-link {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.crm-company-link:hover {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+.crm-cust-no-badge {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-family: monospace;
+  font-size: 0.84rem;
+  font-weight: 800;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #dbeafe;
+}
+
+/* Quick Action Buttons Group */
+.crm-action-buttons-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.crm-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.crm-action-btn.btn-view-po {
+  background: #eff6ff;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+}
+
+.crm-action-btn.btn-view-po:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.crm-action-btn.btn-quotation {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.crm-action-btn.btn-quotation:hover {
+  background: #d97706;
+  color: #ffffff;
+}
+
+.crm-action-btn.btn-report {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.crm-action-btn.btn-report:hover {
+  background: #059669;
+  color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .crm-hero-top {
+    flex-direction: column;
+  }
+
+  .crm-header-action-group {
+    width: 100%;
+  }
+
+  .crm-btn-pill {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* =========================================================
+   AWESOME QUOTATION MODALS (TOP Z-INDEX FOR CREATE/EDIT FRONT)
+   ========================================================= */
+.modal-card.awesome-quotation-modal {
+  max-width: 1200px;
+  width: 95%;
+  max-height: 90vh;
+  background: #f8fafc;
+  border-radius: 24px;
+  box-shadow: 0 30px 70px -15px rgba(15, 23, 42, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+  padding: 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow: hidden !important;
+  animation: aqModalSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10501 !important;
+}
+
+.modal-card.medium {
+  z-index: 10601 !important;
 }
 </style>

@@ -37,7 +37,7 @@ import MyLeaveBalance from '../views/employee/MyLeaveBalance.vue';
 
 
 import ManageDepartments from '../views/ManageDepartments.vue'
-import EmployeeDashboard from '../views/employee/Dashboard.vue' 
+import EmployeeDashboard from '../views/employee/Dashboard.vue'
 // import DailyWorkReport from '../views/employee/DailyWorkReport.vue'
 import MyTask from '../views/employee/MyTask.vue'
 import ApplyLeave from '../views/employee/ApplyLeave.vue'
@@ -74,117 +74,118 @@ import MySalaryAdvances from '../views/employee/MySalaryAdvances.vue';
 import MyProfile from '../views/employee/MyProfile.vue';
 import WeeklyWorkingSchedule from '../views/employee/WeeklyWorkingSchedule.vue';
 
-
-
-
-
-
-
-
+// Newly Extracted Standalone Pages
+import AmcVisitsPage from '../views/employee/AmcVisitsPage.vue';
+import ServiceOrdersPage from '../views/employee/ServiceOrdersPage.vue';
+import MaterialSupplyPage from '../views/employee/MaterialSupplyPage.vue';
 
 const routes = [
-  { path: '/', component: AuthForm, meta: { hideHeader: true, hideBell: true, hideHelp: true, hideMenu: true,
-    hideHeader: true } },
-  { path: '/auth', component: AuthForm, meta: { hideHeader: true, hideBell: true, hideHelp: true,  hideMenu: true,  hideHeader: true } },
+  {
+    path: '/', component: AuthForm, meta: {
+      hideHeader: true, hideBell: true, hideHelp: true, hideMenu: true,
+      hideHeader: true
+    }
+  },
+  { path: '/auth', component: AuthForm, meta: { hideHeader: true, hideBell: true, hideHelp: true, hideMenu: true, hideHeader: true } },
 
   {
-  path: '/dashboard',
-  component: Dashboard,
-  meta: {
-    requiresAuth: true,
-    hideBell: true,  hideMenu: true,
-  }
-},
-{
-  path: '/meeting/:id',
-  name: 'MeetingRoom',
-  component: () => import('../views/MeetingRoom.vue'),
-  meta: { requiresAuth: true, hideBell: true,  hideMenu: true,  hideHeader: true }
-},
+    path: '/dashboard',
+    component: Dashboard,
+    meta: {
+      requiresAuth: true,
+      hideBell: true, hideMenu: true,
+    }
+  },
+  {
+    path: '/meeting/:id',
+    name: 'MeetingRoom',
+    component: () => import('../views/MeetingRoom.vue'),
+    meta: { requiresAuth: true, hideBell: true, hideMenu: true, hideHeader: true }
+  },
 
 
-{path:'/ScheduleMeeting',name:'ScheduleMeeting',component:ScheduleMeeting,meta:{requiresAuth: true, adminOnly: true, hideBell:true,  hideMenu: true,}},
-{path: '/holidays', name: 'Holiday', component: holiday, meta: { requiresAuth: true, adminOnly: true, hideBell:true,  hideMenu: true, }},
-  { path: '/employees', name: 'ManageEmp', component: Employee, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/workflow', name: 'WorkFlow', component: WorkFlow, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/ExpenseManage', name: 'ExpenseManage', component: ExpenseManage, meta: {requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/TimeSheet', name: 'TimeSheet', component: TimeSheet, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/ResourceBooking', name: 'ResourceBooking', component: ResourceBooking, meta: {requiresAuth: true, adminOnly:true,  hideBell: true,  hideMenu: true, } },
-  { path: '/RequestDesk', name: 'RequestDesk', component: RequestDesk, meta: { requiresAuth: true, adminOnly:true, hideBell: true ,  hideMenu: true,} },
-  { path: '/RecruitmentSection', name: 'RecruitmentSection', component: RecruitmentSection, meta: { requiresAuth: true, adminOnly:true, hideBell: true,  hideMenu: true, } },
-  { path: '/ArchCalendar', name: 'ArchCalendar', component: ArchCalendar, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-{ path: '/salaryadvances', name: 'SalaryAdvances', component: SalaryAdvances, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-{path: '/employee/mysalaryadvances', name: 'MySalaryAdvances', component: MySalaryAdvances, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-  {path: '/OfferLetter', name: 'OfferLetter', component: OfferLetter, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
-  {path: '/JoiningLetter', name: 'JoiningLetter', component: JoiningLetter, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
-{path: '/SupplyItems', name: 'SupplyItems', component: SupplyItems, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, }},
-{
-  path: '/OfferLetterList',
-  name: 'OfferLetterList',
-  component: OfferLetterList,
-  meta: { requiresAuth: true, hideBell: true, hideMenu: true }
-},
-{
+  { path: '/ScheduleMeeting', name: 'ScheduleMeeting', component: ScheduleMeeting, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/holidays', name: 'Holiday', component: holiday, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/employees', name: 'ManageEmp', component: Employee, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/workflow', name: 'WorkFlow', component: WorkFlow, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/ExpenseManage', name: 'ExpenseManage', component: ExpenseManage, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/TimeSheet', name: 'TimeSheet', component: TimeSheet, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/ResourceBooking', name: 'ResourceBooking', component: ResourceBooking, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/RequestDesk', name: 'RequestDesk', component: RequestDesk, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/RecruitmentSection', name: 'RecruitmentSection', component: RecruitmentSection, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/ArchCalendar', name: 'ArchCalendar', component: ArchCalendar, meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/salaryadvances', name: 'SalaryAdvances', component: SalaryAdvances, meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/employee/mysalaryadvances', name: 'MySalaryAdvances', component: MySalaryAdvances, meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/OfferLetter', name: 'OfferLetter', component: OfferLetter, meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/JoiningLetter', name: 'JoiningLetter', component: JoiningLetter, meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/SupplyItems', name: 'SupplyItems', component: SupplyItems, meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  {
+    path: '/OfferLetterList',
+    name: 'OfferLetterList',
+    component: OfferLetterList,
+    meta: { requiresAuth: true, hideBell: true, hideMenu: true }
+  },
+  {
     path: '/performance',
     name: 'Performance',
     component: PerformancePage, meta: { requiresAuth: true, hideBell: true, hideMenu: true }
   },
-  {path: '/employee/performance', name: 'EmployeePerformance', component: PerformancePage, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
-{path: '/employee/ETPSession', name: 'ETPSession', component: () => import('../views/employee/ETPSession.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
-{
-  path: '/OfferLetter/:id?',
-  name: 'OfferLetter',
-  component: OfferLetter,
-  meta: { requiresAuth: true, hideBell: true, hideMenu: true }
-},
+  { path: '/employee/performance', name: 'EmployeePerformance', component: PerformancePage, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
+  { path: '/employee/ETPSession', name: 'ETPSession', component: () => import('../views/employee/ETPSession.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
+  {
+    path: '/OfferLetter/:id?',
+    name: 'OfferLetter',
+    component: OfferLetter,
+    meta: { requiresAuth: true, hideBell: true, hideMenu: true }
+  },
 
 
-  { path: '/settings', name: 'Settings', component: Settings, meta: { hideBell: true, adminOnly: true,  hideMenu: true, } },
+  { path: '/settings', name: 'Settings', component: Settings, meta: { hideBell: true, adminOnly: true, hideMenu: true, } },
 
-  { path: '/leaveapplications', name: 'LeaveApplications', component: LeaveApplications, meta:{ requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/approvedleaves', name: 'ApprovedLeaves', component: ApprovedLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/rejectedleaves', name: 'RejectedLeaves', component: RejectedLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/pendingleaves', name: 'PendingLeaves', component: PendingLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/manageleavetype', name: 'ManageLeavetype', component: ManageLeavetype, meta: { requiresAuth: true, adminOnly:true, hideBell: true,  hideMenu: true, } },
-{path: '/MyApps', name: 'MyApps', component: () => import('../views/MyApps.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-{path: '/ArchApps', name: 'ArchApps', component: () => import('../views/employee/ArchApps.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
+  { path: '/leaveapplications', name: 'LeaveApplications', component: LeaveApplications, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/approvedleaves', name: 'ApprovedLeaves', component: ApprovedLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/rejectedleaves', name: 'RejectedLeaves', component: RejectedLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/pendingleaves', name: 'PendingLeaves', component: PendingLeaves, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/manageleavetype', name: 'ManageLeavetype', component: ManageLeavetype, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/MyApps', name: 'MyApps', component: () => import('../views/MyApps.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/ArchApps', name: 'ArchApps', component: () => import('../views/employee/ArchApps.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
 
-{path: '/employee/ManageStock', name: 'ManageStock', component: () => import('../views/employee/ManageStock.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-  { path: '/customerregistration', name: 'CustomerRegistration', component: CustomerRegistration, meta: {requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-{ path: '/salaryslip', name: 'SalarySlip', component: SalarySlip, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-{
-  path: '/quotation',
-  name: 'Quotation',
-  component: Quotation,
-  meta: {
-    public: true,
-    requiresAuth: false,
-    adminOnly: false,
-    hideBell: true,
-    hideHelp: true,  hideMenu: true,  hideHeader: true,
-  }
-},
+  { path: '/employee/ManageStock', name: 'ManageStock', component: () => import('../views/employee/ManageStock.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/customerregistration', name: 'CustomerRegistration', component: CustomerRegistration, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/salaryslip', name: 'SalarySlip', component: SalarySlip, meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  {
+    path: '/quotation',
+    name: 'Quotation',
+    component: Quotation,
+    meta: {
+      public: true,
+      requiresAuth: false,
+      adminOnly: false,
+      hideBell: true,
+      hideHelp: true, hideMenu: true, hideHeader: true,
+    }
+  },
 
 
 
   {
-  path: '/employee/quotations',
-  component: () => import('@/views/ViewAllQuotations.vue')
-},
+    path: '/employee/quotations',
+    component: () => import('@/views/ViewAllQuotations.vue')
+  },
 
 
-  { path: '/managedepartments', name: 'ManageDepartments', component: ManageDepartments, meta: {requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/assigntask', name: 'AssignTask', component: AssignTask, meta: { requiresAuth: true, adminOnly: true, hideBell: true,  hideMenu: true, } },
-  { path: '/announcement', name: 'Announcement', component: Announcement, meta: { requiresAuth: true, adminOnly: true, hideBell: true ,  hideMenu: true,} },
-  { path: '/workreport', name: 'WorkReport', component: WorkReport, meta: { requiresAuth: true, adminOnly:true, hideBell: true,  hideMenu: true, } },
-  { path: '/empattendanceadmin', name: 'empattendanceadmin', component: EmpAttendanceAdmin, meta: { requiresAuth: true, adminOnly:true, hideBell: true,  hideMenu: true, } },
-  { path: '/empdsi', name: 'EmpDsi', component: EmpDsi, meta: { requiresAuth: true, adminOnly:true, hideBell:true,  hideMenu: true, } },
-  { path: '/rcahelp', name: 'RCAhelp', component: RCAhelp, meta: { hideBell: true, adminOnly: true,  hideMenu: true, } },
+  { path: '/managedepartments', name: 'ManageDepartments', component: ManageDepartments, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/assigntask', name: 'AssignTask', component: AssignTask, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/announcement', name: 'Announcement', component: Announcement, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/workreport', name: 'WorkReport', component: WorkReport, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/empattendanceadmin', name: 'empattendanceadmin', component: EmpAttendanceAdmin, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/empdsi', name: 'EmpDsi', component: EmpDsi, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true, } },
+  { path: '/rcahelp', name: 'RCAhelp', component: RCAhelp, meta: { hideBell: true, adminOnly: true, hideMenu: true, } },
 
   // ───── EMPLOYEE SECTION ─────
   { path: '/employee/dashboard', name: 'EmployeeDashboard', component: EmployeeDashboard, meta: { requiresAuth: true } },
   { path: '/employee/mytask', name: 'MyTask', component: MyTask, meta: { requiresAuth: true } },
-{ path : '/employee/weeklyworkingschedule', name: 'WeeklyWorkingSchedule', component: WeeklyWorkingSchedule, meta: {requiresAuth: true} },
+  { path: '/employee/weeklyworkingschedule', name: 'WeeklyWorkingSchedule', component: WeeklyWorkingSchedule, meta: { requiresAuth: true } },
   { path: '/employee/applyleave', name: 'ApplyLeave', component: ApplyLeave, meta: { requiresAuth: true } },
   { path: '/employee/viewannouncement', name: 'ViewAnnouncement', component: ViewAnnouncement, meta: { requiresAuth: true } },
 
@@ -194,34 +195,37 @@ const routes = [
   { path: '/employee/pendingleaves', name: 'PendingLeavesEmp', component: PendingLeavesEmp, meta: { requiresAuth: true } },
   { path: '/employee/empattendance', name: 'empattendance', component: EmpAttendance, meta: { requiresAuth: true } },
   { path: '/employee/archcalendar', name: 'ArchCalendarEmp', component: ArchCalendarEmp, meta: { requiresAuth: true } },
-  { path: '/employee/viewkra', name: 'ViewKra', component: ViewKra, meta: { requiresAuth: true } },  // Add this line
+  { path: '/employee/viewkra', name: 'ViewKra', component: ViewKra, meta: { requiresAuth: true } },  // Extracted Standalone Pages
+  { path: '/employee/amc-visits', name: 'AmcVisitsPage', component: AmcVisitsPage, meta: { requiresAuth: true } },
+  { path: '/employee/service-orders', name: 'ServiceOrdersPage', component: ServiceOrdersPage, meta: { requiresAuth: true } },
+  { path: '/employee/material-supply', name: 'MaterialSupplyPage', component: MaterialSupplyPage, meta: { requiresAuth: true } },
   { path: '/employee/report', name: 'Report', component: Report, meta: { requiresAuth: true } },
   { path: '/employee/customerregistrations', name: 'CustomerRegistrations', component: CustomerRegistrations, meta: { requiresAuth: true } },
-  { path: '/employee/literature' , name: 'LiteraTure' , component: LiteraTure, meta: { requiresAuth: true } },
+  { path: '/employee/literature', name: 'LiteraTure', component: LiteraTure, meta: { requiresAuth: true } },
   { path: '/employee/visitschedule', name: 'VisitSchedule', component: VisitSchedule, meta: { requiresAuth: true } },
-  { path: '/employee/MobileAppLifeCycle', name: 'MobileAppLifeCycle', component: () => import('../views/employee/MobileAppLifeCycle.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-  { path: '/employee/SpinTheWheel', name: 'SpinTheWheel', component: () => import('../views/employee/SpinTheWheel.vue'), meta: { requiresAuth: true, hideBell: true,  hideMenu: true, } },
-{ path: '/employee/Request', name: 'RequestDeskemp', component: RequestDeskemp, meta: { requiresAuth: true } },
-{ path: '/employee/Resourcebooking', name: 'ResourceBookingEmp', component: ResourceBookingEmp, meta: { requiresAuth: true } },
+  { path: '/employee/MobileAppLifeCycle', name: 'MobileAppLifeCycle', component: () => import('../views/employee/MobileAppLifeCycle.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/employee/SpinTheWheel', name: 'SpinTheWheel', component: () => import('../views/employee/SpinTheWheel.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true, } },
+  { path: '/employee/Request', name: 'RequestDeskemp', component: RequestDeskemp, meta: { requiresAuth: true } },
+  { path: '/employee/Resourcebooking', name: 'ResourceBookingEmp', component: ResourceBookingEmp, meta: { requiresAuth: true } },
   // 🔔 Bell hidden here also
-  { 
+  {
     path: '/employee/followup',
     name: 'FollowUp',
     component: FollowUp,
-    meta: {requiresAuth: true, hideBell: true,  hideHeader: true }
+    meta: { requiresAuth: true, hideBell: true, hideHeader: true }
   },
-  {path: '/employee/myleavebalance', name: 'MyLeaveBalance', component: MyLeaveBalance, meta: { requiresAuth: true } },
-  { 
+  { path: '/employee/myleavebalance', name: 'MyLeaveBalance', component: MyLeaveBalance, meta: { requiresAuth: true } },
+  {
     path: '/employee/sop',
     name: 'sop',
     component: sop,
-    meta: { requiresAuth: true}
+    meta: { requiresAuth: true }
   },
-  { 
+  {
     path: '/employee/AmcRecord',
     name: 'AmcRecord',
     component: AmcRecord,
-    meta: { requiresAuth: true, hideBell: true,  hideHeader: true }
+    meta: { requiresAuth: true, hideBell: true, hideHeader: true }
   },
   { path: '/employee/viewallpo', name: 'ViewAllPo', component: ViewAllPo, meta: { requiresAuth: true } },
   { path: '/employee/mydsi', name: 'MyDsi', component: MyDsi, meta: { requiresAuth: true } },
@@ -229,8 +233,8 @@ const routes = [
   { path: '/employee/empworkreport', name: 'EmpWorkReport', component: EmpWorkReport, meta: { requiresAuth: true } },
   { path: '/employee/myprofile', name: 'MyProfile', component: MyProfile },
   {
-  path: '/quotation-report', name: 'QuotationReport', component: QuotationReport, meta: { requiresAuth: true, hideBell: true,  hideMenu: true, hideHeader: true }
-}
+    path: '/quotation-report', name: 'QuotationReport', component: QuotationReport, meta: { requiresAuth: true, hideBell: true, hideMenu: true, hideHeader: true }
+  }
 ]
 
 

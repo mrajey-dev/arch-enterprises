@@ -66,7 +66,7 @@
       </div>
       </div>  
    
-        <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/weeklyworkingschedule')">
+        <!-- <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/weeklyworkingschedule')">
       <div class="new-tag">New</div>
       <div class="card-icon todo-icon">
         <i class="fas fa-list-ul"></i>
@@ -75,7 +75,7 @@
         <p class="label">Weekly To-Do list</p>
         <span class="progress-text">Set your weekly goal</span>
       </div>
-      </div>
+      </div> -->
 
   <!-- Mobile Only Cards - Grouped by Category -->
   <div class="mobile-section-title">

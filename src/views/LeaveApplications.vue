@@ -556,252 +556,367 @@ export default {
       this.visibleLeaveCount += 5
     },
 
-    calculateLeaveDays(fromDate, toDate, leaveType) {
-      try {
-        const from = new Date(fromDate)
-        const to = new Date(toDate)
-        
-        if (isNaN(from.getTime()) || isNaN(to.getTime())) {
-          console.error('Invalid dates:', fromDate, toDate)
-          return 1
-        }
-        
-        from.setHours(0, 0, 0, 0)
-        to.setHours(0, 0, 0, 0)
-        
-        const diffTime = Math.abs(to - from)
-        let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-        
-        const leaveTypeLower = (leaveType || '').toLowerCase().trim()
-        if (leaveTypeLower === 'half day' || leaveTypeLower === 'half-day' || leaveTypeLower.includes('half')) {
-          diffDays = 0.5
-        }
-        
-        return diffDays
-      } catch (error) {
-        console.error('Error calculating days:', error)
-        return 1
-      }
-    },
+calculateLeaveDays(fromDate, toDate, leaveType) {
+  try {
+    const from = new Date(fromDate)
+    const to = new Date(toDate)
+    
+    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+      console.error('Invalid dates:', fromDate, toDate)
+      return 1
+    }
+    
+    from.setHours(0, 0, 0, 0)
+    to.setHours(0, 0, 0, 0)
+    
+    const diffTime = Math.abs(to - from)
+    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    
+    // FIX: Better half-day detection
+    const leaveTypeLower = (leaveType || '').toLowerCase().trim()
+    // Check for half day in various formats
+    if (leaveTypeLower === 'half day' || 
+        leaveTypeLower === 'half-day' || 
+        leaveTypeLower === 'halfday' ||
+        leaveTypeLower.includes('half')) {
+      diffDays = 0.5
+    }
+    
+    return diffDays
+  } catch (error) {
+    console.error('Error calculating days:', error)
+    return 1
+  }
+},
 
-    mapLeaveTypeToColumn(leaveType) {
-      const typeMap = {
-        'casual': { used_column: 'used_cl_leave', total_column: 'casual_leave', remaining_column: 'remaining_cl_leave' },
-        'cl': { used_column: 'used_cl_leave', total_column: 'casual_leave', remaining_column: 'remaining_cl_leave' },
-        'pl': { used_column: 'used_pl_leave', total_column: 'pl_leave', remaining_column: 'remaining_pl_leave' },
-        'privilege': { used_column: 'used_pl_leave', total_column: 'pl_leave', remaining_column: 'remaining_pl_leave' },
-        'sick': { used_column: 'used_sick_leave', total_column: 'sick_leave', remaining_column: 'remaining_sick_leave' },
-        'sl': { used_column: 'used_sick_leave', total_column: 'sick_leave', remaining_column: 'remaining_sick_leave' },
-        'unpaid': { used_column: 'used_unpaid_leave', total_column: 'unpaid_leave', remaining_column: 'remaining_unpaid_leave' }
+   mapLeaveTypeToColumn(leaveType) {
+  if (!leaveType) return null
+  
+  const typeMap = {
+    'casual': { used_column: 'used_cl_leave', total_column: 'casual_leave', remaining_column: 'remaining_cl_leave' },
+    'cl': { used_column: 'used_cl_leave', total_column: 'casual_leave', remaining_column: 'remaining_cl_leave' },
+    'pl': { used_column: 'used_pl_leave', total_column: 'pl_leave', remaining_column: 'remaining_pl_leave' },
+    'privilege': { used_column: 'used_pl_leave', total_column: 'pl_leave', remaining_column: 'remaining_pl_leave' },
+    'sick': { used_column: 'used_sick_leave', total_column: 'sick_leave', remaining_column: 'remaining_sick_leave' },
+    'sl': { used_column: 'used_sick_leave', total_column: 'sick_leave', remaining_column: 'remaining_sick_leave' },
+    'unpaid': { used_column: 'used_unpaid_leave', total_column: 'unpaid_leave', remaining_column: 'remaining_unpaid_leave' },
+    // Add explicit mapping for half day
+    'half day': { used_column: 'used_cl_leave', total_column: 'casual_leave', remaining_column: 'remaining_cl_leave' }
+  }
+  
+  const key = (leaveType || '').toLowerCase().trim()
+  
+  // Direct match
+  if (typeMap[key]) {
+    return typeMap[key]
+  }
+  
+  // Check if it contains half day - treat as casual leave
+  if (key.includes('half')) {
+    return typeMap['half day']
+  }
+  
+  // Partial match
+  for (const [typeKey, mapping] of Object.entries(typeMap)) {
+    if (key.includes(typeKey)) {
+      return mapping
+    }
+  }
+  
+  // Default to casual leave if nothing matches
+  console.warn('Unknown leave type, defaulting to casual:', leaveType)
+  return typeMap['casual']
+},
+
+async approveLeave(leave) {
+  if (this.busyLeave.id) return
+  const previousStatus = leave.status
+  this.busyLeave = { id: leave.id, action: 'Approved' }
+
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) throw new Error('No auth token found!')
+
+    const userName = leave.name || this.loggedInUserName
+    if (!userName) throw new Error('No valid user name found!')
+
+    // Calculate leave days (handles half-day correctly)
+    let totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate, leave.leaveType)
+    
+    console.log('Approving leave:', {
+      id: leave.id,
+      name: userName,
+      fromDate: leave.fromDate,
+      toDate: leave.toDate,
+      leaveType: leave.leaveType,
+      totalDays: totalDays
+    })
+
+    // 1. Update leave request status
+    await axios.patch(
+      `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
+      { status: 'Approved' },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+
+    // 2. IMMEDIATE UI UPDATE - Update local status instantly
+    const leaveIndex = this.leaveRequests.findIndex(l => l.id === leave.id)
+    if (leaveIndex !== -1) {
+      this.leaveRequests[leaveIndex].status = 'Approved'
+      // Force reactivity by creating new array reference
+      this.leaveRequests = [...this.leaveRequests]
+    }
+
+    // 3. Get user ID
+    const userResponse = await axios.get(
+      `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(userName)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    
+    const userId = userResponse.data.id
+    console.log('User ID:', userId)
+    
+    const currentYear = new Date().getFullYear()
+    
+    // 4. Get current leave balance
+    const balanceResponse = await axios.get(
+      `https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`,
+      { 
+        params: { year: currentYear },
+        headers: { Authorization: `Bearer ${token}` }
       }
+    )
+    
+    if (!balanceResponse.data.success) {
+      throw new Error('Could not fetch leave balance')
+    }
+    
+    const currentBalance = balanceResponse.data.data
+    console.log('Current balance:', currentBalance)
+    
+    // 5. Map leave type to database columns - FIXED for Half Day
+    const leaveTypeMapping = this.mapLeaveTypeToColumn(leave.leaveType)
+    
+    if (!leaveTypeMapping) {
+      // For Half Day, treat it as the appropriate leave type based on what's available
+      console.warn('Unknown leave type, attempting to handle as half day:', leave.leaveType)
       
-      const key = leaveType.toLowerCase().trim()
-      for (const [typeKey, mapping] of Object.entries(typeMap)) {
-        if (key.includes(typeKey)) {
-          return mapping
-        }
-      }
-      
-      return null
-    },
-
-    async approveLeave(leave) {
-      if (this.busyLeave.id) return
-      const previousStatus = leave.status
-      this.busyLeave = { id: leave.id, action: 'Approved' }
-
-      try {
-        const token = localStorage.getItem('token')
-        if (!token) throw new Error('No auth token found!')
-
-        const userName = leave.name || this.loggedInUserName
-        if (!userName) throw new Error('No valid user name found!')
-
-        let totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate, leave.leaveType)
-        
-        console.log('Approving leave:', {
-          id: leave.id,
-          name: userName,
-          fromDate: leave.fromDate,
-          toDate: leave.toDate,
-          leaveType: leave.leaveType,
-          totalDays: totalDays
-        })
-
-        await axios.patch(
-          `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
-          { status: 'Approved' },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-
-        const userResponse = await axios.get(
-          `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(userName)}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        
-        const userId = userResponse.data.id
-        console.log('User ID:', userId)
-        
-        const currentYear = new Date().getFullYear()
-        
-        const balanceResponse = await axios.get(
-          `https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`,
-          { 
-            params: { year: currentYear },
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
-        
-        if (!balanceResponse.data.success) {
-          throw new Error('Could not fetch leave balance')
-        }
-        
-        const currentBalance = balanceResponse.data.data
-        console.log('Current balance:', currentBalance)
-        
-        const leaveTypeMapping = this.mapLeaveTypeToColumn(leave.leaveType)
-        
-        if (!leaveTypeMapping) {
-          throw new Error(`Unknown leave type: ${leave.leaveType}`)
-        }
-        
-        const currentUsed = parseFloat(currentBalance[leaveTypeMapping.used_column]) || 0
-        const totalAllowed = parseFloat(currentBalance[leaveTypeMapping.total_column]) || 0
-        const newUsed = currentUsed + totalDays
-        
-        console.log('Leave balance update:', {
-          currentUsed,
-          totalAllowed,
-          totalDays,
-          newUsed,
-          column: leaveTypeMapping.used_column
-        })
-        
-        const updateData = {
-          [leaveTypeMapping.used_column]: parseFloat(newUsed.toFixed(2))
-        }
-        
-        console.log('Updating balance with:', updateData)
-        
-        await axios.put(
-          `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
-          updateData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        
-        if (newUsed > totalAllowed) {
-          toastWarning(`Warning: This will exceed ${leave.leaveType} leave limit! Remaining: ${(totalAllowed - currentUsed).toFixed(1)} days`)
-        }
-        
-        if (previousStatus !== 'Approved') {
-          await this.createLeaveRecord(leave, userId, totalDays)
-        }
-        
-        if (previousStatus === 'Rejected' || previousStatus === 'Pending') {
-          await this.markAttendanceAsLeave(leave, userId)
-        }
-        
-        if (previousStatus === 'Rejected') {
-          await this.deleteAbsentRecords(leave)
-        }
-        
-        toastSuccess(`Leave approved successfully! ${totalDays} day(s) deducted from ${leave.leaveType} leave balance`)
-
-        await this.fetchLeaves()
-
-      } catch (error) {
-        console.error('Approve leave failed:', error)
-        toastError( 'Could not approve leave')
-      } finally {
-        this.busyLeave = { id: null, action: null }
-      }
-    },
-
-    async rejectLeave(leave) {
-      if (this.busyLeave.id) return
-      const previousStatus = leave.status
-      this.busyLeave = { id: leave.id, action: 'Rejected' }
-
-      try {
-        const token = localStorage.getItem('token')
-        if (!token) throw new Error('No auth token found!')
-
-        const userName = leave.name || this.loggedInUserName
-        console.log('Rejecting leave:', {
-          id: leave.id,
-          name: userName,
-          previousStatus: previousStatus
-        })
-
-        await axios.patch(
-          `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
-          { status: 'Rejected' },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-
-        if (previousStatus === 'Approved') {
-          const totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate, leave.leaveType)
+      // If it's half day but we don't have mapping, try to use the parent type
+      // or skip balance update for half day if it's already handled differently
+      if (leave.leaveType && leave.leaveType.toLowerCase().includes('half')) {
+        // For half day, we might not need to update balance if it's already accounted
+        // But we'll try to use the regular leave type if available
+        const regularType = leave.leaveType.replace(/half day/i, '').trim() || 'casual'
+        const fallbackMapping = this.mapLeaveTypeToColumn(regularType)
+        if (fallbackMapping) {
+          // Use the regular type mapping
+          const currentUsed = parseFloat(currentBalance[fallbackMapping.used_column]) || 0
+          const totalAllowed = parseFloat(currentBalance[fallbackMapping.total_column]) || 0
+          const newUsed = currentUsed + totalDays
           
-          const userResponse = await axios.get(
-            `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(userName)}`,
+          const updateData = {
+            [fallbackMapping.used_column]: parseFloat(newUsed.toFixed(2))
+          }
+          
+          await axios.put(
+            `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
+            updateData,
             { headers: { Authorization: `Bearer ${token}` } }
           )
-          
-          const userId = userResponse.data.id
-          const currentYear = new Date().getFullYear()
-          
-          const balanceResponse = await axios.get(
-            `https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`,
-            { 
-              params: { year: currentYear },
-              headers: { Authorization: `Bearer ${token}` }
-            }
-          )
-          
-          if (balanceResponse.data.success) {
-            const currentBalance = balanceResponse.data.data
-            const leaveTypeMapping = this.mapLeaveTypeToColumn(leave.leaveType)
-            
-            if (leaveTypeMapping) {
-              const currentUsed = parseFloat(currentBalance[leaveTypeMapping.used_column]) || 0
-              const newUsed = Math.max(0, currentUsed - totalDays)
-              
-              console.log('Reverting leave balance:', {
-                currentUsed,
-                totalDays,
-                newUsed
-              })
-              
-              await axios.put(
-                `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
-                {
-                  [leaveTypeMapping.used_column]: parseFloat(newUsed.toFixed(2))
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
-              )
-            }
-          }
-          
-          await this.deleteLeaveRecords(leave)
-          toastSuccess(`Leave rejected and ${totalDays} day(s) added back to balance`)
-        } else {
-          toastSuccess('Leave rejected successfully')
         }
-
-        if (previousStatus !== 'Rejected') {
-          await this.markAttendanceAsAbsent(leave)
-        }
-
-        await this.fetchLeaves()
-
-      } catch (error) {
-        console.error('Reject failed:', error)
-        toastError('Could not reject leave')
-      } finally {
-        this.busyLeave = { id: null, action: null }
       }
-    },
+    } else {
+      // Normal leave type update
+      const currentUsed = parseFloat(currentBalance[leaveTypeMapping.used_column]) || 0
+      const totalAllowed = parseFloat(currentBalance[leaveTypeMapping.total_column]) || 0
+      const newUsed = currentUsed + totalDays
+      
+      console.log('Leave balance update:', {
+        currentUsed,
+        totalAllowed,
+        totalDays,
+        newUsed,
+        column: leaveTypeMapping.used_column
+      })
+      
+      const updateData = {
+        [leaveTypeMapping.used_column]: parseFloat(newUsed.toFixed(2))
+      }
+      
+      await axios.put(
+        `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
+        updateData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      if (newUsed > totalAllowed) {
+        toastWarning(`Warning: This will exceed ${leave.leaveType} leave limit!`)
+      }
+    }
+    
+    // 6. Create leave record if needed (skip for half day if already handled)
+    if (previousStatus !== 'Approved' && leave.leaveType && !leave.leaveType.toLowerCase().includes('half')) {
+      await this.createLeaveRecord(leave, userId, totalDays)
+    }
+    
+    // 7. Mark attendance as Leave
+    if (previousStatus === 'Rejected' || previousStatus === 'Pending') {
+      await this.markAttendanceAsLeave(leave, userId)
+    }
+    
+    // 8. Delete absent records if re-approving
+    if (previousStatus === 'Rejected') {
+      await this.deleteAbsentRecords(leave)
+    }
+    
+    toastSuccess(`Leave approved successfully! ${totalDays} day(s) processed`)
 
+    // 9. Refresh leaves in background to sync with server
+    await this.fetchLeaves()
+
+  } catch (error) {
+    console.error('Approve leave failed:', error)
+    
+    // REVERT local status if API failed
+    const leaveIndex = this.leaveRequests.findIndex(l => l.id === leave.id)
+    if (leaveIndex !== -1) {
+      this.leaveRequests[leaveIndex].status = previousStatus
+      this.leaveRequests = [...this.leaveRequests]
+    }
+    
+    toastError('Could not approve leave: ' + (error.message || 'Unknown error'))
+  } finally {
+    this.busyLeave = { id: null, action: null }
+  }
+},
+async rejectLeave(leave) {
+  if (this.busyLeave.id) return
+  const previousStatus = leave.status
+  this.busyLeave = { id: leave.id, action: 'Rejected' }
+
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) throw new Error('No auth token found!')
+
+    const userName = leave.name || this.loggedInUserName
+    console.log('Rejecting leave:', {
+      id: leave.id,
+      name: userName,
+      previousStatus: previousStatus,
+      leaveType: leave.leaveType
+    })
+
+    // 1. Update leave request status to Rejected
+    await axios.patch(
+      `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
+      { status: 'Rejected' },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+
+    // 2. IMMEDIATE UI UPDATE - Update local status instantly
+    const leaveIndex = this.leaveRequests.findIndex(l => l.id === leave.id)
+    if (leaveIndex !== -1) {
+      this.leaveRequests[leaveIndex].status = 'Rejected'
+      // Force reactivity by creating new array reference
+      this.leaveRequests = [...this.leaveRequests]
+    }
+
+    // 3. If leave was previously Approved, revert the leave balance
+    if (previousStatus === 'Approved') {
+      const totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate, leave.leaveType)
+      
+      // Get user ID
+      const userResponse = await axios.get(
+        `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(userName)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      const userId = userResponse.data.id
+      const currentYear = new Date().getFullYear()
+      
+      // Get current leave balance
+      const balanceResponse = await axios.get(
+        `https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`,
+        { 
+          params: { year: currentYear },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      
+      if (balanceResponse.data.success) {
+        const currentBalance = balanceResponse.data.data
+        const leaveTypeMapping = this.mapLeaveTypeToColumn(leave.leaveType)
+        
+        if (leaveTypeMapping) {
+          // Revert the used leave
+          const currentUsed = parseFloat(currentBalance[leaveTypeMapping.used_column]) || 0
+          const newUsed = Math.max(0, currentUsed - totalDays)
+          
+          console.log('Reverting leave balance:', {
+            currentUsed,
+            totalDays,
+            newUsed
+          })
+          
+          await axios.put(
+            `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
+            {
+              [leaveTypeMapping.used_column]: parseFloat(newUsed.toFixed(2))
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+        } else if (leave.leaveType && leave.leaveType.toLowerCase().includes('half')) {
+          // For half day, try to revert from regular type
+          const regularType = leave.leaveType.replace(/half day/i, '').trim() || 'casual'
+          const fallbackMapping = this.mapLeaveTypeToColumn(regularType)
+          if (fallbackMapping) {
+            const currentUsed = parseFloat(currentBalance[fallbackMapping.used_column]) || 0
+            const newUsed = Math.max(0, currentUsed - totalDays)
+            
+            await axios.put(
+              `https://employees.archenterprises.co.in/api/api/leave-balances/${currentBalance.id}`,
+              {
+                [fallbackMapping.used_column]: parseFloat(newUsed.toFixed(2))
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+          }
+        }
+      }
+      
+      // Delete leave records (skip for half day to avoid 404)
+      if (leave.leaveType && !leave.leaveType.toLowerCase().includes('half')) {
+        await this.deleteLeaveRecords(leave)
+      }
+      
+      toastSuccess(`Leave rejected and ${totalDays} day(s) added back to balance`)
+    } else {
+      toastSuccess('Leave rejected successfully')
+    }
+
+    // 4. Mark attendance as Absent (if not already)
+    if (previousStatus !== 'Rejected') {
+      await this.markAttendanceAsAbsent(leave)
+    }
+
+    // 5. Refresh leaves in background to sync with server
+    await this.fetchLeaves()
+
+  } catch (error) {
+    console.error('Reject failed:', error)
+    
+    // REVERT local status if API failed
+    const leaveIndex = this.leaveRequests.findIndex(l => l.id === leave.id)
+    if (leaveIndex !== -1) {
+      this.leaveRequests[leaveIndex].status = previousStatus
+      this.leaveRequests = [...this.leaveRequests]
+    }
+    
+    toastError('Could not reject leave: ' + (error.message || 'Unknown error'))
+  } finally {
+    this.busyLeave = { id: null, action: null }
+  }
+},
     async markAttendanceAsLeave(leave, userId) {
       try {
         const token = localStorage.getItem('token')
@@ -965,44 +1080,51 @@ export default {
       }
     },
 
-    async deleteLeaveRecords(leave) {
-      try {
-        const token = localStorage.getItem('token')
-        
-        const userResponse = await axios.get(
-          `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(leave.name)}`,
+async deleteLeaveRecords(leave) {
+  try {
+    const token = localStorage.getItem('token')
+    
+    // Skip for half day to avoid 404
+    if (leave.leaveType && leave.leaveType.toLowerCase().includes('half')) {
+      console.log('Skipping leave record deletion for half day')
+      return
+    }
+    
+    const userResponse = await axios.get(
+      `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(leave.name)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    
+    const userId = userResponse.data.id
+    
+    const leavesResponse = await axios.get(
+      `https://employees.archenterprises.co.in/api/api/leaves`,
+      { 
+        params: { 
+          user_id: userId,
+          from_date: leave.fromDate,
+          to_date: leave.toDate,
+          leave_type: leave.leaveType
+        },
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+    
+    if (leavesResponse.data && leavesResponse.data.length > 0) {
+      for (const leaveRecord of leavesResponse.data) {
+        console.log('Deleting leave record:', leaveRecord.id)
+        await axios.delete(
+          `https://employees.archenterprises.co.in/api/api/leaves/${leaveRecord.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
-        
-        const userId = userResponse.data.id
-        
-        const leavesResponse = await axios.get(
-          `https://employees.archenterprises.co.in/api/api/leaves`,
-          { 
-            params: { 
-              user_id: userId,
-              from_date: leave.fromDate,
-              to_date: leave.toDate,
-              leave_type: leave.leaveType
-            },
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
-        
-        if (leavesResponse.data && leavesResponse.data.length > 0) {
-          for (const leaveRecord of leavesResponse.data) {
-            console.log('Deleting leave record:', leaveRecord.id)
-            await axios.delete(
-              `https://employees.archenterprises.co.in/api/api/leaves/${leaveRecord.id}`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            )
-          }
-          console.log('Leave records deleted successfully')
-        }
-      } catch (error) {
-        console.error('Failed to delete leave records:', error)
       }
-    },
+      console.log('Leave records deleted successfully')
+    }
+  } catch (error) {
+    console.error('Failed to delete leave records:', error)
+    // Don't throw - we want to continue even if deletion fails
+  }
+},
 
     async markAttendanceAsAbsent(leave) {
       try {

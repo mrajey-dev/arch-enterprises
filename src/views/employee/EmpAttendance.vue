@@ -288,6 +288,7 @@
                 <li><span class="legend-box half-day"></span> Half Day</li>
                 <li><span class="legend-box traveling"></span> Traveling</li>
                 <li><span class="legend-box leave"></span> Leave</li>
+                <li><span class="legend-box unpaid-leave"></span> Unpaid Leave</li>
                 <li><span class="legend-box holiday"></span> Holiday</li>
               </ul>
             </div>
@@ -394,7 +395,7 @@ export default {
       calendarData: [],
       viewMode: 'day',
       statusCounts: {
-        Present: 0, OnSite: 0, HalfDay: 0, Traveling: 0, Absent: 0, Leave: 0, Missing: 0
+        Present: 0, OnSite: 0, HalfDay: 0, Traveling: 0, Absent: 0, Leave: 0, Missing: 0, UnpaidLeave: 0
       },
       currentDate: today.toISOString().split('T')[0],
       user: {
@@ -1163,7 +1164,8 @@ export default {
         Traveling: 0,
         Leave: 0,
         Absent: 0,
-        Missing: 0
+        Missing: 0,
+        UnpaidLeave: 0
       };
       
       if (attendanceData && Array.isArray(attendanceData)) {
@@ -1261,6 +1263,7 @@ export default {
         'halfday': 'HalfDay',
         'traveling': 'Traveling',
         'leave': 'Leave',
+        'unpaid leave': 'UnpaidLeave',
         'absent': 'Absent',
         'missing': 'Missing'
       };
@@ -1279,6 +1282,7 @@ export default {
           'HalfDay': 'attendance-half-day',
           'Traveling': 'attendance-traveling',
           'Leave': 'attendance-leave',
+          'UnpaidLeave': 'attendance-unpaid-leave',
           'Absent': 'attendance-absent',
           'Missing': 'attendance-missing'
         };
@@ -2494,6 +2498,7 @@ export default {
 .calendar-cell-mobile.attendance-half-day { background: #fed7aa; }
 .calendar-cell-mobile.attendance-traveling { background: #fef3c7; }
 .calendar-cell-mobile.attendance-leave { background: #e9d5ff; }
+.calendar-cell-mobile.attendance-unpaid-leave { background: #f3f4f6; border-left: 2px solid #6b7280; }
 .calendar-cell-mobile.attendance-absent { background: #fee2e2; border-left: 2px solid #ef4444; }
 .calendar-cell-mobile.attendance-missing { background: #ffe0e0; border-left: 2px solid #dc2626; position: relative; }
 .calendar-cell-mobile.attendance-weekend { background: #f9fafb; opacity: 0.8; }
@@ -2505,6 +2510,7 @@ export default {
 .attendance-half-day { background: linear-gradient(135deg, #fed7aa, #fdba74); }
 .attendance-traveling { background: linear-gradient(135deg, #fef3c7, #fde68a); }
 .attendance-leave { background: linear-gradient(135deg, #e9d5ff, #d8b4fe); }
+.attendance-unpaid-leave { background: linear-gradient(135deg, #f3f4f6, #e5e7eb); border-left: 3px solid #6b7280; }
 .attendance-absent { background: linear-gradient(135deg, #fee2e2, #fecaca); border-left: 3px solid #ef4444; }
 .attendance-missing { background: linear-gradient(135deg, #ffe0e0, #ffc9c9) !important; border-left: 3px solid #dc2626; position: relative; }
 .attendance-missing::after {
@@ -2581,6 +2587,7 @@ export default {
 .legend-box.half-day { background: #fed7aa; border-left: 3px solid #f59e0b; }
 .legend-box.traveling { background: #fef3c7; border-left: 3px solid #d97706; }
 .legend-box.leave { background: #e9d5ff; border-left: 3px solid #8b5cf6; }
+.legend-box.unpaid-leave { background: #f3f4f6; border-left: 3px solid #6b7280; }
 .legend-box.holiday { background: #fff; border: 2px solid #58cc71; }
 
 /* Modal */
