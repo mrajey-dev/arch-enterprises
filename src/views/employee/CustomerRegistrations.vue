@@ -2454,108 +2454,331 @@
 
 
 <!-- Open PO Modal -->
-<div v-if="showviewPoModal" class="modal-overlay">
-  <div class="modal-content">
-    <div class="modal-header"><br>
-      <h2 class="modal-title">Open PO</h2>
-      <div class="header-buttons">
-        <button class="closed-po-btn" @click="showClosedPoModal = true"> View Closed PO</button>
-        <button class="btn btn-dark" @click="showviewPoModal = false">⬅ Back</button>
+<div v-if="showviewPoModal" class="pro-modal-backdrop-top crm-modal-overlay" @click.self="showviewPoModal = false">
+  <div class="pro-po-modal-container">
+    <!-- Header -->
+    <div class="pro-modal-header header-blue">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-blue">
+          <i class="fas fa-file-invoice"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Open Purchase Orders</h2>
+            <span class="pro-status-pill pill-cyan">
+              {{ filteredPoList.length }} {{ filteredPoList.length === 1 ? 'Active Order' : 'Active Orders' }}
+            </span>
+          </div>
+          <p class="pro-modal-subtitle" v-if="selectedCompany">
+            <i class="fas fa-building"></i> {{ selectedCompany }}
+          </p>
+        </div>
+      </div>
+
+      <div class="pro-header-actions">
+        <button 
+          type="button" 
+          class="pro-btn-pill-action" 
+          @click="fetchClosedPOs(); showClosedPoModal = true; showviewPoModal = false;" 
+          title="View Closed POs"
+        >
+          <i class="fas fa-box-archive"></i> View Closed PO
+        </button>
+        <button type="button" class="pro-btn-header-close" @click="showviewPoModal = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
     </div>
 
-    <!-- If there are POs -->
-    <ul v-if="filteredPoList.length > 0" class="po-list">
-      <li v-for="po in filteredPoList" :key="po.id" class="po-item">
-        <div class="po-info" @click="openPoDetails(po)">
-          {{ po.po_number }} - {{ po.po_type  }}
-        </div>
-        <div class="po-actions">
-          <button class="btn btn-closedpo btn-sm" @click.stop="handleClosePo(po)"><i class="fa fa-check-square-o" style="font-size:13px;"></i> Close PO</button>
-          <button class="btn btn-danger" @click.stop="deletePo(po.id)"><i class="fa fa-trash-o" style="font-size:13px"></i> Delete PO</button>
-        </div>
-      </li>
-    </ul>
+    <!-- Body / PO List -->
+    <div class="pro-po-modal-body">
+      <div v-if="filteredPoList.length > 0" class="pro-po-cards-wrap">
+        <div 
+          v-for="po in filteredPoList" 
+          :key="po.id" 
+          class="pro-po-row-card"
+        >
+          <!-- Left Icon badge -->
+          <div class="pro-po-type-badge" :class="getPoTypeBadgeClass(po.po_type)">
+            <i :class="getPoTypeIcon(po.po_type)"></i>
+          </div>
 
-    <!-- If empty list -->
-    <p v-else>No open POs available.</p>
+          <!-- Central Info -->
+          <div class="pro-po-info-col" @click="openPoDetails(po)">
+            <div class="pro-po-number-row">
+              <span class="pro-po-number-tag">
+                <i class="fas fa-hashtag"></i> {{ po.po_number || 'PO-N/A' }}
+              </span>
+              <span class="pro-po-type-pill" :class="getPoTypeBadgeClass(po.po_type)">
+                {{ po.po_type || 'General' }}
+              </span>
+              <span v-if="po.company_name" class="pro-po-company-chip">
+                <i class="fas fa-building"></i> {{ po.company_name }}
+              </span>
+            </div>
+
+            <div class="pro-po-meta-row">
+              <span v-if="po.date || po.created_at" class="pro-po-meta-item">
+                <i class="fas fa-calendar-day"></i> {{ formatPoDate(po.date || po.created_at) }}
+              </span>
+              <span v-if="po.value_of_po" class="pro-po-meta-item pro-po-val">
+                <i class="fas fa-indian-rupee-sign"></i> {{ po.value_of_po }}
+              </span>
+              <span v-if="po.nature_of_sale" class="pro-po-meta-item">
+                <i class="fas fa-tag"></i> {{ po.nature_of_sale }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Right Aligned Actions -->
+          <div class="pro-po-actions-group">
+            <button 
+              type="button" 
+              class="pro-btn-po pro-btn-po-details" 
+              @click="openPoDetails(po)" 
+              title="View PO Details"
+            >
+              <i class="fas fa-eye"></i> Details
+            </button>
+            <button 
+              type="button" 
+              class="pro-btn-po pro-btn-po-close" 
+              @click.stop="handleClosePo(po)" 
+              title="Close this PO"
+            >
+              <i class="fas fa-check-circle"></i> Close PO
+            </button>
+            <button 
+              type="button" 
+              class="pro-btn-po pro-btn-po-del" 
+              @click.stop="deletePo(po.id)" 
+              title="Delete this PO"
+            >
+              <i class="fas fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else class="pro-po-empty-state">
+        <div class="pro-po-empty-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <h4 class="pro-po-empty-title">No Open POs Available</h4>
+        <p class="pro-po-empty-desc">
+          There are currently no active open purchase orders for <strong v-if="selectedCompany">{{ selectedCompany }}</strong><span v-else>this customer</span>.
+        </p>
+        <button 
+          type="button" 
+          class="pro-btn-pill-action mt-3" 
+          @click="fetchClosedPOs(); showClosedPoModal = true; showviewPoModal = false;"
+        >
+          <i class="fas fa-box-archive"></i> Check Closed POs
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
 
 <!-- Supply Close Popup -->
-<div v-if="showSupplyCloseModal" class="modal-overlay-supply">
-  <div class="modal-content-supply">
-    <div class="modal-header-supply">
-      <h3 class="modal-title-supply">Close Supply PO</h3>
-      <button class="close-btn-supply" @click="showSupplyCloseModal = false">&times;</button>
-    </div>
-
-    <div class="modal-body-supply">
-      <div class="form-group-supply">
-        <label class="label-supply">Tracking ID</label>
-        <input type="text" v-model="supplyCloseData.tracking_id" class="input-supply" placeholder="Enter tracking ID" />
+<div v-if="showSupplyCloseModal" class="pro-modal-backdrop-top crm-modal-overlay" @click.self="showSupplyCloseModal = false">
+  <div class="pro-supply-close-container">
+    <div class="pro-modal-header header-purple">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-purple">
+          <i class="fas fa-truck-ramp-box"></i>
+        </div>
+        <div>
+          <h2 class="pro-modal-title">Close Supply PO</h2>
+          <p class="pro-modal-subtitle">
+            Provide courier & tracking details to finalize Supply PO
+          </p>
+        </div>
       </div>
-
-      <div class="form-group-supply">
-        <label class="label-supply">Courier Name</label>
-        <input type="text" v-model="supplyCloseData.courier_name" class="input-supply" placeholder="Enter courier name" />
-      </div>
-
-      <div class="form-group-supply">
-        <label class="label-supply">Date</label>
-        <input type="date" v-model="supplyCloseData.date" class="input-supply" />
+      <div class="pro-header-actions">
+        <button type="button" class="pro-btn-header-close" @click="showSupplyCloseModal = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
     </div>
 
-    <div class="modal-footer-supply">
-      <button class="btn-submit-supply" @click="confirmSupplyClose">Submit</button>
-    </div>
+    <form class="pro-supply-body" @submit.prevent="confirmSupplyClose">
+      <div class="pro-card-section mb-0">
+        <div class="pro-field-wrap">
+          <label class="pro-label">
+            <i class="fas fa-barcode"></i> Tracking ID <span class="req-star">*</span>
+          </label>
+          <div class="pro-input-icon-wrap">
+            <i class="fas fa-hashtag pro-field-icon"></i>
+            <input 
+              type="text" 
+              v-model="supplyCloseData.tracking_id" 
+              class="pro-input pro-with-icon" 
+              placeholder="e.g. TRK-98492048" 
+              required 
+            />
+          </div>
+        </div>
+
+        <div class="pro-field-wrap mt-3">
+          <label class="pro-label">
+            <i class="fas fa-truck-fast"></i> Courier / Transporter Name <span class="req-star">*</span>
+          </label>
+          <div class="pro-input-icon-wrap">
+            <i class="fas fa-truck pro-field-icon"></i>
+            <input 
+              type="text" 
+              v-model="supplyCloseData.courier_name" 
+              class="pro-input pro-with-icon" 
+              placeholder="e.g. BlueDart, DTDC, Delhivery" 
+              required 
+            />
+          </div>
+        </div>
+
+        <div class="pro-field-wrap mt-3">
+          <label class="pro-label">
+            <i class="fas fa-calendar-day"></i> Dispatch / Closing Date <span class="req-star">*</span>
+          </label>
+          <div class="pro-input-icon-wrap">
+            <i class="fas fa-calendar pro-field-icon"></i>
+            <input 
+              type="date" 
+              v-model="supplyCloseData.date" 
+              class="pro-input pro-with-icon" 
+              required 
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="pro-modal-footer">
+        <div class="pro-footer-left"></div>
+        <div class="pro-footer-actions">
+          <button type="button" class="pro-btn-footer-cancel" @click="showSupplyCloseModal = false">
+            Cancel
+          </button>
+          <button type="submit" class="quotation-submit-btn pro-btn-footer-submit">
+            <i class="fas fa-check-circle"></i> Submit & Close PO
+          </button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 
 
-
-
 <!-- Closed PO Modal -->
-<div v-if="showClosedPoModal" class="modal-overlay">
-  <div class="modal-content">
-    <div class="modal-header"><br>
-      <h2 class="modal-title">Closed PO</h2>
-      <div class="header-buttons">
-        <button class="btn btn-dark" @click="showClosedPoModal = false">⬅ Back</button>
+<div v-if="showClosedPoModal" class="pro-modal-backdrop-top crm-modal-overlay" @click.self="showClosedPoModal = false">
+  <div class="pro-po-modal-container">
+    <!-- Header -->
+    <div class="pro-modal-header header-emerald">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-emerald">
+          <i class="fas fa-box-archive"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Closed Purchase Orders</h2>
+            <span class="pro-status-pill pill-emerald">
+              {{ filteredClosedPoList.length }} {{ filteredClosedPoList.length === 1 ? 'Closed Record' : 'Closed Records' }}
+            </span>
+          </div>
+          <p class="pro-modal-subtitle" v-if="selectedCompany">
+            <i class="fas fa-building"></i> {{ selectedCompany }}
+          </p>
+        </div>
+      </div>
+
+      <div class="pro-header-actions">
+        <button 
+          type="button" 
+          class="pro-btn-pill-action" 
+          @click="showClosedPoModal = false; showviewPoModal = true;" 
+          title="View Open POs"
+        >
+          <i class="fas fa-folder-open"></i> View Open PO
+        </button>
+        <button type="button" class="pro-btn-header-close" @click="showClosedPoModal = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
     </div>
 
-    <!-- Closed PO Content -->
-    <div class="closed-po-body">
-      <ul v-if="filteredClosedPoList.length > 0" class="po-list">
+    <!-- Body / Closed PO List -->
+    <div class="pro-po-modal-body">
+      <div v-if="filteredClosedPoList.length > 0" class="pro-po-cards-wrap">
+        <div 
+          v-for="po in filteredClosedPoList" 
+          :key="po.id" 
+          class="pro-po-row-card closed-card"
+        >
+          <!-- Left Icon badge -->
+          <div class="pro-po-type-badge badge-closed">
+            <i class="fas fa-check-double"></i>
+          </div>
 
+          <!-- Central Info -->
+          <div class="pro-po-info-col" @click="openPoDetails(po)">
+            <div class="pro-po-number-row">
+              <span class="pro-po-number-tag closed-tag">
+                <i class="fas fa-hashtag"></i> {{ po.po_number || 'PO-N/A' }}
+              </span>
+              <span class="pro-po-type-pill pill-closed">
+                <i class="fas fa-lock"></i> Closed
+              </span>
+              <span v-if="po.po_type" class="pro-po-type-pill" :class="getPoTypeBadgeClass(po.po_type)">
+                {{ po.po_type }}
+              </span>
+              <span v-if="po.company_name" class="pro-po-company-chip">
+                <i class="fas fa-building"></i> {{ po.company_name }}
+              </span>
+            </div>
 
-  <li
-  v-for="po in filteredClosedPoList"
-  :key="po.id"
-  class="po-item"
-  @click="openPoDetails(po)"
->
-  <div class="po-info">
-    <strong>{{ po.po_number }}</strong>
-    <p style="color:#007bff;margin-left:6px;">
-      - {{ po.company_name }}
-    </p>
-  </div>
+            <div class="pro-po-meta-row">
+              <span v-if="po.date || po.created_at" class="pro-po-meta-item">
+                <i class="fas fa-calendar-check"></i> {{ formatPoDate(po.date || po.created_at) }}
+              </span>
+              <span v-if="po.value_of_po" class="pro-po-meta-item pro-po-val">
+                <i class="fas fa-indian-rupee-sign"></i> {{ po.value_of_po }}
+              </span>
+            </div>
+          </div>
 
-  <!-- Re-open button -->
-  <button
-    class="btn btn-success reopen-btn"
-    @click.stop="reopenPo(po.id)"
-  >
-    🔓 Re-Open PO
-  </button>
-</li>
+          <!-- Right Aligned Actions -->
+          <div class="pro-po-actions-group">
+            <button 
+              type="button" 
+              class="pro-btn-po pro-btn-po-details" 
+              @click="openPoDetails(po)" 
+              title="View Details"
+            >
+              <i class="fas fa-eye"></i> Details
+            </button>
+            <button 
+              type="button" 
+              class="pro-btn-po pro-btn-po-reopen" 
+              @click.stop="reopenPo(po.id)" 
+              title="Re-open this PO"
+            >
+              <i class="fas fa-lock-open"></i> Re-Open PO
+            </button>
+          </div>
+        </div>
+      </div>
 
-</ul>
-<p v-else>No closed POs available.</p>
+      <!-- Empty State -->
+      <div v-else class="pro-po-empty-state">
+        <div class="pro-po-empty-icon emerald-icon">
+          <i class="fas fa-box-archive"></i>
+        </div>
+        <h4 class="pro-po-empty-title">No Closed POs Found</h4>
+        <p class="pro-po-empty-desc">
+          There are no closed purchase orders recorded for <strong v-if="selectedCompany">{{ selectedCompany }}</strong><span v-else>this customer</span>.
+        </p>
+      </div>
     </div>
   </div>
 </div>
@@ -2567,213 +2790,303 @@
 
 
 <!-- PO Details Modal -->
-<div v-if="showPoDetailsModal" class="modal-overlay">
-  <div class="modal-contentDetails">
-    <h2 class="modal-title">PO Details</h2>
+<div v-if="showPoDetailsModal" class="pro-modal-backdrop-top crm-modal-overlay pro-po-details-overlay" @click.self="showPoDetailsModal = false">
+  <div class="pro-po-modal-container pro-po-details-container">
+    <!-- Header -->
+    <div class="pro-modal-header header-indigo">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-indigo">
+          <i class="fas fa-file-contract"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Purchase Order Details</h2>
+            <span class="pro-status-pill pill-indigo" v-if="selectedPo">
+              <i :class="getPoTypeIcon(selectedPo.po_type)"></i> {{ selectedPo.po_type || 'PO' }}
+            </span>
+          </div>
+          <p class="pro-modal-subtitle" v-if="selectedPo">
+            <i class="fas fa-building"></i> {{ selectedPo.company_name }}
+          </p>
+        </div>
+      </div>
 
-            <table class="po-table" v-if="selectedPo">
-      <tbody>
-        <tr>
-          <th>PO Type</th>
-          <td>{{ selectedPo.po_type }}</td>
-        </tr>
-        <tr>
-          <th>Company Name</th>
-          <td>{{ selectedPo.company_name }}</td>
-        </tr>
-        <tr>
-          <th>PO Number</th>
-          <td>{{ selectedPo.po_number }}</td>
-        </tr>
-      </tbody>
+      <div class="pro-header-actions">
+        <button type="button" class="pro-btn-header-close" @click="showPoDetailsModal = false" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
 
-      <!-- AMC Specific -->
-      <tbody v-if="selectedPo.po_type === 'AMC'">
-        <tr>
-          <th>Type of AMC</th>
-          <td>{{ selectedPo.type_of_amc }}</td>
-        </tr>
-        <tr>
-          <th>No of Visits</th>
-          <td>{{ selectedPo.no_of_visits }}</td>
-        </tr>
-        <tr>
-          <th>Start Period</th>
-          <td>{{ formatDate(selectedPo.start_period) }}</td>
-        </tr>
-        <tr>
-          <th>End Period</th>
-          <td>{{ formatDate(selectedPo.end_period) }}</td>
-        </tr>
-        <tr>
-          <th>Value Of PO</th>
-          <td>{{ selectedPo.value_of_po }}</td>
-        </tr>
-        <!-- Visits (only show if not null/empty) -->
-        <tr v-for="visit in filledVisits" :key="visit.number">
-          <th>Visit {{ visit.number }}</th>
-          <td>
-            {{ formatDate(visit.date) }}
-            <span v-if="getVisitStatus(visit.date) === 'Completed'" style="color:green; margin-left:6px;">✔</span>
-            <span v-else-if="getVisitStatus(visit.date) === 'Pending'" style="color:orange; margin-left:6px;">⏳</span>
-          </td>
-        </tr>
-      </tbody>
+    <!-- Body / Details -->
+    <div class="pro-po-modal-body" v-if="selectedPo">
 
-      <!-- Service+Supply Specific -->
-      <tbody v-else-if="selectedPo.po_type === 'Service+Supply'">
-        <tr>
-          <th>PO Date</th>
-          <td>{{ formatDate(selectedPo.date) }}</td>
-        </tr>
-        <tr>
-          <th>Type Of Service</th>
-          <td>{{ selectedPo.type_of_service }}</td>
-        </tr>
-        <tr>
-          <th>Value Of PO</th>
-          <td>{{ selectedPo.value_of_po }}</td>
-        </tr>
-        <tr>
-          <th>Quotation Against PO</th>
-          <td>{{ selectedPo.quotation_against_po }}</td>
-        </tr>
-        <tr>
-          <th>Payment Terms</th>
-          <td>{{ selectedPo.payment_terms }}</td>
-        </tr>
-        <tr>
-          <th>Delivery Terms</th>
-          <td>{{ selectedPo.delivery_terms }}</td>
-        </tr>
-        <tr>
-          <th>Delivery due date</th>
-          <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
-        </tr>
-        <tr>
-          <th>Recommended By</th>
-          <td>{{ selectedPo.recommended_by }}</td>
-        </tr>
-      </tbody>
+      <!-- Basic Overview Grid -->
+      <div class="pro-po-detail-overview-grid">
+        <div class="pro-po-detail-stat-card">
+          <span class="stat-label"><i class="fas fa-hashtag"></i> PO Number</span>
+          <span class="stat-value text-bold monospace">{{ selectedPo.po_number || '-' }}</span>
+        </div>
+        <div class="pro-po-detail-stat-card">
+          <span class="stat-label"><i class="fas fa-tag"></i> PO Type</span>
+          <span class="stat-value">
+            <span class="pro-po-type-pill" :class="getPoTypeBadgeClass(selectedPo.po_type)">
+              {{ selectedPo.po_type || 'General' }}
+            </span>
+          </span>
+        </div>
+        <div class="pro-po-detail-stat-card">
+          <span class="stat-label"><i class="fas fa-calendar-day"></i> PO Date</span>
+          <span class="stat-value">{{ formatPoDate(selectedPo.date || selectedPo.created_at) || '-' }}</span>
+        </div>
+        <div class="pro-po-detail-stat-card">
+          <span class="stat-label"><i class="fas fa-indian-rupee-sign"></i> PO Value</span>
+          <span class="stat-value text-emerald font-bold">{{ selectedPo.value_of_po ? '₹ ' + selectedPo.value_of_po : '-' }}</span>
+        </div>
+      </div>
 
-      <!-- Service Specific -->
-      <tbody v-else-if="selectedPo.po_type === 'Service'">
-        <tr>
-          <th>Assign To</th>
-          <td>{{ selectedPo.assignedUser?.name || '-' }}</td>
-        </tr>
-        <tr>
-          <th>Type of Service</th>
-          <td>{{ selectedPo.type_of_service }}</td>
-        </tr>
-        <tr>
-          <th>Value of PO</th>
-          <td>{{ selectedPo.value_of_po }}</td>
-        </tr>
-        <tr>
-          <th>Date</th>
-          <td>{{ formatDate(selectedPo.date) }}</td>
-        </tr>
-        <tr>
-          <th>Service Date</th>
-          <td>
-            <input 
-              type="date" 
-              v-model="selectedPo.service_date"
-              @change="updateServiceDate(selectedPo)"
-              class="form-control"
-            />
-          </td>
-        </tr>
-        <tr v-if="selectedPo.files && selectedPo.files.length">
-          <th>PO Files</th>
-          <td>
-            <button class="btn btn-secondary" @click="viewCustomerPo(cust)">View PO</button>
-          </td>
-        </tr>
-      </tbody>
+      <!-- Specific PO Details by Type -->
 
-      <!-- Supply Specific -->
-      <tbody v-else-if="selectedPo.po_type === 'Supply'">
-        <tr>
-          <th>Value of PO</th>
-          <td>{{ selectedPo.value_of_po }}</td>
-        </tr>
-        <tr>
-          <th>PO Received Date</th>
-          <td>{{ formatDate(selectedPo.date) }}</td>
-        </tr>
-        <tr>
-          <th>Quotation Against PO</th>
-          <td>{{ selectedPo.quotation_against_po }}</td>
-        </tr>
-        <tr>
-          <th>Payment Terms</th>
-          <td>{{ selectedPo.payment_terms }}</td>
-        </tr>
-        <tr>
-          <th>Delivery Terms</th>
-          <td>{{ selectedPo.delivery_terms }}</td>
-        </tr>
-        <tr>
-          <th>Delivery due date</th>
-          <td>{{ formatDate(selectedPo.delivery_due_date) }}</td>
-        </tr>
-        <tr>
-          <th>Tracking Id</th>
-          <td>{{ selectedPo.tracking_id }}</td>
-        </tr>
-        <tr>
-          <th>Courier Name</th>
-          <td>{{ selectedPo.courier_name }}</td>
-        </tr>
-        <tr>
-          <th>Material Deliverd Date</th>
-          <td>{{ selectedPo.closed_date }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <!-- AMC SPECIFIC -->
+      <div v-if="selectedPo.po_type === 'AMC'" class="pro-card-section mt-2">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-blue"><i class="fas fa-calendar-check"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Annual Maintenance Contract (AMC) Details</h3>
+            <span>Coverage timeframe and service visit milestones</span>
+          </div>
+        </div>
 
-   <!-- Buttons -->
-<div class="modal-buttons" style="display: flex; flex-direction: row; gap: 10px; margin-top: 20px;">
-  <button class="btn btn-secondary" @click="viewCustomerPo(customer)">View PO</button>
-<button 
-  class="btn btn-primary" 
-  v-if="selectedPo && selectedPo.po_type === 'Supply' || selectedPo.po_type === 'Service+Supply'" 
-  @click="goToSupplyItems(selectedPo)"
->
-  Manage Items
-</button>
-  <!-- Conditionally show "Add Visit" button if po_type is AMC -->
-  <button 
-    class="btn btn-primary" 
-    v-if="selectedPo && selectedPo.po_type === 'AMC'" 
-    @click="addVisit(selectedPo)"
-  >
-    Add/Update Visit
-  </button>
+        <div class="pro-grid-3col">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Type of AMC</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.type_of_amc || 'Standard' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Total Visits</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.no_of_visits || '-' }} Scheduled</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Coverage Period</label>
+            <div class="pro-detail-readonly-box">
+              {{ formatPoDate(selectedPo.start_period) }} to {{ formatPoDate(selectedPo.end_period) }}
+            </div>
+          </div>
+        </div>
 
-  <button class="btn btn-danger" @click="showPoDetailsModal = false">⬅ Back</button>
-</div>
+        <!-- Visits Grid -->
+        <div class="pro-visits-section mt-3">
+          <label class="pro-sub-label mb-2"><i class="fas fa-list-check"></i> Scheduled AMC Visits</label>
+          <div class="pro-visits-grid" v-if="filledVisits && filledVisits.length">
+            <div v-for="visit in filledVisits" :key="visit.number" class="pro-visit-card">
+              <div class="pro-visit-head">
+                <span class="pro-visit-title">Visit #{{ visit.number }}</span>
+                <span v-if="getVisitStatus(visit.date) === 'Completed'" class="pro-badge-completed">
+                  <i class="fas fa-check"></i> Completed
+                </span>
+                <span v-else class="pro-badge-pending">
+                  <i class="fas fa-clock"></i> Pending
+                </span>
+              </div>
+              <div class="pro-visit-date">
+                <i class="fas fa-calendar-alt"></i> {{ formatPoDate(visit.date) }}
+              </div>
+            </div>
+          </div>
+          <div v-else class="pro-empty-subtext">No visits scheduled yet.</div>
 
+          <!-- Extra Visits -->
+          <div v-if="selectedPo.extra_visits && selectedPo.extra_visits.length" class="mt-3">
+            <label class="pro-sub-label mb-2 text-danger"><i class="fas fa-plus-circle"></i> Extra Visits</label>
+            <div class="pro-visits-grid">
+              <div v-for="extra in selectedPo.extra_visits" :key="'extra-' + extra.id" class="pro-visit-card extra-card">
+                <div class="pro-visit-head">
+                  <span class="pro-visit-title">Extra Visit</span>
+                  <span class="pro-badge-extra">Special</span>
+                </div>
+                <div class="pro-visit-date text-danger">
+                  <i class="fas fa-calendar-alt"></i> {{ formatPoDate(extra.visit_date) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <!-- SERVICE+SUPPLY SPECIFIC -->
+      <div v-else-if="selectedPo.po_type === 'Service+Supply'" class="pro-card-section mt-2">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-purple"><i class="fas fa-boxes-stacked"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Service & Supply Specifications</h3>
+            <span>Commercial and operational agreement terms</span>
+          </div>
+        </div>
 
+        <div class="pro-grid-3col">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Type of Service</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.type_of_service || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Quotation Ref.</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.quotation_against_po || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Recommended By</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.recommended_by || '-' }}</div>
+          </div>
+        </div>
+
+        <div class="pro-grid-3col mt-3">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Payment Terms</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.payment_terms || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Delivery Terms</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.delivery_terms || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Delivery Due Date</label>
+            <div class="pro-detail-readonly-box">{{ formatPoDate(selectedPo.delivery_due_date) || '-' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICE SPECIFIC -->
+      <div v-else-if="selectedPo.po_type === 'Service'" class="pro-card-section mt-2">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-amber"><i class="fas fa-screwdriver-wrench"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Service Order Particulars</h3>
+            <span>Assigned engineer and service execution dates</span>
+          </div>
+        </div>
+
+        <div class="pro-grid-2col">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Assigned Technician / Engineer</label>
+            <div class="pro-detail-readonly-box">
+              <i class="fas fa-user-check text-blue"></i> {{ selectedPo.assignedUser?.name || selectedPo.assign_to || 'Unassigned' }}
+            </div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Type of Service</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.type_of_service || '-' }}</div>
+          </div>
+        </div>
+
+        <div class="pro-grid-2col mt-3">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Service Date (Updateable)</label>
+            <div class="pro-input-icon-wrap">
+              <i class="fas fa-calendar-day pro-field-icon"></i>
+              <input 
+                type="date" 
+                v-model="selectedPo.service_date"
+                @change="updateServiceDate(selectedPo)"
+                class="pro-input pro-with-icon"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUPPLY SPECIFIC -->
+      <div v-else-if="selectedPo.po_type === 'Supply'" class="pro-card-section mt-2">
+        <div class="pro-card-header">
+          <div class="pro-card-header-icon bg-cyan"><i class="fas fa-truck-ramp-box"></i></div>
+          <div class="pro-card-header-title">
+            <h3>Material & Logistics Dispatch</h3>
+            <span>Tracking IDs, courier details, and fulfillment timeline</span>
+          </div>
+        </div>
+
+        <div class="pro-grid-3col">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Quotation Ref.</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.quotation_against_po || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Payment Terms</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.payment_terms || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Delivery Terms</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.delivery_terms || '-' }}</div>
+          </div>
+        </div>
+
+        <div class="pro-grid-3col mt-3">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Delivery Due Date</label>
+            <div class="pro-detail-readonly-box">{{ formatPoDate(selectedPo.delivery_due_date) || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Tracking ID</label>
+            <div class="pro-detail-readonly-box monospace">{{ selectedPo.tracking_id || '-' }}</div>
+          </div>
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Courier Name</label>
+            <div class="pro-detail-readonly-box">{{ selectedPo.courier_name || '-' }}</div>
+          </div>
+        </div>
+
+        <div class="pro-grid-3col mt-3" v-if="selectedPo.closed_date">
+          <div class="pro-field-wrap">
+            <label class="pro-sub-label">Delivered / Closed Date</label>
+            <div class="pro-detail-readonly-box text-emerald font-bold">
+              <i class="fas fa-circle-check"></i> {{ formatPoDate(selectedPo.closed_date) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- STICKY ACTION FOOTER -->
+    <div class="pro-modal-footer">
+      <div class="pro-footer-left">
+        <!-- View Uploaded PO Document Button -->
+        <button 
+          type="button" 
+          class="pro-btn-po pro-btn-po-details" 
+          @click="viewCustomerPo(customer)"
+          title="Open Uploaded PO Document"
+        >
+          <i class="fas fa-file-pdf"></i> View Uploaded PO
+        </button>
+
+        <!-- Manage Items Button for Supply / Service+Supply -->
+        <button 
+          type="button" 
+          class="pro-btn-po pro-btn-po-manage" 
+          v-if="selectedPo && (selectedPo.po_type === 'Supply' || selectedPo.po_type === 'Service+Supply')" 
+          @click="goToSupplyItems(selectedPo)"
+        >
+          <i class="fas fa-boxes-packing"></i> Manage Items
+        </button>
+
+        <!-- Add Visit Button for AMC -->
+        <button 
+          type="button" 
+          class="pro-btn-po pro-btn-po-reopen" 
+          v-if="selectedPo && selectedPo.po_type === 'AMC'" 
+          @click="addVisit(selectedPo)"
+        >
+          <i class="fas fa-calendar-plus"></i> Add/Update Visit
+        </button>
+      </div>
+
+      <div class="pro-footer-actions">
+        <button type="button" class="pro-btn-footer-cancel" @click="showPoDetailsModal = false">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+      </div>
+    </div>
   </div>
 </div>
-<!-- Extra Visits -->
-<tr 
-  v-for="extra in selectedPo?.extra_visits || []" 
-  :key="'extra-' + extra.id"
->
-
-  <th>Extra Visit</th>
-  <td>
-    {{ formatDate(extra.visit_date) }}
-    <span style="color:red; margin-left:6px;">
-      Extra Visit
-    </span>
-  </td>
-</tr>
 
 <!-- Add Visit Modal -->
 <div v-if="showAddVisitModal" class="visit-modal-overlay">
@@ -8400,6 +8713,33 @@ setTimeout(() => {
       return type;
     },
 
+    formatPoDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    },
+
+    getPoTypeIcon(poType) {
+      switch (poType) {
+        case 'AMC': return 'fas fa-calendar-check';
+        case 'Service': return 'fas fa-screwdriver-wrench';
+        case 'Supply': return 'fas fa-truck-ramp-box';
+        case 'Service+Supply': return 'fas fa-boxes-stacked';
+        default: return 'fas fa-file-invoice';
+      }
+    },
+
+    getPoTypeBadgeClass(poType) {
+      switch (poType) {
+        case 'AMC': return 'badge-amc';
+        case 'Service': return 'badge-service';
+        case 'Supply': return 'badge-supply';
+        case 'Service+Supply': return 'badge-servicesupply';
+        default: return 'badge-default';
+      }
+    },
+
     // Equipment handling
     removeEquipment(type, index) {
       this.customer.equipment_details[type].splice(index, 1);
@@ -8975,6 +9315,573 @@ font-family: cursive;
 
   .pro-equip-row-card {
     flex-wrap: wrap;
+  }
+}
+
+/* ===============================
+   PRO OPEN & CLOSED PO MODALS
+================================ */
+.pro-po-modal-container {
+  background: #f8fafc;
+  width: 92%;
+  max-width: 840px;
+  max-height: 88vh;
+  margin: 0 auto;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  animation: proModalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pro-supply-close-container {
+  background: #ffffff;
+  width: 92%;
+  max-width: 520px;
+  max-height: 90vh;
+  margin: 0 auto;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  animation: proModalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pro-supply-body {
+  padding: 1.5rem 1.75rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: #f8fafc;
+}
+
+.pro-po-modal-body {
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  max-height: calc(88vh - 90px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pro-po-cards-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pro-po-row-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.pro-po-row-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.pro-po-row-card.closed-card {
+  background: #ffffff;
+  border-left: 4px solid #10b981;
+}
+
+.pro-po-row-card:not(.closed-card) {
+  border-left: 4px solid #0284c7;
+}
+
+/* PO Type Badge (Left Icon Avatar) */
+.pro-po-type-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.badge-amc {
+  background: #e0e7ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.badge-service {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.badge-supply {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.badge-servicesupply {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
+.badge-default {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.badge-closed {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+/* Info Column */
+.pro-po-info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.pro-po-number-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pro-po-number-tag {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'Consolas', 'Courier New', monospace;
+  letter-spacing: 0.02em;
+}
+
+.pro-po-number-tag.closed-tag {
+  color: #334155;
+}
+
+.pro-po-type-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pro-po-type-pill.pill-closed {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.pro-po-company-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.pro-po-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.pro-po-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pro-po-meta-item.pro-po-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Actions Group */
+.pro-po-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.pro-btn-po {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 13px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.pro-btn-po-details {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.pro-btn-po-details:hover {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.pro-btn-po-close {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.pro-btn-po-close:hover {
+  background: #fde68a;
+  color: #78350f;
+  border-color: #fcd34d;
+  transform: translateY(-1px);
+}
+
+.pro-btn-po-reopen {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.pro-btn-po-reopen:hover {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
+.pro-btn-po-del {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+}
+
+.pro-btn-po-del:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  transform: scale(1.06);
+}
+
+/* Header Action Pill */
+.pro-btn-pill-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.pro-btn-pill-action:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Empty State */
+.pro-po-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pro-po-empty-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.pro-po-empty-icon.emerald-icon {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.pro-po-empty-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.pro-po-empty-desc {
+  font-size: 0.86rem;
+  color: #64748b;
+  max-width: 420px;
+  margin: 0;
+}
+
+.header-emerald {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+.header-purple {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+}
+
+.icon-emerald {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.icon-purple {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.pill-emerald {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+@media (max-width: 768px) {
+  .pro-po-row-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pro-po-actions-group {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ===============================
+   PRO PO DETAILS MODAL (FRONT LAYER)
+================================ */
+.pro-po-details-overlay {
+  z-index: 10005 !important;
+}
+
+.pro-po-details-container {
+  max-width: 900px !important;
+}
+
+.header-indigo {
+  background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%) !important;
+}
+
+.icon-indigo {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.pill-indigo {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Overview Stat Cards Grid */
+.pro-po-detail-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+}
+
+.pro-po-detail-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.pro-po-detail-stat-card .stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pro-po-detail-stat-card .stat-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.pro-po-detail-stat-card .stat-value.text-emerald {
+  color: #059669;
+}
+
+/* Readonly Info Box */
+.pro-detail-readonly-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  font-weight: 500;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* AMC Visits Grid */
+.pro-visits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.pro-visit-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.pro-visit-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.pro-visit-card.extra-card {
+  border-left: 3px solid #ef4444;
+  background: #fff5f5;
+}
+
+.pro-visit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pro-visit-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pro-visit-date {
+  font-size: 0.78rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pro-badge-completed {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #059669;
+  background: #d1fae5;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.pro-badge-pending {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #d97706;
+  background: #fef3c7;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.pro-badge-extra {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #ef4444;
+  background: #fee2e2;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.pro-btn-po-manage {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.pro-btn-po-manage:hover {
+  background: #ddd6fe;
+  color: #5b21b6;
+  border-color: #c4b5fd;
+  transform: translateY(-1px);
+}
+
+.pro-empty-subtext {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .pro-po-detail-overview-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
