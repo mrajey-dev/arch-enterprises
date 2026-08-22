@@ -1154,76 +1154,138 @@
   </div>
 </div>
 
-<div v-if="showWelcomeModal" class="modal-backdrop" @click.self="closeWelcomeModal">
-    <div class="modal-card">
-      <!-- Header -->
-      <div class="modal-header">
-        <button class="btn-back" @click="closeWelcomeModal">
-          <i class="fas fa-arrow-left"></i> Back
-        </button>
+<!-- Reports Modal -->
+<div v-if="showWelcomeModal" class="pro-modal-backdrop-top crm-modal-overlay pro-reports-overlay" @click.self="closeWelcomeModal">
+  <div class="pro-po-modal-container pro-reports-container">
+    <!-- Header -->
+    <div class="pro-modal-header header-teal">
+      <div class="pro-header-left">
+        <div class="pro-header-icon icon-teal">
+          <i class="fas fa-file-contract"></i>
+        </div>
+        <div>
+          <div class="pro-header-title-row">
+            <h2 class="pro-modal-title">Service & Visit Reports</h2>
+            <span class="pro-status-pill pill-teal">
+              {{ allReports.length }} {{ allReports.length === 1 ? 'Report Found' : 'Reports Found' }}
+            </span>
+          </div>
+          <p class="pro-modal-subtitle" v-if="selectedCompany">
+            <i class="fas fa-building"></i> {{ selectedCompany }}
+          </p>
+        </div>
       </div>
 
-      <!-- Body -->
-      <div class="modal-body">
-        <h3 class="modal-title">
-          <strong>{{ selectedCompany }}</strong> reports
-        </h3>
+      <div class="pro-header-actions">
+        <button type="button" class="pro-btn-header-close" @click="closeWelcomeModal" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
 
-        <div class="table-wrapper" v-if="allReports.length">
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Uploaded date</th>
-                <th>Report</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in allReports" :key="index">
-                <td>
-                  <!-- Service -->
-                  <span
-                    v-if="item.type === 'Service'"
-                    class="badge-service"
+    <!-- Body / Reports Table -->
+    <div class="pro-po-modal-body pro-reports-body">
+      <div v-if="allReports.length > 0" class="pro-reports-table-wrap">
+        <table class="pro-reports-table">
+          <thead>
+            <tr>
+              <th style="width: 26%;">Service / Report Type</th>
+              <th style="width: 22%;">PO / Order Ref</th>
+              <th style="width: 22%;">Uploaded Date</th>
+              <th style="width: 30%; text-align: center;">Available Documents</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in allReports" :key="index">
+              <!-- Report Type Column -->
+              <td>
+                <div class="pro-report-type-cell">
+                  <span 
+                    v-if="item.type === 'Service'" 
+                    class="pro-po-type-pill badge-service"
                   >
-                    {{ item.type_of_service }}
+                    <i class="fas fa-screwdriver-wrench"></i> {{ item.type_of_service || 'Service' }}
                   </span>
-
-                  <!-- Visit -->
-                  <span
-                    v-else
-                    class="badge-visit"
+                  <span 
+                    v-else 
+                    class="pro-po-type-pill badge-amc"
                   >
-                    {{ item.type }}
+                    <i class="fas fa-calendar-check"></i> {{ item.type || 'AMC Visit' }}
                   </span>
-                </td>
+                </div>
+              </td>
 
-                <td>{{ formatDate(item.updated_at) }}</td>
-
-                <td>
-                  <div v-if="item.report_path" class="report-actions">
-                    <button
-                      v-for="(path, idx) in item.report_path.split(',')"
-                      :key="idx"
-                      class="view-btn"
-                      @click="openReport(path)"
-                    >
-                      <i class="fas fa-file-invoice"></i> Report {{ idx + 1 }}
-                    </button>
-                  </div>
-                  <span v-else class="not-available">
-                    Not Available
+              <!-- PO Number Column -->
+              <td>
+                <div class="pro-report-po-cell">
+                  <span class="pro-report-po-tag monospace" v-if="item.po_number">
+                    <i class="fas fa-hashtag"></i> {{ item.po_number }}
                   </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  <span v-else class="text-muted text-xs">General / Direct</span>
+                </div>
+              </td>
+
+              <!-- Uploaded Date Column -->
+              <td>
+                <div class="pro-report-date-cell">
+                  <i class="fas fa-calendar-day text-slate"></i>
+                  <span>{{ formatPoDate(item.updated_at || item.created_at) || '-' }}</span>
+                </div>
+              </td>
+
+              <!-- Document Actions Column -->
+              <td style="text-align: center;">
+                <div v-if="item.report_path && item.report_path.trim() !== ''" class="pro-report-docs-flex">
+                  <button
+                    v-for="(path, idx) in item.report_path.split(',')"
+                    :key="idx"
+                    class="pro-report-file-pill"
+                    @click="openReport(path)"
+                    title="View / Download Report PDF"
+                  >
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Report {{ idx + 1 }}</span>
+                    <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                  </button>
+                </div>
+                <span v-else class="pro-no-report-badge">
+                  <i class="fas fa-file-excel"></i> Not Available
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else class="pro-po-empty-state">
+        <div class="pro-po-empty-icon teal-icon">
+          <i class="fas fa-file-circle-xmark"></i>
         </div>
+        <h4 class="pro-po-empty-title">No Reports Found</h4>
+        <p class="pro-po-empty-desc">
+          There are no service or visit report records found for <strong v-if="selectedCompany">{{ selectedCompany }}</strong><span v-else>this customer</span>.
+        </p>
+      </div>
+    </div>
 
-        <p v-else class="empty-state">No reports found.</p>
+    <!-- STICKY ACTION FOOTER -->
+    <div class="pro-modal-footer">
+      <div class="pro-footer-left">
+        <div class="pro-footer-stat">
+          <span class="pro-stat-tag">Total Records:</span>
+          <span class="pro-stat-number">{{ allReports.length }} Records</span>
+        </div>
+      </div>
+
+      <div class="pro-footer-actions">
+        <button type="button" class="pro-btn-footer-cancel" @click="closeWelcomeModal">
+          <i class="fas fa-times"></i> Close
+        </button>
       </div>
     </div>
   </div>
+</div>
 
 
 
@@ -19259,4 +19321,210 @@ textarea.pro-input {
 .modal-card.medium {
   z-index: 10601 !important;
 }
+
+/* =========================================================
+   PRO REPORTS MODAL & MODERN TABLE STYLING
+   ========================================================= */
+.pro-reports-overlay {
+  z-index: 10005 !important;
+}
+
+.pro-reports-container {
+  max-width: 920px !important;
+  width: 92% !important;
+  background: #ffffff !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+.header-teal {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+}
+
+.icon-teal {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.pill-teal {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.teal-icon {
+  background: #e0f2fe !important;
+  color: #0284c7 !important;
+}
+
+.pro-reports-body {
+  padding: 1.5rem 1.75rem !important;
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+  background: #f8fafc !important;
+}
+
+.pro-reports-table-wrap {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.pro-reports-table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  text-align: left !important;
+}
+
+.pro-reports-table thead {
+  background: #f1f5f9 !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.pro-reports-table th {
+  padding: 0.9rem 1.25rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.pro-reports-table td {
+  padding: 1rem 1.25rem !important;
+  font-size: 0.88rem !important;
+  color: #1e293b !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  vertical-align: middle !important;
+}
+
+.pro-reports-table tbody tr {
+  transition: all 0.15s ease !important;
+  background: #ffffff !important;
+}
+
+.pro-reports-table tbody tr:hover {
+  background: #f8fafc !important;
+}
+
+.pro-reports-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.pro-report-type-cell {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.pro-po-type-pill.badge-amc {
+  background: #ede9fe !important;
+  color: #6d28d9 !important;
+  border: 1px solid #ddd6fe !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  font-weight: 700 !important;
+  font-size: 0.76rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.pro-po-type-pill.badge-service {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  font-weight: 700 !important;
+  font-size: 0.76rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.pro-report-po-cell {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.pro-report-po-tag {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.82rem !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.pro-report-date-cell {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-weight: 600 !important;
+  color: #475569 !important;
+  font-size: 0.84rem !important;
+}
+
+.pro-report-docs-flex {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.pro-report-file-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: #ffffff !important;
+  color: #b91c1c !important;
+  border: 1.5px solid #fecaca !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 3px rgba(185, 28, 28, 0.08) !important;
+}
+
+.pro-report-file-pill i.fa-file-pdf {
+  color: #dc2626 !important;
+  font-size: 0.9rem !important;
+}
+
+.pro-report-file-pill:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+}
+
+.pro-report-file-pill:hover i {
+  color: #ffffff !important;
+}
+
+.pro-no-report-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+  background: #f1f5f9 !important;
+  padding: 4px 10px !important;
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+}
 </style>
+
+
