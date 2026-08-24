@@ -2943,7 +2943,7 @@
             <div v-for="visit in filledVisits" :key="visit.number" class="pro-visit-card">
               <div class="pro-visit-head">
                 <span class="pro-visit-title">Visit #{{ visit.number }}</span>
-                <span v-if="getVisitStatus(visit.date) === 'Completed'" class="pro-badge-completed">
+                <span v-if="visit.status === 'Completed' || getVisitStatus(visit.date, selectedPo) === 'Completed'" class="pro-badge-completed">
                   <i class="fas fa-check"></i> Completed
                 </span>
                 <span v-else class="pro-badge-pending">
@@ -5243,23 +5243,27 @@ financialYear() {
     return this.poList.filter(po => !po.status || po.status.toLowerCase() !== 'closed');
   },
     filledVisits() {
-      if (!this.selectedPo) return [];
+      if (!this.selectedPo || this.selectedPo.po_type !== 'AMC') return [];
 
       const isValidDate = (val) => {
         if (!val) return false;
         const s = String(val).trim();
-        if (!s || s === "0000-00-00") return false;  // skip empty & placeholder
-        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return true; // YYYY-MM-DD pattern
-        return !isNaN(Date.parse(s)); // fallback parse
+        if (!s || s === "0000-00-00" || s === "null" || s === "undefined") return false;
+        if (/^\d{4}-\d{2}-\d{2}/.test(s)) return true;
+        return !isNaN(Date.parse(s));
       };
 
       const visits = [];
       for (let i = 1; i <= 12; i++) {
         const key = `visit${i}`;
-        if (isValidDate(this.selectedPo[key])) {
+        const val = this.selectedPo[key];
+        if (isValidDate(val)) {
+          const dateStr = typeof val === 'string' && val.includes('T') ? val.split('T')[0] : String(val).trim();
+          const status = this.getVisitStatus(dateStr, this.selectedPo);
           visits.push({
             number: i,
-            date: this.selectedPo[key]
+            date: dateStr,
+            status: status
           });
         }
       }
@@ -6552,11 +6556,39 @@ setNewEngineTerms() {
         this.visitStatusList = res.data;
       });
   },
-getVisitStatus(date) {
-    const record = this.visitStatusList.find(
-      v => v.visit_date === date
-    );
-    return record ? record.status : null;
+  getVisitStatus(date, po = this.selectedPo) {
+    if (!date) return 'Pending';
+    const cleanDate = typeof date === 'string' && date.includes('T') ? date.split('T')[0] : String(date).trim();
+    const targetPoNumber = (po?.po_number || '').trim().toLowerCase();
+    const targetCompany = (po?.company_name || '').trim().toLowerCase();
+
+    // 1. Check in visit_assignments directly on the PO if present
+    if (po?.visit_assignments && Array.isArray(po.visit_assignments)) {
+      const match = po.visit_assignments.find(v => {
+        const vDate = v.visit_date && String(v.visit_date).includes('T') ? v.visit_date.split('T')[0] : String(v.visit_date || '').trim();
+        return vDate === cleanDate;
+      });
+      if (match && match.status) {
+        return String(match.status).trim().toLowerCase() === 'completed' ? 'Completed' : 'Pending';
+      }
+    }
+
+    // 2. Check in visitStatusList matching company_name, po_number, and visit_date
+    if (this.visitStatusList && Array.isArray(this.visitStatusList)) {
+      const match = this.visitStatusList.find(v => {
+        const vDate = v.visit_date && String(v.visit_date).includes('T') ? v.visit_date.split('T')[0] : String(v.visit_date || '').trim();
+        const vPo = (v.po_number || '').trim().toLowerCase();
+        const vComp = (v.company_name || '').trim().toLowerCase();
+
+        return vDate === cleanDate && (!targetPoNumber || vPo === targetPoNumber) && (!targetCompany || vComp === targetCompany);
+      });
+
+      if (match && match.status) {
+        return String(match.status).trim().toLowerCase() === 'completed' ? 'Completed' : 'Pending';
+      }
+    }
+
+    return 'Pending';
   },
 
   async fetchCompletedVisits() {
@@ -7382,28 +7414,48 @@ resetEquipmentSelections() {
     });
   },
     async saveVisit() {
-  if (!this.selectedVisit || !this.visitDate) return;
+      if (!this.selectedVisit || !this.visitDate) return;
 
-  try {
-    // Make an API call to update the visit column in add_po table
-    await axios.post('https://employees.archenterprises.co.in/api/api/add-visit', {
-      company_name: this.selectedPo.company_name,
-      po_id: this.selectedPo.id,
-      visit_column: this.selectedVisit, // visit1, visit2, etc.
-      visit_date: this.visitDate
-    });
+      try {
+        const res = await axios.post('/api/add-visit', {
+          company_name: this.selectedPo ? this.selectedPo.company_name : null,
+          po_id: this.selectedPo ? this.selectedPo.id : null,
+          visit_column: this.selectedVisit, // visit1, visit2, etc.
+          visit_date: this.visitDate
+        });
 
-    toastSuccess('Visit added successfully!');
-    this.showAddVisitModal = false;
+        toastSuccess(res.data?.message || 'Visit added successfully!');
+        this.showAddVisitModal = false;
 
-    // Optional: update local selectedPo to show immediately
-    this.selectedPo[this.selectedVisit] = this.visitDate;
+        // Update local selectedPo object reactively
+        if (this.selectedPo) {
+          if (res.data?.po) {
+            this.selectedPo = { ...this.selectedPo, ...res.data.po };
+          } else {
+            this.selectedPo = {
+              ...this.selectedPo,
+              [this.selectedVisit]: this.visitDate
+            };
+          }
+        }
 
-  } catch (error) {
-    console.error(error);
-    toastSuccess('Failed to add visit.');
-  }
-},
+        // Re-fetch PO details to sync all relations and visits
+        if (this.selectedPo && this.selectedPo.id) {
+          const freshPo = await axios.get(`/api/pos/${this.selectedPo.id}`);
+          if (freshPo.data) {
+            this.selectedPo = freshPo.data;
+          }
+        }
+
+        this.selectedVisit = '';
+        this.visitDate = '';
+
+      } catch (error) {
+        console.error('Error adding visit:', error);
+        const errorMsg = error.response?.data?.message || 'Failed to add visit.';
+        toastError(errorMsg);
+      }
+    },
     addVisit(po) {
     this.selectedPo = po;
     this.selectedVisit = '';
@@ -8255,16 +8307,23 @@ setTimeout(() => {
 
 
     openPoDetails(po) {
-    axios.get(`/api/pos/${po.id}`)   // single PO details
-      .then(res => {
-        this.selectedPo = res.data;
-        this.showPoDetailsModal = true;
-      })
-      .catch(err => {
-        console.error(err);
-        toastSuccess('Failed to fetch PO details');
-      });
-  },
+      this.selectedPo = po;
+      this.showPoDetailsModal = true;
+      if (this.fetchVisitStatuses) {
+        this.fetchVisitStatuses();
+      }
+      if (po && po.id) {
+        axios.get(`/api/pos/${po.id}`)
+          .then(res => {
+            if (res.data) {
+              this.selectedPo = res.data;
+            }
+          })
+          .catch(err => {
+            console.error('Failed to fetch PO details:', err);
+          });
+      }
+    },
 
 // ✅ Individual Close Button (for each PO)
 
