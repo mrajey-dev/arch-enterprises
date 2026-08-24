@@ -1386,6 +1386,21 @@
         </select>
         <i class="fas fa-chevron-down pro-arrow"></i>
       </div>
+
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar pro-month-icon"></i>
+        <select v-model="filters.year" class="pro-month-select">
+          <option value="">All Years</option>
+          <option
+            v-for="y in availableFilterYears"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
     </div>
 
     <!-- TABLE AREA -->
@@ -1518,6 +1533,21 @@
         </select>
         <i class="fas fa-chevron-down pro-arrow"></i>
       </div>
+
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar pro-month-icon"></i>
+        <select v-model="completedFilters.year" class="pro-month-select">
+          <option value="">All Years</option>
+          <option
+            v-for="y in availableFilterYears"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
     </div>
 
     <!-- TABLE AREA -->
@@ -1645,6 +1675,21 @@
             :value="index + 1"
           >
             {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
+
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar pro-month-icon"></i>
+        <select v-model="serviceFilters.year" class="pro-month-select">
+          <option value="">All Years</option>
+          <option
+            v-for="y in availableFilterYears"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}
           </option>
         </select>
         <i class="fas fa-chevron-down pro-arrow"></i>
@@ -1790,6 +1835,21 @@
         </select>
         <i class="fas fa-chevron-down pro-arrow"></i>
       </div>
+
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar pro-month-icon"></i>
+        <select v-model="assignedServiceFilters.year" class="pro-month-select">
+          <option value="">All Years</option>
+          <option
+            v-for="y in availableFilterYears"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
     </div>
 
     <!-- TABLE AREA -->
@@ -1919,6 +1979,21 @@
             :value="index + 1"
           >
             {{ m }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
+
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar pro-month-icon"></i>
+        <select v-model="supplyFilters.year" class="pro-month-select">
+          <option value="">All Years</option>
+          <option
+            v-for="y in availableFilterYears"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}
           </option>
         </select>
         <i class="fas fa-chevron-down pro-arrow"></i>
@@ -3896,6 +3971,21 @@
         </select>
         <i class="fas fa-chevron-down pro-arrow"></i>
       </div>
+
+      <div class="pro-filter-month-box">
+        <i class="fas fa-calendar pro-month-icon"></i>
+        <select v-model="deliveredFilters.year" class="pro-month-select">
+          <option value="">All Years</option>
+          <option
+            v-for="y in availableFilterYears"
+            :key="y"
+            :value="y"
+          >
+            {{ y }}
+          </option>
+        </select>
+        <i class="fas fa-chevron-down pro-arrow"></i>
+      </div>
     </div>
 
     <!-- TABLE AREA -->
@@ -4518,61 +4608,42 @@ isSavingServiceSupply: false,
          isSavingSupply: false,
          isSavingService:false,
         deliveredFilters: {
-      search: '',
-      month: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
+          search: '',
+          month: '',
+          year: ''
+        },
+        months: [
+          'January', 'February', 'March', 'April',
+          'May', 'June', 'July', 'August',
+          'September', 'October', 'November', 'December'
+        ],
         supplyFilters: {
-      search: '',
-      month: '',
-        status: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
+          search: '',
+          month: '',
+          year: '',
+          status: ''
+        },
         assignedServiceFilters: {
-      search: '',
-      month: '',
-      status: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
+          search: '',
+          month: '',
+          year: '',
+          status: ''
+        },
         serviceFilters: {
-      search: '',
-      month: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
+          search: '',
+          month: '',
+          year: ''
+        },
         completedFilters: {
-      search: '',
-      month: ''
-    },
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],filters: {
-  search: '',
-  month: new Date().getMonth() + 1 
-},
-
-    months: [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December'
-    ],
+          search: '',
+          month: '',
+          year: ''
+        },
+        filters: {
+          search: '',
+          month: new Date().getMonth() + 1,
+          year: ''
+        },
   
         emailError: '',
          quotationLoading: false ,
@@ -5047,7 +5118,51 @@ filteredAllQuotations() {
 
 
 
- filteredDeliveredSupplies() {
+  availableFilterYears() {
+    const currentYear = new Date().getFullYear();
+    const yearSet = new Set([currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2]);
+
+    if (this.visit_assign && Array.isArray(this.visit_assign)) {
+      this.visit_assign.forEach(v => {
+        if (v.visit_date) {
+          const y = new Date(v.visit_date).getFullYear();
+          if (!isNaN(y)) yearSet.add(y);
+        }
+      });
+    }
+
+    if (this.servicePoList && Array.isArray(this.servicePoList)) {
+      this.servicePoList.forEach(s => {
+        if (s.service_date) {
+          const y = new Date(s.service_date).getFullYear();
+          if (!isNaN(y)) yearSet.add(y);
+        }
+      });
+    }
+
+    if (this.supplies && Array.isArray(this.supplies)) {
+      this.supplies.forEach(sp => {
+        const rawDate = sp.delivery_due_date || sp.date;
+        if (rawDate) {
+          const y = new Date(rawDate).getFullYear();
+          if (!isNaN(y)) yearSet.add(y);
+        }
+      });
+    }
+
+    if (this.deliveredSupplies && Array.isArray(this.deliveredSupplies)) {
+      this.deliveredSupplies.forEach(sp => {
+        const rawDate = sp.material_delivered_date || sp.closed_date || sp.date;
+        if (rawDate) {
+          const y = new Date(rawDate).getFullYear();
+          if (!isNaN(y)) yearSet.add(y);
+        }
+      });
+    }
+
+    return Array.from(yearSet).sort((a, b) => b - a);
+  },
+  filteredDeliveredSupplies() {
     let data = [...this.deliveredSupplies];
 
     // 🔍 Search
@@ -5062,9 +5177,20 @@ filteredAllQuotations() {
     // 📅 Month filter
     if (this.deliveredFilters.month) {
       data = data.filter(item => {
-        if (!item.date) return false;
-        const d = new Date(item.date);
+        const rawDate = item.material_delivered_date || item.closed_date || item.date;
+        if (!rawDate) return false;
+        const d = new Date(rawDate);
         return (d.getMonth() + 1) === Number(this.deliveredFilters.month);
+      });
+    }
+
+    // 📅 Year filter
+    if (this.deliveredFilters.year) {
+      data = data.filter(item => {
+        const rawDate = item.material_delivered_date || item.closed_date || item.date;
+        if (!rawDate) return false;
+        const d = new Date(rawDate);
+        return d.getFullYear() === Number(this.deliveredFilters.year);
       });
     }
 
@@ -5072,8 +5198,6 @@ filteredAllQuotations() {
     return data.slice().sort((a, b) => {
       const getTime = (val) => {
         if (!val) return 0;
-
-        // ✅ handle "YYYY-MM-DD" safely
         return new Date(val.replace(' ', 'T')).getTime() || 0;
       };
 
@@ -5082,45 +5206,52 @@ filteredAllQuotations() {
 
       return dateB - dateA;
     });
-  }
-,
+  },
   filteredSupplies() {
-  return this.supplies.filter(supply => {
+    return this.supplies.filter(supply => {
+      const matchesSearch =
+        !this.supplyFilters.search ||
+        supply.company_name?.toLowerCase().includes(this.supplyFilters.search.toLowerCase()) ||
+        supply.po_number?.toLowerCase().includes(this.supplyFilters.search.toLowerCase());
 
-    const matchesSearch =
-      !this.supplyFilters.search ||
-      supply.company_name?.toLowerCase().includes(this.supplyFilters.search.toLowerCase()) ||
-      supply.po_number?.toLowerCase().includes(this.supplyFilters.search.toLowerCase())
+      const rawDate = supply.delivery_due_date || supply.date;
+      const matchesMonth =
+        !this.supplyFilters.month ||
+        (rawDate && (new Date(rawDate).getMonth() + 1) == this.supplyFilters.month);
 
-    const matchesMonth =
-      !this.supplyFilters.month ||
-      new Date(supply.delivery_due_date).getMonth() + 1 == this.supplyFilters.month
+      const matchesYear =
+        !this.supplyFilters.year ||
+        (rawDate && new Date(rawDate).getFullYear() == this.supplyFilters.year);
 
-    const matchesStatus =
-      !this.supplyFilters.status ||
-      (supply.material_status || 'Awaiting Dispatch') === this.supplyFilters.status
+      const matchesStatus =
+        !this.supplyFilters.status ||
+        (supply.material_status || 'Awaiting Dispatch') === this.supplyFilters.status;
 
-    return matchesSearch && matchesMonth && matchesStatus
-  })
-},
-    filteredAssignedServiceList() {
+      return matchesSearch && matchesMonth && matchesYear && matchesStatus;
+    });
+  },
+  filteredAssignedServiceList() {
     return this.assignedServiceList.filter(item => {
-
       // 🔍 Search (company / PO)
-      const search = this.assignedServiceFilters.search.toLowerCase()
+      const search = this.assignedServiceFilters.search.toLowerCase();
       if (search) {
-        const company = item.company_name?.toLowerCase() || ''
-        const po = item.po_number?.toLowerCase() || ''
+        const company = item.company_name?.toLowerCase() || '';
+        const po = item.po_number?.toLowerCase() || '';
         if (!company.includes(search) && !po.includes(search)) {
-          return false
+          return false;
         }
       }
 
       // 📅 Month filter (Visit Date)
       if (this.assignedServiceFilters.month && item.visit_date) {
-        const visitMonth =
-          new Date(item.visit_date).getMonth() + 1
-        if (visitMonth !== this.assignedServiceFilters.month) return false
+        const visitMonth = new Date(item.visit_date).getMonth() + 1;
+        if (visitMonth !== Number(this.assignedServiceFilters.month)) return false;
+      }
+
+      // 📅 Year filter
+      if (this.assignedServiceFilters.year && item.visit_date) {
+        const visitYear = new Date(item.visit_date).getFullYear();
+        if (visitYear !== Number(this.assignedServiceFilters.year)) return false;
       }
 
       // 📌 Status filter
@@ -5128,36 +5259,40 @@ filteredAllQuotations() {
         this.assignedServiceFilters.status &&
         item.status !== this.assignedServiceFilters.status
       ) {
-        return false
+        return false;
       }
 
-      return true
-    })
-  }
-,
-    filteredCompletedVisits() {
+      return true;
+    });
+  },
+  filteredCompletedVisits() {
     return this.completedVisits.filter(row => {
-
       // 🔍 Search (company / PO)
-      const search = this.completedFilters.search.toLowerCase()
+      const search = this.completedFilters.search.toLowerCase();
       if (search) {
-        const company = row.company_name?.toLowerCase() || ''
-        const po = row.po_number?.toLowerCase() || ''
+        const company = row.company_name?.toLowerCase() || '';
+        const po = row.po_number?.toLowerCase() || '';
         if (!company.includes(search) && !po.includes(search)) {
-          return false
+          return false;
         }
       }
 
       // 📅 Month filter
       if (this.completedFilters.month && row.visit_date) {
-        const visitMonth = new Date(row.visit_date).getMonth() + 1
-        if (visitMonth !== this.completedFilters.month) return false
+        const visitMonth = new Date(row.visit_date).getMonth() + 1;
+        if (visitMonth !== Number(this.completedFilters.month)) return false;
       }
 
-      return true
-    })
+      // 📅 Year filter
+      if (this.completedFilters.year && row.visit_date) {
+        const visitYear = new Date(row.visit_date).getFullYear();
+        if (visitYear !== Number(this.completedFilters.year)) return false;
+      }
+
+      return true;
+    });
   },
-    allReports() {
+  allReports() {
     return [
       ...this.serviceReports.map(r => ({
         ...r,
@@ -5171,19 +5306,19 @@ filteredAllQuotations() {
       (a, b) => new Date(b.updated_at) - new Date(a.updated_at) 
     );
   },
-financialYear() {
-  const y = new Date().getFullYear();
-  return `${y}-${String(y + 1).slice(-2)}`;
-},
-     completedVisits() {
+  financialYear() {
+    const y = new Date().getFullYear();
+    return `${y}-${String(y + 1).slice(-2)}`;
+  },
+  completedVisits() {
     return this.assignedVisits.filter(v => v.status === 'Completed');
   },
-    quotePrefix() {
-  const year = new Date().getFullYear();  
-  const nextYearShort = (year + 1).toString().slice(-2); 
-  return `AE/QUOTE/${year}-${nextYearShort}/`;
-},
-     filteredClosedPoList() {
+  quotePrefix() {
+    const year = new Date().getFullYear();  
+    const nextYearShort = (year + 1).toString().slice(-2); 
+    return `AE/QUOTE/${year}-${nextYearShort}/`;
+  },
+  filteredClosedPoList() {
     // Filter closed POs for the current company
     return this.closedPoList.filter(
       po => po.company_name === this.selectedCompany
@@ -5191,51 +5326,60 @@ financialYear() {
   },
   filteredVisits() {
     return this.visit_assign.filter(visit => {
-
       // ❌ Hide completed
-      if (visit.status === 'Completed') return false
+      if (visit.status === 'Completed') return false;
 
       // 🔍 Search filter
-      const search = this.filters.search.toLowerCase()
+      const search = this.filters.search.toLowerCase();
       if (search) {
-        const company = visit.company_name?.toLowerCase() || ''
-        const po = visit.po_number?.toLowerCase() || ''
+        const company = visit.company_name?.toLowerCase() || '';
+        const po = visit.po_number?.toLowerCase() || '';
         if (!company.includes(search) && !po.includes(search)) {
-          return false
+          return false;
         }
       }
 
       // 📅 Month filter
-    if (this.filters.month !== null && visit.visit_date) {
-        const visitMonth = new Date(visit.visit_date).getMonth() + 1
-        if (visitMonth !== this.filters.month) return false
+      if (this.filters.month !== null && this.filters.month !== '' && visit.visit_date) {
+        const visitMonth = new Date(visit.visit_date).getMonth() + 1;
+        if (visitMonth !== Number(this.filters.month)) return false;
       }
 
-      return true
-    })
-  },
-   filteredServicePoList() {
-    return this.servicePoList.filter(order => {
+      // 📅 Year filter
+      if (this.filters.year && visit.visit_date) {
+        const visitYear = new Date(visit.visit_date).getFullYear();
+        if (visitYear !== Number(this.filters.year)) return false;
+      }
 
+      return true;
+    });
+  },
+  filteredServicePoList() {
+    return this.servicePoList.filter(order => {
       // 🔍 Search filter (company / PO)
-      const search = this.serviceFilters.search.toLowerCase()
+      const search = this.serviceFilters.search.toLowerCase();
       if (search) {
-        const company = order.company_name?.toLowerCase() || ''
-        const po = order.po_number?.toLowerCase() || ''
+        const company = order.company_name?.toLowerCase() || '';
+        const po = order.po_number?.toLowerCase() || '';
         if (!company.includes(search) && !po.includes(search)) {
-          return false
+          return false;
         }
       }
 
       // 📅 Month filter (Service Date)
       if (this.serviceFilters.month && order.service_date) {
-        const serviceMonth =
-          new Date(order.service_date).getMonth() + 1
-        if (serviceMonth !== this.serviceFilters.month) return false
+        const serviceMonth = new Date(order.service_date).getMonth() + 1;
+        if (serviceMonth !== Number(this.serviceFilters.month)) return false;
       }
 
-      return true
-    })
+      // 📅 Year filter
+      if (this.serviceFilters.year && order.service_date) {
+        const serviceYear = new Date(order.service_date).getFullYear();
+        if (serviceYear !== Number(this.serviceFilters.year)) return false;
+      }
+
+      return true;
+    });
   },
    filteredPoList() {
     // Show only POs that are not closed

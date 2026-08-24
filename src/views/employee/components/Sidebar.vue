@@ -105,6 +105,13 @@
               <i class="fas fa-boxes"></i>
               <span>Manage Stock</span>  
             </li>
+            <li 
+              v-if="canViewSiteOwnership"
+              @click="goTo('employee/siteownership')"
+            >
+              <i class="fas fa-sitemap"></i>
+              <span>Site Ownership</span>  
+            </li>
              <li 
               @click="goTo('employee/ETPSession')"
             >
@@ -296,6 +303,10 @@ export default {
     isAjay() {
       const name = (this.username || this.user?.name || "").trim().toLowerCase();
       return name === "ajay" || name.startsWith("ajay ") || name.includes("ajay");
+    },
+    canViewSiteOwnership() {
+      const dept = (this.user?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+      return dept === 'service' || dept === 'hr' || dept === 'human resources';
     },
   },
   methods: {

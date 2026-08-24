@@ -2494,25 +2494,25 @@ export default {
 
 /* Mobile Calendar Status Colors */
 .calendar-cell-mobile.attendance-present { background: #d1fae5; }
-.calendar-cell-mobile.attendance-on-site { background: #e0e7ff; }
-.calendar-cell-mobile.attendance-half-day { background: #fed7aa; }
+.calendar-cell-mobile.attendance-on-site { background: #dbeafe; }
+.calendar-cell-mobile.attendance-half-day { background: #ffedd5; }
 .calendar-cell-mobile.attendance-traveling { background: #fef3c7; }
-.calendar-cell-mobile.attendance-leave { background: #e9d5ff; }
-.calendar-cell-mobile.attendance-unpaid-leave { background: #f3f4f6; border-left: 2px solid #6b7280; }
-.calendar-cell-mobile.attendance-absent { background: #fee2e2; border-left: 2px solid #ef4444; }
-.calendar-cell-mobile.attendance-missing { background: #ffe0e0; border-left: 2px solid #dc2626; position: relative; }
+.calendar-cell-mobile.attendance-leave { background: #fce7f3; }
+.calendar-cell-mobile.attendance-unpaid-leave { background: #fee2e2; }
+.calendar-cell-mobile.attendance-absent { background: #fee2e2; }
+.calendar-cell-mobile.attendance-missing { background: #ffe0e0; position: relative; }
 .calendar-cell-mobile.attendance-weekend { background: #f9fafb; opacity: 0.8; }
-.calendar-cell-mobile.public-holiday { background: #fef9c3; border: 2px solid #58cc71; }
+.calendar-cell-mobile.public-holiday { background: #ccfbf1; }
 
 /* Attendance Status Colors */
 .attendance-present { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
-.attendance-on-site { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); }
-.attendance-half-day { background: linear-gradient(135deg, #fed7aa, #fdba74); }
+.attendance-on-site { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+.attendance-half-day { background: linear-gradient(135deg, #ffedd5, #fed7aa); }
 .attendance-traveling { background: linear-gradient(135deg, #fef3c7, #fde68a); }
-.attendance-leave { background: linear-gradient(135deg, #e9d5ff, #d8b4fe); }
-.attendance-unpaid-leave { background: linear-gradient(135deg, #f3f4f6, #e5e7eb); border-left: 3px solid #6b7280; }
-.attendance-absent { background: linear-gradient(135deg, #fee2e2, #fecaca); border-left: 3px solid #ef4444; }
-.attendance-missing { background: linear-gradient(135deg, #ffe0e0, #ffc9c9) !important; border-left: 3px solid #dc2626; position: relative; }
+.attendance-leave { background: linear-gradient(135deg, #fce7f3, #fbcfe8); }
+.attendance-unpaid-leave { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+.attendance-absent { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+.attendance-missing { background: linear-gradient(135deg, #ffe0e0, #ffc9c9) !important; position: relative; }
 .attendance-missing::after {
   content: "!";
   position: absolute;
@@ -2529,7 +2529,7 @@ export default {
   font-size: 10px;
   font-weight: bold;
 }
-.public-holiday { background: linear-gradient(135deg, #fff, #fef9c3) !important; border: 2px solid #58cc71; position: relative; }
+.public-holiday { background: linear-gradient(135deg, #f0fdfa, #ccfbf1) !important; position: relative; }
 .public-holiday::before {
   content: "🎉";
   position: absolute;
@@ -2582,13 +2582,13 @@ export default {
   flex-shrink: 0;
 }
 
-.legend-box.present { background: #d1fae5; border-left: 3px solid #10b981; }
-.legend-box.on-site { background: #e0e7ff; border-left: 3px solid #3b82f6; }
-.legend-box.half-day { background: #fed7aa; border-left: 3px solid #f59e0b; }
-.legend-box.traveling { background: #fef3c7; border-left: 3px solid #d97706; }
-.legend-box.leave { background: #e9d5ff; border-left: 3px solid #8b5cf6; }
-.legend-box.unpaid-leave { background: #f3f4f6; border-left: 3px solid #6b7280; }
-.legend-box.holiday { background: #fff; border: 2px solid #58cc71; }
+.legend-box.present { background: #d1fae5; }
+.legend-box.on-site { background: #dbeafe; }
+.legend-box.half-day { background: #ffedd5; }
+.legend-box.traveling { background: #fef3c7; }
+.legend-box.leave { background: #fce7f3; }
+.legend-box.unpaid-leave { background: #fee2e2; }
+.legend-box.holiday { background: #ccfbf1; }
 
 /* Modal */
 .modal-premium {

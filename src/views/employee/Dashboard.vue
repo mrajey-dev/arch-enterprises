@@ -64,7 +64,17 @@
         <p class="label">View all PO</p>
         <span class="progress-text">Manage Purchase Orders</span>
       </div>
-      </div>  
+    </div>  
+
+    <div v-if="canViewSiteOwnership" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/siteownership')">
+      <div class="card-icon site-icon">
+        <i class="fas fa-sitemap"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Site ownership</p>
+        <span class="progress-text">Site assignments by engineer</span>
+      </div>
+    </div>  
    
         <!-- <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/weeklyworkingschedule')">
       <div class="new-tag">New</div>
@@ -116,6 +126,16 @@
       <div class="card-info">
         <p class="label">SOP</p>
         <span class="progress-text">Standard Operating Procedures</span>
+      </div>
+    </div>
+
+    <div v-if="canViewSiteOwnership" class="dashboard-card clickable-card mobile-only" @click="goTo('employee/siteownership')">
+      <div class="card-icon site-icon">
+        <i class="fas fa-sitemap"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Site ownership</p>
+        <span class="progress-text">Site assignments by engineer</span>
       </div>
     </div>
   </div>
@@ -448,6 +468,391 @@
         </div>
       </div>
     </div>
+
+    <!-- ========================================================= -->
+    <!-- 🏢 SITE OWNERSHIP MODAL POPUP -->
+    <!-- ========================================================= -->
+    <div v-if="showSiteOwnershipModal" class="site-modal-overlay" @click.self="closeSiteOwnershipModal">
+      <div class="site-modal-window">
+        <!-- Header -->
+        <div class="site-modal-header">
+          <div class="site-modal-header-left">
+            <div class="site-modal-icon-badge">
+              <i class="fas fa-sitemap"></i>
+            </div>
+            <div>
+              <h2>Site Ownership</h2>
+              <p>Engineer site assignments & engine distribution</p>
+            </div>
+          </div>
+
+          <div class="site-modal-header-right">
+            <div class="site-quick-stats">
+              <span class="stat-pill total"><i class="fas fa-building"></i> {{ overallTotalSites }} Sites</span>
+              <span class="stat-pill engines"><i class="fas fa-cogs"></i> {{ overallTotalEngines }} Engines</span>
+              <span class="stat-pill amc"><i class="fas fa-file-contract"></i> {{ overallAmcSites }} AMC</span>
+            </div>
+            <button class="site-modal-close" @click="closeSiteOwnershipModal" title="Close Popup">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="site-modal-toolbar">
+          <div class="site-search-box">
+            <i class="fas fa-search"></i>
+            <input
+              type="text"
+              v-model="siteSearchQuery"
+              placeholder="Search customer, engineer, region..."
+              class="site-search-field"
+            />
+            <button v-if="siteSearchQuery" @click="siteSearchQuery = ''" class="site-clear-btn">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="site-toolbar-actions">
+            <div class="site-filter-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <select v-model="siteRegionFilter" class="site-select">
+                <option value="">All Regions</option>
+                <option v-for="r in siteOwnershipRegions" :key="r" :value="r">{{ r }}</option>
+              </select>
+            </div>
+
+            <div class="site-filter-item">
+              <i class="fas fa-tag"></i>
+              <select v-model="siteTypeFilter" class="site-select">
+                <option value="">All Types</option>
+                <option value="AMC">AMC</option>
+                <option value="Non-AMC">Non-AMC</option>
+              </select>
+            </div>
+
+            <button class="site-btn-export" @click="exportSiteOwnershipToExcel" title="Export Excel / CSV">
+              <i class="fas fa-file-excel"></i> <span>Export</span>
+            </button>
+
+            <button class="site-btn-add" @click="openAddSiteModal(activeSiteTab !== 'Summary' && activeSiteTab !== 'All Sites' ? activeSiteTab : '')">
+              <i class="fas fa-plus"></i> <span>Add Site</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sheet Style Tabs (Matching Reference Image) -->
+        <div class="site-sheet-tabs-bar">
+          <button
+            class="sheet-tab-btn"
+            :class="{ active: activeSiteTab === 'Summary' }"
+            @click="activeSiteTab = 'Summary'"
+          >
+            <i class="fas fa-chart-pie"></i> Summary
+          </button>
+
+          <button
+            v-for="eng in siteOwnershipEngineers"
+            :key="eng"
+            class="sheet-tab-btn"
+            :class="{ active: activeSiteTab === eng }"
+            @click="activeSiteTab = eng"
+          >
+            <i class="fas fa-user-tie"></i> {{ eng }}
+            <span class="sheet-tab-count">{{ getEngineerSiteCount(eng) }}</span>
+          </button>
+
+          <button
+            class="sheet-tab-btn"
+            :class="{ active: activeSiteTab === 'All Sites' }"
+            @click="activeSiteTab = 'All Sites'"
+          >
+            <i class="fas fa-globe"></i> All Sites
+            <span class="sheet-tab-count">{{ siteOwnershipList.length }}</span>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="site-modal-body">
+          <!-- Summary Tab View -->
+          <div v-if="activeSiteTab === 'Summary'" class="site-summary-container">
+            <!-- 4 KPI Summary Cards -->
+            <div class="site-kpi-grid">
+              <div class="site-kpi-card kpi-blue">
+                <div class="kpi-icon-wrap"><i class="fas fa-building"></i></div>
+                <div class="kpi-info">
+                  <span class="kpi-number">{{ overallTotalSites }}</span>
+                  <span class="kpi-title">Total Sites Assigned</span>
+                </div>
+              </div>
+              <div class="site-kpi-card kpi-emerald">
+                <div class="kpi-icon-wrap"><i class="fas fa-cogs"></i></div>
+                <div class="kpi-info">
+                  <span class="kpi-number">{{ overallTotalEngines }}</span>
+                  <span class="kpi-title">Total Engines Maintained</span>
+                </div>
+              </div>
+              <div class="site-kpi-card kpi-purple">
+                <div class="kpi-icon-wrap"><i class="fas fa-file-contract"></i></div>
+                <div class="kpi-info">
+                  <span class="kpi-number">{{ overallAmcSites }}</span>
+                  <span class="kpi-title">Active AMC Contracts</span>
+                </div>
+              </div>
+              <div class="site-kpi-card kpi-amber">
+                <div class="kpi-icon-wrap"><i class="fas fa-users-gear"></i></div>
+                <div class="kpi-info">
+                  <span class="kpi-number">{{ siteOwnershipEngineers.length }}</span>
+                  <span class="kpi-title">Service Engineers</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary Table -->
+            <div class="site-table-wrapper">
+              <div class="site-table-title-row">
+                <h3><i class="fas fa-table-list"></i> Engineer-Wise Summary Matrix</h3>
+              </div>
+              <table class="site-data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Engineer Name</th>
+                    <th>Covered Region(s)</th>
+                    <th class="text-center">Total Sites</th>
+                    <th class="text-center">Total Engines</th>
+                    <th class="text-center">AMC Sites</th>
+                    <th class="text-center" style="width: 140px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(s, idx) in siteSummaryData" :key="s.engineer">
+                    <td class="text-center">{{ idx + 1 }}</td>
+                    <td>
+                      <div class="engineer-profile-cell">
+                        <span class="engineer-circle-avatar">{{ s.engineer.charAt(0) }}</span>
+                        <strong>{{ s.engineer }}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <span v-for="r in s.regions" :key="r" class="region-badge" :class="'reg-' + r.toLowerCase()">{{ r }}</span>
+                    </td>
+                    <td class="text-center font-bold">{{ s.total_sites }}</td>
+                    <td class="text-center font-bold text-success">{{ s.total_engines }}</td>
+                    <td class="text-center">
+                      <span class="amc-pill-count">{{ s.amc_sites }}</span>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn-view-eng-sites" @click="activeSiteTab = s.engineer">
+                        <i class="fas fa-eye"></i> View Sites
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-footer-row">
+                    <td colspan="3" class="text-right font-bold">Total</td>
+                    <td class="text-center font-bold">{{ overallTotalSites }}</td>
+                    <td class="text-center font-bold text-success">{{ overallTotalEngines }}</td>
+                    <td class="text-center font-bold">{{ overallAmcSites }}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- Engineer Sites List (Matching Reference Excel Table) -->
+          <div v-else class="site-tab-content-wrap">
+            <div class="site-table-wrapper">
+              <div class="site-table-title-row">
+                <div class="site-table-heading-left">
+                  <h3>
+                    <i class="fas fa-list-check"></i>
+                    {{ activeSiteTab === 'All Sites' ? 'All Assigned Sites' : activeSiteTab + ' - Site Allocation' }}
+                  </h3>
+                  <span class="site-count-badge">{{ filteredSiteList.length }} Sites</span>
+                </div>
+                <div class="site-table-heading-right">
+                  <span class="engine-sum-tag">
+                    <i class="fas fa-cogs"></i> Total Engines: <strong>{{ currentTabEngineTotal }}</strong>
+                  </span>
+                </div>
+              </div>
+
+              <div class="table-scroll-container">
+                <table class="site-data-table excel-grid-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 55px;" class="text-center">Sr No</th>
+                      <th>Customer</th>
+                      <th style="width: 140px;" class="text-center">No of Engines</th>
+                      <th style="width: 120px;" class="text-center">Region</th>
+                      <th style="width: 160px;">Assigned Engineer</th>
+                      <th style="width: 130px;" class="text-center">Customer Type</th>
+                      <th style="width: 100px;" class="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(site, index) in filteredSiteList" :key="site.id || index">
+                      <td class="text-center font-semibold">{{ index + 1 }}</td>
+                      <td class="customer-title-cell">
+                        <i class="fas fa-building customer-row-icon"></i>
+                        <span>{{ site.customer }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="engine-badge-number">{{ site.no_of_engines }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="region-badge" :class="'reg-' + (site.region || 'south').toLowerCase()">
+                          {{ site.region || 'South' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="assigned-eng-pill">
+                          <i class="fas fa-user-circle"></i>
+                          <span>{{ site.assigned_engineer }}</span>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <span v-if="site.customer_type === 'AMC'" class="cust-type-pill amc">AMC</span>
+                        <span v-else-if="site.customer_type" class="cust-type-pill other">{{ site.customer_type }}</span>
+                        <span v-else class="cust-type-pill blank">-</span>
+                      </td>
+                      <td class="text-center">
+                        <div class="site-actions-group">
+                          <button class="site-action-btn edit" @click="openEditSiteModal(site)" title="Edit Site">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button class="site-action-btn delete" @click="deleteSiteOwnership(site.id)" title="Delete Site">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="filteredSiteList.length === 0">
+                      <td colspan="7" class="site-empty-cell">
+                        <div class="empty-state-box">
+                          <i class="fas fa-inbox"></i>
+                          <p>No site ownership records found</p>
+                          <button class="site-btn-add btn-sm" @click="openAddSiteModal(activeSiteTab !== 'All Sites' ? activeSiteTab : '')">
+                            <i class="fas fa-plus"></i> Add First Site
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot v-if="filteredSiteList.length > 0">
+                    <tr class="table-footer-row">
+                      <td colspan="2" class="text-right font-bold">Total</td>
+                      <td class="text-center font-bold text-success">{{ currentTabEngineTotal }}</td>
+                      <td colspan="4"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- ➕ ADD / EDIT SITE SUB-MODAL -->
+    <!-- ========================================================= -->
+    <div v-if="showAddSiteModal" class="site-form-modal-overlay" @click.self="showAddSiteModal = false">
+      <div class="site-form-modal-box">
+        <div class="site-form-header">
+          <h3>
+            <i :class="editingSiteId ? 'fas fa-edit' : 'fas fa-plus-circle'"></i>
+            {{ editingSiteId ? 'Edit Site Ownership' : 'Add New Site Ownership' }}
+          </h3>
+          <button class="site-modal-close" @click="showAddSiteModal = false">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveSiteOwnership" class="site-form-content">
+          <div class="form-group-site">
+            <label>Customer / Site Name <span class="required">*</span></label>
+            <input
+              type="text"
+              v-model="siteForm.customer"
+              placeholder="e.g. A. O. Smith India Water Products Pvt. Ltd. Banglore"
+              required
+              class="form-control-site"
+            />
+          </div>
+
+          <div class="form-row-site">
+            <div class="form-group-site">
+              <label>No of Engines <span class="required">*</span></label>
+              <input
+                type="number"
+                v-model.number="siteForm.no_of_engines"
+                min="1"
+                required
+                class="form-control-site"
+              />
+            </div>
+            <div class="form-group-site">
+              <label>Region <span class="required">*</span></label>
+              <select v-model="siteForm.region" required class="form-control-site">
+                <option value="South">South</option>
+                <option value="West">West</option>
+                <option value="North">North</option>
+                <option value="East">East</option>
+                <option value="Central">Central</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-site">
+            <div class="form-group-site">
+              <label>Assigned Engineer <span class="required">*</span></label>
+              <input
+                type="text"
+                v-model="siteForm.assigned_engineer"
+                list="eng-suggestions"
+                placeholder="e.g. Ahamad"
+                required
+                class="form-control-site"
+              />
+              <datalist id="eng-suggestions">
+                <option v-for="eng in siteOwnershipEngineers" :key="eng" :value="eng"></option>
+              </datalist>
+            </div>
+
+            <div class="form-group-site">
+              <label>Customer Type</label>
+              <select v-model="siteForm.customer_type" class="form-control-site">
+                <option value="">None / Non-AMC</option>
+                <option value="AMC">AMC</option>
+                <option value="Service">Service</option>
+                <option value="Supply">Supply</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group-site">
+            <label>Remarks / Notes</label>
+            <textarea
+              v-model="siteForm.remarks"
+              rows="2"
+              placeholder="Optional notes or details"
+              class="form-control-site"
+            ></textarea>
+          </div>
+
+          <div class="site-form-actions">
+            <button type="button" class="site-btn-cancel" @click="showAddSiteModal = false">Cancel</button>
+            <button type="submit" class="site-btn-submit">
+              <i class="fas fa-save"></i> {{ editingSiteId ? 'Update Site' : 'Save Site' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -491,11 +896,36 @@ export default {
       showFocusOverlay: false,
       highlightStyle: {},
       focusTimer: null,
-      refreshTimer: null
+      refreshTimer: null,
+
+      // Site Ownership State (100% Database Driven)
+      showSiteOwnershipModal: false,
+      siteOwnershipLoading: false,
+      siteOwnershipList: [],
+      siteOwnershipEngineers: [],
+      siteOwnershipRegions: [],
+      activeSiteTab: 'Summary',
+      siteSearchQuery: '',
+      siteRegionFilter: '',
+      siteTypeFilter: '',
+      showAddSiteModal: false,
+      editingSiteId: null,
+      siteForm: {
+        customer: '',
+        no_of_engines: 1,
+        region: 'South',
+        assigned_engineer: '',
+        customer_type: '',
+        remarks: ''
+      }
     }
   },
 
   computed: {
+    canViewSiteOwnership() {
+      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+      return dept === 'service' || dept === 'hr' || dept === 'human resources';
+    },
     activeTasks() {
       if (!this.allTasks.length) return [];
       return this.allTasks.filter(task => {
@@ -517,6 +947,101 @@ export default {
     formattedDate() {
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       return new Date().toLocaleDateString(undefined, options);
+    },
+
+    // Site Ownership Computed Properties
+    filteredSiteList() {
+      let list = this.siteOwnershipList || [];
+
+      // Tab filter
+      if (this.activeSiteTab && this.activeSiteTab !== 'Summary' && this.activeSiteTab !== 'All Sites') {
+        list = list.filter(s => (s.assigned_engineer || '').toLowerCase() === this.activeSiteTab.toLowerCase());
+      }
+
+      // Search query
+      if (this.siteSearchQuery && this.siteSearchQuery.trim()) {
+        const q = this.siteSearchQuery.toLowerCase().trim();
+        list = list.filter(s =>
+          (s.customer || '').toLowerCase().includes(q) ||
+          (s.assigned_engineer || '').toLowerCase().includes(q) ||
+          (s.region || '').toLowerCase().includes(q) ||
+          (s.customer_type || '').toLowerCase().includes(q) ||
+          (s.remarks || '').toLowerCase().includes(q)
+        );
+      }
+
+      // Region filter
+      if (this.siteRegionFilter) {
+        list = list.filter(s => (s.region || '').toLowerCase() === this.siteRegionFilter.toLowerCase());
+      }
+
+      // Type filter
+      if (this.siteTypeFilter) {
+        if (this.siteTypeFilter === 'AMC') {
+          list = list.filter(s => (s.customer_type || '').toUpperCase() === 'AMC');
+        } else if (this.siteTypeFilter === 'Non-AMC') {
+          list = list.filter(s => (s.customer_type || '').toUpperCase() !== 'AMC');
+        }
+      }
+
+      return list;
+    },
+
+    currentTabEngineTotal() {
+      return this.filteredSiteList.reduce((sum, s) => sum + (Number(s.no_of_engines) || 0), 0);
+    },
+
+    overallTotalSites() {
+      return this.siteOwnershipList.length;
+    },
+
+    overallTotalEngines() {
+      return this.siteOwnershipList.reduce((sum, s) => sum + (Number(s.no_of_engines) || 0), 0);
+    },
+
+    overallAmcSites() {
+      return this.siteOwnershipList.filter(s => (s.customer_type || '').toUpperCase() === 'AMC').length;
+    },
+
+    siteSummaryData() {
+      const engineerMap = {};
+
+      // Ensure all known engineers appear
+      this.siteOwnershipEngineers.forEach(eng => {
+        engineerMap[eng] = {
+          engineer: eng,
+          total_sites: 0,
+          total_engines: 0,
+          amc_sites: 0,
+          regions: new Set()
+        };
+      });
+
+      this.siteOwnershipList.forEach(s => {
+        const eng = s.assigned_engineer || 'Unassigned';
+        if (!engineerMap[eng]) {
+          engineerMap[eng] = {
+            engineer: eng,
+            total_sites: 0,
+            total_engines: 0,
+            amc_sites: 0,
+            regions: new Set()
+          };
+        }
+        engineerMap[eng].total_sites += 1;
+        engineerMap[eng].total_engines += (Number(s.no_of_engines) || 0);
+        if ((s.customer_type || '').toUpperCase() === 'AMC') {
+          engineerMap[eng].amc_sites += 1;
+        }
+        if (s.region) {
+          engineerMap[eng].regions.add(s.region);
+        }
+      });
+
+      return Object.values(engineerMap).map(e => ({
+        ...e,
+        regions: Array.from(e.regions)
+      }));
     }
   },
 
@@ -830,6 +1355,154 @@ export default {
       if (s === 'in progress') return 'status-progress';
       if (s === 'completed') return 'status-completed';
       return '';
+    },
+
+    // =========================================================
+    // 🏢 SITE OWNERSHIP METHODS
+    // =========================================================
+    openSiteOwnershipModal() {
+      this.showSiteOwnershipModal = true;
+      this.fetchSiteOwnership();
+    },
+
+    closeSiteOwnershipModal() {
+      this.showSiteOwnershipModal = false;
+    },
+
+    getEngineerSiteCount(engineer) {
+      if (!this.siteOwnershipList) return 0;
+      return this.siteOwnershipList.filter(s => (s.assigned_engineer || '').toLowerCase() === engineer.toLowerCase()).length;
+    },
+
+    async fetchSiteOwnership() {
+      this.siteOwnershipLoading = true;
+      try {
+        const token = localStorage.getItem('token');
+        const baseUrl = 'https://employees.archenterprises.co.in/api/api';
+
+        const response = await axios.get(`${baseUrl}/site-ownership`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+
+        if (response.data) {
+          this.siteOwnershipList = response.data.sites || [];
+          if (response.data.engineers && response.data.engineers.length > 0) {
+            this.siteOwnershipEngineers = response.data.engineers;
+          }
+          if (response.data.regions && response.data.regions.length > 0) {
+            this.siteOwnershipRegions = response.data.regions;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch site ownership from database:', err);
+        toastError('Failed to load site ownership records from database');
+      } finally {
+        this.siteOwnershipLoading = false;
+      }
+    },
+
+    openAddSiteModal(engineer = '') {
+      this.editingSiteId = null;
+      this.siteForm = {
+        customer: '',
+        no_of_engines: 1,
+        region: 'South',
+        assigned_engineer: engineer || (this.siteOwnershipEngineers.length > 0 ? this.siteOwnershipEngineers[0] : ''),
+        customer_type: '',
+        remarks: ''
+      };
+      this.showAddSiteModal = true;
+    },
+
+    openEditSiteModal(site) {
+      this.editingSiteId = site.id;
+      this.siteForm = {
+        customer: site.customer,
+        no_of_engines: site.no_of_engines || 1,
+        region: site.region || 'South',
+        assigned_engineer: site.assigned_engineer || '',
+        customer_type: site.customer_type || '',
+        remarks: site.remarks || ''
+      };
+      this.showAddSiteModal = true;
+    },
+
+    async saveSiteOwnership() {
+      if (!this.siteForm.customer || !this.siteForm.assigned_engineer) {
+        toastError('Please fill in customer name and assigned engineer');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        const baseUrl = 'https://employees.archenterprises.co.in/api/api';
+
+        if (this.editingSiteId) {
+          await axios.put(`${baseUrl}/site-ownership/${this.editingSiteId}`, this.siteForm, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          toastSuccess('Site ownership updated in database!');
+        } else {
+          await axios.post(`${baseUrl}/site-ownership`, this.siteForm, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          toastSuccess('Site ownership added to database!');
+        }
+
+        this.showAddSiteModal = false;
+        await this.fetchSiteOwnership();
+      } catch (err) {
+        console.error('Error saving site ownership to database:', err);
+        toastError('Failed to save site ownership to database');
+      }
+    },
+
+    async deleteSiteOwnership(id) {
+      if (!confirm('Are you sure you want to delete this site assignment from the database?')) return;
+
+      try {
+        const token = localStorage.getItem('token');
+        const baseUrl = 'https://employees.archenterprises.co.in/api/api';
+
+        await axios.delete(`${baseUrl}/site-ownership/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+
+        toastSuccess('Site assignment deleted from database');
+        await this.fetchSiteOwnership();
+      } catch (err) {
+        console.error('Error deleting site from database:', err);
+        toastError('Failed to delete site from database');
+      }
+    },
+
+    exportSiteOwnershipToExcel() {
+      const rows = this.filteredSiteList;
+      if (!rows || rows.length === 0) {
+        toastInfo('No data available to export');
+        return;
+      }
+
+      let csv = 'Sr No,Customer,No of Engines,Region,Assigned Engineer,Customer Type,Remarks\n';
+      rows.forEach((r, idx) => {
+        const cust = `"${(r.customer || '').replace(/"/g, '""')}"`;
+        const eng = r.no_of_engines || 1;
+        const reg = `"${(r.region || '').replace(/"/g, '""')}"`;
+        const engineer = `"${(r.assigned_engineer || '').replace(/"/g, '""')}"`;
+        const type = `"${(r.customer_type || '').replace(/"/g, '""')}"`;
+        const rem = `"${(r.remarks || '').replace(/"/g, '""')}"`;
+        csv += `${idx + 1},${cust},${eng},${reg},${engineer},${type},${rem}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Site_Ownership_${this.activeSiteTab}_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toastSuccess('Site ownership exported successfully!');
     },
 
     async refreshAllData() {
@@ -2352,5 +3025,845 @@ textarea {
 
 .mobile-card-group .dashboard-card:active .card-info .quick-action {
   opacity: 1;
+}
+
+/* ========================================================= */
+/* 🏢 SITE OWNERSHIP CARD & MODAL STYLING */
+/* ========================================================= */
+
+.card-icon.site-icon {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+/* Modal Overlay & Window */
+.site-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: siteFadeIn 0.25s ease-out;
+}
+
+.site-modal-window {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 1180px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  overflow: hidden;
+  animation: siteSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Modal Header */
+.site-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.75rem;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.site-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.site-modal-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.site-modal-header-left h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.site-modal-header-left p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0.2rem 0 0 0;
+}
+
+.site-modal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.site-quick-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.stat-pill {
+  padding: 0.35rem 0.8rem;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stat-pill.total { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); }
+.stat-pill.engines { color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+.stat-pill.amc { color: #f472b6; border-color: rgba(244, 114, 182, 0.3); }
+
+.site-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.site-modal-close:hover {
+  background: #ef4444;
+  color: white;
+  transform: rotate(90deg);
+}
+
+/* Modal Toolbar */
+.site-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.75rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.site-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+  max-width: 400px;
+}
+
+.site-search-box i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.site-search-field {
+  width: 100%;
+  padding: 0.55rem 2rem 0.55rem 2.2rem;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.88rem;
+  background: white;
+  color: #1e293b;
+  transition: all 0.2s;
+}
+
+.site-search-field:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.site-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.site-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.site-filter-item {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 0.6rem;
+  gap: 0.4rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.site-select {
+  border: none;
+  background: transparent;
+  padding: 0.55rem 0.2rem;
+  font-size: 0.85rem;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.site-select:focus {
+  outline: none;
+}
+
+.site-btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.site-btn-export:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.site-btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.site-btn-add:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+}
+
+/* Excel Style Tabs Bar */
+.site-sheet-tabs-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 1.75rem;
+  background: #e2e8f0;
+  border-bottom: 1px solid #cbd5e1;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.sheet-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  top: 1px;
+  white-space: nowrap;
+}
+
+.sheet-tab-btn:hover {
+  background: #ffffff;
+  color: #1e293b;
+}
+
+.sheet-tab-btn.active {
+  background: #ffffff;
+  color: #2563eb;
+  border-color: #cbd5e1 #cbd5e1 #ffffff #cbd5e1;
+  box-shadow: 0 -3px 0 0 #2563eb;
+}
+
+.sheet-tab-count {
+  background: rgba(0, 0, 0, 0.08);
+  color: inherit;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.sheet-tab-btn.active .sheet-tab-count {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Modal Body */
+.site-modal-body {
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  flex: 1;
+  background: #f8fafc;
+}
+
+/* KPI Summary Cards Grid */
+.site-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.site-kpi-card {
+  background: white;
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s;
+}
+
+.site-kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.kpi-blue .kpi-icon-wrap { background: #dbeafe; color: #2563eb; }
+.kpi-emerald .kpi-icon-wrap { background: #d1fae5; color: #059669; }
+.kpi-purple .kpi-icon-wrap { background: #ede9fe; color: #7c3aed; }
+.kpi-amber .kpi-icon-wrap { background: #ffedd5; color: #ea580c; }
+
+.kpi-number {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.1;
+}
+
+.kpi-title {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 0.2rem;
+}
+
+/* Table Wrapper & Title */
+.site-table-wrapper {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.site-table-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: #fdfdfd;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.site-table-title-row h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.site-count-badge {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  margin-left: 0.5rem;
+}
+
+.engine-sum-tag {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.engine-sum-tag strong {
+  font-weight: 800;
+}
+
+/* Modern Data Table */
+.table-scroll-container {
+  overflow-x: auto;
+  max-height: 520px;
+}
+
+.site-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.site-data-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 0.85rem 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.site-data-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.site-data-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* Excel Style Table Grid */
+.excel-grid-table td,
+.excel-grid-table th {
+  border-right: 1px solid #f1f5f9;
+}
+
+.excel-grid-table td:last-child,
+.excel-grid-table th:last-child {
+  border-right: none;
+}
+
+.customer-title-cell {
+  font-weight: 600;
+  color: #0f172a !important;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.customer-row-icon {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.engine-badge-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 1px solid #a7f3d0;
+}
+
+.region-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.reg-south { background: #e0f2fe; color: #0369a1; }
+.reg-west { background: #fef3c7; color: #b45309; }
+.reg-north { background: #f3e8ff; color: #7e22ce; }
+.reg-east { background: #fee2e2; color: #b91c1c; }
+.reg-central { background: #f1f5f9; color: #475569; }
+
+.assigned-eng-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.assigned-eng-pill i {
+  color: #3b82f6;
+}
+
+.cust-type-pill {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.cust-type-pill.amc {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.cust-type-pill.other {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.cust-type-pill.blank {
+  color: #94a3b8;
+}
+
+.engineer-profile-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.engineer-circle-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.amc-pill-count {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  background: #d1fae5;
+  color: #065f46;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.btn-view-eng-sites {
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s;
+}
+
+.btn-view-eng-sites:hover {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* Actions */
+.site-actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.site-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.site-action-btn.edit:hover {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #93c5fd;
+}
+
+.site-action-btn.delete:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+.table-footer-row td {
+  background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+  padding: 0.9rem 1rem;
+  font-size: 0.95rem;
+}
+
+.site-empty-cell {
+  text-align: center;
+  padding: 3rem 1rem !important;
+}
+
+.empty-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: #94a3b8;
+}
+
+.empty-state-box i {
+  font-size: 2.5rem;
+  opacity: 0.5;
+}
+
+.empty-state-box p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Sub-modal Form */
+.site-form-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.site-form-modal-box {
+  background: white;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: siteSlideUp 0.25s ease-out;
+}
+
+.site-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  background: #1e293b;
+  color: white;
+}
+
+.site-form-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.site-form-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row-site {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group-site {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group-site label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.form-group-site .required {
+  color: #ef4444;
+}
+
+.form-control-site {
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background: white;
+  transition: all 0.2s;
+}
+
+.form-control-site:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.site-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.site-btn-cancel {
+  padding: 0.6rem 1.25rem;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.site-btn-submit {
+  padding: 0.6rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes siteFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes siteSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .site-modal-window {
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+  .site-modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 1rem;
+  }
+  .site-modal-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .site-modal-toolbar {
+    padding: 0.8rem 1rem;
+  }
+  .site-search-box {
+    max-width: 100%;
+  }
+  .site-toolbar-actions {
+    width: 100%;
+  }
+  .site-sheet-tabs-bar {
+    padding: 0 1rem;
+  }
+  .site-modal-body {
+    padding: 1rem;
+  }
+  .form-row-site {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
