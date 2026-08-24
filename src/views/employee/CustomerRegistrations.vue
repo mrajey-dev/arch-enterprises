@@ -2024,6 +2024,7 @@
             <th>Dispatched Date</th>
             <th>Tracking ID</th>
             <th>Courier</th>
+            <th style="text-align:center;">Status</th>
             <th style="text-align:center;">Status Action</th>
           </tr>
         </thead>
@@ -2055,6 +2056,16 @@
             <td><span class="pro-text-sub">{{ supply.closed_date ? supply.closed_date: '-'}}</span></td>
             <td><span class="pro-tracking-badge">{{ supply.tracking_id ? supply.tracking_id : '-' }}</span></td>
             <td><span class="pro-text-sub">{{ supply.courier_name ? supply.courier_name : '-' }}</span></td>
+            <!-- Status badge column -->
+            <td style="text-align:center;">
+              <span
+                class="supply-status-badge"
+                :class="getSupplyStatusBadgeClass(supply)"
+              >
+                <i :class="getSupplyStatusIcon(supply)"></i>
+                {{ getSupplyStatusLabel(supply) }}
+              </span>
+            </td>
             <td style="text-align:center;">
               <select
                 :value="supply.material_status || 'Awaiting Dispatch'"
@@ -2077,7 +2088,7 @@
         <!-- NO DATA -->
         <tbody v-else>
           <tr>
-            <td colspan="10" class="pro-no-data-cell">
+            <td colspan="11" class="pro-no-data-cell">
               <div class="pro-no-data-wrap">
                 <i class="fas fa-truck-fast"></i>
                 <p>No supply orders found matching your search</p>
@@ -6259,40 +6270,65 @@ closeDuplicateCompanySelection() {
 },
 
 getRowClass(supply) {
+  const isAwaiting = !supply.material_status || supply.material_status === 'Awaiting Dispatch';
 
-  const today = new Date()
-  const dueDate = new Date(supply.delivery_due_date)
-
-  const diffTime = dueDate - today
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-
-  // Delivered → Blue
+  // Delivered → soft blue
   if (supply.material_status === 'Delivered') {
-    return 'row-blue'
+    return 'row-supply-delivered';
   }
 
-  // Dispatched → Green
+  // Dispatched → soft green
   if (supply.material_status === 'Dispatched') {
-    return 'row-green'
+    return 'row-supply-dispatched';
   }
 
-  // Due within 3 days → Yellow
-  if (
-    supply.delivery_due_date &&
-    diffDays <= 3 &&
-    diffDays >= 0 &&
-    supply.material_status !== 'Delivered'
-  ) {
-    return 'row-yellow'
+  // Overdue: Awaiting + due date is in the past
+  if (isAwaiting && supply.delivery_due_date) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(supply.delivery_due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    if (dueDate < today) {
+      return 'row-supply-overdue';
+    }
   }
 
-  // Awaiting Dispatch → Red
-  if (!supply.material_status || supply.material_status === 'Awaiting Dispatch') {
-    return 'row-red'
+  // Awaiting Dispatch (on time) → soft amber
+  if (isAwaiting) {
+    return 'row-supply-awaiting';
   }
 
-  return ''
+  return '';
+},
+
+getSupplyStatusLabel(supply) {
+  const isAwaiting = !supply.material_status || supply.material_status === 'Awaiting Dispatch';
+  if (supply.material_status === 'Delivered') return 'Delivered';
+  if (supply.material_status === 'Dispatched') return 'Dispatched';
+  if (isAwaiting && supply.delivery_due_date) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(supply.delivery_due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    if (dueDate < today) return 'Overdue';
+  }
+  return 'Awaiting';
+},
+
+getSupplyStatusBadgeClass(supply) {
+  const label = this.getSupplyStatusLabel(supply);
+  if (label === 'Delivered') return 'badge-delivered';
+  if (label === 'Dispatched') return 'badge-dispatched';
+  if (label === 'Overdue') return 'badge-overdue';
+  return 'badge-awaiting';
+},
+
+getSupplyStatusIcon(supply) {
+  const label = this.getSupplyStatusLabel(supply);
+  if (label === 'Delivered') return 'fas fa-circle-check';
+  if (label === 'Dispatched') return 'fas fa-truck';
+  if (label === 'Overdue') return 'fas fa-triangle-exclamation';
+  return 'fas fa-clock';
 },
   async updateDeliveryDate(supply) {
   try {
@@ -15136,6 +15172,76 @@ transform:scale(1.05);
 
 .row-yellow {
   background: #fffe62;
+}
+
+/* ── Material Supply Orders row colour coding ── */
+.row-supply-overdue {
+  background: linear-gradient(90deg, #fff0f0 0%, #ffe4e4 100%) !important;
+  border-left: 4px solid #ef4444 !important;
+}
+.row-supply-overdue:hover {
+  background: #ffd6d6 !important;
+}
+
+.row-supply-awaiting {
+  background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%) !important;
+  border-left: 4px solid #f59e0b !important;
+}
+.row-supply-awaiting:hover {
+  background: #fde68a !important;
+}
+
+.row-supply-dispatched {
+  background: linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border-left: 4px solid #3b82f6 !important;
+}
+.row-supply-dispatched:hover {
+  background: #bfdbfe !important;
+}
+
+.row-supply-delivered {
+  background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  border-left: 4px solid #22c55e !important;
+}
+.row-supply-delivered:hover {
+  background: #bbf7d0 !important;
+}
+
+/* ── Supply status badge pill ── */
+.supply-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.supply-status-badge.badge-overdue {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.supply-status-badge.badge-awaiting {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.supply-status-badge.badge-dispatched {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.supply-status-badge.badge-delivered {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
 }
 .calculation-item-btn {
   background-color: #17a2b8;

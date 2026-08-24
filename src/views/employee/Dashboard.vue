@@ -924,7 +924,7 @@ export default {
   computed: {
     canViewSiteOwnership() {
       const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'service' || dept === 'hr' || dept === 'human resources';
+      return dept === 'service' || dept === 'hr' || dept === 'management';
     },
     activeTasks() {
       if (!this.allTasks.length) return [];
