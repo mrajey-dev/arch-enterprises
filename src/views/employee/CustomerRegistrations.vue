@@ -2354,6 +2354,18 @@
         </div>
       </div>
 
+      <!-- Quarter Filter -->
+      <div class="aq-filter-field">
+        <label><i class="fas fa-chart-pie"></i> Quarter</label>
+        <select v-model="filterQuarter" class="aq-select">
+          <option value="">All Quarters</option>
+          <option value="Q1">Q1 &nbsp; (Apr – Jun)</option>
+          <option value="Q2">Q2 &nbsp; (Jul – Sep)</option>
+          <option value="Q3">Q3 &nbsp; (Oct – Dec)</option>
+          <option value="Q4">Q4 &nbsp; (Jan – Mar)</option>
+        </select>
+      </div>
+
       <!-- Clear Filters Button -->
       <div class="aq-filter-field clear-btn-field" v-if="hasQuotationFilters">
         <label>&nbsp;</label>
@@ -4597,6 +4609,7 @@ percentOptions: Array.from({length:21},(_,i)=> i*5),
         filterYear: '',
           searchCompany: '',
           filterStatus: '',
+          filterQuarter: '',
            showGstInclusive: false,
         filledVisits: [],
         visitStatusList: [],
@@ -5125,7 +5138,34 @@ filteredAllQuotations() {
     })
   }
 
+  // 🗓️ Quarter filter — Indian Financial Year (Apr start)
+  // Q1 = Apr–Jun, Q2 = Jul–Sep, Q3 = Oct–Dec, Q4 = Jan–Mar
+  if (this.filterQuarter) {
+    const quarterMonths = {
+      Q1: [4, 5, 6],
+      Q2: [7, 8, 9],
+      Q3: [10, 11, 12],
+      Q4: [1, 2, 3]
+    }
+    const allowed = quarterMonths[this.filterQuarter] || []
+    list = list.filter(q => {
+      if (!q.created_at) return false
+      const month = new Date(q.created_at).getMonth() + 1
+      return allowed.includes(month)
+    })
+  }
+
   return list
+},
+
+hasQuotationFilters() {
+  return !!(
+    this.searchCompany ||
+    this.filterStatus ||
+    this.filterMonth ||
+    this.filterYear ||
+    this.filterQuarter
+  )
 },
 
 
@@ -5553,25 +5593,61 @@ filterCompany(newCompany) {
 
     formatQuotationAmount(q) {
       if (!q) return '';
-      // Try net_total, total, amount, grand_total, or calculate from items
-      let val = q.grand_total ?? q.net_total ?? q.total_amount ?? q.total ?? q.amount ?? null;
-      
-      if (val === null && Array.isArray(q.items) && q.items.length > 0) {
-        val = q.items.reduce((sum, item) => {
-          const qty = Number(item.qty) || 0;
-          const rate = Number(item.rate) || 0;
-          const discount = Number(item.discount) || 0;
-          const base = (qty * rate) - ((qty * rate * discount) / 100);
-          const cgst = (base * (Number(item.cgst_rate) || 0)) / 100;
-          const sgst = (base * (Number(item.sgst_rate) || 0)) / 100;
-          const igst = (base * (Number(item.igst_rate) || 0)) / 100;
-          return sum + base + cgst + sgst + igst;
-        }, 0);
+
+      // Parse items — DB stores them as a JSON string
+      let parsedItems = [];
+      if (q.items) {
+        if (Array.isArray(q.items)) {
+          parsedItems = q.items;
+        } else if (typeof q.items === 'string') {
+          try { parsedItems = JSON.parse(q.items); } catch { parsedItems = []; }
+        }
       }
 
-      if (val === null || val === undefined || isNaN(Number(val))) {
-        return '';
+      // Determine tax mode from nature_of_sale
+      // Intrastate → CGST + SGST only
+      // Interstate → IGST only
+      // Export     → no tax (zero-rated)
+      const saleType = (q.nature_of_sale || '').toLowerCase();
+
+      let val = null;
+      if (parsedItems.length > 0) {
+        val = parsedItems.reduce((sum, item) => {
+          const qty      = Number(item.qty)      || 0;
+          const rate     = Number(item.rate)     || 0;
+          const discount = Number(item.discount) || 0;
+          const base     = (qty * rate) - ((qty * rate * discount) / 100);
+
+          let tax = 0;
+          if (saleType === 'intrastate') {
+            // Only CGST + SGST
+            tax = (base * (Number(item.cgst_rate) || 0)) / 100
+                + (base * (Number(item.sgst_rate) || 0)) / 100;
+          } else if (saleType === 'interstate') {
+            // Only IGST
+            tax = (base * (Number(item.igst_rate) || 0)) / 100;
+          } else if (saleType === 'export') {
+            // Zero-rated — no tax
+            tax = 0;
+          } else {
+            // nature_of_sale unknown — pick whichever is filled in, never both
+            const hasCgstSgst = (Number(item.cgst_rate) || 0) > 0 || (Number(item.sgst_rate) || 0) > 0;
+            if (hasCgstSgst) {
+              tax = (base * (Number(item.cgst_rate) || 0)) / 100
+                  + (base * (Number(item.sgst_rate) || 0)) / 100;
+            } else {
+              tax = (base * (Number(item.igst_rate) || 0)) / 100;
+            }
+          }
+
+          return sum + base + tax;
+        }, 0);
+      } else {
+        // Fall back to stored totals if no items
+        val = q.grand_total ?? q.net_total ?? q.total_amount ?? q.total ?? q.amount ?? null;
       }
+
+      if (val === null || val === undefined || isNaN(Number(val))) return '';
 
       const currency = q.currency ? q.currency.toUpperCase() : 'INR';
       const num = Number(val);
@@ -6291,6 +6367,12 @@ getRowClass(supply) {
     if (dueDate < today) {
       return 'row-supply-overdue';
     }
+    // Due soon: due date is today, tomorrow, or day after tomorrow (within 3 days)
+    const threeDaysLater = new Date(today);
+    threeDaysLater.setDate(today.getDate() + 3);
+    if (dueDate >= today && dueDate <= threeDaysLater) {
+      return 'row-supply-due-soon';
+    }
   }
 
   // Awaiting Dispatch (on time) → soft amber
@@ -6862,6 +6944,13 @@ updateAmcVisitDate(visit) {
   clearServiceFilters() {
     this.serviceFilters.search = ''
     this.serviceFilters.month = ''
+  },
+  clearQuotationFilters() {
+    this.searchCompany = ''
+    this.filterStatus = ''
+    this.filterMonth = ''
+    this.filterYear = ''
+    this.filterQuarter = ''
   }
 ,
   clearCompletedFilters() {
@@ -15176,27 +15265,39 @@ transform:scale(1.05);
 
 /* ── Material Supply Orders row colour coding ── */
 .row-supply-overdue {
-  background: linear-gradient(90deg, #fff0f0 0%, #ffe4e4 100%) !important;
+  background: #fd9595  !important;
   border-left: 4px solid #ef4444 !important;
 }
 .row-supply-overdue:hover {
-  background: #ffd6d6 !important;
+  background: #f87171 !important;
+  transition: background 0.18s ease;
+}
+
+.row-supply-due-soon {
+  background: #fd9595 !important;
+  border-left: 4px solid #ef4444 !important;
+}
+.row-supply-due-soon:hover {
+  background: #f87171 !important;
+  transition: background 0.18s ease;
 }
 
 .row-supply-awaiting {
-  background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%) !important;
+  background: #f59e0b !important;
   border-left: 4px solid #f59e0b !important;
 }
 .row-supply-awaiting:hover {
-  background: #fde68a !important;
+  background: #fbbf24 !important;
+  transition: background 0.18s ease;
 }
 
 .row-supply-dispatched {
-  background: linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%) !important;
+  background: #619dff  !important;
   border-left: 4px solid #3b82f6 !important;
 }
 .row-supply-dispatched:hover {
-  background: #bfdbfe !important;
+  background: #93c5fd !important;
+  transition: background 0.18s ease;
 }
 
 .row-supply-delivered {
@@ -15204,7 +15305,8 @@ transform:scale(1.05);
   border-left: 4px solid #22c55e !important;
 }
 .row-supply-delivered:hover {
-  background: #bbf7d0 !important;
+  background: #86efac !important;
+  transition: background 0.18s ease;
 }
 
 /* ── Supply status badge pill ── */

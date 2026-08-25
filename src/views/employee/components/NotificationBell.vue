@@ -35,9 +35,6 @@ export default {
       unreadMentionsCount: 0,
       poller: null,
         latestMessage: '',
-         // 🔔 sound-related
-      audio: null,
-      userInteracted: false,
       lastUnreadCount: 0
     }
   },
@@ -58,26 +55,15 @@ async handleNotificationClick() {
       this.$router.push("/employee/help")
     },
 
-    enableSound() {
-      this.userInteracted = true
-    },
-
-    playSound() {
-      if (this.userInteracted && this.audio) {
-        this.audio.currentTime = 0
-        this.audio.play().catch(() => {})
-      }
-    },
-
     async fetchNotifications() {
       try {
         // 1️⃣ Fetch unread count
         const resCount = await axios.get("/api/mentions/unread-count")
         const newCount = resCount.data.count ?? 0
 
-        // 🔥 Play sound ONLY if count increased
+        // Play sound only if count increased (sound removed)
         if (newCount > this.lastUnreadCount) {
-          this.playSound()
+          // sound disabled
         }
 
         this.lastUnreadCount = newCount
@@ -116,10 +102,6 @@ async handleNotificationClick() {
   },
 
 mounted() {
-   // 🔊 prepare audio
-    this.audio = new Audio('https://employees.archenterprises.co.in/sounds/notification.mp3')
-       // unlock sound after first click anywhere
-    window.addEventListener('click', this.enableSound, { once: true })
   // Initial fetch
   this.fetchNotifications()
 
