@@ -1142,10 +1142,15 @@ export default {
 
         const totalDays = this.calculateLeaveDays(leave.fromDate, leave.toDate, leave.leaveType)
 
+        const isHalfDay = this.isHalfDayLeave(leave)
+
         // 1. Update leave request status in backend
         await axios.patch(
           `https://employees.archenterprises.co.in/api/api/leave-requests/${leave.id}/status`,
-          { status: 'Approved' },
+          { 
+            status: 'Approved',
+            is_half_day: isHalfDay
+          },
           { headers: { Authorization: `Bearer ${token}` } }
         )
 
@@ -1321,6 +1326,7 @@ export default {
         const token = localStorage.getItem('token')
         const fromDateStr = this.formatDateToYMD(leave.fromDate)
         const toDateStr = this.formatDateToYMD(leave.toDate)
+        const isHalfDay = this.isHalfDayLeave(leave)
 
         await axios.post(
           'https://employees.archenterprises.co.in/api/api/mark-attendance-leave',
@@ -1329,7 +1335,7 @@ export default {
             fromDate: fromDateStr,
             toDate: toDateStr,
             leaveType: leave.leaveType,
-            is_half_day: leave.is_half_day || false,
+            is_half_day: isHalfDay,
             user_id: userId
           },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -1344,6 +1350,7 @@ export default {
         const token = localStorage.getItem('token')
         const fromDateStr = this.formatDateToYMD(leave.fromDate)
         const toDateStr = this.formatDateToYMD(leave.toDate)
+        const isHalfDay = this.isHalfDayLeave(leave)
 
         const userResponse = await axios.get(
           `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(leave.name)}`,
@@ -1358,7 +1365,7 @@ export default {
             fromDate: fromDateStr,
             toDate: toDateStr,
             leaveType: leave.leaveType,
-            is_half_day: leave.is_half_day || false,
+            is_half_day: isHalfDay,
             user_id: userId
           },
           { headers: { Authorization: `Bearer ${token}` } }
