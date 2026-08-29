@@ -506,7 +506,13 @@ export default {
     formatDate(date) {
       if (!date) return 'N/A'
       try {
-        const d = new Date(date)
+        let d
+        if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date.trim())) {
+          const [y, m, day] = date.trim().split('-').map(Number)
+          d = new Date(y, m - 1, day)
+        } else {
+          d = new Date(date)
+        }
         if (isNaN(d.getTime())) return date
         return d.toLocaleDateString('en-IN', {
           day: '2-digit',
@@ -516,6 +522,21 @@ export default {
       } catch (error) {
         return date
       }
+    },
+
+    formatDateToYMD(dateInput) {
+      if (!dateInput) return ''
+      if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+        return dateInput.trim()
+      }
+      const d = new Date(dateInput)
+      if (isNaN(d.getTime())) {
+        return String(dateInput).slice(0, 10)
+      }
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
     },
 
     getStatusClass(status) {
@@ -556,38 +577,40 @@ export default {
       this.visibleLeaveCount += 5
     },
 
-calculateLeaveDays(fromDate, toDate, leaveType) {
-  try {
-    const from = new Date(fromDate)
-    const to = new Date(toDate)
-    
-    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
-      console.error('Invalid dates:', fromDate, toDate)
-      return 1
-    }
-    
-    from.setHours(0, 0, 0, 0)
-    to.setHours(0, 0, 0, 0)
-    
-    const diffTime = Math.abs(to - from)
-    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-    
-    // FIX: Better half-day detection
-    const leaveTypeLower = (leaveType || '').toLowerCase().trim()
-    // Check for half day in various formats
-    if (leaveTypeLower === 'half day' || 
-        leaveTypeLower === 'half-day' || 
-        leaveTypeLower === 'halfday' ||
-        leaveTypeLower.includes('half')) {
-      diffDays = 0.5
-    }
-    
-    return diffDays
-  } catch (error) {
-    console.error('Error calculating days:', error)
-    return 1
-  }
-},
+    calculateLeaveDays(fromDate, toDate, leaveType) {
+      try {
+        const fromStr = this.formatDateToYMD(fromDate)
+        const toStr = this.formatDateToYMD(toDate)
+        
+        const [y1, m1, d1] = fromStr.split('-').map(Number)
+        const [y2, m2, d2] = toStr.split('-').map(Number)
+        const from = new Date(y1, m1 - 1, d1)
+        const to = new Date(y2, m2 - 1, d2)
+        
+        if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+          console.error('Invalid dates:', fromDate, toDate)
+          return 1
+        }
+        
+        const diffTime = Math.abs(to - from)
+        let diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1
+        
+        // FIX: Better half-day detection
+        const leaveTypeLower = (leaveType || '').toLowerCase().trim()
+        // Check for half day in various formats
+        if (leaveTypeLower === 'half day' || 
+            leaveTypeLower === 'half-day' || 
+            leaveTypeLower === 'halfday' ||
+            leaveTypeLower.includes('half')) {
+          diffDays = 0.5
+        }
+        
+        return diffDays
+      } catch (error) {
+        console.error('Error calculating days:', error)
+        return 1
+      }
+    },
 
    mapLeaveTypeToColumn(leaveType) {
   if (!leaveType) return null
@@ -754,11 +777,6 @@ async approveLeave(leave) {
       }
     }
     
-    // 6. Create leave record if needed (skip for half day if already handled)
-    if (previousStatus !== 'Approved' && leave.leaveType && !leave.leaveType.toLowerCase().includes('half')) {
-      await this.createLeaveRecord(leave, userId, totalDays)
-    }
-    
     // 7. Mark attendance as Leave
     if (previousStatus === 'Rejected' || previousStatus === 'Pending') {
       await this.markAttendanceAsLeave(leave, userId)
@@ -884,11 +902,6 @@ async rejectLeave(leave) {
         }
       }
       
-      // Delete leave records (skip for half day to avoid 404)
-      if (leave.leaveType && !leave.leaveType.toLowerCase().includes('half')) {
-        await this.deleteLeaveRecords(leave)
-      }
-      
       toastSuccess(`Leave rejected and ${totalDays} day(s) added back to balance`)
     } else {
       toastSuccess('Leave rejected successfully')
@@ -920,11 +933,13 @@ async rejectLeave(leave) {
     async markAttendanceAsLeave(leave, userId) {
       try {
         const token = localStorage.getItem('token')
+        const fromDateStr = this.formatDateToYMD(leave.fromDate)
+        const toDateStr = this.formatDateToYMD(leave.toDate)
         
         console.log('Marking attendance as Leave for:', {
           name: leave.name,
-          fromDate: leave.fromDate,
-          toDate: leave.toDate,
+          fromDate: fromDateStr,
+          toDate: toDateStr,
           leaveType: leave.leaveType
         })
 
@@ -932,8 +947,8 @@ async rejectLeave(leave) {
           'https://employees.archenterprises.co.in/api/api/mark-attendance-leave',
           {
             name: leave.name,
-            fromDate: leave.fromDate,
-            toDate: leave.toDate,
+            fromDate: fromDateStr,
+            toDate: toDateStr,
             leaveType: leave.leaveType,
             is_half_day: leave.is_half_day || false,
             user_id: userId
@@ -955,13 +970,16 @@ async rejectLeave(leave) {
     async updateAttendanceToLeave(leave, userId) {
       try {
         const token = localStorage.getItem('token')
+        const fromDateStr = this.formatDateToYMD(leave.fromDate)
+        const toDateStr = this.formatDateToYMD(leave.toDate)
         
         const attendanceResponse = await axios.get(
-          `https://employees.archenterprises.co.in/api/api/attendance/user/${userId}`,
+          `https://employees.archenterprises.co.in/api/api/attendance`,
           { 
             params: { 
-              from_date: leave.fromDate,
-              to_date: leave.toDate
+              user_id: userId,
+              from_date: fromDateStr,
+              to_date: toDateStr
             },
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -990,13 +1008,16 @@ async rejectLeave(leave) {
     async createAttendanceLeaveRecords(leave, userId) {
       try {
         const token = localStorage.getItem('token')
+        const fromDateStr = this.formatDateToYMD(leave.fromDate)
+        const toDateStr = this.formatDateToYMD(leave.toDate)
         
-        const fromDate = new Date(leave.fromDate)
-        const toDate = new Date(leave.toDate)
-        const currentDate = new Date(fromDate)
+        const [y1, m1, d1] = fromDateStr.split('-').map(Number)
+        const [y2, m2, d2] = toDateStr.split('-').map(Number)
+        const currentDate = new Date(y1, m1 - 1, d1)
+        const toDate = new Date(y2, m2 - 1, d2)
         
         while (currentDate <= toDate) {
-          const dateStr = currentDate.toISOString().split('T')[0]
+          const dateStr = this.formatDateToYMD(currentDate)
           
           const existingRecord = await axios.get(
             `https://employees.archenterprises.co.in/api/api/attendance/check`,
@@ -1032,103 +1053,13 @@ async rejectLeave(leave) {
       }
     },
 
-    async createLeaveRecord(leave, userId, totalDays) {
-      try {
-        const token = localStorage.getItem('token')
-        const currentYear = new Date().getFullYear()
-        
-        const existingLeaves = await axios.get(
-          `https://employees.archenterprises.co.in/api/api/leaves`,
-          { 
-            params: { 
-              user_id: userId,
-              from_date: leave.fromDate,
-              to_date: leave.toDate,
-              leave_type: leave.leaveType
-            },
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
-        
-        if (existingLeaves.data && existingLeaves.data.length > 0) {
-          console.log('Leave record already exists, skipping creation')
-          return
-        }
-        
-        const leaveData = {
-          user_id: userId,
-          leave_type: leave.leaveType,
-          from_date: leave.fromDate,
-          to_date: leave.toDate,
-          total_days: totalDays,
-          year: currentYear,
-          status: 'Approved',
-          reason: leave.reason || 'Leave approved'
-        }
-        
-        console.log('Creating leave record:', leaveData)
-        
-        await axios.post(
-          'https://employees.archenterprises.co.in/api/api/leaves',
-          leaveData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        
-        console.log('Leave record created successfully')
-      } catch (error) {
-        console.error('Failed to create leave record:', error)
-      }
-    },
 
-async deleteLeaveRecords(leave) {
-  try {
-    const token = localStorage.getItem('token')
-    
-    // Skip for half day to avoid 404
-    if (leave.leaveType && leave.leaveType.toLowerCase().includes('half')) {
-      console.log('Skipping leave record deletion for half day')
-      return
-    }
-    
-    const userResponse = await axios.get(
-      `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(leave.name)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    
-    const userId = userResponse.data.id
-    
-    const leavesResponse = await axios.get(
-      `https://employees.archenterprises.co.in/api/api/leaves`,
-      { 
-        params: { 
-          user_id: userId,
-          from_date: leave.fromDate,
-          to_date: leave.toDate,
-          leave_type: leave.leaveType
-        },
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    )
-    
-    if (leavesResponse.data && leavesResponse.data.length > 0) {
-      for (const leaveRecord of leavesResponse.data) {
-        console.log('Deleting leave record:', leaveRecord.id)
-        await axios.delete(
-          `https://employees.archenterprises.co.in/api/api/leaves/${leaveRecord.id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-      }
-      console.log('Leave records deleted successfully')
-    }
-  } catch (error) {
-    console.error('Failed to delete leave records:', error)
-    // Don't throw - we want to continue even if deletion fails
-  }
-},
 
     async markAttendanceAsAbsent(leave) {
       try {
         const token = localStorage.getItem('token')
+        const fromDateStr = this.formatDateToYMD(leave.fromDate)
+        const toDateStr = this.formatDateToYMD(leave.toDate)
         
         const userResponse = await axios.get(
           `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(leave.name)}`,
@@ -1139,16 +1070,16 @@ async deleteLeaveRecords(leave) {
         
         console.log('Marking attendance as Absent for:', {
           name: leave.name,
-          fromDate: leave.fromDate,
-          toDate: leave.toDate
+          fromDate: fromDateStr,
+          toDate: toDateStr
         })
 
         await axios.post(
           'https://employees.archenterprises.co.in/api/api/mark-attendance-absent',
           {
             name: leave.name,
-            fromDate: leave.fromDate,
-            toDate: leave.toDate,
+            fromDate: fromDateStr,
+            toDate: toDateStr,
             leaveType: leave.leaveType,
             is_half_day: leave.is_half_day || false,
             user_id: userId
@@ -1170,13 +1101,16 @@ async deleteLeaveRecords(leave) {
     async updateAttendanceToAbsent(leave, userId) {
       try {
         const token = localStorage.getItem('token')
+        const fromDateStr = this.formatDateToYMD(leave.fromDate)
+        const toDateStr = this.formatDateToYMD(leave.toDate)
         
         const attendanceResponse = await axios.get(
-          `https://employees.archenterprises.co.in/api/api/attendance/user/${userId}`,
+          `https://employees.archenterprises.co.in/api/api/attendance`,
           { 
             params: { 
-              from_date: leave.fromDate,
-              to_date: leave.toDate
+              user_id: userId,
+              from_date: fromDateStr,
+              to_date: toDateStr
             },
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -1200,6 +1134,8 @@ async deleteLeaveRecords(leave) {
     async deleteAbsentRecords(leave) {
       try {
         const token = localStorage.getItem('token')
+        const fromDateStr = this.formatDateToYMD(leave.fromDate)
+        const toDateStr = this.formatDateToYMD(leave.toDate)
         
         const userResponse = await axios.get(
           `https://employees.archenterprises.co.in/api/api/user-by-name?name=${encodeURIComponent(leave.name)}`,
@@ -1213,8 +1149,8 @@ async deleteLeaveRecords(leave) {
           { 
             params: { 
               user_id: userId,
-              from_date: leave.fromDate,
-              to_date: leave.toDate,
+              from_date: fromDateStr,
+              to_date: toDateStr,
               status: 'Absent'
             },
             headers: { Authorization: `Bearer ${token}` }
@@ -1244,7 +1180,12 @@ async deleteLeaveRecords(leave) {
           'https://employees.archenterprises.co.in/api/api/leave-requests',
           { headers: { Authorization: `Bearer ${token}` } }
         )
-        this.leaveRequests = response.data
+        const rawLeaves = Array.isArray(response.data) ? response.data : []
+        this.leaveRequests = rawLeaves.map(leave => ({
+          ...leave,
+          fromDate: this.formatDateToYMD(leave.fromDate),
+          toDate: this.formatDateToYMD(leave.toDate)
+        }))
         console.log('Fetched leaves:', this.leaveRequests.length)
       } catch (error) {
         console.error('FULL ERROR:', error)
