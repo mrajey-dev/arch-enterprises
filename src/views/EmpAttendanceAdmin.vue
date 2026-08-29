@@ -252,6 +252,55 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Monthly Late Marks Summary Section -->
+        <div class="late-marks-section-sweet" v-if="lateMarksData.length > 0">
+          <div class="section-title-sweet">
+            <div class="section-title-left">
+              <i class="fas fa-clock text-amber"></i>
+              <h3>Monthly Late Marks Summary ({{ getMonthName(currentMonth) }} {{ currentYear }})</h3>
+              <span class="late-count-bubble">{{ totalLateMarks }}</span>
+            </div>
+            <span class="info-badge-sweet">Rule: After 9:40 AM &bull; 3 late marks = 0.5 CL</span>
+          </div>
+
+          <div class="table-card-sweet">
+            <table class="table-sweet">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th class="text-center">Late Count</th>
+                  <th class="text-center">Penalties Applied</th>
+                  <th class="text-center">CL Deducted</th>
+                  <th class="text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, idx) in lateMarksData" :key="idx">
+                  <td>
+                    <div class="emp-cell">
+                      <div class="avatar-sweet" :style="{ background: getAvatarGradient(item.name) }">
+                        {{ getInitials(item.name) }}
+                      </div>
+                      <span class="emp-name">{{ formatName(item.name) }}</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <span class="late-count-badge" :class="{ 'critical': item.late_count >= 3 }">
+                      {{ item.late_count }} late
+                    </span>
+                  </td>
+                  <td class="text-center">{{ item.penalties_applied }}</td>
+                  <td class="text-center font-medium">{{ item.penalty_amount }} CL</td>
+                  <td class="text-center">
+                    <span v-if="item.late_count >= 3" class="late-tag-sweet">Needs Action</span>
+                    <span v-else class="badge-sweet status-present"><span class="dot"></span> Good</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -772,21 +821,36 @@ export default {
     },
     isLate(clockIn) {
       if (!clockIn || clockIn === '-') return false
-      const lateThreshold = new Date()
-      lateThreshold.setHours(9, 40, 0)
-      const parts = clockIn.split(':').map(Number)
-      const clockInDate = new Date()
-      clockInDate.setHours(parts[0], parts[1], parts[2] || 0)
-      return clockInDate > lateThreshold
+      const timeMatch = String(clockIn).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i)
+      if (!timeMatch) return false
+      let hours = parseInt(timeMatch[1], 10)
+      const minutes = parseInt(timeMatch[2], 10)
+      const meridian = timeMatch[4] ? timeMatch[4].toLowerCase() : null
+      if (meridian === 'pm' && hours < 12) hours += 12
+      if (meridian === 'am' && hours === 12) hours = 0
+      
+      const clockInMinutes = hours * 60 + minutes
+      const thresholdMinutes = 9 * 60 + 40 // 09:40 AM
+      return clockInMinutes > thresholdMinutes
     },
     calculateLateTime(clockIn) {
-      const lateThreshold = new Date()
-      lateThreshold.setHours(9, 40, 0)
-      const parts = clockIn.split(':').map(Number)
-      const clockInDate = new Date()
-      clockInDate.setHours(parts[0], parts[1], parts[2] || 0)
-      const diffMinutes = Math.floor((clockInDate - lateThreshold) / (1000 * 60))
-      return diffMinutes > 0 ? `${diffMinutes}m` : '0m'
+      if (!clockIn || clockIn === '-') return ''
+      const timeMatch = String(clockIn).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i)
+      if (!timeMatch) return ''
+      let hours = parseInt(timeMatch[1], 10)
+      const minutes = parseInt(timeMatch[2], 10)
+      const meridian = timeMatch[4] ? timeMatch[4].toLowerCase() : null
+      if (meridian === 'pm' && hours < 12) hours += 12
+      if (meridian === 'am' && hours === 12) hours = 0
+      
+      const diff = (hours * 60 + minutes) - (9 * 60 + 40)
+      if (diff <= 0) return ''
+      if (diff >= 60) {
+        const h = Math.floor(diff / 60)
+        const m = diff % 60
+        return m > 0 ? `${h}h ${m}m` : `${h}h`
+      }
+      return `${diff}m`
     },
     
     // Main Display Date Navigation
@@ -997,6 +1061,9 @@ export default {
         const year = new Date().getFullYear()
         const month = new Date().getMonth() + 1
         
+        if (!this.employees.length) {
+          await this.fetchAllEmployees()
+        }
         if (!this.employees.length) return
         
         const names = this.employees.map(e => e.name)
@@ -1221,7 +1288,7 @@ export default {
       this.isSidebarVisible = !this.isMobile
     }
   },
-  mounted() {
+  async mounted() {
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
     const now = new Date()
@@ -1231,11 +1298,9 @@ export default {
     this.today = `${yyyy}-${mm}-${dd}`
     this.displayDate = this.today
     this.markAttendance.date = this.today
-    this.fetchAllEmployees()
+    await this.fetchAllEmployees()
     this.fetchDisplayAttendance()
-    setTimeout(() => {
-      this.fetchLateMarksSummary()
-    }, 400)
+    this.fetchLateMarksSummary()
     const token = localStorage.getItem('token')
     if (!token) {
       this.$router.push('/auth')
@@ -1705,6 +1770,62 @@ export default {
   background: #eef2ff;
   color: #4f46e5;
   border-color: #c7d2fe;
+}
+
+/* Late Marks Section on Page */
+.late-marks-section-sweet {
+  margin-top: 24px;
+}
+
+.section-title-sweet {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title-left h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.info-badge-sweet {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.late-count-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #d97706;
+  background: #fef3c7;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.late-count-badge.critical {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.emp-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .td-empty {
