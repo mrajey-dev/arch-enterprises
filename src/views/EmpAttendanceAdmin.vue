@@ -1,944 +1,567 @@
 <template>
   <div class="layout">
-
-    <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <!-- Mobile Header -->
-        <div class="mobile-header" v-if="isMobile">
-          <div class="mobile-title">
-            <i class="fas fa-calendar-check"></i>
-            <span>Attendance</span>
+        <!-- Clean, Sweet Header -->
+        <div class="simple-header">
+          <div class="header-titles">
+            <h1 class="page-title">Daily Attendance</h1>
+            <p class="page-subtitle">{{ displayDateFormatted }}</p>
           </div>
-          <div class="mobile-actions">
-            <button class="mobile-action-btn" @click="showMarkAttendancePopup = true">
-              <i class="fas fa-fingerprint"></i>
-            </button>
-            <button class="mobile-action-btn secondary" @click="showPopupsalary = true">
-              <i class="fas fa-calculator"></i>
-            </button>
-            <button class="mobile-action-btn tertiary" @click="openDatePickerModal">
-              <i class="fas fa-calendar-day"></i>
-            </button>
-          </div>
-        </div>
 
-        <!-- Desktop Header -->
-        <div class="content-header-modern" v-else>
-          <div class="header-left">
-            <div class="title-icon">
-              <i class="fas fa-calendar-check"></i>
-            </div>
-            <div>
-              <h1>Daily Attendance</h1>
-              <p class="subtitle-modern">Track and manage employee attendance</p>
-            </div>
-          </div>
           <div class="header-buttons">
-            <button class="register-btn-modern secondary" @click="showMarkAttendancePopup = true">
-              <i class="fas fa-fingerprint"></i>
+            <button class="btn-mark" @click="showMarkAttendancePopup = true">
+              <i class="fas fa-plus"></i>
               <span>Mark Attendance</span>
             </button>
-            <button class="register-btn-modern" @click="showPopupsalary = true">
+            <button class="btn-secondary" @click="showPopupsalary = true">
               <i class="fas fa-calculator"></i>
-              <span>Calculate Salary</span>
+              <span>Salary</span>
             </button>
-           
-          </div>
-        </div>
-
-        <!-- Stats Bar - Mobile Optimized -->
-        <div class="stats-bar">
-          <div class="stat-card desktop-only" @click="filterByStatus('all')">
-            <i class="fas fa-users"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ displayRecords.length }}</span>
-              <span class="stat-label">Total</span>
-            </div>
-          </div>
-          <div class="stat-card" @click="filterByStatus('Present')">
-            <i class="fas fa-check-circle"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ presentCount }}</span>
-              <span class="stat-label">Present</span>
-            </div>
-          </div>
-          
-          <div class="stat-card" @click="showLateMarksModal = true">
-            <i class="fas fa-exclamation-triangle"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ totalLateMarks }}</span>
-              <span class="stat-label">Total Late</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Date Navigation -->
-        <div class="date-navigation-main">
-          <button @click="changeDisplayDate(-1)" class="nav-date-btn">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <div class="current-date-display" @click="openDatePickerModal">
-            <i class="fas fa-calendar-alt"></i>
-            <span>{{ displayDateFormatted }}</span>
-          </div>
-          <button @click="changeDisplayDate(1)" class="nav-date-btn">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-          <button @click="goToTodayDisplay" class="nav-date-btn today-btn">
-            <i class="fas fa-calendar-day"></i>
-            <span>Today</span>
-          </button>
-        </div>
-
-        <!-- Search - Mobile -->
-        <div class="search-bar-mobile" v-if="isMobile && displayRecords.length > 0">
-          <div class="search-group-mobile">
-            <i class="fas fa-search"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search employees..." class="search-input-mobile" />
-          </div>
-        </div>
-
-        <!-- Attendance Table - Mobile Optimized -->
-        <div class="table-wrapper-premium">
-          <div class="table-header">
-            <div class="section-title-modern">
-              <div class="title-left">
-                <i class="fas fa-list-ul"></i>
-                <span>Attendance Records</span>
-                <span class="record-count-mobile" v-if="isMobile">{{ filteredDisplayRecords.length }}</span>
-              </div>
-            </div>
-            <div class="table-info desktop-only">
+            <button class="btn-secondary" @click="showLateMarksModal = true" :class="{ 'has-late': totalLateMarks > 0 }">
               <i class="fas fa-clock"></i>
-              <span>Last updated: {{ lastUpdated }}</span>
-            </div>
+              <span>Late Marks</span>
+              <span class="late-count-bubble" v-if="totalLateMarks > 0">{{ totalLateMarks }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Clean Metric Pills (Clickable to Filter) -->
+        <div class="summary-strip">
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'all' }"
+            @click="filterByStatus('all')"
+          >
+            <span class="pill-dot dot-all"></span>
+            <span class="pill-label">Total Staff</span>
+            <span class="pill-value">{{ displayRecords.length }}</span>
           </div>
 
-          <!-- Mobile Card View -->
-          <div class="mobile-cards" v-if="isMobile">
-            <div v-for="record in filteredDisplayRecords" :key="record.id" class="attendance-card">
-              <div class="card-header">
-                <div class="employee-info-card">
-                  <div class="employee-avatar">
-                    {{ getInitials(record.name) }}
-                  </div>
-                  <span class="employee-name">{{ record.name }}</span>
-                </div>
-                <span :class="['status-badge-mobile', getStatusClass(record.status)]">
-                  <i :class="getStatusIcon(record.status)"></i>
-                  {{ record.status || 'Not Marked' }}
-                </span>
-              </div>
-
-              <div class="card-body">
-                <div class="card-row">
-                  <span class="card-label"><i class="fas fa-clock"></i> Clock In</span>
-                  <span class="card-value">{{ record.clock_in || '—' }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label"><i class="fas fa-clock"></i> Clock Out</span>
-                  <span class="card-value">{{ record.clock_out || '—' }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label"><i class="fas fa-hourglass-half"></i> Required</span>
-                  <span class="card-value">{{ record.required_time || '—' }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label"><i class="fas fa-hourglass-end"></i> Actual</span>
-                  <span class="card-value actual-time">{{ record.actual_time || '—' }}</span>
-                </div>
-                <div v-if="record.status === 'Present' && record.clock_in" class="card-row">
-                  <span class="card-label"></span>
-                  <span v-if="isLate(record.clock_in)" class="late-warning-mobile">
-                    <i class="fas fa-exclamation-triangle"></i> {{ calculateLateTime(record.clock_in) }} Late
-                  </span>
-                  <span v-else-if="isEarly(record.clock_in)" class="early-info-mobile">
-                    <i class="fas fa-star"></i> {{ calculateEarlyTime(record.clock_in) }} Early
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Mobile Empty State -->
-            <div v-if="filteredDisplayRecords.length === 0" class="empty-state-mobile">
-              <i class="fas fa-calendar-times"></i>
-              <h4>{{ searchQuery ? 'No Matching Records' : 'No Attendance Records' }}</h4>
-              <p>{{ searchQuery ? 'Try adjusting your search' : 'No attendance data found for ' + displayDateFormatted }}</p>
-            </div>
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'Present' }"
+            @click="filterByStatus('Present')"
+          >
+            <span class="pill-dot dot-present"></span>
+            <span class="pill-label">Present</span>
+            <span class="pill-value text-present">{{ presentCount }}</span>
           </div>
 
-          <!-- Desktop Table View -->
-          <div class="table-container" v-else>
-            <table class="attendance-table-premium">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Status</th>
-                  <th>Clock In</th>
-                  <th>Clock Out</th>
-                  <th>Required Time</th>
-                  <th>Actual Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="record in filteredDisplayRecords" :key="record.id">
-                  <td class="employee-cell">
-                    <div class="employee-info">
-                      <div class="employee-avatar">
-                        {{ getInitials(record.name) }}
-                      </div>
-                      <span class="employee-name">{{ record.name }}</span>
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'Leave' }"
+            @click="filterByStatus('Leave')"
+          >
+            <span class="pill-dot dot-leave"></span>
+            <span class="pill-label">Leave</span>
+            <span class="pill-value text-leave">{{ leaveCount }}</span>
+          </div>
+
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'OnSite' }"
+            @click="filterByStatus('OnSite')"
+          >
+            <span class="pill-dot dot-onsite"></span>
+            <span class="pill-label">On Site</span>
+            <span class="pill-value text-onsite">{{ onSiteCount }}</span>
+          </div>
+
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'Traveling' }"
+            @click="filterByStatus('Traveling')"
+          >
+            <span class="pill-dot dot-traveling"></span>
+            <span class="pill-label">Traveling</span>
+            <span class="pill-value text-traveling">{{ travelingCount }}</span>
+          </div>
+
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'HalfDay' }"
+            @click="filterByStatus('HalfDay')"
+          >
+            <span class="pill-dot dot-halfday"></span>
+            <span class="pill-label">Half Day</span>
+            <span class="pill-value text-halfday">{{ halfDayCount }}</span>
+          </div>
+
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'Absent' }"
+            @click="filterByStatus('Absent')"
+          >
+            <span class="pill-dot dot-absent"></span>
+            <span class="pill-label">Absent</span>
+            <span class="pill-value text-absent">{{ absentCount }}</span>
+          </div>
+
+          <div
+            class="summary-pill"
+            :class="{ active: statusFilter === 'Late' }"
+            @click="filterByStatus('Late')"
+          >
+            <span class="pill-dot dot-late"></span>
+            <span class="pill-label">Late Today</span>
+            <span class="pill-value text-late">{{ todayLateCount }}</span>
+          </div>
+        </div>
+
+        <!-- Unified Date Navigator & Search Bar (Single Row!) -->
+        <div class="toolbar-single-row">
+          <!-- Date Navigator -->
+          <div class="date-navigator-sweet">
+            <button class="nav-arrow" @click="changeDisplayDate(-1)" title="Previous day">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="date-pill" @click="openDatePickerModal" title="Click to pick any date">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ displayDateFormatted }}</span>
+            </div>
+            <button class="nav-arrow" @click="changeDisplayDate(1)" title="Next day">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="btn-today" @click="goToTodayDisplay">
+              Today
+            </button>
+          </div>
+
+          <!-- Search Input -->
+          <div class="search-sweet">
+            <i class="fas fa-search search-icon"></i>
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Search employee..."
+              class="search-input"
+            />
+            <button v-if="searchQuery" class="btn-clear-search" @click="searchQuery = ''">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="displayLoading" class="simple-loading">
+          <i class="fas fa-circle-notch fa-spin"></i>
+          <span>Loading attendance...</span>
+        </div>
+
+        <!-- Clean, Sweet Attendance Table -->
+        <div v-else class="table-card-sweet">
+          <table class="table-sweet">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Status</th>
+                <th>Clock In</th>
+                <th>Clock Out</th>
+                <th>Working Time</th>
+                <th class="text-right">History</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="record in filteredDisplayRecords"
+                :key="record.id || record.name"
+                class="row-sweet"
+              >
+                <!-- Employee -->
+                <td class="td-employee">
+                  <div class="emp-identity" @click="viewEmployeeMonthlyAttendance(record.name)">
+                    <div class="avatar-sweet" :style="{ background: getAvatarGradient(record.name) }">
+                      {{ getInitials(record.name) }}
                     </div>
-                  </td>
-                  <td>
-                    <div class="status-container">
-                      <span :class="['status-badge-premium', getStatusClass(record.status)]">
-                        <i :class="getStatusIcon(record.status)"></i>
-                        {{ record.status || 'Not Marked' }}
+                    <div class="emp-info">
+                      <span class="emp-name">{{ formatName(record.name) }}</span>
+                      <span class="emp-sub" v-if="record.site_name">
+                        <i class="fas fa-map-marker-alt"></i> {{ record.site_name }}
                       </span>
-                      <div v-if="record.status === 'Present' && record.clock_in">
-                        <small v-if="isLate(record.clock_in)" class="late-warning">
-                          <i class="fas fa-exclamation-triangle"></i> {{ calculateLateTime(record.clock_in) }} Late
-                        </small>
-                        <small v-else-if="isEarly(record.clock_in)" class="early-info">
-                          <i class="fas fa-star"></i> {{ calculateEarlyTime(record.clock_in) }} Early
-                        </small>
-                      </div>
+                      <span class="emp-sub" v-else-if="record.travel_from && record.travel_to">
+                        <i class="fas fa-plane"></i> {{ record.travel_from }} &rarr; {{ record.travel_to }}
+                      </span>
                     </div>
-                  </td>
-                  <td class="time-cell">{{ record.clock_in || '—' }}</td>
-                  <td class="time-cell">{{ record.clock_out || '—' }}</td>
-                  <td class="time-cell">{{ record.required_time || '—' }}</td>
-                  <td class="time-cell">{{ record.actual_time || '—' }}</td>
-                </tr>
-                <tr v-if="filteredDisplayRecords.length === 0" class="empty-row">
-                  <td colspan="6">
-                    <div class="empty-state-premium">
-                      <i class="fas fa-calendar-times"></i>
-                      <h4>No Attendance Records</h4>
-                      <p>No attendance data found for {{ displayDateFormatted }}</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Late Marks Summary Section -->
-        <div class="late-marks-summary-wrapper" v-if="lateMarksData.length > 0 || totalLateMarks > 0">
-          <div class="section-title-modern">
-          &nbsp;  <i class="fas fa-clock"></i>
-            <span> Late Marks Summary</span>
-            <span class="info-badge">Threshold: 9:40 AM</span>
-          </div>
-          
-          <!-- Mobile Late Cards -->
-          <div class="mobile-late-cards" v-if="isMobile">
-            <div v-for="(item, index) in lateMarksData" :key="index" class="late-mark-card">
-              <div class="late-mark-header">
-                <div class="employee-info-small">
-                  <div class="employee-avatar-small">
-                    {{ getInitials(item.name) }}
                   </div>
-                  <span class="employee-name">{{ item.name }}</span>
-                </div>
-                <span class="late-count-badge" :class="getLateCountClass(item.late_count)">
-                  {{ item.late_count }}
-                </span>
-              </div>
-              <div class="late-mark-body">
-                <div class="late-detail">
-                  <span class="detail-label">Late Count</span>
-                  <span class="detail-value">{{ item.late_count }}</span>
-                </div>
-                <div class="late-detail">
-                  <span class="detail-label">Penalties Applied</span>
-                  <span class="detail-value" :class="{ 'has-penalty': item.penalties_applied > 0 }">
-                    {{ item.penalties_applied }}
+                </td>
+
+                <!-- Status -->
+                <td>
+                  <div class="status-wrap">
+                    <span :class="['badge-sweet', getStatusClass(record.status)]">
+                      <span class="dot"></span>
+                      {{ record.status || 'Not Marked' }}
+                    </span>
+                    <span v-if="isRecordLate(record)" class="late-tag-sweet">
+                      {{ calculateLateTime(record.clock_in) }} Late
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Clock In -->
+                <td class="time-text">
+                  <span v-if="record.clock_in && record.clock_in !== '-'">
+                    {{ formatTime(record.clock_in) }}
                   </span>
-                </div>
-                <div class="late-detail" v-if="item.penalty_amount > 0">
-                  <span class="detail-label">CL Deduction</span>
-                  <span class="detail-value penalty-amount">{{ item.penalty_amount }}</span>
-                </div>
-                <div class="late-progress">
-                  <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" 
-                         :style="{ width: Math.min((item.late_count / 10) * 100, 100) + '%' }"
-                         :class="getLateProgressClass(item.late_count)">
-                    </div>
+                  <span v-else class="text-dash">—</span>
+                </td>
+
+                <!-- Clock Out -->
+                <td class="time-text">
+                  <span v-if="record.clock_out && record.clock_out !== '-'">
+                    {{ formatTime(record.clock_out) }}
+                  </span>
+                  <span v-else class="text-dash">—</span>
+                </td>
+
+                <!-- Actual Working Time -->
+                <td class="time-text">
+                  <span v-if="record.actual_time && record.actual_time !== '-'" class="font-medium text-emerald">
+                    {{ record.actual_time }}
+                  </span>
+                  <span v-else class="text-dash">—</span>
+                </td>
+
+                <!-- Action (View Monthly Calendar) -->
+                <td class="text-right">
+                  <button
+                    class="btn-icon-sweet"
+                    @click="viewEmployeeMonthlyAttendance(record.name)"
+                    title="View monthly attendance calendar"
+                  >
+                    <i class="far fa-calendar-alt"></i>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Empty State -->
+              <tr v-if="filteredDisplayRecords.length === 0">
+                <td colspan="6" class="td-empty">
+                  <div class="empty-sweet">
+                    <i class="far fa-calendar-times"></i>
+                    <p>{{ searchQuery || statusFilter !== 'all' ? 'No employees match your search filter' : 'No attendance marked for ' + displayDateFormatted }}</p>
+                    <button v-if="searchQuery || statusFilter !== 'all'" class="btn-reset-sweet" @click="resetFilters">
+                      Clear Filter
+                    </button>
                   </div>
-                  <span class="progress-label">{{ item.late_count }} / 10</span>
-                </div>
-                <div class="late-detail" v-if="item.pending_penalties > 0">
-                  <span class="detail-label pending">⏳ Pending Penalties</span>
-                  <span class="detail-value warning">{{ item.pending_penalties }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Desktop Late Table -->
-          <div class="table-container" v-else>
-            <table class="attendance-table-premium">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Late Count</th>
-                  <th>Penalties Applied</th>
-                  <th>CL Deduction</th>
-                  <th>Pending Penalties</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in lateMarksData" :key="item.name">
-                  <td class="employee-cell">
-                    <div class="employee-info">
-                      <div class="employee-avatar">
-                        {{ getInitials(item.name) }}
-                      </div>
-                      <span class="employee-name">{{ item.name }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="late-count-badge" :class="getLateCountClass(item.late_count)">
-                      {{ item.late_count }}
-                    </span>
-                  </td>
-                  <td>
-                    <span :class="['penalty-badge', { 'has-penalty': item.penalties_applied > 0 }]">
-                      {{ item.penalties_applied }}
-                    </span>
-                  </td>
-                  <td>
-                    <span v-if="item.penalty_amount > 0" class="penalty-amount">
-                      {{ item.penalty_amount }} CL
-                    </span>
-                    <span v-else class="no-penalty">—</span>
-                  </td>
-                  <td>
-                    <span v-if="item.pending_penalties > 0" class="pending-badge">
-                      <i class="fas fa-clock"></i> {{ item.pending_penalties }}
-                    </span>
-                    <span v-else class="no-pending">✓</span>
-                  </td>
-                  <td>
-                    <span :class="['status-badge-premium', getLateStatusClass(item)]">
-                      <i :class="getLateStatusIcon(item)"></i>
-                      {{ getLateStatusText(item) }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <!-- Penalty Info -->
-          <div class="penalty-info-box">
-           
-            <span>
-              <strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rule:</strong> Every 3 late marks (after 9:40 AM) = 1 penalty (0.5 CL deduction)
-            </span>
-          </div>
-        </div>
-
-        <!-- No Late Marks Message -->
-        <div v-else-if="!lateMarksLoading && employees.length > 0" class="no-late-marks">
-          <i class="fas fa-check-circle"></i>
-          <span>No late marks recorded. All employees are on time! 👏</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
 
-    <!-- Attendance by Date Modal -->
-    <transition name="modal-fade">
-      <div v-if="showDatePickerModal" class="modal-backdrop" @click.self="showDatePickerModal = false">
-        <div class="premium-modal yesterday-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
-          <div class="modal-decoration"></div>
-          
-          <div class="modal-header-premium">
-            <div class="header-icon-premium yesterday-icon">
-              <i class="fas fa-calendar-day"></i>
-            </div>
-            <div class="header-text">
-              <h2>Attendance Details</h2>
-              <p>View attendance for any date</p>
-            </div>
-            <button class="close-btn-premium" @click="showDatePickerModal = false">
-              <i class="fas fa-times"></i>
-            </button>
+    <!-- ================= CLEAN MODALS ================= -->
+
+    <!-- 1. Mark Attendance Modal -->
+    <div v-if="showMarkAttendancePopup" class="modal-overlay" @click.self="showMarkAttendancePopup = false">
+      <div class="modal-sweet modal-small" @click.stop>
+        <div class="modal-sweet-header">
+          <h3>Mark Attendance</h3>
+          <button class="btn-close" @click="showMarkAttendancePopup = false">&times;</button>
+        </div>
+
+        <div class="modal-sweet-body">
+          <div class="form-group-sweet">
+            <label>Employee <span class="req">*</span></label>
+            <select v-model="markAttendance.employee" class="input-sweet">
+              <option value="">Select Employee</option>
+              <option v-for="emp in employees" :key="emp.id" :value="emp.name">
+                {{ emp.name }}
+              </option>
+            </select>
           </div>
 
-          <div class="modal-body-premium">
-            <!-- Date Navigation -->
-            <div class="date-navigation-modal">
-              <button @click="changeModalDate(-1)" class="nav-btn-modal">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <div class="date-display-modal" @click="showDatePickerInput">
-                <i class="fas fa-calendar-alt"></i>
-                <span>{{ modalDateFormatted }}</span>
-              </div>
-              <button @click="changeModalDate(1)" class="nav-btn-modal">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-              <button @click="goToTodayModal" class="nav-btn-modal today-btn-modal">
-                <i class="fas fa-calendar-day"></i> Today
-              </button>
+          <div class="form-group-sweet">
+            <label>Status <span class="req">*</span></label>
+            <select v-model="markAttendance.status" class="input-sweet">
+              <option value="">Select Status</option>
+              <option value="Present">Present</option>
+              <option value="Traveling">Traveling</option>
+              <option value="OnSite">On Site</option>
+              <option value="HalfDay">Half Day</option>
+              <option value="Leave">Leave</option>
+              <option value="Absent">Absent</option>
+            </select>
+          </div>
+
+          <div class="form-group-sweet" v-if="markAttendance.status === 'OnSite'">
+            <label>Site Name</label>
+            <input type="text" v-model="markAttendance.site_name" placeholder="Enter site name" class="input-sweet" />
+          </div>
+
+          <div class="two-col" v-if="markAttendance.status === 'Traveling'">
+            <div class="form-group-sweet">
+              <label>Travel From</label>
+              <input type="text" v-model="markAttendance.travel_from" placeholder="From" class="input-sweet" />
             </div>
-
-            <!-- Hidden Date Input -->
-            <input 
-              type="date" 
-              ref="datePickerInput"
-              v-model="modalSelectedDate" 
-              @change="fetchModalAttendanceByDate" 
-              class="date-picker-input-hidden"
-              :max="today"
-            />
-
-            <!-- Loading State -->
-            <div v-if="modalLoading" class="loading-state">
-              <i class="fas fa-spinner fa-spin"></i>
-              <p>Loading attendance...</p>
+            <div class="form-group-sweet">
+              <label>Travel To</label>
+              <input type="text" v-model="markAttendance.travel_to" placeholder="To" class="input-sweet" />
             </div>
+          </div>
 
-            <!-- Summary Stats -->
-            <div v-else-if="modalAttendanceData.length > 0" class="stats-summary-modal">
-              <div class="stat-item">
-                <span class="stat-number">{{ modalAttendanceData.length }}</span>
-                <span class="stat-label">Total Employees</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">{{ modalAttendanceData.filter(r => r.status === 'Present').length }}</span>
-                <span class="stat-label">Present</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">{{ modalAttendanceData.filter(r => r.is_late).length }}</span>
-                <span class="stat-label">Late</span>
-              </div>
+          <div class="two-col">
+            <div class="form-group-sweet">
+              <label>Date <span class="req">*</span></label>
+              <input type="date" v-model="markAttendance.date" :max="today" class="input-sweet" />
             </div>
+            <div class="form-group-sweet">
+              <label>Clock In Time</label>
+              <input type="time" v-model="markAttendance.time" class="input-sweet" />
+            </div>
+          </div>
+        </div>
 
-            <!-- Mobile Cards -->
-            <div v-else-if="isMobile" class="mobile-cards">
-              <div v-for="record in modalAttendanceData" :key="record.id || record.name" class="attendance-card">
-                <div class="card-header">
-                  <div class="employee-info-card">
-                    <div class="employee-avatar">
-                      {{ getInitials(record.name) }}
-                    </div>
-                    <span class="employee-name">{{ record.name }}</span>
+        <div class="modal-sweet-footer">
+          <button class="btn-cancel" @click="showMarkAttendancePopup = false">Cancel</button>
+          <button class="btn-save" @click="submitMarkedAttendance">Save Attendance</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Calculate Salary Modal -->
+    <div v-if="showPopupsalary" class="modal-overlay" @click.self="showPopupsalary = false">
+      <div class="modal-sweet modal-medium" @click.stop>
+        <div class="modal-sweet-header">
+          <h3>Salary Calculation</h3>
+          <button class="btn-close" @click="showPopupsalary = false">&times;</button>
+        </div>
+
+        <div class="modal-sweet-body">
+          <table class="table-sweet">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th class="text-right">Salary</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="emp in employees" :key="emp.id">
+                <td>
+                  <span class="font-medium">{{ formatName(emp.name) }}</span>
+                </td>
+                <td class="text-right">
+                  <span v-if="emp.salary" class="salary-green font-medium">₹ {{ formatSalary(emp.salary) }}</span>
+                  <span v-else class="text-dash">—</span>
+                </td>
+                <td class="text-right">
+                  <button
+                    class="btn-calc"
+                    @click="calculateSalaryOnClick(emp)"
+                    :disabled="emp.calculating"
+                  >
+                    <i v-if="emp.calculating" class="fas fa-circle-notch fa-spin"></i>
+                    <span v-else>Calculate</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-sweet-footer">
+          <button class="btn-cancel" @click="showPopupsalary = false">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Monthly Attendance Calendar Modal -->
+    <div v-if="showPopup" class="modal-overlay" @click.self="showPopup = false">
+      <div class="modal-sweet modal-medium" @click.stop>
+        <div class="modal-sweet-header">
+          <div>
+            <h3>{{ selectedEmployee ? formatName(selectedEmployee) : 'Employee' }}</h3>
+            <p class="modal-sub">{{ getMonthName(currentMonth) }} {{ currentYear }}</p>
+          </div>
+          <button class="btn-close" @click="showPopup = false">&times;</button>
+        </div>
+
+        <div class="modal-sweet-body">
+          <!-- Stepper -->
+          <div class="month-stepper-sweet">
+            <button @click="goToPreviousMonth" class="step-arrow"><i class="fas fa-chevron-left"></i></button>
+            <span class="month-label">{{ getMonthName(currentMonth) }} {{ currentYear }}</span>
+            <button @click="goToNextMonth" class="step-arrow"><i class="fas fa-chevron-right"></i></button>
+          </div>
+
+          <!-- Status Counts -->
+          <div class="cal-status-row">
+            <span class="status-summary present">Present: {{ statusSummary.Present || 0 }}</span>
+            <span class="status-summary leave">Leave: {{ statusSummary.Leave || 0 }}</span>
+            <span class="status-summary onsite">On Site: {{ statusSummary.OnSite || 0 }}</span>
+            <span class="status-summary traveling">Traveling: {{ statusSummary.Traveling || 0 }}</span>
+            <span class="status-summary halfday">Half Day: {{ statusSummary.HalfDay || 0 }}</span>
+            <span class="status-summary absent">Absent: {{ statusSummary.Absent || 0 }}</span>
+          </div>
+
+          <!-- Calendar Grid -->
+          <table class="cal-table-sweet">
+            <thead>
+              <tr>
+                <th v-for="d in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']" :key="d">{{ d }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(week, wIdx) in buildCalendar(employeeMonthlyData)" :key="wIdx">
+                <td
+                  v-for="(cell, cIdx) in week"
+                  :key="cIdx"
+                  :class="cell.statusClass"
+                  :title="cell.statusText ? `${cell.statusText} (${cell.date})` : ''"
+                >
+                  <div class="cal-cell-inner" v-if="cell.day">
+                    <span class="day-num">{{ cell.day }}</span>
+                    <span class="status-sub-code" v-if="cell.shortStatus">{{ cell.shortStatus }}</span>
                   </div>
-                  <span :class="['status-badge-mobile', getStatusClass(record.status)]">
-                    <i :class="getStatusIcon(record.status)"></i>
-                    {{ record.status || 'Not Marked' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-sweet-footer">
+          <button class="btn-cancel" @click="showPopup = false">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Date Picker Modal -->
+    <div v-if="showDatePickerModal" class="modal-overlay" @click.self="showDatePickerModal = false">
+      <div class="modal-sweet modal-medium" @click.stop>
+        <div class="modal-sweet-header">
+          <h3>Attendance by Date</h3>
+          <button class="btn-close" @click="showDatePickerModal = false">&times;</button>
+        </div>
+
+        <div class="modal-sweet-body">
+          <div class="modal-date-picker-row">
+            <button class="step-arrow" @click="changeModalDate(-1)"><i class="fas fa-chevron-left"></i></button>
+            <div class="date-clicker" @click="showDatePickerInput">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ modalDateFormatted }}</span>
+            </div>
+            <button class="step-arrow" @click="changeModalDate(1)"><i class="fas fa-chevron-right"></i></button>
+            <button class="btn-today" @click="goToTodayModal">Today</button>
+          </div>
+
+          <input
+            type="date"
+            ref="datePickerInput"
+            v-model="modalSelectedDate"
+            @change="fetchModalAttendanceByDate"
+            class="hidden-input"
+            :max="today"
+          />
+
+          <div v-if="modalLoading" class="simple-loading">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <span>Loading records...</span>
+          </div>
+
+          <table class="table-sweet" v-else>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Status</th>
+                <th>Clock In</th>
+                <th>Clock Out</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="rec in modalAttendanceData" :key="rec.id || rec.name">
+                <td>{{ formatName(rec.name) }}</td>
+                <td>
+                  <span :class="['badge-sweet', getStatusClass(rec.status)]">
+                    <span class="dot"></span>
+                    {{ rec.status || 'Not Marked' }}
                   </span>
-                </div>
-                <div class="card-body">
-                  <div class="card-row">
-                    <span class="card-label"><i class="fas fa-clock"></i> Clock In</span>
-                    <span class="card-value">
-                      <span v-if="record.clock_in" class="clock-in-time">
-                        <i class="fas fa-sign-in-alt"></i> {{ formatTime(record.clock_in) }}
-                      </span>
-                      <span v-else>—</span>
-                    </span>
-                  </div>
-                  <div class="card-row">
-                    <span class="card-label"><i class="fas fa-clock"></i> Clock Out</span>
-                    <span class="card-value">
-                      <span v-if="record.clock_out" class="clock-out-time">
-                        <i class="fas fa-sign-out-alt"></i> {{ formatTime(record.clock_out) }}
-                      </span>
-                      <span v-else>—</span>
-                    </span>
-                  </div>
-                  <div class="card-row">
-                    <span class="card-label"><i class="fas fa-hourglass-end"></i> Actual Time</span>
-                    <span class="card-value actual-time">{{ record.actual_time || '—' }}</span>
-                  </div>
-                  <div class="card-row" v-if="record.status === 'Present'">
-                    <span class="card-label"></span>
-                    <span v-if="record.is_late" class="late-warning-mobile">
-                      <i class="fas fa-exclamation-triangle"></i> Late Arrival
-                    </span>
-                    <span v-else-if="record.clock_in" class="early-info-mobile">
-                      <i class="fas fa-check-circle"></i> On Time
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div v-if="modalAttendanceData.length === 0" class="empty-state-mobile">
-                <i class="fas fa-calendar-times"></i>
-                <h4>No Records</h4>
-                <p>No attendance data found for {{ modalDateFormatted }}</p>
-              </div>
-            </div>
+                </td>
+                <td>{{ rec.clock_in ? formatTime(rec.clock_in) : '—' }}</td>
+                <td>{{ rec.clock_out ? formatTime(rec.clock_out) : '—' }}</td>
+              </tr>
+              <tr v-if="modalAttendanceData.length === 0">
+                <td colspan="4" class="td-empty">No records for this date</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-            <!-- Desktop Table -->
-            <div v-else class="table-container">
-              <table class="attendance-table-premium">
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Status</th>
-                    <th>Clock In</th>
-                    <th>Clock Out</th>
-                    <th>Actual Time</th>
-                    <th>Late</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="record in modalAttendanceData" :key="record.id || record.name">
-                    <td class="employee-cell">
-                      <div class="employee-info">
-                        <div class="employee-avatar">
-                          {{ getInitials(record.name) }}
-                        </div>
-                        <span class="employee-name">{{ record.name }}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span :class="['status-badge-premium', getStatusClass(record.status)]">
-                        <i :class="getStatusIcon(record.status)"></i>
-                        {{ record.status || 'Not Marked' }}
-                      </span>
-                    </td>
-                    <td class="time-cell">
-                      <span v-if="record.clock_in" class="clock-in-time">
-                        {{ formatTime(record.clock_in) }}
-                      </span>
-                      <span v-else class="no-time">—</span>
-                    </td>
-                    <td class="time-cell">
-                      <span v-if="record.clock_out" class="clock-out-time">
-                        {{ formatTime(record.clock_out) }}
-                      </span>
-                      <span v-else class="no-time">—</span>
-                    </td>
-                    <td class="time-cell">
-                      <span v-if="record.actual_time" class="actual-time-value">
-                        {{ record.actual_time }}
-                      </span>
-                      <span v-else class="no-time">—</span>
-                    </td>
-                    <td>
-                      <template v-if="record.status === 'Present'">
-                        <span v-if="record.is_late" class="late-warning">
-                          <i class="fas fa-exclamation-triangle"></i> Yes
-                        </span>
-                        <span v-else-if="record.clock_in" class="early-info">
-                          <i class="fas fa-check-circle"></i> No
-                        </span>
-                        <span v-else class="no-time">—</span>
-                      </template>
-                      <span v-else class="no-time">—</span>
-                    </td>
-                  </tr>
-                  <tr v-if="modalAttendanceData.length === 0" class="empty-row">
-                    <td colspan="6">
-                      <div class="empty-state-premium">
-                        <i class="fas fa-calendar-times"></i>
-                        <h4>No Attendance Records</h4>
-                        <p>No attendance data found for {{ modalDateFormatted }}</p>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
-            <button class="btn-submit-premium" @click="showDatePickerModal = false">
-              <i class="fas fa-check"></i> Close
-            </button>
-          </div>
+        <div class="modal-sweet-footer">
+          <button class="btn-cancel" @click="showDatePickerModal = false">Done</button>
         </div>
       </div>
-    </transition>
+    </div>
 
-    <!-- Mark Attendance Modal - Mobile Optimized -->
-    <transition name="modal-fade">
-      <div v-if="showMarkAttendancePopup" class="modal-backdrop" @click.self="showMarkAttendancePopup = false">
-        <div class="premium-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
-          <div class="modal-decoration"></div>
-          
-          <div class="modal-header-premium">
-            <div class="header-icon-premium">
-              <i class="fas fa-fingerprint"></i>
-            </div>
-            <div class="header-text">
-              <h2>{{ isMobile ? 'Mark Attendance' : 'Mark Attendance' }}</h2>
-              <p>Record employee attendance</p>
-            </div>
-            <button class="close-btn-premium" @click="showMarkAttendancePopup = false">
-              <i class="fas fa-times"></i>
-            </button>
+    <!-- 5. Late Marks Summary Modal -->
+    <div v-if="showLateMarksModal" class="modal-overlay" @click.self="showLateMarksModal = false">
+      <div class="modal-sweet modal-medium" @click.stop>
+        <div class="modal-sweet-header">
+          <div>
+            <h3>Monthly Late Marks</h3>
+            <p class="modal-sub">Threshold: After 9:40 AM &bull; 3 late marks = 0.5 CL</p>
           </div>
+          <button class="btn-close" @click="showLateMarksModal = false">&times;</button>
+        </div>
 
-          <div class="modal-body-premium">
-            <div class="form-section">
-              <div class="form-field">
-                <label>Employee <span class="required-star">*</span></label>
-                <div class="field-wrapper">
-                  <i class="fas fa-user field-icon"></i>
-                  <select v-model="markAttendance.employee">
-                    <option value="">Select Employee</option>
-                    <option v-for="emp in employees" :key="emp.id" :value="emp.name">
-                      {{ emp.name }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label>Status <span class="required-star">*</span></label>
-                <div class="field-wrapper">
-                  <i class="fas fa-tag field-icon"></i>
-                  <select v-model="markAttendance.status" :class="markAttendance.status">
-                    <option value="">Select Status</option>
-                    <option>Present</option>
-                    <option>Traveling</option>
-                    <option>OnSite</option>
-                    <option>HalfDay</option>
-                    <option>Leave</option>
-                    <option>Absent</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-field" v-if="markAttendance.status === 'OnSite'">
-                <label>Site Name</label>
-                <div class="field-wrapper">
-                  <i class="fas fa-building field-icon"></i>
-                  <input type="text" v-model="markAttendance.site_name" placeholder="Enter site name" />
-                </div>
-              </div>
-
-              <div class="two-col-grid" v-if="markAttendance.status === 'Traveling'">
-                <div class="form-field">
-                  <label>Travel From</label>
-                  <div class="field-wrapper">
-                    <i class="fas fa-location-dot field-icon"></i>
-                    <input type="text" v-model="markAttendance.travel_from" placeholder="From location" />
-                  </div>
-                </div>
-                <div class="form-field">
-                  <label>Travel To</label>
-                  <div class="field-wrapper">
-                    <i class="fas fa-location-arrow field-icon"></i>
-                    <input type="text" v-model="markAttendance.travel_to" placeholder="To location" />
-                  </div>
-                </div>
-              </div>
-
-              <div class="two-col-grid">
-                <div class="form-field">
-                  <label>Date <span class="required-star">*</span></label>
-                  <div class="field-wrapper">
-                    <i class="fas fa-calendar-alt field-icon"></i>
-                    <input type="date" v-model="markAttendance.date" :max="today" />
-                  </div>
-                </div>
-                <div class="form-field">
-                  <label>Time</label>
-                  <div class="field-wrapper">
-                    <i class="fas fa-clock field-icon"></i>
-                    <input type="time" v-model="markAttendance.time" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
-            <button class="btn-cancel-premium" @click="showMarkAttendancePopup = false">
-              <i class="fas fa-times"></i> Cancel
-            </button>
-            <button class="btn-submit-premium" @click="submitMarkedAttendance">
-              <i class="fas fa-save"></i> Save
-            </button>
+        <div class="modal-sweet-body">
+          <table class="table-sweet" v-if="lateMarksData.length > 0">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th class="text-center">Late Count</th>
+                <th class="text-center">Penalties</th>
+                <th class="text-center">CL Deducted</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in lateMarksData" :key="item.name">
+                <td class="font-medium">{{ formatName(item.name) }}</td>
+                <td class="text-center">
+                  <span class="late-count-tag">{{ item.late_count }}</span>
+                </td>
+                <td class="text-center">{{ item.penalties_applied }}</td>
+                <td class="text-center">
+                  <span v-if="item.penalty_amount > 0" class="text-red font-medium">{{ item.penalty_amount }} CL</span>
+                  <span v-else class="text-dash">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="simple-empty">
+            <i class="fas fa-check-circle text-emerald"></i>
+            <p>No late marks recorded for any employee this month.</p>
           </div>
         </div>
-      </div>
-    </transition>
 
-    <!-- Salary Calculation Modal - Mobile Optimized -->
-    <transition name="modal-fade">
-      <div v-if="showPopupsalary" class="modal-backdrop" @click.self="showPopupsalary = false">
-        <div class="premium-modal salary-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
-          <div class="modal-decoration"></div>
-          
-          <div class="modal-header-premium">
-            <div class="header-icon-premium">
-              <i class="fas fa-rupee-sign"></i>
-            </div>
-            <div class="header-text">
-              <h2>{{ isMobile ? 'Salary' : 'Salary Calculation' }}</h2>
-              <p>Calculate monthly salaries</p>
-            </div>
-            <button class="close-btn-premium" @click="showPopupsalary = false">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <div class="modal-body-premium">
-            <div class="table-wrapper-salary">
-              <!-- Mobile Salary Cards -->
-              <div class="mobile-salary-cards" v-if="isMobile">
-                <div v-for="employee in employees" :key="employee.id" class="salary-card">
-                  <div class="salary-card-header">
-                    <div class="employee-info-small">
-                      <div class="employee-avatar-small">
-                        {{ getInitials(employee.name) }}
-                      </div>
-                      <span class="employee-name">{{ employee.name }}</span>
-                    </div>
-                  </div>
-                  <div class="salary-card-body">
-                    <div v-if="employee.salary" class="salary-amount-mobile">
-                      <i class="fas fa-rupee-sign"></i> {{ formatSalary(employee.salary) }}
-                    </div>
-                    <button v-else class="calculate-btn-mobile" @click="calculateSalaryOnClick(employee)" :disabled="employee.calculating">
-                      <i v-if="employee.calculating" class="fas fa-spinner fa-spin"></i>
-                      <i v-else class="fas fa-calculator"></i>
-                      {{ employee.calculating ? "Calculating..." : "Calculate" }}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Desktop Salary Table -->
-              <table class="salary-table-premium" v-else>
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Salary</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="employee in employees" :key="employee.id">
-                    <td class="employee-cell">
-                      <div class="employee-info">
-                        <div class="employee-avatar-small">
-                          {{ getInitials(employee.name) }}
-                        </div>
-                        <span class="employee-name" @click="viewEmployeeMonthlyAttendance(employee.name)">
-                          {{ employee.name }}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <div v-if="employee.salary" class="salary-amount">
-                        <i class="fas fa-rupee-sign"></i> {{ formatSalary(employee.salary) }}
-                      </div>
-                      <button v-else class="calculate-btn" @click="calculateSalaryOnClick(employee)" :disabled="employee.calculating">
-                        <i v-if="employee.calculating" class="fas fa-spinner fa-spin"></i>
-                        <i v-else class="fas fa-calculator"></i>
-                        {{ employee.calculating ? "Calculating..." : "Calculate" }}
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
-            <button class="btn-submit-premium" @click="showPopupsalary = false">
-              <i class="fas fa-check"></i> Close
-            </button>
-          </div>
+        <div class="modal-sweet-footer">
+          <button class="btn-cancel" @click="showLateMarksModal = false">Close</button>
         </div>
       </div>
-    </transition>
+    </div>
 
-    <!-- Monthly Attendance Modal - Mobile Optimized -->
-    <transition name="modal-fade">
-      <div v-if="showPopup" class="modal-backdrop" @click.self="showPopup = false">
-        <div class="premium-modal monthly-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
-          <div class="modal-decoration"></div>
-          
-          <div class="modal-header-premium">
-            <div class="header-icon-premium">
-              <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div class="header-text">
-              <h2>{{ selectedEmployee }}'s Attendance</h2>
-              <p>Monthly attendance overview</p>
-            </div>
-            <button class="close-btn-premium" @click="showPopup = false">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <div class="modal-body-premium">
-            <div class="month-navigation">
-              <button @click="goToPreviousMonth" class="nav-btn">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <h4>{{ getMonthName(currentMonth) }} {{ currentYear }}</h4>
-              <button @click="goToNextMonth" class="nav-btn">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-
-            <div class="legend-grid">
-              <span class="legend-item present">✓ Present: {{ statusSummary.Present || 0 }}</span>
-              <span class="legend-item absent">✗ Absent: {{ statusSummary.Absent || 0 }}</span>
-              <span class="legend-item halfday">½ Half Day: {{ statusSummary.HalfDay || 0 }}</span>
-              <span class="legend-item onsite">🏢 On Site: {{ statusSummary.OnSite || 0 }}</span>
-              <span class="legend-item traveling">✈ Traveling: {{ statusSummary.Traveling || 0 }}</span>
-              <span class="legend-item leave">🌴 Leave: {{ statusSummary.Leave || 0 }}</span>
-            </div>
-
-            <div class="calendar-container">
-              <table class="calendar-premium">
-                <thead>
-                  <tr>
-                    <th v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day">{{ day }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="week in buildCalendar(employeeMonthlyData)" :key="week[0]?.date">
-                    <td v-for="day in week" :key="day.date" :class="day.statusClass">
-                      {{ day.day }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
-            <button class="btn-submit-premium" @click="showPopup = false">
-              <i class="fas fa-check"></i> Close
-            </button>
-          </div>
+    <!-- 6. Salary Result Popup -->
+    <div v-if="salaryPopup.show" class="modal-overlay" @click.self="salaryPopup.show = false">
+      <div class="modal-sweet modal-small" @click.stop>
+        <div class="modal-sweet-header">
+          <h3>Calculated Salary</h3>
+          <button class="btn-close" @click="salaryPopup.show = false">&times;</button>
+        </div>
+        <div class="modal-sweet-body text-center">
+          <p class="salary-name">{{ salaryPopup.employeeName }}</p>
+          <div class="salary-big">₹ {{ formatSalary(salaryPopup.calculatedSalary) }}</div>
+          <p class="salary-date">{{ getMonthName(currentMonth) }} {{ currentYear }}</p>
+        </div>
+        <div class="modal-sweet-footer">
+          <button class="btn-save" @click="salaryPopup.show = false">Done</button>
         </div>
       </div>
-    </transition>
-
-    <!-- Salary Result Popup - Mobile Optimized -->
-    <transition name="modal-fade">
-      <div v-if="salaryPopup.show" class="modal-backdrop" @click.self="salaryPopup.show = false">
-        <div class="premium-modal result-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
-          <div class="modal-decoration"></div>
-          
-          <div class="modal-header-premium">
-            <div class="header-icon-premium success-icon">
-              <i class="fas fa-rupee-sign"></i>
-            </div>
-            <div class="header-text">
-              <h2>Salary Summary</h2>
-              <p>{{ salaryPopup.employeeName }}</p>
-            </div>
-            <button class="close-btn-premium" @click="salaryPopup.show = false">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <div class="modal-body-premium text-center">
-            <div class="salary-result">
-              <div class="salary-amount-large">
-                <i class="fas fa-rupee-sign"></i>
-                <span>{{ formatSalary(salaryPopup.calculatedSalary) }}</span>
-              </div>
-              <p class="month-text">{{ getMonthName(currentMonth) }} {{ currentYear }}</p>
-              <div class="success-check">
-                <i class="fas fa-check-circle"></i>
-                <span>Salary calculated successfully</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
-            <button class="btn-submit-premium" @click="salaryPopup.show = false">
-              <i class="fas fa-check"></i> Done
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
-
-    <!-- Late Marks Details Modal -->
-    <transition name="modal-fade">
-      <div v-if="showLateMarksModal" class="modal-backdrop" @click.self="showLateMarksModal = false">
-        <div class="premium-modal late-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
-          <div class="modal-decoration"></div>
-          
-          <div class="modal-header-premium">
-            <div class="header-icon-premium warning-icon">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="header-text">
-              <h2>Late Marks Details</h2>
-              <p>Monthly late marks and penalties (Threshold: 9:40 AM)</p>
-            </div>
-            <button class="close-btn-premium" @click="showLateMarksModal = false">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <div class="modal-body-premium">
-            <div class="late-summary-stats">
-              <div class="late-stat-card">
-                <span class="stat-number">{{ totalLateMarks }}</span>
-                <span class="stat-label">Total Late Marks</span>
-              </div>
-              <div class="late-stat-card">
-                <span class="stat-number">{{ totalPenaltiesApplied }}</span>
-                <span class="stat-label">Total Penalties</span>
-              </div>
-              <div class="late-stat-card">
-                <span class="stat-number">{{ totalPenaltyAmount }}</span>
-                <span class="stat-label">CL Deducted</span>
-              </div>
-            </div>
-
-            <div class="monthly-late-list" v-if="monthlyLateSummary.length > 0">
-              <h4>Monthly Breakdown</h4>
-              <div v-for="item in monthlyLateSummary" :key="item.month" class="monthly-late-item">
-                <div class="month-info">
-                  <span class="month-name">{{ item.month_name }}</span>
-                  <span class="month-count">{{ item.late_count }} late marks</span>
-                </div>
-                <div class="month-penalties">
-                  <span v-if="item.penalties_applied > 0" class="penalty-applied">
-                    <i class="fas fa-check-circle"></i> {{ item.penalties_applied }} penalty(ies)
-                  </span>
-                  <span v-if="item.pending_penalties > 0" class="pending-penalty">
-                    <i class="fas fa-clock"></i> {{ item.pending_penalties }} pending
-                  </span>
-                  <span v-else-if="item.penalties_applied === 0 && item.late_count > 0" class="no-penalty">
-                    <i class="fas fa-info-circle"></i> Below threshold
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="penalty-info-box">
-              
-              <span>
-                <strong>&nbsp; Rule:</strong> Every 3 late marks (after 9:40 AM) = 1 penalty (0.5 CL deduction)
-              </span>
-            </div>
-          </div>
-
-          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
-            <button class="btn-submit-premium" @click="showLateMarksModal = false">
-              <i class="fas fa-check"></i> Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    </div>
   </div>
 </template>
 
@@ -948,10 +571,10 @@ import Sidebar from '../components/Sidebar.vue'
 import {
   toastSuccess,
   toastError,
-  toastWarning,
 } from "@/utils/toast.js";
 
 export default {
+  name: 'EmpAttendanceAdmin',
   components: {
     Sidebar
   },
@@ -965,19 +588,16 @@ export default {
       showLateMarksModal: false,
       showDatePickerModal: false,
       
-      // Main display data
       displayDate: '',
       displayDateFormatted: '',
       displayRecords: [],
       displayLoading: false,
       
-      // Modal data
       modalAttendanceData: [],
       modalLoading: false,
       modalSelectedDate: '',
       modalDateFormatted: '',
       
-      scoreSaved: false,
       selectedEmployee: null,
       employeeMonthlyData: [],
       currentMonth: new Date().getMonth(),
@@ -996,7 +616,6 @@ export default {
       },
       employees: [],
       attendanceRecords: [],
-      allAttendanceCache: [],
       salaryPopup: {
         show: false,
         employeeName: '',
@@ -1010,52 +629,100 @@ export default {
         Traveling: 0,
         Leave: 0
       },
-      attendanceByMonth: {},
-      holidays: [],
       lateMarksData: [],
-      monthlyLateSummary: [],
       totalLateMarks: 0,
-      totalPenaltiesApplied: 0,
-      totalPenaltyAmount: 0,
       lateMarksLoading: false
     }
   },
   computed: {
     presentCount() {
-      return this.displayRecords.filter(r => r.status === 'Present').length
+      return this.displayRecords.filter(r => (r.status || '').toLowerCase() === 'present').length
     },
-    lateCount() {
-      return this.displayRecords.filter(r => r.isLate === true).length
+    leaveCount() {
+      return this.displayRecords.filter(r => (r.status || '').toLowerCase() === 'leave').length
     },
-    lastUpdated() {
-      return new Date().toLocaleTimeString()
+    onSiteCount() {
+      return this.displayRecords.filter(r => (r.status || '').toLowerCase().replace(/\s+/g, '') === 'onsite').length
+    },
+    travelingCount() {
+      return this.displayRecords.filter(r => (r.status || '').toLowerCase() === 'traveling').length
+    },
+    halfDayCount() {
+      return this.displayRecords.filter(r => (r.status || '').toLowerCase().replace(/\s+/g, '') === 'halfday').length
+    },
+    absentCount() {
+      return this.displayRecords.filter(r => (r.status || '').toLowerCase() === 'absent').length
+    },
+    todayLateCount() {
+      return this.displayRecords.filter(r => this.isRecordLate(r)).length
     },
     filteredDisplayRecords() {
-      let filtered = this.displayRecords;
-      
-      if (this.statusFilter === 'Present') {
-        filtered = filtered.filter(r => r.status === 'Present');
-      } else if (this.statusFilter === 'Late') {
-        filtered = filtered.filter(r => r.isLate === true);
+      let filtered = this.displayRecords
+
+      if (this.statusFilter !== 'all') {
+        if (this.statusFilter === 'Late') {
+          filtered = filtered.filter(r => this.isRecordLate(r))
+        } else if (this.statusFilter === 'OnSite') {
+          filtered = filtered.filter(r => (r.status || '').toLowerCase().replace(/\s+/g, '') === 'onsite')
+        } else if (this.statusFilter === 'HalfDay') {
+          filtered = filtered.filter(r => (r.status || '').toLowerCase().replace(/\s+/g, '') === 'halfday')
+        } else {
+          filtered = filtered.filter(r => (r.status || '').toLowerCase() === this.statusFilter.toLowerCase())
+        }
       }
-      
+
       if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
+        const query = this.searchQuery.toLowerCase().trim()
         filtered = filtered.filter(r => 
-          r.name && r.name.toLowerCase().includes(query)
-        );
+          (r.name && r.name.toLowerCase().includes(query)) ||
+          (r.status && r.status.toLowerCase().includes(query)) ||
+          (r.site_name && r.site_name.toLowerCase().includes(query))
+        )
       }
-      
-      return filtered;
+
+      return filtered
     }
   },
   methods: {
     filterByStatus(status) {
-      this.statusFilter = this.statusFilter === status ? 'all' : status;
+      this.statusFilter = this.statusFilter === status ? 'all' : status
+    },
+    resetFilters() {
+      this.statusFilter = 'all'
+      this.searchQuery = ''
     },
     getInitials(name) {
       if (!name) return '?'
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      return name
+        .split(' ')
+        .filter(Boolean)
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    },
+    formatName(name) {
+      if (!name) return ''
+      return name
+        .split(' ')
+        .filter(Boolean)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ')
+    },
+    getAvatarGradient(name) {
+      const colors = [
+        'linear-gradient(135deg, #4f46e5, #6366f1)',
+        'linear-gradient(135deg, #2563eb, #3b82f6)',
+        'linear-gradient(135deg, #059669, #10b981)',
+        'linear-gradient(135deg, #d97706, #f59e0b)',
+        'linear-gradient(135deg, #7c3aed, #8b5cf6)',
+        'linear-gradient(135deg, #db2777, #ec4899)',
+      ]
+      let hash = 0
+      for (let i = 0; i < (name || '').length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash)
+      }
+      return colors[Math.abs(hash) % colors.length]
     },
     formatSalary(amount) {
       if (!amount) return '0'
@@ -1065,148 +732,107 @@ export default {
       })
     },
     formatTime(time) {
-      if (!time) return '—';
+      if (!time || time === '-') return '—'
       if (time.match(/^\d{2}:\d{2}:\d{2}$/)) {
-        return time;
+        return time.substring(0, 5)
       }
       try {
-        const date = new Date(`2000-01-01 ${time}`);
+        const date = new Date(`2000-01-01 ${time}`)
         if (!isNaN(date.getTime())) {
           return date.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          });
+            hour12: true
+          })
         }
       } catch (e) {
-        return time;
+        return time
       }
-      return time;
+      return time
     },
     getStatusClass(status) {
-      if (!status) return ''
-      const normalized = status.toLowerCase()
-      switch (normalized) {
-        case 'present': return 'present'
-        case 'onsite': return 'onsite'
-        case 'halfday': return 'halfday'
-        case 'absent': return 'absent'
-        case 'traveling': return 'traveling'
-        case 'leave': return 'leave'
-        default: return ''
+      if (!status) return 'status-default'
+      const s = status.toLowerCase().replace(/\s+/g, '')
+      switch (s) {
+        case 'present': return 'status-present'
+        case 'absent': return 'status-absent'
+        case 'onsite': return 'status-onsite'
+        case 'halfday': return 'status-halfday'
+        case 'traveling': return 'status-traveling'
+        case 'leave': return 'status-leave'
+        default: return 'status-default'
       }
     },
-    getStatusIcon(status) {
-      if (!status) return 'fas fa-question'
-      const normalized = status.toLowerCase()
-      switch (normalized) {
-        case 'present': return 'fas fa-check-circle'
-        case 'onsite': return 'fas fa-building'
-        case 'halfday': return 'fas fa-adjust'
-        case 'absent': return 'fas fa-times-circle'
-        case 'traveling': return 'fas fa-plane'
-        case 'leave': return 'fas fa-umbrella-beach'
-        default: return 'fas fa-tag'
-      }
+    isRecordLate(record) {
+      if (!record) return false
+      const status = (record.status || '').toLowerCase()
+      // Late mark is strictly ONLY for Present employees, never for Traveling or OnSite
+      if (status !== 'present') return false
+      return Boolean(record.is_late) || (record.clock_in && record.clock_in !== '-' && this.isLate(record.clock_in))
     },
     isLate(clockIn) {
-      if (!clockIn) return false
+      if (!clockIn || clockIn === '-') return false
       const lateThreshold = new Date()
       lateThreshold.setHours(9, 40, 0)
-      const clockInParts = clockIn.split(':').map(Number)
+      const parts = clockIn.split(':').map(Number)
       const clockInDate = new Date()
-      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
+      clockInDate.setHours(parts[0], parts[1], parts[2] || 0)
       return clockInDate > lateThreshold
-    },
-    isEarly(clockIn) {
-      if (!clockIn) return false
-      const earlyThreshold = new Date()
-      earlyThreshold.setHours(9, 30, 0)
-      const clockInParts = clockIn.split(':').map(Number)
-      const clockInDate = new Date()
-      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
-      return clockInDate < earlyThreshold
     },
     calculateLateTime(clockIn) {
       const lateThreshold = new Date()
       lateThreshold.setHours(9, 40, 0)
-      const clockInParts = clockIn.split(':').map(Number)
+      const parts = clockIn.split(':').map(Number)
       const clockInDate = new Date()
-      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
-      const diffMs = clockInDate - lateThreshold
-      if (diffMs <= 0) return '00:00:00'
-      const totalSeconds = Math.floor(diffMs / 1000)
-      const hours = Math.floor(totalSeconds / 3600)
-      const minutes = Math.floor((totalSeconds % 3600) / 60)
-      const seconds = totalSeconds % 60
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-    },
-    calculateEarlyTime(clockIn) {
-      const earlyThreshold = new Date()
-      earlyThreshold.setHours(9, 30, 0)
-      const clockInParts = clockIn.split(':').map(Number)
-      const clockInDate = new Date()
-      clockInDate.setHours(clockInParts[0], clockInParts[1], clockInParts[2] || 0)
-      const diffMs = earlyThreshold - clockInDate
-      if (diffMs <= 0) return '00:00:00'
-      const totalSeconds = Math.floor(diffMs / 1000)
-      const hours = Math.floor(totalSeconds / 3600)
-      const minutes = Math.floor((totalSeconds % 3600) / 60)
-      const seconds = totalSeconds % 60
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      clockInDate.setHours(parts[0], parts[1], parts[2] || 0)
+      const diffMinutes = Math.floor((clockInDate - lateThreshold) / (1000 * 60))
+      return diffMinutes > 0 ? `${diffMinutes}m` : '0m'
     },
     
-    // Main Display Date Methods
+    // Main Display Date Navigation
     changeDisplayDate(days) {
-      const date = new Date(this.displayDate);
-      date.setDate(date.getDate() + days);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      this.displayDate = `${year}-${month}-${day}`;
-      this.fetchDisplayAttendance();
+      const date = new Date(this.displayDate)
+      date.setDate(date.getDate() + days)
+      const yyyy = date.getFullYear()
+      const mm = String(date.getMonth() + 1).padStart(2, '0')
+      const dd = String(date.getDate()).padStart(2, '0')
+      this.displayDate = `${yyyy}-${mm}-${dd}`
+      this.fetchDisplayAttendance()
     },
     goToTodayDisplay() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      this.displayDate = `${year}-${month}-${day}`;
-      this.fetchDisplayAttendance();
+      const now = new Date()
+      const yyyy = now.getFullYear()
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const dd = String(now.getDate()).padStart(2, '0')
+      this.displayDate = `${yyyy}-${mm}-${dd}`
+      this.fetchDisplayAttendance()
     },
     async fetchDisplayAttendance() {
-      if (!this.displayDate) return;
-      
-      this.displayLoading = true;
+      if (!this.displayDate) return
+      this.displayLoading = true
       try {
-        const dateObj = new Date(this.displayDate);
+        const dateObj = new Date(this.displayDate)
         this.displayDateFormatted = dateObj.toLocaleDateString('en-IN', {
-          weekday: 'long',
+          weekday: 'short',
           year: 'numeric',
-          month: 'long',
+          month: 'short',
           day: 'numeric'
-        });
+        })
         
-        // Try main API first
-        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance');
-        const allRecords = response.data || [];
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance')
+        const allRecords = response.data || []
         
         const filteredRecords = allRecords.filter(record => {
-          if (!record.date) return false;
-          let recordDate = record.date;
-          if (recordDate.includes('T')) {
-            recordDate = recordDate.split('T')[0];
-          }
-          if (recordDate.includes(' ')) {
-            recordDate = recordDate.split(' ')[0];
-          }
+          if (!record.date) return false
+          let recordDate = record.date
+          if (recordDate.includes('T')) recordDate = recordDate.split('T')[0]
+          if (recordDate.includes(' ')) recordDate = recordDate.split(' ')[0]
           if (recordDate.includes('/')) {
-            const parts = recordDate.split('/');
-            recordDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+            const parts = recordDate.split('/')
+            recordDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
           }
-          return recordDate === this.displayDate;
-        });
+          return recordDate === this.displayDate
+        })
         
         this.displayRecords = filteredRecords.map(record => ({
           name: record.name || 'Unknown',
@@ -1214,36 +840,36 @@ export default {
           is_late: record.is_late || false,
           clock_in: record.clock_in || null,
           clock_out: record.clock_out || null,
+          required_time: record.required_time || null,
           actual_time: record.actual_time || null,
           date: record.date,
+          site_name: record.site_name || null,
+          travel_from: record.travel_from || null,
+          travel_to: record.travel_to || null,
           id: record.id
-        }));
+        }))
         
-        // If no records found, try monthly API
         if (this.displayRecords.length === 0) {
-          await this.fetchDisplayAttendanceFromMonthly();
+          await this.fetchDisplayAttendanceFromMonthly()
         }
-        
       } catch (error) {
-        console.error('Error fetching display attendance:', error);
+        console.error('Error fetching attendance:', error)
       } finally {
-        this.displayLoading = false;
+        this.displayLoading = false
       }
     },
     async fetchDisplayAttendanceFromMonthly() {
       try {
-        const token = localStorage.getItem('token');
-        const dateParts = this.displayDate.split('-');
-        const year = parseInt(dateParts[0]);
-        const month = parseInt(dateParts[1]);
+        const token = localStorage.getItem('token')
+        const dateParts = this.displayDate.split('-')
+        const year = parseInt(dateParts[0])
+        const month = parseInt(dateParts[1])
         
         if (this.employees.length === 0) {
-          await this.fetchAllEmployees();
+          await this.fetchAllEmployees()
         }
         
-        const employeeNames = this.employees.map(emp => emp.name);
-        const allRecords = [];
-        
+        const employeeNames = this.employees.map(emp => emp.name)
         const promises = employeeNames.map(name => 
           axios.get(
             `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(name)}?month=${month}&year=${year}`,
@@ -1254,197 +880,168 @@ export default {
               }
             }
           ).catch(() => ({ data: { data: [] } }))
-        );
+        )
         
-        const results = await Promise.all(promises);
+        const results = await Promise.all(promises)
+        const allRecords = []
         
-        results.forEach((response, index) => {
-          if (response.data && response.data.data) {
-            const monthlyData = response.data.data;
-            const dayRecords = monthlyData.filter(record => {
-              if (!record.date) return false;
-              let recordDate = record.date;
-              if (recordDate.includes('T')) {
-                recordDate = recordDate.split('T')[0];
-              }
-              if (recordDate.includes(' ')) {
-                recordDate = recordDate.split(' ')[0];
-              }
-              return recordDate === this.displayDate;
-            });
-            
-            dayRecords.forEach(record => {
-              allRecords.push({
-                name: employeeNames[index] || 'Unknown',
-                status: record.status || 'Not Marked',
-                is_late: record.is_late || false,
-                clock_in: record.clock_in || null,
-                clock_out: record.clock_out || null,
-                actual_time: record.actual_time || null,
-                date: record.date,
-                id: record.id
-              });
-            });
+        results.forEach(res => {
+          if (res.data && res.data.data) {
+            allRecords.push(...res.data.data)
           }
-        });
+        })
         
-        this.displayRecords = allRecords;
-      } catch (error) {
-        console.error('Error fetching from monthly API:', error);
+        const dayRecords = allRecords.filter(r => {
+          if (!r.date) return false
+          let recordDate = r.date
+          if (recordDate.includes('T')) recordDate = recordDate.split('T')[0]
+          return recordDate === this.displayDate
+        })
+        
+        if (dayRecords.length > 0) {
+          this.displayRecords = dayRecords.map(r => ({
+            name: r.name || 'Unknown',
+            status: r.status || 'Not Marked',
+            is_late: r.is_late || false,
+            clock_in: r.clock_in || null,
+            clock_out: r.clock_out || null,
+            required_time: r.required_time || null,
+            actual_time: r.actual_time || null,
+            date: r.date,
+            id: r.id
+          }))
+        }
+      } catch (err) {
+        console.error('Error in monthly fallback:', err)
       }
     },
     
-    // Modal Methods
+    // Date Modal
     openDatePickerModal() {
-      this.showDatePickerModal = true;
-      this.modalSelectedDate = this.displayDate;
-      this.modalDateFormatted = this.displayDateFormatted;
-      this.fetchModalAttendanceByDate();
+      this.showDatePickerModal = true
+      this.modalSelectedDate = this.displayDate
+      this.modalDateFormatted = this.displayDateFormatted
+      this.fetchModalAttendanceByDate()
     },
     showDatePickerInput() {
-      this.$refs.datePickerInput.click();
+      this.$refs.datePickerInput.click()
     },
     changeModalDate(days) {
-      const date = new Date(this.modalSelectedDate);
-      date.setDate(date.getDate() + days);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      this.modalSelectedDate = `${year}-${month}-${day}`;
-      this.fetchModalAttendanceByDate();
+      const date = new Date(this.modalSelectedDate)
+      date.setDate(date.getDate() + days)
+      const yyyy = date.getFullYear()
+      const mm = String(date.getMonth() + 1).padStart(2, '0')
+      const dd = String(date.getDate()).padStart(2, '0')
+      this.modalSelectedDate = `${yyyy}-${mm}-${dd}`
+      this.fetchModalAttendanceByDate()
     },
     goToTodayModal() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      this.modalSelectedDate = `${year}-${month}-${day}`;
-      this.fetchModalAttendanceByDate();
+      const now = new Date()
+      const yyyy = now.getFullYear()
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const dd = String(now.getDate()).padStart(2, '0')
+      this.modalSelectedDate = `${yyyy}-${mm}-${dd}`
+      this.fetchModalAttendanceByDate()
     },
     async fetchModalAttendanceByDate() {
-      if (!this.modalSelectedDate) return;
-      
-      this.modalLoading = true;
+      if (!this.modalSelectedDate) return
+      this.modalLoading = true
       try {
-        const dateObj = new Date(this.modalSelectedDate);
+        const dateObj = new Date(this.modalSelectedDate)
         this.modalDateFormatted = dateObj.toLocaleDateString('en-IN', {
-          weekday: 'long',
+          weekday: 'short',
           year: 'numeric',
-          month: 'long',
+          month: 'short',
           day: 'numeric'
-        });
+        })
         
-        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance');
-        const allRecords = response.data || [];
+        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance')
+        const allRecords = response.data || []
         
-        const filteredRecords = allRecords.filter(record => {
-          if (!record.date) return false;
-          let recordDate = record.date;
-          if (recordDate.includes('T')) {
-            recordDate = recordDate.split('T')[0];
-          }
-          if (recordDate.includes(' ')) {
-            recordDate = recordDate.split(' ')[0];
-          }
-          if (recordDate.includes('/')) {
-            const parts = recordDate.split('/');
-            recordDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-          }
-          return recordDate === this.modalSelectedDate;
-        });
-        
-        this.modalAttendanceData = filteredRecords.map(record => ({
-          name: record.name || 'Unknown',
-          status: record.status || 'Not Marked',
-          is_late: record.is_late || false,
-          clock_in: record.clock_in || null,
-          clock_out: record.clock_out || null,
-          actual_time: record.actual_time || null,
-          date: record.date,
-          id: record.id
-        }));
-        
-        if (this.modalAttendanceData.length === 0) {
-          await this.fetchModalAttendanceFromMonthly();
-        }
-        
-      } catch (error) {
-        console.error('Error fetching modal attendance:', error);
+        this.modalAttendanceData = allRecords
+          .filter(r => r.date && r.date.startsWith(this.modalSelectedDate))
+          .map(r => ({
+            name: r.name || 'Unknown',
+            status: r.status || 'Not Marked',
+            clock_in: r.clock_in,
+            clock_out: r.clock_out,
+            id: r.id
+          }))
+      } catch (err) {
+        console.error('Error fetching date modal:', err)
       } finally {
-        this.modalLoading = false;
+        this.modalLoading = false
       }
     },
-    async fetchModalAttendanceFromMonthly() {
+
+    // Core Data Fetchers
+    async fetchAllEmployees() {
       try {
-        const token = localStorage.getItem('token');
-        const dateParts = this.modalSelectedDate.split('-');
-        const year = parseInt(dateParts[0]);
-        const month = parseInt(dateParts[1]);
-        
-        if (this.employees.length === 0) {
-          await this.fetchAllEmployees();
-        }
-        
-        const employeeNames = this.employees.map(emp => emp.name);
-        const allRecords = [];
-        
-        const promises = employeeNames.map(name => 
-          axios.get(
-            `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(name)}?month=${month}&year=${year}`,
-            {
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          ).catch(() => ({ data: { data: [] } }))
-        );
-        
-        const results = await Promise.all(promises);
-        
-        results.forEach((response, index) => {
-          if (response.data && response.data.data) {
-            const monthlyData = response.data.data;
-            const dayRecords = monthlyData.filter(record => {
-              if (!record.date) return false;
-              let recordDate = record.date;
-              if (recordDate.includes('T')) {
-                recordDate = recordDate.split('T')[0];
-              }
-              if (recordDate.includes(' ')) {
-                recordDate = recordDate.split(' ')[0];
-              }
-              return recordDate === this.modalSelectedDate;
-            });
-            
-            dayRecords.forEach(record => {
-              allRecords.push({
-                name: employeeNames[index] || 'Unknown',
-                status: record.status || 'Not Marked',
-                is_late: record.is_late || false,
-                clock_in: record.clock_in || null,
-                clock_out: record.clock_out || null,
-                actual_time: record.actual_time || null,
-                date: record.date,
-                id: record.id
-              });
-            });
-          }
-        });
-        
-        this.modalAttendanceData = allRecords;
-      } catch (error) {
-        console.error('Error fetching modal from monthly API:', error);
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/users')
+        this.employees = res.data.filter(u => u.department !== 'Ownership').map(u => ({
+          id: u.id,
+          name: u.name,
+          base_salary: parseFloat(u.keyresponsibility) || null,
+          salary: null,
+          department: u.department,
+          calculating: false
+        }))
+      } catch (err) {
+        console.error('Error fetching employees:', err)
       }
     },
-    
+    async fetchLateMarksSummary() {
+      this.lateMarksLoading = true
+      try {
+        const token = localStorage.getItem('token')
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth() + 1
+        
+        if (!this.employees.length) return
+        
+        const names = this.employees.map(e => e.name)
+        const lateData = []
+        let total = 0
+        
+        const promises = names.map(name =>
+          axios.get('https://employees.archenterprises.co.in/api/api/attendance/late-marks', {
+            params: { name, month, year },
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => ({ data: { success: false } }))
+        )
+        
+        const results = await Promise.all(promises)
+        results.forEach((res, i) => {
+          if (res.data && res.data.success) {
+            const data = res.data.data
+            const count = data.late_count || 0
+            if (count > 0) {
+              lateData.push({
+                name: names[i],
+                late_count: count,
+                penalties_applied: data.penalties_applied || 0,
+                penalty_amount: data.penalty_amount_applied || 0
+              })
+              total += count
+            }
+          }
+        })
+        
+        this.lateMarksData = lateData
+        this.totalLateMarks = total
+      } catch (err) {
+        console.error('Error fetching late marks:', err)
+      } finally {
+        this.lateMarksLoading = false
+      }
+    },
     async submitMarkedAttendance() {
       if (!this.markAttendance.employee || !this.markAttendance.status || !this.markAttendance.date) {
-        toastWarning('Please fill all required fields')
+        toastError('Please fill in required fields')
         return
       }
       try {
-        await axios.post('https://employees.archenterprises.co.in/api/api/attendance/store-or-update', {
+        await axios.post('https://employees.archenterprises.co.in/api/api/attendance', {
           name: this.markAttendance.employee,
           status: this.markAttendance.status,
           clock_in: this.markAttendance.time || null,
@@ -1453,260 +1050,155 @@ export default {
           travel_from: this.markAttendance.travel_from || null,
           travel_to: this.markAttendance.travel_to || null
         })
-        toastSuccess('Attendance saved successfully')
+        toastSuccess('Attendance marked')
         this.showMarkAttendancePopup = false
         this.markAttendance = { employee: '', status: '', date: '', time: '', site_name: '', travel_from: '', travel_to: '' }
-        this.fetchAllEmployees()
         this.fetchDisplayAttendance()
         this.fetchLateMarksSummary()
-      } catch (error) {
-        console.error('Error saving attendance:', error)
-        toastError('Failed to save attendance')
-      }
-    },
-    async fetchAllEmployees() {
-      try {
-        const res = await axios.get('https://employees.archenterprises.co.in/api/api/users')
-        this.employees = res.data.filter(user => user.department !== 'Ownership').map(user => ({
-          id: user.id,
-          name: user.name,
-          salary: user.salary || null,
-          department: user.department,
-          calculating: false
-        }))
       } catch (err) {
-        console.error('Error fetching employees:', err)
+        toastError('Failed to mark attendance')
       }
     },
-    async fetchAttendance() {
+    async calculateSalaryOnClick(employee) {
+      employee.calculating = true
       try {
-        const response = await axios.get('https://employees.archenterprises.co.in/api/api/attendance')
-        const records = response.data.filter(record => {
-          return record.name && record.name.trim() !== '';
-        });
-        this.attendanceRecords = records
-        this.allAttendanceCache = records
-      } catch (error) {
-        console.error('Error fetching attendance:', error)
-      }
-    },
-    async fetchLateMarksSummary() {
-      this.lateMarksLoading = true;
-      try {
-        const token = localStorage.getItem('token');
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth() + 1;
-        
-        if (this.employees.length === 0) {
-          this.lateMarksLoading = false;
-          return;
-        }
-        
-        const employeeNames = this.employees.map(emp => emp.name);
-        const lateData = [];
-        let totalLate = 0;
-        let totalPenalties = 0;
-        let totalPenaltyAmt = 0;
-        
-        const promises = employeeNames.map(name => 
-          axios.get(
-            `https://employees.archenterprises.co.in/api/api/attendance/late-marks`,
-            {
-              params: {
-                name: name,
-                month: currentMonth,
-                year: currentYear
-              },
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          ).catch(() => ({ data: { success: false } }))
-        );
-        
-        const results = await Promise.all(promises);
-        
-        results.forEach((response, index) => {
-          if (response.data && response.data.success) {
-            const data = response.data.data;
-            const lateCount = data.late_count || 0;
-            
-            if (lateCount > 0) {
-              const penaltiesCalculated = Math.floor(lateCount / 3);
-              const penaltiesApplied = data.penalties_applied || 0;
-              const penaltyAmount = data.penalty_amount_applied || 0;
-              
-              lateData.push({
-                name: employeeNames[index],
-                late_count: lateCount,
-                penalties_applied: penaltiesApplied,
-                penalty_amount: penaltyAmount,
-                pending_penalties: Math.max(0, penaltiesCalculated - penaltiesApplied)
-              });
-              
-              totalLate += lateCount;
-              totalPenalties += penaltiesApplied;
-              totalPenaltyAmt += penaltyAmount;
-            }
-          }
-        });
-        
-        this.lateMarksData = lateData;
-        this.totalLateMarks = totalLate;
-        this.totalPenaltiesApplied = totalPenalties;
-        this.totalPenaltyAmount = totalPenaltyAmt;
-        
-        if (lateData.length > 0) {
-          this.monthlyLateSummary = [{
-            month: currentMonth,
-            month_name: this.getMonthName(currentMonth - 1),
-            late_count: totalLate,
-            penalties_applied: totalPenalties,
-            penalty_amount: totalPenaltyAmt,
-            pending_penalties: lateData.reduce((sum, item) => sum + item.pending_penalties, 0)
-          }];
-        } else {
-          this.monthlyLateSummary = [];
-        }
-        
-        this.lateMarksLoading = false;
-      } catch (error) {
-        console.error('Error fetching late marks summary:', error);
-        this.lateMarksLoading = false;
-      }
-    },
-    getLateProgressClass(count) {
-      if (count >= 9) return 'critical';
-      if (count >= 6) return 'warning';
-      if (count >= 3) return 'moderate';
-      return 'good';
-    },
-    getLateCountClass(count) {
-      if (count >= 9) return 'critical';
-      if (count >= 6) return 'warning';
-      if (count >= 3) return 'moderate';
-      return 'good';
-    },
-    getLateStatusClass(item) {
-      if (item.pending_penalties > 0) return 'pending';
-      if (item.penalties_applied > 0) return 'penalty-applied';
-      if (item.late_count >= 3) return 'warning';
-      return 'good';
-    },
-    getLateStatusIcon(item) {
-      if (item.pending_penalties > 0) return 'fas fa-clock';
-      if (item.penalties_applied > 0) return 'fas fa-check-circle';
-      if (item.late_count >= 3) return 'fas fa-exclamation-triangle';
-      return 'fas fa-check';
-    },
-    getLateStatusText(item) {
-      if (item.pending_penalties > 0) return 'Pending';
-      if (item.penalties_applied > 0) return 'Penalty Applied';
-      if (item.late_count >= 3) return 'Needs Action';
-      return 'Good';
-    },
-    async calculateSalaryOnClick(record) {
-      record.calculating = true
-      try {
+        const token = localStorage.getItem('token')
+        const month = this.currentMonth + 1
+        const year = this.currentYear
+
+        // 1. Fetch monthly attendance and base salary in parallel
         const [monthlyRes, salaryRes] = await Promise.all([
-          axios.get(`https://employees.archenterprises.co.in/api/api/attendance/monthly/${record.name}?month=${this.currentMonth + 1}&year=${this.currentYear}`),
-          axios.get(`https://employees.archenterprises.co.in/api/api/user-salary-by-name/${record.name}`)
+          axios.get(
+            `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(employee.name)}?month=${month}&year=${year}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ).catch(() => ({ data: { data: [] } })),
+          axios.get(
+            `https://employees.archenterprises.co.in/api/api/user-salary-by-name/${encodeURIComponent(employee.name)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ).catch(() => ({ data: { salary: employee.base_salary || 0 } }))
         ])
-        const monthlyData = monthlyRes.data.data || []
-        const baseSalary = parseFloat(salaryRes.data.salary) || 0
-        const totalDaysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate()
-        const perDaySalary = baseSalary / totalDaysInMonth
+
+        const monthlyData = monthlyRes.data?.data || []
+        const baseSalary = parseFloat(salaryRes.data?.salary || employee.base_salary || 0)
+
+        const totalDaysInMonth = new Date(year, month, 0).getDate()
+        const perDaySalary = totalDaysInMonth > 0 ? baseSalary / totalDaysInMonth : 0
+
         let fullPaidDays = 0
         monthlyData.forEach(day => {
-          const status = day.status?.trim().toLowerCase()
+          const status = (day.status || '').trim().toLowerCase().replace(/\s+/g, '')
           if (['present', 'onsite', 'traveling', 'leave'].includes(status)) {
-            fullPaidDays++
+            fullPaidDays += 1
           } else if (status === 'halfday') {
-            fullPaidDays++
+            fullPaidDays += 0.5
           }
         })
+
+        // Count Sundays in the month
         let sundayCount = 0
         for (let i = 1; i <= totalDaysInMonth; i++) {
-          const date = new Date(this.currentYear, this.currentMonth, i)
+          const date = new Date(year, month - 1, i)
           if (date.getDay() === 0) sundayCount++
         }
-        const salaryForMonth = (fullPaidDays * perDaySalary) + (sundayCount * perDaySalary)
-        record.salary = Math.round(salaryForMonth)
+
+        const calculated = (fullPaidDays * perDaySalary) + (sundayCount * perDaySalary)
+        const finalSalary = Math.round(calculated)
+
+        employee.salary = finalSalary
         this.salaryPopup = {
           show: true,
-          employeeName: record.name,
-          calculatedSalary: Math.round(salaryForMonth)
+          employeeName: employee.name,
+          calculatedSalary: finalSalary
         }
+        toastSuccess(`Salary calculated for ${employee.name}`)
       } catch (error) {
-        console.error(`Error calculating salary for ${record.name}:`, error)
+        console.error(`Error calculating salary for ${employee.name}:`, error)
         toastError('Failed to calculate salary')
       } finally {
-        record.calculating = false
+        employee.calculating = false
       }
     },
-    async viewEmployeeMonthlyAttendance(name) {
-      this.selectedEmployee = name
+    async viewEmployeeMonthlyAttendance(employeeName) {
+      this.selectedEmployee = employeeName
       this.showPopup = true
-      const month = this.currentMonth + 1
-      const year = this.currentYear
       try {
-        const response = await axios.get(`https://employees.archenterprises.co.in/api/api/attendance/monthly/${name}?month=${month}&year=${year}`)
+        const token = localStorage.getItem('token')
+        const response = await axios.get(
+          `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(employeeName)}?month=${this.currentMonth + 1}&year=${this.currentYear}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
         this.employeeMonthlyData = response.data.data || []
-        this.statusSummary = {
-          Present: 0, Absent: 0, OnSite: 0, HalfDay: 0, Traveling: 0, Leave: 0
-        }
-        this.employeeMonthlyData.forEach(record => {
-          const status = record.status?.trim()
-          if (status && this.statusSummary.hasOwnProperty(status)) {
-            this.statusSummary[status]++
-          }
+        const summary = { Present: 0, Absent: 0, OnSite: 0, HalfDay: 0, Traveling: 0, Leave: 0 }
+        this.employeeMonthlyData.forEach(entry => {
+          if (!entry.status) return
+          const s = entry.status.toLowerCase().replace(/\s+/g, '')
+          if (s === 'present') summary.Present++
+          else if (s === 'leave') summary.Leave++
+          else if (s === 'onsite') summary.OnSite++
+          else if (s === 'traveling') summary.Traveling++
+          else if (s === 'halfday') summary.HalfDay++
+          else if (s === 'absent') summary.Absent++
         })
-      } catch (error) {
-        console.error('Error fetching monthly attendance:', error)
+        this.statusSummary = summary
+      } catch (err) {
+        console.error('Error fetching calendar:', err)
       }
     },
     goToPreviousMonth() {
       if (this.currentMonth === 0) {
         this.currentMonth = 11
-        this.currentYear -= 1
+        this.currentYear--
       } else {
-        this.currentMonth -= 1
+        this.currentMonth--
       }
-      this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
+      if (this.selectedEmployee) this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
     },
     goToNextMonth() {
       if (this.currentMonth === 11) {
         this.currentMonth = 0
-        this.currentYear += 1
+        this.currentYear++
       } else {
-        this.currentMonth += 1
+        this.currentMonth++
       }
-      this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
-    },
-    getMonthName(index) {
-      return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][index]
+      if (this.selectedEmployee) this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
     },
     buildCalendar(attendanceData) {
       const year = this.currentYear
       const month = this.currentMonth
-      const firstDayOfMonth = new Date(year, month, 1)
-      const lastDayOfMonth = new Date(year, month + 1, 0)
-      const daysInMonth = lastDayOfMonth.getDate()
+      const firstDay = new Date(year, month, 1).getDay()
+      const daysInMonth = new Date(year, month + 1, 0).getDate()
       const calendar = []
       let week = []
-      const padDay = firstDayOfMonth.getDay()
-      for (let i = 0; i < padDay; i++) {
-        week.push({ day: '', date: '', statusClass: '' })
+      for (let i = 0; i < firstDay; i++) {
+        week.push({ day: '', date: '', statusClass: '', statusText: '', shortStatus: '' })
       }
-      const getStatusClass = (dateStr) => {
-        const record = attendanceData.find(entry => new Date(entry.date).toISOString().split('T')[0] === dateStr)
-        if (!record || !record.status) return ''
-        return `cal-${record.status.toLowerCase().replace(/\s+/g, '-')}`
+      const getStatusInfo = (dateStr) => {
+        const rec = attendanceData.find(e => {
+          if (!e.date) return false
+          let d = e.date
+          if (d.includes('T')) d = d.split('T')[0]
+          if (d.includes(' ')) d = d.split(' ')[0]
+          return d === dateStr
+        })
+        if (!rec || !rec.status) return { statusClass: '', statusText: '', shortStatus: '' }
+        const s = rec.status.toLowerCase().replace(/\s+/g, '')
+        let short = ''
+        if (s === 'present') short = 'P'
+        else if (s === 'leave') short = 'L'
+        else if (s === 'onsite') short = 'OS'
+        else if (s === 'traveling') short = 'TR'
+        else if (s === 'halfday') short = 'HD'
+        else if (s === 'absent') short = 'A'
+        return {
+          statusClass: `cal-${s}`,
+          statusText: rec.status,
+          shortStatus: short
+        }
       }
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-        week.push({ day, date: dateStr, statusClass: getStatusClass(dateStr) })
+        const info = getStatusInfo(dateStr)
+        week.push({ day, date: dateStr, statusClass: info.statusClass, statusText: info.statusText, shortStatus: info.shortStatus })
         if (week.length === 7) {
           calendar.push(week)
           week = []
@@ -1714,26 +1206,19 @@ export default {
       }
       if (week.length > 0) {
         while (week.length < 7) {
-          week.push({ day: '', date: '', statusClass: '' })
+          week.push({ day: '', date: '', statusClass: '', statusText: '', shortStatus: '' })
         }
         calendar.push(week)
       }
       return calendar
     },
+    getMonthName(monthIndex) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      return months[monthIndex] || ''
+    },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
-    },
-    toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible
-    },
-    formatDate(date) {
-      return new Date(date).toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
     }
   },
   mounted() {
@@ -1746,13 +1231,11 @@ export default {
     this.today = `${yyyy}-${mm}-${dd}`
     this.displayDate = this.today
     this.markAttendance.date = this.today
-    this.currentDate = this.formatDate(now)
     this.fetchAllEmployees()
-    this.fetchAttendance()
     this.fetchDisplayAttendance()
     setTimeout(() => {
       this.fetchLateMarksSummary()
-    }, 500)
+    }, 400)
     const token = localStorage.getItem('token')
     if (!token) {
       this.$router.push('/auth')
@@ -1765,1120 +1248,12 @@ export default {
 </script>
 
 <style scoped>
-/* Date Navigation Main Styles */
-.date-navigation-main {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 16px;
-  margin-bottom: 20px;
-  border: 1px solid #e5e7eb;
-  flex-wrap: wrap;
-}
-
-.nav-date-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: white;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.nav-date-btn:hover {
-  background: var(--primary-color);
-  color: white;
-  transform: scale(1.05);
-}
-
-.nav-date-btn:active {
-  transform: scale(0.95);
-}
-
-.nav-date-btn.today-btn {
-  width: auto;
-  padding: 0 16px;
-  border-radius: 20px;
-  gap: 6px;
-  background: var(--primary);
-  color: white;
-}
-
-.nav-date-btn.today-btn:hover {
-  background: #7c3aed;
-}
-
-.current-date-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  background: white;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 500;
-  color: var(--dark);
-  min-width: 200px;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.current-date-display:hover {
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.current-date-display i {
-  color: var(--primary-color);
-}
-
-/* Date Navigation Modal Styles */
-.date-navigation-modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.nav-btn-modal {
-  padding: 8px 12px;
-  border: none;
-  background: white;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #6b7280;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.nav-btn-modal:hover {
-  background: var(--primary-color);
-  color: white;
-}
-
-.nav-btn-modal.today-btn-modal {
-  background: var(--primary);
-  color: white;
-}
-
-.nav-btn-modal.today-btn-modal:hover {
-  background: #7c3aed;
-}
-
-.date-display-modal {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  color: var(--dark);
-  min-width: 180px;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.date-display-modal:hover {
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.date-display-modal i {
-  color: var(--primary-color);
-}
-
-.date-picker-input-hidden {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-/* Stats Summary Modal */
-.stats-summary-modal {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.stat-item {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
-  text-align: center;
-}
-
-.stat-item .stat-number {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.stat-item .stat-label {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-/* Rest of existing styles... */
-.late-marks-summary-wrapper {
-  margin-top: 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.mobile-late-cards {
-  display: none;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-}
-
-.late-mark-card {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.late-mark-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 8px;
-}
-
-.late-count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-.late-count-badge.critical {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.late-count-badge.warning {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.late-count-badge.moderate {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.late-count-badge.good {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.late-mark-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.late-detail {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.late-detail .detail-label {
-  color: #6b7280;
-}
-
-.late-detail .detail-value {
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.late-detail .detail-value.has-penalty {
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.late-detail .detail-value.penalty-amount {
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.late-detail .detail-value.warning {
-  color: #d97706;
-  font-weight: 600;
-}
-
-.late-detail .detail-label.pending {
-  color: #d97706;
-}
-
-.late-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.late-progress .progress-bar-bg {
-  flex: 1;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.late-progress .progress-bar-fill {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.6s ease;
-}
-
-.late-progress .progress-bar-fill.good {
-  background: #10b981;
-}
-
-.late-progress .progress-bar-fill.moderate {
-  background: #f59e0b;
-}
-
-.late-progress .progress-bar-fill.warning {
-  background: #f97316;
-}
-
-.late-progress .progress-bar-fill.critical {
-  background: #ef4444;
-}
-
-.late-progress .progress-label {
-  font-size: 11px;
-  color: #6b7280;
-  min-width: 50px;
-  text-align: right;
-}
-
-.penalty-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-.penalty-badge.has-penalty {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.penalty-amount {
-  font-weight: 600;
-  color: #dc2626;
-}
-
-.no-penalty {
-  color: #9ca3af;
-}
-
-.pending-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #d97706;
-  font-weight: 500;
-  font-size: 13px;
-}
-
-.no-pending {
-  color: #10b981;
-}
-
-.status-badge-premium.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge-premium.penalty-applied {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge-premium.warning {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge-premium.good {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.warning-icon {
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-}
-
-.late-summary-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.late-stat-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-}
-
-.late-stat-card .stat-number {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.late-stat-card .stat-label {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.monthly-late-list {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.monthly-late-list h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 12px;
-}
-
-.monthly-late-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.monthly-late-item:last-child {
-  border-bottom: none;
-}
-
-.month-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.month-name {
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.month-count {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.month-penalties {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.penalty-applied {
-  color: #dc2626;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.pending-penalty {
-  color: #d97706;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.month-penalties .no-penalty {
-  font-size: 12px;
-  color: #9ca3af;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .mobile-late-cards {
-    display: flex;
-  }
-  
-  .late-summary-stats {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-  }
-  
-  .late-stat-card {
-    padding: 10px;
-  }
-  
-  .late-stat-card .stat-number {
-    font-size: 18px;
-  }
-  
-  .monthly-late-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  
-  .month-penalties {
-    flex-wrap: wrap;
-  }
-  
-  .date-navigation-main {
-    gap: 8px;
-    padding: 10px 12px;
-  }
-  
-  .current-date-display {
-    min-width: 120px;
-    font-size: 13px;
-    padding: 6px 12px;
-  }
-  
-  .nav-date-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-  }
-  
-  .nav-date-btn.today-btn {
-    padding: 0 12px;
-    font-size: 12px;
-  }
-  
-  .date-navigation-modal {
-    gap: 8px;
-  }
-  
-  .date-display-modal {
-    min-width: 120px;
-    font-size: 13px;
-    padding: 6px 12px;
-  }
-  
-  .nav-btn-modal {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-  
-  .stats-summary-modal {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  
-  .stat-item .stat-number {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .late-summary-stats {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .late-stat-card {
-    padding: 8px;
-  }
-  
-  .late-stat-card .stat-number {
-    font-size: 16px;
-  }
-  
-  .date-navigation-main {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .current-date-display {
-    min-width: 100px;
-    font-size: 12px;
-    padding: 4px 10px;
-  }
-  
-  .date-navigation-modal {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .date-display-modal {
-    min-width: 100px;
-    font-size: 12px;
-    padding: 4px 10px;
-  }
-  
-  .stats-summary-modal {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* Add tertiary button styles */
-.register-btn-modern.tertiary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.register-btn-modern.tertiary:hover {
-  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
-}
-
-.mobile-action-btn.tertiary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.yesterday-icon {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
-}
-
-.loading-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #6b7280;
-}
-
-.loading-state i {
-  font-size: 36px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-}
-
-.loading-state p {
-  font-size: 14px;
-}
-
-.yesterday-modal .modal-body-premium {
-  max-height: 60vh;
-}
-
-.clock-in-time {
-  color: #10b981;
-  font-weight: 500;
-}
-
-.clock-out-time {
-  color: #3b82f6;
-  font-weight: 500;
-}
-
-.actual-time-value {
-  color: #8b5cf6;
-  font-weight: 600;
-}
-
-.no-time {
-  color: #9ca3af;
-}
-
-.clock-in-time i, .clock-out-time i {
-  margin-right: 4px;
-  font-size: 11px;
-}
-
-/* Import Font Awesome */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-
-:root {
-  --primary: linear-gradient(135deg, #667eea 0%, #7c3aed 100%);
-  --primary-color: #667eea;
-  --dark: #1a1a2e;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-}
-.register-btn-modern.tertiary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.register-btn-modern.tertiary:hover {
-  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
-}
-
-.mobile-action-btn.tertiary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-/* Yesterday's Attendance Modal Styles */
-.yesterday-icon {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
-}
-
-.loading-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #6b7280;
-}
-
-.loading-state i {
-  font-size: 36px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-}
-
-.loading-state p {
-  font-size: 14px;
-}
-
-.yesterday-modal .modal-body-premium {
-  max-height: 60vh;
-}
-
-/* Clock time styles */
-.clock-in-time {
-  color: #10b981;
-  font-weight: 500;
-}
-
-.clock-out-time {
-  color: #3b82f6;
-  font-weight: 500;
-}
-
-.actual-time-value {
-  color: #8b5cf6;
-  font-weight: 600;
-}
-
-.no-time {
-  color: #9ca3af;
-}
-
-.clock-in-time i, .clock-out-time i {
-  margin-right: 4px;
-  font-size: 11px;
-}
-
-/* Rest of your existing styles remain the same */
-.late-marks-summary-wrapper {
-  margin-top: 24px;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.mobile-late-cards {
-  display: none;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-}
-
-.late-mark-card {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.late-mark-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 8px;
-}
-
-.late-count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-.late-count-badge.critical {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.late-count-badge.warning {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.late-count-badge.moderate {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.late-count-badge.good {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.late-mark-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.late-detail {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.late-detail .detail-label {
-  color: #6b7280;
-}
-
-.late-detail .detail-value {
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.late-detail .detail-value.has-penalty {
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.late-detail .detail-value.penalty-amount {
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.late-detail .detail-value.warning {
-  color: #d97706;
-  font-weight: 600;
-}
-
-.late-detail .detail-label.pending {
-  color: #d97706;
-}
-
-.late-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.late-progress .progress-bar-bg {
-  flex: 1;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.late-progress .progress-bar-fill {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.6s ease;
-}
-
-.late-progress .progress-bar-fill.good {
-  background: #10b981;
-}
-
-.late-progress .progress-bar-fill.moderate {
-  background: #f59e0b;
-}
-
-.late-progress .progress-bar-fill.warning {
-  background: #f97316;
-}
-
-.late-progress .progress-bar-fill.critical {
-  background: #ef4444;
-}
-
-.late-progress .progress-label {
-  font-size: 11px;
-  color: #6b7280;
-  min-width: 50px;
-  text-align: right;
-}
-
-.penalty-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-.penalty-badge.has-penalty {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.penalty-amount {
-  font-weight: 600;
-  color: #dc2626;
-}
-
-.no-penalty {
-  color: #9ca3af;
-}
-
-.pending-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #d97706;
-  font-weight: 500;
-  font-size: 13px;
-}
-
-.no-pending {
-  color: #10b981;
-}
-
-.status-badge-premium.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge-premium.penalty-applied {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge-premium.warning {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge-premium.good {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.warning-icon {
-  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-}
-
-.late-summary-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.late-stat-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-}
-
-.late-stat-card .stat-number {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.late-stat-card .stat-label {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.monthly-late-list {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.monthly-late-list h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 12px;
-}
-
-.monthly-late-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.monthly-late-item:last-child {
-  border-bottom: none;
-}
-
-.month-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.month-name {
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.month-count {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.month-penalties {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.penalty-applied {
-  color: #dc2626;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.pending-penalty {
-  color: #d97706;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.month-penalties .no-penalty {
-  font-size: 12px;
-  color: #9ca3af;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .mobile-late-cards {
-    display: flex;
-  }
-  
-  .late-summary-stats {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-  }
-  
-  .late-stat-card {
-    padding: 10px;
-  }
-  
-  .late-stat-card .stat-number {
-    font-size: 18px;
-  }
-  
-  .monthly-late-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  
-  .month-penalties {
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 480px) {
-  .late-summary-stats {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .late-stat-card {
-    padding: 8px;
-  }
-  
-  .late-stat-card .stat-number {
-    font-size: 16px;
-  }
-}
-
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-
-:root {
-  --primary: linear-gradient(135deg, #667eea 0%, #7c3aed 100%);
-  --primary-color: #667eea;
-  --dark: #1a1a2e;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* ================= SIMPLE & SWEET DESIGN SYSTEM ================= */
 .layout {
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
 }
 
 .main-content {
@@ -2886,1412 +1261,833 @@ export default {
   gap: 20px;
   padding: 20px;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .content {
   flex: 1;
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.mobile-header {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: white;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.mobile-title {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--dark);
+  flex-direction: column;
+  gap: 18px;
 }
 
-.mobile-title i {
-  color: var(--primary-color);
-}
-
-.mobile-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.mobile-action-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: var(--primary);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mobile-action-btn:active {
-  transform: scale(0.9);
-}
-
-.mobile-action-btn.secondary {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.mobile-action-btn.tertiary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.content-header-modern {
+/* ================= 1. SIMPLE HEADER ================= */
+.simple-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.title-icon {
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.content-header-modern h1 {
+.page-title {
+  margin: 0;
   font-size: 22px;
   font-weight: 700;
-  background: var(--primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin: 0;
+  color: #0f172a;
 }
 
-.subtitle-modern {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
+.page-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .header-buttons {
   display: flex;
-  gap: 12px;
-}
-
-.register-btn-modern {
-  padding: 12px 24px;
-  background: var(--primary);
-  border: none;
-  border-radius: 16px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.register-btn-modern.secondary {
-  background: linear-gradient(135deg, #10b981, #059669);
+.btn-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.register-btn-modern.tertiary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+.btn-mark:hover {
+  background: #4338ca;
 }
 
-.register-btn-modern:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.register-btn-modern.tertiary:hover {
-  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+.btn-secondary:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }
 
-.stats-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
+.late-count-bubble {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
 }
 
-.stat-card {
+/* ================= 2. CLEAN SUMMARY STRIP ================= */
+.summary-strip {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+
+.summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.summary-pill:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.summary-pill.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.summary-pill.active .pill-label {
+  color: #cbd5e1;
+}
+
+.summary-pill.active .pill-value {
+  color: #ffffff !important;
+}
+
+.pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-all { background: #64748b; }
+.dot-present { background: #10b981; }
+.dot-leave { background: #6366f1; }
+.dot-onsite { background: #a855f7; }
+.dot-traveling { background: #0ea5e9; }
+.dot-halfday { background: #f97316; }
+.dot-absent { background: #ef4444; }
+.dot-late { background: #f59e0b; }
+
+.pill-label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.pill-value {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.text-present { color: #059669; }
+.text-leave { color: #4f46e5; }
+.text-onsite { color: #7e22ce; }
+.text-traveling { color: #0284c7; }
+.text-halfday { color: #c2410c; }
+.text-absent { color: #dc2626; }
+.text-late { color: #d97706; }
+
+/* ================= 3. SINGLE ROW TOOLBAR ================= */
+.toolbar-single-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.date-navigator-sweet {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.nav-arrow:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.date-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
   cursor: pointer;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+.date-pill i {
+  color: #4f46e5;
 }
 
-.stat-card:active {
-  transform: scale(0.97);
+.date-pill:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
 }
 
-.stat-card i {
-  font-size: 36px;
-  color: var(--primary-color);
+.btn-today {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.stat-info {
-  display: flex;
-  flex-direction: column;
+.btn-today:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
-.stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.current-date-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border-radius: 40px;
-  margin-bottom: 24px;
-  font-weight: 500;
-  color: var(--primary-color);
-}
-
-.current-date-badge i {
-  font-size: 16px;
-}
-
-.search-bar-mobile {
-  display: none;
-  margin-bottom: 16px;
-}
-
-.search-group-mobile {
+.search-sweet {
   position: relative;
+  min-width: 240px;
+  max-width: 320px;
   flex: 1;
 }
 
-.search-group-mobile i {
+.search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
-.search-input-mobile {
+.search-input {
   width: 100%;
-  padding: 10px 12px 10px 38px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  background: white;
-  transition: all 0.3s ease;
+  padding: 8px 30px 8px 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #ffffff;
+  box-sizing: border-box;
 }
 
-.search-input-mobile:focus {
+.search-input:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: #4f46e5;
 }
 
-.table-wrapper-premium {
-  background: white;
-  border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.section-title-modern {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  color: #1a1a2e;
-}
-
-.title-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.section-title-modern i {
-  color: var(--primary-color);
-}
-
-.record-count-mobile {
-  background: var(--primary);
-  color: white;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  margin-left: 4px;
-}
-
-.table-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.attendance-table-premium {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.attendance-table-premium thead {
-  background: #f8fafc;
-}
-
-.attendance-table-premium th {
-  text-align: left;
-  padding: 16px 16px;
-  font-weight: 600;
-  font-size: 13px;
-  color: #6b7280;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.attendance-table-premium td {
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
-}
-
-.attendance-table-premium tbody tr {
-  transition: all 0.3s ease;
-}
-
-.attendance-table-premium tbody tr:hover {
-  background: #fafbfc;
-}
-
-.mobile-cards {
-  display: none;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-}
-
-.attendance-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.employee-info-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.employee-avatar {
-  width: 36px;
-  height: 36px;
-  background: var(--primary);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.employee-name {
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.status-badge-mobile {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-badge-mobile.present {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge-mobile.onsite {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.status-badge-mobile.halfday {
-  background: #fed7aa;
-  color: #c2410c;
-}
-
-.status-badge-mobile.absent {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge-mobile.traveling {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge-mobile.leave {
-  background: #f3e8ff;
-  color: #7e22ce;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.card-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-value {
-  font-size: 13px;
-  color: var(--dark);
-  text-align: right;
-}
-
-.card-value.actual-time {
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.late-warning-mobile {
-  font-size: 11px;
-  color: var(--danger);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.early-info-mobile {
-  font-size: 11px;
-  color: var(--success);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.empty-state-mobile {
-  text-align: center;
-  padding: 40px 20px;
-  color: #9ca3af;
-}
-
-.empty-state-mobile i {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-state-mobile h4 {
-  font-size: 16px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.empty-state-mobile p {
-  font-size: 13px;
-}
-
-.employee-cell {
-  min-width: 180px;
-}
-
-.employee-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.employee-name {
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.status-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.status-badge-premium {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  width: fit-content;
-}
-
-.status-badge-premium.present {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge-premium.onsite {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.status-badge-premium.halfday {
-  background: #fed7aa;
-  color: #c2410c;
-}
-
-.status-badge-premium.absent {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge-premium.traveling {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge-premium.leave {
-  background: #f3e8ff;
-  color: #7e22ce;
-}
-
-.late-warning {
-  font-size: 11px;
-  color: var(--danger);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.early-info {
-  font-size: 11px;
-  color: var(--success);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.time-cell {
-  color: #6b7280;
-  font-family: monospace;
-}
-
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10000;
-  padding: 20px;
-}
-
-.premium-modal {
-  position: relative;
-  background: white;
-  border-radius: 32px;
-  width: 100%;
-  max-width: 550px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
-}
-
-.premium-modal.mobile-modal {
-  max-width: 95%;
-  border-radius: 24px;
-  max-height: 90vh;
-}
-
-.premium-modal.salary-modal {
-  max-width: 600px;
-}
-
-.premium-modal.monthly-modal {
-  max-width: 750px;
-}
-
-.premium-modal.result-modal {
-  max-width: 450px;
-}
-
-.premium-modal.yesterday-modal {
-  max-width: 850px;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.modal-decoration {
+.btn-clear-search {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--primary);
-}
-
-.modal-header-premium {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px 28px;
-  background: white;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.mobile-modal .modal-header-premium {
-  padding: 16px 20px;
-  gap: 12px;
-}
-
-.header-icon-premium {
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.mobile-modal .header-icon-premium {
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
-}
-
-.header-icon-premium.success-icon {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.header-icon-premium.yesterday-icon {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.header-text {
-  flex: 1;
-}
-
-.header-text h2 {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0;
-  color: #1a1a2e;
-}
-
-.mobile-modal .header-text h2 {
-  font-size: 18px;
-}
-
-.header-text p {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 4px 0 0;
-}
-
-.mobile-modal .header-text p {
-  font-size: 12px;
-}
-
-.close-btn-premium {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #f3f4f6;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #6b7280;
-  font-size: 18px;
-}
-
-.close-btn-premium:hover {
-  background: var(--danger);
-  color: white;
-  transform: rotate(90deg);
-}
-
-.modal-body-premium {
-  flex: 1;
-  overflow-y: auto;
-  padding: 28px;
-  background: #fafbfc;
-}
-
-.mobile-modal .modal-body-premium {
-  padding: 16px;
-}
-
-.modal-body-premium::-webkit-scrollbar {
-  width: 6px;
-}
-
-.modal-body-premium::-webkit-scrollbar-track {
-  background: #e5e7eb;
-  border-radius: 10px;
-}
-
-.modal-body-premium::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 10px;
-}
-
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-field label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.required-star {
-  color: var(--danger);
-}
-
-.field-wrapper {
-  position: relative;
-}
-
-.field-wrapper .field-icon {
-  position: absolute;
-  left: 14px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-.field-wrapper input,
-.field-wrapper select,
-.field-wrapper textarea {
-  width: 100%;
-  padding: 12px 14px 12px 42px;
-  border: 2px solid #e5e7eb;
-  border-radius: 14px;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  font-family: inherit;
-}
-
-.mobile-modal .field-wrapper input,
-.mobile-modal .field-wrapper select,
-.mobile-modal .field-wrapper textarea {
-  font-size: 16px;
-  padding: 10px 12px 10px 36px;
-}
-
-.field-wrapper input:focus,
-.field-wrapper select:focus,
-.field-wrapper textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.two-col-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.mobile-modal .two-col-grid {
-  grid-template-columns: 1fr;
-}
-
-.modal-footer-premium {
-  display: flex;
-  gap: 12px;
-  padding: 20px 28px;
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.modal-footer-premium.mobile-footer {
-  flex-direction: column;
-  padding: 16px 20px;
-}
-
-.btn-cancel-premium,
-.btn-submit-premium {
-  flex: 1;
-  padding: 12px;
-  border-radius: 14px;
-  font-weight: 600;
+  background: none;
+  border: none;
+  color: #94a3b8;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 12px;
+}
+
+/* ================= 4. SWEET TABLE ================= */
+.table-card-sweet {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.table-sweet {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.table-sweet th {
+  padding: 12px 18px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.table-sweet td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.row-sweet:hover {
+  background: #fafbfc;
+}
+
+.emp-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.avatar-sweet {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.mobile-footer .btn-cancel-premium,
-.mobile-footer .btn-submit-premium {
-  padding: 14px;
-}
-
-.btn-cancel-premium {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.btn-cancel-premium:hover {
-  background: #e5e7eb;
-}
-
-.btn-submit-premium {
-  background: var(--primary);
-  color: white;
-}
-
-.btn-submit-premium:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-}
-
-.table-wrapper-salary {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.salary-table-premium {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.salary-table-premium thead {
-  background: #f8fafc;
-  position: sticky;
-  top: 0;
-}
-
-.salary-table-premium th {
-  text-align: left;
-  padding: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.salary-table-premium td {
-  padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.mobile-salary-cards {
-  display: none;
+.emp-info {
+  display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
-.salary-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
+.emp-name {
+  font-weight: 600;
+  color: #0f172a;
 }
 
-.salary-card-header {
+.emp-identity:hover .emp-name {
+  color: #4f46e5;
+}
+
+.emp-sub {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge-sweet {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-sweet .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-present { background: #ecfdf5; color: #047857; }
+.status-present .dot { background: #10b981; }
+
+.status-absent { background: #fef2f2; color: #b91c1c; }
+.status-absent .dot { background: #ef4444; }
+
+.status-onsite { background: #faf5ff; color: #7e22ce; }
+.status-onsite .dot { background: #a855f7; }
+
+.status-halfday { background: #fff7ed; color: #c2410c; }
+.status-halfday .dot { background: #f97316; }
+
+.status-traveling { background: #f0f9ff; color: #0369a1; }
+.status-traveling .dot { background: #0ea5e9; }
+
+.status-leave { background: #eef2ff; color: #4338ca; }
+.status-leave .dot { background: #6366f1; }
+
+.status-default { background: #f1f5f9; color: #64748b; }
+.status-default .dot { background: #94a3b8; }
+
+.late-tag-sweet {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.time-text {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 13px;
+  color: #334155;
+}
+
+.font-medium { font-weight: 600; }
+.text-emerald { color: #059669; }
+.text-red { color: #dc2626; }
+.text-dash { color: #cbd5e1; }
+
+.btn-icon-sweet {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-icon-sweet:hover {
+  background: #eef2ff;
+  color: #4f46e5;
+  border-color: #c7d2fe;
+}
+
+.td-empty {
+  padding: 40px !important;
+  text-align: center;
+}
+
+.empty-sweet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+}
+
+.empty-sweet i {
+  font-size: 32px;
+}
+
+.empty-sweet p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.btn-reset-sweet {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ================= 5. SWEET MODALS ================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.modal-sweet {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 88vh;
+}
+
+.modal-small { max-width: 480px; }
+.modal-medium { max-width: 620px; }
+
+.modal-sweet-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.employee-info-small {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.modal-sweet-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.employee-avatar-small {
-  width: 32px;
-  height: 32px;
-  background: var(--primary);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
+.modal-sub {
+  margin: 2px 0 0 0;
   font-size: 12px;
+  color: #64748b;
 }
 
-.salary-card-body {
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.btn-close:hover {
+  color: #0f172a;
+}
+
+.modal-sweet-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-sweet-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: flex-end;
-}
-
-.salary-amount-mobile {
-  font-weight: 600;
-  color: var(--success);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 16px;
-}
-
-.calculate-btn-mobile {
-  background: #e0e7ff;
-  color: var(--primary-color);
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  justify-content: center;
-}
-
-.calculate-btn-mobile:active {
-  transform: scale(0.97);
-}
-
-.calculate-btn-mobile:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.salary-amount {
-  font-weight: 600;
-  color: var(--success);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.calculate-btn {
-  background: #e0e7ff;
-  color: var(--primary-color);
-  border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.calculate-btn:hover:not(:disabled) {
-  background: var(--primary-color);
-  color: rgb(0, 0, 0);
-}
-
-.calculate-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.attendance-score-badge {
-  display: inline-flex;
-  align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  border-radius: 30px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #065f46;
+  background: #fafbfc;
 }
 
-.month-navigation {
+.form-group-sweet {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.nav-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: #f3f4f6;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.nav-btn:hover {
-  background: var(--primary-color);
-  color: white;
-}
-
-.nav-btn:active {
-  transform: scale(0.9);
-}
-
-.legend-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  margin-bottom: 20px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 16px;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.form-group-sweet label {
   font-size: 12px;
-  padding: 4px 12px;
-  border-radius: 20px;
+  font-weight: 600;
+  color: #475569;
 }
 
-.mobile-modal .legend-item {
-  font-size: 10px;
-  padding: 2px 8px;
+.req { color: #ef4444; }
+
+.input-sweet {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  box-sizing: border-box;
 }
 
-.legend-item.present { background: #d1fae5; color: #065f46; }
-.legend-item.absent { background: #fee2e2; color: #991b1b; }
-.legend-item.halfday { background: #fed7aa; color: #c2410c; }
-.legend-item.onsite { background: #e0e7ff; color: #4338ca; }
-.legend-item.traveling { background: #fef3c7; color: #d97706; }
-.legend-item.leave { background: #f3e8ff; color: #7e22ce; }
-
-.calendar-container {
-  overflow-x: auto;
+.input-sweet:focus {
+  outline: none;
+  border-color: #4f46e5;
 }
 
-.calendar-premium {
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-cancel {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save {
+  background: #4f46e5;
+  border: none;
+  color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-calc {
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-calc:disabled {
+  opacity: 0.6;
+}
+
+.salary-green {
+  color: #059669;
+}
+
+/* Calendar Modal Inner */
+.month-stepper-sweet {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.step-arrow {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.month-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.cal-status-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.status-summary {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.status-summary.present { background: #ecfdf5; color: #047857; }
+.status-summary.leave { background: #eef2ff; color: #4338ca; }
+.status-summary.onsite { background: #faf5ff; color: #7e22ce; }
+.status-summary.traveling { background: #f0f9ff; color: #0369a1; }
+.status-summary.halfday { background: #fff7ed; color: #c2410c; }
+.status-summary.absent { background: #fef2f2; color: #b91c1c; }
+
+.cal-table-sweet {
   width: 100%;
   border-collapse: collapse;
+}
+
+.cal-table-sweet th {
+  padding: 6px;
+  font-size: 11px;
+  color: #94a3b8;
   text-align: center;
 }
 
-.calendar-premium th {
-  padding: 12px;
-  background: #f8fafc;
+.cal-table-sweet td {
+  padding: 4px;
+  text-align: center;
+  border: 1px solid #f1f5f9;
+  height: 42px;
+  font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  vertical-align: middle;
 }
 
-.mobile-modal .calendar-premium th {
-  padding: 6px 4px;
-  font-size: 11px;
+.cal-cell-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
-.calendar-premium td {
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
+.day-num {
+  font-size: 12px;
+  line-height: 1;
 }
 
-.mobile-modal .calendar-premium td {
-  padding: 6px 4px;
-  font-size: 11px;
+.status-sub-code {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 2px;
+  opacity: 0.85;
 }
 
-.calendar-premium td:hover {
-  transform: scale(1.02);
+.cal-table-sweet .cal-present { background: #ecfdf5; color: #047857; }
+.cal-table-sweet .cal-leave { background: #eef2ff; color: #4338ca; }
+.cal-table-sweet .cal-onsite { background: #faf5ff; color: #7e22ce; }
+.cal-table-sweet .cal-traveling { background: #f0f9ff; color: #0369a1; }
+.cal-table-sweet .cal-halfday { background: #fff7ed; color: #c2410c; }
+.cal-table-sweet .cal-absent { background: #fef2f2; color: #b91c1c; }
+
+/* Date Picker Inner */
+.modal-date-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.cal-present { background: #d1fae5 !important; color: #065f46; font-weight: 600; }
-.cal-absent { background: #fee2e2 !important; color: #991b1b; }
-.cal-halfday { background: #fed7aa !important; color: #c2410c; }
-.cal-onsite { background: #e0e7ff !important; color: #4338ca; }
-.cal-traveling { background: #fef3c7 !important; color: #d97706; }
-.cal-leave { background: #f3e8ff !important; color: #7e22ce; }
-
-.salary-result {
-  text-align: center;
-  padding: 20px;
+.date-clicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
 }
 
-.mobile-modal .salary-result {
-  padding: 12px;
+.hidden-input {
+  display: none;
 }
 
-.salary-amount-large {
-  font-size: 48px;
+/* Salary Result */
+.salary-name {
+  margin: 0;
+  font-weight: 600;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.salary-big {
+  font-size: 32px;
   font-weight: 800;
-  color: var(--success);
+  color: #059669;
+  margin: 8px 0;
+}
+
+.salary-date {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.late-count-tag {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.simple-loading {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 12px;
+  padding: 40px;
+  color: #64748b;
+  font-size: 13px;
 }
 
-.mobile-modal .salary-amount-large {
-  font-size: 36px;
-}
-
-.salary-amount-large i {
-  font-size: 40px;
-}
-
-.mobile-modal .salary-amount-large i {
-  font-size: 30px;
-}
-
-.month-text {
-  color: #6b7280;
-  margin-bottom: 20px;
-}
-
-.success-check {
+.simple-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 12px;
-  background: #d1fae5;
-  border-radius: 12px;
-  color: #065f46;
+  padding: 30px;
+  color: #64748b;
+  font-size: 13px;
 }
 
-.empty-state-premium {
-  text-align: center;
-  padding: 60px 20px;
-  color: #9ca3af;
+.simple-empty i {
+  font-size: 28px;
 }
 
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state-premium h4 {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
   .main-content {
-    flex-direction: column;
     padding: 12px;
+    gap: 12px;
   }
-
   .content {
     padding: 16px;
-    border-radius: 20px;
-  }
-
-  .mobile-header {
-    display: flex;
-  }
-
-  .content-header-modern {
-    display: none;
-  }
-
-  .stats-bar {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-
-  .stat-card {
-    padding: 14px;
-    flex-direction: column;
-    text-align: center;
-    gap: 6px;
-  }
-
-  .stat-card i {
-    font-size: 24px;
-  }
-
-  .stat-value {
-    font-size: 18px;
-  }
-
-  .stat-label {
-    font-size: 10px;
-  }
-
-  .search-bar-mobile {
-    display: block;
-  }
-
-  .mobile-cards {
-    display: flex;
-  }
-
-  .table-container {
-    display: none;
-  }
-
-  .table-header {
-    padding: 12px 16px;
-  }
-
-  .section-title-modern {
-    font-size: 14px;
-  }
-
-  .table-info {
-    display: none;
-  }
-
-  .mobile-salary-cards {
-    display: flex;
-  }
-
-  .salary-table-premium {
-    display: none;
-  }
-
-  .premium-modal {
-    max-width: 95%;
-  }
-
-  .modal-header-premium {
-    padding: 16px 20px;
-  }
-
-  .modal-body-premium {
-    padding: 16px;
-  }
-
-  .modal-footer-premium {
-    padding: 16px 20px;
-    flex-direction: column;
-  }
-
-  .two-col-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .legend-grid {
-    gap: 8px;
-  }
-
-  .legend-item {
-    font-size: 10px;
-    padding: 2px 8px;
-  }
-}
-
-@media (max-width: 480px) {
-  .main-content {
-    padding: 8px;
-  }
-
-  .content {
-    padding: 12px;
     border-radius: 16px;
   }
-
-  .mobile-title {
-    font-size: 16px;
-  }
-
-  .mobile-action-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-
-  .stats-bar {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .stat-card {
-    padding: 10px;
-  }
-
-  .stat-card i {
-    font-size: 20px;
-  }
-
-  .stat-value {
-    font-size: 16px;
-  }
-
-  .attendance-card {
-    padding: 12px;
-  }
-
-  .card-header {
+  .simple-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
   }
-
-  .card-row {
+  .header-buttons {
+    width: 100%;
+  }
+  .toolbar-single-row {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
+    align-items: stretch;
   }
-
-  .card-value {
-    text-align: left;
-  }
-
-  .status-badge-mobile {
-    align-self: flex-start;
-  }
-
-  .search-input-mobile {
-    font-size: 15px;
-    padding: 8px 10px 8px 34px;
-  }
-
-  .salary-card {
-    padding: 10px;
-  }
-
-  .salary-amount-mobile {
-    font-size: 14px;
-  }
-
-  .calculate-btn-mobile {
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-
-  .salary-amount-large {
-    font-size: 30px;
-  }
-
-  .salary-amount-large i {
-    font-size: 24px;
-  }
-
-  .calendar-premium td {
-    padding: 4px 2px;
-    font-size: 10px;
-  }
-
-  .calendar-premium th {
-    padding: 4px 2px;
-    font-size: 10px;
+  .search-sweet {
+    max-width: 100%;
   }
 }
 </style>
