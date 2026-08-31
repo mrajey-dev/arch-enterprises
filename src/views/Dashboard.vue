@@ -295,7 +295,7 @@ export default {
       leaveChart: null,
       yearlyTarget: 77000000,
       showSkeleton: true,
-      currentUserName: 'Mansi',
+      currentUserName: 'HR',
       isMobile: false,
       isSidebarVisible: true,
       selectedMonth: new Date().getMonth(),
@@ -407,7 +407,7 @@ export default {
     },
 
     formattedUserName() {
-      if (!this.currentUserName) return 'Mansi'
+      if (!this.currentUserName) return 'HR'
       return this.currentUserName
         .split(' ')
         .filter(Boolean)

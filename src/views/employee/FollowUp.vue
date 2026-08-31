@@ -171,10 +171,21 @@
              class="pro-mobile-card"
              :class="`border-status-${q.status || 'pending'}`">
           <div class="pro-mcard-header">
-            <button class="pro-quote-link-btn" @click="openQuotation(q)">
-              <i class="fas fa-file-invoice"></i>
-              <span>Q-{{ q.id }} - {{ q.company_name }}</span>
-            </button>
+            <div class="pro-mcard-quote-group">
+              <button class="pro-quote-link-btn" @click="openQuotation(q)">
+                <i class="fas fa-file-invoice"></i>
+                <span>{{ getQuoteLinkText(q) }}</span>
+              </button>
+              <button 
+                type="button" 
+                class="pro-quote-copy-btn" 
+                :class="{ 'copied': copiedId === q.id }" 
+                @click.stop="copyQuotationLinkText(q)" 
+                :title="copiedId === q.id ? 'Copied!' : 'Copy ' + getQuoteLinkText(q)"
+              >
+                <i :class="copiedId === q.id ? 'fas fa-check' : 'fas fa-copy'"></i>
+              </button>
+            </div>
             <span :class="['pro-status-badge', `status-${q.status || 'pending'}`]">
               {{ q.status || 'Pending' }}
             </span>
@@ -246,7 +257,7 @@
           <thead>
             <tr>
               <th style="width: 45px; text-align: center;">#</th>
-              <th style="width: 170px;">QUOTATION NO.</th>
+              <th style="width: 200px;">QUOTATION NO.</th>
               <th style="width: 110px;">QUOTE DATE</th>
               <th style="width: 180px;">PARTY NAME</th>
               <th style="width: 150px;">ENGINE DETAILS</th>
@@ -275,18 +286,29 @@
               <!-- Index -->
               <td class="cell-index text-center">{{ index + 1 }}</td>
 
-              <!-- Quotation Link -->
+              <!-- Quotation Link & Copy Button -->
               <td>
-                <button 
-                  type="button" 
-                  class="pro-quote-link-btn" 
-                  @click="openQuotation(q)"
-                  title="Open Quotation"
-                >
-                  <i class="fas fa-file-invoice"></i>
-                  <span class="quote-text">Q-{{ q.id }}-{{ formatCompanyName(q.company_name) }}</span>
-                  <i class="fas fa-arrow-up-right-from-square text-xs opacity-75"></i>
-                </button>
+                <div class="pro-quote-cell">
+                  <button 
+                    type="button" 
+                    class="pro-quote-link-btn" 
+                    @click="openQuotation(q)"
+                    title="Open Quotation"
+                  >
+                    <i class="fas fa-file-invoice"></i>
+                    <span class="quote-text">{{ getQuoteLinkText(q) }}</span>
+                    <i class="fas fa-arrow-up-right-from-square text-xs opacity-75"></i>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="pro-quote-copy-btn" 
+                    :class="{ 'copied': copiedId === q.id }" 
+                    @click.stop="copyQuotationLinkText(q)" 
+                    :title="copiedId === q.id ? 'Copied!' : 'Copy ' + getQuoteLinkText(q)"
+                  >
+                    <i :class="copiedId === q.id ? 'fas fa-check' : 'fas fa-copy'"></i>
+                  </button>
+                </div>
               </td>
 
               <!-- Date -->
@@ -427,6 +449,7 @@ export default {
   data() {
     return {
       expandedQuotations: {},
+      copiedId: null,
       selectedStatus: "",
       debounceTimers: {},
       isMobile: false,
@@ -562,6 +585,47 @@ export default {
     },
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
+    },
+    getQuoteLinkText(q) {
+      return `Q-${q.id}-${this.formatCompanyName(q.company_name)}`;
+    },
+    copyQuotationLinkText(q) {
+      const textToCopy = this.getQuoteLinkText(q);
+      const copyToClipboard = (text) => {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text);
+        } else {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.position = "fixed";
+          textArea.style.left = "-999999px";
+          textArea.style.top = "-999999px";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          return new Promise((resolve, reject) => {
+            const successful = document.execCommand("copy");
+            textArea.remove();
+            if (successful) resolve();
+            else reject(new Error("Copy command failed"));
+          });
+        }
+      };
+
+      copyToClipboard(textToCopy)
+        .then(() => {
+          this.copiedId = q.id;
+          toastSuccess(`Copied: ${textToCopy}`);
+          setTimeout(() => {
+            if (this.copiedId === q.id) {
+              this.copiedId = null;
+            }
+          }, 2000);
+        })
+        .catch(err => {
+          console.error("Failed to copy:", err);
+          toastError("Failed to copy");
+        });
     },
     openQuotation(q) {
       localStorage.setItem("selectedQuotationId", q.id);
@@ -1118,7 +1182,13 @@ export default {
   font-size: 0.8rem;
 }
 
-/* Quotation Link Button */
+/* Quotation Link Button & Copy Button */
+.pro-quote-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .pro-quote-link-btn {
   display: inline-flex;
   align-items: center;
@@ -1140,7 +1210,7 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 155px;
+  max-width: 140px;
 }
 
 .pro-quote-link-btn:hover {
@@ -1149,6 +1219,44 @@ export default {
   border-color: #0284c7;
   transform: translateY(-1px);
   box-shadow: 0 3px 8px rgba(2, 132, 199, 0.2);
+}
+
+.pro-quote-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.pro-quote-copy-btn:hover {
+  background: #f1f5f9;
+  color: #0284c7;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(2, 132, 199, 0.15);
+}
+
+.pro-quote-copy-btn.copied {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #86efac !important;
+}
+
+.pro-mcard-quote-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Cell Elements */
