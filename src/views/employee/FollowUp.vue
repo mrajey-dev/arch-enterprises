@@ -172,9 +172,9 @@
              :class="`border-status-${q.status || 'pending'}`">
           <div class="pro-mcard-header">
             <div class="pro-mcard-quote-group">
-              <button class="pro-quote-link-btn" @click="openQuotation(q)">
+              <button class="pro-quote-link-btn" @click="openQuotation(q)" :title="'Open ' + getQuoteLinkText(q)">
                 <i class="fas fa-file-invoice"></i>
-                <span>{{ getQuoteLinkText(q) }}</span>
+                <span class="quote-text">{{ getQuoteLinkText(q) }}</span>
               </button>
               <button 
                 type="button" 
@@ -257,7 +257,7 @@
           <thead>
             <tr>
               <th style="width: 45px; text-align: center;">#</th>
-              <th style="width: 200px;">QUOTATION NO.</th>
+              <th style="width: 280px; min-width: 250px;">QUOTATION NO.</th>
               <th style="width: 110px;">QUOTE DATE</th>
               <th style="width: 180px;">PARTY NAME</th>
               <th style="width: 150px;">ENGINE DETAILS</th>
@@ -293,7 +293,7 @@
                     type="button" 
                     class="pro-quote-link-btn" 
                     @click="openQuotation(q)"
-                    title="Open Quotation"
+                    :title="'Open ' + getQuoteLinkText(q)"
                   >
                     <i class="fas fa-file-invoice"></i>
                     <span class="quote-text">{{ getQuoteLinkText(q) }}</span>
@@ -587,7 +587,10 @@ export default {
       this.isSidebarVisible = !this.isSidebarVisible;
     },
     getQuoteLinkText(q) {
-      return `Q-${q.id}-${this.formatCompanyName(q.company_name)}`;
+      if (!q) return '';
+      const quoteId = q.id || '';
+      const company = this.formatCompanyName(q.company_name);
+      return company ? `Quotation-${quoteId}-${company}.pdf` : `Quotation-${quoteId}.pdf`;
     },
     copyQuotationLinkText(q) {
       const textToCopy = this.getQuoteLinkText(q);
@@ -651,7 +654,7 @@ export default {
     },
     formatCompanyName(name) {
       if (!name) return '';
-      return name.replace(/[^A-Za-z0-9_-]/g, '_');
+      return name.replace(/\./g, '').trim();
     },
     saveRemark(q) {
       axios.put(`/api/quotations/${q.id}`, { remarks: q.remarks })
@@ -1210,7 +1213,7 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 140px;
+  max-width: 250px;
 }
 
 .pro-quote-link-btn:hover {

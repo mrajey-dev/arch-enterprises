@@ -375,18 +375,53 @@
 
     <!-- 2. Calculate Salary Modal -->
     <div v-if="showPopupsalary" class="modal-overlay" @click.self="showPopupsalary = false">
-      <div class="modal-sweet modal-medium" @click.stop>
+      <div class="modal-sweet modal-salary" @click.stop>
         <div class="modal-sweet-header">
-          <h3>Salary Calculation</h3>
+          <div>
+            <h3>Salary Calculation</h3>
+            <p class="modal-sub">Real-time salary earned till date (due Sundays & paid leaves included) & last month</p>
+          </div>
           <button class="btn-close" @click="showPopupsalary = false">&times;</button>
         </div>
 
         <div class="modal-sweet-body">
+          <div class="salary-modal-actions">
+            <div class="salary-modal-note">
+              <i class="fas fa-info-circle text-blue"></i>
+              <span>Sundays & holidays calculate when due. Leaves & half days are full day. Unmarked days or unpaid leaves are excluded.</span>
+            </div>
+            <div class="salary-actions-right">
+              <div
+                class="pt-toggle-wrap"
+                @click.stop="toggleProfessionalTax"
+                title="Deduct ₹200 Professional Tax (PT) from every salary"
+              >
+                <span class="pt-text">
+                  <i class="fas fa-receipt text-muted"></i>
+                  Prof. Tax (₹200)
+                </span>
+                <div class="toggle-switch-sweet" :class="{ active: applyProfessionalTax }">
+                  <div class="toggle-slider-sweet"></div>
+                </div>
+              </div>
+              <button
+                class="btn-calc btn-calc-all"
+                @click="calculateAllSalaries"
+                :disabled="isCalculatingAll"
+              >
+                <i v-if="isCalculatingAll" class="fas fa-circle-notch fa-spin"></i>
+                <span v-else><i class="fas fa-calculator"></i> Calculate All</span>
+              </button>
+            </div>
+          </div>
+
           <table class="table-sweet">
             <thead>
               <tr>
                 <th>Employee</th>
-                <th class="text-right">Salary</th>
+                <th class="text-right">Base Salary</th>
+                <th class="text-right">Last Month ({{ lastMonthLabel }})</th>
+                <th class="text-right">Till Today ({{ todayFormattedShort }})</th>
                 <th class="text-right">Action</th>
               </tr>
             </thead>
@@ -394,16 +429,29 @@
               <tr v-for="emp in employees" :key="emp.id">
                 <td>
                   <span class="font-medium">{{ formatName(emp.name) }}</span>
+                  <div class="emp-dept-sub" v-if="emp.department">{{ emp.department }}</div>
                 </td>
                 <td class="text-right">
-                  <span v-if="emp.salary" class="salary-green font-medium">₹ {{ formatSalary(emp.salary) }}</span>
+                  <span v-if="emp.base_salary" class="font-medium">₹ {{ formatSalary(emp.base_salary) }}</span>
+                  <span v-else class="text-dash">—</span>
+                </td>
+                <td class="text-right">
+                  <span v-if="emp.last_month_salary !== null && emp.last_month_salary !== undefined" class="salary-blue font-medium">
+                    ₹ {{ formatSalary(emp.last_month_salary) }}
+                  </span>
+                  <span v-else class="text-dash">—</span>
+                </td>
+                <td class="text-right">
+                  <span v-if="emp.salary !== null && emp.salary !== undefined" class="salary-green font-medium">
+                    ₹ {{ formatSalary(emp.salary) }}
+                  </span>
                   <span v-else class="text-dash">—</span>
                 </td>
                 <td class="text-right">
                   <button
                     class="btn-calc"
                     @click="calculateSalaryOnClick(emp)"
-                    :disabled="emp.calculating"
+                    :disabled="emp.calculating || isCalculatingAll"
                   >
                     <i v-if="emp.calculating" class="fas fa-circle-notch fa-spin"></i>
                     <span v-else>Calculate</span>
@@ -596,15 +644,101 @@
 
     <!-- 6. Salary Result Popup -->
     <div v-if="salaryPopup.show" class="modal-overlay" @click.self="salaryPopup.show = false">
-      <div class="modal-sweet modal-small" @click.stop>
+      <div class="modal-sweet modal-medium" @click.stop>
         <div class="modal-sweet-header">
-          <h3>Calculated Salary</h3>
+          <div>
+            <h3>Salary Calculation Details</h3>
+            <p class="modal-sub">
+              {{ formatName(salaryPopup.employeeName) }} &bull; Base Salary: ₹ {{ formatSalary(salaryPopup.baseSalary) }} / mo
+            </p>
+          </div>
           <button class="btn-close" @click="salaryPopup.show = false">&times;</button>
         </div>
-        <div class="modal-sweet-body text-center">
-          <p class="salary-name">{{ salaryPopup.employeeName }}</p>
-          <div class="salary-big">₹ {{ formatSalary(salaryPopup.calculatedSalary) }}</div>
-          <p class="salary-date">{{ getMonthName(currentMonth) }} {{ currentYear }}</p>
+        <div class="modal-sweet-body">
+          <div class="salary-cards-grid">
+            <!-- Current Month (Till Date) Card -->
+            <div class="salary-card current-card">
+              <div class="salary-card-header">
+                <div class="salary-card-title">
+                  <i class="fas fa-calendar-day text-emerald"></i>
+                  <span>Current Month (Till Date)</span>
+                </div>
+                <span class="salary-period-tag current-tag">{{ salaryPopup.todayFormatted }}</span>
+              </div>
+              <div class="salary-big-amount text-emerald">
+                ₹ {{ formatSalary(salaryPopup.currentSalary) }}
+              </div>
+              <div class="salary-breakdown-list">
+                <div class="breakdown-row">
+                  <span>Worked & Paid Leaves</span>
+                  <span class="font-medium">{{ salaryPopup.currentWorkedDays }} days</span>
+                </div>
+                <div class="breakdown-row">
+                  <span>Sundays Due (Till Today)</span>
+                  <span class="font-medium">{{ salaryPopup.currentSundayCount }} days</span>
+                </div>
+                <div class="breakdown-row" v-if="salaryPopup.currentHolidayCount > 0">
+                  <span>Paid Holidays (Due)</span>
+                  <span class="font-medium text-emerald">{{ salaryPopup.currentHolidayCount }} days</span>
+                </div>
+                <div class="breakdown-row total-row">
+                  <span>Total Paid Days</span>
+                  <span class="font-medium text-emerald">{{ salaryPopup.currentPaidDays }} / {{ salaryPopup.daysElapsed }} days</span>
+                </div>
+                <div class="breakdown-row" v-if="salaryPopup.ptCurrent > 0">
+                  <span class="text-red">Prof. Tax (PT) Deduction</span>
+                  <span class="font-medium text-red">-₹ {{ formatSalary(salaryPopup.ptCurrent) }}</span>
+                </div>
+                <div class="breakdown-row note-row">
+                  <small>Daily rate: ₹ {{ formatSalary(salaryPopup.perDaySalary) }} ({{ salaryPopup.totalDaysInMonth }} days in month)</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Last Month Card -->
+            <div class="salary-card last-card">
+              <div class="salary-card-header">
+                <div class="salary-card-title">
+                  <i class="fas fa-history text-blue"></i>
+                  <span>Last Month Salary</span>
+                </div>
+                <span class="salary-period-tag last-tag">{{ salaryPopup.lastMonthName }} {{ salaryPopup.lastMonthYear }}</span>
+              </div>
+              <div class="salary-big-amount text-blue">
+                ₹ {{ formatSalary(salaryPopup.lastMonthSalary) }}
+              </div>
+              <div class="salary-breakdown-list">
+                <div class="breakdown-row">
+                  <span>Worked & Paid Leaves</span>
+                  <span class="font-medium">{{ salaryPopup.lastMonthWorkedDays }} days</span>
+                </div>
+                <div class="breakdown-row">
+                  <span>Paid Sundays</span>
+                  <span class="font-medium">{{ salaryPopup.lastMonthSundayCount }} days</span>
+                </div>
+                <div class="breakdown-row" v-if="salaryPopup.lastMonthHolidayCount > 0">
+                  <span>Paid Holidays</span>
+                  <span class="font-medium text-blue">{{ salaryPopup.lastMonthHolidayCount }} days</span>
+                </div>
+                <div class="breakdown-row total-row">
+                  <span>Total Paid Days</span>
+                  <span class="font-medium text-blue">{{ salaryPopup.lastMonthPaidDays }} / {{ salaryPopup.lastMonthDays }} days</span>
+                </div>
+                <div class="breakdown-row" v-if="salaryPopup.ptLastMonth > 0">
+                  <span class="text-red">Prof. Tax (PT) Deduction</span>
+                  <span class="font-medium text-red">-₹ {{ formatSalary(salaryPopup.ptLastMonth) }}</span>
+                </div>
+                <div class="breakdown-row note-row">
+                  <small>Daily rate: ₹ {{ formatSalary(salaryPopup.perDaySalaryLastMonth) }} ({{ salaryPopup.lastMonthDays }} days in month)</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="salary-policy-note">
+            <i class="fas fa-check-circle text-emerald"></i>
+            <span>Holidays, approved leaves & half days are counted as full day (paid). Unmarked days or unpaid leaves are excluded. Sundays calculate when due on that day.</span>
+          </div>
         </div>
         <div class="modal-sweet-footer">
           <button class="btn-save" @click="salaryPopup.show = false">Done</button>
@@ -665,11 +799,37 @@ export default {
       },
       employees: [],
       attendanceRecords: [],
+      isCalculatingAll: false,
+      applyProfessionalTax: true,
       salaryPopup: {
         show: false,
         employeeName: '',
-        calculatedSalary: 0
+        baseSalary: 0,
+        currentSalary: 0,
+        calculatedSalary: 0,
+        ptCurrent: 0,
+        ptLastMonth: 0,
+        currentPaidDays: 0,
+        currentWorkedDays: 0,
+        currentSundayCount: 0,
+        currentHolidayCount: 0,
+        daysElapsed: 0,
+        totalDaysInMonth: 0,
+        perDaySalary: 0,
+        todayFormatted: '',
+        currentMonthName: '',
+        currentYear: 0,
+        lastMonthSalary: 0,
+        lastMonthName: '',
+        lastMonthYear: 0,
+        lastMonthPaidDays: 0,
+        lastMonthWorkedDays: 0,
+        lastMonthSundayCount: 0,
+        lastMonthHolidayCount: 0,
+        lastMonthDays: 0,
+        perDaySalaryLastMonth: 0
       },
+      cachedHolidays: {},
       statusSummary: {
         Present: 0,
         Absent: 0,
@@ -684,6 +844,23 @@ export default {
     }
   },
   computed: {
+    lastMonthLabel() {
+      const now = new Date()
+      let m = now.getMonth() // 0-based, so current month - 1
+      let y = now.getFullYear()
+      if (m === 0) {
+        m = 12
+        y--
+      }
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      return `${months[m - 1]} ${y}`
+    },
+    todayFormattedShort() {
+      const now = new Date()
+      const d = now.getDate()
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      return `${d} ${months[now.getMonth()]}`
+    },
     presentCount() {
       return this.displayRecords.filter(r => (r.status || '').toLowerCase() === 'present').length
     },
@@ -1047,6 +1224,9 @@ export default {
           name: u.name,
           base_salary: parseFloat(u.keyresponsibility) || null,
           salary: null,
+          last_month_salary: null,
+          gross_current_salary: null,
+          gross_last_month_salary: null,
           department: u.department,
           calculating: false
         }))
@@ -1126,63 +1306,270 @@ export default {
         toastError('Failed to mark attendance')
       }
     },
-    async calculateSalaryOnClick(employee) {
+    async fetchHolidaysForMonth(month, year) {
+      const key = `${year}-${month}`
+      if (this.cachedHolidays && this.cachedHolidays[key]) {
+        return this.cachedHolidays[key]
+      }
+      try {
+        const token = localStorage.getItem('token')
+        const res = await axios.get('https://employees.archenterprises.co.in/api/api/holidays', {
+          params: { month, year },
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const set = new Set()
+        if (res.data && res.data.success && Array.isArray(res.data.data)) {
+          res.data.data.forEach(h => {
+            if (h.full_date) {
+              set.add(h.full_date)
+            } else if (h.date) {
+              if (h.date.length === 5) {
+                set.add(`${year}-${h.date}`)
+              } else {
+                set.add(h.date)
+              }
+            }
+          })
+        }
+        if (!this.cachedHolidays) this.cachedHolidays = {}
+        this.cachedHolidays[key] = set
+        return set
+      } catch (e) {
+        console.error('Error fetching holidays for month:', e)
+        return new Set()
+      }
+    },
+    calculateMonthSalaryBreakdown(monthlyData, baseSalary, year, month, isCurrentMonth, maxDay, employeeName, holidayDatesSet = new Set()) {
+      const totalDaysInMonth = new Date(year, month, 0).getDate()
+      const perDaySalary = totalDaysInMonth > 0 ? (baseSalary / totalDaysInMonth) : 0
+      const limitDay = isCurrentMonth ? Math.min(maxDay, totalDaysInMonth) : totalDaysInMonth
+
+      let workedOrPaidDays = 0
+      let sundayCount = 0
+      let holidayCount = 0
+
+      for (let d = 1; d <= limitDay; d++) {
+        const dateObj = new Date(year, month - 1, d)
+        const isSunday = (dateObj.getDay() === 0)
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+        const isDeclaredHoliday = Boolean(holidayDatesSet && holidayDatesSet.has(dateStr))
+
+        if (isSunday) {
+          // Sunday occurred on or before limitDay -> it is due and paid on that day
+          sundayCount += 1
+        } else if (isDeclaredHoliday) {
+          // Any holiday is calculated as paid leave, due on that day
+          holidayCount += 1
+        } else {
+          // Weekday
+          let record = (monthlyData || []).find(e => {
+            if (!e.date) return false
+            let recDate = e.date
+            if (recDate.includes('T')) recDate = recDate.split('T')[0]
+            if (recDate.includes(' ')) recDate = recDate.split(' ')[0]
+            if (recDate.includes('/')) {
+              const parts = recDate.split('/')
+              recDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
+            }
+            return recDate === dateStr
+          })
+
+          // Safeguard: fallback to today's displayRecords if this is today's date
+          if (!record && this.displayDate === dateStr && this.displayRecords && this.displayRecords.length) {
+            record = this.displayRecords.find(r => r.name === employeeName)
+          }
+
+          if (record && record.status) {
+            const rawStatus = (record.status || '').trim()
+            const s = rawStatus.toLowerCase().replace(/[\s-_/]+/g, '')
+
+            // User requirement: only if no any status or unpaid leave then not calculate this
+            const isUnpaidOrAbsent = !s || s === 'notmarked' || s === 'absent' || s.includes('unpaid') || s === 'lop'
+
+            if (!isUnpaidOrAbsent) {
+              if (s.includes('holiday')) {
+                // Attendance recorded specifically as holiday
+                holidayCount += 1
+              } else {
+                // Present, OnSite, Traveling, HalfDay, or approved paid leave
+                workedOrPaidDays += 1
+              }
+            }
+          }
+          // If no record exists on this weekday, it has no status -> NOT calculated!
+        }
+      }
+
+      const totalPaidDays = workedOrPaidDays + sundayCount + holidayCount
+      const calculatedSalary = Math.round(totalPaidDays * perDaySalary)
+
+      return {
+        calculatedSalary,
+        totalPaidDays,
+        workedOrPaidDays,
+        sundayCount,
+        holidayCount,
+        limitDay,
+        totalDaysInMonth,
+        perDaySalary
+      }
+    },
+    async calculateSalaryInternal(employee, showPopup = true) {
       employee.calculating = true
       try {
         const token = localStorage.getItem('token')
-        const month = this.currentMonth + 1
-        const year = this.currentYear
+        const now = new Date()
+        const currYear = now.getFullYear()
+        const currMonth = now.getMonth() + 1
+        const currDay = now.getDate()
 
-        // 1. Fetch monthly attendance and base salary in parallel
-        const [monthlyRes, salaryRes] = await Promise.all([
+        // Calculate last month and last year
+        let lastMonth = currMonth - 1
+        let lastYear = currYear
+        if (lastMonth === 0) {
+          lastMonth = 12
+          lastYear = currYear - 1
+        }
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        const lastMonthName = months[lastMonth - 1]
+        const currMonthName = months[currMonth - 1]
+        const todayFormatted = `${currDay} ${currMonthName} ${currYear}`
+
+        // 1. Fetch current month attendance, last month attendance, user base salary, and holidays in parallel
+        const [currMonthlyRes, lastMonthlyRes, salaryRes, currHolidaysSet, lastHolidaysSet] = await Promise.all([
           axios.get(
-            `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(employee.name)}?month=${month}&year=${year}`,
+            `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(employee.name)}?month=${currMonth}&year=${currYear}`,
             { headers: { Authorization: `Bearer ${token}` } }
           ).catch(() => ({ data: { data: [] } })),
           axios.get(
-            `https://employees.archenterprises.co.in/api/api/user-salary-by-name/${encodeURIComponent(employee.name)}`,
+            `https://employees.archenterprises.co.in/api/api/attendance/monthly/${encodeURIComponent(employee.name)}?month=${lastMonth}&year=${lastYear}`,
             { headers: { Authorization: `Bearer ${token}` } }
-          ).catch(() => ({ data: { salary: employee.base_salary || 0 } }))
+          ).catch(() => ({ data: { data: [] } })),
+          (employee.base_salary ? Promise.resolve({ data: { salary: employee.base_salary } }) :
+            axios.get(
+              `https://employees.archenterprises.co.in/api/api/user-salary-by-name/${encodeURIComponent(employee.name)}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            ).catch(() => ({ data: { salary: employee.base_salary || 0 } }))),
+          this.fetchHolidaysForMonth(currMonth, currYear),
+          this.fetchHolidaysForMonth(lastMonth, lastYear)
         ])
 
-        const monthlyData = monthlyRes.data?.data || []
+        const currMonthlyData = currMonthlyRes.data?.data || []
+        const lastMonthlyData = lastMonthlyRes.data?.data || []
         const baseSalary = parseFloat(salaryRes.data?.salary || employee.base_salary || 0)
+        employee.base_salary = baseSalary
 
-        const totalDaysInMonth = new Date(year, month, 0).getDate()
-        const perDaySalary = totalDaysInMonth > 0 ? baseSalary / totalDaysInMonth : 0
+        // 2. Calculate Current Month (till date) breakdown
+        const currBreakdown = this.calculateMonthSalaryBreakdown(
+          currMonthlyData,
+          baseSalary,
+          currYear,
+          currMonth,
+          true,
+          currDay,
+          employee.name,
+          currHolidaysSet
+        )
 
-        let fullPaidDays = 0
-        monthlyData.forEach(day => {
-          const status = (day.status || '').trim().toLowerCase().replace(/\s+/g, '')
-          if (['present', 'onsite', 'traveling', 'leave'].includes(status)) {
-            fullPaidDays += 1
-          } else if (status === 'halfday') {
-            fullPaidDays += 0.5
+        // 3. Calculate Last Month (full month) breakdown
+        const lastBreakdown = this.calculateMonthSalaryBreakdown(
+          lastMonthlyData,
+          baseSalary,
+          lastYear,
+          lastMonth,
+          false,
+          0,
+          employee.name,
+          lastHolidaysSet
+        )
+
+        const ptCurrent = (this.applyProfessionalTax && currBreakdown.calculatedSalary > 0) ? 200 : 0
+        const ptLastMonth = (this.applyProfessionalTax && lastBreakdown.calculatedSalary > 0) ? 200 : 0
+
+        employee.gross_current_salary = currBreakdown.calculatedSalary
+        employee.gross_last_month_salary = lastBreakdown.calculatedSalary
+
+        employee.salary = Math.max(0, currBreakdown.calculatedSalary - ptCurrent)
+        employee.last_month_salary = Math.max(0, lastBreakdown.calculatedSalary - ptLastMonth)
+
+        if (showPopup) {
+          this.salaryPopup = {
+            show: true,
+            employeeName: employee.name,
+            baseSalary: baseSalary,
+            calculatedSalary: employee.salary,
+            currentSalary: employee.salary,
+            ptCurrent: ptCurrent,
+            ptLastMonth: ptLastMonth,
+            currentPaidDays: currBreakdown.totalPaidDays,
+            currentWorkedDays: currBreakdown.workedOrPaidDays,
+            currentSundayCount: currBreakdown.sundayCount,
+            currentHolidayCount: currBreakdown.holidayCount,
+            daysElapsed: currBreakdown.limitDay,
+            totalDaysInMonth: currBreakdown.totalDaysInMonth,
+            perDaySalary: currBreakdown.perDaySalary,
+            todayFormatted: todayFormatted,
+            currentMonthName: currMonthName,
+            currentYear: currYear,
+            lastMonthSalary: employee.last_month_salary,
+            lastMonthName: lastMonthName,
+            lastMonthYear: lastYear,
+            lastMonthPaidDays: lastBreakdown.totalPaidDays,
+            lastMonthWorkedDays: lastBreakdown.workedOrPaidDays,
+            lastMonthSundayCount: lastBreakdown.sundayCount,
+            lastMonthHolidayCount: lastBreakdown.holidayCount,
+            lastMonthDays: lastBreakdown.totalDaysInMonth,
+            perDaySalaryLastMonth: lastBreakdown.perDaySalary
           }
-        })
-
-        // Count Sundays in the month
-        let sundayCount = 0
-        for (let i = 1; i <= totalDaysInMonth; i++) {
-          const date = new Date(year, month - 1, i)
-          if (date.getDay() === 0) sundayCount++
+          toastSuccess(`Salary calculated for ${employee.name}`)
         }
 
-        const calculated = (fullPaidDays * perDaySalary) + (sundayCount * perDaySalary)
-        const finalSalary = Math.round(calculated)
-
-        employee.salary = finalSalary
-        this.salaryPopup = {
-          show: true,
-          employeeName: employee.name,
-          calculatedSalary: finalSalary
-        }
-        toastSuccess(`Salary calculated for ${employee.name}`)
+        return true
       } catch (error) {
         console.error(`Error calculating salary for ${employee.name}:`, error)
-        toastError('Failed to calculate salary')
+        if (showPopup) toastError('Failed to calculate salary')
+        return false
       } finally {
         employee.calculating = false
+      }
+    },
+    async calculateSalaryOnClick(employee) {
+      await this.calculateSalaryInternal(employee, true)
+    },
+    async calculateAllSalaries() {
+      if (!this.employees || this.employees.length === 0) return
+      this.isCalculatingAll = true
+      let count = 0
+      try {
+        for (const emp of this.employees) {
+          await this.calculateSalaryInternal(emp, false)
+          count++
+        }
+        toastSuccess(`Calculated salaries for ${count} employees`)
+      } catch (err) {
+        console.error('Error in calculating all salaries:', err)
+        toastError('Failed to calculate all salaries')
+      } finally {
+        this.isCalculatingAll = false
+      }
+    },
+    toggleProfessionalTax() {
+      this.applyProfessionalTax = !this.applyProfessionalTax
+      this.employees.forEach(emp => {
+        if (emp.gross_current_salary !== undefined && emp.gross_current_salary !== null) {
+          const pt = (this.applyProfessionalTax && emp.gross_current_salary > 0) ? 200 : 0
+          emp.salary = Math.max(0, emp.gross_current_salary - pt)
+        }
+        if (emp.gross_last_month_salary !== undefined && emp.gross_last_month_salary !== null) {
+          const ptLast = (this.applyProfessionalTax && emp.gross_last_month_salary > 0) ? 200 : 0
+          emp.last_month_salary = Math.max(0, emp.gross_last_month_salary - ptLast)
+        }
+      })
+      if (this.applyProfessionalTax) {
+        toastSuccess('Professional Tax (₹200) enabled')
+      } else {
+        toastSuccess('Professional Tax (₹200) disabled')
       }
     },
     async viewEmployeeMonthlyAttendance(employeeName) {
@@ -1887,6 +2274,7 @@ export default {
 
 .modal-small { max-width: 480px; }
 .modal-medium { max-width: 620px; }
+.modal-salary { max-width: 800px; }
 
 .modal-sweet-header {
   display: flex;
@@ -2133,7 +2521,243 @@ export default {
   display: none;
 }
 
-/* Salary Result */
+/* Salary Modal & Results */
+.salary-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.salary-modal-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.salary-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pt-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.pt-toggle-wrap:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.pt-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.toggle-switch-sweet {
+  width: 34px;
+  height: 18px;
+  background: #cbd5e1;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-switch-sweet.active {
+  background: #10b981;
+}
+
+.toggle-slider-sweet {
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.toggle-switch-sweet.active .toggle-slider-sweet {
+  transform: translateX(16px);
+}
+
+.btn-calc-all {
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-calc-all:hover {
+  background: #4338ca !important;
+}
+
+.emp-dept-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.salary-blue {
+  color: #2563eb;
+}
+
+.salary-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .salary-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.salary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.salary-card.current-card {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 40%);
+}
+
+.salary-card.last-card {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 40%);
+}
+
+.salary-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.salary-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.salary-period-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.salary-period-tag.current-tag {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.salary-period-tag.last-tag {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.salary-big-amount {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 6px 0 10px 0;
+  line-height: 1.1;
+}
+
+.text-blue {
+  color: #2563eb;
+}
+
+.salary-breakdown-list {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #64748b;
+  padding: 3px 0;
+}
+
+.breakdown-row.total-row {
+  border-top: 1px dashed #cbd5e1;
+  margin-top: 6px;
+  padding-top: 6px;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.breakdown-row.note-row {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.salary-policy-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.salary-policy-note i {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
 .salary-name {
   margin: 0;
   font-weight: 600;

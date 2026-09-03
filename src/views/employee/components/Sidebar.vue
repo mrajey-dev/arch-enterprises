@@ -99,7 +99,7 @@
             >
               <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
             </li>
-            <li 
+            <li  v-if="canViewSiteOwnership"
               @click="goTo('employee/ManageStock')"
             >
               <i class="fas fa-boxes"></i>
@@ -118,16 +118,16 @@
               <i class="fas fa-chalkboard-teacher"></i>
               <span>ETP Session</span>  
             </li>
-            <li @click="goTo('employee/weeklyworkingschedule')">
+            <!-- <li @click="goTo('employee/weeklyworkingschedule')">
               <i class="fas fa-chalkboard-teacher"></i><span>My Weekly Schedule</span>
-            </li>
-            <li @click="goTo('archapps')">
+            </li> -->
+            <li  v-if="canViewITProduct" @click="goTo('archapps')">
   <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
 </li>
-<li @click="goTo('employee/mobileapplifecycle')">
+<li  v-if="canViewITProduct" @click="goTo('employee/mobileapplifecycle')">
   <i class="fas fa-mobile-alt"></i> <span>Mobile App Life Cycle</span>
 </li>
-            <li 
+            <li   v-if="canViewSiteOwnership"
               class="desktop-only"
               @click="goTo('employee/visitschedule')"
             >
@@ -158,7 +158,7 @@
             <li @click="goTo('employee/viewkra')">
               <i class="fas fa-tasks"></i> <span>View KRA</span>
             </li>
-            <li @click="goTo('employee/literature')">
+            <li  v-if="canViewSiteOwnership" @click="goTo('employee/literature')">
             <i class="fas fa-suitcase"></i><span>Literature </span>
             </li>
             <li @click="goTo('employee/sop')">
@@ -167,18 +167,13 @@
             <li @click="goTo('employee/mydsi')">
               <i class="fas fa-tasks"></i><span> DSI</span>
             </li>
-            <li @click="goTo('employee/spinthewheel')"
-              class="desktop-only"
-            >
-              <i class="fas fa-cogs"></i><span> Spin The Wheel</span>
-            </li>
             <li @click="goTo('employee/myprofile')">
               <i class="fa-solid fa-user"></i><span> My Profile</span>
             </li>
            
-            <li @click="logout" class="danger-bg">
+            <!-- <li @click="logout" class="danger-bg">
               <i class="fas fa-sign-out-alt"></i><span> Logout</span>
-            </li>
+            </li> -->
             
             <!-- Enhanced Theme Selector Section -->
             <li class="theme-selector-item">
@@ -306,7 +301,11 @@ export default {
     },
     canViewSiteOwnership() {
       const dept = (this.user?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'service' || dept === 'hr' || dept === 'human resources';
+      return dept === 'service' || dept === 'hr' || dept === 'human resources' || dept === 'management' || dept === 'owner';
+    },
+    canViewITProduct() {
+      const dept = (this.user?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+      return dept === 'IT' || dept === 'hr' || dept === 'marketing' || dept === 'owner';
     },
   },
   methods: {
