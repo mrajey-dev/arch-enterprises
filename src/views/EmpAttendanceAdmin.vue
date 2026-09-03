@@ -388,7 +388,7 @@
           <div class="salary-modal-actions">
             <div class="salary-modal-note">
               <i class="fas fa-info-circle text-blue"></i>
-              <span>Sundays & holidays calculate when due. Leaves & half days are full day. Unmarked days or unpaid leaves are excluded.</span>
+              <span>Sundays & holidays calculate when due. Leaves & half days are full day. Absent, unpaid leaves & unmarked days are not paid.</span>
             </div>
             <div class="salary-actions-right">
               <div
@@ -737,7 +737,7 @@
 
           <div class="salary-policy-note">
             <i class="fas fa-check-circle text-emerald"></i>
-            <span>Holidays, approved leaves & half days are counted as full day (paid). Unmarked days or unpaid leaves are excluded. Sundays calculate when due on that day.</span>
+            <span>Holidays, approved leaves & half days are counted as full day (paid). Absent, unpaid leaves & unmarked days are not paid. Sundays calculate when due on that day.</span>
           </div>
         </div>
         <div class="modal-sweet-footer">
@@ -1344,6 +1344,21 @@ export default {
         return new Set()
       }
     },
+    normalizeDate(dateInput) {
+      if (!dateInput) return ''
+      let d = String(dateInput).trim()
+      if (d.includes('T')) d = d.split('T')[0]
+      if (d.includes(' ')) d = d.split(' ')[0]
+      if (d.includes('/')) {
+        const parts = d.split('/')
+        if (parts[0].length === 4) {
+          return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
+        } else if (parts[2].length === 4) {
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+        }
+      }
+      return d
+    },
     calculateMonthSalaryBreakdown(monthlyData, baseSalary, year, month, isCurrentMonth, maxDay, employeeName, holidayDatesSet = new Set()) {
       const totalDaysInMonth = new Date(year, month, 0).getDate()
       const perDaySalary = totalDaysInMonth > 0 ? (baseSalary / totalDaysInMonth) : 0
@@ -1359,50 +1374,44 @@ export default {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
         const isDeclaredHoliday = Boolean(holidayDatesSet && holidayDatesSet.has(dateStr))
 
-        if (isSunday) {
-          // Sunday occurred on or before limitDay -> it is due and paid on that day
-          sundayCount += 1
-        } else if (isDeclaredHoliday) {
-          // Any holiday is calculated as paid leave, due on that day
-          holidayCount += 1
-        } else {
-          // Weekday
-          let record = (monthlyData || []).find(e => {
-            if (!e.date) return false
-            let recDate = e.date
-            if (recDate.includes('T')) recDate = recDate.split('T')[0]
-            if (recDate.includes(' ')) recDate = recDate.split(' ')[0]
-            if (recDate.includes('/')) {
-              const parts = recDate.split('/')
-              recDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
-            }
-            return recDate === dateStr
-          })
+        // Look up employee attendance record for this date
+        let record = (monthlyData || []).find(e => {
+          if (!e.date) return false
+          const recDate = this.normalizeDate(e.date)
+          return recDate === dateStr
+        })
 
-          // Safeguard: fallback to today's displayRecords if this is today's date
-          if (!record && this.displayDate === dateStr && this.displayRecords && this.displayRecords.length) {
-            record = this.displayRecords.find(r => r.name === employeeName)
-          }
-
-          if (record && record.status) {
-            const rawStatus = (record.status || '').trim()
-            const s = rawStatus.toLowerCase().replace(/[\s-_/]+/g, '')
-
-            // User requirement: only if no any status or unpaid leave then not calculate this
-            const isUnpaidOrAbsent = !s || s === 'notmarked' || s === 'absent' || s.includes('unpaid') || s === 'lop'
-
-            if (!isUnpaidOrAbsent) {
-              if (s.includes('holiday')) {
-                // Attendance recorded specifically as holiday
-                holidayCount += 1
-              } else {
-                // Present, OnSite, Traveling, HalfDay, or approved paid leave
-                workedOrPaidDays += 1
-              }
-            }
-          }
-          // If no record exists on this weekday, it has no status -> NOT calculated!
+        // Safeguard: fallback to today's displayRecords if this is today's date
+        if (!record && this.displayDate === dateStr && this.displayRecords && this.displayRecords.length) {
+          record = this.displayRecords.find(r => r.name === employeeName)
         }
+
+        const rawStatus = (record?.status || '').trim()
+        const s = rawStatus.toLowerCase().replace(/[\s-_/]+/g, '')
+
+        // User requirement: if date marked as absent then it is NOT paid leave
+        const isMarkedAbsent = s.includes('absent')
+        const isUnpaidLeave = s.includes('unpaid') || s.includes('lop') || s.includes('withoutpay') || s.includes('lwp')
+
+        if (isMarkedAbsent || isUnpaidLeave) {
+          // Explicitly absent or unpaid leave: 0 paid days under any circumstance
+          continue
+        }
+
+        if (isSunday) {
+          // Sunday occurred on or before limitDay -> due and paid on that day (unless marked absent)
+          sundayCount += 1
+        } else if (isDeclaredHoliday || s.includes('holiday')) {
+          // Declared company holiday or attendance record says holiday -> paid holiday
+          holidayCount += 1
+        } else if (record && record.status) {
+          // Weekday with record: only calculate if not empty or notmarked
+          if (s && s !== 'notmarked') {
+            // Present, OnSite, Traveling, HalfDay, or approved paid leave
+            workedOrPaidDays += 1
+          }
+        }
+        // If no record exists on this weekday, it has no status -> NOT calculated!
       }
 
       const totalPaidDays = workedOrPaidDays + sundayCount + holidayCount
