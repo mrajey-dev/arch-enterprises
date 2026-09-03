@@ -1288,7 +1288,9 @@ export default {
         return
       }
       try {
-        await axios.post('https://employees.archenterprises.co.in/api/api/attendance', {
+        const token = localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const payload = {
           name: this.markAttendance.employee,
           status: this.markAttendance.status,
           clock_in: this.markAttendance.time || null,
@@ -1296,14 +1298,17 @@ export default {
           site_name: this.markAttendance.site_name || null,
           travel_from: this.markAttendance.travel_from || null,
           travel_to: this.markAttendance.travel_to || null
-        })
-        toastSuccess('Attendance marked')
+        }
+        await axios.post('https://employees.archenterprises.co.in/api/api/attendance/store-or-update', payload, { headers })
+        toastSuccess('Attendance marked successfully')
         this.showMarkAttendancePopup = false
         this.markAttendance = { employee: '', status: '', date: '', time: '', site_name: '', travel_from: '', travel_to: '' }
-        this.fetchDisplayAttendance()
-        this.fetchLateMarksSummary()
+        await this.fetchDisplayAttendance()
+        await this.fetchLateMarksSummary()
       } catch (err) {
-        toastError('Failed to mark attendance')
+        console.error('Failed to mark attendance:', err)
+        const errMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to mark attendance'
+        toastError(errMsg)
       }
     },
     async fetchHolidaysForMonth(month, year) {
