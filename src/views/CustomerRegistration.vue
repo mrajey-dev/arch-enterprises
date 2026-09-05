@@ -797,7 +797,7 @@
 
                 <div class="pro-item-total-badge">
                   <span class="pro-total-lbl">Item Net Total:</span>
-                  <span class="pro-total-amount">₹ {{ calculateItemTotal(item).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                  <span class="pro-total-amount">{{ calculateItemTotal(item).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
                 </div>
               </div>
             </div>

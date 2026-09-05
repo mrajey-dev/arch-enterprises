@@ -98,7 +98,7 @@
                   </div>
                   <div class="qa-info">
                     <h4 class="qa-title">Attendance Master</h4>
-                    <p class="qa-subtitle">{{ attendanceRate }}% Present Today</p>
+                    <p class="qa-subtitle">Check Attendance</p>
                   </div>
                 </div>
 

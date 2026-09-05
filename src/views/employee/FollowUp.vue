@@ -11,13 +11,35 @@
             <div class="pro-hero-title-row">
               <h2 class="pro-hero-title">Quotation & Order Sheet</h2>
               <span class="pro-hero-badge">
-                {{ filteredAndSortedQuotations.length }} Quotes
+                {{ totalCount }} Quotes
               </span>
             </div>
             <p class="pro-hero-subtitle">
               Track quotation lifecycle, client follow-up remarks, negotiations, and status conversions
             </p>
           </div>
+        </div>
+
+        <!-- Global Search Bar in Hero Header -->
+        <div class="pro-hero-search-wrap">
+          <i class="fas fa-search pro-search-icon"></i>
+          <input 
+            type="text" 
+            v-model="filters.search" 
+            placeholder="Search quotes, client, serial, staff..." 
+            class="pro-hero-search-input"
+            @input="onSearchInput"
+          >
+          <i v-if="isSearching" class="fas fa-spinner fa-spin pro-search-spinner"></i>
+          <button 
+            type="button" 
+            v-if="filters.search" 
+            class="pro-search-clear-btn" 
+            @click="filters.search = ''; onSearchInput()"
+            title="Clear search"
+          >
+            <i class="fas fa-times"></i>
+          </button>
         </div>
 
         <div class="pro-hero-actions">
@@ -65,54 +87,54 @@
           type="button" 
           class="pro-chip-btn" 
           :class="{ active: selectedStatus === '' }" 
-          @click="selectedStatus = ''"
+          @click="setStatus('')"
         >
           <span class="chip-label">All Quotes</span>
-          <span class="chip-count">{{ followUpQuotations.length }}</span>
+          <span class="chip-count">{{ counts.all }}</span>
         </button>
 
         <button 
           type="button" 
           class="pro-chip-btn chip-pending" 
           :class="{ active: selectedStatus === 'pending' }" 
-          @click="selectedStatus = selectedStatus === 'pending' ? '' : 'pending'"
+          @click="setStatus(selectedStatus === 'pending' ? '' : 'pending')"
         >
           <i class="fas fa-clock"></i>
           <span class="chip-label">Pending</span>
-          <span class="chip-count">{{ pendingCount }}</span>
+          <span class="chip-count">{{ counts.pending }}</span>
         </button>
 
         <button 
           type="button" 
           class="pro-chip-btn chip-followup" 
           :class="{ active: selectedStatus === 'followup' }" 
-          @click="selectedStatus = selectedStatus === 'followup' ? '' : 'followup'"
+          @click="setStatus(selectedStatus === 'followup' ? '' : 'followup')"
         >
           <i class="fas fa-comments"></i>
           <span class="chip-label">Follow Up</span>
-          <span class="chip-count">{{ followupCount }}</span>
+          <span class="chip-count">{{ counts.followup }}</span>
         </button>
 
         <button 
           type="button" 
           class="pro-chip-btn chip-approved" 
           :class="{ active: selectedStatus === 'approved' }" 
-          @click="selectedStatus = selectedStatus === 'approved' ? '' : 'approved'"
+          @click="setStatus(selectedStatus === 'approved' ? '' : 'approved')"
         >
           <i class="fas fa-check-circle"></i>
           <span class="chip-label">Approved</span>
-          <span class="chip-count">{{ approvedCount }}</span>
+          <span class="chip-count">{{ counts.approved }}</span>
         </button>
 
         <button 
           type="button" 
           class="pro-chip-btn chip-rejected" 
           :class="{ active: selectedStatus === 'rejected' }" 
-          @click="selectedStatus = selectedStatus === 'rejected' ? '' : 'rejected'"
+          @click="setStatus(selectedStatus === 'rejected' ? '' : 'rejected')"
         >
           <i class="fas fa-times-circle"></i>
           <span class="chip-label">Rejected</span>
-          <span class="chip-count">{{ rejectedCount }}</span>
+          <span class="chip-count">{{ counts.rejected }}</span>
         </button>
       </div>
     </div>
@@ -122,7 +144,7 @@
       <div class="pro-filter-panel" v-if="showAdvancedFilters">
         <div class="pro-filter-panel-header">
           <div class="pro-filter-panel-title">
-            <i class="fas fa-filter text-indigo"></i> Advanced Search & Filter
+            <i class="fas fa-filter text-indigo"></i> Advanced Remote Search & Filter
           </div>
           <button type="button" class="pro-btn-close-filter" @click="showAdvancedFilters = false" title="Collapse Filters">
             <i class="fas fa-chevron-up"></i> Collapse
@@ -132,31 +154,31 @@
           <div class="pro-filter-box">
             <label><i class="fas fa-user-pen"></i> Created By</label>
             <div class="pro-filter-input-wrap">
-              <input type="text" v-model="filters.created_by" placeholder="Search creator..." class="pro-filter-input" @input="applyFilters">
+              <input type="text" v-model="filters.created_by" placeholder="Search creator..." class="pro-filter-input" @input="onSearchInput">
             </div>
           </div>
           <div class="pro-filter-box">
             <label><i class="fas fa-building"></i> Party / Customer</label>
             <div class="pro-filter-input-wrap">
-              <input type="text" v-model="filters.party_name" placeholder="Search company name..." class="pro-filter-input" @input="applyFilters">
+              <input type="text" v-model="filters.party_name" placeholder="Search company name..." class="pro-filter-input" @input="onSearchInput">
             </div>
           </div>
           <div class="pro-filter-box">
             <label><i class="fas fa-barcode"></i> Engine Serial</label>
             <div class="pro-filter-input-wrap">
-              <input type="text" v-model="filters.engine_serial" placeholder="Serial number..." class="pro-filter-input" @input="applyFilters">
+              <input type="text" v-model="filters.engine_serial" placeholder="Serial number..." class="pro-filter-input" @input="onSearchInput">
             </div>
           </div>
           <div class="pro-filter-box">
             <label><i class="fas fa-microchip"></i> Engine Model</label>
             <div class="pro-filter-input-wrap">
-              <input type="text" v-model="filters.engine_model" placeholder="Model number..." class="pro-filter-input" @input="applyFilters">
+              <input type="text" v-model="filters.engine_model" placeholder="Model number..." class="pro-filter-input" @input="onSearchInput">
             </div>
           </div>
           <div class="pro-filter-box">
             <label><i class="fas fa-user-check"></i> Recommended By</label>
             <div class="pro-filter-input-wrap">
-              <input type="text" v-model="filters.recommended_by" placeholder="Recommender name..." class="pro-filter-input" @input="applyFilters">
+              <input type="text" v-model="filters.recommended_by" placeholder="Recommender name..." class="pro-filter-input" @input="onSearchInput">
             </div>
           </div>
         </div>
@@ -165,8 +187,43 @@
 
     <!-- Main Content / Table Card -->
     <div class="pro-table-card">
+      <!-- Loading State (Initial or Search) -->
+      <div v-if="loading && followUpQuotations.length === 0" class="pro-loading-state">
+        <div class="pro-spinner-container">
+          <div class="pro-pulse-spinner"></div>
+          <div class="pro-loading-text">
+            <h3>Loading Quotations & Order Sheet...</h3>
+            <p v-if="isSearching">Searching matching records from database...</p>
+            <p v-else>Fetching quotations in lazy-loaded batches...</p>
+          </div>
+        </div>
+        <!-- Shimmer Skeleton Rows -->
+        <div class="pro-skeleton-table">
+          <div class="pro-skeleton-row" v-for="n in 6" :key="n">
+            <div class="skeleton-cell w-5"></div>
+            <div class="skeleton-cell w-25"></div>
+            <div class="skeleton-cell w-10"></div>
+            <div class="skeleton-cell w-20"></div>
+            <div class="skeleton-cell w-15"></div>
+            <div class="skeleton-cell w-15"></div>
+            <div class="skeleton-cell w-10"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Mobile Cards View -->
-      <div class="mobile-cards" v-if="isMobile">
+      <div class="mobile-cards" v-else-if="isMobile">
+        <!-- Mobile Table Info Bar -->
+        <div class="pro-table-infobar" v-if="followUpQuotations.length > 0">
+          <div class="pro-info-text">
+            <span>Showing <strong>{{ followUpQuotations.length }}</strong> of <strong>{{ totalQuotations }}</strong> quotes</span>
+            <span v-if="hasActiveFilters" class="pro-filtered-badge">Filtered</span>
+          </div>
+          <div v-if="isSearching" class="pro-search-status-inline">
+            <i class="fas fa-spinner fa-spin"></i> Searching...
+          </div>
+        </div>
+
         <div v-for="(q, index) in filteredAndSortedQuotations" :key="q.id" 
              class="pro-mobile-card"
              :class="`border-status-${q.status || 'pending'}`">
@@ -197,12 +254,16 @@
               <span class="mcard-value">{{ formatDate(q.created_at) }}</span>
             </div>
             <div class="mcard-row">
+              <span class="mcard-label"><i class="fas fa-building"></i> Party</span>
+              <span class="mcard-value font-bold">{{ q.company_name || '—' }}</span>
+            </div>
+            <div class="mcard-row">
               <span class="mcard-label"><i class="fas fa-cog"></i> Engine</span>
               <span class="mcard-value">{{ q.engine_serial || '—' }} / {{ q.model_no || '—' }}</span>
             </div>
             <div class="mcard-row">
               <span class="mcard-label"><i class="fas fa-indian-rupee-sign"></i> Taxable Value</span>
-              <span class="mcard-value font-bold text-emerald">₹ {{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}</span>
+              <span class="mcard-value font-bold text-emerald">{{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}</span>
             </div>
             <div class="mcard-row">
               <span class="mcard-label"><i class="fas fa-percent"></i> Discount</span>
@@ -217,7 +278,7 @@
             <div class="mcard-items" v-if="q.items && q.items.length">
               <div class="mcard-label"><i class="fas fa-list"></i> Items ({{ q.items.length }})</div>
               <ul class="pro-items-list" :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 2 }">
-                <li v-for="(item, idx) in q.items" :key="item.sr" v-show="idx < 2 || expandedQuotations[q.id]">
+                <li v-for="(item, idx) in q.items" :key="item.sr || idx" v-show="idx < 2 || expandedQuotations[q.id]">
                   <span class="bullet-dot">•</span> {{ item.description }}
                 </li>
               </ul>
@@ -245,14 +306,44 @@
           </div>
         </div>
 
-        <div v-if="filteredAndSortedQuotations.length === 0" class="no-data-mobile">
+        <!-- Empty State Mobile -->
+        <div v-if="filteredAndSortedQuotations.length === 0 && !loading" class="no-data-mobile">
           <i class="fas fa-inbox"></i>
-          <p>No quotations match your filters</p>
+          <p>No quotations match your search criteria</p>
+        </div>
+
+        <!-- Lazy Sentinel & Load More Mobile -->
+        <div ref="lazySentinelMobile" class="lazy-sentinel"></div>
+
+        <div v-if="loadingMore" class="pro-lazy-loader">
+          <i class="fas fa-circle-notch fa-spin"></i>
+          <span>Loading more quotations...</span>
+        </div>
+
+        <div v-if="hasMore && !loading && !loadingMore" class="pro-load-more-wrap">
+          <button type="button" class="btn-pro-load-more" @click="fetchMoreQuotations">
+            <i class="fas fa-arrow-down"></i> Load More Quotes ({{ totalQuotations - followUpQuotations.length }} remaining)
+          </button>
+        </div>
+
+        <div v-else-if="!hasMore && followUpQuotations.length > 0 && !loading" class="pro-end-of-list">
+          <i class="fas fa-check-circle text-emerald"></i> All {{ totalQuotations }} quotations loaded
         </div>
       </div>
 
       <!-- Desktop Table View -->
       <div class="table-scroll-wrapper" v-else>
+        <!-- Table Info Bar -->
+        <div class="pro-table-infobar" v-if="followUpQuotations.length > 0 || !loading">
+          <div class="pro-info-text">
+            <span>Showing <strong>{{ followUpQuotations.length }}</strong> of <strong>{{ totalQuotations }}</strong> quotations</span>
+            <span v-if="hasActiveFilters" class="pro-filtered-badge">Filtered Search</span>
+          </div>
+          <div v-if="isSearching" class="pro-search-status-inline">
+            <i class="fas fa-spinner fa-spin"></i> Searching database...
+          </div>
+        </div>
+
         <table class="pro-styled-table">
           <thead>
             <tr>
@@ -344,7 +435,7 @@
               <td>
                 <div class="pro-items-desc-wrap" v-if="q.items && q.items.length">
                   <ul class="pro-items-list" :class="{ 'collapsed': !expandedQuotations[q.id] && q.items.length > 2 }">
-                    <li v-for="(item, idx) in q.items" :key="item.sr" v-show="idx < 2 || expandedQuotations[q.id]">
+                    <li v-for="(item, idx) in q.items" :key="item.sr || idx" v-show="idx < 2 || expandedQuotations[q.id]">
                       <span class="bullet-dot">•</span> {{ item.description }}
                     </li>
                   </ul>
@@ -358,7 +449,7 @@
               <!-- Value -->
               <td class="text-right">
                 <span class="pro-cell-value">
-                  ₹ {{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}
+                  {{ calculateTaxableValue(q.items).toLocaleString('en-IN') }}
                 </span>
               </td>
 
@@ -417,19 +508,37 @@
             </tr>
 
             <!-- Empty Row -->
-            <tr v-if="filteredAndSortedQuotations.length === 0">
+            <tr v-if="filteredAndSortedQuotations.length === 0 && !loading">
               <td colspan="11" class="pro-table-empty">
                 <div class="pro-empty-card">
                   <div class="empty-icon-wrap">
                     <i class="fas fa-folder-open"></i>
                   </div>
                   <h4>No Quotations Found</h4>
-                  <p>No quotation records matched your current filter criteria.</p>
+                  <p>No quotation records matched your search/filter criteria.</p>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
+
+        <!-- Lazy Loading Sentinel & Load More Indicator -->
+        <div ref="lazySentinelDesktop" class="lazy-sentinel"></div>
+
+        <div v-if="loadingMore" class="pro-lazy-loader">
+          <i class="fas fa-circle-notch fa-spin"></i>
+          <span>Loading more quotations (Page {{ page }})...</span>
+        </div>
+
+        <div v-if="hasMore && !loading && !loadingMore" class="pro-load-more-wrap">
+          <button type="button" class="btn-pro-load-more" @click="fetchMoreQuotations">
+            <i class="fas fa-angles-down"></i> Load More Quotations ({{ totalQuotations - followUpQuotations.length }} remaining)
+          </button>
+        </div>
+
+        <div v-else-if="!hasMore && followUpQuotations.length > 0 && !loading" class="pro-end-of-list">
+          <i class="fas fa-check-circle text-emerald"></i> All {{ totalQuotations }} quotations loaded
+        </div>
       </div>
     </div>
   </div>
@@ -452,6 +561,7 @@ export default {
       copiedId: null,
       selectedStatus: "",
       debounceTimers: {},
+      searchDebounceTimer: null,
       isMobile: false,
       isSidebarVisible: true,
       filterOpen: false,
@@ -460,17 +570,35 @@ export default {
       followUpQuotations: [],
       sortOrder: null, // 'asc' or 'desc' or null
       filters: {
+        search: '',
         created_by: '',
         party_name: '',
         engine_serial: '',
         engine_model: '',
         recommended_by: ''
-      }
+      },
+      // Pagination & Lazy Loading state
+      page: 1,
+      perPage: 25,
+      totalQuotations: 0,
+      hasMore: false,
+      loading: false,
+      loadingMore: false,
+      isSearching: false,
+      counts: {
+        all: 0,
+        pending: 0,
+        followup: 0,
+        approved: 0,
+        rejected: 0
+      },
+      observer: null
     };
   },
   computed: {
     hasActiveFilters() {
       return this.selectedStatus !== '' || 
+             this.filters.search !== '' ||
              this.filters.created_by !== '' ||
              this.filters.party_name !== '' ||
              this.filters.engine_serial !== '' ||
@@ -478,76 +606,47 @@ export default {
              this.filters.recommended_by !== '' ||
              this.sortOrder !== null;
     },
-    sortedQuotations() {
-      return [...this.followUpQuotations].sort((a, b) => {
-        return new Date(b.created_at) - new Date(a.created_at);
-      });
-    },
     filteredAndSortedQuotations() {
-      let list = this.followUpQuotations;
+      let list = [...this.followUpQuotations];
       
-      // Status filter
-      if (this.selectedStatus) {
-        list = list.filter(q => q.status === this.selectedStatus);
-      }
-      
-      // Advanced filters
-      if (this.filters.created_by) {
-        const search = this.filters.created_by.toLowerCase().trim();
-        list = list.filter(q => q.created_by && q.created_by.toLowerCase().includes(search));
-      }
-      
-      if (this.filters.party_name) {
-        const search = this.filters.party_name.toLowerCase().trim();
-        list = list.filter(q => q.company_name && q.company_name.toLowerCase().includes(search));
-      }
-      
-      if (this.filters.engine_serial) {
-        const search = this.filters.engine_serial.toLowerCase().trim();
-        list = list.filter(q => q.engine_serial && q.engine_serial.toLowerCase().includes(search));
-      }
-      
-      if (this.filters.engine_model) {
-        const search = this.filters.engine_model.toLowerCase().trim();
-        list = list.filter(q => q.model_no && q.model_no.toLowerCase().includes(search));
-      }
-      
-      if (this.filters.recommended_by) {
-        const search = this.filters.recommended_by.toLowerCase().trim();
-        list = list.filter(q => q.recommended_by && q.recommended_by.toLowerCase().includes(search));
-      }
-      
-      // Apply sorting by value
+      // Apply sorting by value if sortOrder selected
       if (this.sortOrder) {
-        list = [...list].sort((a, b) => {
+        list.sort((a, b) => {
           const valueA = this.calculateTaxableValue(a.items);
           const valueB = this.calculateTaxableValue(b.items);
           return this.sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
         });
-      } else {
-        // Default sort by date (newest first)
-        list = [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       }
       
       return list;
     },
     pendingCount() {
-      return this.followUpQuotations.filter(q => q.status === 'pending').length;
+      return this.counts.pending || 0;
     },
     followupCount() {
-      return this.followUpQuotations.filter(q => q.status === 'followup').length;
+      return this.counts.followup || 0;
     },
     approvedCount() {
-      return this.followUpQuotations.filter(q => q.status === 'approved').length;
+      return this.counts.approved || 0;
     },
     rejectedCount() {
-      return this.followUpQuotations.filter(q => q.status === 'rejected').length;
+      return this.counts.rejected || 0;
+    },
+    totalCount() {
+      return this.counts.all || this.totalQuotations || this.followUpQuotations.length;
     }
   },
   methods: {
+    setStatus(status) {
+      if (this.selectedStatus === status) {
+        this.selectedStatus = '';
+      } else {
+        this.selectedStatus = status;
+      }
+      this.resetAndFetchQuotations();
+    },
     setSortOrder(order) {
       if (this.sortOrder === order) {
-        // Toggle off if same order clicked
         this.sortOrder = null;
       } else {
         this.sortOrder = order;
@@ -566,11 +665,21 @@ export default {
         this.sortOrder = null;
       }
     },
+    onSearchInput() {
+      this.isSearching = true;
+      if (this.searchDebounceTimer) {
+        clearTimeout(this.searchDebounceTimer);
+      }
+      this.searchDebounceTimer = setTimeout(() => {
+        this.resetAndFetchQuotations();
+      }, 350);
+    },
     applyFilters() {
-      // Filters are applied reactively through computed property
+      this.onSearchInput();
     },
     clearFilters() {
       this.selectedStatus = '';
+      this.filters.search = '';
       this.filters.created_by = '';
       this.filters.party_name = '';
       this.filters.engine_serial = '';
@@ -579,6 +688,7 @@ export default {
       this.sortOrder = null;
       this.filterOpen = false;
       toastInfo("All filters and sorting cleared");
+      this.resetAndFetchQuotations();
     },
     toggleFilter() {
       this.filterOpen = !this.filterOpen;
@@ -697,42 +807,152 @@ export default {
         remarks: q.remarks 
       })
       .then(res => {
-        console.log(res.data.message);
-        toastSuccess(res.data.message);
+        toastSuccess(res.data.message || "Status updated");
+        this.fetchStatusCounts();
       })
       .catch(err => {
         console.error(err);
         toastError("Failed to update status");
       });
     },
+    fetchStatusCounts() {
+      // Refresh count summary in background
+      axios.get("/api/quotations", { params: { page: 1, per_page: 1, lazy: 1 } })
+        .then(res => {
+          if (res.data && res.data.counts) {
+            this.counts = res.data.counts;
+          }
+        })
+        .catch(() => {});
+    },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
     },
-    fetchQuotations() {
-      axios.get("/api/quotations")
+    resetAndFetchQuotations() {
+      this.page = 1;
+      this.hasMore = false;
+      this.fetchQuotations(true);
+    },
+    fetchQuotations(isReset = false) {
+      if (isReset) {
+        this.loading = true;
+      }
+      
+      const params = {
+        page: this.page,
+        per_page: this.perPage,
+        lazy: 1
+      };
+
+      if (this.filters.search && this.filters.search.trim()) {
+        params.search = this.filters.search.trim();
+      }
+      if (this.filters.created_by && this.filters.created_by.trim()) {
+        params.created_by = this.filters.created_by.trim();
+      }
+      if (this.filters.party_name && this.filters.party_name.trim()) {
+        params.party_name = this.filters.party_name.trim();
+      }
+      if (this.filters.engine_serial && this.filters.engine_serial.trim()) {
+        params.engine_serial = this.filters.engine_serial.trim();
+      }
+      if (this.filters.engine_model && this.filters.engine_model.trim()) {
+        params.engine_model = this.filters.engine_model.trim();
+      }
+      if (this.filters.recommended_by && this.filters.recommended_by.trim()) {
+        params.recommended_by = this.filters.recommended_by.trim();
+      }
+      if (this.selectedStatus) {
+        params.status = this.selectedStatus;
+      }
+
+      axios.get("/api/quotations", { params })
         .then(res => {
-          this.followUpQuotations = res.data.map(q => ({
+          let rawData = [];
+          if (res.data && res.data.data) {
+            rawData = res.data.data;
+            this.totalQuotations = res.data.total || 0;
+            this.hasMore = Boolean(res.data.has_more);
+            if (res.data.counts) {
+              this.counts = res.data.counts;
+            }
+          } else if (Array.isArray(res.data)) {
+            rawData = res.data;
+            this.totalQuotations = rawData.length;
+            this.hasMore = false;
+          }
+
+          const mapped = rawData.map(q => ({
             ...q,
-            items: q.items || [],
+            items: (typeof q.items === 'string') ? (JSON.parse(q.items) || []) : (q.items || []),
             status: q.quotation_followup_status
               ? q.quotation_followup_status.toLowerCase()
-              : 'pending',
+              : (q.status ? q.status.toLowerCase() : 'pending'),
             remarks: q.remarks || ''
           }));
+
+          if (isReset || this.page === 1) {
+            this.followUpQuotations = mapped;
+          } else {
+            const existingIds = new Set(this.followUpQuotations.map(x => x.id));
+            const freshItems = mapped.filter(x => !existingIds.has(x.id));
+            this.followUpQuotations = [...this.followUpQuotations, ...freshItems];
+          }
+
+          this.$nextTick(() => {
+            this.setupIntersectionObserver();
+          });
         })
-        .catch(() => {
+        .catch(err => {
+          console.error(err);
           toastError('Failed to fetch quotations');
+        })
+        .finally(() => {
+          this.loading = false;
+          this.loadingMore = false;
+          this.isSearching = false;
         });
+    },
+    fetchMoreQuotations() {
+      if (this.loading || this.loadingMore || !this.hasMore) return;
+      this.loadingMore = true;
+      this.page++;
+      this.fetchQuotations(false);
+    },
+    setupIntersectionObserver() {
+      if (this.observer) {
+        this.observer.disconnect();
+      }
+
+      const sentinel = this.$refs.lazySentinelDesktop || this.$refs.lazySentinelMobile;
+      if (!sentinel) return;
+
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0] && entries[0].isIntersecting && this.hasMore && !this.loading && !this.loadingMore) {
+            this.fetchMoreQuotations();
+          }
+        },
+        { root: null, rootMargin: "250px", threshold: 0.1 }
+      );
+
+      this.observer.observe(sentinel);
     }
   },
   mounted() {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
-    this.fetchQuotations();
+    this.fetchQuotations(true);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
   }
 };
 </script>
@@ -831,6 +1051,73 @@ export default {
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.pro-hero-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 380px;
+  min-width: 220px;
+}
+
+.pro-search-icon {
+  position: absolute;
+  left: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.pro-hero-search-input {
+  width: 100%;
+  padding: 8px 34px 8px 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.pro-hero-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.pro-hero-search-input:focus {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+.pro-search-spinner {
+  position: absolute;
+  right: 12px;
+  color: #93c5fd;
+  font-size: 0.85rem;
+}
+
+.pro-search-clear-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 2px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.pro-search-clear-btn:hover {
+  color: #ffffff;
 }
 
 .pro-hero-btn {
@@ -1590,6 +1877,191 @@ export default {
   margin-top: 4px;
 }
 
+/* =========================================================
+   LOADING STATE, SKELETON SHIMMER & LAZY LOAD STYLES
+   ========================================================= */
+.pro-loading-state {
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.pro-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.pro-pulse-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid #e0e7ff;
+  border-top-color: #4f46e5;
+  border-right-color: #6366f1;
+  animation: pro-spin 0.85s linear infinite;
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
+}
+
+@keyframes pro-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.pro-loading-text h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.pro-loading-text p {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Skeleton Shimmer Table */
+.pro-skeleton-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pro-skeleton-row {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #edf2f7;
+}
+
+.skeleton-cell {
+  height: 20px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: pro-shimmer 1.5s infinite;
+}
+
+@keyframes pro-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.w-5 { width: 5%; }
+.w-10 { width: 10%; }
+.w-15 { width: 15%; }
+.w-20 { width: 20%; }
+.w-25 { width: 25%; }
+
+/* Table Info Bar */
+.pro-table-infobar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.pro-info-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pro-filtered-badge {
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.pro-search-status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4f46e5;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+/* Lazy Loading & Load More Elements */
+.lazy-sentinel {
+  height: 20px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.pro-lazy-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 1.25rem 1rem;
+  color: #4f46e5;
+  font-size: 0.88rem;
+  font-weight: 600;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pro-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem 1rem;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-pro-load-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(67, 56, 202, 0.08);
+}
+
+.btn-pro-load-more:hover {
+  background: #4338ca;
+  color: #ffffff;
+  border-color: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.2);
+}
+
+.pro-end-of-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 1.25rem 1rem;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
 @media (max-width: 768px) {
   .pro-followup-container {
     padding: 1rem;
@@ -1597,6 +2069,12 @@ export default {
 
   .pro-followup-hero {
     padding: 1.25rem;
+  }
+
+  .pro-hero-search-wrap {
+    max-width: 100%;
+    width: 100%;
+    order: 3;
   }
 }
 </style>
