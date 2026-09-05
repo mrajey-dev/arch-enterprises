@@ -1,5 +1,5 @@
 <template>
-  <div class="notification-bell-wrapper" @click="handleNotificationClick" title="Chat Mentions & Alerts">
+  <div class="notification-bell-wrapper" :class="{ 'in-header': inHeader }" @click="handleNotificationClick" title="Chat Mentions & Alerts">
     <div class="bell-inner-btn">
       <i class="fas fa-bell bell-icon" :class="{ 'ring-anim': unreadMentionsCount > 0 }"></i>
 
@@ -39,6 +39,12 @@ import {
 
 export default {
   name: "NotificationBell",
+  props: {
+    inHeader: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       unreadMentionsCount: 0,
@@ -147,6 +153,24 @@ export default {
   z-index: 9999;
   cursor: pointer;
   user-select: none;
+}
+
+.notification-bell-wrapper.in-header {
+  position: relative;
+  top: auto;
+  right: auto;
+  z-index: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notification-bell-wrapper.in-header .bell-inner-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(8px);
 }
 
 .bell-inner-btn {

@@ -1,7 +1,7 @@
 <template>
   <div class="app-layout">
-    <!-- 🔔 Global Notification Bell -->
-    <NotificationBell v-if="showBell" />
+    <!-- 🔔 Floating Notification Bell (Only for pages without top header) -->
+    <NotificationBell v-if="showBell && !showHeader" />
     
     <!-- 🌐 Modern Global Header (Replacing old topbar) -->
     <header v-if="showHeader" class="modern-header" :class="{ 'focus-overlay-active': showFocusOverlay }">
@@ -19,8 +19,9 @@
       </div>
 
       <div class="header-right">
-        <!-- 🔔 Admin Notification Bell with live counts & alerts popup -->
-        <AdminNotificationBell />
+        <!-- 🔔 Unified Notification Bell -->
+        <AdminNotificationBell v-if="isAdmin" />
+        <NotificationBell v-else :inHeader="true" />
 
         <div class="user-greeting desktop-only" v-if="user.name">
           <i class="fas fa-user-circle"></i>
@@ -236,6 +237,11 @@ export default {
     },
     recentNotifications() {
       return this.notifications.slice(0, 4);
+    },
+    isAdmin() {
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const role = String(this.user?.role || localUser?.role || '').toLowerCase();
+      return role === 'admin' || role === 'superadmin';
     }
   },
 

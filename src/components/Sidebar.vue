@@ -81,6 +81,14 @@
             <span v-if="notifCounts.request_desk > 0" class="sidebar-item-badge success">{{ notifCounts.request_desk }}</span>
           </li>
 
+          <li @click="goTo('ExpenseManage')">
+            <i class="fas fa-file-invoice-dollar"></i> <span>IT & Expenses</span>
+          </li>
+
+          <li @click="goTo('resourcebooking')">
+            <i class="fas fa-calendar-check"></i> <span>Book a Resource</span>
+          </li>
+
           <li @click="goTo('recruitmentsection')">
             <i class="fas fa-user-tie"></i><span> Recruitment</span>
           </li>

@@ -127,6 +127,9 @@
 <li  v-if="canViewITProduct" @click="goTo('employee/mobileapplifecycle')">
   <i class="fas fa-mobile-alt"></i> <span>Mobile App Life Cycle</span>
 </li>
+<li v-if="canViewITExpenses" @click="goTo('employee/it-expenses')">
+  <i class="fas fa-file-invoice-dollar"></i> <span>IT Expenses</span>
+</li>
             <li   v-if="canViewSiteOwnership"
               class="desktop-only"
               @click="goTo('employee/visitschedule')"
@@ -304,8 +307,28 @@ export default {
       return dept === 'service' || dept === 'hr' || dept === 'human resources' || dept === 'management' || dept === 'owner';
     },
     canViewITProduct() {
-      const dept = (this.user?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'IT' || dept === 'hr' || dept === 'marketing' || dept === 'owner';
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const uid = String(this.user?.id || localUser?.id || localStorage.getItem('user_id') || '');
+      const empId = String(this.user?.emp_id || this.user?.employee_id || localUser?.emp_id || localUser?.employee_id || '');
+      const dept = (this.user?.department || localUser?.department || '').trim().toLowerCase();
+      return uid === '107' || empId === '107' || dept === 'it' || dept === 'hr' || dept === 'marketing' || dept === 'owner' || dept === 'management';
+    },
+    canViewITExpenses() {
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const uid = String(this.user?.id || localUser?.id || localStorage.getItem('user_id') || '');
+      const empId = String(this.user?.emp_id || this.user?.employee_id || localUser?.emp_id || localUser?.employee_id || '');
+      const dept = String(this.user?.department || localUser?.department || '').trim().toLowerCase();
+      const role = String(this.user?.role || localUser?.role || '').trim().toLowerCase();
+
+      return uid === '107' || 
+             empId === '107' || 
+             dept === 'it' || 
+             dept === 'management' || 
+             dept === 'owner' || 
+             dept === 'hr' || 
+             dept === 'finance' ||
+             role === 'admin' ||
+             role === 'it_manager';
     },
   },
   methods: {
