@@ -19,6 +19,9 @@
       </div>
 
       <div class="header-right">
+        <!-- 🔔 Admin Notification Bell with live counts & alerts popup -->
+        <AdminNotificationBell />
+
         <div class="user-greeting desktop-only" v-if="user.name">
           <i class="fas fa-user-circle"></i>
           <span>Hi, {{ formatFirstName(user.name) }}</span>
@@ -163,12 +166,14 @@
 
 <script>
 import NotificationBell from '@views/employee/components/NotificationBell.vue'
+import AdminNotificationBell from './components/AdminNotificationBell.vue'
 import axios from 'axios'
 import { toastInfo } from "@/utils/toast.js";
 
 export default {
   components: {
     NotificationBell,
+    AdminNotificationBell,
   },
 
   data() {

@@ -1,401 +1,670 @@
 <template>
   <div class="layout">
-
-    <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-      <div class="dsi-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <!-- Mobile Header -->
-        <div class="mobile-header" v-if="isMobile">
-       
-          <div class="mobile-title">
-            <i class="fas fa-chart-line"></i>
-            <span>DSI</span>
-          </div>
-          <button class="mobile-view-all-btn" @click="openAllDsiPopup">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-
-        <!-- Desktop Header -->
-        <div class="content-header-modern" v-else>
-          <div class="header-left desktop-only">
-            <div class="title-icon">
-              <i class="fas fa-chart-line"></i>
+      <div class="dsi-container" v-if="!isMobile || !isSidebarVisible">
+        <!-- Hero Header -->
+        <header class="dsi-hero">
+          <div class="hero-content">
+            <div class="hero-title-group">
+              <div class="hero-icon-badge">
+                <i class="fas fa-lightbulb"></i>
+              </div>
+              <div>
+                <div class="hero-badge">EMPLOYEE INNOVATION HUB</div>
+                <h1 class="hero-title">Daily Small Improvement (DSI)</h1>
+                <p class="hero-subtitle">Propose ideas, streamline operations, and showcase the impact of your daily improvements.</p>
+              </div>
             </div>
-            <div>
-              <h1>Daily Small Improvement</h1>
-              <p class="subtitle-modern">Track and share your improvement ideas</p>
-            </div>
-          </div>
-          <button class="view-all-btn-premium" @click="openAllDsiPopup">
-            <i class="fas fa-eye"></i> View All DSI
-          </button>
-        </div>
 
-        <!-- Stats Bar - Mobile Optimized -->
-        <div class="stats-bar">
-          <div class="stat-card" @click="filterByStatus('all')">
-            <i class="fas fa-lightbulb"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ dsiList.length }}</span>
-              <span class="stat-label">Total</span>
+            <div class="hero-actions">
+              <button class="btn-hero-secondary" @click="loadDSIs" :disabled="loading" title="Refresh List">
+                <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
+                <span class="desktop-only">Refresh</span>
+              </button>
+              <button class="btn-hero-primary" @click="openAllDsiPopup">
+                <i class="fas fa-globe"></i>
+                <span>View All DSI</span>
+              </button>
             </div>
           </div>
-          <div class="stat-card approved" @click="filterByStatus('Approved')">
-            <i class="fas fa-check-circle"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ approvedCount }}</span>
-              <span class="stat-label">Approved</span>
-            </div>
-          </div>
-          <div class="stat-card pending" @click="filterByStatus('Waiting')">
-            <i class="fas fa-clock"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ pendingCount }}</span>
-              <span class="stat-label">Pending</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Add DSI Form - Mobile Optimized -->
-        <div class="form-card-premium">
-          <div class="section-title-modern" @click="toggleForm">
-            <div class="title-left">
-              <i class="fas fa-plus-circle"></i>
-              <span>Add New Improvement</span>
-            </div>
-            <i class="fas fa-chevron-down form-toggle" :class="{ rotated: formVisible }"></i>
-          </div>
-
-          <div class="dsi-form-grid" :class="{ 'form-hidden': !formVisible }">
-            <div class="form-field">
-              <label><i class="fas fa-exclamation-triangle"></i> Problem Statement</label>
-              <textarea v-model="newDSI.problem" rows="2" placeholder="Describe the problem..." class="dsi-textarea-premium"></textarea>
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div 
+              class="stat-pill total" 
+              :class="{ active: statusFilter === '' || statusFilter === 'all' }"
+              @click="filterByStatus('all')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-layer-group"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ dsiList.length }}</span>
+                <span class="stat-txt">Total Ideas</span>
+              </div>
             </div>
 
-            <div class="form-field">
-              <label><i class="fas fa-lightbulb"></i> Solution</label>
-              <textarea v-model="newDSI.solution" rows="2" placeholder="Describe your solution..." class="dsi-textarea-premium"></textarea>
+            <div 
+              class="stat-pill approved" 
+              :class="{ active: statusFilter === 'Approved' }"
+              @click="filterByStatus('Approved')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-check-circle"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ approvedCount }}</span>
+                <span class="stat-txt">Approved</span>
+              </div>
             </div>
 
-            <div class="form-field">
-              <label><i class="fas fa-chart-line"></i> Result / Outcome</label>
-              <textarea v-model="newDSI.result" rows="2" placeholder="Describe the expected outcome..." class="dsi-textarea-premium"></textarea>
+            <div 
+              class="stat-pill pending" 
+              :class="{ active: statusFilter === 'Waiting' || statusFilter === 'Pending' }"
+              @click="filterByStatus('Waiting')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-hourglass-half"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ pendingCount }}</span>
+                <span class="stat-txt">Under Review</span>
+              </div>
             </div>
 
-            <div class="form-field image-upload-section">
-              <label><i class="fas fa-camera"></i> Before & After Images</label>
-              <div class="image-upload-row-premium">
-                <label class="image-upload-card-premium" :class="{ 'has-image': newDSI.beforeImage }">
-                  <input type="file" accept="image/*" @change="onImageChange($event, 'before')" hidden />
-                  <div v-if="!newDSI.beforeImage" class="upload-placeholder-premium">
-                    <i class="fas fa-image"></i>
-                    <span>Before</span>
-                  </div>
-                  <img v-else :src="newDSI.beforeImage" class="upload-preview-premium" />
-                </label>
-
-                <label class="image-upload-card-premium" :class="{ 'has-image': newDSI.afterImage }">
-                  <input type="file" accept="image/*" @change="onImageChange($event, 'after')" hidden />
-                  <div v-if="!newDSI.afterImage" class="upload-placeholder-premium">
-                    <i class="fas fa-check-circle"></i>
-                    <span>After</span>
-                  </div>
-                  <img v-else :src="newDSI.afterImage" class="upload-preview-premium" />
-                </label>
+            <div 
+              class="stat-pill rejected" 
+              :class="{ active: statusFilter === 'Rejected' }"
+              @click="filterByStatus('Rejected')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-times-circle"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ rejectedCount }}</span>
+                <span class="stat-txt">Rejected</span>
               </div>
             </div>
           </div>
+        </header>
 
-          <div class="form-actions" :class="{ 'form-hidden': !formVisible }">
-            <button class="btn-submit-premium" @click="addDSI" :disabled="isSubmitting">
-              <span v-if="isSubmitting">
-                <i class="fas fa-spinner fa-spin"></i> Submitting...
-              </span>
-              <span v-else>
-                <i class="fas fa-plus-circle"></i> Add Improvement
-              </span>
+        <!-- ATTRACTIVE SUBMIT NEW IMPROVEMENT FORM SECTION -->
+        <section class="form-section-card">
+          <div class="form-section-header" @click="formVisible = !formVisible">
+            <div class="header-tagline">
+              <div class="tag-icon">
+                <i class="fas fa-plus"></i>
+              </div>
+              <div>
+                <h3 class="tag-title">Submit New Improvement</h3>
+                <p class="tag-desc">Fill in the 3 steps below and attach visual proof to submit your innovation.</p>
+              </div>
+            </div>
+            <button type="button" class="btn-toggle-form" :class="{ rotated: formVisible }">
+              <i class="fas fa-chevron-down"></i>
             </button>
           </div>
-        </div>
 
-        <!-- Search/Filter - Mobile -->
-        <div class="search-bar-mobile" v-if="isMobile && dsiList.length > 0">
-          <div class="search-group-mobile">
-            <i class="fas fa-search"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search improvements..." class="search-input-mobile" />
-          </div>
-        </div>
+          <transition name="expand">
+            <div v-show="formVisible" class="form-body-wrapper">
+              <form @submit.prevent="addDSI" class="dsi-creation-form">
+                
+                <!-- 3 STEP CARDS GRID (Clearly isolated & beautifully styled) -->
+                <div class="steps-grid">
+                  
+                  <!-- Step 1: Problem Card -->
+                  <div class="step-card step-problem">
+                    <div class="step-card-header">
+                      <div class="step-badge problem-badge">
+                        <span class="step-number">1</span>
+                        <i class="fas fa-exclamation-triangle"></i>
+                      </div>
+                      <div class="step-title-wrap">
+                        <h4 class="step-title">Problem Statement</h4>
+                        <span class="step-subtitle">What challenge did you face?</span>
+                      </div>
+                      <span class="req-indicator">*Required</span>
+                    </div>
 
-        <!-- DSI List -->
-        <div class="table-card-premium">
-          <div class="table-header-premium">
-            <div class="section-title-modern">
-              <div class="title-left">
-                <i class="fas fa-list-ul"></i>
-                <span>My Improvements</span>
-                <span class="record-count-mobile" v-if="isMobile">{{ filteredDsiList.length }}</span>
+                    <div class="step-card-body">
+                      <textarea 
+                        v-model="newDSI.problem" 
+                        rows="4" 
+                        maxlength="300"
+                        placeholder="Describe the current issue, bottleneck, quality concern, or waste of time/resources..." 
+                        class="step-textarea problem-textarea"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div class="step-card-footer">
+                      <span class="hint"><i class="fas fa-info-circle"></i> Clear & factual</span>
+                      <span class="counter" :class="{ 'counter-full': (newDSI.problem || '').length >= 300 }">
+                        {{ (newDSI.problem || '').length }} / 300
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Step 2: Solution Card -->
+                  <div class="step-card step-solution">
+                    <div class="step-card-header">
+                      <div class="step-badge solution-badge">
+                        <span class="step-number">2</span>
+                        <i class="fas fa-lightbulb"></i>
+                      </div>
+                      <div class="step-title-wrap">
+                        <h4 class="step-title">Innovative Solution</h4>
+                        <span class="step-subtitle">What is your proposed fix?</span>
+                      </div>
+                      <span class="req-indicator">*Required</span>
+                    </div>
+
+                    <div class="step-card-body">
+                      <textarea 
+                        v-model="newDSI.solution" 
+                        rows="4" 
+                        maxlength="300"
+                        placeholder="Explain the new method, process, tool, automation, or creative approach you implemented..." 
+                        class="step-textarea solution-textarea"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div class="step-card-footer">
+                      <span class="hint"><i class="fas fa-tools"></i> Step-by-step method</span>
+                      <span class="counter" :class="{ 'counter-full': (newDSI.solution || '').length >= 300 }">
+                        {{ (newDSI.solution || '').length }} / 300
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Step 3: Result Card -->
+                  <div class="step-card step-result">
+                    <div class="step-card-header">
+                      <div class="step-badge result-badge">
+                        <span class="step-number">3</span>
+                        <i class="fas fa-chart-line"></i>
+                      </div>
+                      <div class="step-title-wrap">
+                        <h4 class="step-title">Measurable Result</h4>
+                        <span class="step-subtitle">What value was created?</span>
+                      </div>
+                      <span class="req-indicator">*Required</span>
+                    </div>
+
+                    <div class="step-card-body">
+                      <textarea 
+                        v-model="newDSI.result" 
+                        rows="4" 
+                        maxlength="300"
+                        placeholder="Time saved (e.g. 30 mins/day), errors reduced, cost efficiency, safety boost, or cleaner output..." 
+                        class="step-textarea result-textarea"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div class="step-card-footer">
+                      <span class="hint"><i class="fas fa-award"></i> Quantifiable impact</span>
+                      <span class="counter" :class="{ 'counter-full': (newDSI.result || '').length >= 300 }">
+                        {{ (newDSI.result || '').length }} / 300
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- SUPPORTING MEDIA UPLOAD SECTION -->
+                <div class="media-upload-wrapper">
+                  <div class="media-section-head">
+                    <div class="media-head-left">
+                      <div class="media-icon-badge">
+                        <i class="fas fa-camera"></i>
+                      </div>
+                      <div>
+                        <h4 class="media-title">Visual Evidence (Before & After)</h4>
+                        <p class="media-subtitle">Photos showcase real impact. Attach images of the previous state vs new state.</p>
+                      </div>
+                    </div>
+                    <span class="optional-badge">Optional</span>
+                  </div>
+
+                  <div class="media-boxes-grid">
+                    <!-- Before Dropzone -->
+                    <div class="media-box before-box" :class="{ 'is-uploaded': !!newDSI.beforeImage }">
+                      <input 
+                        type="file" 
+                        ref="beforeInput"
+                        accept="image/png, image/jpeg, image/webp" 
+                        @change="onImageChange($event, 'before')" 
+                        hidden 
+                      />
+                      
+                      <div v-if="!newDSI.beforeImage" class="media-placeholder" @click="$refs.beforeInput.click()">
+                        <div class="media-action-circle before-circle">
+                          <i class="fas fa-cloud-arrow-up"></i>
+                        </div>
+                        <div class="media-text-wrap">
+                          <span class="media-drop-title">Upload "BEFORE" Photo</span>
+                          <span class="media-drop-sub">JPG, PNG, WebP up to 5MB</span>
+                        </div>
+                        <span class="btn-browse-pill before-pill">Choose File</span>
+                      </div>
+
+                      <div v-else class="media-preview-container">
+                        <img :src="newDSI.beforeImage" alt="Before Preview" />
+                        <div class="media-preview-glass-bar">
+                          <span class="tag-pill before-tag-pill"><i class="fas fa-clock-rotate-left"></i> BEFORE</span>
+                          <div class="media-ctrl-buttons">
+                            <button type="button" class="btn-ctrl view-btn" @click.stop="openImage(newDSI.beforeImage)" title="Zoom Image">
+                              <i class="fas fa-expand"></i>
+                            </button>
+                            <button type="button" class="btn-ctrl delete-btn" @click.stop="removeImage('before')" title="Remove Image">
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- After Dropzone -->
+                    <div class="media-box after-box" :class="{ 'is-uploaded': !!newDSI.afterImage }">
+                      <input 
+                        type="file" 
+                        ref="afterInput"
+                        accept="image/png, image/jpeg, image/webp" 
+                        @change="onImageChange($event, 'after')" 
+                        hidden 
+                      />
+                      
+                      <div v-if="!newDSI.afterImage" class="media-placeholder" @click="$refs.afterInput.click()">
+                        <div class="media-action-circle after-circle">
+                          <i class="fas fa-cloud-arrow-up"></i>
+                        </div>
+                        <div class="media-text-wrap">
+                          <span class="media-drop-title">Upload "AFTER" Photo</span>
+                          <span class="media-drop-sub">JPG, PNG, WebP up to 5MB</span>
+                        </div>
+                        <span class="btn-browse-pill after-pill">Choose File</span>
+                      </div>
+
+                      <div v-else class="media-preview-container">
+                        <img :src="newDSI.afterImage" alt="After Preview" />
+                        <div class="media-preview-glass-bar">
+                          <span class="tag-pill after-tag-pill"><i class="fas fa-circle-check"></i> AFTER</span>
+                          <div class="media-ctrl-buttons">
+                            <button type="button" class="btn-ctrl view-btn" @click.stop="openImage(newDSI.afterImage)" title="Zoom Image">
+                              <i class="fas fa-expand"></i>
+                            </button>
+                            <button type="button" class="btn-ctrl delete-btn" @click.stop="removeImage('after')" title="Remove Image">
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- FORM SUBMIT CONTROLS -->
+                <div class="form-footer-action-bar">
+                  <button type="button" class="btn-clear-form" @click="resetForm" :disabled="isSubmitting">
+                    <i class="fas fa-arrow-rotate-left"></i> Reset Fields
+                  </button>
+                  <button type="submit" class="btn-submit-gradient" :disabled="isSubmitting">
+                    <span v-if="isSubmitting" class="flex-center gap-8">
+                      <i class="fas fa-circle-notch fa-spin"></i> Submitting Improvement...
+                    </span>
+                    <span v-else class="flex-center gap-8">
+                      <i class="fas fa-paper-plane"></i> Publish DSI Improvement
+                    </span>
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </transition>
+        </section>
+
+        <!-- Listing Section Card -->
+        <section class="listing-section-card">
+          <!-- Filter / Search Toolbar -->
+          <div class="listing-toolbar">
+            <div class="toolbar-title-group">
+              <div class="toolbar-icon"><i class="fas fa-list-check"></i></div>
+              <div>
+                <h3 class="toolbar-title">My Improvements Directory</h3>
+                <p class="toolbar-desc">Showing {{ filteredDsiList.length }} of {{ dsiList.length }} logged submissions</p>
               </div>
             </div>
-            <div class="table-info desktop-only">
-              <i class="fas fa-file-alt"></i>
-              <span>{{ dsiList.length }} records</span>
+
+            <div class="toolbar-controls">
+              <!-- Search box -->
+              <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input 
+                  type="text" 
+                  v-model="searchQuery" 
+                  placeholder="Search problem, solution or result..." 
+                  class="search-field"
+                />
+                <button v-if="searchQuery" @click="searchQuery = ''" class="search-clear-btn">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <!-- Status filter pills -->
+              <div class="filter-pills-row">
+                <button 
+                  class="filter-pill" 
+                  :class="{ active: statusFilter === '' || statusFilter === 'all' }"
+                  @click="filterByStatus('all')"
+                >
+                  All
+                </button>
+                <button 
+                  class="filter-pill pill-approved" 
+                  :class="{ active: statusFilter === 'Approved' }"
+                  @click="filterByStatus('Approved')"
+                >
+                  <span class="dot approved-dot"></span> Approved
+                </button>
+                <button 
+                  class="filter-pill pill-pending" 
+                  :class="{ active: statusFilter === 'Waiting' || statusFilter === 'Pending' }"
+                  @click="filterByStatus('Waiting')"
+                >
+                  <span class="dot pending-dot"></span> Review
+                </button>
+                <button 
+                  class="filter-pill pill-rejected" 
+                  :class="{ active: statusFilter === 'Rejected' }"
+                  @click="filterByStatus('Rejected')"
+                >
+                  <span class="dot rejected-dot"></span> Rejected
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Mobile Card View -->
-          <div class="mobile-cards" v-if="isMobile">
-            <div v-for="(item, index) in filteredDsiList" :key="item.id" class="dsi-card">
-              <div class="card-header">
-                <div class="card-status">
-                  <span :class="['status-badge-mobile', getStatusClass(item.status)]">
+          <!-- Loading State -->
+          <div v-if="loading" class="state-container loading-state">
+            <i class="fas fa-circle-notch fa-spin state-icon"></i>
+            <h4>Loading improvements...</h4>
+            <p>Fetching your recorded DSI submissions</p>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else-if="filteredDsiList.length === 0" class="state-container empty-state">
+            <div class="empty-icon-wrap">
+              <i class="fas fa-lightbulb"></i>
+            </div>
+            <h4>No Improvements Found</h4>
+            <p v-if="searchQuery || statusFilter">
+              No DSI items match your current filter settings. Try adjusting your query.
+            </p>
+            <p v-else>
+              You haven't submitted any DSI improvements yet. Use the form above to share your first innovation!
+            </p>
+            <button v-if="searchQuery || statusFilter" class="btn-clear-filters" @click="clearFilters">
+              <i class="fas fa-filter-circle-xmark"></i> Reset Filters
+            </button>
+          </div>
+
+          <!-- Mobile Cards View -->
+          <div v-else-if="isMobile" class="mobile-dsi-feed">
+            <div 
+              v-for="(item, index) in filteredDsiList" 
+              :key="item.id || index" 
+              class="mobile-dsi-card"
+            >
+              <div class="card-top-bar">
+                <div class="top-date-wrap">
+                  <span class="card-seq">#{{ filteredDsiList.length - index }}</span>
+                  <span class="card-date-badge"><i class="far fa-calendar-alt"></i> {{ formatDate(item.date) }}</span>
+                </div>
+                
+                <div class="top-status-wrap">
+                  <span :class="['status-chip', getStatusClass(item.status)]">
                     <i :class="getStatusIcon(item.status)"></i>
                     {{ capitalizeFirstLetter(item.status) }}
                   </span>
-                  <span class="card-date"><i class="fas fa-calendar-alt"></i> {{ formatDate(item.date) }}</span>
-                </div>
-                <div class="card-actions">
-                  <button class="action-btn-mobile delete" @click="deleteDSI(item.id, index)">
+                  <button 
+                    class="btn-delete-item" 
+                    @click="deleteDSI(item.id, index)" 
+                    title="Delete DSI"
+                  >
                     <i class="fas fa-trash-alt"></i>
                   </button>
                 </div>
               </div>
 
-              <div class="card-body">
-                <div class="card-item">
-                  <div class="card-label"><i class="fas fa-exclamation-triangle"></i> Problem</div>
-                  <div class="card-text">
-                    <span :class="{ 'truncated': !isExpanded(item.id, 'problem') && isTextLong(item.problem, 80) }">
-                      {{ isExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 80) }}
-                    </span>
-                    <button 
-                      v-if="isTextLong(item.problem, 80)" 
-                      @click.stop="toggleReadMore(item.id, 'problem')"
-                      class="readmore-btn"
-                    >
-                      {{ isExpanded(item.id, 'problem') ? 'Read Less' : 'Read More' }}
-                    </button>
-                  </div>
+              <!-- Content Cards -->
+              <div class="mobile-sections-list">
+                <div class="mobile-section-block problem-block">
+                  <span class="section-badge"><i class="fas fa-exclamation-circle"></i> Problem</span>
+                  <p class="section-para">
+                    {{ isExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 80) }}
+                  </p>
+                  <button 
+                    v-if="isTextLong(item.problem, 80)" 
+                    @click.stop="toggleReadMore(item.id, 'problem')"
+                    class="btn-read-toggle"
+                  >
+                    {{ isExpanded(item.id, 'problem') ? 'Read Less' : 'Read More' }}
+                  </button>
                 </div>
 
-                <div class="card-item">
-                  <div class="card-label"><i class="fas fa-lightbulb"></i> Solution</div>
-                  <div class="card-text">
-                    <span :class="{ 'truncated': !isExpanded(item.id, 'solution') && isTextLong(item.solution, 80) }">
-                      {{ isExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 80) }}
-                    </span>
-                    <button 
-                      v-if="isTextLong(item.solution, 80)" 
-                      @click.stop="toggleReadMore(item.id, 'solution')"
-                      class="readmore-btn"
-                    >
-                      {{ isExpanded(item.id, 'solution') ? 'Read Less' : 'Read More' }}
-                    </button>
-                  </div>
+                <div class="mobile-section-block solution-block">
+                  <span class="section-badge"><i class="fas fa-lightbulb"></i> Solution</span>
+                  <p class="section-para">
+                    {{ isExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 80) }}
+                  </p>
+                  <button 
+                    v-if="isTextLong(item.solution, 80)" 
+                    @click.stop="toggleReadMore(item.id, 'solution')"
+                    class="btn-read-toggle"
+                  >
+                    {{ isExpanded(item.id, 'solution') ? 'Read Less' : 'Read More' }}
+                  </button>
                 </div>
 
-                <div class="card-item">
-                  <div class="card-label"><i class="fas fa-chart-line"></i> Result</div>
-                  <div class="card-text">
-                    <span :class="{ 'truncated': !isExpanded(item.id, 'result') && isTextLong(item.result, 80) }">
-                      {{ isExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 80) }}
-                    </span>
-                    <button 
-                      v-if="isTextLong(item.result, 80)" 
-                      @click.stop="toggleReadMore(item.id, 'result')"
-                      class="readmore-btn"
-                    >
-                      {{ isExpanded(item.id, 'result') ? 'Read Less' : 'Read More' }}
-                    </button>
-                  </div>
+                <div class="mobile-section-block result-block">
+                  <span class="section-badge"><i class="fas fa-chart-line"></i> Result</span>
+                  <p class="section-para">
+                    {{ isExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 80) }}
+                  </p>
+                  <button 
+                    v-if="isTextLong(item.result, 80)" 
+                    @click.stop="toggleReadMore(item.id, 'result')"
+                    class="btn-read-toggle"
+                  >
+                    {{ isExpanded(item.id, 'result') ? 'Read Less' : 'Read More' }}
+                  </button>
                 </div>
+              </div>
 
-                <div class="card-images" v-if="item.beforeImage || item.afterImage">
-                  <div class="card-label"><i class="fas fa-camera"></i> Images</div>
-                  <div class="card-image-row">
-                    <div v-if="item.beforeImage" class="card-image-item" @click="openImage(item.beforeImage)">
-                      <img :src="item.beforeImage" alt="Before" />
-                      <span class="image-label">Before</span>
-                    </div>
-                    <div v-if="item.afterImage" class="card-image-item" @click="openImage(item.afterImage)">
-                      <img :src="item.afterImage" alt="After" />
-                      <span class="image-label">After</span>
-                    </div>
-                  </div>
+              <!-- Visual Attachments -->
+              <div class="mobile-photos-row" v-if="item.beforeImage || item.afterImage">
+                <div 
+                  v-if="item.beforeImage" 
+                  class="photo-thumb-wrap" 
+                  @click="openImage(item.beforeImage)"
+                >
+                  <img :src="item.beforeImage" alt="Before" loading="lazy" />
+                  <span class="thumb-tag before-tag">Before</span>
+                </div>
+                <div 
+                  v-if="item.afterImage" 
+                  class="photo-thumb-wrap" 
+                  @click="openImage(item.afterImage)"
+                >
+                  <img :src="item.afterImage" alt="After" loading="lazy" />
+                  <span class="thumb-tag after-tag">After</span>
                 </div>
               </div>
             </div>
-
-            <!-- Mobile Empty State -->
-            <div v-if="filteredDsiList.length === 0" class="empty-state-mobile">
-              <i class="fas fa-lightbulb"></i>
-              <h4>No Improvements</h4>
-              <p>{{ searchQuery ? 'No matches found for your search' : 'Submit your first DSI using the form above' }}</p>
-            </div>
           </div>
 
-          <!-- Desktop Table View -->
-          <div class="table-wrapper-premium" v-else>
-            <table class="dsi-table-premium">
+          <!-- Desktop Modern Table View -->
+          <div v-else class="desktop-table-container">
+            <table class="dsi-modern-table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Problem</th>
-                  <th>Solution</th>
-                  <th>Result</th>
-                  <th>Before</th>
-                  <th>After</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th class="th-num">#</th>
+                  <th class="th-date">Date</th>
+                  <th class="th-problem">Problem Statement</th>
+                  <th class="th-solution">Solution</th>
+                  <th class="th-result">Result</th>
+                  <th class="th-media">Before</th>
+                  <th class="th-media">After</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-action">Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, index) in filteredDsiList" :key="item.id" class="dsi-row-premium">
-                  <td class="serial">{{ index + 1 }}</td>
-                  <td class="problem-cell">
-                    <div class="text-with-readmore">
-                      <span :class="{ 'truncated': !isExpanded(item.id, 'problem') && isTextLong(item.problem, 50) }">
-                        {{ isExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 50) }}
+                <tr v-for="(item, index) in filteredDsiList" :key="item.id || index" class="dsi-table-row">
+                  <td class="td-num">
+                    <span class="row-index-badge">{{ filteredDsiList.length - index }}</span>
+                  </td>
+                  <td class="td-date">
+                    <div class="date-stacked">
+                      <span class="date-main">{{ formatDateMain(item.date) }}</span>
+                      <span class="date-year">{{ formatDateYear(item.date) }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Problem -->
+                  <td class="td-problem">
+                    <div class="content-cell">
+                      <span class="cell-text">
+                        {{ isExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 55) }}
                       </span>
                       <button 
-                        v-if="isTextLong(item.problem, 50)" 
+                        v-if="isTextLong(item.problem, 55)" 
                         @click.stop="toggleReadMore(item.id, 'problem')"
-                        class="readmore-btn"
+                        class="cell-read-more"
                       >
-                        {{ isExpanded(item.id, 'problem') ? 'Read Less' : 'Read More' }}
+                        {{ isExpanded(item.id, 'problem') ? 'Less' : 'More' }}
                       </button>
                     </div>
                   </td>
-                  <td class="solution-cell">
-                    <div class="text-with-readmore">
-                      <span :class="{ 'truncated': !isExpanded(item.id, 'solution') && isTextLong(item.solution, 50) }">
-                        {{ isExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 50) }}
+
+                  <!-- Solution -->
+                  <td class="td-solution">
+                    <div class="content-cell">
+                      <span class="cell-text">
+                        {{ isExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 55) }}
                       </span>
                       <button 
-                        v-if="isTextLong(item.solution, 50)" 
+                        v-if="isTextLong(item.solution, 55)" 
                         @click.stop="toggleReadMore(item.id, 'solution')"
-                        class="readmore-btn"
+                        class="cell-read-more"
                       >
-                        {{ isExpanded(item.id, 'solution') ? 'Read Less' : 'Read More' }}
+                        {{ isExpanded(item.id, 'solution') ? 'Less' : 'More' }}
                       </button>
                     </div>
                   </td>
-                  <td class="result-cell">
-                    <div class="text-with-readmore">
-                      <span :class="{ 'truncated': !isExpanded(item.id, 'result') && isTextLong(item.result, 50) }">
-                        {{ isExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 50) }}
+
+                  <!-- Result -->
+                  <td class="td-result">
+                    <div class="content-cell">
+                      <span class="cell-text">
+                        {{ isExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 55) }}
                       </span>
                       <button 
-                        v-if="isTextLong(item.result, 50)" 
+                        v-if="isTextLong(item.result, 55)" 
                         @click.stop="toggleReadMore(item.id, 'result')"
-                        class="readmore-btn"
+                        class="cell-read-more"
                       >
-                        {{ isExpanded(item.id, 'result') ? 'Read Less' : 'Read More' }}
+                        {{ isExpanded(item.id, 'result') ? 'Less' : 'More' }}
                       </button>
                     </div>
                   </td>
-                  <td class="image-cell">
-                    <img v-if="item.beforeImage" :src="item.beforeImage" class="dsi-thumb-premium" @click="openImage(item.beforeImage)" />
-                    <span v-else class="no-image">—</span>
+
+                  <!-- Before Image -->
+                  <td class="td-media">
+                    <div v-if="item.beforeImage" class="table-img-hover" @click="openImage(item.beforeImage)">
+                      <img :src="item.beforeImage" alt="Before" loading="lazy" />
+                      <span class="img-badge before">Before</span>
+                    </div>
+                    <span v-else class="no-img-dash">—</span>
                   </td>
-                  <td class="image-cell">
-                    <img v-if="item.afterImage" :src="item.afterImage" class="dsi-thumb-premium" @click="openImage(item.afterImage)" />
-                    <span v-else class="no-image">—</span>
+
+                  <!-- After Image -->
+                  <td class="td-media">
+                    <div v-if="item.afterImage" class="table-img-hover" @click="openImage(item.afterImage)">
+                      <img :src="item.afterImage" alt="After" loading="lazy" />
+                      <span class="img-badge after">After</span>
+                    </div>
+                    <span v-else class="no-img-dash">—</span>
                   </td>
-                  <td class="date-cell">
-                    <i class="fas fa-calendar-alt"></i> {{ formatDate(item.date) }}
-                  </td>
-                  <td class="status-cell">
-                    <span :class="['status-badge-premium', getStatusClass(item.status)]">
+
+                  <!-- Status -->
+                  <td class="td-status">
+                    <span :class="['status-pill-badge', getStatusClass(item.status)]">
                       <i :class="getStatusIcon(item.status)"></i>
                       {{ capitalizeFirstLetter(item.status) }}
                     </span>
                   </td>
-                  <td class="action-cell">
-                    <button class="action-icon delete" @click="deleteDSI(item.id, index)" title="Delete">
+
+                  <!-- Action -->
+                  <td class="td-action">
+                    <button 
+                      class="btn-table-delete" 
+                      @click="deleteDSI(item.id, index)" 
+                      title="Delete this DSI record"
+                    >
                       <i class="fas fa-trash-alt"></i>
                     </button>
                   </td>
                 </tr>
-
-                <!-- Desktop Empty State -->
-                <tr v-if="filteredDsiList.length === 0" class="empty-row">
-                  <td colspan="9">
-                    <div class="empty-state-premium">
-                      <i class="fas fa-lightbulb"></i>
-                      <h4>No Improvements Yet</h4>
-                      <p>Submit your first DSI using the form above</p>
-                    </div>
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       </div>
     </div>
 
-    <!-- All DSI Popup Modal - Mobile Optimized -->
-    <div v-if="showAllDsiPopup" class="modal-premium" @click.self="closeAllDsiPopup">
-      <div class="modal-premium-container xlarge" :class="{ 'mobile-modal': isMobile }">
-        <div class="modal-premium-header">
-          <div class="modal-icon">
-            <i class="fas fa-list-alt"></i>
-          </div>
-          <h2>All DSI</h2>
-          <button class="modal-close" @click="closeAllDsiPopup">×</button>
-        </div>
-        <div class="modal-premium-body">
-          <!-- Mobile Modal View -->
-          <div class="modal-mobile-cards" v-if="isMobile">
-            <div v-for="(item, i) in dsiList" :key="i" class="dsi-modal-card">
-              <div class="modal-card-header">
-                <span class="modal-user">{{ item.user || 'Me' }}</span>
-                <span :class="['status-badge-mobile', getStatusClass(item.status)]">
-                  <i :class="getStatusIcon(item.status)"></i>
-                  {{ capitalizeFirstLetter(item.status) }}
-                </span>
-              </div>
-              <div class="modal-card-body">
-                <div class="modal-card-item">
-                  <span class="modal-card-label">Problem</span>
-                  <span class="modal-card-text">{{ item.problem || '—' }}</span>
-                </div>
-                <div class="modal-card-item">
-                  <span class="modal-card-label">Solution</span>
-                  <span class="modal-card-text">{{ item.solution || '—' }}</span>
-                </div>
-                <div class="modal-card-item">
-                  <span class="modal-card-label">Result</span>
-                  <span class="modal-card-text">{{ item.result || '—' }}</span>
-                </div>
-                <div class="modal-card-images" v-if="item.beforeImage || item.afterImage">
-                  <div class="modal-card-label">Images</div>
-                  <div class="modal-card-image-row">
-                    <div v-if="item.beforeImage" class="modal-card-image" @click="openImage(item.beforeImage)">
-                      <img :src="item.beforeImage" alt="Before" />
-                      <span>Before</span>
-                    </div>
-                    <div v-if="item.afterImage" class="modal-card-image" @click="openImage(item.afterImage)">
-                      <img :src="item.afterImage" alt="After" />
-                      <span>After</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <!-- All DSI Modal Popup -->
+    <div v-if="showAllDsiPopup" class="modal-backdrop" @click.self="closeAllDsiPopup">
+      <div class="modal-panel animate-scale">
+        <div class="modal-panel-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon-badge"><i class="fas fa-globe"></i></div>
+            <div>
+              <h3>Organization Improvement Feed</h3>
+              <p>All innovation contributions submitted across the company</p>
             </div>
           </div>
+          <button class="btn-modal-close" @click="closeAllDsiPopup" title="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
 
-          <!-- Desktop Modal Table -->
-          <div class="table-wrapper-premium" v-else>
-            <table class="dsi-table-premium">
+        <!-- Modal Search Bar -->
+        <div class="modal-search-row">
+          <div class="modal-search-box">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              v-model="allDsiSearch" 
+              placeholder="Filter company-wide DSI submissions by keyword or author..." 
+            />
+          </div>
+          <span class="records-pill">{{ filteredAllDsiList.length }} Records</span>
+        </div>
+
+        <div class="modal-panel-body">
+          <div v-if="allDsiLoading" class="modal-loading-wrap">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <span>Loading company DSI records...</span>
+          </div>
+
+          <div v-else-if="filteredAllDsiList.length === 0" class="modal-empty-wrap">
+            <i class="fas fa-inbox"></i>
+            <p>No records match your query.</p>
+          </div>
+
+          <div v-else class="modal-table-wrap">
+            <table class="modal-custom-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>User</th>
+                  <th>Contributor</th>
                   <th>Problem</th>
                   <th>Solution</th>
                   <th>Result</th>
@@ -406,96 +675,73 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, i) in dsiList" :key="i" class="dsi-row-premium">
-                  <td class="serial">{{ i + 1 }}</td>
-                  <td class="user-cell">{{ item.user || 'Me' }}</td>
-                  <td class="problem-cell">
-                    <div class="text-with-readmore">
-                      <span :class="{ 'truncated': !isPopupExpanded(item.id, 'problem') && isTextLong(item.problem, 40) }">
-                        {{ isPopupExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 40) }}
-                      </span>
-                      <button 
-                        v-if="isTextLong(item.problem, 40)" 
-                        @click.stop="togglePopupReadMore(item.id, 'problem')"
-                        class="readmore-btn"
-                      >
-                        {{ isPopupExpanded(item.id, 'problem') ? 'Read Less' : 'Read More' }}
+                <tr v-for="(item, i) in filteredAllDsiList" :key="item.id || i">
+                  <td class="modal-td-num">{{ i + 1 }}</td>
+                  <td class="modal-td-user">
+                    <div class="user-avatar-badge">
+                      <div class="avatar-circle">{{ getInitials(item.user || item.user_name || 'Emp') }}</div>
+                      <span>{{ item.user || item.user_name || 'Colleague' }}</span>
+                    </div>
+                  </td>
+                  <td class="modal-td-text">
+                    <div class="content-cell">
+                      <span>{{ isPopupExpanded(item.id, 'problem') ? (item.problem || '—') : truncateText(item.problem, 40) }}</span>
+                      <button v-if="isTextLong(item.problem, 40)" @click.stop="togglePopupReadMore(item.id, 'problem')" class="cell-read-more">
+                        {{ isPopupExpanded(item.id, 'problem') ? 'Less' : 'More' }}
                       </button>
                     </div>
                   </td>
-                  <td class="solution-cell">
-                    <div class="text-with-readmore">
-                      <span :class="{ 'truncated': !isPopupExpanded(item.id, 'solution') && isTextLong(item.solution, 40) }">
-                        {{ isPopupExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 40) }}
-                      </span>
-                      <button 
-                        v-if="isTextLong(item.solution, 40)" 
-                        @click.stop="togglePopupReadMore(item.id, 'solution')"
-                        class="readmore-btn"
-                      >
-                        {{ isPopupExpanded(item.id, 'solution') ? 'Read Less' : 'Read More' }}
+                  <td class="modal-td-text">
+                    <div class="content-cell">
+                      <span>{{ isPopupExpanded(item.id, 'solution') ? (item.solution || '—') : truncateText(item.solution, 40) }}</span>
+                      <button v-if="isTextLong(item.solution, 40)" @click.stop="togglePopupReadMore(item.id, 'solution')" class="cell-read-more">
+                        {{ isPopupExpanded(item.id, 'solution') ? 'Less' : 'More' }}
                       </button>
                     </div>
                   </td>
-                  <td class="result-cell">
-                    <div class="text-with-readmore">
-                      <span :class="{ 'truncated': !isPopupExpanded(item.id, 'result') && isTextLong(item.result, 40) }">
-                        {{ isPopupExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 40) }}
-                      </span>
-                      <button 
-                        v-if="isTextLong(item.result, 40)" 
-                        @click.stop="togglePopupReadMore(item.id, 'result')"
-                        class="readmore-btn"
-                      >
-                        {{ isPopupExpanded(item.id, 'result') ? 'Read Less' : 'Read More' }}
+                  <td class="modal-td-text">
+                    <div class="content-cell">
+                      <span>{{ isPopupExpanded(item.id, 'result') ? (item.result || '—') : truncateText(item.result, 40) }}</span>
+                      <button v-if="isTextLong(item.result, 40)" @click.stop="togglePopupReadMore(item.id, 'result')" class="cell-read-more">
+                        {{ isPopupExpanded(item.id, 'result') ? 'Less' : 'More' }}
                       </button>
                     </div>
                   </td>
-                  <td class="image-cell">
-                    <img v-if="item.beforeImage" :src="item.beforeImage" class="dsi-thumb-premium" @click="openImage(item.beforeImage)" />
-                    <span v-else class="no-image">—</span>
+                  <td class="modal-td-media">
+                    <img v-if="item.beforeImage" :src="item.beforeImage" class="mini-thumb" @click="openImage(item.beforeImage)" alt="Before" />
+                    <span v-else class="no-img-dash">—</span>
                   </td>
-                  <td class="image-cell">
-                    <img v-if="item.afterImage" :src="item.afterImage" class="dsi-thumb-premium" @click="openImage(item.afterImage)" />
-                    <span v-else class="no-image">—</span>
+                  <td class="modal-td-media">
+                    <img v-if="item.afterImage" :src="item.afterImage" class="mini-thumb" @click="openImage(item.afterImage)" alt="After" />
+                    <span v-else class="no-img-dash">—</span>
                   </td>
-                  <td class="date-cell">
-                    <i class="fas fa-calendar-alt"></i> {{ formatDate(item.date) }}
-                  </td>
-                  <td class="status-cell">
-                    <span :class="['status-badge-premium', getStatusClass(item.status)]">
-                      <i :class="getStatusIcon(item.status)"></i>
+                  <td class="modal-td-date">{{ formatDate(item.date) }}</td>
+                  <td class="modal-td-status">
+                    <span :class="['status-pill-badge', getStatusClass(item.status)]">
                       {{ capitalizeFirstLetter(item.status) }}
                     </span>
-                  </td>
-                </tr>
-                <tr v-if="dsiList.length === 0" class="empty-row">
-                  <td colspan="9">
-                    <div class="empty-state-premium">
-                      <i class="fas fa-inbox"></i>
-                      <p>No DSI records found</p>
-                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="modal-premium-footer" :class="{ 'mobile-footer': isMobile }">
-          <button class="btn-primary-modern" @click="closeAllDsiPopup">
-            <i class="fas fa-check"></i> Close
+
+        <div class="modal-panel-footer">
+          <button class="btn-modal-done" @click="closeAllDsiPopup">
+            <i class="fas fa-check"></i> Done
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Image Modal -->
-    <div v-if="previewImage" class="modal-premium image-modal" @click.self="previewImage = null">
-      <div class="image-modal-content" @click.stop>
-        <button class="image-close-btn" @click="previewImage = null">
+    <!-- Image Lightbox Modal -->
+    <div v-if="previewImage" class="lightbox-backdrop" @click="previewImage = null">
+      <div class="lightbox-panel animate-scale" @click.stop>
+        <button class="lightbox-close-btn" @click="previewImage = null" title="Close Preview">
           <i class="fas fa-times"></i>
         </button>
-        <img :src="previewImage" alt="Preview" />
+        <img :src="previewImage" alt="DSI Evidence Preview" class="lightbox-full-img" />
       </div>
     </div>
   </div>
@@ -511,19 +757,21 @@ import {
 } from "@/utils/toast.js";
 
 export default {
-  name: "ViewDsi",
+  name: "MyDsi",
   components: {
     Sidebar
   },
   data() {
     return {
+      loading: false,
+      allDsiLoading: false,
       isSubmitting: false,
       showAllDsiPopup: false,
-      username: '',
       isMobile: false,
       isSidebarVisible: true,
       formVisible: true,
       searchQuery: '',
+      allDsiSearch: '',
       statusFilter: '',
       expandedTexts: new Map(),
       popupExpandedTexts: new Map(),
@@ -537,22 +785,41 @@ export default {
         afterImageFile: null,
       },
       dsiList: [],
+      allDsiList: [],
       previewImage: null,
     }
   },
   computed: {
     approvedCount() {
-      return this.dsiList.filter(item => item.status === 'Approved').length;
+      return this.dsiList.filter(item => (item.status || '').toLowerCase() === 'approved').length;
     },
     pendingCount() {
-      return this.dsiList.filter(item => item.status === 'Waiting' || item.status === 'Pending').length;
+      return this.dsiList.filter(item => {
+        const s = (item.status || '').toLowerCase();
+        return s === 'waiting' || s === 'pending' || s === '';
+      }).length;
+    },
+    rejectedCount() {
+      return this.dsiList.filter(item => (item.status || '').toLowerCase() === 'rejected').length;
     },
     filteredDsiList() {
       let filtered = this.dsiList;
       
+      // Status filter
+      if (this.statusFilter && this.statusFilter !== 'all') {
+        const target = this.statusFilter.toLowerCase();
+        filtered = filtered.filter(item => {
+          const s = (item.status || '').toLowerCase();
+          if (target === 'waiting' || target === 'pending') {
+            return s === 'waiting' || s === 'pending' || s === '';
+          }
+          return s === target;
+        });
+      }
+
       // Search filter
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
+      if (this.searchQuery && this.searchQuery.trim()) {
+        const query = this.searchQuery.toLowerCase().trim();
         filtered = filtered.filter(item => 
           (item.problem && item.problem.toLowerCase().includes(query)) ||
           (item.solution && item.solution.toLowerCase().includes(query)) ||
@@ -560,12 +827,20 @@ export default {
         );
       }
       
-      // Status filter
-      if (this.statusFilter && this.statusFilter !== 'all') {
-        filtered = filtered.filter(item => item.status === this.statusFilter);
-      }
-      
       return filtered;
+    },
+    filteredAllDsiList() {
+      if (!this.allDsiSearch || !this.allDsiSearch.trim()) {
+        return this.allDsiList;
+      }
+      const q = this.allDsiSearch.toLowerCase().trim();
+      return this.allDsiList.filter(item => 
+        (item.problem && item.problem.toLowerCase().includes(q)) ||
+        (item.solution && item.solution.toLowerCase().includes(q)) ||
+        (item.result && item.result.toLowerCase().includes(q)) ||
+        (item.user && item.user.toLowerCase().includes(q)) ||
+        (item.user_name && item.user_name.toLowerCase().includes(q))
+      );
     }
   },
   mounted() {
@@ -581,13 +856,16 @@ export default {
     window.removeEventListener('resize', this.checkIfMobile);
   },
   methods: {
-    toggleForm() {
-      if (this.isMobile) {
-        this.formVisible = !this.formVisible;
-      }
+    clearFilters() {
+      this.searchQuery = '';
+      this.statusFilter = '';
     },
     filterByStatus(status) {
-      this.statusFilter = this.statusFilter === status ? '' : status;
+      if (status === 'all') {
+        this.statusFilter = '';
+      } else {
+        this.statusFilter = this.statusFilter === status ? '' : status;
+      }
     },
     getExpandKey(id, field) {
       return `${id}_${field}`;
@@ -623,15 +901,15 @@ export default {
     },
     getStatusClass(status) {
       const s = (status || '').toLowerCase();
-      if (s === 'approved') return 'approved';
-      if (s === 'rejected') return 'rejected';
-      return 'pending';
+      if (s === 'approved') return 'status-approved';
+      if (s === 'rejected') return 'status-rejected';
+      return 'status-pending';
     },
     getStatusIcon(status) {
       const s = (status || '').toLowerCase();
       if (s === 'approved') return 'fas fa-check-circle';
       if (s === 'rejected') return 'fas fa-times-circle';
-      return 'fas fa-clock';
+      return 'fas fa-hourglass-half';
     },
     formatDate(date) {
       if (!date) return '—';
@@ -645,19 +923,71 @@ export default {
         return '—';
       }
     },
+    formatDateMain(date) {
+      if (!date) return '—';
+      try {
+        return new Date(date).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short'
+        });
+      } catch (e) {
+        return '—';
+      }
+    },
+    formatDateYear(date) {
+      if (!date) return '';
+      try {
+        return new Date(date).getFullYear();
+      } catch (e) {
+        return '';
+      }
+    },
+    getInitials(name) {
+      if (!name) return 'DS';
+      return name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
+    },
     capitalizeFirstLetter(text) {
-      if (!text || typeof text !== 'string') return '—';
+      if (!text || typeof text !== 'string') return 'Pending';
       return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
     },
+    resetForm() {
+      this.newDSI = {
+        problem: '',
+        solution: '',
+        result: '',
+        beforeImage: null,
+        afterImage: null,
+        beforeImageFile: null,
+        afterImageFile: null
+      };
+      if (this.$refs.beforeInput) this.$refs.beforeInput.value = '';
+      if (this.$refs.afterInput) this.$refs.afterInput.value = '';
+    },
+    removeImage(type) {
+      if (type === 'before') {
+        this.newDSI.beforeImage = null;
+        this.newDSI.beforeImageFile = null;
+        if (this.$refs.beforeInput) this.$refs.beforeInput.value = '';
+      } else {
+        this.newDSI.afterImage = null;
+        this.newDSI.afterImageFile = null;
+        if (this.$refs.afterInput) this.$refs.afterInput.value = '';
+      }
+    },
     async deleteDSI(id, index) {
-      if (!confirm('Are you sure you want to delete this DSI?')) return;
+      if (!confirm('Are you sure you want to delete this DSI entry? This action cannot be undone.')) return;
       try {
         await axios.delete(`/api/dsis/${id}`);
         this.dsiList.splice(index, 1);
-        toastSuccess('DSI deleted successfully');
+        toastSuccess('DSI removed successfully.');
       } catch (error) {
-        console.error(error);
-        toastError('Failed to delete DSI');
+        console.error('Delete error:', error);
+        toastError('Failed to delete DSI item.');
       }
     },
     async openAllDsiPopup() {
@@ -665,23 +995,42 @@ export default {
       await this.fetchAllDSI();
     },
     async fetchAllDSI() {
+      this.allDsiLoading = true;
       try {
         const res = await axios.get('/api/dsis/all');
-        this.dsiList = res.data;
+        const fixUrl = (url) => url ? url.replace('/api/backend', '/backend') : null;
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        this.allDsiList = list.map(dsi => ({
+          id: dsi.id,
+          problem: dsi.problem || '',
+          solution: dsi.solution || '',
+          result: dsi.result || '',
+          beforeImage: fixUrl(dsi.before_image),
+          afterImage: fixUrl(dsi.after_image),
+          date: dsi.created_at,
+          status: dsi.status || 'Waiting',
+          user: dsi.user_name || dsi.user || 'Team Member'
+        }));
       } catch (e) {
-        toastError('Failed to load DSI');
+        console.error('Failed to load all DSIs:', e);
+        toastError('Failed to load organizational DSI records.');
+      } finally {
+        this.allDsiLoading = false;
       }
     },
     closeAllDsiPopup() {
       this.showAllDsiPopup = false;
+      this.allDsiSearch = '';
       this.popupExpandedTexts.clear();
       this.popupExpandedTexts = new Map();
     },
     async loadDSIs() {
+      this.loading = true;
       try {
         const res = await axios.get('/api/dsis');
         const fixUrl = (url) => url ? url.replace('/api/backend', '/backend') : null;
-        this.dsiList = res.data.map(dsi => ({
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        this.dsiList = list.map(dsi => ({
           id: dsi.id,
           problem: dsi.problem || '',
           solution: dsi.solution || '',
@@ -694,22 +1043,24 @@ export default {
         }));
       } catch (error) {
         console.error('Failed to load DSIs:', error);
-        toastError('Failed to load improvements');
+        toastError('Failed to load your improvements.');
+      } finally {
+        this.loading = false;
       }
     },
     async addDSI() {
       if (this.isSubmitting) return;
-      if (!this.newDSI.problem || !this.newDSI.solution || !this.newDSI.result) {
-        toastWarning('Please fill all fields');
+      if (!this.newDSI.problem.trim() || !this.newDSI.solution.trim() || !this.newDSI.result.trim()) {
+        toastWarning('Please fill in Problem, Solution, and Result.');
         return;
       }
 
       this.isSubmitting = true;
       try {
         const formData = new FormData();
-        formData.append('problem', this.newDSI.problem);
-        formData.append('solution', this.newDSI.solution);
-        formData.append('result', this.newDSI.result);
+        formData.append('problem', this.newDSI.problem.trim());
+        formData.append('solution', this.newDSI.solution.trim());
+        formData.append('result', this.newDSI.result.trim());
         if (this.newDSI.beforeImageFile) formData.append('before_image', this.newDSI.beforeImageFile);
         if (this.newDSI.afterImageFile) formData.append('after_image', this.newDSI.afterImageFile);
 
@@ -718,33 +1069,38 @@ export default {
         });
 
         const fixUrl = (url) => url ? url.replace('/api/backend', '/backend') : null;
+        const rawDsi = res.data?.dsi || res.data;
         const newDsi = {
-          id: res.data.dsi.id,
-          problem: res.data.dsi.problem || '',
-          solution: res.data.dsi.solution || '',
-          result: res.data.dsi.result || '',
-          beforeImage: fixUrl(res.data.dsi.before_image),
-          afterImage: fixUrl(res.data.dsi.after_image),
-          date: res.data.dsi.created_at,
-          status: res.data.dsi.status || 'Waiting'
+          id: rawDsi.id || Date.now(),
+          problem: rawDsi.problem || this.newDSI.problem,
+          solution: rawDsi.solution || this.newDSI.solution,
+          result: rawDsi.result || this.newDSI.result,
+          beforeImage: fixUrl(rawDsi.before_image) || this.newDSI.beforeImage,
+          afterImage: fixUrl(rawDsi.after_image) || this.newDSI.afterImage,
+          date: rawDsi.created_at || new Date().toISOString(),
+          status: rawDsi.status || 'Waiting'
         };
         this.dsiList.unshift(newDsi);
-        this.newDSI = {
-          problem: '', solution: '', result: '',
-          beforeImage: null, afterImage: null,
-          beforeImageFile: null, afterImageFile: null
-        };
-        toastSuccess('Improvement added successfully!');
+        this.resetForm();
+        toastSuccess('🎉 Improvement submitted successfully!');
       } catch (error) {
-        console.error(error);
-        toastError('Failed to add improvement. Please try again.');
+        console.error('Add DSI error:', error);
+        const msg = error.response?.data?.message || 'Failed to submit improvement. Please try again.';
+        toastError(msg);
       } finally {
         this.isSubmitting = false;
       }
     },
     onImageChange(e, type) {
-      const file = e.target.files[0];
+      const file = e.target.files && e.target.files[0];
       if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        toastWarning('Image size must be under 5MB.');
+        e.target.value = '';
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         if (type === 'before') {
@@ -758,1373 +1114,1712 @@ export default {
       reader.readAsDataURL(file);
     },
     openImage(img) {
-      this.previewImage = img;
+      if (img) {
+        this.previewImage = img;
+      }
     },
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
+      this.isMobile = window.innerWidth <= 860;
       this.isSidebarVisible = !this.isMobile;
-    },
-    toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible;
-    },
-    logout() {
-      const token = localStorage.getItem('token');
-      axios.post('https://employees.archenterprises.co.in/api/logout', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).finally(() => {
-        localStorage.removeItem('token');
-        this.$router.push('/auth');
-      });
     }
   }
 }
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-/* Variables */
-:root {
-  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
-  --primary-color: #667eea;
-  --dark: #1a1a2e;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-}
-
+/* Global Reset & Base */
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 .layout {
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1e293b;
 }
 
-/* Main Content */
 .main-content {
   display: flex;
-  gap: 20px;
-  padding: 20px;
   min-height: 100vh;
+  background: #f8fafc;
 }
 
-.dsi-board-premium {
+.dsi-container {
   flex: 1;
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
-}
-
-/* Mobile Header */
-.mobile-header {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: white;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark);
-  padding: 8px;
-  cursor: pointer;
-}
-
-.mobile-title {
+  padding: 24px 32px;
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--dark);
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
 }
 
-.mobile-title i {
-  color: var(--primary-color);
-}
-
-.mobile-view-all-btn {
-  background: var(--primary);
-  color: white;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mobile-view-all-btn:hover {
-  transform: scale(1.05);
-}
-
-/* Content Header */
-.content-header-modern {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.title-icon {
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.content-header-modern h1 {
-  font-size: 28px;
-  font-weight: 700;
-  background: var(--primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin: 0;
-}
-
-.subtitle-modern {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
-}
-
-.view-all-btn-premium {
-  padding: 10px 22px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.flex-center {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+}
+
+.gap-8 {
   gap: 8px;
 }
 
-.view-all-btn-premium:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+/* ========================================================
+   HERO HEADER
+   ======================================================== */
+.dsi-hero {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #4338ca 100%);
+  border-radius: 24px;
+  padding: 30px;
+  color: #ffffff;
+  box-shadow: 0 20px 40px -15px rgba(49, 46, 129, 0.35);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Stats Bar */
-.stats-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-  margin-bottom: 28px;
+.dsi-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.25) 0%, transparent 70%);
+  pointer-events: none;
 }
 
-.stat-card {
+.hero-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-title-group {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  gap: 18px;
+}
+
+.hero-icon-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fde047;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.hero-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  margin-bottom: 4px;
+}
+
+.hero-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 13.5px;
+  color: #c7d2fe;
+  margin-top: 6px;
+  max-width: 580px;
+  line-height: 1.45;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-hero-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
 }
 
-.stat-card:hover {
+.btn-hero-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 24px rgba(16, 185, 129, 0.45);
 }
 
-.stat-card:active {
-  transform: scale(0.97);
+.btn-hero-secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.stat-card.approved {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-}
-.stat-card.approved i { color: #065f46; }
-
-.stat-card.pending {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-}
-.stat-card.pending i { color: #d97706; }
-
-.stat-card i {
-  font-size: 28px;
-  color: var(--primary-color);
+.btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.stat-info {
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.stat-pill:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.stat-pill.active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.stat-pill-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.stat-pill.total .stat-pill-icon {
+  background: rgba(99, 102, 241, 0.25);
+  color: #c7d2fe;
+}
+
+.stat-pill.approved .stat-pill-icon {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+}
+
+.stat-pill.pending .stat-pill-icon {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fde68a;
+}
+
+.stat-pill.rejected .stat-pill-icon {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.stat-pill-content {
   display: flex;
   flex-direction: column;
 }
 
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a2e;
+.stat-num {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
 }
 
-.stat-label {
-  font-size: 12px;
-  color: #6b7280;
+.stat-txt {
+  font-size: 11.5px;
+  color: #e0e7ff;
+  font-weight: 500;
 }
 
-/* Section Title */
-.section-title-modern {
+/* ========================================================
+   ATTRACTIVE FORM SECTION & STEP CARDS
+   ======================================================== */
+.form-section-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.form-section-header {
+  padding: 18px 24px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
-  font-weight: 600;
-  font-size: 16px;
-  color: #1a1a2e;
+  align-items: center;
+  cursor: pointer;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  user-select: none;
 }
 
-.title-left {
+.form-section-header:hover {
+  background: #f8fafc;
+}
+
+.header-tagline {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
-.section-title-modern i {
-  color: var(--primary-color);
+.tag-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  flex-shrink: 0;
 }
 
-.form-toggle {
-  transition: transform 0.3s ease;
+.tag-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
 }
 
-.form-toggle.rotated {
+.tag-desc {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.btn-toggle-form {
+  background: #f1f5f9;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-toggle-form.rotated {
   transform: rotate(180deg);
+  background: #e0e7ff;
+  color: #4338ca;
 }
 
-/* Form Card */
-.form-card-premium {
-  background: linear-gradient(135deg, #f8fafc, #ffffff);
-  border-radius: 24px;
+.form-body-wrapper {
   padding: 24px;
-  margin-bottom: 24px;
-  border: 1px solid #e5e7eb;
+  background: #fcfdfe;
 }
 
-.dsi-form-grid {
+/* 3 Step Cards Grid */
+.steps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 24px;
-  transition: all 0.3s ease;
 }
 
-.dsi-form-grid.form-hidden {
-  display: none;
-}
-
-.form-field {
+.step-card {
+  border-radius: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  transition: all 0.25s ease;
+  min-width: 0; /* Prevents overflow mashing */
 }
 
-.form-field label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+/* Problem Card Theme */
+.step-problem {
+  background: #fff8f8;
+  border: 1.5px solid #fed7d7;
+}
+
+.step-problem:focus-within {
+  border-color: #e53e3e;
+  box-shadow: 0 6px 18px rgba(229, 62, 62, 0.12);
+  background: #ffffff;
+}
+
+.problem-badge {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.problem-textarea:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+/* Solution Card Theme */
+.step-solution {
+  background: #fffdf5;
+  border: 1.5px solid #feebc8;
+}
+
+.step-solution:focus-within {
+  border-color: #dd6b20;
+  box-shadow: 0 6px 18px rgba(221, 107, 32, 0.12);
+  background: #ffffff;
+}
+
+.solution-badge {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.solution-textarea:focus {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
+
+/* Result Card Theme */
+.step-result {
+  background: #f6fdf9;
+  border: 1.5px solid #c6f6d5;
+}
+
+.step-result:focus-within {
+  border-color: #38a169;
+  box-shadow: 0 6px 18px rgba(56, 161, 105, 0.12);
+  background: #ffffff;
+}
+
+.result-badge {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.result-textarea:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+/* Step Card Header */
+.step-card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.form-field label i {
-  color: var(--primary-color);
-}
-
-.dsi-textarea-premium {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 14px;
-  font-size: 13px;
-  resize: vertical;
-  font-family: inherit;
-  transition: all 0.3s ease;
-}
-
-.dsi-textarea-premium:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-/* Image Upload */
-.image-upload-section {
-  grid-column: span 3;
-}
-
-.image-upload-row-premium {
-  display: flex;
-  gap: 16px;
-}
-
-.image-upload-card-premium {
-  flex: 1;
-  min-height: 100px;
-  border: 2px dashed #e5e7eb;
-  border-radius: 16px;
-  cursor: pointer;
+.step-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f9fafb;
-  transition: all 0.3s ease;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.step-number {
+  font-size: 12px;
+}
+
+.step-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.step-subtitle {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.image-upload-card-premium.has-image {
-  border: 2px solid var(--primary-color);
+.req-indicator {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
-.image-upload-card-premium:hover {
-  background: #f3f4f6;
+/* Step Card Body & Textarea */
+.step-card-body {
+  width: 100%;
 }
 
-.upload-placeholder-premium {
+.step-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1e293b;
+  background: #ffffff;
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.45;
+  transition: all 0.2s ease;
+}
+
+.step-textarea::placeholder {
+  color: #94a3b8;
+  font-size: 12.5px;
+}
+
+.step-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: #64748b;
+  padding-top: 2px;
+}
+
+.step-card-footer .hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+}
+
+.step-card-footer .counter {
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.step-card-footer .counter-full {
+  color: #dc2626;
+}
+
+/* ========================================================
+   MEDIA UPLOAD SECTION
+   ======================================================== */
+.media-upload-wrapper {
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.media-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.media-head-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.media-icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e0e7ff;
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.media-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.media-subtitle {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.optional-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.media-boxes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.media-box {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  min-height: 140px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.media-box:hover {
+  border-color: #818cf8;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.08);
+}
+
+.media-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  font-size: 24px;
-  color: #9ca3af;
+  justify-content: center;
+  gap: 10px;
+  padding: 22px;
+  cursor: pointer;
+  text-align: center;
+  height: 100%;
 }
 
-.upload-placeholder-premium span {
-  font-size: 12px;
-  font-weight: 500;
+.media-action-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
 }
 
-.upload-preview-premium {
+.before-circle {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.after-circle {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.media-drop-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.media-drop-sub {
+  display: block;
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.btn-browse-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.before-pill {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.after-pill {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.media-preview-container {
+  width: 100%;
+  height: 150px;
+  position: relative;
+}
+
+.media-preview-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.form-actions {
+.media-preview-glass-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 60%);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 10px 14px;
+}
+
+.tag-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.before-tag-pill {
+  background: #4f46e5;
+}
+
+.after-tag-pill {
+  background: #10b981;
+}
+
+.media-ctrl-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-ctrl {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.btn-ctrl.view-btn {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+}
+
+.btn-ctrl.delete-btn {
+  background: #ef4444;
+}
+
+.btn-ctrl:hover {
+  transform: scale(1.1);
+}
+
+/* Form Action Footer */
+.form-footer-action-bar {
   display: flex;
   justify-content: flex-end;
-  transition: all 0.3s ease;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
 }
 
-.form-actions.form-hidden {
-  display: none;
-}
-
-.btn-submit-premium {
-  padding: 10px 24px;
-  background: var(--primary);
+.btn-clear-form {
+  background: #f1f5f9;
   border: none;
   border-radius: 12px;
-  color: white;
-  font-weight: 600;
+  padding: 12px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-form:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-submit-gradient {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+  transition: all 0.25s ease;
 }
 
-.btn-submit-premium:hover:not(:disabled) {
+.btn-submit-gradient:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.45);
 }
 
-.btn-submit-premium:disabled {
-  opacity: 0.6;
+.btn-submit-gradient:disabled {
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
-/* Search Bar - Mobile */
-.search-bar-mobile {
-  display: none;
-  margin-bottom: 16px;
+/* ========================================================
+   DIRECTORY / LISTING SECTION
+   ======================================================== */
+.listing-section-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
 }
 
-.search-group-mobile {
+.listing-toolbar {
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.toolbar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #e0e7ff;
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.toolbar-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.toolbar-desc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input-wrapper {
   position: relative;
-  flex: 1;
+  min-width: 260px;
 }
 
-.search-group-mobile i {
+.search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
-}
-
-.search-input-mobile {
-  width: 100%;
-  padding: 10px 12px 10px 38px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  background: white;
-  transition: all 0.3s ease;
-}
-
-.search-input-mobile:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-/* Table Card */
-.table-card-premium {
-  background: white;
-  border-radius: 24px;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-
-.table-header-premium {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.table-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.record-count-mobile {
-  background: var(--primary);
-  color: white;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  margin-left: 4px;
-}
-
-.table-wrapper-premium {
-  overflow-x: auto;
-}
-
-/* Mobile Cards */
-.mobile-cards {
-  display: none;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-}
-
-.dsi-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.card-status {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.status-badge-mobile {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-badge-mobile.approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge-mobile.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge-mobile.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.card-date {
-  font-size: 11px;
-  color: #6b7280;
-}
-
-.card-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn-mobile {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn-mobile.delete {
-  background: #fee2e2;
-  color: var(--danger);
-}
-
-.action-btn-mobile.delete:active {
-  transform: scale(0.9);
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.card-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.card-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-text {
-  font-size: 13px;
-  color: var(--dark);
-  line-height: 1.5;
-}
-
-.card-text .truncated {
-  display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.card-images {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.card-image-row {
-  display: flex;
-  gap: 10px;
-}
-
-.card-image-item {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid #e5e7eb;
-  transition: all 0.3s ease;
-}
-
-.card-image-item:hover {
-  transform: scale(1.05);
-}
-
-.card-image-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.card-image-item .image-label {
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 9px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-/* Empty State Mobile */
-.empty-state-mobile {
-  text-align: center;
-  padding: 40px 20px;
-  color: #9ca3af;
-}
-
-.empty-state-mobile i {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-state-mobile h4 {
-  font-size: 16px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.empty-state-mobile p {
+  color: #94a3b8;
   font-size: 13px;
 }
 
-/* Desktop Table */
-.dsi-table-premium {
+.search-field {
   width: 100%;
-  border-collapse: collapse;
-  min-width: 1000px;
-}
-
-.dsi-table-premium thead {
+  padding: 9px 32px 9px 34px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: inherit;
   background: #f8fafc;
-}
-
-.dsi-table-premium th {
-  text-align: left;
-  padding: 14px 12px;
-  font-weight: 600;
-  font-size: 13px;
-  color: #6b7280;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.dsi-table-premium td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 13px;
-  vertical-align: middle;
-}
-
-.dsi-row-premium {
-  transition: all 0.3s ease;
-}
-
-.dsi-row-premium:hover {
-  background: #fafbfc;
-}
-
-.serial {
-  font-weight: 600;
-  color: #9ca3af;
-  width: 50px;
-}
-
-/* Read More Styles */
-.text-with-readmore {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 200px;
-}
-
-.text-with-readmore .truncated {
-  display: inline-block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.readmore-btn {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-  padding: 0;
-  width: fit-content;
   transition: all 0.2s ease;
 }
 
-.readmore-btn:hover {
-  color: #764ba2;
-  text-decoration: underline;
+.search-field:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
-.problem-cell, .solution-cell, .result-cell {
-  max-width: 200px;
-  color: #4b5563;
-}
-
-.image-cell {
-  text-align: center;
-  width: 60px;
-}
-
-.dsi-thumb-premium {
-  width: 45px;
-  height: 45px;
-  border-radius: 10px;
-  object-fit: cover;
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
   cursor: pointer;
-  border: 2px solid #e5e7eb;
-  transition: all 0.3s ease;
-}
-
-.dsi-thumb-premium:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: var(--primary-color);
-}
-
-.no-image {
-  color: #9ca3af;
   font-size: 12px;
 }
 
-.date-cell {
-  font-family: monospace;
+.filter-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.filter-pill {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 8px;
   font-size: 12px;
-  color: #6b7280;
-  white-space: nowrap;
-}
-
-.date-cell i {
-  margin-right: 6px;
-  font-size: 11px;
-}
-
-.status-badge-premium {
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.status-badge-premium.approved {
-  background: #d1fae5;
-  color: #065f46;
+.filter-pill.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.status-badge-premium.rejected {
-  background: #fee2e2;
-  color: #991b1b;
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
-.status-badge-premium.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
+.approved-dot { background: #10b981; }
+.pending-dot { background: #f59e0b; }
+.rejected-dot { background: #ef4444; }
 
-.action-cell {
-  width: 60px;
-}
-
-.action-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
+/* States */
+.state-container {
+  padding: 60px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.action-icon.delete {
-  background: #fee2e2;
-  color: var(--danger);
+.state-icon {
+  font-size: 36px;
+  color: #6366f1;
+  margin-bottom: 14px;
 }
 
-.action-icon.delete:hover {
-  background: #fecaca;
-  transform: translateY(-2px);
+.empty-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 14px;
 }
 
-/* Empty States */
-.empty-state-premium {
+.empty-state h4 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.empty-state p {
+  font-size: 13px;
+  color: #64748b;
+  max-width: 400px;
+}
+
+.btn-clear-filters {
+  margin-top: 14px;
+  background: #e0e7ff;
+  color: #4338ca;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ========================================================
+   DESKTOP TABLE VIEW
+   ======================================================== */
+.desktop-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dsi-modern-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+.dsi-modern-table thead tr {
+  background: #f8fafc;
+}
+
+.dsi-modern-table th {
+  padding: 14px 18px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+
+.th-num { width: 50px; text-align: center; }
+.th-date { width: 90px; }
+.th-problem { width: 22%; }
+.th-solution { width: 22%; }
+.th-result { width: 22%; }
+.th-media { width: 70px; text-align: center; }
+.th-status { width: 110px; text-align: center; }
+.th-action { width: 60px; text-align: center; }
+
+.dsi-table-row {
+  transition: background 0.2s ease;
+}
+
+.dsi-table-row:hover {
+  background: #f8fafc;
+}
+
+.dsi-modern-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+.row-index-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.date-stacked {
+  display: flex;
+  flex-direction: column;
+}
+
+.date-main {
+  font-weight: 800;
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.date-year {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.content-cell {
+  position: relative;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.cell-text {
+  word-break: break-word;
+}
+
+.cell-read-more {
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+/* Image Thumbnails in Table */
+.table-img-hover {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  margin: 0 auto;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.table-img-hover:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+  border-color: #6366f1;
+}
+
+.table-img-hover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 8.5px;
+  font-weight: 800;
   text-align: center;
-  padding: 60px 20px;
-  color: #9ca3af;
+  color: #ffffff;
+  padding: 1px 0;
+  text-transform: uppercase;
 }
 
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+.img-badge.before { background: rgba(79, 70, 229, 0.85); }
+.img-badge.after { background: rgba(16, 185, 129, 0.85); }
+
+.no-img-dash {
+  color: #cbd5e1;
+  text-align: center;
+  display: block;
+  font-size: 16px;
 }
 
-.empty-state-premium h4 {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 8px;
+/* Status Badges */
+.status-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
-.empty-state-premium p {
-  font-size: 14px;
+.status-approved {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
-/* Modal Styles */
-.modal-premium {
+.status-pending {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.btn-table-delete {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-table-delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* ========================================================
+   MOBILE FEED VIEW
+   ======================================================== */
+.mobile-dsi-feed {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-dsi-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.card-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.top-date-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-seq {
+  font-weight: 800;
+  color: #6366f1;
+  font-size: 13px;
+}
+
+.card-date-badge {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.top-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-chip {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-delete-item {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.mobile-sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mobile-section-block {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.section-badge {
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.problem-block .section-badge { color: #dc2626; }
+.solution-block .section-badge { color: #d97706; }
+.result-block .section-badge { color: #16a34a; }
+
+.section-para {
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.btn-read-toggle {
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 0 0 0;
+  text-decoration: underline;
+}
+
+.mobile-photos-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.photo-thumb-wrap {
+  height: 90px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #e2e8f0;
+}
+
+.photo-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-tag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+  color: #ffffff;
+  padding: 2px 0;
+}
+
+/* ========================================================
+   MODAL PANEL (ALL DSI)
+   ======================================================== */
+.modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-panel {
+  background: #ffffff;
+  border-radius: 24px;
   width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  max-width: 1100px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.modal-panel-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #e0e7ff;
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.modal-title-wrap h3 {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.modal-title-wrap p {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.btn-modal-close {
+  background: #f1f5f9;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-modal-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.modal-search-row {
+  padding: 12px 24px;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-search-box {
+  position: relative;
+  flex: 1;
+}
+
+.modal-search-box i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.modal-search-box input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.records-pill {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.modal-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+
+.modal-loading-wrap, .modal-empty-wrap {
+  text-align: center;
+  padding: 50px 20px;
+  color: #64748b;
+}
+
+.modal-loading-wrap i {
+  font-size: 28px;
+  color: #6366f1;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.modal-custom-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.modal-custom-table th {
+  background: #f8fafc;
+  padding: 12px 14px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  border-bottom: 1.5px solid #e2e8f0;
+  text-align: left;
+}
+
+.modal-custom-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12.5px;
+}
+
+.user-avatar-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.modal-panel-footer {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.btn-modal-done {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ========================================================
+   LIGHTBOX MODAL
+   ======================================================== */
+.lightbox-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: 1200;
   padding: 20px;
-  animation: modalBackdropIn 0.3s ease;
 }
 
-@keyframes modalBackdropIn {
-  from { opacity: 0; backdrop-filter: blur(0px); }
-  to { opacity: 1; backdrop-filter: blur(10px); }
-}
-
-.modal-premium-container {
-  background: white;
-  border-radius: 32px;
-  width: 100%;
-  max-width: 1200px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
-}
-
-.modal-premium-container.xlarge { max-width: 1200px; }
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.modal-premium-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px 28px;
-  background: white;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.modal-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-  font-size: 20px;
-}
-
-.modal-premium-header h2 {
-  flex: 1;
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0;
-  color: #1a1a2e;
-}
-
-.modal-close {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #6b7280;
-  font-size: 18px;
-}
-
-.modal-close:hover {
-  background: #e5e7eb;
-  transform: rotate(90deg);
-}
-
-.modal-premium-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px;
-  background: #fafbfc;
-}
-
-.modal-premium-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 28px;
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.btn-primary-modern {
-  padding: 10px 20px;
-  background: var(--primary);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-primary-modern:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-/* Modal Mobile Cards */
-.modal-mobile-cards {
-  display: none;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.dsi-modal-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.modal-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.modal-user {
-  font-weight: 600;
-  color: var(--dark);
-  font-size: 14px;
-}
-
-.modal-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.modal-card-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.modal-card-label {
-  color: #6b7280;
-  font-weight: 500;
-  min-width: 70px;
-}
-
-.modal-card-text {
-  color: var(--dark);
-  text-align: right;
-  word-break: break-word;
-}
-
-.modal-card-images {
-  margin-top: 8px;
-}
-
-.modal-card-image-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.modal-card-image {
-  width: 70px;
-  height: 70px;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid #e5e7eb;
-  position: relative;
-}
-
-.modal-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.modal-card-image span {
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 8px;
-  padding: 1px 6px;
-  border-radius: 3px;
-}
-
-/* Image Modal */
-.image-modal {
-  background: rgba(0, 0, 0, 0.9);
-}
-
-.image-modal-content {
+.lightbox-panel {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
 }
 
-.image-modal-content img {
-  max-width: 100%;
-  max-height: 90vh;
+.lightbox-full-img {
+  max-width: 90vw;
+  max-height: 85vh;
   border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
 }
 
-.image-close-btn {
+.lightbox-close-btn {
   position: absolute;
-  top: -40px;
-  right: 0;
+  top: -14px;
+  right: -14px;
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: white;
+  background: #ffffff;
+  color: #0f172a;
   border: none;
+  font-size: 16px;
   cursor: pointer;
-  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.image-close-btn:hover {
-  background: #f3f4f6;
-  transform: rotate(90deg);
+/* Animations */
+.animate-scale {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.desktop-only {
+  display: inline-block;
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .dsi-form-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 1080px) {
+  .dsi-container {
+    padding: 16px;
   }
-  .image-upload-section {
-    grid-column: span 1;
-  }
-}
 
-@media (max-width: 768px) {
-  .main-content {
-    flex-direction: column;
-    padding: 12px;
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  .dsi-board-premium {
-    padding: 16px;
-    border-radius: 20px;
-  }
-  
-  .mobile-header {
-    display: flex;
-  }
-  
-  .content-header-modern {
-    display: none;
-  }
-  
-  .stats-bar {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-  
-  .stat-card {
-    padding: 12px;
-    flex-direction: column;
-    text-align: center;
-    gap: 6px;
-  }
-  
-  .stat-card i {
-    font-size: 22px;
-  }
-  
-  .stat-value {
-    font-size: 20px;
-  }
-  
-  .stat-label {
-    font-size: 10px;
-  }
-  
-  .form-card-premium {
-    padding: 16px;
-  }
-  
-  .dsi-form-grid {
+
+  .steps-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
-  .image-upload-section {
-    grid-column: span 1;
-  }
-  
-  .image-upload-row-premium {
-    flex-direction: column;
-  }
-  
-  .image-upload-card-premium {
-    min-height: 80px;
-  }
-  
-  .form-actions {
-    justify-content: stretch;
-  }
-  
-  .btn-submit-premium {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .search-bar-mobile {
-    display: block;
-  }
-  
-  .table-container {
-    display: none;
-  }
-  
-  .mobile-cards {
-    display: flex;
-  }
-  
-  .table-header-premium {
-    padding: 12px 16px;
-  }
-  
-  .section-title-modern {
-    font-size: 14px;
-    cursor: pointer;
-  }
-  
-  .table-info {
-    display: none;
-  }
-  
-  .modal-premium-container {
-    max-width: 95%;
-    border-radius: 24px;
-  }
-  
-  .modal-premium-container.mobile-modal {
-    max-height: 90vh;
-  }
-  
-  .modal-premium-header {
-    padding: 16px 20px;
-  }
-  
-  .modal-premium-header h2 {
-    font-size: 17px;
-  }
-  
-  .modal-premium-body {
-    padding: 16px;
-  }
-  
-  .modal-premium-footer {
-    padding: 16px 20px;
-  }
-  
-  .modal-premium-footer.mobile-footer .btn-primary-modern {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .modal-mobile-cards {
-    display: flex;
-  }
-  
-  .table-wrapper-premium {
-    overflow-x: auto;
-  }
 }
 
-@media (max-width: 480px) {
-  .main-content {
-    padding: 8px;
-  }
-  
-  .dsi-board-premium {
-    padding: 12px;
-    border-radius: 16px;
-  }
-  
-  .stats-bar {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  
-  .stat-card {
-    padding: 10px;
-  }
-  
-  .stat-card i {
-    font-size: 18px;
-  }
-  
-  .stat-value {
-    font-size: 17px;
-  }
-  
-  .mobile-title {
-    font-size: 16px;
-  }
-  
-  .mobile-view-all-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-  
-  .dsi-card {
-    padding: 12px;
-  }
-  
-  .card-header {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .card-actions {
-    align-self: flex-end;
-  }
-  
-  .card-image-row {
-    flex-wrap: wrap;
-  }
-  
-  .card-image-item {
-    width: 70px;
-    height: 70px;
-  }
-  
-  .modal-card-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-  
-  .modal-card-text {
-    text-align: left;
-  }
-  
-  .dsi-modal-card {
-    padding: 12px;
-  }
-  
-  .dsi-textarea-premium {
-    font-size: 15px;
-  }
-  
-  .search-input-mobile {
-    font-size: 15px;
-    padding: 8px 10px 8px 34px;
-  }
-}
-
-/* Utility Classes */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .desktop-only {
-    display: none !important;
+    display: none;
   }
-}
 
-@media (min-width: 769px) {
-  .mobile-only {
-    display: none !important;
+  .hero-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .media-boxes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-controls {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+  }
+
+  .filter-pills-row {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>

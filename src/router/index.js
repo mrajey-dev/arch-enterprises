@@ -41,9 +41,8 @@ import Report from '../views/employee/Report.vue'
 import FollowUp from '../views/employee/FollowUp.vue'
 import AmcRecord from '../views/employee/AmcRecord.vue'
 
-import ViewAllPo from '../views/employee/ViewAllPo.vue'
 import EmpWorkReport from '../views/employee/EmpWorkReport.vue'
-import RequestDeskemp from '../views/employee/Request.vue'
+import RequestDeskemp from '../views/employee/request.vue'
 import ResourceBookingEmp from '../views/employee/ResourceBooking.vue'
 import ArchCalendarEmp from '../views/employee/ArchCalendarEmp.vue'
 import LiteraTure from '../views/employee/LiteraTure.vue'
@@ -73,6 +72,7 @@ import WeeklyWorkingSchedule from '../views/employee/WeeklyWorkingSchedule.vue'
 import AmcVisitsPage from '../views/employee/AmcVisitsPage.vue'
 import ServiceOrdersPage from '../views/employee/ServiceOrdersPage.vue'
 import MaterialSupplyPage from '../views/employee/MaterialSupplyPage.vue'
+import ViewAllPo from '../views/employee/ViewAllPo.vue'
 import SiteOwnership from '../views/employee/SiteOwnership.vue'
 
 const routes = [
@@ -213,7 +213,7 @@ const routes = [
   { path: '/employee/visitschedule', name: 'VisitSchedule', component: VisitSchedule, meta: { requiresAuth: true } },
   { path: '/employee/MobileAppLifeCycle', name: 'MobileAppLifeCycle', component: () => import('../views/employee/MobileAppLifeCycle.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   { path: '/employee/SpinTheWheel', name: 'SpinTheWheel', component: () => import('../views/employee/SpinTheWheel.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
-  { path: '/employee/Request', name: 'RequestDeskemp', component: RequestDeskemp, meta: { requiresAuth: true } },
+  { path: '/employee/request', alias: '/employee/Request', name: 'RequestDeskemp', component: RequestDeskemp, meta: { requiresAuth: true } },
   { path: '/employee/Resourcebooking', name: 'ResourceBookingEmp', component: ResourceBookingEmp, meta: { requiresAuth: true } },
   {
     path: '/employee/followup',

@@ -28,6 +28,7 @@
           
           <li @click="goTo('rcahelp')">
             <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
+            <span v-if="notifCounts.chat > 0" class="sidebar-item-badge">{{ notifCounts.chat }}</span>
           </li>
           
           <li @click="goTo('ScheduleMeeting')">
@@ -38,6 +39,7 @@
           <li class="dropdown">
             <div class="" @click="toggleDropdown">
               <i class="fas fa-calendar-alt"></i> <span>Leaves</span>
+              <span v-if="notifCounts.leaves > 0" class="sidebar-item-badge warning">{{ notifCounts.leaves }}</span>
               <i class="fas fa-caret-down" style="margin-left:auto;"></i>
             </div>
       
@@ -53,6 +55,7 @@
               </li>
               <li @click="goTo('pendingleaves')">
                 <i class="fas fa-hourglass-half"></i><span> Pending Leaves</span>
+                <span v-if="notifCounts.leaves > 0" class="sidebar-item-badge warning sub">{{ notifCounts.leaves }}</span>
               </li>
             </ul>
           </li>
@@ -75,6 +78,7 @@
 
           <li @click="goTo('requestdesk')">
             <i class="fas fa-headset"></i> <span>Request Desk</span>
+            <span v-if="notifCounts.request_desk > 0" class="sidebar-item-badge success">{{ notifCounts.request_desk }}</span>
           </li>
 
           <li @click="goTo('recruitmentsection')">
@@ -89,6 +93,7 @@
           
           <li @click="goTo('empdsi')">
             <i class="fas fa-tasks"></i> <span>View DSI</span>
+            <span v-if="notifCounts.dsi > 0" class="sidebar-item-badge info">{{ notifCounts.dsi }}</span>
           </li>
            
           <li @click="goTo('performance')">
@@ -485,7 +490,14 @@ export default {
       reviewStars: 0,
       performanceScore: null,
       performanceScoreDisplay: '',
-      loading: false
+      loading: false,
+      notifCounts: {
+        leaves: 0,
+        request_desk: 0,
+        dsi: 0,
+        chat: 0,
+        resource_bookings: 0
+      }
     }
   },
   watch: {
@@ -991,6 +1003,28 @@ export default {
         this.loading = false;
 
       }, 1000);
+    },
+
+    async fetchNotifCounts() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const headers = { Authorization: `Bearer ${token}` };
+      const endpoints = [
+        '/admin/notifications/summary',
+        '/api/admin/notifications/summary',
+        'https://employees.archenterprises.co.in/api/admin/notifications/summary'
+      ];
+      for (const ep of endpoints) {
+        try {
+          const res = await axios.get(ep, { headers });
+          if (res && res.data && res.data.counts) {
+            this.notifCounts = res.data.counts;
+            break;
+          }
+        } catch (e) {
+          // try next
+        }
+      }
     }
   },
   
@@ -1000,6 +1034,7 @@ export default {
       this.currentTheme
     );
     this.fetchAdmin();
+    this.fetchNotifCounts();
     const token = localStorage.getItem('token');
     if (!token) {
       this.$router.push('/auth');
@@ -1141,6 +1176,36 @@ export default {
 .dropdown-menu {
   margin-top: 6px;
   padding-left: 10px;
+}
+
+.sidebar-item-badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-item-badge.warning {
+  background: #f59e0b;
+}
+
+.sidebar-item-badge.success {
+  background: #10b981;
+}
+
+.sidebar-item-badge.info {
+  background: #3b82f6;
+}
+
+.sidebar-item-badge.sub {
+  font-size: 10px;
+  padding: 1px 6px;
 }
 
 .dropdown-menu li {

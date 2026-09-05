@@ -257,17 +257,23 @@ export default {
     },
     findOverlapMessage() {
       if (!this.form.fromDate || !this.form.toDate) return '';
-      const clash = this.leaveRequests.find(lv =>
-        this.isMine(lv) &&
-        new Date(lv.fromDate) <= new Date(this.form.toDate) &&
-        new Date(this.form.fromDate) <= new Date(lv.toDate)
-      );
-      return clash ? `⚠️ You already have a leave from ${clash.fromDate} to ${clash.toDate}` : '';
+      const start = new Date(this.form.fromDate);
+      const end = new Date(this.form.toDate);
+      const clash = this.leaveRequests.find(lv => {
+        if (!this.isMine(lv)) return false;
+        const status = (lv.status || '').toLowerCase().trim();
+        if (status === 'rejected') return false;
+
+        const lvFrom = new Date(lv.fromDate || lv.from_date);
+        const lvTo = new Date(lv.toDate || lv.to_date);
+        return lvFrom <= end && start <= lvTo;
+      });
+      return clash ? `⚠️ You already have a leave request from ${clash.fromDate || clash.from_date} to ${clash.toDate || clash.to_date} (${clash.status || 'Pending'})` : '';
     },
 
     async checkLeaveBalance() {
       if (this.isHalfDay) {
-        const casualRemaining = this.baseAllowances.casual - (this.usedLeaves.casual || 0);
+        const casualRemaining = (this.baseAllowances.casual || 7) - (this.usedLeaves.casual || 0);
         if (casualRemaining < 0.5) {
           this.submitError = `❌ You have only ${casualRemaining} casual leave left. Half-day requires 0.5 casual leave.`;
         } else {
@@ -283,7 +289,7 @@ export default {
       const { fromDate, toDate, leaveType } = this.form;
       if (!fromDate || !toDate || !leaveType) return;
 
-      let leaveKey = (leaveType || '').toLowerCase().replace(' leave', '');
+      let leaveKey = (leaveType || '').toLowerCase().replace(' leave', '').trim();
       if (leaveKey === 'medical') {
         leaveKey = 'sick';
       }
@@ -301,14 +307,14 @@ export default {
         const user = res.data;
 
         const usedMap = {
-          casual: user.cl_leave_used || 0,
-          pl: user.pl_leave_used || 0,
-          sick: user.sl_leave_used || 0,
+          casual: Number(user.cl_leave_used) || 0,
+          pl: Number(user.pl_leave_used) || 0,
+          sick: Number(user.sl_leave_used) || 0,
         };
 
         const totalAllowed = this.baseAllowances[leaveKey] || 0;
         const alreadyUsed = usedMap[leaveKey] || 0;
-        const remaining = totalAllowed - alreadyUsed;
+        const remaining = Math.max(0, totalAllowed - alreadyUsed);
 
         this.leaveWarning = `⚠️ You have ${remaining} ${this.beautify(leaveKey)} leave(s) remaining out of ${totalAllowed}.`;
 
@@ -318,8 +324,13 @@ export default {
           this.submitError = '';
         }
       } catch (err) {
-        console.error('Error checking leave balance:', err);
-        this.submitError = 'Unable to verify leave balance. Please try again.';
+        console.warn('Could not verify leave balance via API, using local balance:', err);
+        const totalAllowed = this.baseAllowances[leaveKey] || 0;
+        const alreadyUsed = this.usedLeaves[leaveKey] || 0;
+        const remaining = Math.max(0, totalAllowed - alreadyUsed);
+        if (totalSelectedDays > remaining) {
+          this.submitError = `❌ You have only ${remaining} ${this.beautify(leaveKey)} left. Please reduce your date range.`;
+        }
       }
     },
 
@@ -333,9 +344,9 @@ export default {
 
         const totals = { casual: 7, sick: 10, pl: 10 };
         const used = {
-          casual: user.cl_leave_used || 0,
-          sick: user.sl_leave_used || 0,
-          pl: user.pl_leave_used || 0,
+          casual: Number(user.cl_leave_used) || 0,
+          sick: Number(user.sl_leave_used) || 0,
+          pl: Number(user.pl_leave_used) || 0,
         };
 
         const remaining = {};
@@ -354,8 +365,9 @@ export default {
 
     async fetchEarnLeaveCount() {
       try {
+        if (!this.userName) return;
         const token = localStorage.getItem('token');
-        const res = await axios.get(`https://employees.archenterprises.co.in/api/api/earn-leave/${this.userName}`, {
+        const res = await axios.get(`https://employees.archenterprises.co.in/api/api/earn-leave/${encodeURIComponent(this.userName)}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const count = res.data?.count || 0;
@@ -374,16 +386,17 @@ export default {
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch (err) {
-        console.error('Admin email failed:', err);
+        console.warn('Admin email notification note:', err);
       }
     },
 
     daysBetween(startStr, endStr) {
+      if (!startStr || !endStr) return 0;
       const start = new Date(startStr);
       const end = new Date(endStr);
       if (end < start) return 0;
-      const diff = Math.floor((end - start) / 86400000);
-      return diff === 0 ? 1 : diff;
+      const diff = Math.round((end.getTime() - start.getTime()) / 86400000);
+      return diff + 1;
     },
 
     computeLeaveBalance() {
@@ -397,12 +410,14 @@ export default {
         'medical leave': 'sick', medical: 'sick',
       };
 
+      const myName = (this.userName || '').trim().toLowerCase();
+
       this.leaveRequests.forEach(lv => {
-        if ((lv.status || '').toLowerCase().trim() !== 'approved' ||
-            (lv.name || '').trim().toLowerCase() !== this.userName.trim().toLowerCase()) return;
+        const lvName = (lv.name || '').trim().toLowerCase();
+        if ((lv.status || '').toLowerCase().trim() !== 'approved' || lvName !== myName) return;
 
         const leaveType = (lv.leave_type || lv.leaveType || '').toLowerCase();
-        if (leaveType === 'half day' || lv.half_day) {
+        if (leaveType === 'half day' || lv.half_day || lv.is_half_day) {
           used.casual += 0.5;
           remaining.casual -= 0.5;
         } else {
@@ -449,7 +464,7 @@ export default {
         
         const allowances = { casual: 7, sick: 10, pl: 10 };
         this.leaveTypes.forEach(type => {
-          const key = (type.leave_name || '').toLowerCase().replace(' leave', '');
+          const key = (type.leave_name || '').toLowerCase().replace(' leave', '').trim();
           if (key === 'medical') return;
           if (allowances.hasOwnProperty(key)) {
             allowances[key] = parseInt(type.total_leaves) || allowances[key];
@@ -477,9 +492,9 @@ export default {
         this.userName = u.name;
         this.userDept = u.department;
         this.usedLeaves = {
-          casual: u.cl_leave_used || 0,
-          pl: u.pl_leave_used || 0,
-          sick: u.sl_leave_used || 0,
+          casual: Number(u.cl_leave_used) || 0,
+          pl: Number(u.pl_leave_used) || 0,
+          sick: Number(u.sl_leave_used) || 0,
         };
         await this.fetchEarnLeaveCount();
         await this.fetchLeaveBalanceFromDB();
@@ -496,31 +511,30 @@ export default {
       const B = new Date(this.form.toDate);
       return this.leaveRequests.find(lv => {
         if (!this.isMine(lv)) return false;
-        const C = new Date(lv.fromDate);
-        const D = new Date(lv.toDate);
+        const status = (lv.status || '').toLowerCase().trim();
+        if (status === 'rejected') return false;
+        const C = new Date(lv.fromDate || lv.from_date);
+        const D = new Date(lv.toDate || lv.to_date);
         return C <= B && A <= D;
       }) || null;
     },
 
     isMine(lv) {
-      return lv.name === this.userName && lv.department === this.userDept;
+      const lvName = (lv.name || '').trim().toLowerCase();
+      const myName = (this.userName || '').trim().toLowerCase();
+      return lvName === myName && !!myName;
     },
 
     // Handle leave type change
     onLeaveTypeChange() {
-      // Clear date fields when leave type changes
       this.form.fromDate = '';
       this.form.toDate = '';
       this.submitError = '';
       this.leaveWarning = '';
-      
-      // If sick leave, we allow previous dates, so no validation needed
-      // For other leaves, ensure dates are today or future
     },
 
     // Handle date change
     onDateChange() {
-      // For non-sick leaves, validate that dates are not in the past
       if (!this.isSickLeave) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -550,11 +564,37 @@ export default {
         }
       }
       
-      // Clear any previous errors
       this.submitError = '';
     },
 
     async submitForm() {
+      if (!this.form.leaveType) {
+        this.submitError = 'Please select a leave type.';
+        toastWarning(this.submitError);
+        return;
+      }
+
+      if (!this.form.fromDate) {
+        this.submitError = 'Please select from date.';
+        toastWarning(this.submitError);
+        return;
+      }
+
+      if (!this.isHalfDay && !this.form.toDate) {
+        this.submitError = 'Please select to date.';
+        toastWarning(this.submitError);
+        return;
+      }
+
+      if (this.isHalfDay) {
+        this.form.toDate = this.form.fromDate;
+        if (!this.form.timeSlot) {
+          this.submitError = 'Time slot is required for half-day leave.';
+          toastWarning(this.submitError);
+          return;
+        }
+      }
+
       // For non-sick leaves, validate dates are not in the past
       if (!this.isSickLeave) {
         const today = new Date();
@@ -587,6 +627,18 @@ export default {
         return;
       }
 
+      if (!this.isCasualLeave && !this.isHalfDay && !(this.form.reason || '').trim()) {
+        this.submitError = 'Reason is required for this leave type.';
+        toastWarning(this.submitError);
+        return;
+      }
+
+      if (this.form.file && this.form.file.size > 5 * 1024 * 1024) {
+        this.submitError = 'File size exceeds 5MB limit. Please choose a smaller file.';
+        toastWarning(this.submitError);
+        return;
+      }
+
       const overlapMsg = this.findOverlapMessage();
       if (overlapMsg) {
         this.submitError = overlapMsg;
@@ -609,41 +661,57 @@ export default {
       this.submitLoading = true;
       this.submitSuccessMsg = '';
 
-      if (this.isHalfDay) {
-        this.form.toDate = this.form.fromDate;
-        if (!this.form.timeSlot) {
-          this.submitError = 'Time slot is required for half-day leave.';
-          toastWarning(this.submitError);
-          return;
-        }
-      }
-
       try {
         const token = localStorage.getItem('token');
         const fd = new FormData();
-        Object.entries(this.form).forEach(([k, v]) => { if (v) fd.append(k, v); });
-        fd.append('limit_exceeded', isLimitExceeded ? 1 : 0);
-        if (this.isHalfDay) fd.append('half_day', '1');
+        
+        fd.append('name', this.form.name || this.userName || '');
+        fd.append('department', this.form.department || this.userDept || '');
+        fd.append('leaveType', this.form.leaveType);
+        fd.append('fromDate', this.form.fromDate);
+        fd.append('toDate', this.isHalfDay ? this.form.fromDate : this.form.toDate);
+        fd.append('reason', (this.form.reason || '').trim() || `${this.form.leaveType} Application`);
+        
+        if (this.form.file) {
+          fd.append('file', this.form.file);
+        }
+        if (this.form.timeSlot) {
+          fd.append('timeSlot', this.form.timeSlot);
+        }
+        fd.append('limit_exceeded', isLimitExceeded ? '1' : '0');
+        if (this.isHalfDay) {
+          fd.append('is_half_day', '1');
+          fd.append('half_day', '1');
+          fd.append('leave_duration', 'half');
+        } else {
+          fd.append('is_half_day', '0');
+          fd.append('half_day', '0');
+          fd.append('leave_duration', 'full');
+        }
 
         const { data } = await axios.post('https://employees.archenterprises.co.in/api/api/leave-request', fd, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data' 
+          }
         });
 
         if (this.isHalfDay) {
-          await axios.post('https://employees.archenterprises.co.in/api/api/update-cl-leave', {
-            name: this.form.name,
-            department: this.form.department,
-            increment: 0.5,
-          }, { headers: { Authorization: `Bearer ${token}` } });
+          try {
+            await axios.post('https://employees.archenterprises.co.in/api/api/update-cl-leave', {
+              name: this.form.name || this.userName,
+              department: this.form.department || this.userDept,
+              increment: 0.5,
+            }, { headers: { Authorization: `Bearer ${token}` } });
+          } catch (clErr) {
+            console.warn('Could not update CL balance directly:', clErr);
+          }
         }
 
-        if (!this.isCasualLeave && !this.isHalfDay && !this.form.reason.trim()) {
-          this.submitError = 'Reason is required for this leave type.';
-          toastWarning(this.submitError);
-          return;
+        if (data && data.leave_id) {
+          await this.sendAdminNotification(data.leave_id);
         }
 
-        await this.sendAdminNotification(data.leave_id);
         this.submitSuccessMsg = '✅ Leave request submitted successfully!';
         toastSuccess('Leave request submitted successfully!');
         this.resetForm();
@@ -651,15 +719,28 @@ export default {
         await this.fetchLeaveBalanceFromDB();
       } catch (e) {
         console.error('Submit error:', e);
-        this.submitError = 'Failed to process leave request.';
-        toastError('Failed to process leave request.');
+        const errMsg = e.response?.data?.message || 
+                       (e.response?.data?.errors ? Object.values(e.response.data.errors).flat().join(' ') : '') ||
+                       'Failed to process leave request. Please check your inputs and try again.';
+        this.submitError = errMsg;
+        toastError(errMsg);
       } finally {
         this.submitLoading = false;
       }
     },
 
     handleFileUpload(e) { 
-      this.form.file = e.target.files[0]; 
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toastWarning('File size exceeds 5MB limit.');
+        this.submitError = 'File size exceeds 5MB limit. Please upload a smaller file.';
+        e.target.value = '';
+        this.form.file = null;
+        return;
+      }
+      this.submitError = '';
+      this.form.file = file; 
     },
 
     resetForm() {

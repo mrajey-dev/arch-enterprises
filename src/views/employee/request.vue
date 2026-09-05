@@ -1,266 +1,429 @@
 <template>
   <div class="layout">
-
     <div class="main-content">
-      <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <Sidebar />
 
-      <section class="content">
-        <!-- Mobile Header -->
-        <div class="mobile-header" v-if="isMobile">
-        
-          <div class="mobile-title">
-            <i class="fas fa-ticket-alt"></i>
-            <span>Request Desk</span>
-          </div>
-          <div class="mobile-stats-badge">
-            <span>{{ requests.length }}</span>
-          </div>
-        </div>
-
-        <!-- Desktop Header -->
-        <div class="content-header-modern" v-else>
-          <div class="header-left desktop-only">
-            <div class="title-icon">
-              <i class="fas fa-ticket-alt"></i>
-            </div>
-            <div>
-              <h1>Request Desk</h1>
-              <p class="subtitle-modern">Manage and track your requests</p>
-            </div>
-          </div>
-          <div class="stats-badge-header">
-            <i class="fas fa-clipboard-list"></i>
-            <span>{{ requests.length }} Total Requests</span>
-          </div>
-        </div>
-
-        <!-- Stats Bar - Mobile Optimized -->
-        <div class="stats-bar">
-          <div class="stat-card pending" @click="filterByStatus('Pending')">
-            <i class="fas fa-clock"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ statusCounts.Pending }}</span>
-              <span class="stat-label">Pending</span>
-            </div>
-          </div>
-          <div class="stat-card approved" @click="filterByStatus('Approved')">
-            <i class="fas fa-check-circle"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ statusCounts.Approved }}</span>
-              <span class="stat-label">Approved</span>
-            </div>
-          </div>
-          <div class="stat-card rejected" @click="filterByStatus('Rejected')">
-            <i class="fas fa-times-circle"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ statusCounts.Rejected }}</span>
-              <span class="stat-label">Rejected</span>
-            </div>
-          </div>
-          <div class="stat-card completed" @click="filterByStatus('Completed')">
-            <i class="fas fa-check-double"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ statusCounts.Completed }}</span>
-              <span class="stat-label">Completed</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Submit Request Card - Mobile Optimized -->
-        <div class="card-premium">
-          <div class="card-header-premium" @click="toggleForm">
-            <div class="section-title-modern">
-              <div class="title-left">
-                <i class="fas fa-pen-alt"></i>
-                <span>{{ editingId ? 'Edit Request' : 'Submit New Request' }}</span>
+      <div class="request-desk-container">
+        <!-- Hero Header -->
+        <header class="desk-hero">
+          <div class="hero-content">
+            <div class="hero-title-group">
+              <div class="hero-icon-badge">
+                <i class="fas fa-ticket-alt"></i>
               </div>
-              <i class="fas fa-chevron-down form-toggle" :class="{ 'rotated': formVisible }"></i>
-            </div>
-          </div>
-
-          <div class="form-section" :class="{ 'form-hidden': !formVisible }">
-            <div class="form-field">
-              <label><i class="fas fa-tag"></i> Request Type</label>
-              <div class="field-wrapper">
-                <i class="fas fa-file-alt field-icon"></i>
-                <input
-                  type="text"
-                  v-model="form.request_type"
-                  placeholder="e.g., WFO, Asset, HR, IT Support"
-                />
+              <div>
+                <div class="hero-badge">INTERNAL SUPPORT & TICKETING</div>
+                <h1 class="hero-title">Employee Request Desk</h1>
+                <p class="hero-subtitle">Submit, track, and manage administrative, HR, asset, and IT assistance requests.</p>
               </div>
             </div>
 
-            <div class="form-field full-width">
-              <label><i class="fas fa-align-left"></i> Description</label>
-              <div class="field-wrapper">
-                <i class="fas fa-comment field-icon" style="top: 18px;"></i>
-                <textarea
-                  v-model="form.description"
-                  rows="4"
-                  maxlength="250"
-                  placeholder="Provide detailed description of your request..."
-                ></textarea>
-              </div>
-              <div class="char-counter">{{ form.description.length }}/250 characters</div>
-            </div>
-
-            <div class="form-actions">
-              <button class="btn-submit-premium" @click="submitRequest" :disabled="isSubmitting">
-                <span v-if="isSubmitting">
-                  <i class="fas fa-spinner fa-spin"></i> Processing...
-                </span>
-                <span v-else>
-                  <i class="fas fa-paper-plane"></i> {{ editingId ? 'Update' : 'Submit' }}
-                </span>
+            <div class="hero-actions">
+              <button class="btn-hero-secondary" @click="fetchData" :disabled="loading" title="Refresh List">
+                <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
+                <span class="desktop-only">Refresh</span>
+              </button>
+              <button class="btn-hero-primary" @click="openCreateForm">
+                <i class="fas fa-plus-circle"></i>
+                <span>{{ editingId ? 'Edit Mode' : 'New Request' }}</span>
               </button>
             </div>
           </div>
+
+          <!-- Status KPI Metric Cards -->
+          <div class="stats-grid">
+            <div 
+              class="stat-pill total" 
+              :class="{ active: statusFilter === '' || statusFilter === 'all' }"
+              @click="filterByStatus('all')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-clipboard-list"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ requests.length }}</span>
+                <span class="stat-txt">Total Requests</span>
+              </div>
+            </div>
+
+            <div 
+              class="stat-pill pending" 
+              :class="{ active: statusFilter === 'Pending' }"
+              @click="filterByStatus('Pending')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-hourglass-half"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ statusCounts.Pending }}</span>
+                <span class="stat-txt">Pending</span>
+              </div>
+            </div>
+
+            <div 
+              class="stat-pill approved" 
+              :class="{ active: statusFilter === 'Approved' }"
+              @click="filterByStatus('Approved')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-check-circle"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ statusCounts.Approved }}</span>
+                <span class="stat-txt">Approved</span>
+              </div>
+            </div>
+
+            <div 
+              class="stat-pill completed" 
+              :class="{ active: statusFilter === 'Completed' }"
+              @click="filterByStatus('Completed')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-check-double"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ statusCounts.Completed }}</span>
+                <span class="stat-txt">Completed</span>
+              </div>
+            </div>
+
+            <div 
+              class="stat-pill rejected" 
+              :class="{ active: statusFilter === 'Rejected' }"
+              @click="filterByStatus('Rejected')"
+            >
+              <div class="stat-pill-icon"><i class="fas fa-times-circle"></i></div>
+              <div class="stat-pill-content">
+                <span class="stat-num">{{ statusCounts.Rejected }}</span>
+                <span class="stat-txt">Rejected</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Main Form & Overview Section Grid -->
+        <div class="form-and-chart-grid">
+          <!-- Request Form Card -->
+          <section class="form-section-card" ref="formSection">
+            <div class="form-section-header" @click="formVisible = !formVisible">
+              <div class="header-tagline">
+                <div class="tag-icon">
+                  <i :class="editingId ? 'fas fa-pen-to-square' : 'fas fa-paper-plane'"></i>
+                </div>
+                <div>
+                  <h3 class="tag-title">{{ editingId ? 'Edit Your Request' : 'Submit New Request' }}</h3>
+                  <p class="tag-desc">{{ editingId ? 'Update details of your existing request ticket.' : 'Select a category and explain what you require.' }}</p>
+                </div>
+              </div>
+              <button type="button" class="btn-toggle-form" :class="{ rotated: formVisible }">
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </div>
+
+            <transition name="expand">
+              <div v-show="formVisible" class="form-body-wrapper">
+                <form @submit.prevent="submitRequest" class="custom-ticket-form">
+                  
+                  <!-- Request Type -->
+                  <div class="input-block">
+                    <label class="input-label">
+                      <i class="fas fa-tag label-icon"></i>
+                      <span>Request Category / Type</span>
+                      <span class="req-star">*</span>
+                    </label>
+
+                    <div class="input-with-icon">
+                      <i class="fas fa-folder-open field-lead-icon"></i>
+                      <input
+                        type="text"
+                        v-model="form.request_type"
+                        placeholder="e.g., Work From Home, IT Support, Asset, HR Query..."
+                        class="text-input"
+                        required
+                      />
+                    </div>
+
+                    <!-- Suggestion Quick-Pills -->
+                    <div class="quick-types-row">
+                      <span class="quick-hint">Quick Select:</span>
+                      <button 
+                        type="button" 
+                        v-for="type in quickTypes" 
+                        :key="type"
+                        class="quick-type-chip"
+                        :class="{ selected: form.request_type === type }"
+                        @click="form.request_type = type"
+                      >
+                        {{ type }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Description -->
+                  <div class="input-block">
+                    <label class="input-label">
+                      <i class="fas fa-align-left label-icon"></i>
+                      <span>Detailed Request Description</span>
+                      <span class="req-star">*</span>
+                    </label>
+
+                    <div class="input-with-icon textarea-icon-wrap">
+                      <i class="fas fa-comment-dots field-lead-icon textarea-icon"></i>
+                      <textarea
+                        v-model="form.description"
+                        rows="4"
+                        maxlength="250"
+                        placeholder="Provide all relevant details, reason, date requirements, or assets needed..."
+                        class="text-input textarea-field"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div class="input-footer">
+                      <span class="hint-text"><i class="fas fa-shield-alt"></i> Submitted securely to management & HR</span>
+                      <span class="char-count" :class="{ 'char-limit': form.description.length >= 250 }">
+                        {{ form.description.length }}/250
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="form-action-row">
+                    <button 
+                      type="button" 
+                      class="btn-cancel" 
+                      @click="cancelEdit"
+                      v-if="editingId"
+                    >
+                      <i class="fas fa-times"></i> Cancel Edit
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn-reset" 
+                      @click="resetForm" 
+                      :disabled="isSubmitting"
+                      v-else
+                    >
+                      <i class="fas fa-undo"></i> Clear
+                    </button>
+                    <button type="submit" class="btn-submit-gradient" :disabled="isSubmitting">
+                      <span v-if="isSubmitting" class="flex-center gap-8">
+                        <i class="fas fa-circle-notch fa-spin"></i> Processing...
+                      </span>
+                      <span v-else class="flex-center gap-8">
+                        <i :class="editingId ? 'fas fa-save' : 'fas fa-paper-plane'"></i>
+                        {{ editingId ? 'Update Request' : 'Submit Request Ticket' }}
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </transition>
+          </section>
+
+          <!-- Status Analytics Chart Card -->
+          <section class="chart-section-card">
+            <div class="chart-header">
+              <div class="chart-title-wrap">
+                <i class="fas fa-chart-pie chart-icon"></i>
+                <div>
+                  <h4>Status Overview</h4>
+                  <p>Distribution of your ticket statuses</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-content-area">
+              <div v-if="requests.length === 0" class="chart-empty">
+                <i class="fas fa-inbox"></i>
+                <p>No requests recorded yet</p>
+              </div>
+              <div v-show="requests.length > 0" class="chart-canvas-wrap">
+                <canvas ref="statusChart"></canvas>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <!-- Donut Chart Card -->
-        <div class="card-premium">
-          <div class="card-header-premium">
-            <div class="section-title-modern">
-              <i class="fas fa-chart-pie"></i>
-              <span>Status Overview</span>
-            </div>
-          </div>
-          <div class="chart-container">
-            <canvas ref="statusChart"></canvas>
-          </div>
-        </div>
-
-        <!-- My Requests Card -->
-        <div class="card-premium">
-          <div class="card-header-premium">
-            <div class="section-title-modern">
-              <div class="title-left">
-                <i class="fas fa-list-ul"></i>
-                <span>My Requests</span>
-                <span class="record-count-mobile" v-if="isMobile">{{ filteredRequests.length }}</span>
+        <!-- Requests Directory Card -->
+        <section class="listing-section-card">
+          <!-- Filter / Search Toolbar -->
+          <div class="listing-toolbar">
+            <div class="toolbar-title-group">
+              <div class="toolbar-icon"><i class="fas fa-list-check"></i></div>
+              <div>
+                <h3 class="toolbar-title">My Request Tickets</h3>
+                <p class="toolbar-desc">Showing {{ filteredRequests.length }} of {{ requests.length }} total tickets</p>
               </div>
             </div>
-            <div class="table-info desktop-only">
-              <i class="fas fa-file-alt"></i>
-              <span>{{ requests.length }} records</span>
+
+            <div class="toolbar-controls">
+              <!-- Search box -->
+              <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input 
+                  type="text" 
+                  v-model="searchQuery" 
+                  placeholder="Search by type or description..." 
+                  class="search-field"
+                />
+                <button v-if="searchQuery" @click="searchQuery = ''" class="search-clear-btn">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <!-- Status filter pills -->
+              <div class="filter-pills-row">
+                <button 
+                  class="filter-pill" 
+                  :class="{ active: statusFilter === '' || statusFilter === 'all' }"
+                  @click="filterByStatus('all')"
+                >
+                  All
+                </button>
+                <button 
+                  class="filter-pill pill-pending" 
+                  :class="{ active: statusFilter === 'Pending' }"
+                  @click="filterByStatus('Pending')"
+                >
+                  <span class="dot pending-dot"></span> Pending
+                </button>
+                <button 
+                  class="filter-pill pill-approved" 
+                  :class="{ active: statusFilter === 'Approved' }"
+                  @click="filterByStatus('Approved')"
+                >
+                  <span class="dot approved-dot"></span> Approved
+                </button>
+                <button 
+                  class="filter-pill pill-completed" 
+                  :class="{ active: statusFilter === 'Completed' }"
+                  @click="filterByStatus('Completed')"
+                >
+                  <span class="dot completed-dot"></span> Completed
+                </button>
+                <button 
+                  class="filter-pill pill-rejected" 
+                  :class="{ active: statusFilter === 'Rejected' }"
+                  @click="filterByStatus('Rejected')"
+                >
+                  <span class="dot rejected-dot"></span> Rejected
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Mobile Search -->
-          <div class="search-bar-mobile" v-if="isMobile && requests.length > 0">
-            <div class="search-group-mobile">
-              <i class="fas fa-search"></i>
-              <input type="text" v-model="searchQuery" placeholder="Search requests..." class="search-input-mobile" />
-            </div>
+          <!-- Loading State -->
+          <div v-if="loading" class="state-container loading-state">
+            <i class="fas fa-circle-notch fa-spin state-icon"></i>
+            <h4>Loading your requests...</h4>
+            <p>Fetching tickets from server</p>
           </div>
 
-          <!-- Mobile Card View -->
-          <div class="mobile-cards" v-if="isMobile">
-            <div v-for="r in filteredRequests" :key="r.id" class="request-card">
-              <div class="card-header">
-                <div class="card-type">
-                  <span class="request-type-badge-mobile">
-                    <i class="fas fa-tag"></i>
-                    {{ r.request_type }}
+          <!-- Empty State -->
+          <div v-else-if="filteredRequests.length === 0" class="state-container empty-state">
+            <div class="empty-icon-wrap">
+              <i class="fas fa-ticket-alt"></i>
+            </div>
+            <h4>No Request Tickets Found</h4>
+            <p v-if="searchQuery || statusFilter">
+              No tickets match your filter criteria. Try clearing search or status filters.
+            </p>
+            <p v-else>
+              You haven't submitted any requests yet. Use the form above to submit your first ticket!
+            </p>
+            <button v-if="searchQuery || statusFilter" class="btn-clear-filters" @click="clearFilters">
+              <i class="fas fa-filter-circle-xmark"></i> Reset Filters
+            </button>
+          </div>
+
+          <!-- Mobile Cards View -->
+          <div v-else-if="isMobile" class="mobile-feed">
+            <div 
+              v-for="(r, index) in filteredRequests" 
+              :key="r.id || index" 
+              class="mobile-req-card"
+            >
+              <div class="mobile-card-top">
+                <div class="req-badge-group">
+                  <span class="req-type-pill">
+                    <i class="fas fa-tag"></i> {{ r.request_type }}
                   </span>
+                  <span class="req-date"><i class="far fa-calendar-alt"></i> {{ formatDate(r.created_at) }}</span>
                 </div>
-                <div class="card-actions">
-                  <button class="action-btn-mobile edit" @click="editRequest(r)">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="action-btn-mobile delete" @click="deleteRequest(r.id)">
-                    <i class="fas fa-trash-alt"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="card-body">
-                <div class="card-row">
-                  <span class="card-label"><i class="fas fa-align-left"></i> Description</span>
-                  <span class="card-value description-text">{{ r.description || '—' }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label"><i class="fas fa-calendar-alt"></i> Date</span>
-                  <span class="card-value">{{ formatDate(r.created_at) }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label"><i class="fas fa-info-circle"></i> Status</span>
-                  <span :class="['status-badge-mobile', getStatusClass(r.status)]">
-                    <i :class="getStatusIcon(r.status)"></i>
-                    {{ r.status }}
+                
+                <div class="req-status-group">
+                  <span :class="['status-chip', getStatusClass(r.status)]">
+                    <i :class="getStatusIcon(r.status)"></i> {{ r.status }}
                   </span>
+                  <div class="mobile-actions">
+                    <button class="btn-m-action edit" @click="editRequest(r)" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-m-action delete" @click="deleteRequest(r.id)" title="Delete">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Mobile Empty State -->
-            <div v-if="filteredRequests.length === 0" class="empty-state-mobile">
-              <i class="fas fa-inbox"></i>
-              <h4>{{ searchQuery ? 'No Matching Requests' : 'No Requests Found' }}</h4>
-              <p>{{ searchQuery ? 'Try adjusting your search' : 'Submit your first request using the form above' }}</p>
+              <div class="mobile-card-body">
+                <span class="body-label">Description:</span>
+                <p class="body-desc">{{ r.description || '—' }}</p>
+              </div>
             </div>
           </div>
 
-          <!-- Desktop Table View -->
-          <div class="table-wrapper-premium" v-else>
-            <table class="request-table-premium">
+          <!-- Desktop Modern Table View -->
+          <div v-else class="desktop-table-container">
+            <table class="modern-desk-table">
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                  <th>Actions</th>
+                  <th class="th-num">#</th>
+                  <th class="th-type">Request Type</th>
+                  <th class="th-desc">Description</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-date">Date Submitted</th>
+                  <th class="th-action">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="r in filteredRequests" :key="r.id" class="request-row">
-                  <td class="type-cell">
-                    <span class="request-type-badge">
-                      <i class="fas fa-tag"></i>
-                      {{ r.request_type }}
-                    </span>
+                <tr v-for="(r, index) in filteredRequests" :key="r.id || index" class="table-row-hover">
+                  <td class="td-num">
+                    <span class="seq-badge">{{ filteredRequests.length - index }}</span>
                   </td>
-                  <td class="description-cell" :title="r.description">
-                    {{ truncateText(r.description, 60) }}
+                  <td class="td-type">
+                    <div class="type-badge-container">
+                      <i class="fas fa-tag type-icon"></i>
+                      <span class="type-text">{{ r.request_type }}</span>
+                    </div>
                   </td>
-                  <td>
-                    <span :class="['status-badge-premium', getStatusClass(r.status)]">
+                  <td class="td-desc">
+                    <div class="desc-cell" :title="r.description">
+                      {{ truncateText(r.description, 75) }}
+                    </div>
+                  </td>
+                  <td class="td-status">
+                    <span :class="['status-pill-badge', getStatusClass(r.status)]">
                       <i :class="getStatusIcon(r.status)"></i>
                       {{ r.status }}
                     </span>
                   </td>
-                  <td class="date-cell">
-                    <i class="fas fa-calendar-alt"></i> {{ formatDate(r.created_at) }}
-                  </td>
-                  <td class="action-cell">
-                    <div class="action-group">
-                      <button class="action-icon edit" @click="editRequest(r)" title="Edit Request">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="action-icon delete" @click="deleteRequest(r.id)" title="Delete Request">
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
+                  <td class="td-date">
+                    <div class="date-cell-wrap">
+                      <i class="far fa-calendar-alt date-icon"></i>
+                      <span>{{ formatDate(r.created_at) }}</span>
                     </div>
                   </td>
-                </tr>
-
-                <!-- Desktop Empty State -->
-                <tr v-if="filteredRequests.length === 0" class="empty-row">
-                  <td colspan="5">
-                    <div class="empty-state-premium">
-                      <i class="fas fa-inbox"></i>
-                      <h4>No Requests Found</h4>
-                      <p>Submit your first request using the form above</p>
+                  <td class="td-action">
+                    <div class="action-buttons-group">
+                      <button class="btn-tbl-action edit" @click="editRequest(r)" title="Edit Request">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn-tbl-action delete" @click="deleteRequest(r.id)" title="Delete Request">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </div>
 </template>
@@ -268,7 +431,7 @@
 <script>
 import Sidebar from './components/Sidebar.vue'
 import Chart from 'chart.js/auto'
-import axios from "axios";
+import axios from 'axios'
 import {
   toastSuccess,
   toastError,
@@ -276,1282 +439,1371 @@ import {
 } from "@/utils/toast.js";
 
 export default {
-  components: { Sidebar },
-
+  name: "RequestDesk",
+  components: {
+    Sidebar
+  },
   data() {
     return {
+      loading: false,
       isSubmitting: false,
       editingId: null,
       isMobile: false,
       isSidebarVisible: true,
-      formVisible: false,
+      formVisible: true,
       searchQuery: '',
       statusFilter: '',
+      quickTypes: [
+        'Work From Office',
+        'IT & Software Support',
+        'Asset / Equipment',
+        'HR Query',
+        'Leave / Attendance',
+        'Expense Reimbursement'
+      ],
       form: {
         request_type: '',
         description: ''
       },
       requests: [],
-      chart: null
+      chartInstance: null
     }
   },
-
   computed: {
     statusCounts() {
-      const counts = { Pending: 0, Approved: 0, Rejected: 0, Completed: 0 }
+      const counts = { Pending: 0, Approved: 0, Rejected: 0, Completed: 0 };
       this.requests.forEach(r => {
-        if (counts[r.status] !== undefined) counts[r.status]++
-      })
-      return counts
+        const status = r.status || 'Pending';
+        if (counts[status] !== undefined) {
+          counts[status]++;
+        } else {
+          counts.Pending++;
+        }
+      });
+      return counts;
     },
     filteredRequests() {
-      let filtered = this.requests;
-      
+      let list = this.requests;
+
       // Status filter
-      if (this.statusFilter) {
-        filtered = filtered.filter(r => r.status === this.statusFilter);
+      if (this.statusFilter && this.statusFilter !== 'all') {
+        list = list.filter(r => (r.status || '').toLowerCase() === this.statusFilter.toLowerCase());
       }
-      
+
       // Search filter
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        filtered = filtered.filter(r => 
-          r.request_type.toLowerCase().includes(query) ||
-          (r.description && r.description.toLowerCase().includes(query))
+      if (this.searchQuery && this.searchQuery.trim()) {
+        const q = this.searchQuery.toLowerCase().trim();
+        list = list.filter(r => 
+          (r.request_type && r.request_type.toLowerCase().includes(q)) ||
+          (r.description && r.description.toLowerCase().includes(q))
         );
       }
-      
-      return filtered;
+
+      return list;
     }
   },
-
+  mounted() {
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
+    this.fetchData();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$router.push('/auth');
+    }
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
+      this.chartInstance = null;
+    }
+  },
   methods: {
-    toggleForm() {
-      if (this.isMobile) {
-        this.formVisible = !this.formVisible;
+    openCreateForm() {
+      this.formVisible = true;
+      if (this.$refs.formSection) {
+        this.$refs.formSection.scrollIntoView({ behavior: 'smooth' });
       }
     },
     filterByStatus(status) {
       this.statusFilter = this.statusFilter === status ? '' : status;
     },
+    clearFilters() {
+      this.searchQuery = '';
+      this.statusFilter = '';
+    },
     truncateText(text, length) {
       if (!text) return '—';
       return text.length > length ? text.substring(0, length) + '...' : text;
     },
-
     getStatusClass(status) {
       const s = (status || '').toLowerCase();
-      if (s === 'approved') return 'approved';
-      if (s === 'rejected') return 'rejected';
-      if (s === 'completed') return 'completed';
-      return 'pending';
+      if (s === 'approved') return 'status-approved';
+      if (s === 'rejected') return 'status-rejected';
+      if (s === 'completed') return 'status-completed';
+      return 'status-pending';
     },
-
     getStatusIcon(status) {
       const s = (status || '').toLowerCase();
       if (s === 'approved') return 'fas fa-check-circle';
       if (s === 'rejected') return 'fas fa-times-circle';
       if (s === 'completed') return 'fas fa-check-double';
-      return 'fas fa-clock';
+      return 'fas fa-hourglass-half';
     },
+    formatDate(date) {
+      if (!date) return '—';
+      try {
+        return new Date(date).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+      } catch (e) {
+        return '—';
+      }
+    },
+    resetForm() {
+      this.form = {
+        request_type: '',
+        description: ''
+      };
+      this.editingId = null;
+    },
+    cancelEdit() {
+      this.resetForm();
+    },
+    editRequest(request) {
+      this.editingId = request.id;
+      this.form.request_type = request.request_type || '';
+      this.form.description = request.description || '';
+      this.formVisible = true;
+      this.$nextTick(() => {
+        if (this.$refs.formSection) {
+          this.$refs.formSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    },
+    async fetchData() {
+      this.loading = true;
+      try {
+        const token = localStorage.getItem('token');
+        const headers = { Authorization: `Bearer ${token}` };
+        let res = null;
+        try {
+          res = await axios.get('/requests/my', { headers });
+        } catch (e1) {
+          res = await axios.get('/api/requests/my', { headers });
+        }
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        this.requests = list;
+        this.renderChart();
+      } catch (error) {
+        console.error('Fetch requests error:', error);
+        toastError('Could not load request tickets.');
+      } finally {
+        this.loading = false;
+      }
+    },
+    async submitRequest() {
+      if (!this.form.request_type.trim() || !this.form.description.trim()) {
+        toastWarning('Please provide both a request type and description.');
+        return;
+      }
 
-    fetchStats() {
-      axios.get('/api/requests/stats', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      })
-      .then(res => {
-        const counts = { Pending: 0, Approved: 0, Rejected: 0, Completed: 0 }
-        res.data.forEach(i => {
-          if (counts[i.status] !== undefined) counts[i.status] = i.total
-        })
+      this.isSubmitting = true;
+      const primaryUrl = this.editingId ? `/requests/${this.editingId}` : '/requests';
+      const fallbackUrl = this.editingId ? `/api/requests/${this.editingId}` : '/api/requests';
+      const method = this.editingId ? 'put' : 'post';
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      const payload = {
+        request_type: this.form.request_type.trim(),
+        description: this.form.description.trim()
+      };
 
-        if (this.chart) this.chart.destroy()
+      try {
+        try {
+          await axios({ method, url: primaryUrl, data: payload, headers });
+        } catch (e1) {
+          await axios({ method, url: fallbackUrl, data: payload, headers });
+        }
 
-        this.chart = new Chart(this.$refs.statusChart, {
+        const successMsg = this.editingId ? 'Request ticket updated successfully!' : 'Request ticket submitted successfully!';
+        toastSuccess(successMsg);
+        this.resetForm();
+        await this.fetchData();
+      } catch (error) {
+        console.error('Submit error:', error);
+        const msg = error.response?.data?.message || 'Failed to process request ticket. Please try again.';
+        toastError(msg);
+      } finally {
+        this.isSubmitting = false;
+      }
+    },
+    async deleteRequest(id) {
+      if (!confirm('Are you sure you want to delete this request ticket?')) return;
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      try {
+        try {
+          await axios.delete(`/requests/${id}`, { headers });
+        } catch (e1) {
+          try {
+            await axios.post(`/requests/${id}/delete`, {}, { headers });
+          } catch (e2) {
+            await axios.delete(`/api/requests/${id}`, { headers });
+          }
+        }
+        toastSuccess('Request deleted successfully.');
+        await this.fetchData();
+      } catch (error) {
+        console.error('Delete error:', error);
+        toastError('Failed to delete request.');
+      }
+    },
+    renderChart() {
+      this.$nextTick(() => {
+        const canvas = this.$refs.statusChart;
+        if (!canvas) return;
+
+        const counts = this.statusCounts;
+
+        if (this.chartInstance) {
+          this.chartInstance.destroy();
+          this.chartInstance = null;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        this.chartInstance = new Chart(ctx, {
           type: 'doughnut',
           data: {
-            labels: Object.keys(counts),
+            labels: ['Pending', 'Approved', 'Completed', 'Rejected'],
             datasets: [{
-              data: Object.values(counts),
-              backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#3b82f6'],
-              borderWidth: 0,
-              hoverOffset: 10
+              data: [counts.Pending, counts.Approved, counts.Completed, counts.Rejected],
+              backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#ef4444'],
+              borderWidth: 2,
+              borderColor: '#ffffff',
+              hoverOffset: 8
             }]
           },
           options: {
             responsive: true,
-            maintainAspectRatio: true,
-            cutout: '60%',
-            animation: { animateScale: true, animateRotate: true },
+            maintainAspectRatio: false,
+            cutout: '68%',
             plugins: {
-              legend: { 
-                position: 'bottom', 
-                labels: { 
-                  usePointStyle: true, 
-                  boxWidth: 10,
-                  padding: 20
-                } 
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  boxWidth: 8,
+                  padding: 14,
+                  font: {
+                    family: "'Plus Jakarta Sans', sans-serif",
+                    size: 11,
+                    weight: '600'
+                  }
+                }
               },
-              tooltip: { backgroundColor: '#1a1a2e', titleColor: '#fff', bodyColor: '#fff' }
+              tooltip: {
+                backgroundColor: '#0f172a',
+                padding: 10,
+                cornerRadius: 8,
+                titleFont: { family: "'Plus Jakarta Sans', sans-serif", weight: '700' },
+                bodyFont: { family: "'Plus Jakarta Sans', sans-serif" }
+              }
             }
           }
-        })
-      }).catch(err => console.error('Stats error:', err))
+        });
+      });
     },
-
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
-    },
-
-    toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible
-    },
-
-    async submitRequest() {
-      if (!this.form.request_type || !this.form.description) {
-        toastWarning('Please fill all fields')
-        return
-      }
-
-      this.isSubmitting = true
-
-      const url = this.editingId
-        ? `/api/requests/${this.editingId}`
-        : '/api/requests'
-      const method = this.editingId ? 'put' : 'post'
-
-      try {
-        await axios({
-          method,
-          url,
-          data: this.form,
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-
-        const successMsg = this.editingId ? 'Request updated successfully!' : 'Request submitted successfully!'
-        this.form.request_type = ''
-        this.form.description = ''
-        this.editingId = null
-        await this.fetchRequests()
-        await this.fetchStats()
-        toastSuccess(successMsg)
-        if (this.isMobile) {
-          this.formVisible = false
-        }
-      } catch (error) {
-        console.error('Submit error:', error)
-        toastError('Failed to save request')
-      } finally {
-        this.isSubmitting = false
-      }
-    },
-
-    async fetchRequests() {
-      try {
-        const res = await axios.get('/api/requests/my', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        this.requests = res.data
-        this.updateChart()
-      } catch (error) {
-        console.error('Fetch requests error:', error)
-        toastError('No requests found for your account')
-      }
-    },
-
-    editRequest(request) {
-      this.editingId = request.id
-      this.form.request_type = request.request_type
-      this.form.description = request.description
-      if (this.isMobile) {
-        this.formVisible = true
-        this.searchQuery = ''
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    },
-
-    async deleteRequest(id) {
-      if (!confirm('Are you sure you want to delete this request?')) return
-
-      try {
-        await axios.delete(`/api/requests/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        await this.fetchRequests()
-        await this.fetchStats()
-        toastSuccess('Request deleted successfully')
-      } catch (error) {
-        console.error('Delete error:', error)
-        toastError('Failed to delete request')
-      }
-    },
-
-    formatDate(date) {
-      if (!date) return '—'
-      return new Date(date).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    },
-
-    updateChart() {
-      const counts = { Pending: 0, Approved: 0, Rejected: 0, Completed: 0 }
-      this.requests.forEach(r => {
-        if (counts[r.status] !== undefined) counts[r.status]++
-      })
-
-      if (this.chart) this.chart.destroy()
-
-      this.chart = new Chart(this.$refs.statusChart, {
-        type: 'doughnut',
-        data: {
-          labels: ['Pending', 'Approved', 'Rejected', 'Completed'],
-          datasets: [{
-            data: [counts.Pending, counts.Approved, counts.Rejected, counts.Completed],
-            backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#3b82f6'],
-            borderWidth: 0,
-            hoverOffset: 10
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          cutout: '60%',
-          animation: { animateScale: true, animateRotate: true },
-          plugins: {
-            legend: { 
-              position: 'bottom', 
-              labels: { 
-                usePointStyle: true, 
-                boxWidth: 10,
-                padding: 20
-              } 
-            },
-            tooltip: { backgroundColor: '#1a1a2e', titleColor: '#fff', bodyColor: '#fff' }
-          }
-        }
-      })
+      this.isMobile = window.innerWidth <= 860;
+      this.isSidebarVisible = !this.isMobile;
     }
-  },
-
-  mounted() {
-    this.checkIfMobile()
-    window.addEventListener('resize', this.checkIfMobile)
-    this.fetchRequests()
-    this.fetchStats()
-    const token = localStorage.getItem('token')
-    if (!token) {
-      this.$router.push('/auth')
-    }
-  },
-
-  beforeUnmount() {
-    window.removeEventListener('resize', this.checkIfMobile)
-    if (this.chart) this.chart.destroy()
   }
 }
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
-/* Variables */
-:root {
-  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
-  --primary-color: #667eea;
-  --dark: #1a1a2e;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-}
-
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 .layout {
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1e293b;
 }
 
-/* Main Content */
 .main-content {
   display: flex;
-  gap: 20px;
-  padding: 20px;
   min-height: 100vh;
+  background: #f8fafc;
 }
 
-.content {
+.request-desk-container {
   flex: 1;
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  margin-top: 0;
-  overflow-x: auto;
+  padding: 24px 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
 }
 
-/* Mobile Header */
-.mobile-header {
-  display: none;
+.flex-center {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+/* ========================================================
+   HERO HEADER
+   ======================================================== */
+.desk-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+  border-radius: 24px;
+  padding: 30px;
+  color: #ffffff;
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.desk-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-content {
+  display: flex;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: white;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
 }
 
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark);
-  padding: 8px;
-  cursor: pointer;
+.hero-title-group {
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
-.mobile-title {
+.hero-icon-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #38bdf8;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.hero-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+
+.hero-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 13.5px;
+  color: #cbd5e1;
+  margin-top: 6px;
+  max-width: 580px;
+  line-height: 1.45;
+}
+
+.hero-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.btn-hero-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+}
+
+.btn-hero-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.45);
+}
+
+.btn-hero-secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.mobile-title i {
-  color: var(--primary-color);
+.btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.mobile-stats-badge {
-  background: var(--primary);
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.stat-pill:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.stat-pill.active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.stat-pill-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
-/* Content Header */
-.content-header-modern {
+.stat-pill.total .stat-pill-icon { background: rgba(148, 163, 184, 0.25); color: #cbd5e1; }
+.stat-pill.pending .stat-pill-icon { background: rgba(245, 158, 11, 0.25); color: #fde68a; }
+.stat-pill.approved .stat-pill-icon { background: rgba(16, 185, 129, 0.25); color: #6ee7b7; }
+.stat-pill.completed .stat-pill-icon { background: rgba(59, 130, 246, 0.25); color: #93c5fd; }
+.stat-pill.rejected .stat-pill-icon { background: rgba(239, 68, 68, 0.25); color: #fca5a5; }
+
+.stat-pill-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-num {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
+}
+
+.stat-txt {
+  font-size: 11px;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+/* ========================================================
+   FORM & ANALYTICS SPLIT SECTION
+   ======================================================== */
+.form-and-chart-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.form-section-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.form-section-header {
+  padding: 18px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-  gap: 16px;
+  cursor: pointer;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  user-select: none;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.form-section-header:hover {
+  background: #f8fafc;
 }
 
-.title-icon {
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.content-header-modern h1 {
-  font-size: 28px;
-  font-weight: 700;
-  background: var(--primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin: 0;
-}
-
-.subtitle-modern {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
-}
-
-.stats-badge-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border-radius: 40px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-/* Stats Bar */
-.stats-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.stat-card {
+.header-tagline {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 20px;
-  transition: all 0.3s ease;
+}
+
+.tag-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+  flex-shrink: 0;
+}
+
+.tag-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.tag-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.btn-toggle-form {
+  background: #f1f5f9;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.25s ease;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+.btn-toggle-form.rotated {
+  transform: rotate(180deg);
+  background: #e0f2fe;
+  color: #0284c7;
 }
 
-.stat-card:active {
-  transform: scale(0.97);
+.form-body-wrapper {
+  padding: 24px;
+  background: #fcfdfe;
 }
 
-.stat-card.pending {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-}
-.stat-card.pending i { color: #d97706; }
-
-.stat-card.approved {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-}
-.stat-card.approved i { color: #065f46; }
-
-.stat-card.rejected {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-}
-.stat-card.rejected i { color: #991b1b; }
-
-.stat-card.completed {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-}
-.stat-card.completed i { color: #4338ca; }
-
-.stat-card i {
-  font-size: 28px;
-}
-
-.stat-info {
+.custom-ticket-form {
   display: flex;
   flex-direction: column;
+  gap: 18px;
 }
 
-.stat-value {
-  font-size: 24px;
+.input-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #334155;
 }
 
-.stat-label {
-  font-size: 12px;
-  color: #6b7280;
+.label-icon {
+  color: #0284c7;
 }
 
-/* Card Premium */
-.card-premium {
-  background: white;
-  border-radius: 24px;
-  padding: 24px;
-  margin-bottom: 24px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+.req-star {
+  color: #ef4444;
 }
 
-.card-header-premium {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.card-header-premium {
-  cursor: pointer;
-}
-
-.section-title-modern {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  font-weight: 600;
-  color: #1a1a2e;
+.input-with-icon {
+  position: relative;
   width: 100%;
 }
 
-.title-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.section-title-modern i {
-  color: var(--primary-color);
-}
-
-.form-toggle {
-  transition: transform 0.3s ease;
-  font-size: 14px;
-  color: #9ca3af;
-}
-
-.form-toggle.rotated {
-  transform: rotate(180deg);
-}
-
-.record-count-mobile {
-  background: var(--primary);
-  color: white;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  margin-left: 4px;
-}
-
-.table-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-/* Form Section */
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  transition: all 0.3s ease;
-}
-
-.form-section.form-hidden {
-  display: none;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-field.full-width {
-  grid-column: span 2;
-}
-
-.form-field label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.form-field label i {
-  color: var(--primary-color);
-}
-
-.field-wrapper {
-  position: relative;
-}
-
-.field-wrapper .field-icon {
+.field-lead-icon {
   position: absolute;
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #94a3b8;
   font-size: 14px;
 }
 
-.field-wrapper textarea + .field-icon {
-  top: 18px;
+.textarea-icon-wrap .textarea-icon {
+  top: 16px;
   transform: none;
 }
 
-.field-wrapper input,
-.field-wrapper textarea {
+.text-input {
   width: 100%;
-  padding: 12px 14px 12px 42px;
-  border: 2px solid #e5e7eb;
-  border-radius: 14px;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  box-sizing: border-box;
+  padding: 11px 14px 11px 40px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 13.5px;
   font-family: inherit;
+  color: #1e293b;
+  background: #ffffff;
+  transition: all 0.2s ease;
 }
 
-.field-wrapper textarea {
-  padding-top: 12px;
-  resize: vertical;
-}
-
-.field-wrapper input:focus,
-.field-wrapper textarea:focus {
+.text-input:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3.5px rgba(2, 132, 199, 0.15);
 }
 
-.char-counter {
-  font-size: 11px;
-  text-align: right;
-  color: #6b7280;
+.textarea-field {
+  resize: vertical;
+  min-height: 95px;
+  line-height: 1.45;
 }
 
-.form-actions {
+.quick-types-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.quick-hint {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.quick-type-chip {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.quick-type-chip:hover {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+.quick-type-chip.selected {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.char-count {
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.char-count.char-limit {
+  color: #ef4444;
+}
+
+.form-action-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
 }
 
-.btn-submit-premium {
-  padding: 10px 24px;
-  background: var(--primary);
+.btn-reset, .btn-cancel {
+  background: #f1f5f9;
   border: none;
   border-radius: 12px;
-  color: white;
-  font-weight: 600;
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.btn-reset:hover { background: #e2e8f0; color: #1e293b; }
+.btn-cancel:hover { background: #fecaca; }
+
+.btn-submit-gradient {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 26px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+  transition: all 0.25s ease;
 }
 
-.btn-submit-premium:hover:not(:disabled) {
+.btn-submit-gradient:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 10px 24px rgba(2, 132, 199, 0.45);
 }
 
-.btn-submit-premium:disabled {
-  opacity: 0.6;
+.btn-submit-gradient:disabled {
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
-/* Chart Container */
-.chart-container {
-  max-width: 300px;
-  margin: 0 auto;
+/* Chart Card */
+.chart-section-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-header {
+  margin-bottom: 12px;
+}
+
+.chart-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-icon {
+  color: #0284c7;
+  font-size: 18px;
+}
+
+.chart-title-wrap h4 {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.chart-title-wrap p {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.chart-content-area {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-/* Search Bar - Mobile */
-.search-bar-mobile {
-  display: none;
-  margin-bottom: 16px;
-  padding: 0 4px;
+.chart-canvas-wrap {
+  width: 100%;
+  height: 100%;
 }
 
-.search-group-mobile {
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #94a3b8;
+  gap: 8px;
+}
+
+.chart-empty i { font-size: 32px; }
+
+/* ========================================================
+   REQUESTS DIRECTORY / LISTING
+   ======================================================== */
+.listing-section-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.listing-toolbar {
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.toolbar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.toolbar-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.toolbar-desc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input-wrapper {
   position: relative;
-  flex: 1;
+  min-width: 260px;
 }
 
-.search-group-mobile i {
+.search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
-.search-input-mobile {
+.search-field {
   width: 100%;
-  padding: 10px 12px 10px 38px;
-  border: 2px solid #e5e7eb;
+  padding: 9px 32px 9px 34px;
+  border: 1.5px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 14px;
-  background: white;
-  transition: all 0.3s ease;
+  font-size: 13px;
+  font-family: inherit;
+  background: #f8fafc;
+  transition: all 0.2s ease;
 }
 
-.search-input-mobile:focus {
+.search-field:focus {
   outline: none;
-  border-color: var(--primary-color);
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
 }
 
-/* Table Styles */
-.table-wrapper-premium {
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.filter-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.filter-pill {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.filter-pill.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.pending-dot { background: #f59e0b; }
+.approved-dot { background: #10b981; }
+.completed-dot { background: #3b82f6; }
+.rejected-dot { background: #ef4444; }
+
+/* States */
+.state-container {
+  padding: 60px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.state-icon {
+  font-size: 36px;
+  color: #0284c7;
+  margin-bottom: 14px;
+}
+
+.empty-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 14px;
+}
+
+.empty-state h4 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.empty-state p {
+  font-size: 13px;
+  color: #64748b;
+  max-width: 400px;
+}
+
+.btn-clear-filters {
+  margin-top: 14px;
+  background: #e0f2fe;
+  color: #0284c7;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ========================================================
+   DESKTOP TABLE
+   ======================================================== */
+.desktop-table-container {
+  width: 100%;
   overflow-x: auto;
 }
 
-.request-table-premium {
+.modern-desk-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
 }
 
-.request-table-premium thead {
+.modern-desk-table thead tr {
   background: #f8fafc;
 }
 
-.request-table-premium th {
-  text-align: left;
-  padding: 14px;
-  font-weight: 600;
+.modern-desk-table th {
+  padding: 14px 18px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+
+.th-num { width: 50px; text-align: center; }
+.th-type { width: 22%; }
+.th-desc { width: 38%; }
+.th-status { width: 120px; text-align: center; }
+.th-date { width: 140px; }
+.th-action { width: 90px; text-align: center; }
+
+.table-row-hover {
+  transition: background 0.2s ease;
+}
+
+.table-row-hover:hover {
+  background: #f8fafc;
+}
+
+.modern-desk-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
   font-size: 13px;
-  color: #6b7280;
-  border-bottom: 2px solid #e5e7eb;
 }
 
-.request-table-premium td {
-  padding: 14px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 13px;
+.seq-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 
-.request-row {
-  transition: all 0.3s ease;
-}
-
-.request-row:hover {
-  background: #fafbfc;
-}
-
-/* Type Cell */
-.type-cell {
-  min-width: 120px;
-}
-
-.request-type-badge {
+.type-badge-container {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: #e0e7ff;
-  color: var(--primary-color);
-  border-radius: 20px;
+  gap: 8px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.type-icon {
+  color: #0284c7;
   font-size: 12px;
-  font-weight: 500;
 }
 
-/* Description Cell */
-.description-cell {
-  max-width: 250px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #6b7280;
+.desc-cell {
+  line-height: 1.45;
+  color: #334155;
+  word-break: break-word;
 }
 
-/* Date Cell */
-.date-cell {
-  font-family: monospace;
-  font-size: 12px;
-  color: #6b7280;
-  white-space: nowrap;
-}
-
-.date-cell i {
-  margin-right: 6px;
-  font-size: 11px;
-}
-
-/* Status Badge */
-.status-badge-premium {
+.status-pill-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: 5px 12px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.status-approved { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.status-pending { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.status-completed { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.status-rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.date-cell-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 12.5px;
   font-weight: 600;
 }
 
-.status-badge-premium.approved {
-  background: #d1fae5;
-  color: #065f46;
+.date-icon {
+  color: #94a3b8;
 }
 
-.status-badge-premium.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge-premium.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge-premium.completed {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-/* Action Group */
-.action-group {
+.action-buttons-group {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-.action-icon {
+.btn-tbl-action {
   width: 32px;
   height: 32px;
   border-radius: 8px;
   border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.action-icon.edit {
-  background: #e0e7ff;
-  color: var(--primary-color);
+.btn-tbl-action.edit {
+  background: #e0f2fe;
+  color: #0284c7;
 }
 
-.action-icon.edit:hover {
-  background: #c7d2fe;
-  transform: translateY(-2px);
+.btn-tbl-action.edit:hover {
+  background: #0284c7;
+  color: #ffffff;
+  transform: scale(1.1);
 }
 
-.action-icon.delete {
+.btn-tbl-action.delete {
   background: #fee2e2;
-  color: var(--danger);
+  color: #ef4444;
 }
 
-.action-icon.delete:hover {
-  background: #fecaca;
-  transform: translateY(-2px);
+.btn-tbl-action.delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+  transform: scale(1.1);
 }
 
-/* Mobile Cards */
-.mobile-cards {
-  display: none;
+/* ========================================================
+   MOBILE FEED
+   ======================================================== */
+.mobile-feed {
+  padding: 16px;
+  display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 4px;
+  gap: 14px;
 }
 
-.request-card {
-  background: white;
-  border: 1px solid #e5e7eb;
+.mobile-req-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
-.card-header {
+.mobile-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.card-type {
-  flex: 1;
-}
-
-.request-type-badge-mobile {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: #e0e7ff;
-  color: var(--primary-color);
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.card-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn-mobile {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn-mobile.edit {
-  background: #e0e7ff;
-  color: var(--primary-color);
-}
-
-.action-btn-mobile.edit:active {
-  transform: scale(0.9);
-}
-
-.action-btn-mobile.delete {
-  background: #fee2e2;
-  color: var(--danger);
-}
-
-.action-btn-mobile.delete:active {
-  transform: scale(0.9);
-}
-
-.card-body {
+.req-badge-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
 }
 
-.card-row {
+.req-type-pill {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0284c7;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.req-date {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.req-status-group {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 8px;
 }
 
-.card-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 50px;
-}
-
-.card-value {
-  font-size: 13px;
-  color: var(--dark);
-  text-align: right;
-}
-
-.description-text {
-  max-width: 60%;
-  word-break: break-word;
-  text-align: right;
-}
-
-.status-badge-mobile {
+.status-chip {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 10px;
-  border-radius: 12px;
+}
+
+.mobile-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-m-action {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
-  font-weight: 600;
 }
 
-.status-badge-mobile.approved {
-  background: #d1fae5;
-  color: #065f46;
+.btn-m-action.edit { background: #e0f2fe; color: #0284c7; }
+.btn-m-action.delete { background: #fee2e2; color: #ef4444; }
+
+.mobile-card-body {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
-.status-badge-mobile.rejected {
-  background: #fee2e2;
-  color: #991b1b;
+.body-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 2px;
 }
 
-.status-badge-mobile.pending {
-  background: #fef3c7;
-  color: #d97706;
+.body-desc {
+  font-size: 12.5px;
+  color: #1e293b;
+  line-height: 1.4;
 }
 
-.status-badge-mobile.completed {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-/* Empty States */
-.empty-state-premium {
-  text-align: center;
-  padding: 60px 20px;
-  color: #9ca3af;
-}
-
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state-premium h4 {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.empty-state-premium p {
-  font-size: 14px;
-}
-
-.empty-state-mobile {
-  text-align: center;
-  padding: 40px 20px;
-  color: #9ca3af;
-}
-
-.empty-state-mobile i {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-state-mobile h4 {
-  font-size: 16px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.empty-state-mobile p {
-  font-size: 13px;
+.desktop-only {
+  display: inline-block;
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .description-cell {
-    max-width: 150px;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    flex-direction: column;
-    padding: 12px;
-  }
-
-  .content {
+  .request-desk-container {
     padding: 16px;
-    border-radius: 20px;
   }
 
-  .mobile-header {
-    display: flex;
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 
-  .content-header-modern {
-    display: none;
-  }
-
-  .stats-bar {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .stat-card {
-    padding: 12px;
-    flex-direction: column;
-    text-align: center;
-    gap: 6px;
-  }
-
-  .stat-card i {
-    font-size: 22px;
-  }
-
-  .stat-value {
-    font-size: 20px;
-  }
-
-  .stat-label {
-    font-size: 10px;
-  }
-
-  .card-premium {
-    padding: 16px;
-    border-radius: 20px;
-  }
-
-  .card-header-premium {
-    margin-bottom: 12px;
-  }
-
-  .section-title-modern {
-    font-size: 14px;
-  }
-
-  .form-section.form-hidden {
-    display: none;
-  }
-
-  .field-wrapper input,
-  .field-wrapper textarea {
-    font-size: 16px;
-    padding: 10px 12px 10px 36px;
-  }
-
-  .form-actions {
-    justify-content: stretch;
-  }
-
-  .btn-submit-premium {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .search-bar-mobile {
-    display: block;
-  }
-
-  .table-wrapper-premium {
-    display: none;
-  }
-
-  .mobile-cards {
-    display: flex;
-  }
-
-  .table-info {
-    display: none;
-  }
-
-  .chart-container {
-    max-width: 250px;
-  }
-
-  .request-card {
-    padding: 14px;
-  }
-
-  .card-row {
-    flex-wrap: wrap;
-  }
-
-  .description-text {
-    max-width: 100%;
-    text-align: left;
-  }
-}
-
-@media (max-width: 480px) {
-  .main-content {
-    padding: 8px;
-  }
-
-  .content {
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .stats-bar {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .stat-card {
-    padding: 10px;
-  }
-
-  .stat-card i {
-    font-size: 18px;
-  }
-
-  .stat-value {
-    font-size: 17px;
-  }
-
-  .mobile-title {
-    font-size: 16px;
-  }
-
-  .mobile-stats-badge {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-
-  .card-premium {
-    padding: 12px;
-  }
-
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .card-actions {
-    align-self: flex-end;
-  }
-
-  .card-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  .card-value {
-    text-align: left;
-    width: 100%;
-  }
-
-  .description-text {
-    max-width: 100%;
-    text-align: left;
-  }
-
-  .field-wrapper input,
-  .field-wrapper textarea {
-    font-size: 15px;
-    padding: 8px 10px 8px 34px;
-  }
-
-  .search-input-mobile {
-    font-size: 15px;
-    padding: 8px 10px 8px 34px;
-  }
-
-  .chart-container {
-    max-width: 200px;
-  }
-
-  .empty-state-mobile i {
-    font-size: 40px;
-  }
-
-  .empty-state-mobile h4 {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 380px) {
-  .stats-bar {
+  .form-and-chart-grid {
     grid-template-columns: 1fr;
   }
-
-  .stat-card {
-    flex-direction: row;
-    text-align: left;
-  }
 }
 
-/* Utility Classes */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .desktop-only {
-    display: none !important;
+    display: none;
   }
-}
 
-@media (min-width: 769px) {
-  .mobile-only {
-    display: none !important;
+  .hero-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .toolbar-controls {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+  }
+
+  .filter-pills-row {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>
