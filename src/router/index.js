@@ -26,7 +26,6 @@ import EmpDsi from '../views/EmpDsi.vue'
 import RCAhelp from '../views/RCAhelp.vue'
 import ArchCalendar from '../views/ArchCalendar.vue'
 import OfferLetter from '../views/OfferLetter.vue'
-import JoiningLetter from '../views/JoiningLetter.vue'
 import OfferLetterList from '../views/OfferLetterList.vue'
 import PerformancePage from '../views/PerformancePage.vue'
 import EmployeePerformance from '../views/employee/PerformancePage.vue'
@@ -125,7 +124,6 @@ const routes = [
   { path: '/salaryadvances', name: 'SalaryAdvances', component: SalaryAdvances, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   { path: '/employee/mysalaryadvances', name: 'MySalaryAdvances', component: MySalaryAdvances, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   { path: '/OfferLetter', name: 'OfferLetter', component: OfferLetter, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
-  { path: '/JoiningLetter', name: 'JoiningLetter', component: JoiningLetter, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   { path: '/SupplyItems', name: 'SupplyItems', component: SupplyItems, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   {
     path: '/OfferLetterList',

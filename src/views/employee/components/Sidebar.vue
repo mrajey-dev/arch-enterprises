@@ -17,10 +17,10 @@
           <div class="profile-pic-wrapper">
             <label for="profileUpload" class="profile-upload-label">
               <img
-                :key="profilePhoto"
                 :src="profilePhoto"
                 @error="profilePhoto = defaultPhoto"
                 class="profile-pic"
+                alt="Profile Photo"
               />
               <input
                 type="file"
@@ -266,6 +266,27 @@ import {
 export default {
   components: { ChangePasswordForm },
   data() {
+    const initUser = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("user") || "{}");
+      } catch (e) {
+        return {};
+      }
+    })();
+
+    const initPhoto = (() => {
+      try {
+        if (initUser && initUser.id) {
+          const cached = localStorage.getItem(`profilePhoto_${initUser.id}`);
+          if (cached) return cached;
+        }
+        if (initUser && typeof initUser.profile_photo === "string" && initUser.profile_photo.includes("/")) {
+          return `https://employees.archenterprises.co.in/backend/public/storage/${initUser.profile_photo}`;
+        }
+      } catch (e) {}
+      return "https://cdn-icons-png.flaticon.com/512/219/219983.png";
+    })();
+
     return {
       isMobileOpen: false,
       isCollapsed: false,
@@ -274,13 +295,13 @@ export default {
       results: [],
       showPopup: false,
       allowedVisitDepartments: ['Management', 'Service'],
-      username: "",
-      user: {},
+      username: initUser.name || "",
+      user: initUser,
       leaveDropdownOpen: false,
       showChangePassword: false,
       defaultPhoto: "https://cdn-icons-png.flaticon.com/512/219/219983.png",
-      profilePhoto: "https://cdn-icons-png.flaticon.com/512/219/219983.png",
-      profileFetched: false,
+      profilePhoto: initPhoto,
+      profileFetched: Boolean(initUser && initUser.id && localStorage.getItem(`profilePhoto_${initUser.id}`)),
       themeOptions: [
         { value: "default", label: "Default Purple", color: "#8b5cf6", icon: "💜" },
         { value: "blue", label: "Ocean Blue", color: "#3b82f6", icon: "💙" },
@@ -461,11 +482,10 @@ export default {
       if (cachedPhoto) {
         this.profilePhoto = cachedPhoto;
         this.profileFetched = true;
-        return;
       }
       
       const token = localStorage.getItem("token");
-      if (!token || this.profileFetched) return;
+      if (!token) return;
       
       try {
         const response = await axios.get(
@@ -482,19 +502,22 @@ export default {
 
           if (typeof user.profile_photo === "string" && user.profile_photo.includes("/")) {
             const imageUrl = `https://employees.archenterprises.co.in/backend/public/storage/${user.profile_photo}`;
-            this.profilePhoto = imageUrl + "?v=" + Date.now();
-            
-            if (user.id) {
-              localStorage.setItem(`profilePhoto_${user.id}`, this.profilePhoto);
+            if (this.profilePhoto !== imageUrl) {
+              this.profilePhoto = imageUrl;
             }
-          } else {
+            if (user.id) {
+              localStorage.setItem(`profilePhoto_${user.id}`, imageUrl);
+            }
+          } else if (!this.profilePhoto || this.profilePhoto.includes("flaticon")) {
             this.profilePhoto = this.defaultPhoto;
           }
         }
         this.profileFetched = true;
       } catch (error) {
         console.error("Failed to fetch user profile:", error);
-        this.profilePhoto = this.defaultPhoto;
+        if (!this.profilePhoto) {
+          this.profilePhoto = this.defaultPhoto;
+        }
       }
     },
     

@@ -1646,13 +1646,15 @@ export default {
 }
 
 .logo-img {
-  height: 36px;
+  height: 56px;
   width: auto;
+  max-width: 280px;
+  object-fit: contain;
 }
 
 .logo-text {
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   background: linear-gradient(135deg, var(--primary), #7c3aed);
   -webkit-background-clip: text;
   background-clip: text;

@@ -7,125 +7,175 @@
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
     >
-      <!-- Profile Section -->
+      <!-- Profile / Header Section -->
       <div class="profile-section">
-        <img
-          :src="profileImage"
-          alt="Profile Picture"
-          class="profile-pic"
-        />
+        <div class="profile-pic-wrapper">
+          <img
+            :src="profileImage"
+            alt="Profile Picture"
+            class="profile-pic"
+          />
+          <span class="online-indicator"></span>
+        </div>
+        <div class="profile-meta">
+          <h2 class="sidebar-title"></h2>
+          <span class="role-badge">HR & Administration</span>
+        </div>
       </div>
 
       <div class="menu-scroll">
         <ul class="sidebar-menu">
-          <li @click="goTo('dashboard')">
-            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+
+          <!-- ─── 1. OVERVIEW & CONNECT ─── -->
+          <li class="menu-section-header">
+            <span>OVERVIEW</span>
+          </li>
+
+          <li @click="goTo('dashboard')" :class="{ 'active-item': isActive('dashboard') }">
+            <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
           </li>
           
-          <li @click="goTo('archcalendar')">
-            <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
+          <li @click="goTo('archcalendar')" :class="{ 'active-item': isActive('archcalendar') }">
+            <i class="fas fa-calendar-alt"></i> <span>Company Calendar</span>
           </li>
           
-          <li @click="goTo('rcahelp')">
-            <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
-            <span v-if="notifCounts.chat > 0" class="sidebar-item-badge">{{ notifCounts.chat }}</span>
+          <li @click="goTo('rcahelp')" :class="{ 'active-item': isActive('rcahelp') }">
+            <i class="fas fa-comments" aria-hidden="true"></i> <span>Team Chat</span>
           </li>
           
-          <li @click="goTo('ScheduleMeeting')">
-            <i class="fas fa-headset"></i> <span>Schedule Meeting</span>
+          <li @click="goTo('ScheduleMeeting')" :class="{ 'active-item': isActive('ScheduleMeeting') }">
+            <i class="fas fa-video"></i> <span>Schedule Meeting</span>
           </li>
-          
-          <!-- Leaves Dropdown -->
-          <li class="dropdown">
-            <div class="" @click="toggleDropdown">
-              <i class="fas fa-calendar-alt"></i> <span>Leaves</span>
-              <span v-if="notifCounts.leaves > 0" class="sidebar-item-badge warning">{{ notifCounts.leaves }}</span>
-              <i class="fas fa-caret-down" style="margin-left:auto;"></i>
+
+          <!-- ─── 2. PEOPLE & TALENT ─── -->
+          <li class="menu-section-header">
+            <span>PEOPLE & TALENT</span>
+          </li>
+
+          <li @click="goTo('employees')" :class="{ 'active-item': isActive('employees') }">
+            <i class="fas fa-users"></i> <span>Employees Master</span>
+          </li>
+
+          <li @click="goTo('managedepartments')" :class="{ 'active-item': isActive('managedepartments') }">
+            <i class="fas fa-sitemap"></i> <span>Departments</span>
+          </li>
+
+          <li @click="goTo('recruitmentsection')" :class="{ 'active-item': isActive('recruitmentsection') }">
+            <i class="fas fa-user-plus"></i> <span>Recruitment</span>
+          </li>
+
+          <!-- Letters Hub Dropdown -->
+          <li class="dropdown-wrapper" :class="{ 'dropdown-active': lettersDropdownOpen }">
+            <div @click="toggleLettersDropdown" class="dropdown-toggle">
+              <i class="fas fa-file-signature"></i> <span>Letters & Onboarding</span>
+              <i class="fas fa-chevron-down caret-icon" :class="{ 'rotate': lettersDropdownOpen }"></i>
             </div>
       
-            <ul v-if="dropdownOpen" class="dropdown-menu">
-              <li @click="goTo('leaveapplications')">
-                <i class="fas fa-list"></i><span> All Leaves</span>
+            <ul v-if="lettersDropdownOpen" class="dropdown-menu">
+              <li @click="goTo('offerletter')" :class="{ 'active-sub-item': isActive('offerletter') }">
+                <i class="fas fa-envelope-open-text"></i> <span>Create Offer Letter</span>
               </li>
-              <li @click="goTo('approvedleaves')">
-                <i class="fas fa-check-circle"></i><span> Approved Leaves</span>
-              </li>
-              <li @click="goTo('rejectedleaves')">
-                <i class="fas fa-times-circle"></i><span> Rejected Leaves</span>
-              </li>
-              <li @click="goTo('pendingleaves')">
-                <i class="fas fa-hourglass-half"></i><span> Pending Leaves</span>
-                <span v-if="notifCounts.leaves > 0" class="sidebar-item-badge warning sub">{{ notifCounts.leaves }}</span>
+              <li @click="goTo('OfferLetterList')" :class="{ 'active-sub-item': isActive('OfferLetterList') }">
+                <i class="fas fa-list-alt"></i> <span>Offer Letters List</span>
               </li>
             </ul>
           </li>
+
+          <li @click="goTo('empattendanceadmin')" :class="{ 'active-item': isActive('empattendanceadmin') }">
+            <i class="fas fa-user-clock"></i> <span>Attendance Master</span>
+          </li>
+
+          <li @click="goTo('holidays')" :class="{ 'active-item': isActive('holidays') }">
+            <i class="fas fa-umbrella-beach"></i> <span>Holidays Calendar</span>
+          </li>
+
+          <!-- ─── 3. LEAVE MANAGEMENT ─── -->
+          <li class="menu-section-header">
+            <span>LEAVE MANAGEMENT</span>
+          </li>
+
+          <li class="dropdown-wrapper" :class="{ 'dropdown-active': dropdownOpen }">
+            <div @click="toggleDropdown" class="dropdown-toggle">
+              <i class="fas fa-calendar-check"></i> <span>Leaves Center</span>
+              <span v-if="notifCounts.leaves > 0" class="sidebar-item-badge warning">{{ notifCounts.leaves }}</span>
+              <i class="fas fa-chevron-down caret-icon" :class="{ 'rotate': dropdownOpen }"></i>
+            </div>
       
-          <li @click="goTo('workflow')">
-            <i class="fas fa-tasks"></i> <span>Work Flow</span>
+            <ul v-if="dropdownOpen" class="dropdown-menu">
+              <li @click="goTo('leaveapplications')" :class="{ 'active-sub-item': isActive('leaveapplications') }">
+                <i class="fas fa-list-ul"></i> <span>All Leaves</span>
+              </li>
+              <li @click="goTo('pendingleaves')" :class="{ 'active-sub-item': isActive('pendingleaves') }">
+                <i class="fas fa-hourglass-half"></i> <span>Pending Approvals</span>
+                <span v-if="notifCounts.leaves > 0" class="sidebar-item-badge warning sub">{{ notifCounts.leaves }}</span>
+              </li>
+              <li @click="goTo('approvedleaves')" :class="{ 'active-sub-item': isActive('approvedleaves') }">
+                <i class="fas fa-check-circle"></i> <span>Approved Leaves</span>
+              </li>
+              <li @click="goTo('rejectedleaves')" :class="{ 'active-sub-item': isActive('rejectedleaves') }">
+                <i class="fas fa-times-circle"></i> <span>Rejected Leaves</span>
+              </li>
+              <li @click="goTo('manageleavetype')" :class="{ 'active-sub-item': isActive('manageleavetype') }">
+                <i class="fas fa-sliders-h"></i> <span>Leave Types Config</span>
+              </li>
+            </ul>
           </li>
 
-          <li @click="goTo('offerletter')">
-            <i class="far fa-file-alt"></i> <span>Offer Letter</span>
-          </li>
-          
-          <li @click="goTo('myapps')">
-            <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
-          </li>
-          
-          <li @click="goTo('salaryslip')">
-            <i class="far fa-file-alt"></i> <span>Salary Slip</span>
+          <!-- ─── 4. PAYROLL & FINANCE ─── -->
+          <li class="menu-section-header">
+            <span>PAYROLL & FINANCE</span>
           </li>
 
-          <li @click="goTo('requestdesk')">
+          <li @click="goTo('salaryslip')" :class="{ 'active-item': isActive('salaryslip') }">
+            <i class="fas fa-money-check-alt"></i> <span>Salary Slips</span>
+          </li>
+
+          <li @click="goTo('salaryadvances')" :class="{ 'active-item': isActive('salaryadvances') }">
+            <i class="fas fa-hand-holding-usd"></i> <span>Salary Advances</span>
+          </li>
+
+          <li @click="goTo('ExpenseManage')" :class="{ 'active-item': isActive('ExpenseManage') }">
+            <i class="fas fa-file-invoice-dollar"></i> <span>IT & Office Expenses</span>
+          </li>
+
+          <!-- ─── 5. WORKFLOW & OPERATIONS ─── -->
+          <li class="menu-section-header">
+            <span>OPERATIONS</span>
+          </li>
+
+          <li @click="goTo('workflow')" :class="{ 'active-item': isActive('workflow') }">
+            <i class="fas fa-project-diagram"></i> <span>Work Flow</span>
+          </li>
+
+          <li @click="goTo('workreport')" :class="{ 'active-item': isActive('workreport') }">
+            <i class="fas fa-file-signature"></i> <span>Daily Work Reports</span>
+          </li>
+
+          <li @click="goTo('requestdesk')" :class="{ 'active-item': isActive('requestdesk') }">
             <i class="fas fa-headset"></i> <span>Request Desk</span>
             <span v-if="notifCounts.request_desk > 0" class="sidebar-item-badge success">{{ notifCounts.request_desk }}</span>
           </li>
 
-          <li @click="goTo('ExpenseManage')">
-            <i class="fas fa-file-invoice-dollar"></i> <span>IT & Expenses</span>
+          <li @click="goTo('resourcebooking')" :class="{ 'active-item': isActive('resourcebooking') }">
+            <i class="fas fa-laptop-house"></i> <span>Book a Resource</span>
           </li>
 
-          <li @click="goTo('resourcebooking')">
-            <i class="fas fa-calendar-check"></i> <span>Book a Resource</span>
-          </li>
-
-          <li @click="goTo('recruitmentsection')">
-            <i class="fas fa-user-tie"></i><span> Recruitment</span>
-          </li>
-
-        
-
-          <li @click="goTo('manageleavetype')">
-            <i class="fas fa-sliders-h"></i><span> Manage Leave Type</span>
-          </li>
-          
-          <li @click="goTo('empdsi')">
+          <li @click="goTo('empdsi')" :class="{ 'active-item': isActive('empdsi') }">
             <i class="fas fa-tasks"></i> <span>View DSI</span>
             <span v-if="notifCounts.dsi > 0" class="sidebar-item-badge info">{{ notifCounts.dsi }}</span>
           </li>
            
-          <li @click="goTo('performance')">
-            <i class="fas fa-chart-line"></i><span> Performance</span>
+          <li @click="goTo('performance')" :class="{ 'active-item': isActive('performance') }">
+            <i class="fas fa-chart-line"></i> <span>Quarterly Performance</span>
           </li>
 
-          <li @click="logout" class="danger-bg">
-            <i class="fas fa-sign-out-alt"></i><span> Logout</span>
+          <li @click="goTo('myapps')" :class="{ 'active-item': isActive('myapps') }">
+            <i class="fas fa-th-large"></i> <span>Company Apps</span>
           </li>
-          
-          <li>
-            <select
-              class="theme-select"
-              @change="changeTheme"
-              :value="currentTheme"
-            >
-              <option value="default">⚪</option>
-              <option value="blue">🟦</option>
-              <option value="green">🟩</option>
-              <option value="orange">🟧</option>
-              <option value="red">🟥</option>
-              <option value="teal">🟦</option>
-              <option value="purple">🟥</option>
-            </select><span> Theme</span>
+
+          <!-- ─── 6. SESSION ─── -->
+          <li @click="logout" class="danger-bg">
+            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
           </li>
         </ul>
       </div>
@@ -455,14 +505,22 @@ import {
   toastInfo
 } from "@/utils/toast.js";
 
+// Module-level cache to keep memory state across component remounts during route changes
+let cachedAdmin = {
+  name: localStorage.getItem("admin_name") || "",
+  email: localStorage.getItem("admin_email") || "",
+  photo: localStorage.getItem("admin_photo") || ""
+};
+
 export default {
   data() {
     return {
       isMobileOpen: false,
       isCollapsed: false,
       currentTheme: localStorage.getItem("theme") || "default",
-      adminEmail: '',
-      adminName: '',
+      adminEmail: cachedAdmin.email || localStorage.getItem("admin_email") || "",
+      adminName: cachedAdmin.name || localStorage.getItem("admin_name") || "",
+      adminPhoto: cachedAdmin.photo || localStorage.getItem("admin_photo") || "",
       searchQuery: "",
       results: [],
       showPopup: false,
@@ -485,10 +543,16 @@ export default {
       selectedFile: null,
       uploading: false,
       vaultFiles: [],
-      user: {
-        profile_picture: "https://cdn-icons-png.freepik.com/256/6024/6024190.png"
-      },
       dropdownOpen: false,
+      lettersDropdownOpen: false,
+      themeOptions: [
+        { value: "default", label: "Emerald Mint (Default)", color: "#2cb67d" },
+        { value: "blue", label: "Ocean Blue", color: "#3b82f6" },
+        { value: "teal", label: "Aqua Teal", color: "#14b8a6" },
+        { value: "orange", label: "Sunset Orange", color: "#f97316" },
+        { value: "red", label: "Coral Red", color: "#ef4444" },
+        { value: "purple", label: "Lavender Purple", color: "#8b5cf6" }
+      ],
       showPerformanceModal: false,
       users: [],
       selectedEmployee: '',
@@ -526,25 +590,59 @@ export default {
       return this.selectedEmployee && specialEmployees.includes(this.selectedEmployee.name);
     },
     profileImage() {
-      if (!this.adminName) {
-        return "https://img.icons8.com/fluency/96/user-male-circle.png";
+      if (this.adminPhoto) {
+        return this.adminPhoto;
       }
+      const name = (this.adminName || "").trim().toLowerCase();
 
-      const name = this.adminName.toLowerCase();
-
-      if (name === "hr") {
+      if (name === "hr" || name === "admin" || !name) {
         return "https://i.pinimg.com/736x/03/82/e8/0382e829a8b19c46cabfe9abf8c80d8b.jpg";
       }
 
-      // Removed CRM condition - now uses default profile picture
-      return (
-        this.user.profile_picture ||
-        "https://img.icons8.com/fluency/96/user-male-circle.png"
-      );
+      return "https://i.pinimg.com/736x/03/82/e8/0382e829a8b19c46cabfe9abf8c80d8b.jpg";
     }
   },
 
   methods: {
+    goTo(route) {
+      if (!route) return;
+      const targetPath = route.startsWith('/') ? route : `/${route}`;
+      this.$router.push(targetPath).catch(() => {});
+      if (window.innerWidth <= 768) {
+        this.isMobileOpen = false;
+      }
+    },
+    isActive(route) {
+      if (!route) return false;
+      const currentPath = (this.$route.path || '').toLowerCase();
+      const cleanRoute = route.toLowerCase().replace(/^\//, '');
+      const currentClean = currentPath.replace(/^\//, '');
+      return currentClean === cleanRoute || currentClean.startsWith(cleanRoute + '/');
+    },
+    toggleDropdown() {
+      this.dropdownOpen = !this.dropdownOpen;
+    },
+    toggleLettersDropdown() {
+      this.lettersDropdownOpen = !this.lettersDropdownOpen;
+    },
+    logout() {
+      const token = localStorage.getItem("token");
+      axios
+        .post(
+          "https://employees.archenterprises.co.in/api/api/logout",
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .finally(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("admin_name");
+          localStorage.removeItem("admin_email");
+          localStorage.removeItem("admin_photo");
+          cachedAdmin = { name: "", email: "", photo: "" };
+          this.$router.push("/auth");
+        });
+    },
     handleMouseEnter() {
       if (window.innerWidth > 768) {
         this.isCollapsed = false;
@@ -562,32 +660,55 @@ export default {
       }
     },
     
-    changeTheme(e) {
-      const theme = e.target.value
-      this.currentTheme = theme
+    changeTheme(themeOrEvent) {
+      const theme = typeof themeOrEvent === 'string' ? themeOrEvent : themeOrEvent?.target?.value || 'default';
+      this.currentTheme = theme;
 
-      document.documentElement.classList.add("theme-transition")
-      document.documentElement.setAttribute("data-theme", theme)
-      localStorage.setItem("theme", theme)
+      document.documentElement.classList.add("theme-transition");
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
 
       setTimeout(() => {
-        document.documentElement.classList.remove("theme-transition")
-      }, 400)
+        document.documentElement.classList.remove("theme-transition");
+      }, 400);
     },
 
     async fetchAdmin() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
       try {
         const res = await axios.get(
           "https://employees.archenterprises.co.in/api/api/admin-info",
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`
+              Authorization: `Bearer ${token}`
             }
           }
         );
 
-        this.adminName = res.data.name;
-        this.adminEmail = res.data.email;
+        if (res.data) {
+          if (res.data.name && res.data.name !== this.adminName) {
+            this.adminName = res.data.name;
+            localStorage.setItem("admin_name", res.data.name);
+            cachedAdmin.name = res.data.name;
+          }
+          if (res.data.email && res.data.email !== this.adminEmail) {
+            this.adminEmail = res.data.email;
+            localStorage.setItem("admin_email", res.data.email);
+            cachedAdmin.email = res.data.email;
+          }
+          if (res.data.profile_photo) {
+            const photoUrl = res.data.profile_photo.startsWith('http')
+              ? res.data.profile_photo
+              : `https://employees.archenterprises.co.in/backend/public/storage/${res.data.profile_photo}`;
+            if (this.adminPhoto !== photoUrl) {
+              this.adminPhoto = photoUrl;
+              localStorage.setItem("admin_photo", photoUrl);
+              cachedAdmin.photo = photoUrl;
+            }
+          }
+        }
 
       } catch (error) {
         console.error("Admin info error:", error);
@@ -940,11 +1061,24 @@ export default {
     },
 
     toggleDropdown() {
-      this.dropdownOpen = !this.dropdownOpen
+      this.dropdownOpen = !this.dropdownOpen;
+    },
+
+    toggleLettersDropdown() {
+      this.lettersDropdownOpen = !this.lettersDropdownOpen;
+    },
+
+    isActive(route) {
+      const current = (this.$route.path || '').toLowerCase();
+      const target = ('/' + route).toLowerCase();
+      return current === target || current === target + '/' || (target !== '/' && current.startsWith(target + '/'));
     },
     
     goTo(route) {
-      this.$router.push(`/${route}`)
+      if (this.isMobileOpen) {
+        this.isMobileOpen = false;
+      }
+      this.$router.push(`/${route}`);
     },
     
     logout() {
@@ -1057,287 +1191,462 @@ export default {
 /* Layout */
 .layout {
   display: flex;
-   min-height: 100vh; 
-   position: sticky;
-  background: #f4f6fb;
-  border-radius: 15px;
+  min-height: 100vh; 
+  position: sticky;
+  background: var(--bg-app, #edf7f2);
+  border-radius: 16px;
 }
 
-/* Sidebar */
+/* Sidebar Container */
 .sidebar { 
-  width: 260px;
-  /* background: linear-gradient(180deg, var(--primary), #020617); */
-  color: #ffffff;
+  width: 270px;
+  color: #113329;
   display: flex;
-  height: 100%;
   flex-direction: column;
-  transition: width 0.35s ease;
-  /* box-shadow: 4px 0 12px rgba(0,0,0,0.15); */
+  border-radius: 20px;
+  position: fixed;
+  top: 92px;
+  height: calc(100vh - 110px);
+  background: #ffffff;
+  border: 1px solid #dff0e7;
+  box-shadow: 0 10px 35px -5px rgba(44, 182, 125, 0.08), 0 0 1px 1px rgba(44, 182, 125, 0.04);
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  z-index: 100;
+  overflow: hidden;
+}
+
+/* Collapsed Sidebar */
+.sidebar.collapsed {
+  width: 84px;
+}
+
+/* Profile / Header Section */
+.profile-section {
+  padding: 18px 16px 14px;
+  text-align: center;
+  background: linear-gradient(180deg, #edf8f3 0%, #ffffff 100%);
+  border-bottom: 1px solid #e5f2eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: relative;
 }
 
-/* Collapsed sidebar */
-.sidebar.collapsed {
-  width: 80px;
-}
-
-/* Profile Section */
-.profile-section {
-  padding: 20px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
 .profile-pic-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
 }
 
 .profile-pic {
-  width: 70px;
-  margin-left: -16px;
-  height: 70px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #38bdf8;
+  border: 2.5px solid #2cb67d;
+  box-shadow: 0 4px 14px rgba(44, 182, 125, 0.25);
   cursor: pointer;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.profile-pic:hover {
+  transform: scale(1.05);
+  border-color: #209961;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4);
+}
+
+.profile-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
 }
 
 .sidebar-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f2e22;
+  margin: 0 0 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.2px;
 }
 
-/* Hide title when collapsed */
-.sidebar.collapsed .sidebar-title {
+.role-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1b9961;
+  background: #eaf7f1;
+  border: 1px solid #cbe9dc;
+  padding: 2px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+  display: inline-block;
+}
+
+.sidebar.collapsed .profile-meta {
   display: none;
 }
 
+/* Scrollable Menu */
 .menu-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 0;
-    max-height: calc(100vh - 180px);
+  padding: 10px 8px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(44, 182, 125, 0.25) transparent;
 }
 
-/* Scrollbar */
 .menu-scroll::-webkit-scrollbar {
   width: 5px;
 }
+
 .menu-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
+  background: rgba(44, 182, 125, 0.25);
   border-radius: 10px;
 }
 
-/* Menu */
+.menu-scroll::-webkit-scrollbar-thumb:hover {
+  background: #2cb67d;
+}
+
+/* Sidebar Menu */
 .sidebar-menu {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.sidebar-menu li {
-  padding: 12px 18px;
+/* Category Section Header */
+.menu-section-header {
+  padding: 14px 14px 6px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  background-color: #02061700!important;
-  font-size: 14px;
-  color: var(--text);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #7d9e92;
+  letter-spacing: 0.9px;
+  user-select: none;
+  text-transform: uppercase;
+}
+
+.sidebar.collapsed .menu-section-header {
+  display: none;
+}
+
+/* Regular Menu Items */
+.sidebar-menu li:not(.menu-section-header) {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #3b574e;
   cursor: pointer;
-  transition: background 0.25s ease, padding 0.3s ease;
-  border-radius: 8px;
-  margin: 4px 10px;
-      flex-wrap: wrap;
-     transition: all 0.75s ease;
+  border-radius: 12px;
+  margin: 1px 4px;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .sidebar-menu li i {
   min-width: 20px;
   text-align: center;
-  font-size: 16px;
+  font-size: 15px;
+  color: #2cb67d;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
-/* Hover */
-.sidebar-menu li:hover {
-  background: rgba(56, 189, 248, 0.15);
+/* Hover State */
+.sidebar-menu li:not(.menu-section-header):hover {
+  background: #eef8f3;
+  color: #113329;
 }
 
-/* Active / Danger */
-.danger-bg {
-  color: #fca5a5;
+.sidebar-menu li:not(.menu-section-header):hover i {
+  color: #209961;
+  transform: scale(1.1);
 }
-.danger-bg:hover {
-  background: rgba(248, 113, 113, 0.15);
+
+/* Active Navigation Item */
+.sidebar-menu li.active-item {
+  background: linear-gradient(135deg, #34b782 0%, #22a96f 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 5px 16px rgba(44, 182, 125, 0.35);
 }
-.dropdown-wrapper > div {
+
+.sidebar-menu li.active-item i {
+  color: #ffffff !important;
+}
+
+.sidebar-menu li.active-item::before {
+  display: none;
+}
+
+/* Dropdown Menu Item */
+.dropdown-wrapper {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.dropdown-toggle {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
+  gap: 12px;
   width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  transition: background 0.2s ease;
 }
 
-.dropdown-menu {
-  margin-top: 6px;
-  padding-left: 10px;
+.dropdown-wrapper:hover .dropdown-toggle {
+  background: #eef8f3;
 }
 
-.sidebar-item-badge {
+.dropdown-active > .dropdown-toggle {
+  background: #f2faf6;
+  color: #0f2e22;
+  font-weight: 600;
+}
+
+.caret-icon {
   margin-left: auto;
-  background: #ef4444;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 999px;
-  min-width: 18px;
-  text-align: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  font-size: 11px !important;
+  color: #7d9e92 !important;
+  transition: transform 0.25s ease !important;
 }
 
-.sidebar-item-badge.warning {
-  background: #f59e0b;
+.caret-icon.rotate {
+  transform: rotate(180deg);
+  color: #209961 !important;
 }
 
-.sidebar-item-badge.success {
-  background: #10b981;
-}
-
-.sidebar-item-badge.info {
-  background: #3b82f6;
-}
-
-.sidebar-item-badge.sub {
-  font-size: 10px;
-  padding: 1px 6px;
+/* Sub-items list */
+.dropdown-menu {
+  list-style: none;
+  padding: 4px 0 6px 14px;
+  margin: 2px 0 4px 10px;
+  border-left: 2px solid #cbe8db;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .dropdown-menu li {
-  font-size: 13px;
-  padding: 10px 14px;
-  background: rgba(255,255,255,0.04);
-}
-.search-bar {
-  padding: 10px 16px;
-  position: relative;
+  font-size: 12.8px !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  color: #55756a !important;
+  margin: 0 !important;
 }
 
-.search-bar input {
+.dropdown-menu li:hover {
+  background: #eef8f3 !important;
+  color: #0f2e22 !important;
+}
+
+.dropdown-menu li.active-sub-item {
+  background: #e2f6ec !important;
+  color: #16935b !important;
+  font-weight: 600;
+}
+
+.dropdown-menu li i {
+  font-size: 13px !important;
+  color: #2cb67d;
+}
+
+.dropdown-menu li.active-sub-item i {
+  color: #16935b !important;
+}
+
+/* Danger / Logout Button */
+.danger-bg {
+  margin-top: 8px !important;
+  color: #ef4444 !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fee2e2;
+}
+
+.danger-bg i {
+  color: #ef4444 !important;
+}
+
+.danger-bg:hover {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+/* Theme Selector Swatches */
+.theme-selector-item {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  padding: 10px 14px !important;
+  background: #f4faf6 !important;
+  border: 1px solid #e1f0e8;
+  border-radius: 12px !important;
+  margin: 4px 4px !important;
+  cursor: default !important;
+}
+
+.theme-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b8f81;
+  margin-bottom: 8px;
+}
+
+.theme-options {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   width: 100%;
-  padding: 8px 34px 8px 12px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  background: #020617;
-  color: #fff;
-  font-size: 13px;
 }
 
-.search-bar i {
-  position: absolute;
-  right: 26px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-}
-.sidebar-toggle {
-  position: absolute;
-  top: -9px;
-  right: -15px;
-  background: #38bdf8;
-  border: none;
-  color: #020617;
-  width: 30px;
-  height: 30px;
+.theme-option {
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
+  border: 2px solid #ffffff;
   cursor: pointer;
-  /* box-shadow: 0 4px 10px rgba(0,0,0,0.25); */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  outline: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.sidebar.collapsed .sidebar-menu li span{
-  display: none;
+
+.theme-option:hover {
+  transform: scale(1.18);
+}
+
+.theme-option.active {
+  box-shadow: 0 0 0 2px #2cb67d, 0 2px 6px rgba(44, 182, 125, 0.35);
+  transform: scale(1.1);
+}
+
+.theme-check {
+  color: #ffffff;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Badges */
+.sidebar-item-badge {
+  margin-left: auto;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1.5px 7px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+}
+
+.sidebar-item-badge.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+}
+
+.sidebar-item-badge.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+}
+
+.sidebar-item-badge.info {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
+}
+
+.sidebar-item-badge.sub {
+  font-size: 0.62rem;
+  padding: 0 5px;
+}
+
+/* Collapsed mode adjustments */
+.sidebar.collapsed .sidebar-menu li span,
+.sidebar.collapsed .caret-icon,
+.sidebar.collapsed .theme-selector-item,
+.sidebar.collapsed .dropdown-menu {
+  display: none !important;
 }
 
 .sidebar.collapsed .sidebar-menu li {
   justify-content: center;
-  padding: 14px;
+  padding: 12px 0;
 }
-/* COLLAPSED SIDEBAR */
-.sidebar.collapsed .sidebar-menu li {
+
+.sidebar.collapsed .dropdown-toggle {
   justify-content: center;
-  padding: 14px;
+  padding: 12px 0;
 }
 
-/* Hide text only */
-.sidebar.collapsed .sidebar-menu li span {
-  display: none;
-}
-
-/* Hide caret arrow only */
-.sidebar.collapsed .fa-caret-down {
-  display: none;
-}
-
-/* Make dropdown container behave like normal item */
-.sidebar.collapsed .dropdown-wrapper > div {
-  justify-content: center;
-}
-
-/* Ensure icons stay visible */
-.sidebar.collapsed .sidebar-menu li i {
-  display: inline-block;
-}
-
-/* ================= MOBILE RESPONSIVE ================= */
+/* Mobile Responsive */
 @media (max-width: 768px) {
-
   .sidebar {
     position: fixed;
     top: 0;
     left: -100%;
     height: 100vh;
-    width: 260px;
+    width: 280px;
     z-index: 1001;
-    transition: left 0.35s ease;
+    border-radius: 0 20px 20px 0;
+    transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .sidebar.mobile-open {
     left: 0;
   }
 
-  /* Disable collapse mode on mobile */
   .sidebar.collapsed {
-    width: 260px;
+    width: 280px;
   }
 
-  /* Always show text on mobile */
-  .sidebar-menu li span {
+  .sidebar-menu li span,
+  .caret-icon,
+  .menu-section-header,
+  .profile-meta {
     display: inline !important;
   }
 
-  .fa-caret-down {
-    display: inline !important;
-  }
-
-  /* Overlay */
   .mobile-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.45);
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
     z-index: 1000;
   }
 
-  /* Toggle button reposition */
-  .sidebar-toggle {
-    top: 15px;
-    right: 15px;
-    z-index: 1100;
-  }
-
-  /* Main content full width */
   .layout {
     flex-direction: column;
   }
@@ -1345,101 +1654,5 @@ export default {
   .main-content {
     margin-left: 0 !important;
   }
-}
-
-.sidebar-toggle {
-  position: absolute;
-  top: -9px;
-  right: -15px;
-  width: 30px;
-  height: 30px;
-  background: #38bdf8;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 0;
-  z-index: 1100;
-  /* box-shadow: 0 4px 10px rgba(0,0,0,0.25); */
-}
-
-.sidebar-toggle span {
-  display: block;
-  width: 16px;
-  height: 2px;
-  margin: 3px 0;
-  background: #020617;
-  border-radius: 1px;
-  transition: all 0.4s ease;
-}
-
-/* Animate hamburger to X */
-.sidebar-toggle .bar1.active {
-  transform: rotate(45deg) translate(4px, 4px);
-}
-.sidebar-toggle .bar2.active {
-  opacity: 0;
-}
-.sidebar-toggle .bar3.active {
-  transform: rotate(-45deg) translate(4px, -4px);
-}
-
-.sidebar { 
-  width: 260px;
-  /* background: linear-gradient(180deg, var(--primary), #020617); */
-  color: #e5e7eb;
-  display: flex;
-  flex-direction: column;
-border-radius: 12px;
-  /* ✅ STICKY SIDEBAR */
-  position: fixed;
-   top: 100px;
-  height: 86vh;
-
-  transition: width 0.35s ease;
-  /* box-shadow: 4px 0 12px rgba(0,0,0,0.15); */
-  z-index: 100;
-}
-
-.sidebar {
-  transition: width 0.35s ease, box-shadow 0.3s ease;
-}
-
-/* 🌟 Sidebar Notification Badges */
-.sidebar-item-badge {
-  margin-left: auto;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #ffffff;
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 1px 7px;
-  border-radius: 999px;
-  min-width: 18px;
-  text-align: center;
-  line-height: 1.4;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-}
-
-.sidebar-item-badge.warning {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
-}
-
-.sidebar-item-badge.success {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
-}
-
-.sidebar-item-badge.info {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
-}
-
-.sidebar-item-badge.sub {
-  font-size: 0.62rem;
-  padding: 0 5px;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="layout">
 
-    <!-- KRA Modal - Premium Design -->
+    <!-- 🌟 KRA Modal - Emerald Mint Modern Design -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showKRAModal" @click.self="closeKRAModal()">
         <div class="premium-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
@@ -21,6 +21,25 @@
           </div>
 
           <div class="modal-body-premium">
+            <!-- Step Progress Indicator -->
+            <div v-if="!isEditMode" class="step-progress-bar">
+              <div 
+                v-for="step in 4" 
+                :key="step" 
+                class="step-progress-item" 
+                :class="{ 'active': addKRAModalStep === step, 'completed': addKRAModalStep > step }"
+                @click="step < addKRAModalStep ? addKRAModalStep = step : null"
+              >
+                <div class="step-circle">
+                  <i v-if="addKRAModalStep > step" class="fas fa-check"></i>
+                  <span v-else>{{ step }}</span>
+                </div>
+                <span class="step-name">
+                  {{ step === 1 ? 'Name' : step === 2 ? 'Tasks' : step === 3 ? 'KPIs' : 'Target' }}
+                </span>
+              </div>
+            </div>
+
             <!-- Step 1: KRA Name -->
             <div v-if="isEditMode || addKRAModalStep === 1" class="form-section">
               <div class="section-title">
@@ -60,15 +79,15 @@
                       :class="{ 'error': taskError }"
                     />
                   </div>
-                  <button v-if="kraForm.tasks.length > 1" type="button" @click="removeTask(index)" class="remove-task-btn">
+                  <button v-if="kraForm.tasks.length > 1" type="button" @click="removeTask(index)" class="remove-task-btn" title="Remove task">
                     <i class="fas fa-trash-alt"></i>
                   </button>
                 </div>
                 <span v-if="taskError" class="field-error">
                   <i class="fas fa-exclamation-circle"></i> {{ taskError }}
                 </span>
-                <button type="button" @click="kraForm.tasks.push('')" class="add-btn">
-                  <i class="fas fa-plus-circle"></i> Add Task
+                <button type="button" @click="kraForm.tasks.push('')" class="add-task-btn">
+                  <i class="fas fa-plus-circle"></i> Add Another Task
                 </button>
               </div>
             </div>
@@ -86,12 +105,12 @@
                     <input
                       v-model="newKpi"
                       type="text"
-                      placeholder="Enter KPI name"
+                      placeholder="Enter KPI name (e.g. Sales Target, Quality Score)"
                       @keyup.enter="addKpi"
                     />
                   </div>
                   <button @click="addKpi" class="add-kpi-btn">
-                    <i class="fas fa-save"></i> <span class="btn-text">Add KPI</span>
+                    <i class="fas fa-plus"></i> <span class="btn-text">Add KPI</span>
                   </button>
                 </div>
                 <span v-if="kpiError" class="field-error">
@@ -110,7 +129,7 @@
             <div v-if="isEditMode || addKRAModalStep === 4" class="form-section">
               <div class="section-title">
                 <i class="fas fa-bullseye"></i>
-                <span>Target (Optional)</span>
+                <span>Target & Objective (Optional)</span>
               </div>
               <div class="form-field">
                 <div class="field-wrapper">
@@ -118,7 +137,7 @@
                   <input
                     v-model="kraForm.target"
                     type="text"
-                    placeholder="e.g., Increase sales by 15%, Complete 10 projects, etc."
+                    placeholder="e.g., Increase efficiency by 15%, Complete 10 projects, etc."
                     :class="{ 'error': targetError }"
                   />
                 </div>
@@ -134,7 +153,7 @@
               <i class="fas fa-arrow-left"></i> Previous
             </button>
             <button v-if="!isEditMode && addKRAModalStep < 4" type="button" class="btn-submit-premium" @click="validateStep">
-              Next <i class="fas fa-arrow-right"></i>
+              Next Step <i class="fas fa-arrow-right"></i>
             </button>
             <button v-if="isEditMode || addKRAModalStep === 4" type="button" class="btn-submit-premium" @click="saveKRA">
               <i class="fas fa-save"></i> Save KRA
@@ -147,7 +166,7 @@
       </div>
     </transition>
 
-    <!-- Department Modal - Premium Design -->
+    <!-- 🌟 Department Modal - Emerald Mint Modern Design -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showDepartmentForm" @click.self="closeDepartmentForm()">
         <div class="premium-modal department-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
@@ -158,8 +177,8 @@
               <i class="fas fa-building"></i>
             </div>
             <div class="header-text">
-              <h2>Add Department</h2>
-              <p>Create a new department</p>
+              <h2>Add New Department</h2>
+              <p>Create an organizational department with code</p>
             </div>
             <button class="close-btn-premium" @click="closeDepartmentForm()">
               <i class="fas fa-times"></i>
@@ -170,18 +189,18 @@
             <form @submit.prevent="submitDepartment">
               <div class="form-section">
                 <div class="form-field">
-                  <label>Department Name <span class="required-star">*</span></label>
+                  <label class="field-label">Department Name <span class="required-star">*</span></label>
                   <div class="field-wrapper">
                     <i class="fas fa-building field-icon"></i>
-                    <input v-model="departmentForm.name" placeholder="e.g., Engineering, Marketing" required />
+                    <input v-model="departmentForm.name" placeholder="e.g., Engineering, Marketing, Operations" required />
                   </div>
                 </div>
 
-                <div class="form-field">
-                  <label>Department Code <span class="required-star">*</span></label>
+                <div class="form-field" style="margin-top: 16px;">
+                  <label class="field-label">Department Code <span class="required-star">*</span></label>
                   <div class="field-wrapper">
                     <i class="fas fa-barcode field-icon"></i>
-                    <input v-model="departmentForm.code" placeholder="e.g., ENG, MKT" required />
+                    <input v-model="departmentForm.code" placeholder="e.g., ENG, MKT, OPS" required />
                   </div>
                 </div>
               </div>
@@ -200,7 +219,7 @@
       </div>
     </transition>
 
-    <!-- View KRAs Modal - Premium Design -->
+    <!-- 🌟 View KRAs Modal - Emerald Mint Modern Design -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showKRAsModal" @click.self="showKRAsModal = false">
         <div class="premium-modal view-kra-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
@@ -224,8 +243,13 @@
               <div v-for="(kra, index) in selectedDepartmentKRAs" :key="kra.id" class="kra-card-item">
                 <div class="kra-card-header" @click="toggleKRA(index)">
                   <div class="kra-title-section">
-                    <i :class="expandedKRAIndex === index ? 'fas fa-chevron-down' : 'fas fa-chevron-right'"></i>
-                    <h3>{{ kra.name }}</h3>
+                    <div class="kra-expand-icon">
+                      <i :class="expandedKRAIndex === index ? 'fas fa-chevron-down' : 'fas fa-chevron-right'"></i>
+                    </div>
+                    <div class="kra-title-wrap">
+                      <h3 class="kra-name-heading">{{ kra.name }}</h3>
+                      <span class="kra-meta-badge">{{ (kra.tasks && kra.tasks.length) || 0 }} Tasks • {{ (kra.kpis && kra.kpis.length) || 0 }} KPIs</span>
+                    </div>
                   </div>
                   <div class="kra-card-actions">
                     <button class="icon-btn-small edit" @click.stop="editKRA(kra)" title="Edit KRA">
@@ -242,11 +266,11 @@
                     <div class="info-section">
                       <div class="info-header">
                         <i class="fas fa-tasks"></i>
-                        <strong>Tasks</strong>
+                        <strong>Tasks List</strong>
                       </div>
                       <ul class="info-list">
                         <li v-for="(task, tIndex) in kra.tasks" :key="tIndex">
-                          <i class="fas fa-check-circle"></i> {{ task }}
+                          <i class="fas fa-check-circle"></i> <span>{{ task }}</span>
                         </li>
                         <li v-if="!kra.tasks || kra.tasks.length === 0" class="empty-item">No tasks defined</li>
                       </ul>
@@ -259,7 +283,7 @@
                       </div>
                       <div class="kpi-badges">
                         <span v-for="(kpi, kIndex) in kra.kpis" :key="kIndex" class="kpi-badge">
-                          {{ kpi }}
+                          <i class="fas fa-bolt"></i> {{ kpi }}
                         </span>
                         <span v-if="!kra.kpis || kra.kpis.length === 0" class="empty-item">No KPIs defined</span>
                       </div>
@@ -278,22 +302,24 @@
             </div>
             
             <div v-else class="empty-state-premium">
-              <i class="fas fa-inbox"></i>
+              <div class="empty-icon-circle">
+                <i class="fas fa-inbox"></i>
+              </div>
               <h4>No KRAs Available</h4>
-              <p>This department doesn't have any KRAs yet.</p>
+              <p>This department doesn't have any Key Responsibility Areas defined yet.</p>
             </div>
           </div>
 
           <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
             <button type="button" class="btn-submit-premium" @click="showKRAsModal = false">
-              <i class="fas fa-check"></i> Close
+              <i class="fas fa-check"></i> Done
             </button>
           </div>
         </div>
       </div>
     </transition>
 
-    <!-- Main Content -->
+    <!-- 🌟 Main Layout Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
@@ -303,7 +329,6 @@
       }">
         <!-- Mobile Header -->
         <div class="mobile-header" v-if="isMobile">
-        
           <div class="mobile-title">
             <i class="fas fa-building"></i>
             <span>Departments</span>
@@ -313,15 +338,15 @@
           </button>
         </div>
 
-        <!-- Desktop Header -->
+        <!-- 🏢 Desktop Header Banner -->
         <div class="content-header-modern" v-else>
           <div class="header-left">
             <div class="title-icon">
               <i class="fas fa-building"></i>
             </div>
             <div>
-              <h1>Departments & KRA</h1>
-              <p class="subtitle-modern">Manage departments and key responsibility areas</p>
+              <h1 class="page-title">Departments & KRA Master</h1>
+              <p class="subtitle-modern">Manage department directory, codes, and Key Responsibility Areas (KRAs)</p>
             </div>
           </div>
           <button class="register-btn-modern" @click="showDepartmentForm = true">
@@ -330,33 +355,62 @@
           </button>
         </div>
 
-        <!-- Stats Bar - Mobile Optimized -->
+        <!-- 📊 Top Metric KPI Summary Cards -->
         <div class="stats-bar">
           <div class="stat-card">
-            <i class="fas fa-building"></i>
+            <div class="stat-icon-wrap emerald">
+              <i class="fas fa-building"></i>
+            </div>
             <div class="stat-info">
               <span class="stat-value">{{ departments.length }}</span>
-              <span class="stat-label">Departments</span>
+              <span class="stat-label">Total Departments</span>
             </div>
+            <span class="stat-tag emerald">Active Units</span>
           </div>
+
           <div class="stat-card">
-            <i class="fas fa-tasks"></i>
+            <div class="stat-icon-wrap mint">
+              <i class="fas fa-bullseye"></i>
+            </div>
             <div class="stat-info">
               <span class="stat-value">{{ totalKRAs }}</span>
-              <span class="stat-label">Total KRAs</span>
+              <span class="stat-label">Total KRAs Defined</span>
             </div>
+            <span class="stat-tag mint">Key Goals</span>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap amber">
+              <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ departmentsWithKRAs }}</span>
+              <span class="stat-label">Units with KRAs</span>
+            </div>
+            <span class="stat-tag amber">{{ Math.round((departmentsWithKRAs / (departments.length || 1)) * 100) }}% Coverage</span>
           </div>
         </div>
 
-        <!-- Search - Mobile -->
-        <div class="search-bar-mobile" v-if="isMobile && departments.length > 0">
-          <div class="search-group-mobile">
-            <i class="fas fa-search"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search departments..." class="search-input-mobile" />
+        <!-- 🔍 Search & Live Filter Bar -->
+        <div class="department-search-bar">
+          <div class="search-input-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Search departments by name or code..." 
+              class="search-input-field" 
+            />
+            <button v-if="searchQuery" class="search-clear-btn" @click="searchQuery = ''">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="search-results-counter">
+            <span>Showing <strong>{{ filteredDepartments.length }}</strong> of {{ departments.length }} Departments</span>
           </div>
         </div>
 
-        <!-- Table - Mobile Optimized -->
+        <!-- 📋 Departments Directory / Table -->
         <div class="table-wrapper-premium">
           <!-- Mobile Card View -->
           <div class="mobile-cards" v-if="isMobile">
@@ -371,11 +425,13 @@
                     <span class="code-badge-mobile">{{ dept.code }}</span>
                   </div>
                 </div>
-                <!-- <i class="fas fa-chevron-down"></i> -->
               </div>
               <div class="card-actions">
                 <button class="card-action-btn primary" @click.stop="addKRA(dept)">
                   <i class="fas fa-plus-circle"></i> Add KRA
+                </button>
+                <button class="card-action-btn secondary" @click.stop="viewDepartmentKRAs(dept)">
+                  <i class="fas fa-eye"></i> View ({{ dept.kras_count || 0 }})
                 </button>
                 <button class="card-action-btn danger" @click.stop="deleteDepartment(dept.id)">
                   <i class="fas fa-trash-alt"></i> Delete
@@ -387,53 +443,87 @@
             <div v-if="filteredDepartments.length === 0" class="empty-state-mobile">
               <i class="fas fa-building"></i>
               <h4>{{ searchQuery ? 'No Matching Departments' : 'No Departments Yet' }}</h4>
-              <p>{{ searchQuery ? 'Try adjusting your search' : 'Click "Add Department" to create your first department' }}</p>
+              <p>{{ searchQuery ? 'Try adjusting your search query' : 'Click "Add Department" to create your first department' }}</p>
             </div>
           </div>
 
-          <!-- Desktop Table View -->
+          <!-- Desktop Modern Table View -->
           <table class="department-table" v-else>
             <thead>
               <tr>
-                <th>Department Name</th>
-                <th>Department Code</th>
-                <th>Actions</th>
+                <th>DEPARTMENT NAME</th>
+                <th>DEPARTMENT CODE</th>
+                <th>ASSIGNED KRAS</th>
+                <th class="text-right">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="dept in filteredDepartments" :key="dept.id">
+              <tr v-for="dept in filteredDepartments" :key="dept.id" class="dept-table-row">
+                <!-- Department Name -->
                 <td class="department-name" @click="viewDepartmentKRAs(dept)">
                   <div class="dept-info">
                     <div class="dept-avatar">
                       {{ getInitials(dept.name) }}
                     </div>
-                    <span>{{ dept.name }}</span>
+                    <div class="dept-text-wrap">
+                      <span class="dept-main-name">{{ dept.name }}</span>
+                      <small class="dept-sub-text">Click to view Key Responsibility Areas</small>
+                    </div>
                   </div>
                 </td>
-                <td><span class="code-badge">{{ dept.code }}</span></td>
+
+                <!-- Code Badge -->
                 <td>
+                  <span class="code-badge">{{ dept.code }}</span>
+                </td>
+
+                <!-- KRAs Count Pill -->
+                <td>
+                  <button class="kras-count-pill" @click="viewDepartmentKRAs(dept)">
+                    <i class="fas fa-bullseye"></i>
+                    <span>{{ dept.kras_count || 0 }} KRAs</span>
+                    <i class="fas fa-arrow-right pill-arrow"></i>
+                  </button>
+                </td>
+
+                <!-- Action Buttons -->
+                <td class="text-right">
                   <div class="action-group">
-                    <button class="action-btn-primary" @click="addKRA(dept)" title="Add KRA">Add KRAs
+                    <button class="action-btn-primary" @click="addKRA(dept)" title="Add KRA">
                       <i class="fas fa-plus-circle"></i>
+                      <span>Add KRA</span>
                     </button>
-                    <button class="action-btn-danger" @click="deleteDepartment(dept.id)" title="Delete Department">Delete 
+                    <button class="action-btn-view" @click="viewDepartmentKRAs(dept)" title="View KRAs">
+                      <i class="fas fa-eye"></i>
+                      <span>View</span>
+                    </button>
+                    <button class="action-btn-danger" @click="deleteDepartment(dept.id)" title="Delete Department">
                       <i class="fas fa-trash-alt"></i>
                     </button>
                   </div>
                 </td>
               </tr>
+
+              <!-- Empty Row -->
               <tr v-if="filteredDepartments.length === 0" class="empty-row">
-                <td colspan="3">
+                <td colspan="4">
                   <div class="empty-state-premium">
-                    <i class="fas fa-building"></i>
-                    <h4>No Departments Yet</h4>
-                    <p>Click "Add Department" to create your first department</p>
+                    <div class="empty-icon-circle">
+                      <i class="fas fa-building"></i>
+                    </div>
+                    <h4>{{ searchQuery ? 'No Matching Departments Found' : 'No Departments Configured' }}</h4>
+                    <p>{{ searchQuery ? `No department matches "${searchQuery}". Try clearing search.` : 'Click "Add Department" to start structuring your organization.' }}</p>
+                    <button v-if="!searchQuery" class="register-btn-modern inline-btn" @click="showDepartmentForm = true">
+                      <i class="fas fa-plus-circle"></i>
+                      <span>Create Department</span>
+                    </button>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
       </section>
     </div>
   </div>
@@ -449,6 +539,7 @@ import {
 } from "@/utils/toast.js";
 
 export default {
+  name: 'ManageDepartments',
   components: {
     Sidebar
   },
@@ -493,6 +584,9 @@ export default {
     },
     totalKRAs() {
       return this.departments.reduce((total, dept) => total + (dept.kras_count || 0), 0);
+    },
+    departmentsWithKRAs() {
+      return this.departments.filter(dept => (dept.kras_count || 0) > 0).length;
     },
     filteredDepartments() {
       if (!this.searchQuery) return this.departments;
@@ -698,7 +792,7 @@ export default {
     async fetchDepartments() {
       try {
         const response = await axios.get('https://employees.archenterprises.co.in/api/api/departments');
-        this.departments = response.data.data;
+        this.departments = response.data.data || [];
         // Fetch KRAs count for each department
         for (let dept of this.departments) {
           const kraResponse = await axios.get(`https://employees.archenterprises.co.in/api/api/kras/${dept.id}`);
@@ -734,15 +828,23 @@ export default {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Variables */
+/* 🌿 Root & Variables - Emerald Mint Theme */
 :root {
-  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
-  --primary-color: #667eea;
-  --dark: #1a1a2e;
-  --success: #10b981;
+  --primary: #2cb67d;
+  --primary-dark: #209961;
+  --primary-light: #eaf7f1;
+  --secondary: #638578;
+  --text: #0f2e22;
+  --text-light: #6b8f81;
+  --bg-app: #edf7f2;
+  --card: #ffffff;
+  --border: #e0f0e8;
   --danger: #ef4444;
   --warning: #f59e0b;
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 }
 
 * {
@@ -753,44 +855,36 @@ export default {
 
 .layout {
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-app, #edf7f2);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  color: #0f2e22;
 }
 
-/* Main Content */
+/* 🌿 Main Content Area */
 .main-content {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: 24px;
+  padding: 18px 24px;
   min-height: 100vh;
 }
 
 .content {
   flex: 1;
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  background: transparent;
+  overflow-x: hidden;
 }
 
-/* Mobile Header */
+/* 📱 Mobile Header */
 .mobile-header {
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: white;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark);
-  padding: 8px;
-  cursor: pointer;
+  padding: 14px 18px;
+  background: #ffffff;
+  border-radius: 18px;
+  margin-bottom: 18px;
+  border: 1px solid #e0f0e8;
+  box-shadow: 0 4px 16px rgba(44, 182, 125, 0.06);
 }
 
 .mobile-title {
@@ -798,72 +892,35 @@ export default {
   align-items: center;
   gap: 10px;
   font-size: 18px;
-  font-weight: 600;
-  color: var(--dark);
+  font-weight: 700;
+  color: #0f2e22;
+  font-family: var(--font-display, sans-serif);
 }
 
 .mobile-title i {
-  color: var(--primary-color);
+  color: #2cb67d;
 }
 
 .mobile-add-btn {
-  background: var(--primary);
+  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
   color: white;
   border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.3);
 }
 
-.mobile-add-btn:active {
-  transform: scale(0.9);
-}
-
-/* Search Bar - Mobile */
-.search-bar-mobile {
-  display: none;
-  margin-bottom: 16px;
-}
-
-.search-group-mobile {
-  position: relative;
-  flex: 1;
-}
-
-.search-group-mobile i {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-}
-
-.search-input-mobile {
-  width: 100%;
-  padding: 10px 12px 10px 38px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  background: white;
-  transition: all 0.3s ease;
-}
-
-.search-input-mobile:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-/* Content Header */
+/* 🏢 Desktop Header Banner */
 .content-header-modern {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -877,222 +934,217 @@ export default {
 .title-icon {
   width: 52px;
   height: 52px;
-  background: var(--primary);
+  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
   border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 24px;
+  font-size: 22px;
+  box-shadow: 0 8px 20px rgba(44, 182, 125, 0.28);
 }
 
-.content-header-modern h1 {
+.page-title {
   font-size: 22px;
-  font-weight: 700;
-  background: var(--primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-weight: 800;
+  color: #0f2e22;
+  font-family: var(--font-display, sans-serif);
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .subtitle-modern {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
+  color: #6b8f81;
+  font-size: 13.5px;
+  margin-top: 3px;
+  font-weight: 500;
 }
 
 .register-btn-modern {
   padding: 12px 24px;
-  background: var(--primary);
+  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
   border: none;
   border-radius: 16px;
   color: white;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 13.5px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(44, 182, 125, 0.3);
 }
 
 .register-btn-modern:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 10px 25px rgba(44, 182, 125, 0.4);
 }
 
-/* Stats Bar */
+/* 📊 Stats Bar */
 .stats-bar {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
-  flex: 1;
-  min-width: 150px;
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 18px 22px;
+  background: #ffffff;
   border-radius: 20px;
-  transition: all 0.3s ease;
+  border: 1px solid #dff0e7;
+  box-shadow: 0 4px 18px rgba(44, 182, 125, 0.05);
+  position: relative;
+  transition: all 0.25s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 25px rgba(44, 182, 125, 0.1);
 }
 
-.stat-card i {
-  font-size: 32px;
-  color: var(--primary-color);
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-icon-wrap.emerald {
+  background: #eaf7f1;
+  color: #16935b;
+}
+
+.stat-icon-wrap.mint {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.stat-icon-wrap.amber {
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .stat-info {
-  display: flex;
-  flex-direction: column;
+  flex: 1;
 }
 
 .stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a2e;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f2e22;
+  font-family: var(--font-display, sans-serif);
+  line-height: 1.1;
+  display: block;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* Mobile Cards */
-.mobile-cards {
-  display: none;
-  flex-direction: column;
-  gap: 16px;
-  padding: 4px;
-}
-
-.department-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
-}
-
-.dept-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.dept-avatar {
-  width: 40px;
-  height: 40px;
-  background: var(--primary);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
+  font-size: 12.5px;
+  color: #6b8f81;
   font-weight: 600;
-  font-size: 14px;
+  margin-top: 3px;
+  display: block;
 }
 
-.dept-name {
-  font-weight: 600;
-  color: var(--dark);
-  font-size: 14px;
-}
-
-.code-badge-mobile {
-  padding: 2px 10px;
-  background: #e0e7ff;
-  color: var(--primary-color);
-  border-radius: 12px;
+.stat-tag {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 8px;
+  align-self: flex-start;
 }
 
-.card-actions {
+.stat-tag.emerald { background: #eaf7f1; color: #16935b; }
+.stat-tag.mint { background: #e0f2fe; color: #0284c7; }
+.stat-tag.amber { background: #fef3c7; color: #d97706; }
+
+/* 🔍 Search Bar */
+.department-search-bar {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-.card-action-btn {
+.search-input-wrapper {
+  position: relative;
   flex: 1;
-  padding: 8px;
-  border: none;
-  border-radius: 10px;
-  font-size: 12px;
+  max-width: 480px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #2cb67d;
+  font-size: 14px;
+}
+
+.search-input-field {
+  width: 100%;
+  padding: 12px 40px 12px 44px;
+  background: #ffffff;
+  border: 1px solid #dff0e7;
+  border-radius: 14px;
+  font-size: 13.5px;
+  color: #0f2e22;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  outline: none;
+  box-shadow: 0 2px 10px rgba(44, 182, 125, 0.04);
+  transition: all 0.25s ease;
+}
+
+.search-input-field:focus {
+  border-color: #2cb67d;
+  box-shadow: 0 0 0 3px rgba(44, 182, 125, 0.16);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 10px;
 }
 
-.card-action-btn.primary {
-  background: #e0e7ff;
-  color: var(--primary-color);
-}
-
-.card-action-btn.primary:active {
-  transform: scale(0.97);
-}
-
-.card-action-btn.danger {
-  background: #fee2e2;
-  color: var(--danger);
-}
-
-.card-action-btn.danger:active {
-  transform: scale(0.97);
-}
-
-/* Empty State Mobile */
-.empty-state-mobile {
-  text-align: center;
-  padding: 40px 20px;
-  color: #9ca3af;
-}
-
-.empty-state-mobile i {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-state-mobile h4 {
-  font-size: 16px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.empty-state-mobile p {
+.search-results-counter {
   font-size: 13px;
+  color: #6b8f81;
+  font-weight: 500;
 }
 
-/* Table Styles */
+.search-results-counter strong {
+  color: #16935b;
+}
+
+/* 📋 Table Styles */
 .table-wrapper-premium {
-  overflow-x: auto;
-  border-radius: 20px;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #dff0e7;
+  box-shadow: 0 6px 24px rgba(44, 182, 125, 0.06);
+  overflow: hidden;
 }
 
 .department-table {
@@ -1101,29 +1153,39 @@ export default {
 }
 
 .department-table thead {
-  background: #f8fafc;
+  background: #f7fcf9;
+  border-bottom: 1px solid #e0f0e8;
 }
 
 .department-table th {
   text-align: left;
-  padding: 16px 20px;
-  font-weight: 600;
-  font-size: 13px;
-  color: #6b7280;
-  border-bottom: 2px solid #e5e7eb;
+  padding: 16px 24px;
+  font-weight: 800;
+  font-size: 11.5px;
+  color: #7d9e92;
+  letter-spacing: 0.6px;
+}
+
+.department-table th.text-right {
+  text-align: right;
 }
 
 .department-table td {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f2faf6;
+  vertical-align: middle;
 }
 
-.department-table tbody tr {
-  transition: all 0.3s ease;
+.department-table td.text-right {
+  text-align: right;
 }
 
-.department-table tbody tr:hover {
-  background: #fafbfc;
+.dept-table-row {
+  transition: all 0.2s ease;
+}
+
+.dept-table-row:hover {
+  background: #f7fcf9;
 }
 
 .department-name {
@@ -1133,85 +1195,157 @@ export default {
 .dept-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .dept-avatar {
-  width: 36px;
-  height: 36px;
-  background: var(--primary);
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.25);
+  flex-shrink: 0;
 }
 
-.department-name span {
-  font-weight: 500;
-  color: #1a1a2e;
+.dept-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.dept-main-name {
+  font-weight: 700;
+  color: #0f2e22;
+  font-size: 14.5px;
+}
+
+.dept-sub-text {
+  font-size: 11.5px;
+  color: #7d9e92;
+  margin-top: 1px;
 }
 
 .code-badge {
-  padding: 4px 12px;
-  background: #e0e7ff;
-  color: var(--primary-color);
-  border-radius: 20px;
+  padding: 5px 14px;
+  background: #eaf7f1;
+  color: #16935b;
+  border-radius: 999px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
+  border: 1px solid #d4ede1;
+  display: inline-block;
 }
 
-.action-group {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn-primary,
-.action-btn-danger {
-  width: auto;
-  height: 34px;
-  padding: 17px;
-  gap: 8px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.kras-count-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  color: #15803d;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.kras-count-pill:hover {
+  background: #dcfce7;
+  transform: translateX(2px);
+}
+
+.pill-arrow {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* Action Buttons */
+.action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .action-btn-primary {
-  background: #e0e7ff;
-  color: var(--primary-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #eaf7f1;
+  color: #16935b;
+  border: 1px solid #cbe9dc;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .action-btn-primary:hover {
-  color: rgb(0, 0, 0);
-  transform: translateY(-2px);
+  background: #2cb67d;
+  color: #ffffff;
+  border-color: #2cb67d;
+  transform: translateY(-1px);
+}
+
+.action-btn-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn-view:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .action-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   background: #fee2e2;
-  color: var(--danger);
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .action-btn-danger:hover {
-  color: rgb(196, 9, 9);
-  transform: translateY(-2px);
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: translateY(-1px);
 }
 
-/* Modal Styles */
+/* 🌿 Modal Modern Styles */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
+  background: rgba(15, 46, 34, 0.45);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1221,266 +1355,237 @@ export default {
 
 .premium-modal {
   position: relative;
-  background: white;
-  border-radius: 32px;
+  background: #ffffff;
+  border-radius: 28px;
   width: 100%;
   max-width: 650px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
-}
-
-.premium-modal.mobile-modal {
-  max-width: 95%;
-  border-radius: 24px;
-  max-height: 90vh;
+  box-shadow: 0 25px 60px rgba(15, 46, 34, 0.2);
+  border: 1px solid #dff0e7;
+  animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .premium-modal.department-modal {
-  max-width: 500px;
+  max-width: 480px;
 }
 
 .premium-modal.view-kra-modal {
-  max-width: 700px;
+  max-width: 680px;
 }
 
 @keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.96) translateY(-14px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-decoration {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--primary);
+  height: 5px;
+  background: linear-gradient(90deg, #34b782, #2cb67d, #0284c7);
 }
 
-/* Modal Header */
 .modal-header-premium {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 24px 28px;
-  background: white;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.mobile-modal .modal-header-premium {
-  padding: 16px 20px;
-  gap: 12px;
+  padding: 22px 28px;
+  background: #f7fcf9;
+  border-bottom: 1px solid #e0f0e8;
 }
 
 .header-icon-premium {
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 18px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 24px;
-}
-
-.mobile-modal .header-icon-premium {
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
-}
-
-.header-text {
-  flex: 1;
+  font-size: 20px;
+  box-shadow: 0 4px 14px rgba(44, 182, 125, 0.25);
 }
 
 .header-text h2 {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f2e22;
+  font-family: var(--font-display, sans-serif);
   margin: 0;
-  color: #1a1a2e;
-}
-
-.mobile-modal .header-text h2 {
-  font-size: 18px;
 }
 
 .header-text p {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 4px 0 0;
-}
-
-.mobile-modal .header-text p {
-  font-size: 12px;
+  font-size: 12.5px;
+  color: #6b8f81;
+  margin: 2px 0 0;
 }
 
 .close-btn-premium {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 12px;
-  background: #f3f4f6;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #e0f0e8;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: #6b7280;
-  font-size: 18px;
+  color: #6b8f81;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .close-btn-premium:hover {
-  color: rgb(16, 4, 4);
-  transform: rotate(90deg);
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+/* Step Progress Indicator */
+.step-progress-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
+  padding: 0 10px;
+}
+
+.step-progress-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.25s ease;
+}
+
+.step-progress-item.active .step-circle {
+  background: #2cb67d;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(44, 182, 125, 0.2);
+}
+
+.step-progress-item.completed .step-circle {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.step-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #6b8f81;
+}
+
+.step-progress-item.active .step-name {
+  color: #16935b;
+  font-weight: 700;
 }
 
 /* Modal Body */
 .modal-body-premium {
-  flex: 1;
+  padding: 24px 28px;
   overflow-y: auto;
-  padding: 28px;
-  background: #fafbfc;
-}
-
-.mobile-modal .modal-body-premium {
-  padding: 16px;
-}
-
-.modal-body-premium::-webkit-scrollbar {
-  width: 6px;
-}
-
-.modal-body-premium::-webkit-scrollbar-track {
-  background: #e5e7eb;
-  border-radius: 10px;
-}
-
-.modal-body-premium::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 10px;
-}
-
-/* Form Sections */
-.form-section {
-  background: white;
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.mobile-modal .form-section {
-  padding: 16px;
+  background: #ffffff;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
-  font-weight: 600;
-  font-size: 16px;
-  color: #1a1a2e;
-}
-
-.mobile-modal .section-title {
+  gap: 8px;
   font-size: 14px;
+  font-weight: 700;
+  color: #0f2e22;
+  margin-bottom: 12px;
 }
 
 .section-title i {
-  color: var(--primary-color);
-  font-size: 18px;
+  color: #2cb67d;
 }
 
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-field label {
+.field-label {
   font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+  font-weight: 700;
+  color: #0f2e22;
+  margin-bottom: 6px;
+  display: block;
 }
 
 .required-star {
-  color: var(--danger);
+  color: #ef4444;
 }
 
 .field-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.field-wrapper .field-icon {
+.field-icon {
   position: absolute;
   left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
+  color: #2cb67d;
   font-size: 14px;
 }
 
-.field-wrapper input,
-.field-wrapper select,
-.field-wrapper textarea {
+.field-wrapper input {
   width: 100%;
   padding: 12px 14px 12px 42px;
-  border: 2px solid #e5e7eb;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 14px;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  font-family: inherit;
-}
-
-.mobile-modal .field-wrapper input,
-.mobile-modal .field-wrapper select,
-.mobile-modal .field-wrapper textarea {
-  font-size: 16px;
-  padding: 10px 12px 10px 36px;
-}
-
-.field-wrapper input:focus,
-.field-wrapper select:focus,
-.field-wrapper textarea:focus {
+  font-size: 13.5px;
+  color: #0f2e22;
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transition: all 0.2s ease;
+}
+
+.field-wrapper input:focus {
+  background: #ffffff;
+  border-color: #2cb67d;
+  box-shadow: 0 0 0 3px rgba(44, 182, 125, 0.16);
 }
 
 .field-wrapper input.error {
-  border-color: var(--danger);
+  border-color: #ef4444;
+  background: #fff5f5;
 }
 
 .field-error {
-  font-size: 11px;
-  color: var(--danger);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 6px;
 }
 
-/* Tasks Container */
+/* Tasks list */
 .tasks-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .task-item {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 8px;
 }
 
 .task-item .field-wrapper {
@@ -1488,53 +1593,51 @@ export default {
 }
 
 .remove-task-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #fee2e2;
-  border: none;
-  cursor: pointer;
-  color: var(--danger);
-  transition: all 0.3s ease;
-}
-
-.remove-task-btn:active {
-  transform: scale(0.9);
-}
-
-.add-btn {
-  padding: 10px 16px;
-  background: #f3f4f6;
-  border: none;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
-  font-weight: 500;
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-task-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.add-task-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  width: fit-content;
+  padding: 10px 16px;
+  background: #eaf7f1;
+  color: #16935b;
+  border: 1px dashed #2cb67d;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  align-self: flex-start;
+  transition: all 0.2s ease;
 }
 
-.add-btn:active {
-  transform: scale(0.97);
+.add-task-btn:hover {
+  background: #2cb67d;
+  color: #ffffff;
 }
 
-/* KPI Container */
-.kpi-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
+/* KPIs chips */
 .kpi-input-group {
   display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.mobile-modal .kpi-input-group {
-  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .kpi-input-group .field-wrapper {
@@ -1542,133 +1645,126 @@ export default {
 }
 
 .add-kpi-btn {
-  padding: 10px 20px;
-  background: var(--primary);
-  border: none;
-  border-radius: 12px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
   color: white;
-  font-weight: 500;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 12.5px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.mobile-modal .add-kpi-btn {
-  width: 100%;
-  justify-content: center;
-}
-
-.add-kpi-btn:active {
-  transform: scale(0.97);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .kpi-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .kpi-chip {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  border-radius: 30px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #065f46;
+  background: #eaf7f1;
+  color: #16935b;
+  border: 1px solid #cbe9dc;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
 }
 
 .kpi-chip i {
   cursor: pointer;
-  transition: all 0.3s ease;
+  opacity: 0.7;
 }
 
-.kpi-chip i:active {
-  transform: scale(0.9);
+.kpi-chip i:hover {
+  opacity: 1;
+  color: #ef4444;
 }
 
 /* Modal Footer */
 .modal-footer-premium {
   display: flex;
-  gap: 12px;
-  padding: 20px 28px;
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.modal-footer-premium.mobile-footer {
-  flex-direction: column;
-  padding: 16px 20px;
-}
-
-.btn-cancel-premium,
-.btn-submit-premium {
-  flex: 1;
-  padding: 12px;
-  border-radius: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  border: none;
-}
-
-.mobile-footer .btn-cancel-premium,
-.mobile-footer .btn-submit-premium {
-  padding: 14px;
-}
-
-.btn-cancel-premium {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.btn-cancel-premium:hover {
-  background: #e5e7eb;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 28px;
+  background: #f7fcf9;
+  border-top: 1px solid #e0f0e8;
 }
 
 .btn-submit-premium {
-  background: var(--primary);
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(44, 182, 125, 0.28);
+  transition: all 0.2s ease;
 }
 
 .btn-submit-premium:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(44, 182, 125, 0.35);
 }
 
-/* KRA View Cards */
+.btn-cancel-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 18px;
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-premium:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* View KRAs Cards List */
 .kra-cards-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .kra-card-item {
-  background: white;
-  border-radius: 16px;
+  border: 1px solid #e0f0e8;
+  border-radius: 18px;
+  background: #f7fcf9;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.kra-card-item:hover {
+  border-color: #2cb67d;
+  box-shadow: 0 4px 14px rgba(44, 182, 125, 0.08);
 }
 
 .kra-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: #f8fafc;
+  padding: 14px 18px;
   cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.kra-card-header:active {
-  transform: scale(0.99);
 }
 
 .kra-title-section {
@@ -1677,78 +1773,66 @@ export default {
   gap: 12px;
 }
 
-.kra-title-section i {
-  color: var(--primary-color);
-  font-size: 14px;
+.kra-expand-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #eaf7f1;
+  color: #16935b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
 }
 
-.kra-title-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a2e;
+.kra-name-heading {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f2e22;
   margin: 0;
+}
+
+.kra-meta-badge {
+  font-size: 11.5px;
+  color: #6b8f81;
 }
 
 .kra-card-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .icon-btn-small {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.icon-btn-small:active {
-  transform: scale(0.9);
+  font-size: 12px;
+  transition: all 0.2s ease;
 }
 
 .icon-btn-small.edit {
-  background: #e0e7ff;
-  color: var(--primary-color);
-}
-
-.icon-btn-small.edit:hover {
-  background: var(--primary-color);
-  color: white;
+  background: #eaf7f1;
+  color: #16935b;
 }
 
 .icon-btn-small.delete {
   background: #fee2e2;
-  color: var(--danger);
-}
-
-.icon-btn-small.delete:hover {
-  background: var(--danger);
-  color: white;
+  color: #ef4444;
 }
 
 .kra-card-body {
-  padding: 20px;
-  border-top: 1px solid #e5e7eb;
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  padding: 16px 18px;
+  background: #ffffff;
+  border-top: 1px solid #eef6f2;
 }
 
 .info-section {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .info-section:last-child {
@@ -1759,127 +1843,161 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
-  color: #374151;
-  font-size: 13px;
-}
-
-.info-header i {
-  color: var(--primary-color);
+  font-size: 12.5px;
+  color: #16935b;
+  margin-bottom: 6px;
 }
 
 .info-list {
   list-style: none;
-  padding-left: 24px;
+  padding: 0;
+  margin: 0;
 }
 
 .info-list li {
-  padding: 6px 0;
-  font-size: 13px;
-  color: #4b5563;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 13px;
+  color: #0f2e22;
+  padding: 4px 0;
 }
 
 .info-list li i {
-  color: var(--success);
-  font-size: 12px;
+  color: #2cb67d;
+  font-size: 11px;
 }
 
 .kpi-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-left: 24px;
+  gap: 6px;
 }
 
 .kpi-badge {
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  border-radius: 20px;
+  padding: 4px 10px;
+  background: #eaf7f1;
+  color: #16935b;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 500;
-  color: #065f46;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.kpi-badge i {
+  font-size: 10px;
 }
 
 .target-text {
-  padding-left: 24px;
   font-size: 13px;
-  color: #4b5563;
-  font-style: italic;
+  color: #0f2e22;
+  font-weight: 600;
+  margin: 0;
 }
 
-.empty-item {
-  color: #9ca3af;
-  font-size: 12px;
-  padding: 6px 0;
-}
-
+/* Empty States */
 .empty-state-premium {
+  padding: 40px 20px;
   text-align: center;
-  padding: 60px 20px;
-  color: #9ca3af;
 }
 
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+.empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #eaf7f1;
+  color: #2cb67d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin: 0 auto 14px;
 }
 
 .empty-state-premium h4 {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f2e22;
+  margin: 0 0 6px;
 }
 
 .empty-state-premium p {
-  font-size: 14px;
+  font-size: 13px;
+  color: #6b8f81;
+  margin: 0 0 16px;
 }
 
-/* Expand Transition */
-.expand-enter-active,
-.expand-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
+.inline-btn {
+  margin: 0 auto;
 }
 
-.expand-enter-from,
-.expand-leave-to {
-  opacity: 0;
-  max-height: 0;
+/* Mobile Cards */
+.mobile-cards {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px;
 }
 
-.expand-enter-to,
-.expand-leave-from {
-  opacity: 1;
-  max-height: 500px;
+.department-card {
+  background: white;
+  border: 1px solid #e0f0e8;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(44, 182, 125, 0.05);
 }
 
-/* Modal Fade */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.3s ease;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f2faf6;
 }
 
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
+.code-badge-mobile {
+  padding: 2px 10px;
+  background: #eaf7f1;
+  color: #16935b;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-/* Responsive */
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card-action-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.card-action-btn.primary { background: #eaf7f1; color: #16935b; }
+.card-action-btn.secondary { background: #f1f5f9; color: #475569; }
+.card-action-btn.danger { background: #fee2e2; color: #ef4444; }
+
+/* 📱 Media Queries */
+@media (max-width: 900px) {
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
-  .main-content {
-    flex-direction: column;
-    padding: 12px;
-  }
-
-  .content {
-    padding: 16px;
-    border-radius: 20px;
-  }
-
   .mobile-header {
     display: flex;
   }
@@ -1888,159 +2006,16 @@ export default {
     display: none;
   }
 
-  .stats-bar {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .stat-card {
-    width: 100%;
-    padding: 14px;
-  }
-
-  .stat-card i {
-    font-size: 28px;
-  }
-
-  .stat-value {
-    font-size: 18px;
-  }
-
-  .search-bar-mobile {
-    display: block;
-  }
-
-  .mobile-cards {
-    display: flex;
+  .main-content {
+    padding: 12px;
   }
 
   .department-table {
     display: none;
   }
 
-  .table-wrapper-premium {
-    border: none;
-  }
-
-  .premium-modal {
-    max-width: 95%;
-  }
-
-  .modal-header-premium {
-    padding: 16px 20px;
-  }
-
-  .modal-body-premium {
-    padding: 16px;
-  }
-
-  .modal-footer-premium {
-    padding: 16px 20px;
-    flex-direction: column;
-  }
-
-  .kpi-input-group {
-    flex-direction: column;
-  }
-
-  .add-kpi-btn {
-    width: 100%;
-  }
-
-  .action-group {
-    flex-direction: column;
-  }
-
-  .action-btn-primary,
-  .action-btn-danger {
-    width: 100%;
-    padding: 12px 16px;
-  }
-
-  .department-table th,
-  .department-table td {
-    padding: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .main-content {
-    padding: 8px;
-  }
-
-  .content {
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .mobile-title {
-    font-size: 16px;
-  }
-
-  .mobile-add-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-
-  .department-card {
-    padding: 12px;
-  }
-
-  .card-header {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-  }
-
-
-  .dept-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 12px;
-  }
-
-  .dept-name {
-    font-size: 13px;
-  }
-
-  .search-input-mobile {
-    font-size: 15px;
-    padding: 8px 10px 8px 34px;
-  }
-
-  .kra-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .kra-card-actions {
-    align-self: flex-end;
-  }
-
-  .kra-title-section h3 {
-    font-size: 14px;
-  }
-
-  .info-list {
-    padding-left: 16px;
-  }
-
-  .kpi-badges {
-    padding-left: 16px;
-  }
-
-  .target-text {
-    padding-left: 16px;
-  }
-
-  .empty-state-mobile i {
-    font-size: 40px;
-  }
-
-  .empty-state-mobile h4 {
-    font-size: 15px;
+  .mobile-cards {
+    display: flex;
   }
 }
 </style>
