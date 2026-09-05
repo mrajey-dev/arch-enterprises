@@ -1400,4 +1400,38 @@ border-radius: 12px;
   transition: width 0.35s ease, box-shadow 0.3s ease;
 }
 
+/* 🌟 Sidebar Notification Badges */
+.sidebar-item-badge {
+  margin-left: auto;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+.sidebar-item-badge.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+}
+
+.sidebar-item-badge.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+.sidebar-item-badge.info {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+.sidebar-item-badge.sub {
+  font-size: 0.62rem;
+  padding: 0 5px;
+}
 </style>

@@ -5,13 +5,19 @@
       class="admin-bell-btn" 
       :class="{ 'has-unread': unseenCount > 0, 'is-active': isOpen }"
       @click="toggleDropdown"
-      title="Admin Alerts & Notifications"
-      aria-label="Admin Notifications"
+      title="Alerts & Notifications"
+      aria-label="Notifications"
     >
       <i class="fas fa-bell bell-icon" :class="{ 'ring-anim': unseenCount > 0 }"></i>
-      <span v-if="unseenCount > 0" class="bell-badge">
-        {{ unseenCount > 99 ? '99+' : unseenCount }}
-      </span>
+      
+      <!-- Nicely styled badge count -->
+      <transition name="badge-pop">
+        <span v-if="unseenCount > 0" class="bell-badge" :class="{ 'pill-badge': unseenCount > 9 }">
+          {{ unseenCount > 99 ? '99+' : unseenCount }}
+        </span>
+      </transition>
+      
+      <!-- Subtle radar ping animation -->
       <span v-if="unseenCount > 0" class="badge-ping"></span>
     </button>
 
@@ -23,7 +29,7 @@
           <div class="header-title-wrap">
             <div class="live-dot-pulse" :class="{ 'idle': unseenCount === 0 }"></div>
             <div class="title-text">
-              <h3>Admin Notifications</h3>
+              <h3>Notifications & Alerts</h3>
               <span class="total-pill">
                 {{ unseenCount > 0 ? `${unseenCount} New Alert${unseenCount === 1 ? '' : 's'}` : 'All caught up' }}
               </span>
@@ -56,6 +62,20 @@
           </div>
         </div>
 
+        <!-- 🔔 Desktop Notification Permission Banner (Outside app alert prompt) -->
+        <div v-if="notifPermission !== 'granted'" class="desktop-notif-banner">
+          <div class="banner-icon-wrap">
+            <i class="fas fa-desktop"></i>
+          </div>
+          <div class="banner-text">
+            <strong>Show outside the app</strong>
+            <span>Receive desktop & lock screen alerts when new requests arrive.</span>
+          </div>
+          <button class="btn-enable-desktop" @click.stop="enableDesktopNotifications">
+            <i class="fas fa-bell"></i> Enable
+          </button>
+        </div>
+
         <!-- Mode Bar (Unseen vs All) -->
         <div class="filter-controls-bar">
           <div class="mode-toggle">
@@ -76,7 +96,7 @@
           </div>
         </div>
 
-        <!-- 4 Main Category Tabs -->
+        <!-- Main Category Tabs -->
         <div class="notif-tabs-scroll">
           <div class="notif-tabs">
             <button 
@@ -196,6 +216,11 @@
           >
             <i class="fas fa-check-circle"></i> Clear Badge
           </button>
+
+          <button class="btn-test-outside" @click.stop="triggerTestOutsideNotification" title="Test notification outside app">
+            <i class="fas fa-paper-plane"></i> Test Alert
+          </button>
+
           <div class="footer-links">
             <span class="quick-link" @click="goTo('/pendingleaves')">Leaves</span>
             <span class="quick-link" @click="goTo('/RequestDesk')">Desk</span>
@@ -211,6 +236,12 @@
 <script>
 import axios from 'axios'
 import { toastSuccess, toastError, toastInfo } from '@/utils/toast.js'
+import { 
+  showDesktopNotification, 
+  requestNotificationPermission, 
+  getNotificationPermission,
+  updateTabBadgeCount 
+} from '@/utils/webNotification.js'
 
 export default {
   name: 'AdminNotificationBell',
@@ -222,6 +253,9 @@ export default {
       activeCategory: 'all',
       pollingTimer: null,
       seenIds: new Set(),
+      knownItemIds: new Set(),
+      isFirstFetch: true,
+      notifPermission: getNotificationPermission(),
       counts: {
         leaves: 0,
         request_desk: 0,
@@ -256,7 +290,39 @@ export default {
       return source.filter(item => item.type === this.activeCategory)
     }
   },
+  watch: {
+    unseenCount(newVal) {
+      updateTabBadgeCount(newVal)
+    }
+  },
   methods: {
+    async enableDesktopNotifications() {
+      const granted = await requestNotificationPermission()
+      this.notifPermission = getNotificationPermission()
+      if (granted) {
+        toastSuccess('Outside app notifications enabled!')
+        showDesktopNotification({
+          title: 'ARCH 360 Alerts Enabled',
+          body: 'You will now receive notifications outside the app on your desktop.',
+          icon: '/Arch360.png'
+        })
+      } else {
+        toastInfo('Please allow notifications in your browser address bar.')
+      }
+    },
+
+    triggerTestOutsideNotification() {
+      showDesktopNotification({
+        title: 'ARCH 360 Notification Test',
+        body: 'Outside-app alert is active! You will get notified of leaves, requests, and chat.',
+        icon: '/Arch360.png',
+        onClick: () => {
+          this.isOpen = true
+        }
+      })
+      toastSuccess('Test alert sent outside the app!')
+    },
+
     loadSeenIds() {
       try {
         const stored = localStorage.getItem('admin_seen_notifications_v2')
@@ -270,46 +336,57 @@ export default {
         this.seenIds = new Set()
       }
     },
+
     saveSeenIds() {
       try {
-        const arr = Array.from(this.seenIds).slice(-200)
+        const arr = Array.from(this.seenIds).slice(-300)
         localStorage.setItem('admin_seen_notifications_v2', JSON.stringify(arr))
       } catch (e) {
         // ignore
       }
     },
+
     isItemUnseen(id) {
       return !this.seenIds.has(id)
     },
+
     markItemSeen(id) {
       this.seenIds.add(id)
       this.saveSeenIds()
+      updateTabBadgeCount(this.unseenCount)
     },
+
     markAllAsSeen() {
       this.items.forEach(item => {
         this.seenIds.add(item.id)
       })
       this.saveSeenIds()
       this.markChatReadBackend()
+      updateTabBadgeCount(0)
       toastSuccess('All notifications marked as seen')
     },
+
     toggleDropdown() {
       this.isOpen = !this.isOpen
+      this.notifPermission = getNotificationPermission()
       if (this.isOpen) {
         this.fetchNotifications(false)
       }
     },
+
     closeDropdown(e) {
       if (this.$refs.bellContainer && !this.$refs.bellContainer.contains(e.target)) {
         this.isOpen = false
       }
     },
+
     goTo(route) {
       this.isOpen = false
       if (this.$route.path !== route) {
         this.$router.push(route)
       }
     },
+
     handleCardClick(item) {
       this.markItemSeen(item.id)
       this.isOpen = false
@@ -319,6 +396,7 @@ export default {
         }
       }
     },
+
     async fetchNotifications(showToast = false) {
       const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || ''
       this.loading = true
@@ -345,7 +423,35 @@ export default {
 
         if (res && res.data && res.data.counts) {
           this.counts = res.data.counts
-          this.items = res.data.items || []
+          const incomingItems = res.data.items || []
+
+          // Detect brand new unseen items to trigger Desktop Notification outside the app
+          if (!this.isFirstFetch) {
+            const brandNewItems = incomingItems.filter(
+              item => !this.knownItemIds.has(item.id) && !this.seenIds.has(item.id)
+            )
+
+            // Trigger outside notification for new alerts (up to 3 to prevent spam)
+            brandNewItems.slice(0, 3).forEach(item => {
+              showDesktopNotification({
+                title: item.title || 'ARCH 360 Notification',
+                body: item.description || 'New activity in ARCH 360',
+                icon: '/Arch360.png',
+                tag: item.id,
+                onClick: () => {
+                  this.handleCardClick(item)
+                }
+              })
+            })
+          }
+
+          // Update known IDs
+          incomingItems.forEach(item => this.knownItemIds.add(item.id))
+          this.items = incomingItems
+          this.isFirstFetch = false
+
+          // Update tab title and OS app badge
+          updateTabBadgeCount(this.unseenCount)
 
           if (showToast) {
             toastSuccess('Notifications refreshed')
@@ -360,6 +466,7 @@ export default {
         this.loading = false
       }
     },
+
     async markChatReadBackend() {
       const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || ''
       if (!token) return
@@ -386,13 +493,14 @@ export default {
   },
   mounted() {
     this.loadSeenIds()
+    this.notifPermission = getNotificationPermission()
     this.fetchNotifications(false)
     document.addEventListener('click', this.closeDropdown)
 
-    // Polling every 25 seconds
+    // Polling every 20 seconds
     this.pollingTimer = setInterval(() => {
       this.fetchNotifications(false)
-    }, 25000)
+    }, 20000)
   },
   beforeUnmount() {
     document.removeEventListener('click', this.closeDropdown)
@@ -413,7 +521,7 @@ export default {
 /* 🔔 Bell Button Trigger */
 .admin-bell-btn {
   position: relative;
-  background: #f8fafc;
+  background: #ffffff;
   border: 1.5px solid #e2e8f0;
   color: #334155;
   width: 42px;
@@ -424,7 +532,7 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .admin-bell-btn:hover,
@@ -433,27 +541,28 @@ export default {
   border-color: #93c5fd;
   color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
 }
 
 .bell-icon {
-  font-size: 1.15rem;
-  transition: transform 0.2s ease;
+  font-size: 1.2rem;
+  transition: transform 0.25s ease;
 }
 
 .admin-bell-btn:hover .bell-icon {
   transform: rotate(12deg) scale(1.08);
 }
 
-/* Bell Badge */
+/* 🌟 Nicely Designed Bell Count Badge */
 .bell-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  top: -5px;
+  right: -5px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: #ffffff;
   font-size: 0.72rem;
   font-weight: 800;
+  line-height: 1;
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
@@ -462,44 +571,69 @@ export default {
   align-items: center;
   justify-content: center;
   border: 2px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.45);
-  z-index: 2;
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45), 0 0 10px rgba(239, 68, 68, 0.3);
+  z-index: 3;
+  letter-spacing: -0.2px;
+  transform-origin: center;
+  animation: popScale 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bell-badge.pill-badge {
+  min-width: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
 }
 
 .badge-ping {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -5px;
+  right: -5px;
   width: 20px;
   height: 20px;
   border-radius: 999px;
   background-color: #ef4444;
-  opacity: 0.75;
-  animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  opacity: 0.65;
+  animation: pingRing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
   z-index: 1;
+  pointer-events: none;
 }
 
-@keyframes ping {
-  75%, 100% {
-    transform: scale(1.8);
-    opacity: 0;
-  }
+@keyframes popScale {
+  0% { transform: scale(0); opacity: 0; }
+  80% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes popIn {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
+@keyframes pingRing {
+  0% { transform: scale(1); opacity: 0.7; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
 }
 
-@keyframes ring {
-  0%, 100% { transform: rotate(0); }
-  20%, 60% { transform: rotate(15deg); }
-  40%, 80% { transform: rotate(-15deg); }
+.badge-pop-enter-active,
+.badge-pop-leave-active {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.badge-pop-enter-from,
+.badge-pop-leave-to {
+  transform: scale(0);
+  opacity: 0;
+}
+
+/* 🔔 Bell Ring Animation */
+@keyframes bellSwing {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-6deg); }
+  75% { transform: rotate(3deg); }
+  100% { transform: rotate(0); }
 }
 
 .ring-anim {
-  animation: ring 1.2s ease infinite;
+  animation: bellSwing 1.8s ease-in-out infinite;
+  transform-origin: top center;
 }
 
 /* 📋 Dropdown Card */
@@ -617,6 +751,70 @@ export default {
 .btn-icon-action:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
+}
+
+/* 🔔 Desktop Notification Prompt Banner */
+.desktop-notif-banner {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-bottom: 1px solid #bfdbfe;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.banner-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.banner-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.banner-text strong {
+  font-size: 0.78rem;
+  color: #1e3a8a;
+}
+
+.banner-text span {
+  font-size: 0.70rem;
+  color: #3b82f6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-enable-desktop {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  flex-shrink: 0;
+}
+
+.btn-enable-desktop:hover {
+  background: #1d4ed8;
 }
 
 /* Filter Controls Bar */
@@ -927,6 +1125,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   font-size: 0.78rem;
+  gap: 8px;
 }
 
 .btn-footer-link {
@@ -954,10 +1153,30 @@ export default {
   cursor: not-allowed;
 }
 
+.btn-test-outside {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.btn-test-outside:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
 .footer-links {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .quick-link {
@@ -965,6 +1184,7 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: color 0.15s;
+  font-size: 0.74rem;
 }
 
 .quick-link:hover {
