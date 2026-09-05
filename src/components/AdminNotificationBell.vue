@@ -143,6 +143,16 @@
               <span>Chat</span>
               <span class="tab-count" v-if="categoryCounts.chat">{{ categoryCounts.chat }}</span>
             </button>
+            <button 
+              v-if="categoryCounts.general"
+              class="tab-btn" 
+              :class="{ active: activeCategory === 'general' }"
+              @click.stop="activeCategory = 'general'"
+            >
+              <i class="fas fa-bell"></i>
+              <span>General</span>
+              <span class="tab-count">{{ categoryCounts.general }}</span>
+            </button>
           </div>
         </div>
 
@@ -281,12 +291,16 @@ export default {
         leave: source.filter(i => i.type === 'leave').length,
         request_desk: source.filter(i => i.type === 'request_desk').length,
         resource_booking: source.filter(i => i.type === 'resource_booking').length,
-        chat: source.filter(i => i.type === 'chat').length
+        chat: source.filter(i => i.type === 'chat').length,
+        general: source.filter(i => i.type === 'general' || (i.type !== 'leave' && i.type !== 'request_desk' && i.type !== 'resource_booking' && i.type !== 'chat')).length
       }
     },
     filteredItems() {
       const source = this.displayedItems
       if (this.activeCategory === 'all') return source
+      if (this.activeCategory === 'general') {
+        return source.filter(item => item.type === 'general' || (item.type !== 'leave' && item.type !== 'request_desk' && item.type !== 'resource_booking' && item.type !== 'chat'))
+      }
       return source.filter(item => item.type === this.activeCategory)
     }
   },

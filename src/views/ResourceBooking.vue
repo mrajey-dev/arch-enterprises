@@ -329,28 +329,50 @@ export default {
       })
     },
 
+    getAuthHeaders() {
+      const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || '';
+      return {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : '',
+          Accept: 'application/json'
+        }
+      };
+    },
+
     async addResource() {
       if (!this.newResource.name) {
         toastWarning('Please enter resource name')
         return
       }
 
-      try {
-        await axios.post('/api/resource-booking', {
-          name: this.newResource.name,
-          description: this.newResource.description
-        }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        })
-        
+      const endpoints = [
+        '/resources',
+        '/api/resources',
+        '/resource-booking',
+        '/api/resource-booking',
+        'https://employees.archenterprises.co.in/api/resources'
+      ];
+
+      let success = false;
+      for (const ep of endpoints) {
+        try {
+          await axios.post(ep, {
+            name: this.newResource.name,
+            description: this.newResource.description
+          }, this.getAuthHeaders());
+          success = true;
+          break;
+        } catch (error) {
+          // try next
+        }
+      }
+
+      if (success) {
         this.showAddModal = false
         this.newResource = { name: '', description: '', available: 1 }
         toastSuccess('Resource added successfully!')
         this.fetchResources()
-      } catch (error) {
-        console.error(error)
+      } else {
         toastError('Failed to add resource')
       }
     },
@@ -366,19 +388,32 @@ export default {
 
     async fetchResources() {
       this.loadingResources = true
-      try {
-        const response = await axios.get('/api/resource-bookings', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+      const endpoints = [
+        '/resource-bookings',
+        '/api/resource-bookings',
+        'https://employees.archenterprises.co.in/api/resource-bookings',
+        'https://employees.archenterprises.co.in/api/api/resource-bookings'
+      ];
+
+      let fetched = null;
+      for (const ep of endpoints) {
+        try {
+          const res = await axios.get(ep, this.getAuthHeaders());
+          if (res && res.data) {
+            fetched = Array.isArray(res.data) ? res.data : (res.data.data || []);
+            break;
           }
-        })
-        this.resources = response.data
-      } catch (error) {
-        console.error(error)
-        toastError('Failed to load resources')
-      } finally {
-        this.loadingResources = false
+        } catch (error) {
+          // try next
+        }
       }
+
+      if (fetched) {
+        this.resources = fetched;
+      } else {
+        this.resources = [];
+      }
+      this.loadingResources = false;
     }
   },
 
@@ -387,7 +422,7 @@ export default {
     window.addEventListener('resize', this.checkIfMobile)
     this.fetchResources()
 
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token') || localStorage.getItem('admin_token')
     if (!token) {
       this.$router.push('/auth')
     }

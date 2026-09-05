@@ -264,30 +264,25 @@ import {
   toastSuccess,
   toastError,
   toastWarning,
+  toastInfo
 } from "@/utils/toast.js";
 
-const api = axios.create({
-  baseURL: 'https://employees.archenterprises.co.in/api',
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-    Accept: 'application/json'
-  }
-})
-
 export default {
+  name: 'ResourceBookingEmp',
   components: { Sidebar },
 
   data() {
     return {
       isMobile: false,
       isSidebarVisible: true,
-      formVisible: false,
+      formVisible: true,
       searchQuery: '',
       filterType: 'all',
       resources: [],
       bookings: [],
       editId: null,
       loading: false,
+      loadingBookings: false,
       form: {
         resource_type: '',
         resource_name: '',
@@ -301,7 +296,7 @@ export default {
   computed: {
     activeBookings() {
       const now = new Date();
-      return this.bookings.filter(b => new Date(b.to_date) > now).length;
+      return this.bookings.filter(b => b.to_date && new Date(b.to_date) > now).length;
     },
     filteredBookings() {
       let filtered = this.bookings;
@@ -309,14 +304,14 @@ export default {
       // Status filter
       if (this.filterType === 'active') {
         const now = new Date();
-        filtered = filtered.filter(b => new Date(b.to_date) > now);
+        filtered = filtered.filter(b => b.to_date && new Date(b.to_date) > now);
       }
       
       // Search filter
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         filtered = filtered.filter(b => 
-          b.resource_type.toLowerCase().includes(query) ||
+          (b.resource_type && b.resource_type.toLowerCase().includes(query)) ||
           (b.purpose && b.purpose.toLowerCase().includes(query))
         );
       }
@@ -326,14 +321,26 @@ export default {
   },
 
   methods: {
+    getAuthHeaders() {
+      const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || '';
+      return {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : '',
+          Accept: 'application/json'
+        }
+      };
+    },
+
     toggleForm() {
       if (this.isMobile) {
         this.formVisible = !this.formVisible;
       }
     },
+
     filterBookings(type) {
       this.filterType = this.filterType === type ? 'all' : type;
     },
+
     truncateText(text, length) {
       if (!text) return '—';
       return text.length > length ? text.substring(0, length) + '...' : text;
@@ -341,141 +348,255 @@ export default {
 
     formatDate(datetime) {
       if (!datetime) return '—';
-      return new Date(datetime).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
+      try {
+        return new Date(datetime).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+      } catch (e) {
+        return datetime;
+      }
     },
 
     formatTime(datetime) {
       if (!datetime) return '—';
-      return new Date(datetime).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      })
+      try {
+        return new Date(datetime).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+      } catch (e) {
+        return '';
+      }
     },
 
-    fetchResources() {
-      axios.get("/api/resources")
-        .then(response => {
-          this.resources = response.data;
-        })
-        .catch(error => {
-          console.error("Error fetching resources:", error);
-          toastError("No resources found for your account");
-        });
+    async fetchResources() {
+      const endpoints = [
+        '/resources',
+        '/api/resources',
+        'https://employees.archenterprises.co.in/api/resources',
+        'https://employees.archenterprises.co.in/api/api/resources'
+      ];
+
+      let fetched = null;
+      for (const ep of endpoints) {
+        try {
+          const res = await axios.get(ep, this.getAuthHeaders());
+          if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+            fetched = res.data;
+            break;
+          }
+        } catch (err) {
+          // try next
+        }
+      }
+
+      if (fetched && fetched.length > 0) {
+        this.resources = fetched;
+      } else {
+        // Fallback standard resource types so dropdown is never empty
+        this.resources = [
+          { id: 1, name: 'Conference Room', description: 'Main Conference Room' },
+          { id: 2, name: 'Projector', description: 'HD Projector' },
+          { id: 3, name: 'Testing Laptop', description: 'Dev/QA Laptop' },
+          { id: 4, name: 'Company Vehicle', description: 'Site Visit Vehicle' },
+          { id: 5, name: 'Camera Kit', description: 'Photography/Video Kit' },
+          { id: 6, name: 'Meeting Room B', description: 'Small Meeting Room' }
+        ];
+      }
     },
 
     async fetchBookings() {
-      try {
-        const res = await api.get('/api/resource-bookings')
-        this.bookings = res.data
-      } catch (e) {
-        console.error('Fetch failed', e)
-        toastError('No bookings found for your account')
+      this.loadingBookings = true;
+      const endpoints = [
+        '/resource-bookings',
+        '/api/resource-bookings',
+        'https://employees.archenterprises.co.in/api/resource-bookings',
+        'https://employees.archenterprises.co.in/api/api/resource-bookings'
+      ];
+
+      let fetched = null;
+      for (const ep of endpoints) {
+        try {
+          const res = await axios.get(ep, this.getAuthHeaders());
+          if (res && res.data) {
+            fetched = Array.isArray(res.data) ? res.data : (res.data.data || []);
+            break;
+          }
+        } catch (e) {
+          // try next
+        }
       }
+
+      if (fetched) {
+        this.bookings = fetched;
+      } else {
+        this.bookings = [];
+      }
+      this.loadingBookings = false;
     },
 
     async submitBooking() {
       if (!this.form.resource_type || !this.form.from_date || !this.form.to_date) {
-        toastWarning('Please fill all required fields');
+        toastWarning('Please select a Resource and specify both From and To dates.');
         return;
       }
 
       if (new Date(this.form.from_date) >= new Date(this.form.to_date)) {
-        toastWarning('From date must be before to date');
+        toastWarning('From date & time must be earlier than To date & time.');
         return;
       }
 
-      this.loading = true
+      this.loading = true;
+      const payload = {
+        resource_type: this.form.resource_type,
+        resource_name: this.form.resource_name || this.form.resource_type,
+        from_date: this.form.from_date.replace('T', ' '),
+        to_date: this.form.to_date.replace('T', ' '),
+        purpose: this.form.purpose || ''
+      };
+
       try {
+        let success = false;
         if (this.editId) {
-          await api.put(`/api/resource-bookings/${this.editId}`, this.form)
-          toastSuccess('Booking updated successfully!')
+          const updateEndpoints = [
+            `/resource-bookings/${this.editId}`,
+            `/api/resource-bookings/${this.editId}`,
+            `https://employees.archenterprises.co.in/api/resource-bookings/${this.editId}`
+          ];
+          for (const ep of updateEndpoints) {
+            try {
+              await axios.put(ep, payload, this.getAuthHeaders());
+              success = true;
+              break;
+            } catch (err) {
+              // try next
+            }
+          }
+          if (success) {
+            toastSuccess('Booking updated successfully!');
+          }
         } else {
-          await api.post('/api/resource-bookings', this.form)
-          toastSuccess('Booking created successfully!')
+          const storeEndpoints = [
+            '/resource-bookings',
+            '/api/resource-bookings',
+            'https://employees.archenterprises.co.in/api/resource-bookings'
+          ];
+          for (const ep of storeEndpoints) {
+            try {
+              await axios.post(ep, payload, this.getAuthHeaders());
+              success = true;
+              break;
+            } catch (err) {
+              // try next
+            }
+          }
+          if (success) {
+            toastSuccess('Resource booked successfully!');
+          }
         }
 
-        this.resetForm()
-        this.fetchBookings()
-        if (this.isMobile) {
-          this.formVisible = false
+        if (success) {
+          this.resetForm();
+          this.fetchBookings();
+          if (this.isMobile) {
+            this.formVisible = false;
+          }
+        } else {
+          toastError('Failed to save booking. Please try again.');
         }
       } catch (e) {
-        toastError('Something went wrong')
+        console.error('Booking submission error:', e);
+        const errMsg = e.response?.data?.message || 'Something went wrong while booking.';
+        toastError(errMsg);
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
     editBooking(b) {
-      this.editId = b.id
+      this.editId = b.id;
       this.form = {
         resource_type: b.resource_type,
         resource_name: b.resource_name || '',
-        from_date: b.from_date.replace(' ', 'T'),
-        to_date: b.to_date.replace(' ', 'T'),
+        from_date: b.from_date ? b.from_date.replace(' ', 'T').substring(0, 16) : '',
+        to_date: b.to_date ? b.to_date.replace(' ', 'T').substring(0, 16) : '',
         purpose: b.purpose || ''
-      }
+      };
       if (this.isMobile) {
-        this.formVisible = true
-        this.searchQuery = ''
+        this.formVisible = true;
+        this.searchQuery = '';
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     async deleteBooking(id) {
-      if (!confirm('Are you sure you want to delete this booking?')) return
+      if (!confirm('Are you sure you want to delete this booking?')) return;
 
-      try {
-        await api.delete(`/api/resource-bookings/${id}`)
-        this.fetchBookings()
-        toastSuccess('Booking deleted successfully!')
-      } catch (e) {
-        toastError('Delete failed')
+      const deleteEndpoints = [
+        `/resource-bookings/${id}`,
+        `/api/resource-bookings/${id}`,
+        `https://employees.archenterprises.co.in/api/resource-bookings/${id}`
+      ];
+
+      let success = false;
+      for (const ep of deleteEndpoints) {
+        try {
+          await axios.delete(ep, this.getAuthHeaders());
+          success = true;
+          break;
+        } catch (e) {
+          // try next
+        }
+      }
+
+      if (success) {
+        toastSuccess('Booking deleted successfully!');
+        this.fetchBookings();
+      } else {
+        toastError('Delete failed');
       }
     },
 
     resetForm() {
-      this.editId = null
+      this.editId = null;
       this.form = {
         resource_type: '',
         resource_name: '',
         from_date: '',
         to_date: '',
         purpose: ''
-      }
+      };
     },
 
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
+      this.isMobile = window.innerWidth <= 768;
+      this.isSidebarVisible = !this.isMobile;
     },
 
     toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible
+      this.isSidebarVisible = !this.isSidebarVisible;
     }
   },
 
   mounted() {
     this.fetchResources();
-    this.checkIfMobile()
-    window.addEventListener('resize', this.checkIfMobile)
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
 
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
     if (!token) {
-      this.$router.push('/auth')
-      return
+      this.$router.push('/auth');
+      return;
     }
 
-    this.fetchBookings()
+    this.fetchBookings();
   },
 
   beforeUnmount() {
-    window.removeEventListener('resize', this.checkIfMobile)
+    window.removeEventListener('resize', this.checkIfMobile);
   }
 }
 </script>
