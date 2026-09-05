@@ -93,7 +93,7 @@
                     </div>
                     <div class="qa-avatar-stack">
                       <span class="qa-avatar"><i class="fas fa-user-check"></i></span>
-                      <span class="qa-badge-pill">{{ attendanceRate }}%</span>
+                     
                     </div>
                   </div>
                   <div class="qa-info">
@@ -110,7 +110,7 @@
                     </div>
                     <div class="qa-avatar-stack">
                       <span class="qa-avatar"><i class="fas fa-user-check"></i></span>
-                      <span class="qa-badge-pill light">+8</span>
+                  
                     </div>
                   </div>
                   <div class="qa-info">
@@ -141,9 +141,7 @@
             <div class="dashboard-section-block">
               <div class="section-title-row">
                 <h3 class="section-heading">Folders</h3>
-                <span class="see-all-link" @click="goTo('managedepartments')">
-                  <i class="fas fa-arrow-right"></i>
-                </span>
+              
               </div>
 
               <div class="folders-grid">
@@ -153,7 +151,7 @@
                     <div class="folder-icon-wrap">
                       <i class="fas fa-folder folder-icon"></i>
                     </div>
-                    <i class="fas fa-ellipsis-v folder-options"></i>
+                    
                   </div>
                   <h4 class="folder-name">Employees</h4>
                   <div class="folder-meta">
@@ -168,7 +166,7 @@
                     <div class="folder-icon-wrap">
                       <i class="fas fa-folder folder-icon"></i>
                     </div>
-                    <i class="fas fa-ellipsis-v folder-options"></i>
+                  
                   </div>
                   <h4 class="folder-name">Departments</h4>
                   <div class="folder-meta">
@@ -183,7 +181,7 @@
                     <div class="folder-icon-wrap">
                       <i class="fas fa-folder folder-icon"></i>
                     </div>
-                    <i class="fas fa-ellipsis-v folder-options"></i>
+                  
                   </div>
                   <h4 class="folder-name">Expenses</h4>
                   <div class="folder-meta">
@@ -198,7 +196,7 @@
                     <div class="folder-icon-wrap">
                       <i class="fas fa-folder folder-icon"></i>
                     </div>
-                    <i class="fas fa-ellipsis-v folder-options"></i>
+                  
                   </div>
                   <h4 class="folder-name">Leaves Center</h4>
                   <div class="folder-meta">
@@ -213,9 +211,7 @@
             <div class="dashboard-section-block">
               <div class="section-title-row">
                 <h3 class="section-heading">Recent Files & Operations</h3>
-                <span class="see-all-link" @click="goTo('workreport')">
-                  <i class="fas fa-arrow-right"></i>
-                </span>
+             
               </div>
 
               <div class="recent-files-card">

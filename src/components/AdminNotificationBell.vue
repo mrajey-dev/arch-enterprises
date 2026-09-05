@@ -536,80 +536,72 @@ export default {
 .admin-bell-btn {
   position: relative;
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  color: #334155;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .admin-bell-btn:hover,
 .admin-bell-btn.is-active {
-  background: #eff6ff;
-  border-color: #93c5fd;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
   color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.12);
 }
 
 .bell-icon {
-  font-size: 1.2rem;
-  transition: transform 0.25s ease;
+  font-size: 1.05rem;
+  color: #475569;
+  transition: transform 0.25s ease, color 0.2s ease;
 }
 
 .admin-bell-btn:hover .bell-icon {
+  color: #2563eb;
   transform: rotate(12deg) scale(1.08);
 }
 
 /* 🌟 Nicely Designed Bell Count Badge */
 .bell-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: #ffffff;
-  font-size: 0.72rem;
-  font-weight: 800;
-  line-height: 1;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45), 0 0 10px rgba(239, 68, 68, 0.3);
-  z-index: 3;
-  letter-spacing: -0.2px;
-  transform-origin: center;
-  animation: popScale 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: absolute;
+    top: -9px;
+    right: -10px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    min-width: 18px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: 1050px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(220, 38, 38, 0.4);
+    z-index: 3;
+    letter-spacing: -0.2px;
+    transform-origin: center;
+    animation: popScale-1a1efbf1 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .bell-badge.pill-badge {
-  min-width: 24px;
-  padding: 0 6px;
+  min-width: 22px;
+  padding: 0 5px;
   border-radius: 12px;
 }
 
 .badge-ping {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  background-color: #ef4444;
-  opacity: 0.65;
-  animation: pingRing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-  z-index: 1;
-  pointer-events: none;
+  display: none;
 }
 
 @keyframes popScale {

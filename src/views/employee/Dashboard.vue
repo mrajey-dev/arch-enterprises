@@ -1664,21 +1664,27 @@ export default {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
   position: relative;
 }
 
 .user-greeting {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--dark);
-  font-weight: 500;
+  gap: 0.45rem;
+  background: #f0fdf4;
+  border: 1px solid #dcfce7;
+  color: #166534;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 30px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .user-greeting i {
-  font-size: 1.2rem;
-  color: var(--primary);
+  font-size: 1.05rem;
+  color: #16a34a;
 }
 
 /* Notification Bell */
@@ -1696,14 +1702,21 @@ export default {
 
 .notification-bell-wrapper .badge {
   position: absolute;
-  top: -8px;
-  right: -10px;
+  top: -4px;
+  right: -4px;
   background: var(--danger);
   color: white;
-  font-size: 0.65rem;
-  padding: 2px 6px;
-  border-radius: 20px;
-  font-weight: 600;
+  font-size: 0.68rem;
+  padding: 0 4px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.35);
 }
 
 .notification-dropdown {
@@ -1749,22 +1762,32 @@ export default {
 }
 
 .download-btn {
-  background: var(--light);
-  border: 1px solid var(--border);
-  padding: 0.5rem 1rem;
-  border-radius: 40px;
-  font-weight: 500;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-weight: 600;
+  color: #334155;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .download-btn:hover {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+  background: #f8fafc;
+  color: #0284c7;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.12);
+}
+
+.download-btn i {
+  font-size: 1.05rem;
+  color: #0284c7;
 }
 
 .download-menu {
@@ -1844,22 +1867,30 @@ export default {
 }
 
 .logout-btn-modern {
-  background: none;
-  border: none;
+  background: #fff1f2;
+  border: 1px solid #ffe4e6;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  color: var(--gray);
+  justify-content: center;
   cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-radius: 40px;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .logout-btn-modern:hover {
   background: #fee2e2;
-  color: #ef4444;
+  border-color: #fecdd3;
+  color: #be123c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(225, 29, 72, 0.12);
+}
+
+.logout-btn-modern i {
+  font-size: 1.05rem;
+  color: #e11d48;
 }
 
 /* Main Layout */

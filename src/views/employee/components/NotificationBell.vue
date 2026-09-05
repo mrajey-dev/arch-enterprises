@@ -177,26 +177,26 @@ export default {
   position: relative;
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 50%;
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .bell-inner-btn:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.12);
 }
 
 .bell-icon {
-  font-size: 1.25rem;
-  color: #334155;
+  font-size: 1.05rem;
+  color: #475569;
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
@@ -208,45 +208,35 @@ export default {
 /* 🌟 Nicely Styled Badge */
 .badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -4px;
+  right: -4px;
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
   border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 2px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45);
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.4);
   z-index: 3;
   letter-spacing: -0.2px;
   animation: popScale 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .badge.pill-badge {
-  min-width: 24px;
-  padding: 0 6px;
+  min-width: 22px;
+  padding: 0 5px;
   border-radius: 12px;
 }
 
 .badge-ping {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  background-color: #ef4444;
-  opacity: 0.65;
-  animation: pingRing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-  z-index: 1;
-  pointer-events: none;
+  display: none;
 }
 
 @keyframes popScale {
