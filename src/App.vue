@@ -469,93 +469,154 @@ export default {
   --bg-app: #edf7f2;
 }
 
-/* Theme Support */
-[data-theme="default"], [data-theme="Default"] {
+/* Theme Support - Default Mystic Teal */
+:root, [data-theme="default"], [data-theme="Default"], [data-theme="teal"] {
+  --primary: #14b8a6; 
+  --primary-dark: #0f766e;
+  --primary-light: #f0fdfa;
+  --primary-gradient: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  --primary-glow: rgba(20, 184, 166, 0.28);
+  --sidebar: #ffffff; 
+  --card: #ffffff; 
+  --text: #134e4a;
+  --text-muted: #64748b;
+  --border: #ccfbf1;
+  --bg: #f2fbf9;
+  --bg-app: #f2fbf9;
+  --surface-tint: #f0fdfa;
+}
+
+[data-theme="emerald"] {
   --primary: #2cb67d; 
   --primary-dark: #209961;
   --primary-light: #eaf7f1;
+  --primary-gradient: linear-gradient(135deg, #2cb67d 0%, #10b981 100%);
+  --primary-glow: rgba(44, 182, 125, 0.28);
   --sidebar: #ffffff; 
   --card: #ffffff; 
-  --text: #113329;
-  --border: #e0f0e8;
+  --text: #0f2e22;
+  --text-muted: #6b8f81;
+  --border: #dff0e7;
+  --bg: #edf7f2;
   --bg-app: #edf7f2;
-}
-
-[data-theme="green"] {
-  --primary: #10b981;
-  --primary-dark: #059669;
-  --primary-light: #ecfdf5;
-  --sidebar: #ffffff;
-  --card: #ffffff;
-  --text: #064e3b;
-  --border: #d1fae5;
-  --bg-app: #f0fdf4;
+  --surface-tint: #f4fbf7;
 }
 
 [data-theme="blue"] {
   --primary: #3b82f6;
-  --primary-dark: #2563eb;
+  --primary-dark: #1d4ed8;
   --primary-light: #eff6ff;
+  --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --primary-glow: rgba(59, 130, 246, 0.28);
   --sidebar: #ffffff;
   --card: #ffffff;
-  --text: #1e3a8a;
+  --text: #0f172a;
+  --text-muted: #64748b;
   --border: #dbeafe;
-  --bg-app: #f0f7ff;
-}
-
-[data-theme="dark"] {
-  --primary: #10b981;
-  --primary-dark: #059669;
-  --primary-light: #1e293b;
-  --sidebar: #0f172a;
-  --card: #1e293b;
-  --text: #f8fafc;
-  --border: #334155;
-  --bg-app: #0b1120;
-}
-
-[data-theme="orange"] {
-  --primary: #f97316;
-  --primary-dark: #ea580c;
-  --primary-light: #fff7ed;
-  --sidebar: #ffffff;
-  --card: #ffffff;
-  --text: #7c2d12;
-  --border: #ffedd5;
-  --bg-app: #fffaf5;
-}
-
-[data-theme="red"] {
-  --primary: #ef4444;
-  --primary-dark: #dc2626;
-  --primary-light: #fef2f2;
-  --sidebar: #ffffff;
-  --card: #ffffff;
-  --text: #7f1d1d;
-  --border: #fee2e2;
-  --bg-app: #fff5f5;
-}
-
-[data-theme="teal"] {
-  --primary: #14b8a6;
-  --primary-dark: #0d9488;
-  --primary-light: #f0fdfa;
-  --sidebar: #ffffff;
-  --card: #ffffff;
-  --text: #134e4a;
-  --border: #ccfbf1;
-  --bg-app: #f2fbf9;
+  --bg: #f0f6ff;
+  --bg-app: #f0f6ff;
+  --surface-tint: #f5f9ff;
 }
 
 [data-theme="purple"] {
   --primary: #8b5cf6;
-  --primary-dark: #7c3aed;
+  --primary-dark: #6d28d9;
   --primary-light: #f5f3ff;
+  --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  --primary-glow: rgba(139, 92, 246, 0.28);
   --sidebar: #ffffff;
   --card: #ffffff;
-  --text: #4c1d95;
+  --text: #1e1b4b;
+  --text-muted: #6b7280;
   --border: #ede9fe;
-  --bg-app: #faf8ff;
+  --bg: #f8f6ff;
+  --bg-app: #f8f6ff;
+  --surface-tint: #fbf9ff;
+}
+
+[data-theme="green"] {
+  --primary: #10b981;
+  --primary-dark: #047857;
+  --primary-light: #ecfdf5;
+  --primary-gradient: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  --primary-glow: rgba(16, 185, 129, 0.28);
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --text: #064e3b;
+  --text-muted: #6b7280;
+  --border: #d1fae5;
+  --bg: #f0fdf4;
+  --bg-app: #f0fdf4;
+  --surface-tint: #f6fef9;
+}
+
+[data-theme="orange"] {
+  --primary: #f97316;
+  --primary-dark: #c2410c;
+  --primary-light: #fff7ed;
+  --primary-gradient: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
+  --primary-glow: rgba(249, 115, 22, 0.28);
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --text: #431407;
+  --text-muted: #78716c;
+  --border: #fed7aa;
+  --bg: #fffbf5;
+  --bg-app: #fffbf5;
+  --surface-tint: #fff8f0;
+}
+
+[data-theme="red"] {
+  --primary: #ef4444;
+  --primary-dark: #b91c1c;
+  --primary-light: #fef2f2;
+  --primary-gradient: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  --primary-glow: rgba(239, 68, 68, 0.28);
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --text: #450a0a;
+  --text-muted: #71717a;
+  --border: #fecaca;
+  --bg: #fff5f5;
+  --bg-app: #fff5f5;
+  --surface-tint: #fff0f0;
+}
+
+[data-theme="teal"] {
+  --primary: #14b8a6;
+  --primary-dark: #0f766e;
+  --primary-light: #f0fdfa;
+  --primary-gradient: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  --primary-glow: rgba(20, 184, 166, 0.28);
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --text: #134e4a;
+  --text-muted: #64748b;
+  --border: #ccfbf1;
+  --bg: #f2fbf9;
+  --bg-app: #f2fbf9;
+  --surface-tint: #f0fdfa;
+}
+
+[data-theme="dark"] {
+  --primary: #38bdf8;
+  --primary-dark: #0284c7;
+  --primary-light: #1e293b;
+  --primary-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  --primary-glow: rgba(56, 189, 248, 0.35);
+  --sidebar: #0f172a;
+  --card: #1e293b;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --bg: #0b1120;
+  --bg-app: #0b1120;
+  --surface-tint: #162033;
+}
+
+.theme-transition,
+.theme-transition * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
 }
 
 /* Layout */
@@ -567,19 +628,20 @@ export default {
 
 /* Modern Header - Fixed */
 .modern-header {
-  background: #ffffff;
+  background: var(--card, #ffffff);
   padding: 0 2rem;
   height: 78px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 20px rgba(44, 182, 125, 0.05);
+  box-shadow: 0 4px 20px var(--primary-glow, rgba(44, 182, 125, 0.05));
   border-bottom: 1px solid var(--border, #e0f0e8);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .header-left {
@@ -592,7 +654,7 @@ export default {
   display: none;
   font-size: 1.4rem;
   cursor: pointer;
-  color: var(--dark);
+  color: var(--text, #0f2e22);
 }
 
 .logo-section {
@@ -611,7 +673,7 @@ export default {
 .logo-text {
   font-weight: 700;
   font-size: 1.4rem;
-  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  background: var(--primary-gradient, linear-gradient(135deg, var(--primary), #7c3aed));
   -webkit-background-clip: text;
   background-clip: text;
       font-family: sans-serif;
@@ -629,9 +691,9 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  background: #f0fdf4;
-  border: 1px solid #dcfce7;
-  color: #166534;
+  background: var(--primary-light, #f0fdf4);
+  border: 1px solid var(--border, #dcfce7);
+  color: var(--primary-dark, #166534);
   font-weight: 600;
   font-size: 0.85rem;
   padding: 0.4rem 0.85rem;
@@ -641,7 +703,7 @@ export default {
 
 .user-greeting i {
   font-size: 1.05rem;
-  color: #16a34a;
+  color: var(--primary, #16a34a);
 }
 
 /* Notification Bell */
@@ -649,7 +711,7 @@ export default {
   position: relative;
   cursor: pointer;
   font-size: 1.2rem;
-  color: var(--gray);
+  color: var(--text-muted, #64748b);
   transition: color 0.2s;
 }
 .mobile-only {
@@ -663,7 +725,7 @@ export default {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: var(--danger);
+  background: var(--danger, #ef4444);
   color: white;
   font-size: 0.68rem;
   padding: 0 4px;
@@ -673,7 +735,7 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 2px solid #ffffff;
+  border: 2px solid var(--card, #ffffff);
   font-weight: 700;
   box-shadow: 0 2px 4px rgba(220, 38, 38, 0.35);
 }
@@ -683,7 +745,8 @@ export default {
   top: 45px;
   right: 0;
   width: 300px;
-  background: white;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e0f0e8);
   border-radius: 12px;
   box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
   z-index: 200;
@@ -698,6 +761,7 @@ export default {
   gap: 10px;
   border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
+  color: var(--text, #0f2e22);
 }
 
 .notification-item i {
@@ -707,7 +771,7 @@ export default {
 .notification-item small {
   margin-left: auto;
   font-size: 0.7rem;
-  color: var(--gray);
+  color: var(--text-muted, #64748b);
 }
 
 .no-notif {

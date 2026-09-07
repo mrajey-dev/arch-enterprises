@@ -173,6 +173,30 @@
             <i class="fas fa-th-large"></i> <span>Company Apps</span>
           </li>
 
+          <!-- Theme Selector Section -->
+          <li class="theme-selector-item">
+            <div class="theme-selector-label">
+              <i class="fas fa-palette"></i>
+              <span>Theme</span>
+            </div>
+            <div class="theme-options">
+              <button
+                v-for="themeOption in themeOptions"
+                :key="themeOption.value"
+                type="button"
+                class="theme-option"
+                :class="{ active: currentTheme === themeOption.value }"
+                :style="{ backgroundColor: themeOption.color }"
+                @click="changeTheme(themeOption.value)"
+                :title="themeOption.label"
+              >
+                <span v-if="currentTheme === themeOption.value" class="theme-check">
+                  <i class="fas fa-check"></i>
+                </span>
+              </button>
+            </div>
+          </li>
+
           <!-- ─── 6. SESSION ─── -->
           <li @click="logout" class="danger-bg">
             <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
@@ -517,7 +541,7 @@ export default {
     return {
       isMobileOpen: false,
       isCollapsed: false,
-      currentTheme: localStorage.getItem("theme") || "default",
+      currentTheme: localStorage.getItem("theme") || "teal",
       adminEmail: cachedAdmin.email || localStorage.getItem("admin_email") || "",
       adminName: cachedAdmin.name || localStorage.getItem("admin_name") || "",
       adminPhoto: cachedAdmin.photo || localStorage.getItem("admin_photo") || "",
@@ -546,12 +570,14 @@ export default {
       dropdownOpen: false,
       lettersDropdownOpen: false,
       themeOptions: [
-        { value: "default", label: "Emerald Mint (Default)", color: "#2cb67d" },
+        { value: "teal", label: "Mystic Teal (Default)", color: "#14b8a6" },
+        { value: "emerald", label: "Emerald Mint", color: "#2cb67d" },
         { value: "blue", label: "Ocean Blue", color: "#3b82f6" },
-        { value: "teal", label: "Aqua Teal", color: "#14b8a6" },
+        { value: "purple", label: "Royal Purple", color: "#8b5cf6" },
+        { value: "green", label: "Forest Green", color: "#10b981" },
         { value: "orange", label: "Sunset Orange", color: "#f97316" },
-        { value: "red", label: "Coral Red", color: "#ef4444" },
-        { value: "purple", label: "Lavender Purple", color: "#8b5cf6" }
+        { value: "red", label: "Crimson Red", color: "#ef4444" },
+        { value: "dark", label: "Midnight Dark", color: "#0f172a" }
       ],
       showPerformanceModal: false,
       users: [],
@@ -1200,16 +1226,16 @@ export default {
 /* Sidebar Container */
 .sidebar { 
   width: 270px;
-  color: #113329;
+  color: var(--text, #113329);
   display: flex;
   flex-direction: column;
   border-radius: 20px;
   position: fixed;
   top: 92px;
   height: calc(100vh - 110px);
-  background: #ffffff;
-  border: 1px solid #dff0e7;
-  box-shadow: 0 10px 35px -5px rgba(44, 182, 125, 0.08), 0 0 1px 1px rgba(44, 182, 125, 0.04);
+  background: var(--sidebar, #ffffff);
+  border: 1px solid var(--border, #dff0e7);
+  box-shadow: 0 10px 35px -5px var(--primary-glow, rgba(44, 182, 125, 0.08)), 0 0 1px 1px var(--primary-glow, rgba(44, 182, 125, 0.04));
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
   z-index: 100;
   overflow: hidden;
@@ -1224,8 +1250,8 @@ export default {
 .profile-section {
   padding: 18px 16px 14px;
   text-align: center;
-  background: linear-gradient(180deg, #edf8f3 0%, #ffffff 100%);
-  border-bottom: 1px solid #e5f2eb;
+  background: linear-gradient(180deg, var(--surface-tint, #edf8f3) 0%, var(--card, #ffffff) 100%);
+  border-bottom: 1px solid var(--border, #e5f2eb);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1244,15 +1270,15 @@ export default {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2.5px solid #2cb67d;
-  box-shadow: 0 4px 14px rgba(44, 182, 125, 0.25);
+  border: 2.5px solid var(--primary, #2cb67d);
+  box-shadow: 0 4px 14px var(--primary-glow, rgba(44, 182, 125, 0.25));
   cursor: pointer;
   transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .profile-pic:hover {
   transform: scale(1.05);
-  border-color: #209961;
+  border-color: var(--primary-dark, #209961);
 }
 
 .online-indicator {
@@ -1262,9 +1288,9 @@ export default {
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: #10b981;
-  border: 2.5px solid #ffffff;
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4);
+  background: var(--primary, #10b981);
+  border: 2.5px solid var(--card, #ffffff);
+  box-shadow: 0 0 0 1px var(--primary-glow, rgba(16, 185, 129, 0.4));
 }
 
 .profile-meta {
@@ -1277,7 +1303,7 @@ export default {
 .sidebar-title {
   font-size: 14.5px;
   font-weight: 700;
-  color: #0f2e22;
+  color: var(--text, #0f2e22);
   margin: 0 0 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -1288,9 +1314,9 @@ export default {
 .role-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #1b9961;
-  background: #eaf7f1;
-  border: 1px solid #cbe9dc;
+  color: var(--primary-dark, #1b9961);
+  background: var(--primary-light, #eaf7f1);
+  border: 1px solid var(--border, #cbe9dc);
   padding: 2px 9px;
   border-radius: 999px;
   letter-spacing: 0.2px;
@@ -1307,7 +1333,7 @@ export default {
   overflow-y: auto;
   padding: 10px 8px 24px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(44, 182, 125, 0.25) transparent;
+  scrollbar-color: var(--primary-glow, rgba(44, 182, 125, 0.25)) transparent;
 }
 
 .menu-scroll::-webkit-scrollbar {
@@ -1315,12 +1341,12 @@ export default {
 }
 
 .menu-scroll::-webkit-scrollbar-thumb {
-  background: rgba(44, 182, 125, 0.25);
+  background: var(--primary-glow, rgba(44, 182, 125, 0.25));
   border-radius: 10px;
 }
 
 .menu-scroll::-webkit-scrollbar-thumb:hover {
-  background: #2cb67d;
+  background: var(--primary, #2cb67d);
 }
 
 /* Sidebar Menu */
@@ -1340,7 +1366,7 @@ export default {
   align-items: center;
   font-size: 10.5px;
   font-weight: 800;
-  color: #7d9e92;
+  color: var(--text-muted, #7d9e92);
   letter-spacing: 0.9px;
   user-select: none;
   text-transform: uppercase;
@@ -1358,7 +1384,7 @@ export default {
   gap: 12px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #3b574e;
+  color: var(--text, #3b574e);
   cursor: pointer;
   border-radius: 12px;
   margin: 1px 4px;
@@ -1370,27 +1396,27 @@ export default {
   min-width: 20px;
   text-align: center;
   font-size: 15px;
-  color: #2cb67d;
+  color: var(--primary, #2cb67d);
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
 /* Hover State */
 .sidebar-menu li:not(.menu-section-header):hover {
-  background: #eef8f3;
-  color: #113329;
+  background: var(--primary-light, #eef8f3);
+  color: var(--text, #113329);
 }
 
 .sidebar-menu li:not(.menu-section-header):hover i {
-  color: #209961;
+  color: var(--primary-dark, #209961);
   transform: scale(1.1);
 }
 
 /* Active Navigation Item */
 .sidebar-menu li.active-item {
-  background: linear-gradient(135deg, #34b782 0%, #22a96f 100%) !important;
+  background: var(--primary-gradient, linear-gradient(135deg, #34b782 0%, #22a96f 100%)) !important;
   color: #ffffff !important;
   font-weight: 600;
-  box-shadow: 0 5px 16px rgba(44, 182, 125, 0.35);
+  box-shadow: 0 5px 16px var(--primary-glow, rgba(44, 182, 125, 0.35));
 }
 
 .sidebar-menu li.active-item i {
@@ -1420,25 +1446,25 @@ export default {
 }
 
 .dropdown-wrapper:hover .dropdown-toggle {
-  background: #eef8f3;
+  background: var(--primary-light, #eef8f3);
 }
 
 .dropdown-active > .dropdown-toggle {
-  background: #f2faf6;
-  color: #0f2e22;
+  background: var(--surface-tint, #f2faf6);
+  color: var(--text, #0f2e22);
   font-weight: 600;
 }
 
 .caret-icon {
   margin-left: auto;
   font-size: 11px !important;
-  color: #7d9e92 !important;
+  color: var(--text-muted, #7d9e92) !important;
   transition: transform 0.25s ease !important;
 }
 
 .caret-icon.rotate {
   transform: rotate(180deg);
-  color: #209961 !important;
+  color: var(--primary-dark, #209961) !important;
 }
 
 /* Sub-items list */
@@ -1446,7 +1472,7 @@ export default {
   list-style: none;
   padding: 4px 0 6px 14px;
   margin: 2px 0 4px 10px;
-  border-left: 2px solid #cbe8db;
+  border-left: 2px solid var(--border, #cbe8db);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1456,28 +1482,28 @@ export default {
   font-size: 12.8px !important;
   padding: 8px 12px !important;
   border-radius: 8px !important;
-  color: #55756a !important;
+  color: var(--text-muted, #55756a) !important;
   margin: 0 !important;
 }
 
 .dropdown-menu li:hover {
-  background: #eef8f3 !important;
-  color: #0f2e22 !important;
+  background: var(--primary-light, #eef8f3) !important;
+  color: var(--text, #0f2e22) !important;
 }
 
 .dropdown-menu li.active-sub-item {
-  background: #e2f6ec !important;
-  color: #16935b !important;
+  background: var(--primary-light, #e2f6ec) !important;
+  color: var(--primary-dark, #16935b) !important;
   font-weight: 600;
 }
 
 .dropdown-menu li i {
   font-size: 13px !important;
-  color: #2cb67d;
+  color: var(--primary, #2cb67d);
 }
 
 .dropdown-menu li.active-sub-item i {
-  color: #16935b !important;
+  color: var(--primary-dark, #16935b) !important;
 }
 
 /* Danger / Logout Button */
@@ -1502,8 +1528,8 @@ export default {
   flex-direction: column !important;
   align-items: flex-start !important;
   padding: 10px 14px !important;
-  background: #f4faf6 !important;
-  border: 1px solid #e1f0e8;
+  background: var(--surface-tint, #f4faf6) !important;
+  border: 1px solid var(--border, #e1f0e8);
   border-radius: 12px !important;
   margin: 4px 4px !important;
   cursor: default !important;
@@ -1515,7 +1541,7 @@ export default {
   gap: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #6b8f81;
+  color: var(--text-muted, #6b8f81);
   margin-bottom: 8px;
 }
 
@@ -1546,7 +1572,7 @@ export default {
 }
 
 .theme-option.active {
-  box-shadow: 0 0 0 2px #2cb67d, 0 2px 6px rgba(44, 182, 125, 0.35);
+  box-shadow: 0 0 0 2px var(--primary, #2cb67d), 0 2px 6px var(--primary-glow, rgba(44, 182, 125, 0.35));
   transform: scale(1.1);
 }
 
@@ -1609,6 +1635,97 @@ export default {
 .sidebar.collapsed .dropdown-toggle {
   justify-content: center;
   padding: 12px 0;
+}
+
+/* Enhanced Theme Selector Styles */
+.theme-selector-item {
+  display: flex;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  padding: 14px 18px !important;
+  margin: 10px 12px 6px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.theme-selector-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  width: 100%;
+}
+
+.theme-selector-label i {
+  font-size: 15px;
+  color: var(--primary, #2cb67d);
+}
+
+.theme-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.theme-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  outline: none;
+}
+
+.theme-option:hover {
+  transform: scale(1.18);
+  border-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.theme-option.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+  transform: scale(1.15);
+}
+
+.theme-check {
+  color: #ffffff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-check i {
+  font-size: 10px;
+  margin: 0;
+}
+
+/* Collapsed sidebar theme adjustments */
+.sidebar.collapsed .theme-selector-item {
+  padding: 10px 6px !important;
+  align-items: center !important;
+  margin: 8px 4px;
+}
+
+.sidebar.collapsed .theme-selector-label span {
+  display: none;
+}
+
+.sidebar.collapsed .theme-options {
+  justify-content: center;
 }
 
 /* Mobile Responsive */

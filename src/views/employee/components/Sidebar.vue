@@ -290,7 +290,7 @@ export default {
     return {
       isMobileOpen: false,
       isCollapsed: false,
-      currentTheme: localStorage.getItem("theme") || "default",
+      currentTheme: localStorage.getItem("theme") || "teal",
       searchQuery: "",
       results: [],
       showPopup: false,
@@ -303,12 +303,13 @@ export default {
       profilePhoto: initPhoto,
       profileFetched: Boolean(initUser && initUser.id && localStorage.getItem(`profilePhoto_${initUser.id}`)),
       themeOptions: [
-        { value: "default", label: "Default Purple", color: "#8b5cf6", icon: "💜" },
+        { value: "teal", label: "Mystic Teal (Default)", color: "#14b8a6", icon: "💚" },
+        { value: "emerald", label: "Emerald Mint", color: "#2cb67d", icon: "🌿" },
         { value: "blue", label: "Ocean Blue", color: "#3b82f6", icon: "💙" },
+        { value: "purple", label: "Royal Purple", color: "#8b5cf6", icon: "💜" },
         { value: "green", label: "Forest Green", color: "#10b981", icon: "💚" },
         { value: "orange", label: "Sunset Orange", color: "#f97316", icon: "🧡" },
-        { value: "red", label: "Crimson Red", color: "#ef4444", icon: "❤️" },
-        { value: "teal", label: "Mystic Teal", color: "#14b8a6", icon: "💚" }
+        { value: "red", label: "Crimson Red", color: "#ef4444", icon: "❤️" }
       ]
     };
   },
