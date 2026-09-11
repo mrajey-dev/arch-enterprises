@@ -296,11 +296,11 @@ export default {
       this.authUser.handle = res.data.handle
     })
     document.addEventListener('click', this.closeMentionBox)
-    axios.get('/api/mentions/unread-count')
-      .then(res => {
-        this.unreadMentionsCount = res.data.count
+    axios.post('/api/mentions/mark-as-read')
+      .then(() => {
+        this.unreadMentionsCount = 0
       })
-      .catch(err => console.error('Failed to fetch unread mentions', err))
+      .catch(() => {})
     this.fetchNotifications();
     this.fetchQuestions()
     this.checkIfMobile()

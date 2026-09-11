@@ -57,19 +57,35 @@ export default {
 
   methods: {
     async handleNotificationClick() {
-      try {
-        await axios.post("/api/mentions/mark-as-read")
+      // 1. Immediately reset UI notification state
+      this.unreadMentionsCount = 0
+      this.latestMessage = ''
+      this.lastUnreadCount = 0
+      updateTabBadgeCount(0)
 
-        // Reset UI
-        this.unreadMentionsCount = 0
-        this.latestMessage = ''
-        this.lastUnreadCount = 0
-        updateTabBadgeCount(0)
+      try {
+        const token = localStorage.getItem('token') || ''
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+        const markEndpoints = [
+          "/api/mentions/mark-as-read",
+          "/mentions/mark-as-read",
+          "https://employees.archenterprises.co.in/api/api/mentions/mark-as-read",
+          "/api/notifications/mark-as-read",
+          "/notifications/mark-as-read",
+          "https://employees.archenterprises.co.in/api/api/notifications/mark-as-read"
+        ]
+
+        await Promise.allSettled(
+          markEndpoints.map(ep => axios.post(ep, {}, { headers }))
+        )
       } catch (err) {
         console.error("Failed to mark notifications as read", err)
       }
 
-      this.$router.push("/employee/help")
+      if (this.$route.path !== '/employee/help') {
+        this.$router.push("/employee/help")
+      }
     },
 
     async fetchNotifications() {
