@@ -344,11 +344,8 @@ export default {
 
       return uid === '107' || 
              empId === '107' || 
-             dept === 'it' || 
-             dept === 'management' || 
              dept === 'owner' || 
              dept === 'hr' || 
-             dept === 'finance' ||
              role === 'admin' ||
              role === 'it_manager';
     },
