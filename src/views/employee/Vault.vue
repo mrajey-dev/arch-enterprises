@@ -475,7 +475,7 @@
               <div class="studio-doc-brand">
                 <div class="brand-badge-ico"><i class="fas fa-file-signature"></i></div>
                 <div class="brand-text-col">
-                  <span class="studio-app-title">ARCH360 Digital Sign Studio</span>
+                  <span class="studio-app-title">Arch Enterprises Digital Sign Studio</span>
                   <div class="studio-active-filename" :title="currentStudioFilename">
                     {{ currentStudioFilename || 'Select or drop a document to begin' }}
                     <span v-if="selectedUploadFile" class="file-size-pill">{{ formatBytes(selectedUploadFile.size) }}</span>
@@ -652,9 +652,21 @@
                         :title="c.name"
                       ></button>
                     </div>
-                    <button type="button" class="btn-clear-drawing" @click="clearDrawCanvas" title="Clear Canvas">
-                      <i class="fas fa-eraser"></i> Clear
-                    </button>
+                    <div class="toolbar-btn-group">
+                      <button type="button" class="btn-clear-drawing" @click="clearDrawCanvas" title="Clear Canvas">
+                        <i class="fas fa-eraser"></i> Clear
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-drag-to-doc" 
+                        :class="{ active: isDragModeActive }"
+                        @click="toggleDragMode"
+                        title="Toggle drag-to-document mode"
+                      >
+                        <i class="fas fa-hand-paper"></i>
+                        {{ isDragModeActive ? 'Dragging...' : 'Drag to Doc' }}
+                      </button>
+                    </div>
                   </div>
 
                   <div class="draw-canvas-container">
@@ -702,6 +714,18 @@
                       <small class="font-label-name">{{ f.name }}</small>
                     </div>
                   </div>
+
+                  <div class="drag-mode-row mt-2">
+                    <button 
+                      type="button" 
+                      class="btn-drag-to-doc" 
+                      :class="{ active: isDragModeActive }"
+                      @click="toggleDragMode"
+                    >
+                      <i class="fas fa-hand-paper"></i>
+                      {{ isDragModeActive ? 'Dragging on Doc...' : 'Drag to Doc' }}
+                    </button>
+                  </div>
                 </div>
 
                 <!-- 3. UPLOAD IMAGE SIGNATURE -->
@@ -721,9 +745,20 @@
 
                   <div v-else class="sig-uploaded-preview">
                     <img :src="uploadedSignatureImage" alt="Signature preview" />
-                    <button type="button" class="btn-remove-sig-img" @click.stop="uploadedSignatureImage = null">
-                      <i class="fas fa-times"></i> Remove
-                    </button>
+                    <div class="sig-preview-actions">
+                      <button type="button" class="btn-remove-sig-img" @click.stop="uploadedSignatureImage = null">
+                        <i class="fas fa-times"></i> Remove
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-drag-to-doc" 
+                        :class="{ active: isDragModeActive }"
+                        @click="toggleDragMode"
+                      >
+                        <i class="fas fa-hand-paper"></i>
+                        {{ isDragModeActive ? 'Dragging...' : 'Drag to Doc' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -733,7 +768,40 @@
                     <div class="seal-icon-halo"><i class="fas fa-shield-alt"></i></div>
                     <div class="seal-details">
                       <strong>{{ user.name || 'Authorized Signatory' }}</strong>
-                      <span>{{ user.department || 'ARCH360' }} • Official AES-256 Seal</span>
+                      <span>{{ user.department || 'Arch Enterprises' }} • Official AES-256 Seal</span>
+                    </div>
+                  </div>
+                  <div class="drag-mode-row mt-2">
+                    <button 
+                      type="button" 
+                      class="btn-drag-to-doc" 
+                      :class="{ active: isDragModeActive }"
+                      @click="toggleDragMode"
+                    >
+                      <i class="fas fa-hand-paper"></i>
+                      {{ isDragModeActive ? 'Dragging on Doc...' : 'Drag to Doc' }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 🔒 LIVE DIGITAL AUDIT TRAIL (DATE, TIMESTAMP, IP) IN SIGNATURE SECTION -->
+                <div class="sig-audit-metadata-card mt-3">
+                  <div class="sig-audit-header">
+                    <i class="fas fa-shield-alt text-emerald"></i>
+                    <span>Arch Enterprises Security Audit</span>
+                  </div>
+                  <div class="sig-audit-grid">
+                    <div class="sig-audit-item">
+                      <span class="sig-audit-label"><i class="far fa-calendar-alt"></i> Signing Date</span>
+                      <span class="sig-audit-val bold">{{ stampCurrentDate || todayDateFormatted }}</span>
+                    </div>
+                    <div class="sig-audit-item">
+                      <span class="sig-audit-label"><i class="far fa-clock"></i> Timestamp</span>
+                      <span class="sig-audit-val bold font-mono">{{ stampCurrentTime || todayTimeFormatted }}</span>
+                    </div>
+                    <div class="sig-audit-item ip-span">
+                      <span class="sig-audit-label"><i class="fas fa-network-wired"></i> Current Device IP</span>
+                      <span class="sig-audit-val bold font-mono ip-val">{{ currentDeviceIp || 'Fetching IP...' }}</span>
                     </div>
                   </div>
                 </div>
@@ -772,14 +840,14 @@
                 <div class="digital-cert-info-card mt-3">
                   <div class="cert-card-header">
                     <i class="fas fa-shield-alt text-primary"></i>
-                    <span>Digital Security Seal</span>
+                    <span>Arch Enterprises Security Seal</span>
                   </div>
                   <p class="cert-card-desc">
-                    Your digital signature and cryptographic verification will be securely embedded with this document in the Security Vault.
+                    Your digital signature, live timestamp, and client device IP will be cryptographically embedded with this document in the Security Vault.
                   </p>
                   <div class="cert-card-pill">
                     <i class="fas fa-fingerprint"></i>
-                    <span>AES-256 Verified Audit Trail</span>
+                    <span>Arch Enterprises AES-256 Audit Trail</span>
                   </div>
                 </div>
 
@@ -787,8 +855,16 @@
 
             </aside>
 
-            <!-- 👉 RIGHT VIEWPORT: FULL REAL PDF DOCUMENT (CLEAN DOCUMENT ONLY) -->
-            <main class="odoo-studio-viewport" ref="pdfViewportContainer">
+            <!-- 👉 RIGHT VIEWPORT: FULL REAL PDF DOCUMENT -->
+            <main 
+              class="odoo-studio-viewport" 
+              ref="pdfViewportContainer"
+              @mousemove="isDragModeActive ? onDragStamp($event) : null"
+              @mouseup="isDragModeActive ? stopDragStamp() : null"
+              @mouseleave="isDragModeActive ? stopDragStamp() : null"
+              @touchmove="isDragModeActive ? onDragStampTouch($event) : null"
+              @touchend="isDragModeActive ? stopDragStamp() : null"
+            >
               
               <!-- State A: Loading PDF -->
               <div v-if="loadingPdf" class="viewport-loader">
@@ -811,17 +887,99 @@
                   class="pdf-canvas-wrapper" 
                   ref="pdfCanvasContainer"
                   :style="{ transform: `scale(${pdfZoom})`, transformOrigin: 'top center' }"
+                  @click="isDragModeActive ? onPdfCanvasClick($event) : null"
                 >
-                  <!-- 1. Real Full PDF Document Viewer (Shows exact PDF pages, tables, text) -->
+                  <!-- 1a. When drag mode active: canvas pages (stamp scrolls with content) -->
+                  <div v-if="isDragModeActive && isPdf" class="pdf-canvas-pages-stack">
+                    <canvas
+                      v-for="(pg, idx) in dragPdfPages"
+                      :key="idx"
+                      class="pdf-drag-page-canvas"
+                      :width="pg.width"
+                      :height="pg.height"
+                      :ref="'dragPageCanvas_' + idx"
+                      :style="{ width: pg.cssWidth + 'px', height: pg.cssHeight + 'px' }"
+                    ></canvas>
+                    <div v-if="dragPdfPages.length === 0" class="drag-pdf-loading">
+                      <i class="fas fa-spinner fa-spin"></i> Rendering PDF pages...
+                    </div>
+                  </div>
+
+                  <!-- 1b. Normal iframe view (non-drag mode) -->
                   <iframe 
-                    v-if="isPdf && pdfBlobUrl" 
+                    v-else-if="isPdf && pdfBlobUrl && !isDragModeActive" 
                     :src="pdfBlobUrl" 
                     class="real-pdf-iframe" 
+                    :class="{ 'is-dragging-active': isDraggingStamp }"
                     title="Full PDF Document"
                   ></iframe>
 
                   <!-- 2. Real Image (If document is PNG/JPG) -->
                   <img v-else-if="isImage" :src="imagePreviewUrl" class="real-image-preview" alt="Document Preview" />
+
+                  <!-- 🏷️ DRAGGABLE SIGNATURE STAMP OVERLAY (drag mode: absolute pixel position within stacked canvases) -->
+                  <div 
+                    v-if="isDragModeActive"
+                    class="interactive-odoo-stamp" 
+                    :class="[stampSize, { 'is-dragging': isDraggingStamp }]"
+                    :style="{ left: stampPosAbsX + 'px', top: stampPosAbsY + 'px', position: 'absolute', transform: 'translate(-50%, -50%)' }"
+                    @mousedown.stop="startDragStamp"
+                    @touchstart.stop="startDragStampTouch"
+                    title="Drag to place signature anywhere on this document"
+                  >
+                    <!-- Drag handle header -->
+                    <div class="stamp-header-badge">
+                      <i class="fas fa-arrows-alt"></i>
+                      <span>Drag to Place</span>
+                    </div>
+
+                    <!-- Stamp Body Content -->
+                    <div class="stamp-render-area">
+                      <!-- A. Drawn Signature -->
+                      <div v-if="signatureMode === 'draw'" class="stamp-draw-view">
+                        <img v-if="drawnSignatureData" :src="drawnSignatureData" class="stamp-sig-img" alt="Signature" />
+                        <span v-else class="stamp-placeholder-hint"><i class="fas fa-pen-nib"></i> Draw on left panel</span>
+                      </div>
+
+                      <!-- B. Typed Signature -->
+                      <div v-else-if="signatureMode === 'type'" class="stamp-type-view">
+                        <span :class="['stamp-font-styled', typedFontClass]">
+                          {{ typedSignatureName || signerName || user.name || 'Authorized Signatory' }}
+                        </span>
+                      </div>
+
+                      <!-- C. Uploaded Image Signature -->
+                      <div v-else-if="signatureMode === 'upload'" class="stamp-upload-view">
+                        <img v-if="uploadedSignatureImage" :src="uploadedSignatureImage" class="stamp-sig-img" alt="Signature" />
+                        <span v-else class="stamp-placeholder-hint"><i class="fas fa-image"></i> Upload on left</span>
+                      </div>
+
+                      <!-- D. Seal -->
+                      <div v-else-if="signatureMode === 'seal'" class="stamp-seal-view">
+                        <i class="fas fa-certificate text-gold"></i>
+                        <div class="seal-txt">
+                          <strong>{{ signerName || user.name }}</strong>
+                          <small>{{ signerDept || user.department || 'Arch Enterprises' }}</small>
+                        </div>
+                      </div>
+
+                      <!-- Stamp Footer -->
+                      <div class="stamp-footer-row">
+                        <div class="signer-tag">
+                          <i class="fas fa-user-check"></i> {{ signerName || user.name }}
+                        </div>
+                        <div class="stamp-meta-line">
+                          <span><i class="far fa-calendar-alt"></i> {{ stampCurrentDate || todayDateFormatted }}</span>
+                          <span><i class="far fa-clock"></i> {{ stampCurrentTime || todayTimeFormatted }}</span>
+                        </div>
+                        <div class="stamp-audit-row">
+                          <span class="stamp-ip-badge"><i class="fas fa-network-wired"></i> IP: {{ currentDeviceIp || 'Detecting...' }}</span>
+                          <span class="verified-tag"><i class="fas fa-shield-alt"></i> ARCH ENTERPRISES</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -921,7 +1079,7 @@
                 <div class="cert-logo-row">
                   <div class="cert-brand">
                     <i class="fas fa-shield-alt"></i>
-                    <span>ARCH360 SECURITY VAULT</span>
+                    <span>ARCH ENTERPRISES SECURITY VAULT</span>
                   </div>
                   <div class="cert-badge-valid">
                     <i class="fas fa-check-circle"></i> VERIFIED & AUTHENTIC
@@ -963,11 +1121,15 @@
                   </div>
                   <div class="cert-key-val">
                     <span class="key">Department:</span>
-                    <span class="val">{{ activeCertData?.signer_department || 'ARCH360' }}</span>
+                    <span class="val">{{ activeCertData?.signer_department || 'Arch Enterprises' }}</span>
                   </div>
                   <div class="cert-key-val">
                     <span class="key">Signing Timestamp:</span>
                     <span class="val">{{ activeCertData?.signed_at }}</span>
+                  </div>
+                  <div class="cert-key-val">
+                    <span class="key">Device IP Address:</span>
+                    <span class="val bold" style="color: #0369a1; font-family: monospace;">{{ activeCertData?.client_ip || activeCertData?.metadata?.client_ip || 'Captured' }}</span>
                   </div>
                   <div class="cert-key-val">
                     <span class="key">Purpose / Reason:</span>
@@ -983,7 +1145,7 @@
                     <div class="stamp-inner-circle">
                       <i class="fas fa-shield-alt"></i>
                       <span>DIGITALLY SIGNED</span>
-                      <small>ARCH360</small>
+                      <small>ARCH ENTERPRISES</small>
                     </div>
                   </div>
                 </div>
@@ -1009,7 +1171,7 @@
 
               <div class="cert-footer-disclaimer">
                 <i class="fas fa-lock"></i>
-                <span>This document certificate has been cryptographically generated and stored within the ARCH360 AES-256 Encrypted Security Vault. Authenticated and tamper-evident.</span>
+                <span>This document certificate has been cryptographically generated and stored within the Arch Enterprises AES-256 Encrypted Security Vault. Authenticated and tamper-evident.</span>
               </div>
             </div>
 
@@ -1139,6 +1301,10 @@ export default {
       isPdf: false,
       isImage: false,
       imagePreviewUrl: null,
+      // Canvas-based drag mode rendering
+      dragPdfPages: [],       // [{width, height, dataUrl}, ...] for each page
+      stampPosAbsY: 0,        // absolute Y in pixels from top of stacked pages
+      stampPosAbsX: 0,        // absolute X in pixels from left of page
 
       // Signature Studio Settings
       signatureMode: 'draw', // 'draw', 'type', 'upload', 'seal'
@@ -1147,16 +1313,21 @@ export default {
       typedFontClass: 'sig-font-1',
       uploadedSignatureImage: null,
       signerName: localUser.name || 'Authorized Signatory',
-      signerDept: localUser.department || 'ARCH360',
+      signerDept: localUser.department || 'Arch Enterprises',
       signatureReason: 'Digitally Authenticated & Approved',
 
       // Interactive Draggable Stamp State
-      stampPosX: 70, // percentage (0 - 100)
+      stampPosX: 50, // percentage (0 - 100)
       stampPosY: 80, // percentage (0 - 100)
       stampPage: 1,  // page number where stamp is located
       stampSize: 'medium', // 'small', 'medium', 'large'
       isDraggingStamp: false,
+      isDragModeActive: false, // toggled by "Drag to Doc" button
       isSavingStudio: false,
+      currentDeviceIp: '',
+      stampCurrentDate: '',
+      stampCurrentTime: '',
+      stampClockInterval: null,
 
       // Drawing canvas internal state
       isDrawing: false,
@@ -1201,6 +1372,15 @@ export default {
     todayDateCode() {
       const d = new Date();
       return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    },
+    todayDateFormatted() {
+      const d = new Date();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+    },
+    todayTimeFormatted() {
+      const d = new Date();
+      return d.toLocaleTimeString('en-US', { hour12: true });
     },
     isAdminOrHrContext() {
       const role = String(this.user?.role || '').trim().toLowerCase();
@@ -1258,16 +1438,70 @@ export default {
     if (this.isVaultUnlocked) {
       this.fetchVaultFiles();
     }
+    this.fetchDeviceIp();
+    this.startStampClock();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+    if (this.stampClockInterval) {
+      clearInterval(this.stampClockInterval);
+    }
   },
   methods: {
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
+    },
+
+    async fetchDeviceIp() {
+      // 1. Try public IP service with fast timeout
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.ip) {
+            this.currentDeviceIp = data.ip;
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback to backend
+      }
+
+      // 2. Fallback to server's client-ip endpoint
+      try {
+        const res = await axios.get('/api/employee/vault/client-ip');
+        if (res.data && res.data.ip) {
+          this.currentDeviceIp = res.data.ip;
+          return;
+        }
+      } catch (e) {
+        // Fallback
+      }
+
+      if (!this.currentDeviceIp) {
+        this.currentDeviceIp = '127.0.0.1';
+      }
+    },
+
+    startStampClock() {
+      this.updateStampClock();
+      if (this.stampClockInterval) clearInterval(this.stampClockInterval);
+      this.stampClockInterval = setInterval(() => {
+        this.updateStampClock();
+      }, 1000);
+    },
+
+    updateStampClock() {
+      const d = new Date();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      this.stampCurrentDate = `${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+      this.stampCurrentTime = d.toLocaleTimeString('en-US', { hour12: true });
     },
 
     // 🔐 2-STEP OTP & AUTHENTICATION
@@ -1442,8 +1676,10 @@ export default {
       this.signatureMode = 'draw';
       this.typedSignatureName = this.user.name || '';
       this.signerName = this.user.name || 'Authorized Signatory';
-      this.signerDept = this.user.department || 'ARCH360';
+      this.signerDept = this.user.department || 'Arch Enterprises';
       this.showSignStudio = true;
+      this.fetchDeviceIp();
+      this.startStampClock();
 
       this.$nextTick(() => {
         this.initDrawCanvas();
@@ -1467,8 +1703,10 @@ export default {
       this.signatureMode = 'draw';
       this.typedSignatureName = this.user.name || '';
       this.signerName = this.user.name || 'Authorized Signatory';
-      this.signerDept = this.user.department || 'ARCH360';
+      this.signerDept = this.user.department || 'Arch Enterprises';
       this.showSignStudio = true;
+      this.fetchDeviceIp();
+      this.startStampClock();
 
       this.$nextTick(() => {
         this.initDrawCanvas();
@@ -1511,6 +1749,8 @@ export default {
       this.selectedUploadFile = null;
       this.activeSignFile = null;
       this.pdfRawBuffer = null;
+      this.dragPdfPages = [];
+      this.isDragModeActive = false;
       if (this.pdfBlobUrl) {
         URL.revokeObjectURL(this.pdfBlobUrl);
         this.pdfBlobUrl = null;
@@ -1576,6 +1816,63 @@ export default {
         console.error('Error reading file:', err);
         toastError('Error processing file.');
         this.loadingPdf = false;
+      }
+    },
+
+    // Render all PDF pages as stacked canvases for drag mode
+    async renderAllPdfPagesForDrag() {
+      if (!this.pdfRawBuffer || !this.isPdf) return;
+      this.dragPdfPages = [];
+      try {
+        const loadingTask = pdfjsLib.getDocument({
+          // .slice(0) creates a copy — pdfjs detaches the original ArrayBuffer
+          data: new Uint8Array(this.pdfRawBuffer.slice(0)),
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/standard_fonts/'
+        });
+        const pdfDoc = await loadingTask.promise;
+        const totalPages = pdfDoc.numPages;
+        const scale = 1.5;
+
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale });
+          const offscreen = document.createElement('canvas');
+          offscreen.width = Math.floor(viewport.width);
+          offscreen.height = Math.floor(viewport.height);
+          const ctx = offscreen.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          pages.push({
+            width: offscreen.width,
+            height: offscreen.height,
+            cssWidth: Math.floor(viewport.width),
+            cssHeight: Math.floor(viewport.height),
+            imageData: ctx.getImageData(0, 0, offscreen.width, offscreen.height)
+          });
+        }
+        this.dragPdfPages = pages;
+
+        // Set initial stamp position near center-bottom of first page
+        await this.$nextTick();
+        this.stampPosAbsX = pages[0] ? Math.floor(pages[0].cssWidth / 2) : 300;
+        this.stampPosAbsY = pages[0] ? Math.floor(pages[0].cssHeight * 0.8) : 400;
+
+        // Draw each page onto its canvas ref
+        await this.$nextTick();
+        for (let i = 0; i < pages.length; i++) {
+          const canvasEl = this.$refs['dragPageCanvas_' + i];
+          const el = Array.isArray(canvasEl) ? canvasEl[0] : canvasEl;
+          if (el) {
+            const ctx = el.getContext('2d');
+            ctx.putImageData(pages[i].imageData, 0, 0);
+          }
+        }
+      } catch (e) {
+        console.error('Error rendering drag PDF pages:', e);
       }
     },
 
@@ -1693,6 +1990,23 @@ export default {
       toastSuccess(`Stamp moved to Page ${this.currentPdfPage}`);
     },
 
+    toggleDragMode() {
+      this.isDragModeActive = !this.isDragModeActive;
+      if (this.isDragModeActive) {
+        this.stampPosAbsX = 0;
+        this.stampPosAbsY = 0;
+        this.stampPage = 1;
+        // If PDF is loaded, render all pages as canvases
+        if (this.isPdf && this.pdfRawBuffer) {
+          this.$nextTick(() => {
+            this.renderAllPdfPagesForDrag();
+          });
+        }
+      } else {
+        this.dragPdfPages = [];
+      }
+    },
+
     // 🖋️ INTERACTIVE DRAG & DROP & CLICK-TO-PLACE ON PDF
     startDragStamp(e) {
       this.isDraggingStamp = true;
@@ -1711,21 +2025,28 @@ export default {
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
-      const clientX = e.clientX || e.touches?.[0]?.clientX;
-      const clientY = e.clientY || e.touches?.[0]?.clientY;
+      const clientX = e.clientX;
+      const clientY = e.clientY;
       if (clientX === undefined || clientY === undefined) return;
 
-      let xPercent = ((clientX - rect.left) / rect.width) * 100;
-      let yPercent = ((clientY - rect.top) / rect.height) * 100;
-
-      this.stampPosX = Math.max(5, Math.min(95, Math.round(xPercent)));
-      this.stampPosY = Math.max(5, Math.min(95, Math.round(yPercent)));
-      this.stampPage = this.currentPdfPage;
+      // Store as absolute pixel position relative to canvas container
+      const rawX = clientX - rect.left + container.scrollLeft;
+      const rawY = clientY - rect.top + container.scrollTop;
+      this.stampPosAbsX = Math.max(0, rawX);
+      this.stampPosAbsY = Math.max(0, rawY);
     },
 
     onDragStampTouch(e) {
       if (!this.isDraggingStamp) return;
-      this.onDragStamp(e);
+      if (e.touches && e.touches[0]) {
+        const container = this.$refs.pdfCanvasContainer;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const rawX = e.touches[0].clientX - rect.left + container.scrollLeft;
+        const rawY = e.touches[0].clientY - rect.top + container.scrollTop;
+        this.stampPosAbsX = Math.max(0, rawX);
+        this.stampPosAbsY = Math.max(0, rawY);
+      }
     },
 
     stopDragStamp() {
@@ -1736,14 +2057,11 @@ export default {
       if (this.isDraggingStamp) return;
       const container = this.$refs.pdfCanvasContainer;
       if (!container) return;
-
       const rect = container.getBoundingClientRect();
-      let xPercent = ((e.clientX - rect.left) / rect.width) * 100;
-      let yPercent = ((e.clientY - rect.top) / rect.height) * 100;
-
-      this.stampPosX = Math.max(5, Math.min(95, Math.round(xPercent)));
-      this.stampPosY = Math.max(5, Math.min(95, Math.round(yPercent)));
-      this.stampPage = this.currentPdfPage;
+      const rawX = e.clientX - rect.left + container.scrollLeft;
+      const rawY = e.clientY - rect.top + container.scrollTop;
+      this.stampPosAbsX = Math.max(0, rawX);
+      this.stampPosAbsY = Math.max(0, rawY);
     },
 
     // 🖋️ SIGNATURE DRAWING & CREATION
@@ -1884,66 +2202,129 @@ export default {
         ctx.fillStyle = '#059669';
         ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('ARCH360 ENTERPRISE AUTHENTICATED', 300, 65);
+        ctx.fillText('ARCH ENTERPRISES AUTHENTICATED', 300, 65);
         ctx.font = '18px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(this.signerName || 'Authorized Signatory', 300, 105);
-        ctx.fillText(`${this.signerDept || 'ARCH360'} • Official Seal`, 300, 135);
+        ctx.fillText(`${this.signerDept || 'Arch Enterprises'} • Official Seal`, 300, 135);
+      }
+
+      if (!this.currentDeviceIp) {
+        await this.fetchDeviceIp();
       }
 
       // Draw bottom verification border line and signer caption
       ctx.strokeStyle = '#2563eb';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(30, 185);
-      ctx.lineTo(570, 185);
+      ctx.moveTo(25, 172);
+      ctx.lineTo(575, 172);
       ctx.stroke();
 
-      ctx.fillStyle = '#1e293b';
-      ctx.font = 'bold 16px "Plus Jakarta Sans", sans-serif';
+      // Signer Name
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 15px "Plus Jakarta Sans", -apple-system, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(`Digitally Signed by: ${this.signerName || this.user.name || 'Signatory'}`, 30, 210);
+      ctx.fillText(`Digitally Signed by: ${this.signerName || this.user.name || 'Signatory'}`, 25, 192);
 
-      ctx.fillStyle = '#64748b';
-      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      // Verified Badge on Right
+      ctx.fillStyle = '#059669';
+      ctx.font = 'bold 12px "Plus Jakarta Sans", -apple-system, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('✔ ARCH ENTERPRISES VERIFIED', 575, 192);
+
+      // Date, Timestamp, and Device IP
+      const dateStr = this.stampCurrentDate || this.todayDateFormatted;
+      const timeStr = this.stampCurrentTime || this.todayTimeFormatted;
+      const ipStr = this.currentDeviceIp || '127.0.0.1';
+
+      ctx.fillStyle = '#1e3a8a';
+      ctx.font = 'bold 12px "Plus Jakarta Sans", -apple-system, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(`ARCH360 AES-256 Verified • ${this.todayDateCode} • Reason: ${this.signatureReason}`, 30, 232);
+      ctx.fillText(`Date: ${dateStr}   |   Time: ${timeStr}   |   IP: ${ipStr}`, 25, 212);
+
+      // Reason & Certificate Reference
+      ctx.fillStyle = '#64748b';
+      ctx.font = '11px "Plus Jakarta Sans", -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Reason: ${this.signatureReason || 'Official Document Approval'}  •  Arch Enterprises Ref: AE-DS-${this.todayDateCode}`, 25, 232);
 
       return offscreen.toDataURL('image/png');
     },
 
-    // 🚀 STAMP & BAKE SIGNATURE INTO PDF USING PDF-LIB
+    // 🚀 STAMP & BAKE SIGNATURE INTO PDF USING PDF-LIB (pixel-accurate, multi-page)
     async stampPdfDocument(pdfBuffer, filename) {
-      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      // .slice(0) ensures we work on a fresh copy — pdf-lib can detach the original
+      const pdfDoc = await PDFDocument.load(pdfBuffer.slice ? pdfBuffer.slice(0) : pdfBuffer);
       const sigPngUrl = await this.generateSignatureStampPng();
       const pngImage = await pdfDoc.embedPng(sigPngUrl);
 
-      const pages = pdfDoc.getPages();
-      const targetIndex = Math.max(0, Math.min(pages.length - 1, (this.stampPage || 1) - 1));
-      const page = pages[targetIndex];
-      const { width: pdfWidth, height: pdfHeight } = page.getSize();
+      const pdfPages = pdfDoc.getPages();
 
-      // Calculate stamp dimension relative to PDF points
+      // These MUST match the CSS values in .pdf-canvas-pages-stack
+      const STACK_PAD_TOP = 12; // padding-top of .pdf-canvas-pages-stack
+      const PAGE_GAP      = 8;  // gap between canvas pages
+
+      // stampPosAbsY is absolute px from top of .pdf-canvas-wrapper scroll area.
+      // Subtract the top padding of the stack to get position within the page stack.
+      let absY = this.stampPosAbsY - STACK_PAD_TOP;
+      let absX = this.stampPosAbsX;
+
+      // Walk pages to find which page and the relative Y within that page
+      let targetPageIdx = this.dragPdfPages.length > 0 ? this.dragPdfPages.length - 1 : 0;
+      let relYInPage = 0;
+
+      if (this.dragPdfPages.length > 0) {
+        let y = absY;
+        for (let i = 0; i < this.dragPdfPages.length; i++) {
+          const pageH = this.dragPdfPages[i].cssHeight;
+          if (y <= pageH) {
+            // Stamp is within this page
+            targetPageIdx = i;
+            relYInPage = Math.max(0, y);
+            break;
+          }
+          // Stamp is past this page — subtract page height and gap before next
+          y -= (pageH + PAGE_GAP);
+
+          // If this is the last page, clamp to bottom
+          if (i === this.dragPdfPages.length - 1) {
+            targetPageIdx = i;
+            relYInPage = Math.min(pageH, Math.max(0, y + pageH));
+          }
+        }
+      } else {
+        // Fallback: no canvas data, use percentage-based position on stamp page
+        targetPageIdx = Math.max(0, (this.stampPage || 1) - 1);
+        relYInPage = 0;
+      }
+
+      const safeIdx = Math.min(targetPageIdx, pdfPages.length - 1);
+      const targetPage = pdfPages[safeIdx];
+      const { width: pdfW, height: pdfH } = targetPage.getSize();
+
+      // Rendered canvas size at scale=1.5 (must match renderAllPdfPagesForDrag)
+      const renderedW = this.dragPdfPages[safeIdx]?.cssWidth  || pdfW;
+      const renderedH = this.dragPdfPages[safeIdx]?.cssHeight || pdfH;
+
+      // Map rendered pixel coords → PDF point coords
+      const pdfX = (absX       / renderedW) * pdfW;
+      const pdfY = (relYInPage / renderedH) * pdfH;
+
+      // Stamp size
       const relWidth = this.stampSize === 'large' ? 0.38 : (this.stampSize === 'small' ? 0.22 : 0.30);
-      const stampW = pdfWidth * relWidth;
-      const stampH = stampW * (250 / 600); // 0.416 aspect ratio
+      const stampW = pdfW * relWidth;
+      const stampH = stampW * (250 / 600); // aspect ratio
 
-      const centerPtX = (this.stampPosX / 100) * pdfWidth;
-      const centerPtY = (this.stampPosY / 100) * pdfHeight;
+      const finalX = Math.max(10, Math.min(pdfW - stampW - 10, pdfX - stampW / 2));
+      // PDF origin is BOTTOM-LEFT, so invert Y axis
+      const finalY = Math.max(10, Math.min(pdfH - stampH - 10, pdfH - pdfY - stampH / 2));
 
-      const finalX = Math.max(10, Math.min(pdfWidth - stampW - 10, centerPtX - (stampW / 2)));
-      // Note: PDF coordinate system (0,0) is at BOTTOM-LEFT
-      const finalY = Math.max(10, Math.min(pdfHeight - stampH - 10, pdfHeight - centerPtY - (stampH / 2)));
-
-      page.drawImage(pngImage, {
-        x: finalX,
-        y: finalY,
-        width: stampW,
-        height: stampH
-      });
+      targetPage.drawImage(pngImage, { x: finalX, y: finalY, width: stampW, height: stampH });
 
       const modifiedBytes = await pdfDoc.save();
       return new File([modifiedBytes], filename, { type: 'application/pdf' });
     },
+
 
     // 🚀 VALIDATE & SIGN (SUBMITS FILE & DIGITAL SIGNATURE TO VAULT)
     async validateAndSignDocument() {
@@ -1954,7 +2335,21 @@ export default {
 
       this.isSavingStudio = true;
       try {
-        const finalFileToUpload = this.selectedUploadFile;
+        let finalFileToUpload = this.selectedUploadFile;
+        const targetFilename = this.studioMode === 'upload'
+          ? (this.selectedUploadFile?.name || 'document.pdf')
+          : (this.activeSignFile?.filename || 'document.pdf');
+
+        // If drag mode was used on a PDF, bake the signature into the PDF at stamp position
+        if (this.isDragModeActive && this.isPdf && this.pdfRawBuffer) {
+          // .slice(0) copies the buffer so it isn't detached by prior pdfjs usage
+          finalFileToUpload = await this.stampPdfDocument(this.pdfRawBuffer.slice(0), targetFilename);
+        }
+
+        if (!this.currentDeviceIp) {
+          await this.fetchDeviceIp();
+        }
+
         const sigDataUrl = await this.generateSignatureStampPng();
 
         if (this.studioMode === 'upload') {
@@ -1969,10 +2364,19 @@ export default {
           }
           formData.append('is_digitally_signed', '1');
           formData.append('signer_name', this.signerName || this.user.name || 'Authorized Signatory');
-          formData.append('signer_department', this.signerDept || this.user.department || 'ARCH360');
+          formData.append('signer_department', this.signerDept || this.user.department || 'Arch Enterprises');
           formData.append('signature_reason', this.signatureReason);
           formData.append('signature_type', this.signatureMode);
           formData.append('signature_data', sigDataUrl);
+          formData.append('client_ip', this.currentDeviceIp || '');
+          if (this.isDragModeActive) {
+            formData.append('signature_position', JSON.stringify({
+              x: this.stampPosX,
+              y: this.stampPosY,
+              page: this.stampPage,
+              size: this.stampSize
+            }));
+          }
 
           const res = await axios.post('/api/employee/vault/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
@@ -1988,10 +2392,22 @@ export default {
           const formData = new FormData();
           formData.append('user_id', this.user.id);
           formData.append('signer_name', this.signerName || this.user.name || 'Authorized Signatory');
-          formData.append('signer_department', this.signerDept || this.user.department || 'ARCH360');
+          formData.append('signer_department', this.signerDept || this.user.department || 'Arch Enterprises');
           formData.append('signature_data', sigDataUrl);
           formData.append('signature_reason', this.signatureReason);
           formData.append('signature_type', this.signatureMode);
+          formData.append('client_ip', this.currentDeviceIp || '');
+          if (this.isDragModeActive && finalFileToUpload) {
+            formData.append('file', finalFileToUpload);
+          }
+          if (this.isDragModeActive) {
+            formData.append('signature_position', JSON.stringify({
+              x: this.stampPosX,
+              y: this.stampPosY,
+              page: this.stampPage,
+              size: this.stampSize
+            }));
+          }
 
           const res = await axios.post(`/api/employee/vault/sign-file/${this.activeSignFile.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
@@ -2075,6 +2491,7 @@ export default {
         signer_name: file.signer_name || file.uploader_name,
         signer_department: file.signer_department || file.uploader_dept,
         signed_at: file.signed_at || file.created_at,
+        client_ip: file.client_ip || file.signature_metadata?.client_ip || this.currentDeviceIp || '',
         signature_reason: file.signature_reason || 'Digitally Authenticated & Approved',
         signature_data: file.signature_data,
         certificate_hash: file.signature_hash || `ARCH-DS-${this.todayDateCode}-${file.id}`
@@ -3604,6 +4021,59 @@ export default {
   cursor: pointer;
 }
 
+.toolbar-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-drag-to-doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn-drag-to-doc:hover {
+  background: rgba(37, 99, 235, 0.22);
+  border-color: #3b82f6;
+}
+
+.btn-drag-to-doc.active {
+  background: rgba(5, 150, 105, 0.15);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #34d399;
+  animation: drag-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes drag-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+}
+
+.drag-mode-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.sig-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .draw-canvas-container {
   background: #ffffff;
   border-radius: 10px;
@@ -3759,6 +4229,63 @@ export default {
   color: #94a3b8;
 }
 
+/* Live Audit Metadata Card in Signature Section */
+.sig-audit-metadata-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid #1e293b;
+  border-left: 3px solid #10b981;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.sig-audit-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sig-audit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sig-audit-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sig-audit-item.ip-span {
+  grid-column: span 2;
+}
+
+.sig-audit-label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sig-audit-val {
+  font-size: 0.76rem;
+  color: #f1f5f9;
+}
+
+.sig-audit-val.ip-val {
+  color: #38bdf8;
+  letter-spacing: 0.3px;
+}
+
 /* Digital Certificate Info Card */
 .digital-cert-info-card {
   background: #0f172a;
@@ -3895,11 +4422,44 @@ export default {
   max-width: 960px;
   height: calc(100vh - 120px);
   min-height: 700px;
-  overflow: hidden;
+  overflow-y: auto;  /* allows scrolling when canvases are stacked */
+  overflow-x: hidden;
   transition: transform 0.15s ease;
   user-select: none;
   display: flex;
+  flex-direction: column;
 }
+
+/* Stacked PDF canvas pages for drag mode */
+.pdf-canvas-pages-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  background: #525659;
+  gap: 8px;
+  padding: 12px 0;
+  min-height: 100%;
+}
+
+.pdf-drag-page-canvas {
+  display: block;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  background: #fff;
+  max-width: 100%;
+}
+
+.drag-pdf-loading {
+  color: #94a3b8;
+  padding: 40px;
+  text-align: center;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
 
 .real-pdf-iframe {
   width: 100%;
@@ -4021,12 +4581,13 @@ export default {
 
 .stamp-footer-row {
   width: 100%;
-  margin-top: 6px;
+  margin-top: 5px;
   padding-top: 4px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #cbd5e1;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  text-align: left;
 }
 
 .signer-tag {
@@ -4038,10 +4599,42 @@ export default {
   text-overflow: ellipsis;
 }
 
-.verified-tag {
-  font-size: 0.58rem;
+.stamp-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 0.54rem;
+  color: #475569;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.stamp-audit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 0.52rem;
+  line-height: 1.2;
+}
+
+.stamp-ip-badge {
+  color: #0369a1;
   font-weight: 700;
-  color: #2563eb;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.verified-tag {
+  font-size: 0.54rem;
+  font-weight: 800;
+  color: #059669;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 /* ==================================================== */
