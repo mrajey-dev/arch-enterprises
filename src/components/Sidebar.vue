@@ -173,6 +173,11 @@
             <i class="fas fa-th-large"></i> <span>Company Apps</span>
           </li>
 
+          <li @click="goTo('vault')" :class="{ 'active-item': isActive('vault') || isActive('security-vault') || isActive('employee/vault') }">
+            <i class="fas fa-shield-alt"></i> <span>Security Vault</span>
+            <span class="sidebar-item-badge hot"><i class="fas fa-lock" style="font-size: 0.65rem;"></i></span>
+          </li>
+
           <!-- Theme Selector Section -->
           <li class="theme-selector-item">
             <div class="theme-selector-label">

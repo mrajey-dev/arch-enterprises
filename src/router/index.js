@@ -154,6 +154,7 @@ const routes = [
   { path: '/manageleavetype', name: 'ManageLeavetype', component: ManageLeavetype, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true } },
   { path: '/MyApps', alias: ['/myapps', '/employee/myapps', '/apps'], name: 'MyApps', component: () => import('../views/MyApps.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   { path: '/ArchApps', alias: ['/archapps', '/employee/archapps'], name: 'ArchApps', component: () => import('../views/employee/ArchApps.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
+  { path: '/employee/vault', alias: ['/vault', '/employee/security-vault', '/hr/vault', '/admin/vault', '/security-vault', '/hr/security-vault'], name: 'SecurityVault', component: () => import('../views/employee/Vault.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
 
   { path: '/employee/ManageStock', name: 'ManageStock', component: () => import('../views/employee/ManageStock.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   { path: '/customerregistration', name: 'CustomerRegistration', component: CustomerRegistration, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true } },

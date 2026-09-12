@@ -170,6 +170,9 @@
             <li @click="goTo('employee/mydsi')">
               <i class="fas fa-tasks"></i><span> DSI</span>
             </li>
+            <li @click="goTo('employee/vault')">
+              <i class="fas fa-shield-alt"></i><span> Security Vault</span>
+            </li>
             <li @click="goTo('employee/myprofile')">
               <i class="fa-solid fa-user"></i><span> My Profile</span>
             </li>

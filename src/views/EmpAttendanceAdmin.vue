@@ -195,8 +195,22 @@
                       <span class="dot"></span>
                       {{ record.status || 'Not Marked' }}
                     </span>
-                    <span v-if="isRecordLate(record)" class="late-tag-sweet">
-                      {{ calculateLateTime(record.clock_in) }} Late
+                    <span
+                      v-if="isRecordLate(record)"
+                      class="late-tag-sweet late-tag-clickable"
+                      @click.stop="openWaiveLateModal(record)"
+                      title="Click to remove Late Mark tag"
+                    >
+                      <i class="fas fa-clock"></i> {{ calculateLateTime(record.clock_in) }} Late
+                      <i class="fas fa-times-circle btn-waive-icon" title="Remove late mark tag"></i>
+                    </span>
+                    <span
+                      v-else-if="isRecordWaived(record)"
+                      class="waived-tag-sweet waived-tag-clickable"
+                      @click.stop="openRestoreLateModal(record)"
+                      :title="record.waive_reason ? `Waived by Admin: '${record.waive_reason}'. Click to restore.` : 'Late mark was waived. Click to restore.'"
+                    >
+                      <i class="fas fa-check-circle"></i> Late Waived
                     </span>
                   </div>
                 </td>
@@ -273,12 +287,13 @@
                   <th class="text-center">Penalties Applied</th>
                   <th class="text-center">CL Deducted</th>
                   <th class="text-center">Status</th>
+                  <th class="text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(item, idx) in lateMarksData" :key="idx">
                   <td>
-                    <div class="emp-cell">
+                    <div class="emp-cell" @click="showLateMarksModal = true; expandedLateEmployee = item.name" style="cursor: pointer;">
                       <div class="avatar-sweet" :style="{ background: getAvatarGradient(item.name) }">
                         {{ getInitials(item.name) }}
                       </div>
@@ -295,6 +310,15 @@
                   <td class="text-center">
                     <span v-if="item.late_count >= 3" class="late-tag-sweet">Needs Action</span>
                     <span v-else class="badge-sweet status-present"><span class="dot"></span> Good</span>
+                  </td>
+                  <td class="text-right">
+                    <button
+                      class="btn-waive-action"
+                      @click="showLateMarksModal = true; expandedLateEmployee = item.name"
+                      title="View late dates and remove late mark tags"
+                    >
+                      <i class="fas fa-tasks"></i> Manage Tags
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -495,6 +519,7 @@
             <span class="status-summary traveling">Traveling: {{ statusSummary.Traveling || 0 }}</span>
             <span class="status-summary halfday">Half Day: {{ statusSummary.HalfDay || 0 }}</span>
             <span class="status-summary absent">Absent: {{ statusSummary.Absent || 0 }}</span>
+            <span class="status-summary late" v-if="statusSummary.Late > 0">Late: {{ statusSummary.Late }}</span>
           </div>
 
           <!-- Calendar Grid -->
@@ -601,35 +626,73 @@
         <div class="modal-sweet-header">
           <div>
             <h3>Monthly Late Marks</h3>
-            <p class="modal-sub">Threshold: After 9:40 AM &bull; 3 late marks = 0.5 CL</p>
+            <p class="modal-sub">Threshold: After 9:40 AM &bull; 3 late marks = 0.5 CL deduction</p>
           </div>
           <button class="btn-close" @click="showLateMarksModal = false">&times;</button>
         </div>
 
         <div class="modal-sweet-body">
-          <table class="table-sweet" v-if="lateMarksData.length > 0">
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th class="text-center">Late Count</th>
-                <th class="text-center">Penalties</th>
-                <th class="text-center">CL Deducted</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in lateMarksData" :key="item.name">
-                <td class="font-medium">{{ formatName(item.name) }}</td>
-                <td class="text-center">
-                  <span class="late-count-tag">{{ item.late_count }}</span>
-                </td>
-                <td class="text-center">{{ item.penalties_applied }}</td>
-                <td class="text-center">
-                  <span v-if="item.penalty_amount > 0" class="text-red font-medium">{{ item.penalty_amount }} CL</span>
-                  <span v-else class="text-dash">—</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div v-if="lateMarksData.length > 0" class="late-marks-modal-list">
+            <div v-for="item in lateMarksData" :key="item.name" class="employee-late-card">
+              <div class="emp-late-header" @click="toggleEmployeeLateDetails(item.name)">
+                <div class="emp-identity-sm">
+                  <div class="avatar-sweet" :style="{ background: getAvatarGradient(item.name) }">
+                    {{ getInitials(item.name) }}
+                  </div>
+                  <div>
+                    <div class="font-semibold">{{ formatName(item.name) }}</div>
+                    <div class="emp-sub-late">
+                      <span class="late-count-badge" :class="{ 'critical': item.late_count >= 3 }">
+                        {{ item.late_count }} late
+                      </span>
+                      <span v-if="item.penalty_amount > 0" class="text-red font-medium" style="margin-left: 6px;">
+                        &bull; {{ item.penalty_amount }} CL Deducted
+                      </span>
+                      <span v-if="item.waived_records && item.waived_records.length > 0" class="text-emerald" style="margin-left: 6px;">
+                        &bull; {{ item.waived_records.length }} Waived
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="emp-late-right">
+                  <button class="btn-toggle-details">
+                    <i class="fas" :class="expandedLateEmployee === item.name ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Expanded Late Details -->
+              <div v-if="expandedLateEmployee === item.name" class="emp-late-details">
+                <!-- Active Late Marks -->
+                <div v-if="item.late_records && item.late_records.length > 0" class="late-records-block">
+                  <div class="block-title text-amber"><i class="fas fa-clock"></i> Active Late Marks</div>
+                  <div class="late-record-item" v-for="rec in item.late_records" :key="rec.id || rec.date">
+                    <div class="rec-info">
+                      <span class="rec-date font-medium">{{ formatDateDisplay(rec.date) }}</span>
+                      <span class="rec-time">Clock In: {{ formatTime(rec.clock_in) }} ({{ calculateLateTime(rec.clock_in) }} late)</span>
+                    </div>
+                    <button class="btn-waive-action" @click.stop="openWaiveLateModal({ ...rec, name: item.name })" title="Remove late mark tag">
+                      <i class="fas fa-times-circle"></i> Remove Tag
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Waived Late Marks -->
+                <div v-if="item.waived_records && item.waived_records.length > 0" class="waived-records-block">
+                  <div class="block-title text-emerald"><i class="fas fa-check-circle"></i> Waived Late Marks</div>
+                  <div class="late-record-item waived-item" v-for="rec in item.waived_records" :key="rec.id || rec.date">
+                    <div class="rec-info">
+                      <span class="rec-date font-medium">{{ formatDateDisplay(rec.date) }}</span>
+                      <span class="rec-time text-muted">Clock In: {{ formatTime(rec.clock_in) }} &bull; Reason: {{ rec.waive_reason || 'Waived by Admin' }}</span>
+                    </div>
+                    <button class="btn-restore-action" @click.stop="openRestoreLateModal({ ...rec, name: item.name })" title="Restore late mark tag">
+                      <i class="fas fa-undo-alt"></i> Restore
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-else class="simple-empty">
             <i class="fas fa-check-circle text-emerald"></i>
             <p>No late marks recorded for any employee this month.</p>
@@ -745,6 +808,120 @@
         </div>
       </div>
     </div>
+
+    <!-- 7. Remove / Waive Late Mark Modal -->
+    <div v-if="showWaiveLateModal" class="modal-overlay" @click.self="showWaiveLateModal = false">
+      <div class="modal-sweet modal-small" @click.stop>
+        <div class="modal-sweet-header">
+          <div class="header-with-icon">
+            <div class="header-icon-wrap amber">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div>
+              <h3>Remove Late Mark Tag</h3>
+              <p class="modal-sub">Waive late mark tag for employee</p>
+            </div>
+          </div>
+          <button class="btn-close" @click="showWaiveLateModal = false">&times;</button>
+        </div>
+
+        <div class="modal-sweet-body">
+          <div class="record-summary-card" v-if="selectedLateRecord">
+            <div class="summary-item-row">
+              <span class="lbl">Employee:</span>
+              <span class="val font-semibold">{{ formatName(selectedLateRecord.name) }}</span>
+            </div>
+            <div class="summary-item-row">
+              <span class="lbl">Date:</span>
+              <span class="val">{{ formatDateDisplay(selectedLateRecord.date) }}</span>
+            </div>
+            <div class="summary-item-row" v-if="selectedLateRecord.clock_in">
+              <span class="lbl">Clock In:</span>
+              <span class="val text-amber font-mono">{{ formatTime(selectedLateRecord.clock_in) }} ({{ calculateLateTime(selectedLateRecord.clock_in) }} late)</span>
+            </div>
+          </div>
+
+          <div class="form-group-sweet" style="margin-top: 14px;">
+            <label>Reason for Waiver (Optional)</label>
+            <input
+              type="text"
+              v-model="waiveReason"
+              placeholder="e.g. Permission given, client delay, approved by management..."
+              class="input-sweet"
+              @keyup.enter="confirmWaiveLateMark"
+            />
+          </div>
+
+          <div class="info-note-box">
+            <i class="fas fa-info-circle text-blue"></i>
+            <span>Removing this tag will mark this day on-time, reducing the monthly late count and auto-refunding deducted leave if applicable.</span>
+          </div>
+        </div>
+
+        <div class="modal-sweet-footer">
+          <button class="btn-cancel" @click="showWaiveLateModal = false">Cancel</button>
+          <button
+            class="btn-save btn-waive-confirm"
+            @click="confirmWaiveLateMark"
+            :disabled="isWaivingLate"
+          >
+            <i v-if="isWaivingLate" class="fas fa-circle-notch fa-spin"></i>
+            <span v-else><i class="fas fa-check"></i> Remove Late Tag</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Restore Late Mark Modal -->
+    <div v-if="showRestoreLateModal" class="modal-overlay" @click.self="showRestoreLateModal = false">
+      <div class="modal-sweet modal-small" @click.stop>
+        <div class="modal-sweet-header">
+          <div class="header-with-icon">
+            <div class="header-icon-wrap purple">
+              <i class="fas fa-undo-alt"></i>
+            </div>
+            <div>
+              <h3>Restore Late Mark</h3>
+              <p class="modal-sub">Re-apply late mark tag to record</p>
+            </div>
+          </div>
+          <button class="btn-close" @click="showRestoreLateModal = false">&times;</button>
+        </div>
+
+        <div class="modal-sweet-body">
+          <div class="record-summary-card" v-if="selectedLateRecord">
+            <div class="summary-item-row">
+              <span class="lbl">Employee:</span>
+              <span class="val font-semibold">{{ formatName(selectedLateRecord.name) }}</span>
+            </div>
+            <div class="summary-item-row">
+              <span class="lbl">Date:</span>
+              <span class="val">{{ formatDateDisplay(selectedLateRecord.date) }}</span>
+            </div>
+            <div class="summary-item-row" v-if="selectedLateRecord.waive_reason">
+              <span class="lbl">Previous Reason:</span>
+              <span class="val text-muted">{{ selectedLateRecord.waive_reason }}</span>
+            </div>
+          </div>
+
+          <p class="restore-note-text">
+            Are you sure you want to restore the Late Mark tag for this attendance record? Late count and leave deductions will be recalculated.
+          </p>
+        </div>
+
+        <div class="modal-sweet-footer">
+          <button class="btn-cancel" @click="showRestoreLateModal = false">Cancel</button>
+          <button
+            class="btn-save"
+            @click="confirmRestoreLateMark"
+            :disabled="isWaivingLate"
+          >
+            <i v-if="isWaivingLate" class="fas fa-circle-notch fa-spin"></i>
+            <span v-else><i class="fas fa-undo-alt"></i> Restore Tag</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -840,7 +1017,13 @@ export default {
       },
       lateMarksData: [],
       totalLateMarks: 0,
-      lateMarksLoading: false
+      lateMarksLoading: false,
+      showWaiveLateModal: false,
+      showRestoreLateModal: false,
+      selectedLateRecord: null,
+      waiveReason: '',
+      isWaivingLate: false,
+      expandedLateEmployee: null
     }
   },
   computed: {
@@ -989,15 +1172,31 @@ export default {
         default: return 'status-default'
       }
     },
+    isLatePolicyApplicable(dateStr) {
+      if (!dateStr) return false
+      const clean = String(dateStr).split('T')[0].split(' ')[0]
+      return clean >= '2026-08-01'
+    },
+    isRecordWaived(record) {
+      if (!record) return false
+      return record.is_late_waived === true || record.is_late_waived === 1 || record.is_late_waived === '1' || record.is_late_waived === 'true'
+    },
     isRecordLate(record) {
       if (!record) return false
-      const status = (record.status || '').toLowerCase()
-      // Late mark is strictly ONLY for Present employees, never for Traveling or OnSite
+      if (this.isRecordWaived(record)) return false
+      if (record.date && !this.isLatePolicyApplicable(record.date)) return false
+
+      const status = (record.status || '').toLowerCase().trim()
+      // Late mark is strictly ONLY for Present employees, never for Traveling, OnSite, HalfDay, Leave, Absent
       if (status !== 'present') return false
-      return Boolean(record.is_late) || (record.clock_in && record.clock_in !== '-' && this.isLate(record.clock_in))
+      
+      const isExplicitLate = record.is_late === true || record.is_late === 1 || record.is_late === '1' || record.is_late === 'true'
+      if (isExplicitLate) return true
+      
+      return Boolean(record.clock_in && record.clock_in !== '-' && record.clock_in !== '--' && this.isLate(record.clock_in))
     },
     isLate(clockIn) {
-      if (!clockIn || clockIn === '-') return false
+      if (!clockIn || clockIn === '-' || clockIn === '--' || clockIn === 'null') return false
       const timeMatch = String(clockIn).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i)
       if (!timeMatch) return false
       let hours = parseInt(timeMatch[1], 10)
@@ -1011,7 +1210,7 @@ export default {
       return clockInMinutes > thresholdMinutes
     },
     calculateLateTime(clockIn) {
-      if (!clockIn || clockIn === '-') return ''
+      if (!clockIn || clockIn === '-' || clockIn === '--' || clockIn === 'null') return ''
       const timeMatch = String(clockIn).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i)
       if (!timeMatch) return ''
       let hours = parseInt(timeMatch[1], 10)
@@ -1079,6 +1278,10 @@ export default {
           name: record.name || 'Unknown',
           status: record.status || 'Not Marked',
           is_late: record.is_late || false,
+          is_late_waived: Boolean(record.is_late_waived),
+          waived_by: record.waived_by || null,
+          waive_reason: record.waive_reason || null,
+          waived_at: record.waived_at || null,
           clock_in: record.clock_in || null,
           clock_out: record.clock_out || null,
           required_time: record.required_time || null,
@@ -1144,6 +1347,10 @@ export default {
             name: r.name || 'Unknown',
             status: r.status || 'Not Marked',
             is_late: r.is_late || false,
+            is_late_waived: Boolean(r.is_late_waived),
+            waived_by: r.waived_by || null,
+            waive_reason: r.waive_reason || null,
+            waived_at: r.waived_at || null,
             clock_in: r.clock_in || null,
             clock_out: r.clock_out || null,
             required_time: r.required_time || null,
@@ -1262,12 +1469,15 @@ export default {
           if (res.data && res.data.success) {
             const data = res.data.data
             const count = data.late_count || 0
-            if (count > 0) {
+            const waivedList = data.waived_records || []
+            if (count > 0 || waivedList.length > 0) {
               lateData.push({
                 name: names[i],
                 late_count: count,
                 penalties_applied: data.penalties_applied || 0,
-                penalty_amount: data.penalty_amount_applied || 0
+                penalty_amount: data.penalty_amount_applied || 0,
+                late_records: data.late_records || [],
+                waived_records: waivedList
               })
               total += count
             }
@@ -1280,6 +1490,92 @@ export default {
         console.error('Error fetching late marks:', err)
       } finally {
         this.lateMarksLoading = false
+      }
+    },
+    openWaiveLateModal(record) {
+      this.selectedLateRecord = record
+      this.waiveReason = ''
+      this.showWaiveLateModal = true
+    },
+    openRestoreLateModal(record) {
+      this.selectedLateRecord = record
+      this.showRestoreLateModal = true
+    },
+    toggleEmployeeLateDetails(name) {
+      this.expandedLateEmployee = this.expandedLateEmployee === name ? null : name
+    },
+    formatDateDisplay(dateStr) {
+      if (!dateStr) return ''
+      try {
+        let clean = String(dateStr).split('T')[0].split(' ')[0]
+        const d = new Date(clean)
+        return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      } catch (e) {
+        return dateStr
+      }
+    },
+    async confirmWaiveLateMark() {
+      if (!this.selectedLateRecord) return
+      this.isWaivingLate = true
+      try {
+        const token = localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const payload = {
+          id: this.selectedLateRecord.id,
+          name: this.selectedLateRecord.name,
+          date: this.selectedLateRecord.date,
+          reason: this.waiveReason.trim() || 'Waived by Admin',
+          restore: false
+        }
+        const res = await axios.post('https://employees.archenterprises.co.in/api/api/attendance/remove-late-mark', payload, { headers })
+        toastSuccess(res.data?.message || 'Late mark tag removed successfully')
+        this.showWaiveLateModal = false
+        this.selectedLateRecord = null
+        this.waiveReason = ''
+
+        // Refresh all relevant data views
+        await this.fetchDisplayAttendance()
+        await this.fetchLateMarksSummary()
+        if (this.showPopup && this.selectedEmployee) {
+          await this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
+        }
+      } catch (err) {
+        console.error('Error removing late mark:', err)
+        const errMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to remove late mark'
+        toastError(errMsg)
+      } finally {
+        this.isWaivingLate = false
+      }
+    },
+    async confirmRestoreLateMark() {
+      if (!this.selectedLateRecord) return
+      this.isWaivingLate = true
+      try {
+        const token = localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const payload = {
+          id: this.selectedLateRecord.id,
+          name: this.selectedLateRecord.name,
+          date: this.selectedLateRecord.date,
+          restore: true
+        }
+        const res = await axios.post('https://employees.archenterprises.co.in/api/api/attendance/remove-late-mark', payload, { headers })
+        toastSuccess(res.data?.message || 'Late mark restored successfully')
+        this.showRestoreLateModal = false
+        this.selectedLateRecord = null
+
+        // Refresh all relevant data views
+        await this.fetchDisplayAttendance()
+        await this.fetchLateMarksSummary()
+        if (this.showPopup && this.selectedEmployee) {
+          await this.viewEmployeeMonthlyAttendance(this.selectedEmployee)
+        }
+      } catch (err) {
+        console.error('Error restoring late mark:', err)
+        const errMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to restore late mark'
+        toastError(errMsg)
+      } finally {
+        this.isWaivingLate = false
       }
     },
     async submitMarkedAttendance() {
@@ -1596,7 +1892,7 @@ export default {
           { headers: { Authorization: `Bearer ${token}` } }
         )
         this.employeeMonthlyData = response.data.data || []
-        const summary = { Present: 0, Absent: 0, OnSite: 0, HalfDay: 0, Traveling: 0, Leave: 0 }
+        const summary = { Present: 0, Absent: 0, OnSite: 0, HalfDay: 0, Traveling: 0, Leave: 0, Late: 0 }
         this.employeeMonthlyData.forEach(entry => {
           if (!entry.status) return
           const s = entry.status.toLowerCase().replace(/\s+/g, '')
@@ -1606,6 +1902,10 @@ export default {
           else if (s === 'traveling') summary.Traveling++
           else if (s === 'halfday') summary.HalfDay++
           else if (s === 'absent') summary.Absent++
+
+          if (this.isRecordLate(entry)) {
+            summary.Late++
+          }
         })
         this.statusSummary = summary
       } catch (err) {
@@ -1657,9 +1957,19 @@ export default {
         else if (s === 'traveling') short = 'TR'
         else if (s === 'halfday') short = 'HD'
         else if (s === 'absent') short = 'A'
+
+        const isLate = this.isRecordLate(rec)
+        let statusClass = `cal-${s}`
+        let statusText = rec.status
+        if (isLate) {
+          statusClass += ' cal-late'
+          statusText += ` (Late: ${this.calculateLateTime(rec.clock_in)})`
+          short = `${short}*`
+        }
+
         return {
-          statusClass: `cal-${s}`,
-          statusText: rec.status,
+          statusClass: statusClass,
+          statusText: statusText,
           shortStatus: short
         }
       }
@@ -2460,6 +2770,7 @@ export default {
 .status-summary.traveling { background: #f0f9ff; color: #0369a1; }
 .status-summary.halfday { background: #fff7ed; color: #c2410c; }
 .status-summary.absent { background: #fef2f2; color: #b91c1c; }
+.status-summary.late { background: #fef3c7; color: #b45309; }
 
 .cal-table-sweet {
   width: 100%;
@@ -2505,6 +2816,7 @@ export default {
 }
 
 .cal-table-sweet .cal-present { background: #ecfdf5; color: #047857; }
+.cal-table-sweet .cal-present.cal-late { background: #fef3c7; color: #b45309; border-color: #fde68a; }
 .cal-table-sweet .cal-leave { background: #eef2ff; color: #4338ca; }
 .cal-table-sweet .cal-onsite { background: #faf5ff; color: #7e22ce; }
 .cal-table-sweet .cal-traveling { background: #f0f9ff; color: #0369a1; }
@@ -2799,6 +3111,299 @@ export default {
   border-radius: 6px;
   font-weight: 700;
   font-size: 12px;
+}
+
+/* ================= LATE TAGS & WAIVER STYLES ================= */
+.late-tag-clickable {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.late-tag-clickable:hover {
+  background: #fde68a;
+  color: #78350f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.15);
+}
+
+.btn-waive-icon {
+  font-size: 11px;
+  color: #d97706;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.late-tag-clickable:hover .btn-waive-icon {
+  opacity: 1;
+  color: #b45309;
+  transform: scale(1.15);
+}
+
+.waived-tag-sweet {
+  font-size: 11px;
+  font-weight: 600;
+  color: #047857;
+  background: #d1fae5;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.waived-tag-clickable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.waived-tag-clickable:hover {
+  background: #a7f3d0;
+  color: #065f46;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.header-icon-wrap.amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.header-icon-wrap.purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.record-summary-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.summary-item-row .lbl {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.summary-item-row .val {
+  color: #0f172a;
+}
+
+.info-note-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: #1e40af;
+  line-height: 1.4;
+}
+
+.info-note-box i {
+  font-size: 14px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.restore-note-text {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 14px 0 0 0;
+}
+
+.btn-waive-confirm {
+  background: #d97706 !important;
+}
+
+.btn-waive-confirm:hover {
+  background: #b45309 !important;
+}
+
+/* Late Marks Modal List & Card Styles */
+.late-marks-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.employee-late-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.employee-late-card:hover {
+  border-color: #cbd5e1;
+}
+
+.emp-late-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: pointer;
+  background: #ffffff;
+  transition: background 0.15s ease;
+}
+
+.emp-late-header:hover {
+  background: #f8fafc;
+}
+
+.emp-identity-sm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.emp-sub-late {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.btn-toggle-details {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.emp-late-details {
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.block-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.late-record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.late-record-item:last-child {
+  margin-bottom: 0;
+}
+
+.rec-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rec-date {
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.rec-time {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.btn-waive-action {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-waive-action:hover {
+  background: #fde68a;
+  color: #78350f;
+  transform: scale(1.03);
+}
+
+.btn-restore-action {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-restore-action:hover {
+  background: #ddd6fe;
+  color: #5b21b6;
+  transform: scale(1.03);
 }
 
 .simple-loading {
