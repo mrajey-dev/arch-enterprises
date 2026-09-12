@@ -25,6 +25,8 @@
     "file-saver": "^2.0.5",
     "html2pdf.js": "^0.14.0",
     "notyf": "^3.10.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.3.289",
     "vue": "^3.5.13",
     "vue-chartjs": "^5.3.2",
     "vue-router": "^4.5.1",

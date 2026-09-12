@@ -1,8 +1,9 @@
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
+import "./toast.css";
 
 const notyf = new Notyf({
-  duration: 10000,
+  duration: 3000,
   position: {
     x: "right",
     y: "top",
@@ -12,27 +13,43 @@ const notyf = new Notyf({
   types: [
     {
       type: "success",
-      background: "#16a34a", // professional green
+      background: "linear-gradient(135deg, #059669 0%, #10b981 60%, #047857 100%)",
+      className: "notyf__toast--success",
       icon: {
-        className: "notyf__icon--success",
+        className: "fas fa-circle-check notyf-custom-icon",
         tagName: "i",
+        text: "",
       },
     },
     {
       type: "error",
-      background: "#dc2626", // professional red
+      background: "linear-gradient(135deg, #e11d48 0%, #f43f5e 60%, #be123c 100%)",
+      className: "notyf__toast--error",
       icon: {
-        className: "notyf__icon--error",
+        className: "fas fa-circle-exclamation notyf-custom-icon",
         tagName: "i",
+        text: "",
       },
     },
     {
       type: "warning",
-      background: "#f59e0b",
+      background: "linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #b45309 100%)",
+      className: "notyf__toast--warning",
+      icon: {
+        className: "fas fa-triangle-exclamation notyf-custom-icon",
+        tagName: "i",
+        text: "",
+      },
     },
     {
       type: "info",
-      background: "#2563eb",
+      background: "linear-gradient(135deg, #2563eb 0%, #3b82f6 60%, #1d4ed8 100%)",
+      className: "notyf__toast--info",
+      icon: {
+        className: "fas fa-circle-info notyf-custom-icon",
+        tagName: "i",
+        text: "",
+      },
     },
   ],
 });

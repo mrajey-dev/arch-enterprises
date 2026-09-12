@@ -49,7 +49,7 @@
                     id="vaultEmail"
                     v-model="authEmail" 
                     type="text" 
-                    placeholder="Enter username or email (e.g. admin, hr, or hr@archenterprises.co.in)" 
+                    placeholder="Enter username or email" 
                     class="vault-input"
                     required
                   />
@@ -148,30 +148,26 @@
         <!-- ==================================================== -->
         <div v-else class="vault-workspace">
           
-          <!-- 🌟 Vault Header Section -->
-          <div class="vault-header-card">
-            <div class="header-left">
-              <div class="vault-icon-badge">
+          <!-- Vault Top Bar -->
+          <div class="vault-top-banner">
+            <div class="banner-title-area">
+              <div class="vault-shield-badge">
                 <i class="fas fa-vault"></i>
               </div>
-              <div class="vault-title-group">
-                <div class="title-row">
-                  <h2>Security Vault</h2>
-                  <span class="vault-status-pill">
-                    <span class="pulse-dot"></span> Unlocked (Protected)
-                  </span>
-                  <span v-if="isHrUser" class="hr-indicator-badge">
-                    <i class="fas fa-user-shield"></i> HR & Management Mode
-                  </span>
+              <div>
+                <div class="vault-badge-line">
+                  <span class="vault-status-active"><i class="fas fa-check-circle"></i> Vault Active & Unlocked</span>
+                  <span v-if="isHrUser" class="hr-indicator-badge"><i class="fas fa-user-shield"></i> HR Management Mode</span>
                 </div>
-                <p class="vault-subtext">
+                <h1>{{ isHrUser ? 'HR & Enterprise Security Vault' : 'Employee Security Vault' }}</h1>
+                <p class="vault-description">
                   Confidential document repository, HR records, digital signatures & restricted company files.
                 </p>
               </div>
             </div>
 
             <div class="header-right-actions">
-              <button class="btn-vault-upload" @click="showUploadModal = true">
+              <button class="btn-vault-upload" @click="openUploadStudio">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <span>Upload Document</span>
               </button>
@@ -214,6 +210,16 @@
               </div>
             </div>
 
+            <div class="vault-kpi-card">
+              <div class="kpi-icon-square teal">
+                <i class="fas fa-file-signature"></i>
+              </div>
+              <div class="kpi-info">
+                <span class="kpi-num">{{ signedFilesCount }}</span>
+                <span class="kpi-text">Digitally Signed</span>
+              </div>
+            </div>
+
             <div v-if="isHrUser" class="vault-kpi-card">
               <div class="kpi-icon-square amber">
                 <i class="fas fa-building-shield"></i>
@@ -232,7 +238,7 @@
               <input 
                 v-model="searchQuery" 
                 type="text" 
-                placeholder="Search files by name, uploader, or category..." 
+                placeholder="Search files by name, uploader, signer, or category..." 
                 class="search-bar"
               />
               <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''">
@@ -253,14 +259,7 @@
                 :class="{ active: activeCategory === 'personal' }"
                 @click="activeCategory = 'personal'"
               >
-                <i class="fas fa-user"></i> Personal ({{ myFilesCount }})
-              </button>
-              <button 
-                class="tab-pill" 
-                :class="{ active: activeCategory === 'shared' }"
-                @click="activeCategory = 'shared'"
-              >
-                <i class="fas fa-share-alt"></i> Shared ({{ sharedWithMeCount }})
+                <i class="fas fa-user-lock"></i> Personal
               </button>
               <button 
                 v-if="isHrUser"
@@ -268,7 +267,7 @@
                 :class="{ active: activeCategory === 'hr_confidential' }"
                 @click="activeCategory = 'hr_confidential'"
               >
-                <i class="fas fa-user-shield"></i> HR Records ({{ hrFilesCount }})
+                <i class="fas fa-building-shield"></i> HR Confidential
               </button>
               <button 
                 class="tab-pill" 
@@ -277,24 +276,36 @@
               >
                 <i class="fas fa-file-contract"></i> Contracts
               </button>
+              <button 
+                class="tab-pill" 
+                :class="{ active: activeCategory === 'payslip' }"
+                @click="activeCategory = 'payslip'"
+              >
+                <i class="fas fa-file-invoice-dollar"></i> Payslips
+              </button>
+              <button 
+                class="tab-pill" 
+                :class="{ active: activeCategory === 'signed' }"
+                @click="activeCategory = 'signed'"
+              >
+                <i class="fas fa-certificate"></i> Signed & Verified
+              </button>
             </div>
           </div>
 
-          <!-- 📄 Files Table / Content Area -->
+          <!-- 📂 Vault Documents Table -->
           <div class="vault-files-container">
             <div v-if="loadingFiles" class="loading-state-card">
               <i class="fas fa-spinner fa-spin loader-icon"></i>
-              <p>Decrypting and fetching your vault items...</p>
+              <p>Decrypting & loading vault records...</p>
             </div>
 
             <div v-else-if="filteredFiles.length === 0" class="empty-state-card">
-              <div class="empty-halo">
-                <i class="fas fa-folder-open"></i>
-              </div>
+              <div class="empty-halo"><i class="fas fa-folder-open"></i></div>
               <h3>No Secured Documents Found</h3>
-              <p>Upload a file to keep your critical documents encrypted and protected.</p>
-              <button class="btn-empty-upload" @click="showUploadModal = true">
-                <i class="fas fa-cloud-upload-alt"></i> Upload New File
+              <p>Upload contracts, certificates, ID proofs or confidential documents to your encrypted vault.</p>
+              <button class="btn-empty-upload" @click="openUploadStudio">
+                <i class="fas fa-cloud-upload-alt"></i> Upload First Document
               </button>
             </div>
 
@@ -306,22 +317,30 @@
                     <th>Category</th>
                     <th>Size</th>
                     <th>Uploader</th>
-                    <th>Date Uploaded</th>
-                    <th>Access / Permissions</th>
+                    <th>Digital Signature</th>
+                    <th>Upload Date</th>
+                    <th>Access</th>
                     <th class="text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="file in filteredFiles" :key="file.id" class="file-table-row">
-                    
-                    <!-- Document Name with Type Icon -->
+                    <!-- File Name & Info -->
                     <td>
                       <div class="file-name-cell">
                         <div class="file-type-icon" :class="getFileIconClass(file.filename)">
                           <i :class="getFileIcon(file.filename)"></i>
                         </div>
                         <div class="file-meta-col">
-                          <span class="file-title" :title="file.filename">{{ file.filename }}</span>
+                          <div class="d-flex align-center gap-2">
+                            <span class="file-title" :title="file.filename">{{ file.filename }}</span>
+                            <span v-if="file.is_digitally_signed" class="signed-mini-badge" title="Digitally Signed & Verified">
+                              <i class="fas fa-check-circle"></i>
+                            </span>
+                            <span v-if="file.has_password" class="pwd-mini-badge" title="Password Protected Document">
+                              <i class="fas fa-key"></i>
+                            </span>
+                          </div>
                           <span v-if="file.description" class="file-desc-sub">{{ file.description }}</span>
                         </div>
                       </div>
@@ -344,6 +363,24 @@
                       <div class="uploader-info-cell">
                         <span class="uploader-name">{{ file.uploader_name }}</span>
                         <span class="uploader-dept">{{ file.uploader_dept }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Digital Signature Status -->
+                    <td>
+                      <div v-if="file.is_digitally_signed" class="signature-status-pill verified" @click="openCertificateModal(file)" title="Click to view digital certificate">
+                        <div class="sig-status-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="sig-status-text">
+                          <span class="sig-status-title">Digitally Signed</span>
+                          <small class="sig-signer-name">{{ file.signer_name || file.uploader_name }}</small>
+                        </div>
+                      </div>
+                      <div v-else class="signature-status-pill unsigned" @click="openSignStudio(file)" title="Click to attach digital signature">
+                        <div class="sig-status-icon"><i class="fas fa-pen-nib"></i></div>
+                        <div class="sig-status-text">
+                          <span class="sig-status-title">Not Signed</span>
+                          <small class="sig-action-hint">Click to Sign</small>
+                        </div>
                       </div>
                     </td>
 
@@ -377,6 +414,24 @@
                           <i class="fas fa-download"></i>
                         </a>
 
+                        <!-- Digital Signature Action Button -->
+                        <button 
+                          v-if="!file.is_digitally_signed" 
+                          class="action-btn sign-btn" 
+                          @click="openSignStudio(file)" 
+                          title="Attach Digital Signature"
+                        >
+                          <i class="fas fa-signature"></i>
+                        </button>
+                        <button 
+                          v-else 
+                          class="action-btn cert-btn" 
+                          @click="openCertificateModal(file)" 
+                          title="View Digital Verification Certificate"
+                        >
+                          <i class="fas fa-award"></i>
+                        </button>
+
                         <button 
                           v-if="file.can_share" 
                           class="action-btn share" 
@@ -401,90 +456,380 @@
               </table>
             </div>
           </div>
+
         </div>
 
-        <!-- ==================================================== -->
-        <!-- 📤 MODAL 1: UPLOAD SECURE DOCUMENT                   -->
-        <!-- ==================================================== -->
-        <div v-if="showUploadModal" class="modal-backdrop" @click.self="showUploadModal = false">
-          <div class="vault-modal-card">
-            <div class="modal-header">
-              <div class="modal-title-row">
-                <i class="fas fa-shield-alt modal-ico"></i>
-                <h3>Secure File Upload</h3>
+        <!-- ========================================================================= -->
+        <!-- 🚀 ODOO DIGITAL SIGN FULL-SCREEN STUDIO (UPLOAD & SIGN / SIGN EXISTING)  -->
+        <!-- ========================================================================= -->
+        <div v-if="showSignStudio" class="odoo-fullscreen-studio">
+          
+          <!-- 1. STUDIO TOP NAVIGATION BAR (ODOO SIGN STYLE) -->
+          <header class="odoo-studio-navbar">
+            <div class="navbar-left-group">
+              <button type="button" class="btn-studio-back" @click="closeSignStudio" title="Discard and return to vault">
+                <i class="fas fa-arrow-left"></i>
+                <span>Discard & Exit</span>
+              </button>
+              
+              <div class="studio-doc-brand">
+                <div class="brand-badge-ico"><i class="fas fa-file-signature"></i></div>
+                <div class="brand-text-col">
+                  <span class="studio-app-title">ARCH360 Digital Sign Studio</span>
+                  <div class="studio-active-filename" :title="currentStudioFilename">
+                    {{ currentStudioFilename || 'Select or drop a document to begin' }}
+                    <span v-if="selectedUploadFile" class="file-size-pill">{{ formatBytes(selectedUploadFile.size) }}</span>
+                    <span v-else-if="activeSignFile?.file_size" class="file-size-pill">{{ activeSignFile.file_size }}</span>
+                  </div>
+                </div>
               </div>
-              <button class="btn-close-modal" @click="showUploadModal = false">&times;</button>
             </div>
 
-            <form @submit.prevent="submitUpload" class="modal-body-form">
-              <!-- Dropzone -->
-              <div 
-                class="file-dropzone" 
-                :class="{ 'has-file': selectedUploadFile, 'dragging': isDragging }"
-                @dragover.prevent="isDragging = true"
-                @dragleave.prevent="isDragging = false"
-                @drop.prevent="handleFileDrop"
-                @click="$refs.fileInput.click()"
-              >
-                <input 
-                  type="file" 
-                  ref="fileInput" 
-                  @change="handleFileSelect" 
-                  style="display: none" 
-                />
-                
-                <div v-if="!selectedUploadFile" class="dropzone-prompt">
-                  <div class="drop-halo">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                  </div>
-                  <p class="drop-main-text">Click to browse or drag & drop documents</p>
-                  <span class="drop-sub-text">Supports PDF, DOCX, XLSX, PNG, JPG, ZIP (Max 50MB)</span>
-                </div>
-
-                <div v-else class="dropzone-file-preview">
-                  <i class="fas fa-file-invoice selected-file-ico"></i>
-                  <div class="preview-text">
-                    <span class="preview-name">{{ selectedUploadFile.name }}</span>
-                    <span class="preview-size">{{ formatBytes(selectedUploadFile.size) }}</span>
-                  </div>
-                  <button type="button" class="btn-remove-file" @click.stop="selectedUploadFile = null">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Category -->
-              <div class="form-row-group">
-                <label>Document Category</label>
-                <select v-model="uploadCategory" class="modal-select" required>
-                  <option value="personal">🔒 Personal Confidential Document</option>
-                  <option v-if="isHrUser" value="hr_confidential">🏢 HR / Company Confidential</option>
-                  <option value="contract">📜 Employment Contract & Offer Letter</option>
-                  <option value="payslip">💰 Payslip / Tax Declaration</option>
-                  <option value="general">📁 General Secured File</option>
-                </select>
-              </div>
-
-              <!-- Notes / Description -->
-              <div class="form-row-group">
-                <label>Description / Security Note (Optional)</label>
-                <input 
-                  v-model="uploadDescription" 
-                  type="text" 
-                  placeholder="e.g. FY 2026 Appraisal Contract Signed" 
-                  class="modal-input"
-                />
-              </div>
-
-              <div class="modal-actions-footer">
-                <button type="button" class="btn-cancel" @click="showUploadModal = false">Cancel</button>
-                <button type="submit" class="btn-submit-upload" :disabled="uploadingFile || !selectedUploadFile">
-                  <span v-if="uploadingFile"><i class="fas fa-spinner fa-spin"></i> Encrypting & Uploading...</span>
-                  <span v-else><i class="fas fa-lock"></i> Encrypt & Save to Vault</span>
+            <!-- Center: Multi-page & Zoom Tools (For PDF) -->
+            <div class="navbar-center-tools">
+              <!-- Page navigation -->
+              <div v-if="isPdf && totalPdfPages > 1" class="page-nav-pill">
+                <button type="button" class="page-nav-btn" :disabled="currentPdfPage <= 1" @click="prevPdfPage" title="Previous Page">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="page-nav-counter">Page <strong>{{ currentPdfPage }}</strong> of <strong>{{ totalPdfPages }}</strong></span>
+                <button type="button" class="page-nav-btn" :disabled="currentPdfPage >= totalPdfPages" @click="nextPdfPage" title="Next Page">
+                  <i class="fas fa-chevron-right"></i>
                 </button>
               </div>
-            </form>
+
+              <!-- Zoom Controls -->
+              <div v-if="isPdf" class="zoom-controls-pill">
+                <button type="button" class="zoom-btn" @click="zoomOutPdf" title="Zoom Out"><i class="fas fa-minus"></i></button>
+                <span class="zoom-level">{{ Math.round(pdfZoom * 100) }}%</span>
+                <button type="button" class="zoom-btn" @click="zoomInPdf" title="Zoom In"><i class="fas fa-plus"></i></button>
+                <button type="button" class="btn-fit-width" @click="fitPdfWidth" title="Reset / Fit Zoom"><i class="fas fa-expand-alt"></i></button>
+              </div>
+            </div>
+
+            <!-- Right: Action Button -->
+            <div class="navbar-right-group">
+              <span v-if="uploadFilePassword" class="pwd-indicator-badge">
+                <i class="fas fa-key"></i> Password Protected
+              </span>
+
+              <button 
+                type="button" 
+                class="btn-studio-validate" 
+                :disabled="isSavingStudio || (studioMode === 'upload' && !selectedUploadFile)"
+                @click="validateAndSignDocument"
+              >
+                <span v-if="isSavingStudio">
+                  <i class="fas fa-spinner fa-spin"></i> Stamping & Encrypting...
+                </span>
+                <span v-else>
+                  <i class="fas fa-check-double"></i>
+                  {{ studioMode === 'upload' ? 'Validate & Save to Vault' : 'Validate & Sign Document' }}
+                </span>
+              </button>
+            </div>
+          </header>
+
+          <!-- 2. STUDIO SPLIT WORKSPACE: LEFT TOOLS SIDEBAR + RIGHT FULL PDF VIEWPORT -->
+          <div class="odoo-studio-body">
+            
+            <!-- 👈 LEFT SIDEBAR: Document Metadata & Signature Tools -->
+            <aside class="odoo-studio-sidebar custom-scrollbar">
+              
+              <!-- SECTION A: Document Source (If Upload Mode) -->
+              <div v-if="studioMode === 'upload'" class="sidebar-block">
+                <div class="block-header">
+                  <span class="block-number">1</span>
+                  <h4>Document Upload</h4>
+                </div>
+
+                <input 
+                  type="file" 
+                  ref="studioFileInput" 
+                  accept=".pdf,image/png,image/jpeg,image/webp" 
+                  style="display: none" 
+                  @change="handleStudioFileSelect" 
+                />
+
+                <div 
+                  v-if="!selectedUploadFile"
+                  class="studio-dropzone" 
+                  :class="{ 'dragging': isDraggingFile }"
+                  @dragover.prevent="isDraggingFile = true"
+                  @dragleave.prevent="isDraggingFile = false"
+                  @drop.prevent="handleStudioFileDrop"
+                  @click="$refs.studioFileInput.click()"
+                >
+                  <div class="drop-icon-halo"><i class="fas fa-cloud-upload-alt"></i></div>
+                  <p class="drop-primary">Click or drop document here</p>
+                  <span class="drop-secondary">PDF, PNG, JPG (Full PDF rendering)</span>
+                </div>
+
+                <div v-else class="studio-selected-file-card">
+                  <div class="file-card-ico"><i :class="getFileIcon(selectedUploadFile.name)"></i></div>
+                  <div class="file-card-details">
+                    <strong class="file-card-name">{{ selectedUploadFile.name }}</strong>
+                    <span class="file-card-size">{{ formatBytes(selectedUploadFile.size) }}</span>
+                  </div>
+                  <button type="button" class="btn-change-file" @click="$refs.studioFileInput.click()" title="Change Document">
+                    <i class="fas fa-sync-alt"></i>
+                  </button>
+                </div>
+
+                <!-- Category & Notes -->
+                <div class="sidebar-field-group mt-3">
+                  <label>Document Category</label>
+                  <select v-model="uploadCategory" class="sidebar-select">
+                    <option value="personal">🔒 Personal Confidential Document</option>
+                    <option v-if="isHrUser" value="hr_confidential">🏢 HR / Company Confidential</option>
+                    <option value="contract">📜 Employment Contract & Offer Letter</option>
+                    <option value="payslip">💰 Payslip / Tax Declaration</option>
+                    <option value="general">📁 General Secured File</option>
+                  </select>
+                </div>
+
+                <div class="sidebar-field-group mt-2">
+                  <label>Description (Optional)</label>
+                  <input v-model="uploadDescription" type="text" placeholder="e.g. FY 2026 Appraisal Contract Signed" class="sidebar-input" />
+                </div>
+
+                <!-- Password Protection Field with Eye Toggle -->
+                <div class="sidebar-field-group mt-2">
+                  <label class="d-flex justify-between align-center">
+                    <span><i class="fas fa-key text-amber"></i> Document Password</span>
+                    <small class="text-muted">Optional</small>
+                  </label>
+                  <div class="sidebar-input-wrap">
+                    <i class="fas fa-lock input-prefix-icon"></i>
+                    <input 
+                      v-model="uploadFilePassword" 
+                      :type="showUploadPassword ? 'text' : 'password'" 
+                      placeholder="Enter password to lock this document" 
+                      class="sidebar-input with-prefix with-suffix"
+                    />
+                    <button type="button" class="btn-toggle-eye-sidebar" @click="showUploadPassword = !showUploadPassword">
+                      <i :class="showUploadPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SECTION B: Digital Signature Creator (Odoo Style) -->
+              <div class="sidebar-block">
+                <div class="block-header">
+                  <span class="block-number">{{ studioMode === 'upload' ? '2' : '1' }}</span>
+                  <h4>Digital Signature</h4>
+                </div>
+
+                <!-- Mode Switcher Tabs -->
+                <div class="odoo-sig-tabs">
+                  <button type="button" class="odoo-tab-btn" :class="{ active: signatureMode === 'draw' }" @click="setSignatureMode('draw')">
+                    <i class="fas fa-pen-nib"></i> Draw
+                  </button>
+                  <button type="button" class="odoo-tab-btn" :class="{ active: signatureMode === 'type' }" @click="setSignatureMode('type')">
+                    <i class="fas fa-font"></i> Type
+                  </button>
+                  <button type="button" class="odoo-tab-btn" :class="{ active: signatureMode === 'upload' }" @click="setSignatureMode('upload')">
+                    <i class="fas fa-image"></i> Upload
+                  </button>
+                  <button type="button" class="odoo-tab-btn" :class="{ active: signatureMode === 'seal' }" @click="setSignatureMode('seal')">
+                    <i class="fas fa-certificate"></i> Seal
+                  </button>
+                </div>
+
+                <!-- 1. DRAW SIGNATURE -->
+                <div v-show="signatureMode === 'draw'" class="tab-content-pane">
+                  <div class="canvas-toolbar">
+                    <div class="pen-palette">
+                      <button 
+                        type="button" 
+                        v-for="c in penColors" 
+                        :key="c.hex" 
+                        class="pen-color-dot" 
+                        :class="{ active: penColor === c.hex }" 
+                        :style="{ backgroundColor: c.hex }" 
+                        @click="penColor = c.hex" 
+                        :title="c.name"
+                      ></button>
+                    </div>
+                    <button type="button" class="btn-clear-drawing" @click="clearDrawCanvas" title="Clear Canvas">
+                      <i class="fas fa-eraser"></i> Clear
+                    </button>
+                  </div>
+
+                  <div class="draw-canvas-container">
+                    <canvas 
+                      ref="studioDrawCanvas" 
+                      class="studio-draw-canvas" 
+                      width="420" 
+                      height="130"
+                      @mousedown="startDrawing"
+                      @mousemove="draw"
+                      @mouseup="stopDrawing"
+                      @mouseleave="stopDrawing"
+                      @touchstart="handleTouchStart"
+                      @touchmove="handleTouchMove"
+                      @touchend="stopDrawing"
+                    ></canvas>
+                    <div class="canvas-sign-guideline">
+                      <span><i class="fas fa-pen"></i> Sign above this line</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. TYPE SIGNATURE -->
+                <div v-show="signatureMode === 'type'" class="tab-content-pane">
+                  <div class="sidebar-field-group">
+                    <input 
+                      v-model="typedSignatureName" 
+                      type="text" 
+                      placeholder="Type your legal full name" 
+                      class="sidebar-input"
+                    />
+                  </div>
+
+                  <div class="font-styles-selection-list">
+                    <div 
+                      v-for="f in fontStyles" 
+                      :key="f.class" 
+                      class="font-choice-card" 
+                      :class="{ active: typedFontClass === f.class }"
+                      @click="typedFontClass = f.class"
+                    >
+                      <span :class="['font-preview-text', f.class]">
+                        {{ typedSignatureName || user.name || 'Your Signature' }}
+                      </span>
+                      <small class="font-label-name">{{ f.name }}</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. UPLOAD IMAGE SIGNATURE -->
+                <div v-show="signatureMode === 'upload'" class="tab-content-pane">
+                  <input 
+                    type="file" 
+                    ref="sigImageFileInput" 
+                    accept="image/png, image/jpeg, image/webp" 
+                    style="display: none" 
+                    @change="handleSigImageUpload" 
+                  />
+
+                  <div v-if="!uploadedSignatureImage" class="sig-upload-box" @click="$refs.sigImageFileInput.click()">
+                    <i class="fas fa-image text-emerald"></i>
+                    <span>Click to upload transparent signature image (PNG / JPG)</span>
+                  </div>
+
+                  <div v-else class="sig-uploaded-preview">
+                    <img :src="uploadedSignatureImage" alt="Signature preview" />
+                    <button type="button" class="btn-remove-sig-img" @click.stop="uploadedSignatureImage = null">
+                      <i class="fas fa-times"></i> Remove
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 4. OFFICIAL SEAL -->
+                <div v-show="signatureMode === 'seal'" class="tab-content-pane">
+                  <div class="enterprise-seal-box">
+                    <div class="seal-icon-halo"><i class="fas fa-shield-alt"></i></div>
+                    <div class="seal-details">
+                      <strong>{{ user.name || 'Authorized Signatory' }}</strong>
+                      <span>{{ user.department || 'ARCH360' }} • Official AES-256 Seal</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- SECTION C: Signer Credentials & Placement Options -->
+              <div class="sidebar-block">
+                <div class="block-header">
+                  <span class="block-number">{{ studioMode === 'upload' ? '3' : '2' }}</span>
+                  <h4>Signer Credentials & Stamp</h4>
+                </div>
+
+                <div class="sidebar-field-group">
+                  <label>Signatory Name</label>
+                  <input v-model="signerName" type="text" class="sidebar-input" />
+                </div>
+
+                <div class="sidebar-field-group mt-2">
+                  <label>Department / Authority</label>
+                  <input v-model="signerDept" type="text" class="sidebar-input" />
+                </div>
+
+                <div class="sidebar-field-group mt-2">
+                  <label>Signing Reason / Purpose</label>
+                  <select v-model="signatureReason" class="sidebar-select">
+                    <option value="Digitally Authenticated & Approved">🔒 Digitally Authenticated & Approved</option>
+                    <option value="Verified & Confirmed by Employee">✅ Verified & Confirmed by Employee</option>
+                    <option value="HR Official Acknowledgment">🏢 HR Official Acknowledgment</option>
+                    <option value="Employment Agreement Accepted">📜 Employment Agreement Accepted</option>
+                    <option value="Legal & Financial Authorization">💼 Legal & Financial Authorization</option>
+                  </select>
+                </div>
+
+                <!-- Digital Security Info Note -->
+                <div class="digital-cert-info-card mt-3">
+                  <div class="cert-card-header">
+                    <i class="fas fa-shield-alt text-primary"></i>
+                    <span>Digital Security Seal</span>
+                  </div>
+                  <p class="cert-card-desc">
+                    Your digital signature and cryptographic verification will be securely embedded with this document in the Security Vault.
+                  </p>
+                  <div class="cert-card-pill">
+                    <i class="fas fa-fingerprint"></i>
+                    <span>AES-256 Verified Audit Trail</span>
+                  </div>
+                </div>
+
+              </div>
+
+            </aside>
+
+            <!-- 👉 RIGHT VIEWPORT: FULL REAL PDF DOCUMENT (CLEAN DOCUMENT ONLY) -->
+            <main class="odoo-studio-viewport" ref="pdfViewportContainer">
+              
+              <!-- State A: Loading PDF -->
+              <div v-if="loadingPdf" class="viewport-loader">
+                <i class="fas fa-spinner fa-spin loader-spin-ico"></i>
+                <p>Loading & Rendering Full PDF Document...</p>
+              </div>
+
+              <!-- State B: No Document Selected Yet (Upload Mode) -->
+              <div v-else-if="!selectedUploadFile && studioMode === 'upload'" class="viewport-empty-stage" @click="$refs.studioFileInput.click()">
+                <div class="empty-stage-halo"><i class="fas fa-file-pdf"></i></div>
+                <h3>No Document Selected</h3>
+                <p>Select or drag a PDF document into the studio to preview.</p>
+                <button type="button" class="btn-browse-stage"><i class="fas fa-folder-open"></i> Browse PDF / Image</button>
+              </div>
+
+              <!-- State C: REAL DOCUMENT RENDERED (PDF or Image) -->
+              <div v-else class="pdf-stage-scroll-area">
+                
+                <div 
+                  class="pdf-canvas-wrapper" 
+                  ref="pdfCanvasContainer"
+                  :style="{ transform: `scale(${pdfZoom})`, transformOrigin: 'top center' }"
+                >
+                  <!-- 1. Real Full PDF Document Viewer (Shows exact PDF pages, tables, text) -->
+                  <iframe 
+                    v-if="isPdf && pdfBlobUrl" 
+                    :src="pdfBlobUrl" 
+                    class="real-pdf-iframe" 
+                    title="Full PDF Document"
+                  ></iframe>
+
+                  <!-- 2. Real Image (If document is PNG/JPG) -->
+                  <img v-else-if="isImage" :src="imagePreviewUrl" class="real-image-preview" alt="Document Preview" />
+                </div>
+
+              </div>
+
+            </main>
+
           </div>
+
         </div>
 
         <!-- ==================================================== -->
@@ -557,6 +902,126 @@
           </div>
         </div>
 
+        <!-- ==================================================== -->
+        <!-- 📜 MODAL 3: DIGITAL VERIFICATION CERTIFICATE VIEWER  -->
+        <!-- ==================================================== -->
+        <div v-if="showCertificateModal" class="modal-backdrop" @click.self="showCertificateModal = false">
+          <div class="vault-modal-card certificate-modal-card">
+            <div class="modal-header cert-header">
+              <div class="modal-title-row">
+                <i class="fas fa-award modal-ico text-gold"></i>
+                <h3>Digital Signature Certificate</h3>
+              </div>
+              <button class="btn-close-modal" @click="showCertificateModal = false">&times;</button>
+            </div>
+
+            <div class="certificate-container" id="printableCertificate">
+              <!-- Official Certificate Header -->
+              <div class="cert-banner">
+                <div class="cert-logo-row">
+                  <div class="cert-brand">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>ARCH360 SECURITY VAULT</span>
+                  </div>
+                  <div class="cert-badge-valid">
+                    <i class="fas fa-check-circle"></i> VERIFIED & AUTHENTIC
+                  </div>
+                </div>
+                <h2>Digital Verification Certificate</h2>
+                <p class="cert-subtitle">Cryptographic Verification & Digital Signature Audit Trail</p>
+              </div>
+
+              <!-- Certificate Body Grid -->
+              <div class="cert-body-grid">
+                <!-- Document Info Box -->
+                <div class="cert-info-card">
+                  <div class="card-header-mini"><i class="fas fa-file-contract"></i> Secured Document Details</div>
+                  <div class="cert-key-val">
+                    <span class="key">Document Name:</span>
+                    <span class="val bold">{{ activeCertData?.filename }}</span>
+                  </div>
+                  <div class="cert-key-val">
+                    <span class="key">File Size:</span>
+                    <span class="val">{{ activeCertData?.file_size }}</span>
+                  </div>
+                  <div class="cert-key-val">
+                    <span class="key">Category:</span>
+                    <span class="val">{{ formatCategoryLabel(activeCertData?.category) }}</span>
+                  </div>
+                  <div class="cert-key-val">
+                    <span class="key">Vault Document ID:</span>
+                    <span class="val">#{{ activeCertData?.document_id || activeCertData?.id }}</span>
+                  </div>
+                </div>
+
+                <!-- Signer Info Box -->
+                <div class="cert-info-card">
+                  <div class="card-header-mini"><i class="fas fa-user-check"></i> Signatory Credentials</div>
+                  <div class="cert-key-val">
+                    <span class="key">Signer Name:</span>
+                    <span class="val bold">{{ activeCertData?.signer_name }}</span>
+                  </div>
+                  <div class="cert-key-val">
+                    <span class="key">Department:</span>
+                    <span class="val">{{ activeCertData?.signer_department || 'ARCH360' }}</span>
+                  </div>
+                  <div class="cert-key-val">
+                    <span class="key">Signing Timestamp:</span>
+                    <span class="val">{{ activeCertData?.signed_at }}</span>
+                  </div>
+                  <div class="cert-key-val">
+                    <span class="key">Purpose / Reason:</span>
+                    <span class="val italic">{{ activeCertData?.signature_reason || 'Digitally Authenticated' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Visual Signature Box -->
+              <div class="cert-signature-showcase">
+                <div class="sig-seal-column">
+                  <div class="official-stamp-graphic">
+                    <div class="stamp-inner-circle">
+                      <i class="fas fa-shield-alt"></i>
+                      <span>DIGITALLY SIGNED</span>
+                      <small>ARCH360</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="sig-image-column">
+                  <label>Official Signature Representation:</label>
+                  <div class="sig-render-box">
+                    <img v-if="activeCertData?.signature_data && isBase64OrUrl(activeCertData?.signature_data)" :src="activeCertData?.signature_data" alt="Digital Signature" class="cert-rendered-sig-img" />
+                    <div v-else class="cert-text-signature">{{ activeCertData?.signature_data || activeCertData?.signer_name }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cryptographic Verification Bar -->
+              <div class="cert-crypto-bar">
+                <div class="crypto-hash-block">
+                  <span class="hash-label">CERTIFICATE HASH / TOKEN:</span>
+                  <code class="hash-code">{{ activeCertData?.certificate_hash || activeCertData?.signature_hash }}</code>
+                </div>
+                <button type="button" class="btn-copy-hash" @click="copyHash(activeCertData?.certificate_hash || activeCertData?.signature_hash)" title="Copy Hash">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+
+              <div class="cert-footer-disclaimer">
+                <i class="fas fa-lock"></i>
+                <span>This document certificate has been cryptographically generated and stored within the ARCH360 AES-256 Encrypted Security Vault. Authenticated and tamper-evident.</span>
+              </div>
+            </div>
+
+            <div class="modal-actions-footer cert-modal-actions">
+              <button type="button" class="btn-cancel" @click="showCertificateModal = false">Close</button>
+              <button type="button" class="btn-print-cert" @click="printCertificate">
+                <i class="fas fa-print"></i> Print / Save Certificate
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -564,9 +1029,17 @@
 
 <script>
 import axios from 'axios';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+import { PDFDocument } from 'pdf-lib';
 import Sidebar from '@/views/employee/components/Sidebar.vue';
 import AdminSidebar from '@/components/Sidebar.vue';
 import { toastSuccess, toastError, toastWarning, toastInfo } from '@/utils/toast.js';
+
+// Configure bundled pdfjs worker
+if (typeof window !== 'undefined' && pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+}
 
 export default {
   name: 'SecurityVault',
@@ -578,21 +1051,21 @@ export default {
     const localUser = (() => {
       try {
         let u = JSON.parse(localStorage.getItem('user') || '{}');
+        if (u && (u.id || u.email || u.name)) {
+          return u;
+        }
         const adminEmail = localStorage.getItem('admin_email');
         const adminName = localStorage.getItem('admin_name');
-        
-        if (!u || !u.email) {
-          if (adminEmail || adminName) {
-            u = {
-              id: 1,
-              name: adminName || 'HR Management',
-              email: adminEmail || 'admin@archenterprises.co.in',
-              department: 'HR Management',
-              role: 'hr'
-            };
-          }
+        if (adminEmail || adminName) {
+          return {
+            id: 1,
+            name: adminName || 'Admin',
+            email: adminEmail || 'admin@archenterprises.co.in',
+            department: 'Management',
+            role: 'admin'
+          };
         }
-        return u || {};
+        return {};
       } catch (e) {
         return {};
       }
@@ -600,8 +1073,6 @@ export default {
 
     const initPhoto = (() => {
       try {
-        const adminPhoto = localStorage.getItem('admin_photo');
-        if (adminPhoto) return adminPhoto;
         if (localUser && localUser.id) {
           const cached = localStorage.getItem(`profilePhoto_${localUser.id}`);
           if (cached) return cached;
@@ -609,6 +1080,8 @@ export default {
         if (localUser && typeof localUser.profile_photo === 'string' && localUser.profile_photo.includes('/')) {
           return `https://employees.archenterprises.co.in/backend/public/storage/${localUser.profile_photo}`;
         }
+        const adminPhoto = localStorage.getItem('admin_photo');
+        if (adminPhoto) return adminPhoto;
       } catch (e) {}
       return 'https://cdn-icons-png.flaticon.com/512/219/219983.png';
     })();
@@ -620,7 +1093,7 @@ export default {
       isMobile: window.innerWidth <= 768,
       isSidebarVisible: true,
       user: localUser,
-      authEmail: (localUser.email || localStorage.getItem('admin_email') || 'hr@archenterprises.co.in').trim(),
+      authEmail: (localUser.email || localUser.name || '').trim(),
       profilePhoto: initPhoto,
       defaultPhoto: 'https://cdn-icons-png.flaticon.com/512/219/219983.png',
 
@@ -644,13 +1117,69 @@ export default {
       searchQuery: '',
       activeCategory: 'all',
 
-      // 📤 Upload Modal State
-      showUploadModal: false,
+      // 🚀 FULL-SCREEN ODOO DIGITAL SIGN STUDIO STATE
+      showSignStudio: false,
+      studioMode: 'upload', // 'upload' | 'sign_existing'
       selectedUploadFile: null,
+      activeSignFile: null,
       uploadCategory: 'personal',
       uploadDescription: '',
-      isDragging: false,
-      uploadingFile: false,
+      uploadFilePassword: '',
+      showUploadPassword: false,
+      isDraggingFile: false,
+
+      // PDF & Document Rendering State
+      pdfRawBuffer: null,
+      pdfBlobUrl: null,
+      pdfDocProxy: null,
+      totalPdfPages: 1,
+      currentPdfPage: 1,
+      pdfZoom: 1.0,
+      loadingPdf: false,
+      isPdf: false,
+      isImage: false,
+      imagePreviewUrl: null,
+
+      // Signature Studio Settings
+      signatureMode: 'draw', // 'draw', 'type', 'upload', 'seal'
+      drawnSignatureData: null,
+      typedSignatureName: localUser.name || '',
+      typedFontClass: 'sig-font-1',
+      uploadedSignatureImage: null,
+      signerName: localUser.name || 'Authorized Signatory',
+      signerDept: localUser.department || 'ARCH360',
+      signatureReason: 'Digitally Authenticated & Approved',
+
+      // Interactive Draggable Stamp State
+      stampPosX: 70, // percentage (0 - 100)
+      stampPosY: 80, // percentage (0 - 100)
+      stampPage: 1,  // page number where stamp is located
+      stampSize: 'medium', // 'small', 'medium', 'large'
+      isDraggingStamp: false,
+      isSavingStudio: false,
+
+      // Drawing canvas internal state
+      isDrawing: false,
+      lastX: 0,
+      lastY: 0,
+      penColor: '#0f172a',
+      penColors: [
+        { name: 'Deep Slate', hex: '#0f172a' },
+        { name: 'Royal Navy', hex: '#1e3a8a' },
+        { name: 'Emerald Seal', hex: '#065f46' },
+        { name: 'Crimson Red', hex: '#991b1b' }
+      ],
+      fontStyles: [
+        { name: 'Elegance Script', class: 'sig-font-1' },
+        { name: 'Executive Flow', class: 'sig-font-2' },
+        { name: 'Modern Signature', class: 'sig-font-3' },
+        { name: 'Formal Calligraphy', class: 'sig-font-4' }
+      ],
+
+      // 📜 Digital Certificate Modal State
+      showCertificateModal: false,
+      activeCertData: null,
+      loadingCertificate: false,
 
       // 👥 Share Modal State
       showShareModal: false,
@@ -669,20 +1198,21 @@ export default {
       const secs = this.timerSeconds % 60;
       return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     },
+    todayDateCode() {
+      const d = new Date();
+      return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    },
     isAdminOrHrContext() {
-      const adminEmail = localStorage.getItem('admin_email');
-      const adminName = localStorage.getItem('admin_name');
-      const dept = String(this.user?.department || '').trim().toLowerCase();
       const role = String(this.user?.role || '').trim().toLowerCase();
-      const path = String(this.$route?.path || '').trim().toLowerCase();
-      return !!adminEmail || !!adminName || dept === 'hr' || dept === 'human resources' || dept === 'owner' || dept === 'management' || role === 'admin' || role === 'hr' || path.startsWith('/hr') || path.startsWith('/admin') || path === '/vault';
+      if (this.user?.id && role !== 'admin' && role !== 'superadmin') {
+        return false;
+      }
+      return role === 'admin' || role === 'superadmin';
     },
     isHrUser() {
       const dept = String(this.user?.department || '').trim().toLowerCase();
       const role = String(this.user?.role || '').trim().toLowerCase();
-      const adminEmail = localStorage.getItem('admin_email');
-      const adminName = localStorage.getItem('admin_name');
-      return !!adminEmail || !!adminName || dept === 'hr' || dept === 'human resources' || dept === 'owner' || dept === 'management' || role === 'admin' || role === 'hr' || role === 'owner';
+      return role === 'admin' || role === 'superadmin' || role === 'hr' || role === 'owner' || dept === 'hr' || dept === 'human resources';
     },
     myFilesCount() {
       return this.files.filter(f => f.is_owner).length;
@@ -690,29 +1220,37 @@ export default {
     sharedWithMeCount() {
       return this.files.filter(f => !f.is_owner).length;
     },
+    signedFilesCount() {
+      return this.files.filter(f => f.is_digitally_signed).length;
+    },
     hrFilesCount() {
       return this.files.filter(f => f.category === 'hr_confidential').length;
     },
     filteredFiles() {
       return this.files.filter(file => {
-        // Category filter
-        if (this.activeCategory === 'personal' && !file.is_owner) return false;
-        if (this.activeCategory === 'shared' && file.is_owner) return false;
+        if (this.activeCategory === 'personal' && file.category !== 'personal') return false;
         if (this.activeCategory === 'hr_confidential' && file.category !== 'hr_confidential') return false;
         if (this.activeCategory === 'contract' && file.category !== 'contract') return false;
+        if (this.activeCategory === 'payslip' && file.category !== 'payslip') return false;
+        if (this.activeCategory === 'signed' && !file.is_digitally_signed) return false;
 
-        // Search query
         if (this.searchQuery.trim()) {
           const q = this.searchQuery.toLowerCase();
-          const nameMatch = (file.filename || '').toLowerCase().includes(q);
-          const uploaderMatch = (file.uploader_name || '').toLowerCase().includes(q);
-          const catMatch = (file.category || '').toLowerCase().includes(q);
-          const descMatch = (file.description || '').toLowerCase().includes(q);
-          return nameMatch || uploaderMatch || catMatch || descMatch;
+          const matchName = file.filename && file.filename.toLowerCase().includes(q);
+          const matchUploader = file.uploader_name && file.uploader_name.toLowerCase().includes(q);
+          const matchSigner = file.signer_name && file.signer_name.toLowerCase().includes(q);
+          const matchDesc = file.description && file.description.toLowerCase().includes(q);
+          return matchName || matchUploader || matchSigner || matchDesc;
         }
 
         return true;
       });
+    },
+    currentStudioFilename() {
+      if (this.studioMode === 'upload') {
+        return this.selectedUploadFile ? this.selectedUploadFile.name : '';
+      }
+      return this.activeSignFile ? this.activeSignFile.filename : '';
     }
   },
   mounted() {
@@ -723,55 +1261,39 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize);
-    if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
   },
   methods: {
     handleResize() {
       this.isMobile = window.innerWidth <= 768;
     },
 
-    // ==========================================
-    // 🔐 2-STEP VERIFICATION METHODS
-    // ==========================================
+    // 🔐 2-STEP OTP & AUTHENTICATION
     async requestVaultOtp() {
       this.authError = '';
       this.sendingOtp = true;
-      this.resendingOtp = true;
-
-      const targetEmail = (this.authEmail || this.user.email || this.user.name || localStorage.getItem('admin_email') || localStorage.getItem('admin_name') || 'hr@archenterprises.co.in').trim();
-
-      if (!targetEmail) {
-        this.authError = 'Please enter your username or email address.';
-        toastError(this.authError);
-        this.sendingOtp = false;
-        this.resendingOtp = false;
-        return;
-      }
-
       try {
         const payload = {
-          email: targetEmail,
-          password: this.password,
-          user_id: this.user?.id
+          user_id: this.user.id || null,
+          email: this.authEmail,
+          password: this.password
         };
 
-        const res = await axios.post('/api/employee/vault/send-otp', payload);
-
+        const res = await axios.post('/api/employee/vault/request-otp', payload);
         if (res.data.success) {
-          toastSuccess('Verification code sent to ' + targetEmail + '!');
+          toastSuccess(res.data.message || 'Verification OTP dispatched to your registered email!');
           this.currentStep = 2;
-          this.startCountdownTimer();
+          this.startOtpTimer();
           this.$nextTick(() => {
             if (this.$refs.otpInputRefs && this.$refs.otpInputRefs[0]) {
               this.$refs.otpInputRefs[0].focus();
             }
           });
-        } else {
-          this.authError = res.data.message || 'Verification failed.';
-          toastError(this.authError);
         }
       } catch (err) {
-        this.authError = err.response?.data?.message || 'Invalid credentials or failed to send OTP.';
+        this.authError = err.response?.data?.message || 'Authentication failed. Please verify your credentials.';
         toastError(this.authError);
       } finally {
         this.sendingOtp = false;
@@ -779,37 +1301,73 @@ export default {
       }
     },
 
+    startOtpTimer() {
+      this.timerSeconds = 600;
+      if (this.timerInterval) clearInterval(this.timerInterval);
+      this.timerInterval = setInterval(() => {
+        if (this.timerSeconds > 0) {
+          this.timerSeconds--;
+        } else {
+          clearInterval(this.timerInterval);
+        }
+      }, 1000);
+    },
+
+    handleOtpInput(index, event) {
+      const val = event.target.value;
+      if (val.length === 1 && index < 5) {
+        this.$nextTick(() => {
+          this.$refs.otpInputRefs[index + 1]?.focus();
+        });
+      }
+    },
+
+    handleOtpKeydown(index, event) {
+      if (event.key === 'Backspace' && !this.otpDigits[index] && index > 0) {
+        this.$nextTick(() => {
+          this.$refs.otpInputRefs[index - 1]?.focus();
+        });
+      }
+    },
+
+    handleOtpPaste(event) {
+      event.preventDefault();
+      const pasteData = (event.clipboardData || window.clipboardData).getData('text').trim();
+      if (/^\d{6}$/.test(pasteData)) {
+        for (let i = 0; i < 6; i++) {
+          this.otpDigits[i] = pasteData[i];
+        }
+        this.$refs.otpInputRefs[5]?.focus();
+      }
+    },
+
     async verifyVaultOtp() {
       if (this.otpCode.length < 6) {
-        this.authError = 'Please enter all 6 digits of your verification code.';
+        this.authError = 'Please enter all 6 digits of the OTP.';
         return;
       }
 
       this.authError = '';
       this.verifyingOtp = true;
-
-      const targetEmail = (this.authEmail || this.user.email || this.user.name || localStorage.getItem('admin_email') || localStorage.getItem('admin_name') || 'hr@archenterprises.co.in').trim();
-
       try {
         const payload = {
-          email: targetEmail,
-          otp: this.otpCode,
-          user_id: this.user?.id
+          user_id: this.user.id || null,
+          email: this.authEmail,
+          otp: this.otpCode
         };
 
         const res = await axios.post('/api/employee/vault/verify-otp', payload);
-
         if (res.data.success) {
-          sessionStorage.setItem('arch_vault_unlocked', 'true');
+          toastSuccess('Security Vault unlocked successfully!');
           this.isVaultUnlocked = true;
-          toastSuccess('Vault Unlocked Successfully!');
-          this.fetchVaultFiles();
-        } else {
-          this.authError = res.data.message || 'Invalid code.';
-          toastError(this.authError);
+          sessionStorage.setItem('arch_vault_unlocked', 'true');
+          if (res.data.user) {
+            this.user = { ...this.user, ...res.data.user };
+          }
+          await this.fetchVaultFiles();
         }
       } catch (err) {
-        this.authError = err.response?.data?.message || 'Incorrect verification code. Please try again.';
+        this.authError = err.response?.data?.message || 'Invalid or expired OTP code.';
         toastError(this.authError);
       } finally {
         this.verifyingOtp = false;
@@ -823,62 +1381,24 @@ export default {
       if (this.timerInterval) clearInterval(this.timerInterval);
     },
 
-    startCountdownTimer() {
-      if (this.timerInterval) clearInterval(this.timerInterval);
-      this.timerSeconds = 600; // 10 minutes
-      this.timerInterval = setInterval(() => {
-        if (this.timerSeconds > 0) {
-          this.timerSeconds--;
-        } else {
-          clearInterval(this.timerInterval);
-        }
-      }, 1000);
-    },
-
-    handleOtpInput(index, event) {
-      const val = event.target.value;
-      if (val && index < 5) {
-        this.$refs.otpInputRefs[index + 1].focus();
-      }
-      if (this.otpCode.length === 6) {
-        this.verifyVaultOtp();
-      }
-    },
-
-    handleOtpKeydown(index, event) {
-      if (event.key === 'Backspace' && !this.otpDigits[index] && index > 0) {
-        this.$refs.otpInputRefs[index - 1].focus();
-      }
-    },
-
-    handleOtpPaste(event) {
-      event.preventDefault();
-      const pastedData = (event.clipboardData || window.clipboardData).getData('text').trim();
-      if (/^\d{6}$/.test(pastedData)) {
-        for (let i = 0; i < 6; i++) {
-          this.otpDigits[i] = pastedData[i];
-        }
-        this.verifyVaultOtp();
-      }
-    },
-
     lockVault() {
-      sessionStorage.removeItem('arch_vault_unlocked');
       this.isVaultUnlocked = false;
+      sessionStorage.removeItem('arch_vault_unlocked');
       this.currentStep = 1;
       this.password = '';
       this.otpDigits = ['', '', '', '', '', ''];
-      toastInfo('Security Vault Locked.');
+      toastInfo('Security Vault locked.');
     },
 
-    // ==========================================
-    // 📁 VAULT FILES & DATA OPERATIONS
-    // ==========================================
+    // 📁 LOAD VAULT FILES
     async fetchVaultFiles() {
       this.loadingFiles = true;
       try {
         const res = await axios.get('/api/employee/vault/files', {
-          params: { user_id: this.user.id, email: this.user.email }
+          params: {
+            user_id: this.user.id,
+            email: this.user.email
+          }
         });
 
         if (res.data.success) {
@@ -886,78 +1406,613 @@ export default {
           this.usersList = res.data.users || [];
         }
       } catch (err) {
-        toastError('Failed to load secured vault files.');
+        toastError('Failed to fetch secured vault documents.');
       } finally {
         this.loadingFiles = false;
       }
     },
 
-    handleFileSelect(e) {
+    // =========================================================================
+    // 🚀 FULL-SCREEN ODOO DIGITAL SIGN STUDIO METHODS
+    // =========================================================================
+    openUploadStudio() {
+      this.studioMode = 'upload';
+      this.selectedUploadFile = null;
+      this.activeSignFile = null;
+      this.uploadCategory = 'personal';
+      this.uploadDescription = '';
+      this.uploadFilePassword = '';
+      this.showUploadPassword = false;
+      this.pdfRawBuffer = null;
+      if (this.pdfBlobUrl) {
+        URL.revokeObjectURL(this.pdfBlobUrl);
+        this.pdfBlobUrl = null;
+      }
+      this.pdfDocProxy = null;
+      this.totalPdfPages = 1;
+      this.currentPdfPage = 1;
+      this.pdfZoom = 1.0;
+      this.isPdf = false;
+      this.isImage = false;
+      this.imagePreviewUrl = null;
+      this.stampPosX = 70;
+      this.stampPosY = 80;
+      this.stampPage = 1;
+      this.stampSize = 'medium';
+      this.signatureMode = 'draw';
+      this.typedSignatureName = this.user.name || '';
+      this.signerName = this.user.name || 'Authorized Signatory';
+      this.signerDept = this.user.department || 'ARCH360';
+      this.showSignStudio = true;
+
+      this.$nextTick(() => {
+        this.initDrawCanvas();
+      });
+    },
+
+    async openSignStudio(file) {
+      this.studioMode = 'sign_existing';
+      this.activeSignFile = file;
+      this.selectedUploadFile = null;
+      this.uploadFilePassword = file.file_password || '';
+      this.showUploadPassword = false;
+      if (this.pdfBlobUrl) {
+        URL.revokeObjectURL(this.pdfBlobUrl);
+        this.pdfBlobUrl = null;
+      }
+      this.stampPosX = 70;
+      this.stampPosY = 80;
+      this.stampPage = 1;
+      this.stampSize = 'medium';
+      this.signatureMode = 'draw';
+      this.typedSignatureName = this.user.name || '';
+      this.signerName = this.user.name || 'Authorized Signatory';
+      this.signerDept = this.user.department || 'ARCH360';
+      this.showSignStudio = true;
+
+      this.$nextTick(() => {
+        this.initDrawCanvas();
+      });
+
+      // Fetch file buffer for live rendering
+      this.loadingPdf = true;
+      try {
+        const fileUrl = file.preview_url || file.download_url;
+        const res = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+        this.pdfRawBuffer = res.data;
+
+        const fname = (file.filename || '').toLowerCase();
+        if (fname.endsWith('.pdf')) {
+          this.isPdf = true;
+          this.isImage = false;
+          const blob = new Blob([this.pdfRawBuffer], { type: 'application/pdf' });
+          this.pdfBlobUrl = URL.createObjectURL(blob) + '#toolbar=0&navpanes=0&scrollbar=1';
+          this.loadingPdf = false;
+        } else if (this.isImageFile(fname)) {
+          this.isPdf = false;
+          this.isImage = true;
+          const blob = new Blob([this.pdfRawBuffer]);
+          this.imagePreviewUrl = URL.createObjectURL(blob);
+          this.loadingPdf = false;
+        } else {
+          this.isPdf = false;
+          this.isImage = false;
+          this.loadingPdf = false;
+        }
+      } catch (err) {
+        console.error('Failed to load file preview:', err);
+        toastError('Could not load document preview.');
+        this.loadingPdf = false;
+      }
+    },
+
+    closeSignStudio() {
+      this.showSignStudio = false;
+      this.selectedUploadFile = null;
+      this.activeSignFile = null;
+      this.pdfRawBuffer = null;
+      if (this.pdfBlobUrl) {
+        URL.revokeObjectURL(this.pdfBlobUrl);
+        this.pdfBlobUrl = null;
+      }
+      this.pdfDocProxy = null;
+      this.imagePreviewUrl = null;
+    },
+
+    async handleStudioFileSelect(e) {
       const file = e.target.files[0];
       if (file) {
-        this.selectedUploadFile = file;
+        await this.processStudioFile(file);
       }
     },
 
-    handleFileDrop(e) {
-      this.isDragging = false;
+    async handleStudioFileDrop(e) {
+      this.isDraggingFile = false;
       const file = e.dataTransfer.files[0];
       if (file) {
-        this.selectedUploadFile = file;
+        await this.processStudioFile(file);
       }
     },
 
-    async submitUpload() {
-      if (!this.selectedUploadFile) {
-        toastWarning('Please select a document to upload.');
+    async processStudioFile(file) {
+      if (file.size > 50 * 1024 * 1024) {
+        toastWarning('File size exceeds maximum allowed limit of 50MB.');
         return;
       }
 
-      this.uploadingFile = true;
-      const formData = new FormData();
-      formData.append('file', this.selectedUploadFile);
-      formData.append('user_id', this.user.id);
-      formData.append('category', this.uploadCategory);
-      formData.append('description', this.uploadDescription);
+      this.selectedUploadFile = file;
+      this.loadingPdf = true;
+      if (this.pdfBlobUrl) {
+        URL.revokeObjectURL(this.pdfBlobUrl);
+        this.pdfBlobUrl = null;
+      }
 
       try {
-        const res = await axios.post('/api/employee/vault/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        const buffer = await file.arrayBuffer();
+        this.pdfRawBuffer = buffer;
 
-        if (res.data.success) {
-          toastSuccess('Document encrypted and stored successfully!');
-          this.showUploadModal = false;
-          this.selectedUploadFile = null;
-          this.uploadDescription = '';
-          this.fetchVaultFiles();
+        const fname = (file.name || '').toLowerCase();
+        if (fname.endsWith('.pdf')) {
+          this.isPdf = true;
+          this.isImage = false;
+          const blob = new Blob([buffer], { type: 'application/pdf' });
+          this.pdfBlobUrl = URL.createObjectURL(blob) + '#toolbar=0&navpanes=0&scrollbar=1';
+          this.loadingPdf = false;
+        } else if (this.isImageFile(fname)) {
+          this.isPdf = false;
+          this.isImage = true;
+          this.imagePreviewUrl = URL.createObjectURL(file);
+          this.totalPdfPages = 1;
+          this.currentPdfPage = 1;
+          this.stampPage = 1;
+          this.loadingPdf = false;
+        } else {
+          this.isPdf = false;
+          this.isImage = false;
+          this.loadingPdf = false;
+          toastInfo('Document uploaded. Drag the digital stamp to position it.');
         }
       } catch (err) {
-        toastError(err.response?.data?.message || 'Failed to upload document.');
+        console.error('Error reading file:', err);
+        toastError('Error processing file.');
+        this.loadingPdf = false;
+      }
+    },
+
+    // 📄 PDF.js Loading and Page Rendering
+    async loadPdfFromBuffer(buffer) {
+      this.loadingPdf = true;
+      this.isPdf = true;
+      this.isImage = false;
+      try {
+        const loadingTask = pdfjsLib.getDocument({
+          data: new Uint8Array(buffer),
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.3.289/standard_fonts/'
+        });
+        this.pdfDocProxy = await loadingTask.promise;
+        this.totalPdfPages = this.pdfDocProxy.numPages;
+        this.currentPdfPage = 1;
+        this.stampPage = 1;
+        this.pdfZoom = 1.0;
+        await this.$nextTick();
+        await this.renderPdfPage(1);
+      } catch (e) {
+        console.error('PDF.js loading error:', e);
+        toastError('Could not render PDF document: ' + (e.message || 'Invalid PDF'));
       } finally {
-        this.uploadingFile = false;
+        this.loadingPdf = false;
       }
     },
 
-    async deleteFile(file) {
-      if (!confirm(`Are you sure you want to delete "${file.filename}" permanently from the Security Vault?`)) {
+    async renderPdfPage(pageNum) {
+      if (!this.pdfDocProxy) return;
+      try {
+        if (this.currentRenderTask) {
+          try {
+            this.currentRenderTask.cancel();
+          } catch (cancelErr) {}
+        }
+
+        await this.$nextTick();
+        const page = await this.pdfDocProxy.getPage(pageNum);
+        const canvas = this.$refs.pdfCanvas;
+        if (!canvas) {
+          console.error('Canvas element not found in DOM');
+          return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+        // Calculate a crisp high-res width (standard 850px base on desktop)
+        const container = this.$refs.pdfViewportContainer;
+        const availableW = container ? Math.max(container.clientWidth - 100, 700) : 850;
+        const baseScale = Math.min(availableW / unscaledViewport.width, 1.6);
+        const finalScale = Math.max(0.85, baseScale);
+
+        const viewport = page.getViewport({ scale: finalScale });
+
+        const outputScale = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = Math.floor(viewport.width) + "px";
+        canvas.style.height = Math.floor(viewport.height) + "px";
+
+        // Fill white background before drawing
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+        const renderContext = {
+          canvasContext: ctx,
+          transform: transform,
+          viewport: viewport
+        };
+
+        this.currentRenderTask = page.render(renderContext);
+        await this.currentRenderTask.promise;
+        this.currentRenderTask = null;
+      } catch (err) {
+        if (err?.name !== 'RenderingCancelledException') {
+          console.error('PDF renderPage error:', err);
+        }
+      }
+    },
+
+    async prevPdfPage() {
+      if (this.currentPdfPage > 1) {
+        this.currentPdfPage--;
+        await this.renderPdfPage(this.currentPdfPage);
+      }
+    },
+
+    async nextPdfPage() {
+      if (this.currentPdfPage < this.totalPdfPages) {
+        this.currentPdfPage++;
+        await this.renderPdfPage(this.currentPdfPage);
+      }
+    },
+
+    zoomInPdf() {
+      this.pdfZoom = Math.min(2.0, parseFloat((this.pdfZoom + 0.15).toFixed(2)));
+    },
+
+    zoomOutPdf() {
+      this.pdfZoom = Math.max(0.5, parseFloat((this.pdfZoom - 0.15).toFixed(2)));
+    },
+
+    fitPdfWidth() {
+      this.pdfZoom = 1.0;
+    },
+
+    moveStampToCurrentPage() {
+      this.stampPage = this.currentPdfPage;
+      toastSuccess(`Stamp moved to Page ${this.currentPdfPage}`);
+    },
+
+    // 🖋️ INTERACTIVE DRAG & DROP & CLICK-TO-PLACE ON PDF
+    startDragStamp(e) {
+      this.isDraggingStamp = true;
+      e.preventDefault();
+      e.stopPropagation();
+    },
+
+    startDragStampTouch(e) {
+      this.isDraggingStamp = true;
+      e.stopPropagation();
+    },
+
+    onDragStamp(e) {
+      if (!this.isDraggingStamp) return;
+      const container = this.$refs.pdfCanvasContainer;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const clientX = e.clientX || e.touches?.[0]?.clientX;
+      const clientY = e.clientY || e.touches?.[0]?.clientY;
+      if (clientX === undefined || clientY === undefined) return;
+
+      let xPercent = ((clientX - rect.left) / rect.width) * 100;
+      let yPercent = ((clientY - rect.top) / rect.height) * 100;
+
+      this.stampPosX = Math.max(5, Math.min(95, Math.round(xPercent)));
+      this.stampPosY = Math.max(5, Math.min(95, Math.round(yPercent)));
+      this.stampPage = this.currentPdfPage;
+    },
+
+    onDragStampTouch(e) {
+      if (!this.isDraggingStamp) return;
+      this.onDragStamp(e);
+    },
+
+    stopDragStamp() {
+      this.isDraggingStamp = false;
+    },
+
+    onPdfCanvasClick(e) {
+      if (this.isDraggingStamp) return;
+      const container = this.$refs.pdfCanvasContainer;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      let xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+      let yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+
+      this.stampPosX = Math.max(5, Math.min(95, Math.round(xPercent)));
+      this.stampPosY = Math.max(5, Math.min(95, Math.round(yPercent)));
+      this.stampPage = this.currentPdfPage;
+    },
+
+    // 🖋️ SIGNATURE DRAWING & CREATION
+    setSignatureMode(mode) {
+      this.signatureMode = mode;
+      if (mode === 'draw') {
+        this.$nextTick(() => {
+          this.initDrawCanvas();
+        });
+      }
+    },
+
+    initDrawCanvas() {
+      const canvas = this.$refs.studioDrawCanvas;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!this.drawnSignatureData) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    },
+
+    startDrawing(e) {
+      this.isDrawing = true;
+      const canvas = this.$refs.studioDrawCanvas;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      this.lastX = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+      this.lastY = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+    },
+
+    draw(e) {
+      if (!this.isDrawing) return;
+      const canvas = this.$refs.studioDrawCanvas;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.getBoundingClientRect();
+      const currentX = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+      const currentY = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+
+      ctx.beginPath();
+      ctx.moveTo(this.lastX, this.lastY);
+      ctx.lineTo(currentX, currentY);
+      ctx.strokeStyle = this.penColor;
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      this.lastX = currentX;
+      this.lastY = currentY;
+    },
+
+    stopDrawing() {
+      this.isDrawing = false;
+      const canvas = this.$refs.studioDrawCanvas;
+      if (canvas) {
+        this.drawnSignatureData = canvas.toDataURL('image/png');
+      }
+    },
+
+    handleTouchStart(e) {
+      e.preventDefault();
+      this.startDrawing(e);
+    },
+
+    handleTouchMove(e) {
+      e.preventDefault();
+      this.draw(e);
+    },
+
+    clearDrawCanvas() {
+      const canvas = this.$refs.studioDrawCanvas;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      this.drawnSignatureData = null;
+    },
+
+    handleSigImageUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          toastWarning('Signature image must be less than 5MB.');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          this.uploadedSignatureImage = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+
+    // 🎨 Render High-Resolution Signature Stamp Image for Baking
+    async generateSignatureStampPng() {
+      const offscreen = document.createElement('canvas');
+      offscreen.width = 600;
+      offscreen.height = 250;
+      const ctx = offscreen.getContext('2d');
+
+      // Transparent background
+      ctx.clearRect(0, 0, 600, 250);
+
+      if (this.signatureMode === 'draw') {
+        if (this.drawnSignatureData) {
+          const img = new Image();
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.src = this.drawnSignatureData;
+          });
+          ctx.drawImage(img, 20, 10, 560, 160);
+        }
+      } else if (this.signatureMode === 'type') {
+        ctx.fillStyle = '#0f172a';
+        let fontName = 'Great Vibes';
+        if (this.typedFontClass === 'sig-font-2') fontName = 'Dancing Script';
+        if (this.typedFontClass === 'sig-font-3') fontName = 'Caveat';
+        if (this.typedFontClass === 'sig-font-4') fontName = 'Sacramento';
+
+        ctx.font = `64px "${fontName}", cursive`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.typedSignatureName || this.signerName || 'Authorized Signatory', 300, 90);
+      } else if (this.signatureMode === 'upload') {
+        if (this.uploadedSignatureImage) {
+          const img = new Image();
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.src = this.uploadedSignatureImage;
+          });
+          ctx.drawImage(img, 50, 10, 500, 160);
+        }
+      } else if (this.signatureMode === 'seal') {
+        ctx.strokeStyle = '#059669';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(30, 20, 540, 150);
+        ctx.fillStyle = '#059669';
+        ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ARCH360 ENTERPRISE AUTHENTICATED', 300, 65);
+        ctx.font = '18px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(this.signerName || 'Authorized Signatory', 300, 105);
+        ctx.fillText(`${this.signerDept || 'ARCH360'} • Official Seal`, 300, 135);
+      }
+
+      // Draw bottom verification border line and signer caption
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(30, 185);
+      ctx.lineTo(570, 185);
+      ctx.stroke();
+
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 16px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Digitally Signed by: ${this.signerName || this.user.name || 'Signatory'}`, 30, 210);
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`ARCH360 AES-256 Verified • ${this.todayDateCode} • Reason: ${this.signatureReason}`, 30, 232);
+
+      return offscreen.toDataURL('image/png');
+    },
+
+    // 🚀 STAMP & BAKE SIGNATURE INTO PDF USING PDF-LIB
+    async stampPdfDocument(pdfBuffer, filename) {
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      const sigPngUrl = await this.generateSignatureStampPng();
+      const pngImage = await pdfDoc.embedPng(sigPngUrl);
+
+      const pages = pdfDoc.getPages();
+      const targetIndex = Math.max(0, Math.min(pages.length - 1, (this.stampPage || 1) - 1));
+      const page = pages[targetIndex];
+      const { width: pdfWidth, height: pdfHeight } = page.getSize();
+
+      // Calculate stamp dimension relative to PDF points
+      const relWidth = this.stampSize === 'large' ? 0.38 : (this.stampSize === 'small' ? 0.22 : 0.30);
+      const stampW = pdfWidth * relWidth;
+      const stampH = stampW * (250 / 600); // 0.416 aspect ratio
+
+      const centerPtX = (this.stampPosX / 100) * pdfWidth;
+      const centerPtY = (this.stampPosY / 100) * pdfHeight;
+
+      const finalX = Math.max(10, Math.min(pdfWidth - stampW - 10, centerPtX - (stampW / 2)));
+      // Note: PDF coordinate system (0,0) is at BOTTOM-LEFT
+      const finalY = Math.max(10, Math.min(pdfHeight - stampH - 10, pdfHeight - centerPtY - (stampH / 2)));
+
+      page.drawImage(pngImage, {
+        x: finalX,
+        y: finalY,
+        width: stampW,
+        height: stampH
+      });
+
+      const modifiedBytes = await pdfDoc.save();
+      return new File([modifiedBytes], filename, { type: 'application/pdf' });
+    },
+
+    // 🚀 VALIDATE & SIGN (SUBMITS FILE & DIGITAL SIGNATURE TO VAULT)
+    async validateAndSignDocument() {
+      if (this.studioMode === 'upload' && !this.selectedUploadFile) {
+        toastWarning('Please select or drop a document first.');
         return;
       }
 
+      this.isSavingStudio = true;
       try {
-        const res = await axios.delete(`/api/employee/vault/file/${file.id}`, {
-          params: { user_id: this.user.id }
-        });
+        const finalFileToUpload = this.selectedUploadFile;
+        const sigDataUrl = await this.generateSignatureStampPng();
 
-        if (res.data.success) {
-          toastSuccess('Document removed from vault.');
-          this.fetchVaultFiles();
+        if (this.studioMode === 'upload') {
+          // UPLOAD NEW SECURED DOCUMENT
+          const formData = new FormData();
+          formData.append('file', finalFileToUpload);
+          formData.append('user_id', this.user.id);
+          formData.append('category', this.uploadCategory);
+          formData.append('description', this.uploadDescription);
+          if (this.uploadFilePassword) {
+            formData.append('file_password', this.uploadFilePassword);
+          }
+          formData.append('is_digitally_signed', '1');
+          formData.append('signer_name', this.signerName || this.user.name || 'Authorized Signatory');
+          formData.append('signer_department', this.signerDept || this.user.department || 'ARCH360');
+          formData.append('signature_reason', this.signatureReason);
+          formData.append('signature_type', this.signatureMode);
+          formData.append('signature_data', sigDataUrl);
+
+          const res = await axios.post('/api/employee/vault/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+
+          if (res.data.success) {
+            toastSuccess('Document digitally signed and encrypted into vault successfully!');
+            this.closeSignStudio();
+            await this.fetchVaultFiles();
+          }
+        } else {
+          // SIGN EXISTING VAULT DOCUMENT
+          const formData = new FormData();
+          formData.append('user_id', this.user.id);
+          formData.append('signer_name', this.signerName || this.user.name || 'Authorized Signatory');
+          formData.append('signer_department', this.signerDept || this.user.department || 'ARCH360');
+          formData.append('signature_data', sigDataUrl);
+          formData.append('signature_reason', this.signatureReason);
+          formData.append('signature_type', this.signatureMode);
+
+          const res = await axios.post(`/api/employee/vault/sign-file/${this.activeSignFile.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+
+          if (res.data.success) {
+            toastSuccess('Digital signature attached to document successfully!');
+            this.closeSignStudio();
+            await this.fetchVaultFiles();
+            this.openCertificateModal(res.data.file || this.activeSignFile);
+          }
         }
       } catch (err) {
-        toastError(err.response?.data?.message || 'Failed to delete file.');
+        console.error('Signing failed:', err);
+        toastError(err.response?.data?.message || 'Failed to apply digital signature.');
+      } finally {
+        this.isSavingStudio = false;
       }
     },
 
+    // 👥 SHARE MODAL METHODS
     async openShareModal(file) {
       this.activeShareFile = file;
       this.selectedShareUserId = '';
@@ -981,7 +2036,6 @@ export default {
         };
 
         const res = await axios.post('/api/employee/vault/grant-access', payload);
-
         if (res.data.success) {
           toastSuccess(res.data.message || 'Access granted successfully!');
           this.showShareModal = false;
@@ -1007,6 +2061,77 @@ export default {
       } catch (err) {
         toastError('Failed to revoke access.');
       }
+    },
+
+    // 📜 CERTIFICATE VIEWER
+    async openCertificateModal(file) {
+      this.loadingCertificate = true;
+      this.showCertificateModal = true;
+      this.activeCertData = {
+        filename: file.filename,
+        file_size: file.file_size,
+        category: file.category,
+        document_id: file.id,
+        signer_name: file.signer_name || file.uploader_name,
+        signer_department: file.signer_department || file.uploader_dept,
+        signed_at: file.signed_at || file.created_at,
+        signature_reason: file.signature_reason || 'Digitally Authenticated & Approved',
+        signature_data: file.signature_data,
+        certificate_hash: file.signature_hash || `ARCH-DS-${this.todayDateCode}-${file.id}`
+      };
+
+      try {
+        const res = await axios.get(`/api/employee/vault/certificate/${file.id}`);
+        if (res.data.success && res.data.certificate) {
+          this.activeCertData = res.data.certificate;
+        }
+      } catch (err) {
+        // Fallback
+      } finally {
+        this.loadingCertificate = false;
+      }
+    },
+
+    copyHash(hash) {
+      if (!hash) return;
+      navigator.clipboard.writeText(hash).then(() => {
+        toastSuccess('Certificate Hash copied to clipboard!');
+      }).catch(() => {
+        toastInfo(`Hash: ${hash}`);
+      });
+    },
+
+    printCertificate() {
+      window.print();
+    },
+
+    async deleteFile(file) {
+      if (!confirm(`Are you sure you want to delete "${file.filename}" permanently from the Security Vault?`)) {
+        return;
+      }
+
+      try {
+        const res = await axios.delete(`/api/employee/vault/file/${file.id}`, {
+          params: { user_id: this.user.id }
+        });
+
+        if (res.data.success) {
+          toastSuccess('Document removed from vault.');
+          this.fetchVaultFiles();
+        }
+      } catch (err) {
+        toastError(err.response?.data?.message || 'Failed to delete file.');
+      }
+    },
+
+    isImageFile(filename) {
+      if (!filename) return false;
+      return /\.(png|jpe?g|webp|gif|svg)$/i.test(filename);
+    },
+
+    isBase64OrUrl(str) {
+      if (!str) return false;
+      return str.startsWith('data:image') || str.startsWith('http://') || str.startsWith('https://');
     },
 
     // Helpers
@@ -1072,7 +2197,7 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@600;700&family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Sacramento&display=swap');
 
 .layout {
   min-height: 100vh;
@@ -1135,14 +2260,13 @@ export default {
 .lock-shield-halo {
   width: 72px;
   height: 72px;
-  border-radius: 20px;
+  border-radius: 50%;
   background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  border: 2px solid #bfdbfe;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
-  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.2);
+  margin-bottom: 20px;
 }
 
 .lock-shield-ico {
@@ -1153,28 +2277,28 @@ export default {
 .security-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 0.72rem;
+  gap: 6px;
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  margin-bottom: 8px;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
 }
 
 .lock-header-text h2 {
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 6px 0;
+  margin: 0 0 8px 0;
 }
 
 .lock-subtitle {
-  font-size: 0.86rem;
   color: #64748b;
-  margin: 0 0 20px 0;
+  font-size: 0.86rem;
   line-height: 1.45;
+  margin: 0 0 20px 0;
 }
 
 .user-verification-badge {
@@ -1183,7 +2307,7 @@ export default {
   gap: 12px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 10px 14px;
   width: 100%;
   margin-bottom: 24px;
@@ -1191,10 +2315,11 @@ export default {
 }
 
 .user-avatar-mini img {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #ffffff;
 }
 
 .user-info-mini {
@@ -1205,24 +2330,23 @@ export default {
 }
 
 .user-name-label {
-  font-size: 0.88rem;
   font-weight: 700;
-  color: #0f172a;
+  font-size: 0.88rem;
+  color: #1e293b;
 }
 
 .user-email-label {
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   color: #64748b;
 }
 
 .hr-badge-pill {
-  background: #f5f3ff;
-  color: #7c3aed;
-  border: 1px solid #ddd6fe;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  color: #7c3aed;
+  background: #f5f3ff;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: 6px;
 }
 
 .lock-form {
@@ -1235,14 +2359,14 @@ export default {
 .input-field-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
   text-align: left;
+  gap: 6px;
 }
 
 .input-field-group label {
   font-size: 0.8rem;
-  font-weight: 700;
-  color: #334155;
+  font-weight: 600;
+  color: #475569;
 }
 
 .input-wrap-icon {
@@ -1255,18 +2379,18 @@ export default {
   position: absolute;
   left: 14px;
   color: #94a3b8;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .vault-input {
   width: 100%;
-  padding: 12px 42px 12px 40px;
-  border: 1.5px solid #e2e8f0;
+  padding: 11px 40px 11px 40px;
+  border: 1px solid #cbd5e1;
   border-radius: 12px;
   font-size: 0.9rem;
-  color: #0f172a;
-  background: #ffffff;
+  color: #1e293b;
   outline: none;
+  background: #ffffff;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
@@ -1283,66 +2407,118 @@ export default {
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  font-size: 0.9rem;
+  padding: 4px;
+}
+
+.btn-lock-action {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-lock-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.btn-lock-action:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-lock-action.unlock {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+}
+
+.auth-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 0.8rem;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-align: left;
 }
 
 .otp-box-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  text-align: center;
+  text-align: left;
+}
+
+.otp-box-section label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
 }
 
 .otp-digit-inputs {
   display: flex;
-  justify-content: center;
   gap: 8px;
+  justify-content: space-between;
 }
 
 .otp-digit-box {
-  width: 48px;
-  height: 54px;
-  border: 1.5px solid #cbd5e1;
+  width: 50px;
+  height: 56px;
+  border: 2px solid #cbd5e1;
   border-radius: 12px;
+  text-align: center;
   font-size: 1.4rem;
   font-weight: 800;
-  text-align: center;
   color: #0f172a;
   outline: none;
+  background: #ffffff;
   transition: all 0.2s ease;
-  background: #f8fafc;
 }
 
 .otp-digit-box:focus {
-  border-color: #2563eb;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-color: #059669;
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
 }
 
 .timer-resend-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.78rem;
   margin-top: 4px;
 }
 
 .timer-countdown {
+  font-size: 0.78rem;
   color: #64748b;
   font-weight: 600;
 }
 
 .timer-countdown.expired {
-  color: #e11d48;
+  color: #dc2626;
 }
 
 .btn-resend-code {
   background: none;
   border: none;
   color: #2563eb;
+  font-size: 0.8rem;
   font-weight: 700;
-  font-size: 0.78rem;
   cursor: pointer;
+  padding: 0;
 }
 
 .btn-resend-code:disabled {
@@ -1350,74 +2526,30 @@ export default {
   cursor: not-allowed;
 }
 
-.auth-error-banner {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  color: #e11d48;
-  font-size: 0.8rem;
-  padding: 8px 12px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-align: left;
-}
-
-.btn-lock-action {
-  width: 100%;
-  padding: 13px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #ffffff;
-  border: none;
-  font-size: 0.92rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-lock-action.unlock {
-  background: linear-gradient(135deg, #059669, #047857);
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
-}
-
-.btn-lock-action:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.btn-lock-action:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .otp-actions-stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 .btn-back-step {
   background: none;
   border: none;
   color: #64748b;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   padding: 6px;
 }
 
 .lock-footer-info {
-  margin-top: 20px;
-  font-size: 0.72rem;
-  color: #94a3b8;
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-top: 24px;
+  font-size: 0.74rem;
+  color: #94a3b8;
 }
 
 /* ==================================================== */
@@ -1429,93 +2561,81 @@ export default {
   gap: 20px;
 }
 
-.vault-header-card {
+.vault-top-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 20px;
+  padding: 24px 28px;
+  color: #ffffff;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
-  padding: 22px 24px;
-  border-radius: 18px;
-  border: 1px solid #e5eaf2;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-  flex-wrap: wrap;
-  gap: 16px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
 }
 
-.header-left {
+.banner-title-area {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 
-.vault-icon-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+.vault-shield-badge {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-size: 1.3rem;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
-  flex-shrink: 0;
+  font-size: 1.6rem;
+  color: #60a5fa;
 }
 
-.title-row {
+.vault-badge-line {
   display: flex;
+  gap: 8px;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 
-.title-row h2 {
-  font-size: 1.45rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-}
-
-.vault-status-pill {
+.vault-status-active {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-  padding: 3px 10px;
-  border-radius: 999px;
+  gap: 5px;
   font-size: 0.72rem;
   font-weight: 700;
-}
-
-.pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 3px 8px;
+  border-radius: 12px;
 }
 
 .hr-indicator-badge {
-  background: #f5f3ff;
-  color: #7c3aed;
-  border: 1px solid #ddd6fe;
-  padding: 3px 10px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.72rem;
   font-weight: 700;
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.15);
+  padding: 3px 8px;
+  border-radius: 12px;
 }
 
-.vault-subtext {
-  font-size: 0.84rem;
-  color: #64748b;
-  margin: 4px 0 0 0;
+.banner-title-area h1 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  margin: 2px 0 4px 0;
+}
+
+.vault-description {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
 }
 
 .header-right-actions {
   display: flex;
-  align-items: center;
   gap: 10px;
 }
 
@@ -1531,33 +2651,33 @@ export default {
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
   transition: all 0.2s ease;
 }
 
 .btn-vault-upload:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
 }
 
 .btn-vault-lock {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: #ffffff;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-  padding: 10px 14px;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 10px 16px;
   border-radius: 12px;
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-vault-lock:hover {
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #fca5a5;
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
 }
 
 /* KPI Cards */
@@ -1592,6 +2712,7 @@ export default {
 .kpi-icon-square.blue { background: #eff6ff; color: #2563eb; }
 .kpi-icon-square.green { background: #ecfdf5; color: #059669; }
 .kpi-icon-square.purple { background: #f5f3ff; color: #7c3aed; }
+.kpi-icon-square.teal { background: #f0fdfa; color: #0d9488; }
 .kpi-icon-square.amber { background: #fffbeb; color: #d97706; }
 
 .kpi-info {
@@ -1831,6 +2952,16 @@ export default {
   color: #0f172a;
 }
 
+.signed-mini-badge {
+  color: #059669;
+  font-size: 0.85rem;
+}
+
+.pwd-mini-badge {
+  color: #d97706;
+  font-size: 0.8rem;
+}
+
 .file-desc-sub {
   font-size: 0.72rem;
   color: #94a3b8;
@@ -1862,6 +2993,64 @@ export default {
 .uploader-dept {
   font-size: 0.7rem;
   color: #94a3b8;
+}
+
+/* Digital Signature Status Pill */
+.signature-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.signature-status-pill.verified {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.signature-status-pill.verified .sig-status-icon {
+  color: #059669;
+  font-size: 1rem;
+}
+
+.signature-status-pill.verified .sig-status-title {
+  font-weight: 700;
+  font-size: 0.76rem;
+  color: #065f46;
+}
+
+.signature-status-pill.verified .sig-signer-name {
+  font-size: 0.68rem;
+  color: #059669;
+}
+
+.signature-status-pill.unsigned {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+}
+
+.signature-status-pill.unsigned:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.signature-status-pill.unsigned .sig-status-icon {
+  color: #64748b;
+}
+
+.signature-status-pill.unsigned .sig-status-title {
+  font-weight: 700;
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.signature-status-pill.unsigned .sig-action-hint {
+  font-size: 0.68rem;
+  color: #2563eb;
+  font-weight: 600;
 }
 
 .access-pill-wrapper {
@@ -1918,19 +3107,953 @@ export default {
 }
 
 .action-btn.download:hover { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.action-btn.sign-btn:hover { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+.action-btn.cert-btn:hover { background: #fffbeb; color: #d97706; border-color: #fde68a; }
 .action-btn.share:hover { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
 .action-btn.delete:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
 
 .text-right { text-align: right; }
 
-/* Modal Styles */
+/* ========================================================================= */
+/* 🚀 ODOO DIGITAL SIGN FULLSCREEN STUDIO STYLES                             */
+/* ========================================================================= */
+.odoo-fullscreen-studio {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100000;
+  background: #0b0f19;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Studio Navbar */
+.odoo-studio-navbar {
+  height: 64px;
+  background: #111827;
+  border-bottom: 1px solid #1f2937;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.navbar-left-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-studio-back {
+  background: #1f2937;
+  border: 1px solid #374151;
+  color: #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-studio-back:hover {
+  background: #374151;
+  color: #ffffff;
+}
+
+.studio-doc-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-badge-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.2);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.brand-text-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.studio-app-title {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+.studio-active-filename {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size-pill {
+  font-size: 0.68rem;
+  background: #1f2937;
+  color: #38bdf8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Center Tools */
+.navbar-center-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-nav-pill,
+.zoom-controls-pill {
+  display: flex;
+  align-items: center;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 4px 6px;
+  gap: 6px;
+}
+
+.page-nav-btn,
+.zoom-btn,
+.btn-fit-width {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.76rem;
+  transition: all 0.15s ease;
+}
+
+.page-nav-btn:hover:not(:disabled),
+.zoom-btn:hover,
+.btn-fit-width:hover {
+  background: #374151;
+  color: #ffffff;
+}
+
+.page-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-nav-counter {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  padding: 0 4px;
+}
+
+.page-nav-counter strong {
+  color: #ffffff;
+}
+
+.zoom-level {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #38bdf8;
+  padding: 0 4px;
+  min-width: 42px;
+  text-align: center;
+}
+
+/* Right Actions */
+.navbar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pwd-indicator-badge {
+  font-size: 0.74rem;
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.btn-studio-validate {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-studio-validate:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45);
+}
+
+.btn-studio-validate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Studio Body */
+.odoo-studio-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left Sidebar */
+.odoo-studio-sidebar {
+  width: 400px;
+  flex-shrink: 0;
+  background: #111827;
+  border-right: 1px solid #1f2937;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar-block {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.block-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.block-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.block-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.studio-dropzone {
+  border: 2px dashed #475569;
+  border-radius: 12px;
+  padding: 20px 14px;
+  text-align: center;
+  cursor: pointer;
+  background: #0f172a;
+  transition: all 0.2s ease;
+}
+
+.studio-dropzone:hover,
+.studio-dropzone.dragging {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.drop-icon-halo {
+  font-size: 1.8rem;
+  color: #38bdf8;
+  margin-bottom: 6px;
+}
+
+.drop-primary {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 2px 0;
+}
+
+.drop-secondary {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.studio-selected-file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.file-card-ico {
+  font-size: 1.4rem;
+  color: #38bdf8;
+}
+
+.file-card-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-card-name {
+  font-size: 0.84rem;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card-size {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.btn-change-file {
+  background: #1f2937;
+  border: 1px solid #374151;
+  color: #38bdf8;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.76rem;
+}
+
+.sidebar-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-field-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.sidebar-select,
+.sidebar-input {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #ffffff;
+  font-size: 0.84rem;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.sidebar-select:focus,
+.sidebar-input:focus {
+  border-color: #38bdf8;
+}
+
+.sidebar-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-prefix-icon {
+  position: absolute;
+  left: 10px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.sidebar-input.with-prefix {
+  padding-left: 32px;
+}
+
+.sidebar-input.with-suffix {
+  padding-right: 36px;
+}
+
+.btn-toggle-eye-sidebar {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+/* Odoo Sig Tabs */
+.odoo-sig-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: #0f172a;
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.odoo-tab-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  padding: 7px 4px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.odoo-tab-btn:hover {
+  color: #ffffff;
+}
+
+.odoo-tab-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* Tab Panes */
+.tab-content-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canvas-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pen-palette {
+  display: flex;
+  gap: 8px;
+}
+
+.pen-color-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pen-color-dot.active {
+  border-color: #ffffff;
+  transform: scale(1.15);
+}
+
+.btn-clear-drawing {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.draw-canvas-container {
+  background: #ffffff;
+  border-radius: 10px;
+  border: 2px dashed #94a3b8;
+  position: relative;
+  overflow: hidden;
+}
+
+.studio-draw-canvas {
+  width: 100%;
+  height: 110px;
+  display: block;
+  cursor: crosshair;
+}
+
+.canvas-sign-guideline {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 4px;
+}
+
+/* Type Signature Cards */
+.font-styles-selection-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.font-choice-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.font-choice-card:hover {
+  border-color: #64748b;
+}
+
+.font-choice-card.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.font-preview-text {
+  display: block;
+  font-size: 1.25rem;
+  color: #ffffff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.font-label-name {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.sig-font-1 { font-family: 'Great Vibes', cursive; }
+.sig-font-2 { font-family: 'Dancing Script', cursive; }
+.sig-font-3 { font-family: 'Caveat', cursive; }
+.sig-font-4 { font-family: 'Sacramento', cursive; }
+
+/* Image Upload Signature */
+.sig-upload-box {
+  background: #0f172a;
+  border: 2px dashed #334155;
+  border-radius: 10px;
+  padding: 18px 12px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.sig-uploaded-preview {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.sig-uploaded-preview img {
+  max-height: 70px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.btn-remove-sig-img {
+  background: #fee2e2;
+  border: none;
+  color: #dc2626;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Seal */
+.enterprise-seal-box {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.seal-icon-halo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.seal-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.seal-details strong {
+  font-size: 0.86rem;
+  color: #ffffff;
+}
+
+.seal-details span {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+/* Digital Certificate Info Card */
+.digital-cert-info-card {
+  background: #0f172a;
+  border: 1px solid #1e3a8a;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cert-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #60a5fa;
+}
+
+.cert-card-desc {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.cert-card-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+
+/* RIGHT VIEWPORT (FULL PDF ONLY) */
+.odoo-studio-viewport {
+  flex: 1;
+  background: #0b0f19;
+  overflow: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+}
+
+.viewport-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+  gap: 14px;
+  color: #94a3b8;
+}
+
+.loader-spin-ico {
+  font-size: 2.2rem;
+  color: #38bdf8;
+}
+
+.viewport-empty-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  max-width: 460px;
+  text-align: center;
+  background: #111827;
+  border: 2px dashed #374151;
+  border-radius: 20px;
+  padding: 40px 24px;
+  cursor: pointer;
+}
+
+.empty-stage-halo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 14px;
+}
+
+.viewport-empty-stage h3 {
+  margin: 0 0 6px 0;
+  color: #ffffff;
+  font-size: 1.2rem;
+}
+
+.viewport-empty-stage p {
+  color: #94a3b8;
+  font-size: 0.84rem;
+  margin: 0 0 16px 0;
+}
+
+.btn-browse-stage {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pdf-stage-scroll-area {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+}
+
+.pdf-canvas-wrapper {
+  position: relative;
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 960px;
+  height: calc(100vh - 120px);
+  min-height: 700px;
+  overflow: hidden;
+  transition: transform 0.15s ease;
+  user-select: none;
+  display: flex;
+}
+
+.real-pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+  display: block;
+}
+
+.real-pdf-iframe.is-dragging-active {
+  pointer-events: none;
+}
+
+.real-image-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  margin: auto;
+}
+
+/* Interactive Draggable Stamp */
+.interactive-odoo-stamp {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.94);
+  border: 2px solid #2563eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+  backdrop-filter: blur(4px);
+  user-select: none;
+  touch-action: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.interactive-odoo-stamp.is-dragging {
+  cursor: grabbing;
+  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.6);
+  border-color: #059669;
+}
+
+.interactive-odoo-stamp.small { width: 170px; }
+.interactive-odoo-stamp.medium { width: 230px; }
+.interactive-odoo-stamp.large { width: 300px; }
+
+.stamp-header-badge {
+  background: #2563eb;
+  color: #ffffff;
+  padding: 3px 8px;
+  font-size: 0.64rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.stamp-render-area {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stamp-draw-view,
+.stamp-type-view,
+.stamp-upload-view,
+.stamp-seal-view {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.stamp-sig-img {
+  max-height: 48px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.stamp-placeholder-hint {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.stamp-font-styled {
+  font-size: 1.35rem;
+  color: #0f172a;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.stamp-seal-view {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seal-txt {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.seal-txt strong {
+  font-size: 0.74rem;
+  color: #065f46;
+}
+
+.seal-txt small {
+  font-size: 0.64rem;
+  color: #059669;
+}
+
+.stamp-footer-row {
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.signer-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.verified-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+/* ==================================================== */
+/* MODAL COMMON & SHARE / CERTIFICATE STYLES            */
+/* ==================================================== */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -1948,6 +4071,10 @@ export default {
   overflow: hidden;
 }
 
+.certificate-modal-card {
+  max-width: 680px;
+}
+
 .modal-header {
   padding: 18px 24px;
   border-bottom: 1px solid #e2e8f0;
@@ -1959,15 +4086,15 @@ export default {
 .modal-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .modal-ico {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: #2563eb;
 }
 
-.modal-title-row h3 {
+.modal-header h3 {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 800;
@@ -1977,94 +4104,51 @@ export default {
 .btn-close-modal {
   background: none;
   border: none;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   color: #94a3b8;
   cursor: pointer;
+  padding: 0;
+  line-height: 1;
 }
 
-.modal-body-form,
 .modal-share-body {
-  padding: 20px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
-.file-dropzone {
-  border: 2px dashed #cbd5e1;
-  border-radius: 14px;
-  padding: 30px 20px;
-  text-align: center;
+.target-file-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: #f8fafc;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
-.file-dropzone.dragging,
-.file-dropzone:hover {
-  border-color: #2563eb;
-  background: #eff6ff;
-}
-
-.file-dropzone.has-file {
-  border-style: solid;
-  border-color: #a7f3d0;
-  background: #f0fdf4;
-}
-
-.drop-halo {
-  font-size: 2rem;
+.target-file-summary i {
+  font-size: 1.4rem;
   color: #2563eb;
-  margin-bottom: 8px;
 }
 
-.drop-main-text {
-  font-size: 0.9rem;
-  font-weight: 700;
+.target-file-summary strong {
+  display: block;
+  font-size: 0.88rem;
   color: #0f172a;
-  margin: 0 0 4px 0;
 }
 
-.drop-sub-text {
+.target-file-summary p {
+  margin: 0;
   font-size: 0.74rem;
   color: #64748b;
 }
 
-.dropzone-file-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-}
-
-.selected-file-ico {
-  font-size: 1.8rem;
-  color: #059669;
-}
-
-.preview-text {
+.share-form {
   display: flex;
   flex-direction: column;
-  flex: 1;
-}
-
-.preview-name {
-  font-weight: 700;
-  color: #0f172a;
-  font-size: 0.88rem;
-}
-
-.preview-size {
-  font-size: 0.72rem;
-  color: #64748b;
-}
-
-.btn-remove-file {
-  background: none;
-  border: none;
-  color: #e11d48;
-  font-size: 1rem;
-  cursor: pointer;
+  gap: 14px;
 }
 
 .form-row-group {
@@ -2076,7 +4160,7 @@ export default {
 .form-row-group label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #334155;
+  color: #475569;
 }
 
 .modal-select,
@@ -2086,8 +4170,7 @@ export default {
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   font-size: 0.86rem;
-  color: #0f172a;
-  background: #ffffff;
+  color: #1e293b;
   outline: none;
   box-sizing: border-box;
 }
@@ -2097,85 +4180,28 @@ export default {
   border-color: #2563eb;
 }
 
-.modal-actions-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.btn-cancel {
-  padding: 10px 16px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.86rem;
-  color: #64748b;
-  cursor: pointer;
-}
-
 .btn-submit-upload {
-  padding: 10px 20px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
   border: none;
   background: #2563eb;
   color: #ffffff;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.86rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-submit-upload:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.target-file-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-
-.target-file-summary i {
-  font-size: 1.5rem;
-  color: #2563eb;
-}
-
-.target-file-summary strong {
   font-size: 0.88rem;
-  color: #0f172a;
-}
-
-.target-file-summary p {
-  font-size: 0.74rem;
-  color: #64748b;
-  margin: 2px 0 0 0;
-}
-
-.share-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .existing-shares-box {
-  margin-top: 10px;
   border-top: 1px solid #e2e8f0;
-  padding-top: 12px;
+  padding-top: 14px;
 }
 
 .existing-shares-box h4 {
+  margin: 0 0 10px 0;
   font-size: 0.82rem;
   color: #64748b;
-  margin: 0 0 8px 0;
+  text-transform: uppercase;
 }
 
 .shares-list {
@@ -2189,17 +4215,13 @@ export default {
   justify-content: space-between;
   align-items: center;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
   padding: 8px 12px;
-}
-
-.share-user-meta {
-  display: flex;
-  flex-direction: column;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .share-user-meta strong {
+  display: block;
   font-size: 0.82rem;
   color: #0f172a;
 }
@@ -2210,22 +4232,307 @@ export default {
 }
 
 .btn-revoke-share {
-  background: none;
+  background: #fee2e2;
   border: none;
-  color: #e11d48;
+  color: #dc2626;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+/* Certificate Styles */
+.certificate-container {
+  padding: 24px;
+  background: #ffffff;
+}
+
+.cert-banner {
+  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.cert-logo-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.cert-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #0f172a;
+}
+
+.cert-badge-valid {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.cert-banner h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.cert-subtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.cert-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.cert-info-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-header-mini {
   font-size: 0.76rem;
+  font-weight: 800;
+  color: #2563eb;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.cert-key-val {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.cert-key-val .key {
+  color: #64748b;
+}
+
+.cert-key-val .val {
+  color: #1e293b;
+}
+
+.cert-key-val .val.bold {
+  font-weight: 700;
+}
+
+.cert-signature-showcase {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.official-stamp-graphic {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px dashed #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stamp-inner-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #059669;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.stamp-inner-circle i {
+  font-size: 1.3rem;
+  margin-bottom: 2px;
+}
+
+.sig-image-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sig-image-column label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.sig-render-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cert-rendered-sig-img {
+  max-height: 55px;
+  max-width: 100%;
+}
+
+.cert-text-signature {
+  font-family: 'Great Vibes', cursive;
+  font-size: 1.8rem;
+  color: #0f172a;
+}
+
+.cert-crypto-bar {
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.hash-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  display: block;
+}
+
+.hash-code {
+  font-size: 0.8rem;
+  color: #34d399;
+  font-family: monospace;
+}
+
+.btn-copy-hash {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cert-footer-disclaimer {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.modal-actions-footer {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-cancel {
+  background: #e2e8f0;
+  border: none;
+  color: #475569;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
 }
 
-@media (max-width: 992px) {
-  .vault-header-card {
+.btn-print-cert {
+  background: #0f172a;
+  border: none;
+  color: #ffffff;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #111827;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+
+/* Print Styles */
+@media print {
+  .layout, .main-content, .vault-board-premium {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+  .modal-backdrop {
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+  }
+  .vault-modal-card {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+  }
+  .modal-header, .modal-actions-footer {
+    display: none !important;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 10px;
+  }
+  .vault-top-banner {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
   }
-  .header-right-actions {
+  .odoo-studio-body {
+    flex-direction: column;
+  }
+  .odoo-studio-sidebar {
     width: 100%;
-    justify-content: space-between;
+    height: 45vh;
+  }
+  .cert-body-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

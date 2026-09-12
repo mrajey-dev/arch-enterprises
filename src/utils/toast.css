@@ -1,0 +1,250 @@
+/* ========================================================= */
+/* 🌟 PREMIUM MODERN TOAST NOTIFICATIONS (NOTYF OVERHAUL)   */
+/* ========================================================= */
+
+.notyf {
+  z-index: 999999 !important;
+  padding: 20px 24px !important;
+  pointer-events: none;
+}
+
+.notyf__toast {
+  pointer-events: auto;
+  border-radius: 16px !important;
+  padding: 0 !important;
+  box-shadow: 
+    0 16px 36px -6px rgba(15, 23, 42, 0.22),
+    0 4px 14px -2px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  max-width: 440px !important;
+  min-width: 300px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  margin-bottom: 12px !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease !important;
+  animation: notyfSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.notyf__toast:hover {
+  transform: translateY(-2px) scale(1.01) !important;
+  box-shadow: 
+    0 22px 45px -8px rgba(15, 23, 42, 0.28),
+    0 8px 20px -4px rgba(15, 23, 42, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 💨 DISAPPEAR / EXIT ANIMATION */
+.notyf__toast--disappear {
+  animation: notyfSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  pointer-events: none !important;
+}
+
+.notyf__toast--disappear .notyf__icon,
+.notyf__toast--disappear .notyf__message,
+.notyf__toast--disappear .notyf__dismiss {
+  animation: notyfFadeOut 0.2s ease-out forwards !important;
+}
+
+.notyf__wrapper {
+  padding: 12px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  position: relative;
+  z-index: 2;
+}
+
+/* 🎨 Custom Icon Container */
+.notyf__icon {
+  margin: 0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  opacity: 1 !important;
+  animation: none !important;
+}
+
+.notyf__icon i,
+.notyf-custom-icon {
+  font-size: 1.15rem !important;
+  color: #ffffff !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+/* 📝 Message Typography */
+.notyf__message {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.01em !important;
+  padding: 0 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  flex: 1 1 auto !important;
+  opacity: 1 !important;
+  animation: none !important;
+}
+
+/* ❌ Dismiss Button & Cross (X) Icon */
+.notyf__dismiss {
+  position: relative !important;
+  margin-left: auto !important;
+  padding: 0 !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  animation: none !important;
+  top: auto !important;
+  right: auto !important;
+  flex-shrink: 0 !important;
+}
+
+.notyf__dismiss-btn {
+  position: relative !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 50% !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  cursor: pointer !important;
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  opacity: 0.85 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.notyf__dismiss-btn:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.35) !important;
+  transform: rotate(90deg) scale(1.1) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+.notyf__dismiss-btn:active {
+  transform: rotate(90deg) scale(0.95) !important;
+}
+
+/* ✖ Cross Lines Centered Precision */
+.notyf__dismiss-btn:before,
+.notyf__dismiss-btn:after {
+  content: "" !important;
+  position: absolute !important;
+  background-color: #ffffff !important;
+  width: 2px !important;
+  height: 12px !important;
+  border-radius: 2px !important;
+  top: 50% !important;
+  left: 50% !important;
+  margin-top: -6px !important;
+  margin-left: -1px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.notyf__dismiss-btn:before {
+  transform: rotate(45deg) !important;
+}
+
+.notyf__dismiss-btn:after {
+  transform: rotate(-45deg) !important;
+}
+
+/* 🌊 Ripple Effect */
+.notyf__ripple {
+  height: 400px !important;
+  width: 400px !important;
+  opacity: 0.18 !important;
+}
+
+/* ✨ Type Themes with Modern Gradient Lighting */
+.notyf__toast--success {
+  background: linear-gradient(135deg, #059669 0%, #10b981 60%, #047857 100%) !important;
+}
+
+.notyf__toast--error {
+  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 60%, #be123c 100%) !important;
+}
+
+.notyf__toast--warning {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #b45309 100%) !important;
+}
+
+.notyf__toast--info {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 60%, #1d4ed8 100%) !important;
+}
+
+/* 🚀 Entrance & Exit Keyframes */
+@keyframes notyfSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes notyfSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 100px;
+    margin-bottom: 12px;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.92);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+@keyframes notyfFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 📱 Responsive Mobile Adjustments */
+@media (max-width: 640px) {
+  .notyf {
+    padding: 12px 14px !important;
+  }
+  .notyf__toast {
+    max-width: 100% !important;
+    min-width: 280px !important;
+    border-radius: 12px !important;
+  }
+  .notyf__wrapper {
+    padding: 12px 14px !important;
+  }
+  .notyf__message {
+    font-size: 0.86rem !important;
+  }
+}
