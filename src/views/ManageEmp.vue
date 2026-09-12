@@ -302,117 +302,420 @@
           </button>
         </div>
 
+        <!-- Search, View Switcher & Stats Bar -->
         <div class="search-bar">
           <div class="search-input-wrapper">
             <i class="fas fa-search"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search by name, department, or email..." />
+            <input type="text" v-model="searchQuery" placeholder="Search by name, role, department, handle, contact..." />
+            <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''" title="Clear Search">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
+
+          <!-- View Mode Switcher Segmented Control -->
+          <div class="view-mode-tabs">
+            <button 
+              type="button" 
+              class="view-tab-btn" 
+              :class="{ active: viewMode === 'table' }"
+              @click="setViewMode('table')"
+              title="Standard Data Table"
+            >
+              <i class="fas fa-table"></i>
+              <span>Table</span>
+            </button>
+            <button 
+              type="button" 
+              class="view-tab-btn" 
+              :class="{ active: viewMode === 'tree' }"
+              @click="setViewMode('tree')"
+              title="Interactive Org Tree Structure"
+            >
+              <i class="fas fa-sitemap"></i>
+              <span>Tree Structure</span>
+            </button>
+            <button 
+              type="button" 
+              class="view-tab-btn" 
+              :class="{ active: viewMode === 'icons' }"
+              @click="setViewMode('icons')"
+              title="Visual Cards & Icons"
+            >
+              <i class="fas fa-th-large"></i>
+              <span>Visual Cards</span>
+            </button>
+          </div>
+
           <div class="stats">
             <i class="fas fa-users"></i>
             <span>{{ filteredUsers.length }} Employees</span>
           </div>
         </div>
 
-        <!-- Mobile Card View -->
-        <div class="mobile-cards" v-if="isMobile">
-          <div v-for="(user, index) in filteredUsers" :key="user.id" class="employee-card">
-            <div class="card-header">
-              <div class="card-avatar" @click="openKRASelection(user)">
-                <div class="avatar">{{ getInitials(user.name) }}</div>
-                <span class="card-name">{{ formatName(user.name) }}</span>
-                <i class="fas fa-chart-line kra-hint-mobile"></i>
-              </div>
-              <span :class="['status-badge-mobile', user.status === 'active' ? 'active' : 'inactive']">
-                <i class="fas fa-circle"></i>
-                {{ user.status === 'active' ? 'Active' : 'Inactive' }}
+        <!-- Quick Department Filter Strip -->
+        <div class="dept-quick-strip" v-if="users.length > 0">
+          <button 
+            type="button" 
+            class="dept-chip" 
+            :class="{ active: selectedDeptFilter === 'all' }"
+            @click="selectedDeptFilter = 'all'"
+          >
+            <i class="fas fa-layer-group"></i>
+            <span>All</span>
+            <span class="chip-count">{{ users.length }}</span>
+          </button>
+          <button 
+            type="button" 
+            v-for="dept in departmentStats" 
+            :key="dept.name" 
+            class="dept-chip"
+            :class="{ active: selectedDeptFilter.toLowerCase() === dept.name.toLowerCase() }"
+            @click="selectedDeptFilter = selectedDeptFilter.toLowerCase() === dept.name.toLowerCase() ? 'all' : dept.name"
+          >
+            <i :class="getDeptIcon(dept.name)" :style="{ color: getDeptColor(dept.name) }"></i>
+            <span>{{ dept.name }}</span>
+            <span class="chip-count" :style="{ backgroundColor: getDeptColor(dept.name) + '18', color: getDeptColor(dept.name) }">
+              {{ dept.total }}
+            </span>
+          </button>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 🌳 1. TREE STRUCTURE VIEW (VISUALIZATION WITH ICONS)     -->
+        <!-- ========================================================= -->
+        <div v-if="viewMode === 'tree'" class="tree-view-wrapper">
+          <!-- Tree Controls Bar -->
+          <div class="tree-controls-bar">
+            <div class="tree-stats-row">
+              <span class="tree-stat-pill">
+                <i class="fas fa-sitemap text-primary"></i> <strong>{{ departmentStats.length }}</strong> Departments
+              </span>
+              <span class="tree-stat-pill emerald">
+                <i class="fas fa-user-check"></i> <strong>{{ activeCount }}</strong> Active
+              </span>
+              <span class="tree-stat-pill slate" v-if="inactiveCount > 0">
+                <i class="fas fa-user-slash"></i> <strong>{{ inactiveCount }}</strong> Inactive
               </span>
             </div>
-
-            <div class="card-body">
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-envelope"></i> Email</span>
-                <span class="card-value">{{ user.email }}</span>
-              </div>
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-building"></i> Department</span>
-                <span class="card-value dept-badge-mobile">{{ user.department }}</span>
-              </div>
-              <div class="card-row">
-                <span class="card-label"><i class="fas fa-phone"></i> Contact</span>
-                <span class="card-value">{{ user.mobile }}</span>
-              </div>
-            </div>
-
-            <div class="card-actions">
-              <button class="card-action-btn edit" @click="editUser(user)">
-                <i class="fas fa-edit"></i> Edit
+            <div class="tree-btn-group">
+              <button type="button" class="btn-tree-tool" @click="expandAllDepts" title="Expand All Branches">
+                <i class="fas fa-plus-square"></i> Expand All
               </button>
-              <button class="card-action-btn toggle" :class="user.status === 'active' ? 'deactivate' : 'activate'" @click="toggleStatus(user)">
-                <i :class="user.status === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
-                {{ user.status === 'active' ? 'Deactivate' : 'Activate' }}
+              <button type="button" class="btn-tree-tool" @click="collapseAllDepts" title="Collapse All Branches">
+                <i class="fas fa-minus-square"></i> Collapse All
               </button>
             </div>
           </div>
 
-          <div v-if="filteredUsers.length === 0" class="empty-state-mobile">
-            <i class="fas fa-user-friends"></i>
-            <p>No employees found</p>
-            <span>Try adjusting your search</span>
-          </div>
-        </div>
+          <!-- Tree Visual Hierarchy -->
+          <div class="org-tree-chart">
+            <!-- Root Company Node (Arch Enterprises) -->
+            <div class="tree-root-section">
+              <div class="org-company-node">
+                <div class="company-badge-halo">
+                  <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="company-info-block">
+                  <h3 class="company-name">Arch Enterprises</h3>
+                  <span class="company-sub">Enterprise Organizational Structure</span>
+                </div>
+                <div class="company-meta-badge">
+                  <i class="fas fa-users"></i>
+                  <span>{{ filteredUsers.length }} Total Staff</span>
+                </div>
+              </div>
+              <div class="tree-trunk-line"></div>
+            </div>
 
-        <!-- Desktop Table View -->
-        <div class="table-container" v-else>
-          <table class="employee-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Employee</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(user, index) in filteredUsers" :key="user.id">
-                <td>{{ index + 1 }}</td>
-                <td class="employee-name" @click="openKRASelection(user)">
-                  <div class="avatar">{{ getInitials(user.name) }}</div>
-                  <span>{{ formatName(user.name) }}</span>
-                  <i class="fas fa-chart-line kra-hint"></i>
-                </td>
-                <td>{{ user.email }}</td>
-                <td><span class="dept-badge">{{ user.department }}</span></td>
-                <td>{{ user.mobile }}</td>
-                <td>
-                  <span :class="['status-badge', user.status === 'active' ? 'active' : 'inactive']">
-                    <i class="fas fa-circle"></i>
-                    {{ user.status === 'active' ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td>
-                  <div class="actions">
-                    <button class="action-edit" @click="editUser(user)" title="Edit">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-toggle" :class="user.status === 'active' ? 'deactivate' : 'activate'" @click="toggleStatus(user)" :title="user.status === 'active' ? 'Deactivate' : 'Activate'">
-                      <i :class="user.status === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+            <!-- Department Branches -->
+            <div class="tree-departments-flow">
+              <div 
+                v-for="dept in departmentStats" 
+                :key="dept.name" 
+                class="dept-branch-block"
+                :class="{ 'collapsed': isDeptCollapsed(dept.name) }"
+              >
+                <!-- Department Header Node -->
+                <div class="dept-header-box" @click="toggleDeptCollapse(dept.name)">
+                  <div class="dept-header-main">
+                    <div class="dept-icon-circle" :style="{ backgroundColor: getDeptColor(dept.name) + '18', color: getDeptColor(dept.name) }">
+                      <i :class="getDeptIcon(dept.name)"></i>
+                    </div>
+                    <div class="dept-title-meta">
+                      <h4 class="dept-name-heading">{{ dept.name }}</h4>
+                      <span class="dept-subtitle">
+                        {{ dept.total }} Member{{ dept.total !== 1 ? 's' : '' }} • {{ dept.active }} Active
+                      </span>
+                    </div>
+                  </div>
+                  <div class="dept-header-actions">
+                    <span class="dept-count-badge" :style="{ backgroundColor: getDeptColor(dept.name) }">
+                      {{ dept.total }}
+                    </span>
+                    <button type="button" class="btn-dept-expand">
+                      <i :class="isDeptCollapsed(dept.name) ? 'fas fa-chevron-down' : 'fas fa-chevron-up'"></i>
                     </button>
                   </div>
-                </td>
-              </tr>
-              <tr v-if="filteredUsers.length === 0">
-                <td colspan="7" class="empty-state">
-                  <i class="fas fa-user-friends"></i>
-                  <p>No employees found</p>
-                  <span>Try adjusting your search</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+
+                <!-- Connector Line to Employee Leaf Cards -->
+                <div v-show="!isDeptCollapsed(dept.name)" class="dept-stem-line"></div>
+
+                <!-- Employee Cards within Department -->
+                <transition name="fade">
+                  <div v-show="!isDeptCollapsed(dept.name)" class="dept-employee-cards-row">
+                    <div 
+                      v-for="user in dept.users" 
+                      :key="user.id" 
+                      class="tree-employee-leaf"
+                      :class="{ 'inactive': user.status !== 'active' }"
+                    >
+                      <div class="leaf-avatar-section" @click="openKRASelection(user)">
+                        <div class="leaf-avatar" :style="{ backgroundColor: getAvatarColor(user.name) }">
+                          {{ getInitials(user.name) }}
+                        </div>
+                        <span class="leaf-status-dot" :class="user.status === 'active' ? 'active' : 'inactive'" :title="user.status === 'active' ? 'Active' : 'Inactive'"></span>
+                      </div>
+
+                      <div class="leaf-details-section" @click="openKRASelection(user)">
+                        <div class="leaf-name-row">
+                          <strong class="leaf-name">{{ formatName(user.name) }}</strong>
+                          <i class="fas fa-chart-line kra-leaf-hint" title="Assign / View KRAs"></i>
+                        </div>
+                        <span class="leaf-role" :title="user.keyresponsibility || user.department">
+                          <i class="fas fa-briefcase"></i> {{ user.keyresponsibility || 'Team Member' }}
+                        </span>
+                        <div class="leaf-contacts">
+                          <a v-if="user.email" :href="'mailto:' + user.email" class="leaf-contact-chip" :title="user.email" @click.stop>
+                            <i class="fas fa-envelope"></i>
+                            <span class="truncate-txt">{{ user.email }}</span>
+                          </a>
+                          <a v-if="user.mobile" :href="'tel:' + user.mobile" class="leaf-contact-chip phone" :title="user.mobile" @click.stop>
+                            <i class="fas fa-phone-alt"></i>
+                            <span>{{ user.mobile }}</span>
+                          </a>
+                        </div>
+                      </div>
+
+                      <div class="leaf-actions-bar">
+                        <button type="button" class="leaf-btn edit" @click.stop="editUser(user)" title="Edit Employee">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="leaf-btn kra" @click.stop="openKRASelection(user)" title="KRA Performance">
+                          <i class="fas fa-chart-line"></i>
+                        </button>
+                        <button 
+                          type="button" 
+                          class="leaf-btn toggle" 
+                          :class="user.status === 'active' ? 'deactivate' : 'activate'" 
+                          @click.stop="toggleStatus(user)"
+                          :title="user.status === 'active' ? 'Deactivate Employee' : 'Activate Employee'"
+                        >
+                          <i :class="user.status === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </transition>
+
+              </div>
+            </div>
+
+            <!-- Empty state for tree -->
+            <div v-if="departmentStats.length === 0" class="tree-empty-card">
+              <i class="fas fa-user-friends"></i>
+              <h4>No employees match your search</h4>
+              <p>Try adjusting your search keywords or department filter</p>
+              <button type="button" class="btn-clear-search" @click="searchQuery = ''; selectedDeptFilter = 'all'">
+                Reset Filters
+              </button>
+            </div>
+          </div>
         </div>
+
+        <!-- ========================================================= -->
+        <!-- 🎨 2. VISUAL ICONS & CARDS GRID VIEW                     -->
+        <!-- ========================================================= -->
+        <div v-else-if="viewMode === 'icons'" class="visual-cards-wrapper">
+          <div class="visual-cards-grid">
+            <div 
+              v-for="user in filteredUsers" 
+              :key="user.id" 
+              class="visual-emp-card"
+              :class="{ 'inactive': user.status !== 'active' }"
+            >
+              <!-- Top color stripe -->
+              <div class="card-color-stripe" :style="{ backgroundColor: getDeptColor(user.department) }"></div>
+
+              <div class="card-top-meta">
+                <span class="dept-tag-pill" :style="{ backgroundColor: getDeptColor(user.department) + '18', color: getDeptColor(user.department) }">
+                  <i :class="getDeptIcon(user.department)"></i> {{ user.department || 'General' }}
+                </span>
+                <span class="status-pill-badge" :class="user.status === 'active' ? 'active' : 'inactive'">
+                  <i class="fas fa-circle"></i> {{ user.status === 'active' ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+
+              <!-- Avatar & Name Profile -->
+              <div class="card-hero-profile" @click="openKRASelection(user)">
+                <div class="avatar-hero-ring">
+                  <div class="avatar-hero" :style="{ backgroundColor: getAvatarColor(user.name) }">
+                    {{ getInitials(user.name) }}
+                  </div>
+                  <i class="fas fa-chart-line kra-hero-hint" title="Assign / View KRAs"></i>
+                </div>
+                <h3 class="hero-name">{{ formatName(user.name) }}</h3>
+                <span class="hero-handle">@{{ user.handle || (user.name ? user.name.toLowerCase().replace(/\s+/g, '_') : 'user') }}</span>
+                <div class="hero-role-pill" :title="user.keyresponsibility || 'Team Member'">
+                  <i class="fas fa-id-badge"></i> {{ user.keyresponsibility || 'Team Member' }}
+                </div>
+              </div>
+
+              <!-- Contact & Details Strip -->
+              <div class="card-contacts-strip">
+                <a v-if="user.email" :href="'mailto:' + user.email" class="contact-pill-link" :title="user.email">
+                  <i class="fas fa-envelope"></i>
+                  <span>{{ user.email }}</span>
+                </a>
+                <a v-if="user.mobile" :href="'tel:' + user.mobile" class="contact-pill-link phone" :title="user.mobile">
+                  <i class="fas fa-phone-alt"></i>
+                  <span>{{ user.mobile }}</span>
+                </a>
+              </div>
+
+              <!-- Card Action Buttons -->
+              <div class="card-bottom-actions">
+                <button type="button" class="btn-card-tool kra" @click="openKRASelection(user)" title="KRA Performance">
+                  <i class="fas fa-chart-line"></i> <span>KRA</span>
+                </button>
+                <button type="button" class="btn-card-tool edit" @click="editUser(user)" title="Edit Employee">
+                  <i class="fas fa-edit"></i> <span>Edit</span>
+                </button>
+                <button 
+                  type="button" 
+                  class="btn-card-tool toggle" 
+                  :class="user.status === 'active' ? 'deactivate' : 'activate'"
+                  @click="toggleStatus(user)"
+                  :title="user.status === 'active' ? 'Deactivate Employee' : 'Activate Employee'"
+                >
+                  <i :class="user.status === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="filteredUsers.length === 0" class="cards-empty-state">
+            <i class="fas fa-user-friends"></i>
+            <h4>No employees found</h4>
+            <p>Try adjusting your search criteria or department filter</p>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 📋 3. TABLE VIEW (DESKTOP) / MOBILE CARDS                -->
+        <!-- ========================================================= -->
+        <template v-else-if="viewMode === 'table'">
+          <!-- Mobile Card View -->
+          <div class="mobile-cards" v-if="isMobile">
+            <div v-for="(user, index) in filteredUsers" :key="user.id" class="employee-card">
+              <div class="card-header">
+                <div class="card-avatar" @click="openKRASelection(user)">
+                  <div class="avatar">{{ getInitials(user.name) }}</div>
+                  <span class="card-name">{{ formatName(user.name) }}</span>
+                  <i class="fas fa-chart-line kra-hint-mobile"></i>
+                </div>
+                <span :class="['status-badge-mobile', user.status === 'active' ? 'active' : 'inactive']">
+                  <i class="fas fa-circle"></i>
+                  {{ user.status === 'active' ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-envelope"></i> Email</span>
+                  <span class="card-value">{{ user.email }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-building"></i> Department</span>
+                  <span class="card-value dept-badge-mobile">{{ user.department }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="card-label"><i class="fas fa-phone"></i> Contact</span>
+                  <span class="card-value">{{ user.mobile }}</span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="card-action-btn edit" @click="editUser(user)">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="card-action-btn toggle" :class="user.status === 'active' ? 'deactivate' : 'activate'" @click="toggleStatus(user)">
+                  <i :class="user.status === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+                  {{ user.status === 'active' ? 'Deactivate' : 'Activate' }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="filteredUsers.length === 0" class="empty-state-mobile">
+              <i class="fas fa-user-friends"></i>
+              <p>No employees found</p>
+              <span>Try adjusting your search</span>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="table-container" v-else>
+            <table class="employee-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Employee</th>
+                  <th>Email</th>
+                  <th>Department</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(user, index) in filteredUsers" :key="user.id">
+                  <td>{{ index + 1 }}</td>
+                  <td class="employee-name" @click="openKRASelection(user)">
+                    <div class="avatar">{{ getInitials(user.name) }}</div>
+                    <span>{{ formatName(user.name) }}</span>
+                    <i class="fas fa-chart-line kra-hint"></i>
+                  </td>
+                  <td>{{ user.email }}</td>
+                  <td><span class="dept-badge">{{ user.department }}</span></td>
+                  <td>{{ user.mobile }}</td>
+                  <td>
+                    <span :class="['status-badge', user.status === 'active' ? 'active' : 'inactive']">
+                      <i class="fas fa-circle"></i>
+                      {{ user.status === 'active' ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <button class="action-edit" @click="editUser(user)" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="action-toggle" :class="user.status === 'active' ? 'deactivate' : 'activate'" @click="toggleStatus(user)" :title="user.status === 'active' ? 'Deactivate' : 'Activate'">
+                        <i :class="user.status === 'active' ? 'fas fa-user-slash' : 'fas fa-user-check'"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="filteredUsers.length === 0">
+                  <td colspan="7" class="empty-state">
+                    <i class="fas fa-user-friends"></i>
+                    <p>No employees found</p>
+                    <span>Try adjusting your search</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
 
         <!-- KRA Modal - Premium -->
         <transition name="modal-fade">
@@ -538,6 +841,9 @@ export default {
   },
   data() {
     return {
+      viewMode: sessionStorage.getItem('arch_emp_view_mode') || 'table',
+      selectedDeptFilter: 'all',
+      collapsedDepts: {},
       searchQuery: '',
       dobError: false,
       userAssignedKRAs: [],
@@ -594,13 +900,53 @@ export default {
   },
   computed: {
     filteredUsers() {
-      if (!this.searchQuery) return this.users;
+      let list = this.users;
+      if (this.selectedDeptFilter && this.selectedDeptFilter !== 'all') {
+        list = list.filter(u => String(u.department || 'General').trim().toLowerCase() === this.selectedDeptFilter.trim().toLowerCase());
+      }
+      if (!this.searchQuery) return list;
       const query = this.searchQuery.toLowerCase();
-      return this.users.filter(user =>
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.department.toLowerCase().includes(query)
+      return list.filter(user =>
+        (user.name && user.name.toLowerCase().includes(query)) ||
+        (user.email && user.email.toLowerCase().includes(query)) ||
+        (user.department && user.department.toLowerCase().includes(query)) ||
+        (user.handle && user.handle.toLowerCase().includes(query)) ||
+        (user.mobile && user.mobile.toLowerCase().includes(query)) ||
+        (user.keyresponsibility && user.keyresponsibility.toLowerCase().includes(query))
       );
+    },
+    activeCount() {
+      return this.filteredUsers.filter(u => u.status === 'active').length;
+    },
+    inactiveCount() {
+      return this.filteredUsers.filter(u => u.status !== 'active').length;
+    },
+    departmentStats() {
+      const map = {};
+      this.filteredUsers.forEach(u => {
+        const d = (u.department || 'General').trim();
+        if (!map[d]) {
+          map[d] = {
+            name: d,
+            total: 0,
+            active: 0,
+            inactive: 0,
+            users: []
+          };
+        }
+        map[d].total++;
+        if (u.status === 'active') map[d].active++;
+        else map[d].inactive++;
+        map[d].users.push(u);
+      });
+      return Object.values(map).sort((a, b) => b.total - a.total);
+    },
+    allDepartmentNames() {
+      const depts = new Set();
+      this.users.forEach(u => {
+        if (u.department) depts.add(u.department.trim());
+      });
+      return Array.from(depts).sort();
     },
     filteredKRAOptions() {
       const userDept = this.selectedUser?.department;
@@ -617,6 +963,7 @@ export default {
     }
   },
   mounted() {
+    localStorage.removeItem('arch_emp_view_mode');
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
     this.fetchUsers();
@@ -624,6 +971,67 @@ export default {
     this.fetchAllKRAs();
   },
   methods: {
+    setViewMode(mode) {
+      this.viewMode = mode;
+      sessionStorage.setItem('arch_emp_view_mode', mode);
+    },
+    toggleDeptCollapse(deptName) {
+      this.collapsedDepts = {
+        ...this.collapsedDepts,
+        [deptName]: !this.collapsedDepts[deptName]
+      };
+    },
+    isDeptCollapsed(deptName) {
+      if (this.searchQuery && this.searchQuery.trim().length > 0) {
+        return false;
+      }
+      return !!this.collapsedDepts[deptName];
+    },
+    expandAllDepts() {
+      this.collapsedDepts = {};
+    },
+    collapseAllDepts() {
+      const map = {};
+      this.departmentStats.forEach(d => {
+        map[d.name] = true;
+      });
+      this.collapsedDepts = map;
+    },
+    getDeptIcon(dept) {
+      if (!dept) return 'fas fa-briefcase';
+      const d = String(dept).toLowerCase();
+      if (d.includes('tech') || d.includes('it') || d.includes('software') || d.includes('developer') || d.includes('eng')) return 'fas fa-laptop-code';
+      if (d.includes('hr') || d.includes('human') || d.includes('talent') || d.includes('recruit')) return 'fas fa-users-cog';
+      if (d.includes('sale') || d.includes('market') || d.includes('biz') || d.includes('business')) return 'fas fa-chart-line';
+      if (d.includes('financ') || d.includes('account') || d.includes('tax') || d.includes('audit')) return 'fas fa-file-invoice-dollar';
+      if (d.includes('operat') || d.includes('admin') || d.includes('logistic')) return 'fas fa-cogs';
+      if (d.includes('manage') || d.includes('director') || d.includes('exec') || d.includes('board') || d.includes('lead')) return 'fas fa-user-tie';
+      if (d.includes('design') || d.includes('ui') || d.includes('ux') || d.includes('creat')) return 'fas fa-paint-brush';
+      if (d.includes('legal') || d.includes('complian') || d.includes('law')) return 'fas fa-balance-scale';
+      if (d.includes('support') || d.includes('customer') || d.includes('client') || d.includes('serv')) return 'fas fa-headset';
+      return 'fas fa-building';
+    },
+    getDeptColor(dept) {
+      if (!dept) return '#64748b';
+      const d = String(dept).toLowerCase();
+      if (d.includes('tech') || d.includes('it') || d.includes('software')) return '#3b82f6';
+      if (d.includes('hr') || d.includes('human')) return '#ec4899';
+      if (d.includes('sale') || d.includes('market')) return '#f59e0b';
+      if (d.includes('financ') || d.includes('account')) return '#10b981';
+      if (d.includes('operat')) return '#06b6d4';
+      if (d.includes('manage') || d.includes('director')) return '#8b5cf6';
+      if (d.includes('design')) return '#f43f5e';
+      if (d.includes('legal')) return '#d97706';
+      if (d.includes('support')) return '#14b8a6';
+      return '#6366f1';
+    },
+    getAvatarColor(name) {
+      if (!name) return '#475569';
+      const colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#4f46e5', '#db2777'];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      return colors[Math.abs(hash) % colors.length];
+    },
     getInitials(name) {
       if (!name) return '?';
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -1678,6 +2086,894 @@ export default {
   gap: 8px;
   font-weight: 500;
   font-size: 14px;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.clear-search-btn:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+/* View Mode Tabs */
+.view-mode-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.view-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-tab-btn i {
+  font-size: 13px;
+}
+
+.view-tab-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.view-tab-btn.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Quick Department Filter Strip */
+.dept-quick-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+  scrollbar-width: thin;
+}
+
+.dept-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.dept-chip:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.dept-chip.active {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.dept-chip.active i {
+  color: #38bdf8 !important;
+}
+
+.chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dept-chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* ========================================================= */
+/* 🌳 TREE STRUCTURE VISUALIZATION STYLES                    */
+/* ========================================================= */
+.tree-view-wrapper {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  margin-bottom: 24px;
+}
+
+.tree-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tree-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tree-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.tree-stat-pill.emerald {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.tree-stat-pill.slate {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.tree-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-tree-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-tree-tool:hover {
+  background: #ffffff;
+  color: #2563eb;
+  border-color: #93c5fd;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
+}
+
+/* Org Tree Chart Layout */
+.org-tree-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* Root Node */
+.tree-root-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.org-company-node {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.org-company-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.4);
+}
+
+.company-badge-halo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.company-info-block {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.company-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  margin: 0;
+  color: #ffffff;
+}
+
+.company-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.company-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #38bdf8;
+  margin-left: 12px;
+}
+
+.tree-trunk-line {
+  width: 3px;
+  height: 32px;
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+/* Departments Flow */
+.tree-departments-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.dept-branch-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.dept-branch-block:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.dept-branch-block.collapsed {
+  background: #ffffff;
+}
+
+/* Department Header Card */
+.dept-header-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dept-header-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dept-icon-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.dept-header-box:hover .dept-icon-circle {
+  transform: scale(1.06);
+}
+
+.dept-title-meta {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.dept-name-heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dept-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.dept-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dept-count-badge {
+  color: #ffffff;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-dept-expand {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.dept-header-box:hover .btn-dept-expand {
+  color: #2563eb;
+}
+
+/* Connector Line from Department to Employees */
+.dept-stem-line {
+  width: 2px;
+  height: 16px;
+  background: #cbd5e1;
+  margin: 8px 0 12px 20px;
+}
+
+/* Employee Nodes in Tree */
+.dept-employee-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.tree-employee-leaf {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.tree-employee-leaf:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+}
+
+.tree-employee-leaf.inactive {
+  opacity: 0.7;
+  background: #f8fafc;
+}
+
+.leaf-avatar-section {
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.leaf-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.leaf-status-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+.leaf-status-dot.active {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.leaf-status-dot.inactive {
+  background: #94a3b8;
+}
+
+.leaf-details-section {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.leaf-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leaf-name {
+  font-size: 14px;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kra-leaf-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.tree-employee-leaf:hover .kra-leaf-hint {
+  opacity: 1;
+  color: #2563eb;
+}
+
+.leaf-role {
+  font-size: 11.5px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaf-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.leaf-contact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #64748b;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.leaf-contact-chip:hover {
+  color: #2563eb;
+}
+
+.leaf-contact-chip.phone {
+  color: #059669;
+}
+
+.truncate-txt {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Actions in Leaf */
+.leaf-actions-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.leaf-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.leaf-btn.edit:hover {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.leaf-btn.kra:hover {
+  background: #faf5ff;
+  color: #7c3aed;
+  border-color: #ddd6fe;
+}
+
+.leaf-btn.toggle.activate {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.leaf-btn.toggle.deactivate {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.leaf-btn.toggle.deactivate:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.tree-empty-card,
+.cards-empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 16px;
+  width: 100%;
+}
+
+.tree-empty-card i,
+.cards-empty-state i {
+  font-size: 40px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.tree-empty-card h4,
+.cards-empty-state h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.tree-empty-card p,
+.cards-empty-state p {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.btn-clear-search {
+  padding: 8px 16px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ========================================================= */
+/* 🎨 VISUAL ICONS & CARDS GRID STYLES                       */
+/* ========================================================= */
+.visual-cards-wrapper {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.visual-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.visual-emp-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.visual-emp-card:hover {
+  transform: translateY(-4px);
+  border-color: #bfdbfe;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.1);
+}
+
+.visual-emp-card.inactive {
+  opacity: 0.75;
+  background: #f8fafc;
+}
+
+.card-color-stripe {
+  height: 4px;
+  width: 100%;
+}
+
+.card-top-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 4px 14px;
+}
+
+.dept-tag-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-pill-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-pill-badge.active {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.status-pill-badge.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.card-hero-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 16px 8px 16px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.avatar-hero-ring {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.avatar-hero {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease;
+}
+
+.card-hero-profile:hover .avatar-hero {
+  transform: scale(1.05);
+}
+
+.kra-hero-hint {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #ffffff;
+  color: #2563eb;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.hero-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.hero-handle {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+  font-family: monospace;
+}
+
+.hero-role-pill {
+  margin-top: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-contacts-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 16px 12px 16px;
+  margin-top: auto;
+}
+
+.contact-pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #64748b;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-pill-link:hover {
+  color: #2563eb;
+}
+
+.contact-pill-link.phone {
+  color: #059669;
+}
+
+.card-bottom-actions {
+  display: flex;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.btn-card-tool {
+  flex: 1;
+  padding: 9px 8px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-card-tool:not(:last-child) {
+  border-right: 1px solid #f1f5f9;
+}
+
+.btn-card-tool.kra:hover {
+  background: #faf5ff;
+  color: #7c3aed;
+}
+
+.btn-card-tool.edit:hover {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.btn-card-tool.toggle.deactivate:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.btn-card-tool.toggle.activate {
+  color: #059669;
+}
+
+.btn-card-tool.toggle.activate:hover {
+  background: #ecfdf5;
 }
 
 /* Mobile Cards */
