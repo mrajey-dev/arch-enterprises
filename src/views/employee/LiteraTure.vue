@@ -181,7 +181,7 @@
                       <button @click="copyItem(item)" class="btn-action-icon" title="Copy">
                         <i class="fas fa-copy"></i>
                       </button>
-                      <button @click="downloadItem(item)" class="btn-action-icon" title="Download">
+                      <button v-if="item.type === 'file'" @click="downloadItem(item)" class="btn-action-icon" title="Download">
                         <i class="fas fa-download"></i>
                       </button>
                     </div>
@@ -758,36 +758,17 @@ export default {
     // ==================== FILE OPENING IN NEW TAB ====================
     
     // Open file in new tab
-   // Open file in new tab - Using direct server URL
-openFileInNewTab(item) {
-  if (item.type === 'folder') {
-    this.currentFolder = item
-    this.breadcrumbPath.push(item)
-    this.fetchItems()
-    return
-  }
-  
-  // The direct URL to your file on the server
-  // Using the path you provided: https://employees.archenterprises.co.in/backend/storage/app/public/files/
-  const filePath = item.path || `files/${item.id}`
-  const directUrl = `https://employees.archenterprises.co.in/backend/storage/app/public/${filePath}`
-  
-  // For PDF files, open directly in new tab
-  if (item.name.toLowerCase().endsWith('.pdf')) {
-    window.open(directUrl, '_blank')
-    return
-  }
-  
-  // For images, open directly
-  const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp', '.ico']
-  if (imageExts.some(ext => item.name.toLowerCase().endsWith(ext))) {
-    window.open(directUrl, '_blank')
-    return
-  }
-  
-  // For other files, open in new tab
-  window.open(directUrl, '_blank')
-},
+    openFileInNewTab(item) {
+      if (item.type === 'folder') {
+        this.currentFolder = item
+        this.breadcrumbPath.push(item)
+        this.fetchItems()
+        return
+      }
+      
+      const viewUrl = `https://employees.archenterprises.co.in/api/api/files/${item.id}/view`
+      window.open(viewUrl, '_blank')
+    },
     
     // Helper to get content type from file extension
     getContentType(filename) {
@@ -913,6 +894,11 @@ openFileInNewTab(item) {
 
     // Download file (as fallback)
     async downloadItem(item) {
+      if (!item || item.type === 'folder') {
+        this.showToast('info', 'Folders cannot be downloaded directly')
+        return
+      }
+
       try {
         const response = await axios.get(`/api/files/${item.id}/download`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
