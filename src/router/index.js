@@ -212,6 +212,7 @@ const routes = [
   { path: '/employee/literature', name: 'LiteraTure', component: LiteraTure, meta: { requiresAuth: true } },
   { path: '/employee/visitschedule', name: 'VisitSchedule', component: VisitSchedule, meta: { requiresAuth: true } },
   { path: '/employee/MobileAppLifeCycle', name: 'MobileAppLifeCycle', component: () => import('../views/employee/MobileAppLifeCycle.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
+  { path: '/employee/socialmediamanagement', alias: ['/employee/SocialMediaManagement'], name: 'SocialMediaManagement', component: () => import('../views/employee/SocialMediaManagement.vue'), meta: { requiresAuth: true } },
   { path: '/employee/SpinTheWheel', name: 'SpinTheWheel', component: () => import('../views/employee/SpinTheWheel.vue'), meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
   { path: '/employee/request', alias: '/employee/Request', name: 'RequestDeskemp', component: RequestDeskemp, meta: { requiresAuth: true } },
   { path: '/employee/Resourcebooking', alias: ['/employee/resourcebooking', '/employee/ResourceBooking', '/employee/resource-booking'], name: 'ResourceBookingEmp', component: ResourceBookingEmp, meta: { requiresAuth: true } },

@@ -117,8 +117,17 @@
               <i class="fas fa-chalkboard-teacher"></i><span>My Weekly Schedule</span>
             </li> -->
 
-<li  v-if="canViewITProduct" @click="goTo('employee/mobileapplifecycle')">
+<li  v-if="onlyViewITTeam" @click="goTo('employee/mobileapplifecycle')">
   <i class="fas fa-mobile-alt"></i> <span>Mobile App Life Cycle</span>
+</li>
+<li v-if="onlyViewMarketing || onlyViewITTeam" @click="goTo('employee/socialmediamanagement')">
+  <i class="fas fa-share-alt"></i> <span>Social Media</span>
+</li>
+<li v-if="onlyViewITLead" @click="goTo('employee/empworkreport')">
+  <i class="fas fa-folder"></i> <span>Work Report</span>
+</li>
+<li v-if="onlyViewITTeam || onlyViewMarketing" @click="goTo('employee/archapps')">
+  <i class="fas fa-th-large"></i> <span>My Apps</span>
 </li>
 
             <li   v-if="canViewFirePump"
@@ -311,30 +320,166 @@ export default {
       const name = (this.username || this.user?.name || "").trim().toLowerCase();
       return name === "ajay" || name.startsWith("ajay ") || name.includes("ajay");
     },
-    canViewFirePump() {
-      const dept = (this.user?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'service' || dept === 'hr' || dept === 'human resources' || dept === 'management' || dept === 'owner';
+    effectiveUser() {
+      let localUser = {};
+      try {
+        localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      } catch (e) {
+        localUser = {};
+      }
+      const current = this.user || this.currentUser || {};
+      return {
+        ...localUser,
+        ...current,
+        id: current.id || localUser.id || '',
+        emp_id: current.emp_id || current.employee_id || localUser.emp_id || localUser.employee_id || '',
+        department: (current.department || localUser.department || '').toString().trim(),
+        designation: (current.designation || localUser.designation || current.keyresponsibility || localUser.keyresponsibility || '').toString().trim(),
+        role: (current.role || localUser.role || '').toString().trim()
+      };
     },
-     onlyViewITLead() {
-      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'it_lead' || dept === 'owner';
+    canViewFirePump() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        normDept === 'service' ||
+        normDept === 'humanresources' ||
+        normDept === 'hr' ||
+        normDept === 'management' ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'service' ||
+        dept === 'human resources' ||
+        dept === 'hr' ||
+        dept === 'management' ||
+        dept === 'owner'
+      );
+    },
+    onlyViewITLead() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const desig = (u.designation || '').toLowerCase();
+      const role = (u.role || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      const normDesig = desig.replace(/[\s_-]+/g, '');
+      const normRole = role.replace(/[\s_-]+/g, '');
+
+      const isLeadDept = (
+        normDept === 'itlead' ||
+        normDept === 'ithead' ||
+        dept === 'it_lead' ||
+        dept === 'it lead' ||
+        dept === 'it-lead' ||
+        dept === 'it_head' ||
+        dept === 'it head' ||
+        dept === 'it-head' ||
+        dept.includes('it_lead') ||
+        dept.includes('it lead') ||
+        dept.includes('it-lead') ||
+        dept.includes('it head') ||
+        dept.includes('it_head')
+      );
+
+      const isLeadDesigOrRole = (
+        normDesig === 'itlead' ||
+        normDesig === 'ithead' ||
+        desig.includes('it lead') ||
+        desig.includes('it_lead') ||
+        normRole === 'itlead' ||
+        role.includes('it_lead') ||
+        role.includes('it lead') ||
+        ((normDept === 'it' || dept.includes('information technology')) && (normDesig.includes('lead') || normDesig.includes('head') || normRole.includes('lead') || normRole.includes('head')))
+      );
+
+      const isOwner = (
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        normRole === 'owner' ||
+        role === 'owner'
+      );
+
+      return Boolean(isLeadDept || isLeadDesigOrRole || isOwner);
+    },
+    onlyViewMarketing() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        normDept === 'marketing' ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'marketing' ||
+        dept === 'owner' ||
+        dept === 'ownership'
+      );
+    },
+    onlyViewITTeam() {
+      if (this.onlyViewITLead) return true;
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const role = (u.role || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      const normRole = role.replace(/[\s_-]+/g, '');
+
+      return Boolean(
+        normDept === 'it' ||
+        normDept === 'itteam' ||
+        dept === 'it' ||
+        dept === 'it team' ||
+        dept === 'it_team' ||
+        dept === 'it-team' ||
+        dept.includes('information technology') ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        normRole === 'owner' ||
+        role === 'owner'
+      );
     },
     canViewITProduct() {
-      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const uid = String(this.user?.id || localUser?.id || localStorage.getItem('user_id') || '');
-      const empId = String(this.user?.emp_id || this.user?.employee_id || localUser?.emp_id || localUser?.employee_id || '');
-      const dept = (this.user?.department || localUser?.department || '').trim().toLowerCase();
-      return uid === '107' || empId === '107' || dept === 'it' || dept === 'hr' || dept === 'marketing' || dept === 'owner' || dept === 'management';
+      if (this.onlyViewITLead || this.onlyViewITTeam) return true;
+      const u = this.effectiveUser;
+      const uid = String(u.id || localStorage.getItem('user_id') || '');
+      const empId = String(u.emp_id || '');
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+
+      return Boolean(
+        uid === '107' ||
+        empId === '107' ||
+        normDept === 'it' ||
+        normDept === 'marketing' ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        normDept === 'management' ||
+        dept === 'it' ||
+        dept === 'marketing' ||
+        dept === 'owner' ||
+        dept === 'management'
+      );
     },
     canViewITExpenses() {
-      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const uid = String(this.user?.id || localUser?.id || localStorage.getItem('user_id') || '');
-      const empId = String(this.user?.emp_id || this.user?.employee_id || localUser?.emp_id || localUser?.employee_id || '');
-      const dept = String(this.user?.department || localUser?.department || '').trim().toLowerCase();
+      const u = this.effectiveUser;
+      const uid = String(u.id || localStorage.getItem('user_id') || '');
+      const empId = String(u.emp_id || '');
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
 
-      return uid === '107' || 
-             empId === '107' || 
-             dept === 'owner';
+      return Boolean(
+        uid === '107' || 
+        empId === '107' || 
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'owner'
+      );
+    },
+    hideLeaveSections() {
+      const hiddenIds = [104, 101];
+      return hiddenIds.includes(Number(this.effectiveUser?.id || this.user?.id));
     },
   },
   methods: {

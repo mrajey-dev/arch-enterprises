@@ -45,7 +45,16 @@
       <span class="progress-text">Mark your daily attendance</span>
     </div>
   </div>
-
+ <div v-if="onlyHR" class="dashboard-card clickable-card" @click="goToHrDashboard">
+      <div class="card-icon hr-icon">
+        <i class="fas fa-user-shield"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">HR Dashboard</p>
+        <span class="progress-text">Access HR Admin Portal</span>
+      </div>
+    </div>
+    
   <div v-if="canViewCRM" class="dashboard-card clickable-card" @click="goTo('employee/Customerregistrations')">
     <div class="card-icon crm-icon">
       <i class="fas fa-users"></i>
@@ -65,6 +74,15 @@
         <span class="progress-text">Manage Purchase Orders</span>
       </div>
     </div>  
+     <div v-if="canViewCRM" class="dashboard-card clickable-card" @click="goTo('employee/visitschedule')">
+      <div class="card-icon visits-icon">
+        <i class="fas fa-map-marked-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Visit Schedule</p>
+        <span class="progress-text">View & Manage Visits</span>
+      </div>
+    </div>
     <div v-if="onlyViewITTeam || onlyViewMarketing" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/archapps')">
       <div class="card-icon google-form-icon">
         <i class="fas fa-mobile-alt"></i>
@@ -75,12 +93,12 @@
       </div>
     </div>
 
-    <div v-if="onlyViewMarketing" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/socialmediamanagement')">
-      <div class="card-icon google-form-icon">
+    <div v-if="onlyViewMarketing || onlyViewITTeam" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/socialmediamanagement')">
+      <div class="card-icon social-icon">
         <i class="fas fa-share-alt"></i>
       </div>
       <div class="card-info">
-        <p class="label">Social Media Management</p>
+        <p class="label">Social Media</p>
         <span class="progress-text">View & Manage Social Media </span>
       </div>
     </div>
@@ -124,7 +142,7 @@
         <span class="progress-text">Manage sensitive information</span>
       </div>
     </div>
-     <div v-if="onlyViewITLead" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/empworkreport')">
+    <div v-if="onlyViewITLead" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/empworkreport')">
       <div class="card-icon todo-icon">
         <i class="fas fa-folder"></i>
       </div>
@@ -134,6 +152,7 @@
       </div>
     </div>
 
+    
     
 
 
@@ -169,7 +188,7 @@
       <i class="fas fa-briefcase"></i> Work Management
     </div>
     
-    <div class="dashboard-card clickable-card mobile-only" @click="goTo('employee/visitschedule')">
+    <div class="dashboard-card clickable-card" @click="goTo('employee/visitschedule')">
       <div class="card-icon visits-icon">
         <i class="fas fa-map-marked-alt"></i>
       </div>
@@ -207,6 +226,46 @@
       <div class="card-info">
         <p class="label">Site ownership</p>
         <span class="progress-text">Site assignments by engineer</span>
+      </div>
+    </div>
+
+    <div v-if="onlyViewMarketing || onlyViewITTeam" class="dashboard-card clickable-card mobile-only" @click="goTo('employee/socialmediamanagement')">
+      <div class="card-icon google-form-icon">
+        <i class="fas fa-share-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Social Media</p>
+        <span class="progress-text">View & Manage Social Media</span>
+      </div>
+    </div>
+
+    <div v-if="onlyViewITLead" class="dashboard-card clickable-card mobile-only" @click="goTo('employee/empworkreport')">
+      <div class="card-icon todo-icon">
+        <i class="fas fa-folder"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Work Report</p>
+        <span class="progress-text">View & Manage Work Report</span>
+      </div>
+    </div>
+
+    <div v-if="onlyViewITTeam || onlyViewMarketing" class="dashboard-card clickable-card mobile-only" @click="goTo('employee/archapps')">
+      <div class="card-icon google-form-icon">
+        <i class="fas fa-mobile-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">My Apps</p>
+        <span class="progress-text">View & Manage Tasks</span>
+      </div>
+    </div>
+
+    <div v-if="onlyHR" class="dashboard-card clickable-card mobile-only" @click="goToHrDashboard">
+      <div class="card-icon hr-icon">
+        <i class="fas fa-user-shield"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">HR Dashboard</p>
+        <span class="progress-text">Access HR Admin Portal</span>
       </div>
     </div>
   </div>
@@ -993,36 +1052,190 @@ export default {
   },
 
   computed: {
-     canViewITProduct() {
-      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const uid = String(this.user?.id || localUser?.id || localStorage.getItem('user_id') || '');
-      const empId = String(this.user?.emp_id || this.user?.employee_id || localUser?.emp_id || localUser?.employee_id || '');
-      const dept = (this.user?.department || localUser?.department || '').trim().toLowerCase();
-      return dept === 'it_lead' || dept === 'it' || dept === 'hr' || dept === 'marketing' || dept === 'owner';
-    },
-    canViewCRM() {
-      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'ownership' || dept === 'owner' || dept === 'service' || dept === 'management';
+    effectiveUser() {
+      let localUser = {};
+      try {
+        localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      } catch (e) {
+        localUser = {};
+      }
+      const current = this.currentUser || {};
+      return {
+        ...localUser,
+        ...current,
+        id: current.id || localUser.id || '',
+        emp_id: current.emp_id || current.employee_id || localUser.emp_id || localUser.employee_id || '',
+        department: (current.department || localUser.department || '').toString().trim(),
+        designation: (current.designation || localUser.designation || current.keyresponsibility || localUser.keyresponsibility || '').toString().trim(),
+        role: (current.role || localUser.role || '').toString().trim()
+      };
     },
     onlyViewITLead() {
-      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'it_lead' || dept === 'owner';
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const desig = (u.designation || '').toLowerCase();
+      const role = (u.role || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      const normDesig = desig.replace(/[\s_-]+/g, '');
+      const normRole = role.replace(/[\s_-]+/g, '');
+
+      const isLeadDept = (
+        normDept === 'itlead' ||
+        normDept === 'ithead' ||
+        dept === 'it_lead' ||
+        dept === 'it lead' ||
+        dept === 'it-lead' ||
+        dept === 'it_head' ||
+        dept === 'it head' ||
+        dept === 'it-head' ||
+        dept.includes('it_lead') ||
+        dept.includes('it lead') ||
+        dept.includes('it-lead') ||
+        dept.includes('it head') ||
+        dept.includes('it_head')
+      );
+
+      const isLeadDesigOrRole = (
+        normDesig === 'itlead' ||
+        normDesig === 'ithead' ||
+        desig.includes('it lead') ||
+        desig.includes('it_lead') ||
+        normRole === 'itlead' ||
+        role.includes('it_lead') ||
+        role.includes('it lead') ||
+        ((normDept === 'it' || dept.includes('information technology')) && (normDesig.includes('lead') || normDesig.includes('head') || normRole.includes('lead') || normRole.includes('head')))
+      );
+
+      const isOwner = (
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        normRole === 'owner' ||
+        role === 'owner'
+      );
+
+      return Boolean(isLeadDept || isLeadDesigOrRole || isOwner);
+    },
+    onlyViewITTeam() {
+      if (this.onlyViewITLead) return true;
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const role = (u.role || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      const normRole = role.replace(/[\s_-]+/g, '');
+
+      return Boolean(
+        normDept === 'it' ||
+        normDept === 'itteam' ||
+        dept === 'it' ||
+        dept === 'it team' ||
+        dept === 'it_team' ||
+        dept === 'it-team' ||
+        dept.includes('information technology') ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        normRole === 'owner' ||
+        role === 'owner'
+      );
+    },
+    canViewITProduct() {
+      if (this.onlyViewITLead || this.onlyViewITTeam) return true;
+      const u = this.effectiveUser;
+      const uid = String(u.id || localStorage.getItem('user_id') || '');
+      const empId = String(u.emp_id || '');
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+
+      return Boolean(
+        uid === '107' ||
+        empId === '107' ||
+        normDept === 'it' ||
+        normDept === 'hr' ||
+        normDept === 'marketing' ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        normDept === 'management' ||
+        dept === 'it' ||
+        dept === 'hr' ||
+        dept === 'marketing' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        dept === 'management'
+      );
+    },
+    canViewCRM() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        normDept === 'ownership' ||
+        normDept === 'owner' ||
+        normDept === 'service' ||
+        normDept === 'management' ||
+        dept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'service' ||
+        dept === 'management'
+      );
+    },
+    onlyHR() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        normDept === 'hr' ||
+        normDept === 'humanresources' ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'hr' ||
+        dept === 'human resources' ||
+        dept === 'owner' ||
+        dept === 'ownership'
+      );
     },
     onlyViewMarketing() {
-      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'marketing' || dept === 'owner';
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        normDept === 'marketing' ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'marketing' ||
+        dept === 'owner' ||
+        dept === 'ownership'
+      );
     },
-  onlyViewEdior() {
-    const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-    return dept === 'video_editor' || dept === 'owner';
-  },
-  onlyViewITTeam() {
-    const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-    return dept === 'it_lead' || dept === 'it' || dept === 'owner';
-  },
+    onlyViewEdior() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        normDept === 'videoeditor' ||
+        normDept === 'editor' ||
+        normDept === 'owner' ||
+        dept === 'video_editor' ||
+        dept === 'video editor' ||
+        dept === 'owner'
+      );
+    },
     canViewSiteOwnership() {
-      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
-      return dept === 'service' || dept === 'hr' || dept === 'management';
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        normDept === 'service' ||
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        normDept === 'management' ||
+        dept === 'service' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        dept === 'management'
+      );
     },
     activeTasks() {
       if (!this.allTasks.length) return [];
@@ -1317,6 +1530,19 @@ export default {
 
     goTo(route) {
       this.$router.push(`/${route}`);
+    },
+
+    goToHrDashboard() {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const role = (user?.role || '').toLowerCase();
+      const adminToken = localStorage.getItem('admin_token');
+
+      if (role === 'admin' && adminToken) {
+        this.$router.push('/dashboard');
+      } else {
+        localStorage.setItem('authTab', 'admin');
+        this.$router.push('/auth?switch=admin');
+      }
     },
 
     goToTask(taskId) {
@@ -2118,7 +2344,8 @@ export default {
 .crm-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .po-icon { background: linear-gradient(135deg, #c023d1, #a51ab4); }
 .todo-icon { background: linear-gradient(135deg, #2b2b2a, #686866); }
-
+.social-icon {background: linear-gradient(135deg, #00e1ff, #000000); }
+.hr-icon { background: linear-gradient(135deg, #6366f1, #4338ca); }
 .calendar-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .balance-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .visit-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }

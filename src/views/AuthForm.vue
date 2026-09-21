@@ -328,6 +328,20 @@ export default {
     }
   },
   created() {
+    const isSwitchingToAdmin = this.$route.query.switch === 'admin' || this.$route.query.role === 'admin';
+    if (isSwitchingToAdmin) {
+      this.isEmployeeLogin = false;
+      localStorage.setItem('authTab', 'admin');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      const savedEmail = localStorage.getItem('rememberedEmail');
+      if (savedEmail) {
+        this.loginForm.email = savedEmail;
+        this.rememberMe = true;
+      }
+      return;
+    }
+
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
     const savedTab = localStorage.getItem('authTab');
