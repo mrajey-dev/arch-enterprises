@@ -104,7 +104,7 @@
               <form @submit.prevent="submitBooking">
                 <div class="form-grid-layout">
                   <!-- Resource Selection -->
-                  <div class="form-group-modern">
+                  <div class="form-group-modern full-span">
                     <label class="input-label">
                       <i class="fas fa-cube"></i> Select Resource <span class="req">*</span>
                     </label>
@@ -1065,6 +1065,14 @@ export default {
   overflow: hidden;
 }
 
+/* Ensure box-sizing border-box across the entire booking card and form controls */
+.booking-form-card,
+.booking-form-card *,
+.booking-form-card *::before,
+.booking-form-card *::after {
+  box-sizing: border-box !important;
+}
+
 .form-header {
   padding: 22px 28px;
   display: flex;
@@ -1128,40 +1136,52 @@ export default {
   padding: 28px;
 }
 
+/* 2-Column Grid with Safe Minmax and Generous Gap */
 .form-grid-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
 }
 
 .full-span {
   grid-column: 1 / -1;
+  width: 100%;
 }
 
 .form-group-modern {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
+  min-width: 0;
+  width: 100%;
 }
 
 .input-label {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #334155;
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 2px;
 }
 
 .input-label i {
   color: #6366f1;
+  font-size: 13px;
 }
 
-.req { color: #ef4444; }
+.req { 
+  color: #ef4444; 
+  font-weight: 800;
+}
 
 .custom-select-wrapper,
 .input-field-wrapper {
   position: relative;
+  width: 100%;
+  min-width: 0;
 }
 
 .select-icon,
@@ -1172,6 +1192,7 @@ export default {
   transform: translateY(-50%);
   color: #94a3b8;
   font-size: 14px;
+  pointer-events: none;
 }
 
 .textarea-icon {
@@ -1181,15 +1202,18 @@ export default {
 
 .form-input {
   width: 100%;
-  padding: 12px 14px 12px 40px;
+  max-width: 100%;
+  box-sizing: border-box !important;
+  padding: 12px 16px 12px 42px;
   background: #f8fafc;
   border: 1.5px solid #e2e8f0;
   border-radius: 14px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-family: inherit;
   color: #0f172a;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  line-height: 1.4;
 }
 
 .form-input:focus {
@@ -1198,9 +1222,21 @@ export default {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
+.select-input {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 14px;
+}
+
 .textarea-input {
-  padding-top: 12px;
+  padding-top: 14px;
   resize: vertical;
+  min-height: 85px;
+  line-height: 1.5;
 }
 
 .duration-presets {
@@ -1213,18 +1249,19 @@ export default {
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   color: #475569;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .preset-pill:hover {
   background: #e0e7ff;
   color: #4338ca;
   border-color: #c7d2fe;
+  transform: translateY(-1px);
 }
 
 .form-footer-bar {
@@ -1239,13 +1276,15 @@ export default {
 }
 
 .duration-live-preview {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
+  font-weight: 600;
   color: #334155;
   background: #eef2ff;
-  padding: 8px 16px;
+  border: 1px solid #e0e7ff;
+  padding: 9px 18px;
   border-radius: 12px;
 }
 

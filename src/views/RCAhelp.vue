@@ -220,7 +220,8 @@
             :key="user.id"
             class="mention-option"
             :class="{ active: index === selectedMentionIndex }"
-            @click="selectMention(user)"
+            @mousedown.prevent="selectMention(user)"
+            @click.prevent="selectMention(user)"
           >
             <div class="mention-avatar" :style="{ backgroundColor: getAvatarColor(user.id) }">
               {{ (user.handle || 'U')[0].toUpperCase() }}
@@ -278,6 +279,8 @@ export default {
       mentionUsers: [],
       mentionQuery: '',
       mentionTarget: null,
+      currentMentionInput: null,
+      currentCursorPos: null,
       mentionPosition: { top: 0, left: 0 }
     }
   },
@@ -414,7 +417,12 @@ export default {
       }
       if (e.key === 'Enter') {
         e.preventDefault()
-        this.selectMention(this.mentionUsers[this.selectedMentionIndex])
+        e.stopPropagation()
+        this.currentMentionInput = e.target
+        this.currentCursorPos = e.target.selectionStart
+        if (this.mentionUsers[this.selectedMentionIndex]) {
+          this.selectMention(this.mentionUsers[this.selectedMentionIndex])
+        }
       }
       if (e.key === 'Escape') {
         this.showMentionBox = false
@@ -422,6 +430,8 @@ export default {
     },
     onMentionInput(e, target) {
       const input = e.target
+      this.currentMentionInput = input
+      this.currentCursorPos = input.selectionStart
       const text = input.value
       const cursorPos = input.selectionStart
       const beforeCursor = text.slice(0, cursorPos)
@@ -465,20 +475,41 @@ export default {
       )
     },
     selectMention(user) {
+      if (!user) return
       const isQuestion = this.mentionTarget === 'question'
-      const text = isQuestion ? this.newQuestion : this.mentionTarget.replyText
-      const inputEl = document.activeElement
-      const cursorPos = inputEl.selectionStart
+      const text = (isQuestion ? this.newQuestion : this.mentionTarget?.replyText) || ''
+      const inputEl = this.currentMentionInput || document.activeElement
+      let cursorPos = (inputEl && typeof inputEl.selectionStart === 'number')
+        ? inputEl.selectionStart
+        : (typeof this.currentCursorPos === 'number' ? this.currentCursorPos : text.length)
+
+      if (typeof cursorPos !== 'number' || isNaN(cursorPos) || cursorPos > text.length || cursorPos < 0) {
+        cursorPos = text.length
+      }
+
       const before = text.slice(0, cursorPos)
       const after = text.slice(cursorPos)
-      const newBefore = before.replace(/@([A-Za-z0-9_]*)$/, `@${user.handle}`)
-      const finalText = newBefore + ' ' + after
+      const insertText = `@${user.handle} `
+      const newBefore = before.replace(/@([A-Za-z0-9_]*)$/, insertText)
+      const finalText = newBefore + after.replace(/^\s/, '')
+
       if (isQuestion) {
         this.newQuestion = finalText
-      } else {
+      } else if (this.mentionTarget) {
         this.mentionTarget.replyText = finalText
       }
       this.showMentionBox = false
+      this.selectedMentionIndex = 0
+
+      this.$nextTick(() => {
+        if (inputEl && typeof inputEl.focus === 'function') {
+          inputEl.focus()
+          const newPos = newBefore.length
+          if (typeof inputEl.setSelectionRange === 'function') {
+            inputEl.setSelectionRange(newPos, newPos)
+          }
+        }
+      })
     },
     setMentionPosition(input) {
       const rect = input.getBoundingClientRect()
@@ -1337,62 +1368,76 @@ export default {
 /* Mention Dropdown */
 .mention-dropdown {
   position: absolute;
-  background: var(--surface);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  width: 260px;
+  background: #ffffff !important;
+  border-radius: 14px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08);
+  width: 280px;
   max-height: 280px;
   overflow-y: auto;
-  z-index: 1000;
-  border: 1px solid var(--border);
+  z-index: 9999;
+  border: 1px solid #e2e8f0;
 }
 
 .mention-dropdown.mobile-dropdown {
-  width: 220px;
-  max-height: 200px;
-  border-radius: 10px;
+  width: 240px;
+  max-height: 220px;
+  border-radius: 12px;
 }
 
 .mention-header {
-  padding: 10px 12px;
+  padding: 10px 14px;
   font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .mention-option {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   cursor: pointer;
-  transition: background 0.2s;
+  background: #ffffff;
+  transition: background-color 0.15s ease;
 }
 
 .mention-option:hover,
 .mention-option.active {
-  background: var(--bg-light);
+  background: #f1f5f9;
 }
 
 .mention-avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: white;
+  flex-shrink: 0;
+}
+
+.mention-option span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
 }
 
 .mention-empty {
   padding: 20px;
   text-align: center;
-  color: var(--text-secondary);
+  color: #94a3b8;
   font-size: 13px;
+  background: #ffffff;
 }
 
 /* Image Modal */

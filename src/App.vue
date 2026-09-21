@@ -71,61 +71,61 @@
 
         <!-- 📂 Menu -->
         <ul class="sidebar-menu">
-          <li @click="goTo('employee/dashboard')">
+          <li @click="goTo('employee/dashboard')" :class="{ active: isActive('employee/dashboard', ['dashboard']) }">
             <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
           </li>
-          <li @click="goTo('employee/archcalender')">
+          <li @click="goTo('employee/archcalendar')" :class="{ active: isActive('employee/archcalendar', ['archcalendar', 'employee/archcalender']) }">
             <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
           </li>
-          <li @click="goTo('employee/help')">
+          <li @click="goTo('employee/help')" :class="{ active: isActive('employee/help', ['help']) }">
             <i class="fas fa-comments"></i> <span>Chat</span>
           </li>
-          <li class="has-submenu">
+          <li class="has-submenu" :class="{ 'submenu-active': isLeavesActive }">
             <div class="submenu-title" @click="toggleLeaves">
               <i class="fas fa-calendar-check"></i>
               <span>Leaves</span>
               <i class="fa fa-caret-down" :class="{ rotate: leavesOpen }"></i>
             </div>
             <ul v-if="leavesOpen" class="submenu">
-              <li @click="$router.push('leaveapplicationsemp'); toggleSidebar()">
+              <li @click="goTo('employee/leaveapplicationsemp')" :class="{ active: isActive('employee/leaveapplicationsemp') }">
                 <i class="fas fa-list"></i> All Leaves
               </li>
-              <li @click="$router.push('approvedleavesemp'); toggleSidebar()">
+              <li @click="goTo('employee/approvedleavesemp')" :class="{ active: isActive('employee/approvedleavesemp') }">
                 <i class="fas fa-check-circle"></i> Approved
               </li>
-              <li @click="$router.push('rejectedleavesemp'); toggleSidebar()">
+              <li @click="goTo('employee/rejectedleavesemp')" :class="{ active: isActive('employee/rejectedleavesemp') }">
                 <i class="fas fa-times-circle"></i> Rejected
               </li>
-              <li @click="goTo('pendingleaves')">
+              <li @click="goTo('employee/pendingleaves')" :class="{ active: isActive('employee/pendingleaves') }">
                 <i class="fas fa-hourglass-half"></i> Pending Leaves
               </li>
             </ul>
           </li>
-          <li @click="goTo('employee/applyleave')">
+          <li @click="goTo('employee/applyleave')" :class="{ active: isActive('employee/applyleave') }">
             <i class="fas fa-plane-departure"></i><span> Apply for Leave</span>
           </li>
-          <li class="mobile-only" @click="goTo('employee/Customerregistrations')">
+          <li class="mobile-only" @click="goTo('employee/Customerregistrations')" :class="{ active: isActive('employee/Customerregistrations', ['employee/customerregistrations']) }">
             <i class="fas fa-user-friends"></i><span> CRM</span>
           </li>
-          <li @click="goTo('employee/viewAnnouncement')">
+          <li @click="goTo('employee/viewAnnouncement')" :class="{ active: isActive('employee/viewAnnouncement', ['employee/viewannouncement']) }">
             <i class="fas fa-bullhorn"></i><span> Announcement</span>
           </li>
-          <li @click="goTo('employee/request')">
+          <li @click="goTo('employee/request')" :class="{ active: isActive('employee/request') }">
             <i class="fa fa-check-square-o"></i><span> Request Desk</span>
           </li>
-          <li @click="goTo('employee/resourcebooking')">
+          <li @click="goTo('employee/resourcebooking')" :class="{ active: isActive('employee/resourcebooking', ['employee/Resourcebooking', 'resourcebooking']) }">
             <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
           </li>
-          <li @click="goTo('employee/viewkra')">
+          <li @click="goTo('employee/viewkra')" :class="{ active: isActive('employee/viewkra') }">
             <i class="fas fa-tasks"></i> <span>View KRA</span>
           </li>
-          <li @click="goTo('employee/mydsi')">
+          <li @click="goTo('employee/mydsi')" :class="{ active: isActive('employee/mydsi', ['mydsi', 'empdsi']) }">
             <i class="fas fa-chart-line"></i><span> DSI</span>
           </li>
-          <li @click="goTo('employee/vault')">
+          <li @click="goTo('employee/vault')" :class="{ active: isActive('employee/vault', ['vault', 'security-vault']) }">
             <i class="fas fa-shield-alt"></i><span> Security Vault</span>
           </li>
-          <li @click="goTo('employee/myprofile')">
+          <li @click="goTo('employee/myprofile')" :class="{ active: isActive('employee/myprofile') }">
             <i class="fa-solid fa-user"></i><span> My Profile</span>
           </li>
           <li @click="logout" class="danger-bg">
@@ -202,11 +202,13 @@ export default {
             return {
               name: parsed.name || '',
               department: parsed.department || '',
-              profile_photo: parsed.profile_photo || ''
+              profile_photo: parsed.profile_photo || '',
+              role: parsed.role || '',
+              id: parsed.id || null
             };
           }
         } catch (e) {}
-        return { name: '', department: '', profile_photo: '' };
+        return { name: '', department: '', profile_photo: '', role: '', id: null };
       })(),
       sidebarOpen: false,
       helpOpen: false,
@@ -254,6 +256,34 @@ export default {
       const localUser = JSON.parse(localStorage.getItem('user') || '{}');
       const role = String(this.user?.role || localUser?.role || '').toLowerCase();
       return role === 'admin' || role === 'superadmin';
+    },
+    isLeavesActive() {
+      const current = (this.$route?.path || '').toLowerCase().replace(/^\/+|\/+$/g, '');
+      return [
+        'employee/leaveapplicationsemp',
+        'employee/approvedleavesemp',
+        'employee/rejectedleavesemp',
+        'employee/pendingleaves',
+        'leaveapplicationsemp',
+        'approvedleavesemp',
+        'rejectedleavesemp',
+        'pendingleaves'
+      ].some(r => current === r || current.startsWith(r + '/'));
+    }
+  },
+
+  watch: {
+    $route: {
+      immediate: true,
+      handler(to) {
+        if (this.isLeavesActive) {
+          this.leavesOpen = true;
+        }
+        this.loadUser();
+        if (to && to.path !== '/auth' && to.path !== '/') {
+          this.fetchNotifications();
+        }
+      }
     }
   },
 
@@ -262,6 +292,8 @@ export default {
     this.fetchNotifications()
     initSessionTimeout(this.$router)
 
+    window.addEventListener('auth-change', this.handleAuthChange)
+    window.addEventListener('storage', this.handleStorageChange)
     window.addEventListener('keydown', this.handleEscape)
     
     // Close download menu when clicking outside
@@ -276,6 +308,8 @@ export default {
 
   beforeUnmount() {
     destroySessionTimeout()
+    window.removeEventListener('auth-change', this.handleAuthChange)
+    window.removeEventListener('storage', this.handleStorageChange)
     window.removeEventListener('keydown', this.handleEscape)
     document.removeEventListener('click', this.closeNotificationPanel)
     if (this.focusTimer) {
@@ -398,6 +432,16 @@ export default {
       localStorage.setItem('hasSeenSBUFocus', 'true');
     },
 
+    isActive(route, aliases = []) {
+      if (!route) return false;
+      const current = (this.$route?.path || '').toLowerCase().replace(/^\/+|\/+$/g, '');
+      const targets = [route, ...(Array.isArray(aliases) ? aliases : [aliases])].filter(Boolean);
+      return targets.some(target => {
+        const clean = target.toLowerCase().replace(/^\/+|\/+$/g, '');
+        return current === clean || current.startsWith(clean + '/');
+      });
+    },
+
     // Existing methods
     goTo(route) {
       this.$router.push(`/${route}`)
@@ -414,14 +458,42 @@ export default {
       }
     },
 
+    handleAuthChange(e) {
+      if (e && e.detail) {
+        this.user.name = e.detail.name || '';
+        this.user.department = e.detail.department || '';
+        this.user.profile_photo = e.detail.profile_photo || '';
+        this.user.role = e.detail.role || '';
+        this.user.id = e.detail.id || null;
+      } else {
+        this.loadUser();
+      }
+    },
+
+    handleStorageChange(e) {
+      if (!e || e.key === 'user' || e.key === null) {
+        this.loadUser();
+      }
+    },
+
     loadUser() {
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
-        const parsedUser = JSON.parse(storedUser)
-        this.user.name = parsedUser.name || ''
-        this.user.department = parsedUser.department || ''
-        this.user.profile_photo = parsedUser.profile_photo || ''
+        try {
+          const parsedUser = JSON.parse(storedUser)
+          this.user.name = parsedUser.name || ''
+          this.user.department = parsedUser.department || ''
+          this.user.profile_photo = parsedUser.profile_photo || ''
+          this.user.role = parsedUser.role || ''
+          this.user.id = parsedUser.id || null
+          return
+        } catch (e) {}
       }
+      this.user.name = ''
+      this.user.department = ''
+      this.user.profile_photo = ''
+      this.user.role = ''
+      this.user.id = null
     },
 
     toggleSidebar() {
@@ -450,6 +522,12 @@ export default {
           localStorage.removeItem("admin_token");
           localStorage.removeItem("user");
           localStorage.removeItem("loginTime");
+          this.user.name = '';
+          this.user.department = '';
+          this.user.profile_photo = '';
+          this.user.role = '';
+          this.user.id = null;
+          window.dispatchEvent(new CustomEvent('auth-change', { detail: null }));
           this.$router.push("/auth");
         });
     }
@@ -1047,6 +1125,23 @@ export default {
 .sidebar-menu li:hover {
   background: rgba(255,255,255,0.18);
   transform: translateX(6px);
+}
+
+.sidebar-menu li.active {
+  background: var(--primary-gradient, linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+.sidebar-menu li.active i {
+  color: #ffffff !important;
+}
+
+.submenu li.active {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
 }
 
 .has-submenu {

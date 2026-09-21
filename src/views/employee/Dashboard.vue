@@ -55,7 +55,7 @@
       </div>
     </div>
     
-  <div v-if="canViewCRM" class="dashboard-card clickable-card" @click="goTo('employee/Customerregistrations')">
+  <div v-if="canViewCRM || onlyViewMarketing" class="dashboard-card clickable-card" @click="goTo('employee/Customerregistrations')">
     <div class="card-icon crm-icon">
       <i class="fas fa-users"></i>
     </div>

@@ -683,6 +683,7 @@ export default {
           localStorage.removeItem("admin_email");
           localStorage.removeItem("admin_photo");
           cachedAdmin = { name: "", email: "", photo: "" };
+          window.dispatchEvent(new CustomEvent('auth-change', { detail: null }));
           this.$router.push("/auth");
         });
     },

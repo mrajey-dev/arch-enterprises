@@ -71,6 +71,9 @@ export async function performAutoLogout(reason = 'inactivity') {
   localStorage.removeItem('user');
   localStorage.removeItem('loginTime');
   localStorage.removeItem(ACTIVITY_STORAGE_KEY);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('auth-change', { detail: null }));
+  }
 
   // Best-effort backend token revocation
   if (token) {

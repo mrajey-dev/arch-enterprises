@@ -56,51 +56,53 @@
         <!-- Scrollable Menu Section -->
         <div class="menu-scroll">
           <ul class="sidebar-menu">
-            <li @click="goTo('employee/dashboard')">
+            <li @click="goTo('employee/dashboard')" :class="{ active: isActive('employee/dashboard', ['dashboard']) }">
               <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
             </li>
-            <li @click="goTo('employee/archcalendar')">
+            <li @click="goTo('employee/archcalendar')" :class="{ active: isActive('employee/archcalendar', ['archcalendar']) }">
               <i class="fas fa-calendar-alt"></i> <span>Calendar</span>
             </li>
-            <li @click="goTo('employee/help')">
+            <li @click="goTo('employee/help')" :class="{ active: isActive('employee/help', ['help']) }">
               <i class="fas fa-comments" aria-hidden="true"></i> <span>Chat</span>
             </li>
             <!-- Leave Dropdown -->
-            <li class="dropdown-wrapper">
+            <li class="dropdown-wrapper" :class="{ 'dropdown-active': leaveDropdownOpen, 'active-parent': isLeaveActive }">
               <div @click="toggleLeaveDropdown">
                 <i class="fas fa-calendar-alt"></i><span> Leave</span>
-                <i class="fas fa-caret-down"></i>
+                <i class="fas fa-caret-down" :class="{ 'rotate-caret': leaveDropdownOpen }"></i>
               </div>
               <ul v-if="leaveDropdownOpen" class="dropdown-menu">
-                <li @click="goTo('employee/leaveapplicationsemp')">
+                <li @click="goTo('employee/leaveapplicationsemp')" :class="{ 'active-sub-item': isActive('employee/leaveapplicationsemp') }">
                   <i class="fas fa-list"></i> <span>All Leaves</span>
                 </li>
-                <li @click="goTo('employee/approvedleavesemp')">
+                <li @click="goTo('employee/approvedleavesemp')" :class="{ 'active-sub-item': isActive('employee/approvedleavesemp') }">
                   <i class="fas fa-check-circle"></i> <span>Approved</span>
                 </li>
-                <li @click="goTo('employee/rejectedleavesemp')">
+                <li @click="goTo('employee/rejectedleavesemp')" :class="{ 'active-sub-item': isActive('employee/rejectedleavesemp') }">
                   <i class="fas fa-times-circle"></i> <span>Rejected</span>
                 </li>
-                <li @click="goTo('employee/pendingleaves')">
+                <li @click="goTo('employee/pendingleaves')" :class="{ 'active-sub-item': isActive('employee/pendingleaves') }">
                   <i class="fas fa-hourglass-half"></i><span> Pending</span>
                 </li>
               </ul>
             </li>
 
-            <li @click="goTo('employee/applyleave')">
+            <li @click="goTo('employee/applyleave')" :class="{ active: isActive('employee/applyleave') }">
               <i class="fas fa-plane-departure"></i><span> Apply for Leave </span>
             </li>
-            <li @click="goTo('employee/myleavebalance')">
+            <li @click="goTo('employee/myleavebalance')" :class="{ active: isActive('employee/myleavebalance') }">
               <i class="fas fa-balance-scale"></i><span> My Leave Balance </span>
             </li>
             <li
               v-if="user.department && allowedVisitDepartments.includes(user.department.toLowerCase())"
               @click="goTo('employee/visitschedule')"
+              :class="{ active: isActive('employee/visitschedule') }"
             >
               <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
             </li>
             <li  v-if="canViewFirePump"
               @click="goTo('employee/ManageStock')"
+              :class="{ active: isActive('employee/ManageStock') }"
             >
               <i class="fas fa-boxes"></i>
               <span>Manage Stock</span>  
@@ -108,6 +110,7 @@
             <li 
               v-if="canViewFirePump"
               @click="goTo('employee/siteownership')"
+              :class="{ active: isActive('employee/siteownership', ['employee/site-ownership']) }"
             >
               <i class="fas fa-sitemap"></i>
               <span>Site Ownership</span>  
@@ -117,22 +120,21 @@
               <i class="fas fa-chalkboard-teacher"></i><span>My Weekly Schedule</span>
             </li> -->
 
-<li  v-if="onlyViewITTeam" @click="goTo('employee/mobileapplifecycle')">
-  <i class="fas fa-mobile-alt"></i> <span>Mobile App Life Cycle</span>
-</li>
-<li v-if="onlyViewMarketing || onlyViewITTeam" @click="goTo('employee/socialmediamanagement')">
-  <i class="fas fa-share-alt"></i> <span>Social Media</span>
-</li>
-<li v-if="onlyViewITLead" @click="goTo('employee/empworkreport')">
-  <i class="fas fa-folder"></i> <span>Work Report</span>
-</li>
-<li v-if="onlyViewITTeam || onlyViewMarketing" @click="goTo('employee/archapps')">
-  <i class="fas fa-th-large"></i> <span>My Apps</span>
-</li>
+            <li v-if="onlyViewITTeam" @click="goTo('employee/mobileapplifecycle')" :class="{ active: isActive('employee/mobileapplifecycle') }">
+              <i class="fas fa-mobile-alt"></i> <span>Mobile App Life Cycle</span>
+            </li>
+
+            <li v-if="onlyViewITLead" @click="goTo('employee/empworkreport')" :class="{ active: isActive('employee/empworkreport') }">
+              <i class="fas fa-folder"></i> <span>Work Report</span>
+            </li>
+            <li v-if="onlyViewITTeam || onlyViewMarketing" @click="goTo('employee/archapps')" :class="{ active: isActive('employee/archapps', ['archapps', 'myapps', 'employee/myapps', 'apps']) }">
+              <i class="fas fa-th-large"></i> <span>My Apps</span>
+            </li>
 
             <li   v-if="canViewFirePump"
               class="desktop-only"
               @click="goTo('employee/visitschedule')"
+              :class="{ active: isActive('employee/visitschedule') }"
             >
               <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
             </li>
@@ -141,32 +143,33 @@
               v-if="user?.department === 'Management'"
               class="mobile-only"
               @click="goTo('employee/performance')"
+              :class="{ active: isActive('employee/performance', ['performance']) }"
             >
               <i class="fas fa-chart-line"></i>
               <span>Performance</span>
             </li>
 
-            <li @click="goTo('employee/viewAnnouncement')">
+            <li @click="goTo('employee/viewAnnouncement')" :class="{ active: isActive('employee/viewAnnouncement', ['employee/viewannouncement']) }">
               <i class="fas fa-bullhorn"></i><span> Announcement</span>
             </li>
-            <li @click="goTo('employee/request')">
+            <li @click="goTo('employee/request')" :class="{ active: isActive('employee/request') }">
               <i class="fa fa-check-square-o"></i><span> Request Desk</span>
             </li>
-            <li @click="goTo('employee/resourcebooking')">
+            <li @click="goTo('employee/resourcebooking')" :class="{ active: isActive('employee/resourcebooking', ['employee/Resourcebooking', 'resourcebooking']) }">
               <i class="fa-solid fa-calendar"></i><span> Resource Booking</span>
             </li>
-            <li @click="goTo('employee/mysalaryadvances')">
+            <li @click="goTo('employee/mysalaryadvances')" :class="{ active: isActive('employee/mysalaryadvances', ['salaryadvances']) }">
               <i class="fas fa-hand-holding-usd"></i><span>Salary Advances</span>
             </li>
            
-            <li  v-if="canViewFirePump || onlyViewITLead"  @click="goTo('employee/literature')">
-            <i class="fas fa-suitcase"></i><span>Literature </span>
+            <li  v-if="canViewFirePump || onlyViewITLead"  @click="goTo('employee/literature')" :class="{ active: isActive('employee/literature') }">
+              <i class="fas fa-suitcase"></i><span>Literature </span>
             </li>
-            <li @click="goTo('employee/sop')">
+            <li @click="goTo('employee/sop')" :class="{ active: isActive('employee/sop') }">
               <i class="fas fa-book"></i><span> SOP</span>
             </li>
           
-            <li @click="goTo('employee/myprofile')">
+            <li @click="goTo('employee/myprofile')" :class="{ active: isActive('employee/myprofile') }">
               <i class="fa-solid fa-user"></i><span> My Profile</span>
             </li>
            
@@ -481,8 +484,36 @@ export default {
       const hiddenIds = [104, 101];
       return hiddenIds.includes(Number(this.effectiveUser?.id || this.user?.id));
     },
+    isLeaveActive() {
+      const current = (this.$route?.path || '').toLowerCase().replace(/^\/+|\/+$/g, '');
+      return [
+        'employee/leaveapplicationsemp',
+        'employee/approvedleavesemp',
+        'employee/rejectedleavesemp',
+        'employee/pendingleaves'
+      ].some(r => current === r || current.startsWith(r + '/'));
+    },
+  },
+  watch: {
+    '$route.path': {
+      immediate: true,
+      handler() {
+        if (this.isLeaveActive) {
+          this.leaveDropdownOpen = true;
+        }
+      }
+    }
   },
   methods: {
+    isActive(route, aliases = []) {
+      if (!route) return false;
+      const current = (this.$route?.path || '').toLowerCase().replace(/^\/+|\/+$/g, '');
+      const targets = [route, ...(Array.isArray(aliases) ? aliases : [aliases])].filter(Boolean);
+      return targets.some(target => {
+        const clean = target.toLowerCase().replace(/^\/+|\/+$/g, '');
+        return current === clean || current.startsWith(clean + '/');
+      });
+    },
     handleMouseEnter() {
       if (window.innerWidth > 768) {
         this.isCollapsed = false;
@@ -550,7 +581,8 @@ export default {
         .finally(() => {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
-          localStorage.removeItem(`profilePhoto_${this.user.id}`);
+          localStorage.removeItem(`profilePhoto_${this.user?.id}`);
+          window.dispatchEvent(new CustomEvent('auth-change', { detail: null }));
           this.$router.push("/auth");
         });
     },
@@ -835,9 +867,63 @@ export default {
 
 /* Hover */
 .sidebar-menu li:hover {
-  background: rgba(56, 189, 248, 0.15);
-  transform: translateX(5px);
-  color: #0284c7;
+  background: var(--primary-light, rgba(20, 184, 166, 0.12));
+  transform: translateX(4px);
+  color: var(--primary-dark, #0f766e);
+}
+
+/* 🌟 Active Menu Item Highlight (Stays highlighted when open) */
+.sidebar-menu li.active,
+.sidebar-menu li.active-item {
+  background: var(--primary-gradient, linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px var(--primary-glow, rgba(20, 184, 166, 0.35)) !important;
+  transform: translateX(4px);
+}
+
+.sidebar-menu li.active i,
+.sidebar-menu li.active-item i {
+  color: #ffffff !important;
+}
+
+.sidebar-menu li.active span,
+.sidebar-menu li.active-item span {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Caret rotation */
+.rotate-caret {
+  transform: rotate(180deg);
+  transition: transform 0.25s ease;
+}
+
+/* Active Dropdown Parent */
+.dropdown-wrapper.active-parent > div {
+  color: var(--primary-dark, #0f766e);
+  font-weight: 700;
+}
+
+.dropdown-wrapper.active-parent > div i {
+  color: var(--primary, #14b8a6);
+}
+
+/* Dropdown Sub-menu Active */
+.dropdown-menu li.active-sub-item,
+.dropdown-menu li.active {
+  background: var(--primary-light, rgba(20, 184, 166, 0.12)) !important;
+  color: var(--primary-dark, #0f766e) !important;
+  font-weight: 700 !important;
+  border-left: 3px solid var(--primary, #14b8a6) !important;
+  transform: translateX(3px);
+}
+
+.dropdown-menu li.active-sub-item i,
+.dropdown-menu li.active i,
+.dropdown-menu li.active-sub-item span,
+.dropdown-menu li.active span {
+  color: var(--primary-dark, #0f766e) !important;
 }
 
 /* Active / Danger */

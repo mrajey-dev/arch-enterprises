@@ -4,211 +4,298 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <div class="session-board-premium" v-if="!isMobile || !isSidebarVisible">
-        <!-- Mobile Header -->
+        <!-- 📱 Mobile Header -->
         <div class="mobile-header" v-if="isMobile">
-        
           <div class="mobile-title">
             <i class="fas fa-chalkboard-teacher"></i>
-            <span>ETP Ratings</span>
+            <span>Saturday ETP Ratings</span>
           </div>
-          <button class="mobile-add-btn" @click="openAddSessionModal">
+          <button class="mobile-add-btn" @click="openAddSessionModal" title="Add Session">
             <i class="fas fa-plus"></i>
           </button>
         </div>
 
-        <!-- Desktop Header -->
+        <!-- 🏢 Desktop Header Banner -->
         <div class="content-header-modern" v-else>
           <div class="header-left desktop-only">
             <div class="title-icon">
               <i class="fas fa-chalkboard-teacher"></i>
             </div>
             <div>
+              <div class="header-tag-row">
+                <span class="header-badge-sub">Employee Training Program</span>
+                <span class="header-schedule-tag"><i class="fas fa-calendar-check"></i> Every Saturday</span>
+              </div>
               <h1>Saturday ETP Ratings</h1>
-              <p class="subtitle-modern">Rate sessions conducted by employees | Every Saturday</p>
+              <p class="subtitle-modern">Rate, review, and celebrate learning sessions conducted by team members</p>
             </div>
           </div>
-          <div class="stats-badge-header">
-            <i class="fas fa-star"></i>
-            <span>{{ totalSessions }} Sessions</span>
+          <div class="header-right-actions">
+            <div class="stats-badge-header">
+              <i class="fas fa-star text-gold"></i>
+              <span><strong>{{ totalSessions }}</strong> Sessions Tracked</span>
+            </div>
+            <button class="btn-primary-header" @click="openAddSessionModal">
+              <i class="fas fa-plus-circle"></i>
+              <span>Add New Session</span>
+            </button>
           </div>
         </div>
 
-        <!-- Stats Bar - Mobile Optimized -->
+        <!-- 📊 Stats Overview Bar -->
         <div class="stats-bar">
-          <div class="stat-card" @click="activeTab = 'sessions'">
-            <i class="fas fa-calendar-week"></i>
+          <div class="stat-card" :class="{ 'card-active': activeTab === 'sessions' }" @click="activeTab = 'sessions'">
+            <div class="stat-icon-wrap blue">
+              <i class="fas fa-calendar-week"></i>
+            </div>
             <div class="stat-info">
               <span class="stat-value">{{ totalSessions }}</span>
-              <span class="stat-label">Sessions</span>
+              <span class="stat-label">Total Sessions</span>
             </div>
           </div>
-          <div class="stat-card" @click="activeTab = 'leaderboard'">
-            <i class="fas fa-users"></i>
+
+          <div class="stat-card" :class="{ 'card-active': activeTab === 'leaderboard' }" @click="activeTab = 'leaderboard'">
+            <div class="stat-icon-wrap indigo">
+              <i class="fas fa-users"></i>
+            </div>
             <div class="stat-info">
               <span class="stat-value">{{ totalRatings }}</span>
-              <span class="stat-label">Ratings</span>
+              <span class="stat-label">Submitted Ratings</span>
             </div>
           </div>
+
           <div class="stat-card">
-            <i class="fas fa-chart-line"></i>
+            <div class="stat-icon-wrap amber">
+              <i class="fas fa-chart-line"></i>
+            </div>
             <div class="stat-info">
-              <span class="stat-value">{{ avgRatingOverall }}</span>
-              <span class="stat-label">Avg Rating</span>
+              <span class="stat-value">{{ avgRatingOverall }}<span class="max-rate">/5</span></span>
+              <span class="stat-label">Overall Average</span>
             </div>
           </div>
-          <div class="stat-card" @click="openAddSessionModal">
-            <i class="fas fa-plus-circle"></i>
+
+          <div class="stat-card add-stat-card" @click="openAddSessionModal">
+            <div class="stat-icon-wrap green">
+              <i class="fas fa-plus"></i>
+            </div>
             <div class="stat-info">
-              <span class="stat-value action-stat">+ New</span>
-              <span class="stat-label">Add Session</span>
+              <span class="stat-value action-stat">New Session</span>
+              <span class="stat-label">Click to conduct</span>
             </div>
           </div>
         </div>
 
-        <!-- Tabs: Sessions List & Leaderboard - Mobile Optimized -->
-        <div class="tabs-modern">
-          <button 
-            class="tab-btn" 
-            :class="{ active: activeTab === 'sessions' }"
-            @click="activeTab = 'sessions'"
-          >
-            <i class="fas fa-list"></i> <span class="tab-text">Sessions</span>
-          </button>
-          <button 
-            class="tab-btn" 
-            :class="{ active: activeTab === 'leaderboard' }"
-            @click="activeTab = 'leaderboard'"
-          >
-            <i class="fas fa-trophy"></i> <span class="tab-text">Leaderboard</span>
-          </button>
-        </div>
+        <!-- 🗂️ TABS BAR (Cleanly Separated & Modern Segmented Pill Style) -->
+        <div class="etp-tabs-bar-container">
+          <div class="etp-segmented-tabs">
+            <button 
+              type="button"
+              class="tab-btn" 
+              :class="{ active: activeTab === 'sessions' }"
+              @click="activeTab = 'sessions'"
+            >
+              <i class="fas fa-chalkboard"></i>
+              <span class="tab-text">Sessions List</span>
+              <span class="tab-badge-counter">{{ sessions.length }}</span>
+            </button>
 
-        <!-- Sessions List Tab -->
-        <div v-show="activeTab === 'sessions'">
-          <!-- Filter Section - Mobile Optimized -->
-          <div class="filter-section">
-            <div class="search-wrapper">
-              <i class="fas fa-search"></i>
-              <input 
-                type="text" 
-                v-model="searchQuery" 
-                @input="debouncedSearch"
-                placeholder="Search sessions..."
-                class="search-input"
-              >
-            </div>
-            <select v-model="selectedMonth" class="month-select" @change="loadSessions">
-              <option value="">All Months</option>
-              <option v-for="month in months" :key="month.value" :value="month.value">
-                {{ isMobile ? month.short : month.name }}
-              </option>
-            </select>
+            <button 
+              type="button"
+              class="tab-btn" 
+              :class="{ active: activeTab === 'leaderboard' }"
+              @click="activeTab = 'leaderboard'"
+            >
+              <i class="fas fa-trophy"></i>
+              <span class="tab-text">Leaderboard</span>
+              <span class="tab-badge-counter">{{ leaderboard.length }}</span>
+            </button>
           </div>
 
-          <!-- Sessions Grid - Mobile Optimized -->
+          <!-- Quick Right Info in Tab Bar -->
+          <div class="tab-bar-right-info" v-if="!isMobile">
+            <span class="live-pulse-dot"></span>
+            <span class="tab-live-text">{{ activeTab === 'sessions' ? 'Viewing Saturday Sessions' : 'Presenter Rankings' }}</span>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- TAB 1: SESSIONS LIST VIEW                              -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div v-show="activeTab === 'sessions'" class="tab-pane-transition">
+          
+          <!-- 🔍 Filter & Search Toolbar (Distinct & Separated Card) -->
+          <div class="filter-toolbar-card">
+            <div class="toolbar-left">
+              <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input 
+                  type="text" 
+                  v-model="searchQuery" 
+                  @input="debouncedSearch"
+                  placeholder="Search by topic, presenter name, or key point..."
+                  class="search-input"
+                >
+                <button v-if="searchQuery" type="button" class="btn-clear-search" @click="searchQuery = ''; loadSessions()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="select-month-wrapper">
+                <i class="fas fa-calendar-alt select-icon"></i>
+                <select v-model="selectedMonth" class="month-select" @change="loadSessions">
+                  <option value="">All Months</option>
+                  <option v-for="month in months" :key="month.value" :value="month.value">
+                    {{ isMobile ? month.short : month.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <span class="results-counter-pill">
+                <i class="fas fa-layer-group"></i> {{ sessions.length }} Session{{ sessions.length === 1 ? '' : 's' }}
+              </span>
+              <button class="btn-add-inline" @click="openAddSessionModal">
+                <i class="fas fa-plus"></i>
+                <span>Add Session</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 📋 Sessions Section Header -->
           <div class="sessions-section">
             <div class="section-title-modern">
               <div class="title-left">
-                <i class="fas fa-chalkboard"></i>
-                <span>Session History</span>
-                <span class="record-count-mobile" v-if="isMobile">{{ sessions.length }}</span>
+                <span class="section-indicator-dot"></span>
+                <span>Saturday Sessions Archive</span>
               </div>
-              <button class="btn-add-small" @click="openAddSessionModal">
-                <i class="fas fa-plus"></i> <span class="btn-text">Add</span>
-              </button>
+              <span class="archive-date-hint">Updated weekly</span>
             </div>
 
+            <!-- Loading State -->
             <div v-if="loading" class="loading-state">
-              <i class="fas fa-spinner fa-pulse"></i>
-              <p>Loading sessions...</p>
+              <i class="fas fa-circle-notch fa-spin"></i>
+              <p>Loading Saturday ETP sessions...</p>
             </div>
 
+            <!-- Sessions Grid -->
             <div v-else-if="sessions.length" class="sessions-grid-premium">
-              <div v-for="session in sessions" :key="session.id" class="session-card-premium" :class="{ 'mobile-card': isMobile }">
+              <div 
+                v-for="session in sessions" 
+                :key="session.id" 
+                class="session-card-premium" 
+                :class="{ 'mobile-card': isMobile }"
+              >
+                <!-- Top Color Accent Stripe -->
                 <div class="card-accent" :style="{ background: session.accent_color || 'linear-gradient(135deg, #1e3c72, #2a5298)' }"></div>
                 
-                <div class="session-header" :class="{ 'mobile-header': isMobile }">
-                  <div class="session-icon">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                  </div>
-                  <div class="session-title-wrap">
-                    <h3>{{ truncateText(session.topic, isMobile ? 30 : 40) }}</h3>
-                    <div class="session-meta">
-                      <span><i class="fas fa-user"></i> {{ session.presenter_name }}</span>
-                      <span><i class="fas fa-calendar-alt"></i> {{ formatDateShort(session.session_date) }}</span>
+                <!-- Card Header -->
+                <div class="session-card-header">
+                  <div class="session-card-title-row">
+                    <div class="session-icon" :style="{ background: getLightAccent(session.accent_color) }">
+                      <i class="fas fa-chalkboard-teacher" :style="{ color: session.accent_color || '#2a5298' }"></i>
+                    </div>
+                    <div class="session-title-wrap">
+                      <h3 :title="session.topic">{{ session.topic }}</h3>
+                      <div class="session-meta">
+                        <span class="meta-tag presenter">
+                          <i class="fas fa-user-circle"></i> {{ session.presenter_name }}
+                        </span>
+                        <span class="meta-tag date">
+                          <i class="fas fa-calendar-alt"></i> {{ formatDateShort(session.session_date) }}
+                        </span>
+                        <span class="meta-tag duration" v-if="session.duration_minutes">
+                          <i class="fas fa-clock"></i> {{ session.duration_minutes }} min
+                        </span>
+                      </div>
                     </div>
                   </div>
+
+                  <!-- Creator Action Buttons -->
                   <div
                     class="session-actions"
                     v-if="session.created_by === currentUserId"
                   >
-                    <button class="action-btn edit-btn" @click="editSession(session)" title="Edit">
+                    <button class="action-btn edit-btn" @click="editSession(session)" title="Edit Session">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button class="action-btn delete-btn" @click="confirmDeleteSession(session)" title="Delete">
+                    <button class="action-btn delete-btn" @click="confirmDeleteSession(session)" title="Delete Session">
                       <i class="fas fa-trash-alt"></i>
                     </button>
                   </div>
                 </div>
 
-                <!-- Key Points -->
-                <div class="key-points" v-if="session.key_points">
-                  <div class="points-label">
-                    <i class="fas fa-lightbulb"></i> Key Points
+                <!-- Key Points Block -->
+                <div class="key-points-wrapper" v-if="session.key_points">
+                  <div class="points-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Key Takeaways & Highlights</span>
                   </div>
-                  <div class="key-points-content">
-                    <pre class="key-points-text" :class="{ 'collapsed': !session.keyPointsExpanded && isLongText(session.key_points) }">
+                  <div class="key-points-body">
+                    <div class="key-points-text" :class="{ 'collapsed': !session.keyPointsExpanded && isLongText(session.key_points) }">
                       <span v-html="formatKeyPoints(session.key_points)"></span>
-                    </pre>
+                    </div>
                     <button 
                       v-if="isLongText(session.key_points)" 
+                      type="button"
                       class="read-more-btn"
                       @click="toggleKeyPoints(session)"
                     >
-                      {{ session.keyPointsExpanded ? 'Read less' : 'Read more' }}
+                      {{ session.keyPointsExpanded ? 'Show less' : 'Read full key points' }}
                       <i :class="session.keyPointsExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
                     </button>
                   </div>
                 </div>
 
-                <!-- Rating Section - Mobile Optimized -->
-                <div class="rating-section" :class="{ 'mobile-rating': isMobile }">
-                  <div class="rating-label">
-                    <i class="fas fa-star"></i> Rate this session (1-5)
+                <!-- Rating Section -->
+                <div class="rating-section-card">
+                  <div class="rating-header-row">
+                    <span class="rating-label">
+                      <i class="fas fa-star text-gold"></i> Your Rating
+                    </span>
+                    <span v-if="session.userRatingSubmitted" class="rating-submitted-badge">
+                      <i class="fas fa-check-circle"></i> Rated {{ session.userRatingSubmitted }}/5
+                    </span>
                   </div>
-                  <div class="rating-input" :class="{ 'mobile-rating-input': isMobile }">
-                    <div class="stars-input">
+
+                  <div class="rating-input-row">
+                    <div class="stars-input-wrap">
                       <span 
                         v-for="star in 5" 
                         :key="star"
                         class="star"
-                        :class="{ 'filled': session.userRating && session.userRating >= star }"
+                        :class="{ 'filled': session.userRating && session.userRating >= star, 'disabled': session.ratingSubmitted }"
                         @click="setRating(session, star)"
+                        :title="`Rate ${star} star${star > 1 ? 's' : ''}`"
                       >
                         <i class="fas fa-star"></i>
                       </span>
                     </div>
+
                     <button 
                       v-if="session.userRating && session.userRating > 0 && !session.ratingSubmitted"
+                      type="button"
                       class="btn-submit-rating"
                       @click="submitRating(session)"
                       :disabled="ratingSubmitting === session.id"
                     >
                       <i v-if="ratingSubmitting === session.id" class="fas fa-spinner fa-pulse"></i>
-                      Submit
+                      <i v-else class="fas fa-paper-plane"></i>
+                      <span>Submit {{ session.userRating }}/5</span>
                     </button>
-                    <span v-if="session.userRatingSubmitted" class="rating-submitted-badge">
-                      <i class="fas fa-check-circle"></i> {{ session.userRatingSubmitted }}/5
-                    </span>
                   </div>
                 </div>
 
-                <!-- Individual Ratings List -->
+                <!-- Individual Ratings Reviews Drawer -->
                 <div class="ratings-list-section" v-if="session.ratings && session.ratings.length > 0">
-                  <div class="ratings-label" @click="toggleRatingsList(session)">
-                    <i class="fas fa-users"></i>
-                    <span>Reviews ({{ session.ratings.length }})</span>
-                    <i class="fas fa-chevron-down" :class="{ 'rotated': session.ratingsVisible }"></i>
+                  <div class="ratings-label-bar" @click="toggleRatingsList(session)">
+                    <div class="reviews-title">
+                      <i class="fas fa-comments"></i>
+                      <span>Peer Reviews & Ratings ({{ session.ratings.length }})</span>
+                    </div>
+                    <div class="reviews-toggle-icon">
+                      <i class="fas fa-chevron-down" :class="{ 'rotated': session.ratingsVisible }"></i>
+                    </div>
                   </div>
                   
                   <div class="ratings-list" :class="{ 'ratings-hidden': !session.ratingsVisible }">
@@ -216,15 +303,12 @@
                       v-for="rating in session.ratings" 
                       :key="rating.id" 
                       class="rating-item"
-                      :class="{ 
-                        'current-user-rating': rating.user_id === currentUserId,
-                        'mobile-rating-item': isMobile 
-                      }"
+                      :class="{ 'current-user-rating': rating.user_id === currentUserId }"
                     >
                       <div class="rating-user-info">
                         <i class="fas fa-user-circle"></i>
-                        <span class="rating-user-name">{{ truncateText(rating.user_name || 'Anonymous', isMobile ? 15 : 25) }}</span>
-                        <span class="rating-user-badge" v-if="rating.user_id === currentUserId">(You)</span>
+                        <span class="rating-user-name">{{ rating.user_name || 'Anonymous User' }}</span>
+                        <span class="rating-user-badge" v-if="rating.user_id === currentUserId">You</span>
                       </div>
                       <div class="rating-stars-display">
                         <i v-for="star in 5" :key="star" class="fas fa-star" :class="{ 'filled': rating.rating >= star }"></i>
@@ -237,33 +321,36 @@
                   </div>
                 </div>
 
-                <!-- Average Rating -->
-                <div class="avg-rating" v-if="session.avg_rating" :class="{ 'mobile-avg': isMobile }">
-                  <div class="avg-rating-stars">
-                    <i class="fas fa-chart-simple"></i> Avg: 
-                    <span class="rating-value">{{ session.avg_rating }}/5</span>
+                <!-- Card Footer with Overall Rating -->
+                <div class="session-card-footer">
+                  <div class="avg-rating-pill" v-if="session.avg_rating">
+                    <i class="fas fa-chart-simple"></i>
+                    <span class="rating-value">Avg: <strong>{{ session.avg_rating }}</strong>/5</span>
                     <span class="star-rating-display">
                       <i v-for="n in 5" :key="n" class="fas fa-star" :class="{ 'filled': Math.round(session.avg_rating) >= n }"></i>
                     </span>
+                    <span class="rating-count">({{ session.rating_count || 0 }} reviews)</span>
                   </div>
-                  <span class="rating-count">({{ session.rating_count || 0 }})</span>
-                </div>
+                  <div class="avg-rating-pill no-rating" v-else>
+                    <i class="far fa-star"></i>
+                    <span>No ratings yet</span>
+                  </div>
 
-                <div class="session-footer" :class="{ 'mobile-footer': isMobile }">
-                  <div class="badge-duration" v-if="session.duration_minutes">
-                    <i class="fas fa-clock"></i> {{ session.duration_minutes }} min
-                  </div>
-                  <div class="badge-presenter">
-                    <i class="fas fa-user-circle"></i> {{ truncateText(session.presenter_name, isMobile ? 15 : 25) }}
+                  <div class="footer-presenter-pill">
+                    <i class="fas fa-user-tie"></i>
+                    <span>{{ session.presenter_name }}</span>
                   </div>
                 </div>
               </div>
             </div>
 
+            <!-- Empty State -->
             <div v-else class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
-              <i class="fas fa-calendar-times"></i>
-              <h4>No Sessions Found</h4>
-              <p>{{ searchQuery ? 'Try a different search' : 'Click "Add Session" to create your first Saturday session' }}</p>
+              <div class="empty-icon-wrap">
+                <i class="fas fa-calendar-times"></i>
+              </div>
+              <h4>No Saturday Sessions Found</h4>
+              <p>{{ searchQuery ? 'Try adjusting your search query or month filter' : 'Create your first Saturday session to start collecting ratings' }}</p>
               <button class="btn-primary-empty" @click="openAddSessionModal">
                 <i class="fas fa-plus-circle"></i> Add First Session
               </button>
@@ -271,16 +358,21 @@
           </div>
         </div>
 
-        <!-- Leaderboard Tab - Mobile Optimized -->
-        <div v-show="activeTab === 'leaderboard'" class="leaderboard-section">
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- TAB 2: LEADERBOARD VIEW                                -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div v-show="activeTab === 'leaderboard'" class="leaderboard-section tab-pane-transition">
           <div class="section-title-modern">
-            <i class="fas fa-trophy"></i>
-            <span>Employee Leaderboard</span>
+            <div class="title-left">
+              <span class="section-indicator-dot trophy"></span>
+              <span>Saturday ETP Presenter Rankings</span>
+            </div>
+            <span class="archive-date-hint">Ranked by peer ratings</span>
           </div>
           
           <div v-if="loadingLeaderboard" class="loading-state">
-            <i class="fas fa-spinner fa-pulse"></i>
-            <p>Loading leaderboard...</p>
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <p>Loading leaderboard rankings...</p>
           </div>
           
           <div v-else-if="leaderboard.length" class="leaderboard-table-wrapper">
@@ -291,7 +383,7 @@
                   <span v-if="index === 0" class="rank-badge gold">🥇</span>
                   <span v-else-if="index === 1" class="rank-badge silver">🥈</span>
                   <span v-else-if="index === 2" class="rank-badge bronze">🥉</span>
-                  <span v-else class="rank-number">{{ index + 1 }}</span>
+                  <span v-else class="rank-number">#{{ index + 1 }}</span>
                 </div>
                 <div class="card-content">
                   <div class="presenter-name">
@@ -307,7 +399,7 @@
                       <span class="stat-number">{{ employee.total_ratings_received || 0 }}</span>
                     </div>
                     <div class="stat-chip">
-                      <span class="stat-label">Avg</span>
+                      <span class="stat-label">Average</span>
                       <span class="stat-number rating">{{ employee.avg_rating || 'N/A' }}</span>
                     </div>
                   </div>
@@ -322,111 +414,232 @@
             </div>
 
             <!-- Desktop Table View -->
-            <table class="leaderboard-table" v-else>
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Presenter</th>
-                  <th>Sessions</th>
-                  <th>Ratings</th>
-                  <th>Average</th>
-                  <th>Performance</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(employee, index) in leaderboard" :key="employee.presenter_name">
-                  <td class="rank-cell">
-                    <span v-if="index === 0" class="rank-badge gold">🥇 1</span>
-                    <span v-else-if="index === 1" class="rank-badge silver">🥈 2</span>
-                    <span v-else-if="index === 2" class="rank-badge bronze">🥉 3</span>
-                    <span v-else class="rank-number">{{ index + 1 }}</span>
-                  </td>
-                  <td class="presenter-cell">
-                    <i class="fas fa-user-circle"></i> {{ employee.presenter_name }}
-                  </td>
-                  <td>{{ employee.sessions_count }}</td>
-                  <td>{{ employee.total_ratings_received || 0 }}</td>
-                  <td class="rating-cell">
-                    <span class="avg-rating-value">{{ employee.avg_rating || 'N/A' }}</span>
-                    <span class="stars-mini">
-                      <i v-for="n in 5" :key="n" class="fas fa-star" :class="{ 'filled': Math.round(employee.avg_rating) >= n }"></i>
-                    </span>
-                  </td>
-                  <td>
-                    <div class="progress-bar">
-                      <div class="progress-fill" :style="{ width: ((employee.avg_rating || 0) / 5 * 100) + '%' }"></div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-responsive-container" v-else>
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th class="th-rank">Rank</th>
+                    <th>Presenter Name</th>
+                    <th>Sessions Conducted</th>
+                    <th>Total Ratings</th>
+                    <th>Average Rating</th>
+                    <th>Score Progress</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(employee, index) in leaderboard" :key="employee.presenter_name">
+                    <td class="rank-cell">
+                      <span v-if="index === 0" class="rank-badge gold">🥇 1</span>
+                      <span v-else-if="index === 1" class="rank-badge silver">🥈 2</span>
+                      <span v-else-if="index === 2" class="rank-badge bronze">🥉 3</span>
+                      <span v-else class="rank-number">#{{ index + 1 }}</span>
+                    </td>
+                    <td class="presenter-cell">
+                      <div class="presenter-cell-wrap">
+                        <div class="presenter-avatar-circle">
+                          {{ getInitials(employee.presenter_name) }}
+                        </div>
+                        <span class="presenter-cell-name">{{ employee.presenter_name }}</span>
+                      </div>
+                    </td>
+                    <td class="numeric-cell">
+                      <span class="stat-bubble">{{ employee.sessions_count }} session{{ employee.sessions_count === 1 ? '' : 's' }}</span>
+                    </td>
+                    <td class="numeric-cell">
+                      <span class="stat-bubble gray">{{ employee.total_ratings_received || 0 }} rating{{ employee.total_ratings_received === 1 ? '' : 's' }}</span>
+                    </td>
+                    <td class="rating-cell">
+                      <span class="avg-rating-value">{{ employee.avg_rating || 'N/A' }}</span>
+                      <span class="stars-mini">
+                        <i v-for="n in 5" :key="n" class="fas fa-star" :class="{ 'filled': Math.round(employee.avg_rating) >= n }"></i>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="progress-cell-wrap">
+                        <div class="progress-bar">
+                          <div class="progress-fill" :style="{ width: ((employee.avg_rating || 0) / 5 * 100) + '%' }"></div>
+                        </div>
+                        <span class="progress-pct">{{ Math.round(((employee.avg_rating || 0) / 5) * 100) }}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
           
           <div v-else class="empty-state-premium" :class="{ 'empty-mobile': isMobile }">
-            <i class="fas fa-chart-simple"></i>
-            <h4>No Data Available</h4>
-            <p>Add sessions and ratings to see the leaderboard</p>
+            <div class="empty-icon-wrap">
+              <i class="fas fa-trophy"></i>
+            </div>
+            <h4>No Rankings Available Yet</h4>
+            <p>Conduct sessions and submit ratings to populate the leaderboard</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Session Form Modal - Mobile Optimized -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 📝 SESSION MODAL FORM (Clean Alignment & Separation)    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div v-if="showSessionModal" class="modal-overlay" @click.self="closeSessionModal">
-      <div class="modal-container-premium modal-form" :class="{ 'mobile-modal': isMobile }">
-        <div class="modal-header">
-          <div class="modal-icon">
-            <i class="fas fa-edit"></i>
+      <div class="modal-container-premium modal-form-pro" :class="{ 'mobile-modal': isMobile }">
+        <!-- Modal Header -->
+        <div class="modal-header-pro">
+          <div class="modal-header-left">
+            <div class="modal-icon-badge">
+              <i :class="editingSession ? 'fas fa-edit' : 'fas fa-calendar-plus'"></i>
+            </div>
+            <div>
+              <h2 class="modal-title">{{ editingSession ? 'Edit Saturday Session' : 'Add New Saturday Session' }}</h2>
+              <p class="modal-subtitle">Enter session details, presenter, date, and key discussion highlights</p>
+            </div>
           </div>
-          <h2>{{ editingSession ? 'Edit Session' : 'Add New Session' }}</h2>
-          <button class="close-modal" @click="closeSessionModal">&times;</button>
+          <button type="button" class="close-modal-pro" @click="closeSessionModal" title="Close modal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <div class="modal-body">
-          <form @submit.prevent="handleSessionSubmit">
-            <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
-              <div class="form-group">
-                <label><i class="fas fa-heading"></i> Topic *</label>
-                <input type="text" v-model="sessionForm.topic" placeholder="Enter topic" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-user"></i> Presenter *</label>
-                <select v-model="sessionForm.presenter_name" required class="employee-select">
-                  <option value="">Select Employee</option>
-                  <option v-for="employee in employees" :key="employee.id" :value="employee.name">
-                    {{ employee.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
 
-            <div class="form-row-grid" :class="{ 'mobile-grid': isMobile }">
-              <div class="form-group">
-                <label><i class="fas fa-calendar-alt"></i> Date *</label>
-                <input type="date" v-model="sessionForm.session_date" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-clock"></i> Duration (min)</label>
-                <input type="number" v-model.number="sessionForm.duration_minutes" placeholder="60">
+        <!-- Modal Body & Form -->
+        <div class="modal-body-pro">
+          <form @submit.prevent="handleSessionSubmit" class="pro-session-form">
+            
+            <!-- 📌 Section 1: Session Topic / Title (Full Width for complete readability) -->
+            <div class="form-group-pro full-width">
+              <label class="field-label-pro">
+                <i class="fas fa-chalkboard"></i> Session Topic / Title <span class="required-star">*</span>
+              </label>
+              <div class="input-wrap-pro">
+                <input 
+                  type="text" 
+                  v-model="sessionForm.topic" 
+                  placeholder="e.g. Advanced Vue.js Architecture & Performance" 
+                  class="form-control-pro"
+                  required
+                  maxlength="150"
+                >
               </div>
             </div>
 
-            <div class="form-group">
-              <label><i class="fas fa-lightbulb"></i> Key Points</label>
-              <textarea v-model="sessionForm.key_points" rows="4" placeholder="Enter key points line by line..."></textarea>
-              <small class="form-hint">Press Enter for line breaks.</small>
+            <!-- 📌 Section 2: Presenter & Session Date (2 Clean Separated Columns) -->
+            <div class="form-grid-row">
+              <div class="form-group-pro">
+                <label class="field-label-pro">
+                  <i class="fas fa-user-tie"></i> Presenter Employee <span class="required-star">*</span>
+                </label>
+                <div class="select-wrap-pro">
+                  <select v-model="sessionForm.presenter_name" required class="form-control-pro select-field-pro">
+                    <option value="">Select Employee Presenter</option>
+                    <option v-for="employee in employees" :key="employee.id" :value="employee.name">
+                      {{ employee.name }} ({{ employee.department || 'General' }})
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group-pro">
+                <label class="field-label-pro">
+                  <i class="fas fa-calendar-alt"></i> Session Date <span class="required-star">*</span>
+                </label>
+                <div class="input-wrap-pro">
+                  <input 
+                    type="date" 
+                    v-model="sessionForm.session_date" 
+                    class="form-control-pro date-input-pro"
+                    required
+                  >
+                </div>
+              </div>
             </div>
 
-            <div class="form-group" v-if="!isMobile">
-              <label><i class="fas fa-palette"></i> Accent Color</label>
-              <input type="color" v-model="sessionForm.accent_color" class="color-picker">
+            <!-- 📌 Section 3: Duration with Quick Presets & Theme Color (2 Clean Separated Columns) -->
+            <div class="form-grid-row">
+              <div class="form-group-pro">
+                <label class="field-label-pro">
+                  <i class="fas fa-clock"></i> Duration (Minutes)
+                </label>
+                <div class="input-wrap-pro">
+                  <input 
+                    type="number" 
+                    v-model.number="sessionForm.duration_minutes" 
+                    placeholder="e.g. 60" 
+                    min="10"
+                    max="360"
+                    class="form-control-pro"
+                  >
+                </div>
+                <!-- Quick Duration Presets -->
+                <div class="duration-presets">
+                  <span class="preset-label">Quick:</span>
+                  <button 
+                    v-for="mins in [30, 45, 60, 90]" 
+                    :key="mins" 
+                    type="button" 
+                    class="preset-pill"
+                    :class="{ 'active': sessionForm.duration_minutes === mins }"
+                    @click="sessionForm.duration_minutes = mins"
+                  >
+                    {{ mins }}m
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group-pro" v-if="!isMobile">
+                <label class="field-label-pro">
+                  <i class="fas fa-palette"></i> Card Theme Color Accent
+                </label>
+                <div class="color-picker-palette-row">
+                  <!-- Preset Color Swatches -->
+                  <button 
+                    v-for="color in presetColors" 
+                    :key="color"
+                    type="button" 
+                    class="color-swatch-btn"
+                    :style="{ background: color }"
+                    :class="{ 'swatch-active': sessionForm.accent_color === color }"
+                    @click="sessionForm.accent_color = color"
+                    :title="color"
+                  >
+                    <i class="fas fa-check" v-if="sessionForm.accent_color === color"></i>
+                  </button>
+
+                  <!-- Custom Color Picker Input -->
+                  <div class="custom-color-input-wrap">
+                    <input type="color" v-model="sessionForm.accent_color" class="custom-color-input" title="Custom color picker">
+                    <span class="custom-color-hex">{{ sessionForm.accent_color }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="modal-actions" :class="{ 'mobile-actions': isMobile }">
-              <button type="button" class="btn-secondary" @click="closeSessionModal">Cancel</button>
-              <button type="submit" class="btn-primary" :disabled="submitting">
-                <i v-if="submitting" class="fas fa-spinner fa-pulse"></i>
-                <i v-else class="fas fa-save"></i>
-                {{ submitting ? 'Saving...' : (editingSession ? 'Update' : 'Add') }}
+            <!-- 📌 Section 4: Key Discussion Points & Agenda (Full Width) -->
+            <div class="form-group-pro full-width">
+              <div class="field-label-between">
+                <label class="field-label-pro">
+                  <i class="fas fa-list-check"></i> Key Discussion Points & Agenda
+                </label>
+                <span class="hint-badge-pro"><i class="fas fa-info-circle"></i> 1 line per bullet point</span>
+              </div>
+              <div class="input-wrap-pro">
+                <textarea 
+                  v-model="sessionForm.key_points" 
+                  rows="4" 
+                  placeholder="• Architecture overview and module separation&#10;• Best practices for reactive state&#10;• Q&A and practical takeaways"
+                  class="form-control-pro textarea-pro"
+                ></textarea>
+              </div>
+              <small class="form-hint-pro">Each line will be displayed as a distinct key point bullet in the session card.</small>
+            </div>
+
+            <!-- Form Actions Bar -->
+            <div class="modal-actions-pro" :class="{ 'mobile-actions': isMobile }">
+              <button type="button" class="btn-cancel-pro" @click="closeSessionModal">
+                Cancel
+              </button>
+              <button type="submit" class="btn-submit-pro" :disabled="submitting">
+                <i v-if="submitting" class="fas fa-circle-notch fa-spin"></i>
+                <i v-else :class="editingSession ? 'fas fa-save' : 'fas fa-plus-circle'"></i>
+                <span>{{ submitting ? 'Saving Session...' : (editingSession ? 'Update Session' : 'Create Session') }}</span>
               </button>
             </div>
           </form>
@@ -434,28 +647,48 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal - Mobile Optimized -->
+    <!-- 🗑️ DELETE CONFIRMATION MODAL -->
     <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
-      <div class="modal-container-premium" :class="{ 'mobile-modal': isMobile }">
-        <div class="modal-header">
-          <div class="modal-icon">
-            <i class="fas fa-trash-alt" style="color: #ef4444;"></i>
+      <div class="modal-container-premium delete-modal-pro" :class="{ 'mobile-modal': isMobile }">
+        <div class="modal-header-pro delete-header">
+          <div class="modal-header-left">
+            <div class="modal-icon-badge danger">
+              <i class="fas fa-trash-alt"></i>
+            </div>
+            <div>
+              <h2 class="modal-title danger">Delete Saturday Session</h2>
+              <p class="modal-subtitle">This action will permanently delete the session and its ratings</p>
+            </div>
           </div>
-          <h2>Confirm Deletion</h2>
-          <button class="close-modal" @click="showDeleteModal = false">&times;</button>
+          <button type="button" class="close-modal-pro" @click="showDeleteModal = false">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <div class="modal-body">
-          <p>Delete <strong>{{ sessionToDelete?.topic }}</strong>? This will remove all ratings.</p>
-          <div class="modal-actions" :class="{ 'mobile-actions': isMobile }" style="margin-top: 24px;">
-            <button class="btn-secondary" @click="showDeleteModal = false">Cancel</button>
-            <button class="btn-danger" @click="deleteSession" :disabled="deleting">
-              <i v-if="deleting" class="fas fa-spinner fa-pulse"></i>
-              Delete
+
+        <div class="modal-body-pro">
+          <div class="delete-warning-box">
+            <p>Are you sure you want to delete the session:</p>
+            <div class="delete-topic-pill">
+              <i class="fas fa-chalkboard"></i>
+              <strong>{{ sessionToDelete?.topic }}</strong>
+            </div>
+            <p class="delete-warning-note">All ratings and peer reviews associated with this session will be permanently erased.</p>
+          </div>
+
+          <div class="modal-actions-pro" :class="{ 'mobile-actions': isMobile }">
+            <button type="button" class="btn-cancel-pro" @click="showDeleteModal = false">
+              Keep Session
+            </button>
+            <button type="button" class="btn-danger-pro" @click="deleteSession" :disabled="deleting">
+              <i v-if="deleting" class="fas fa-circle-notch fa-spin"></i>
+              <i v-else class="fas fa-trash-alt"></i>
+              <span>{{ deleting ? 'Deleting...' : 'Delete Permanently' }}</span>
             </button>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -468,12 +701,13 @@ const API_BASE = 'https://employees.archenterprises.co.in/api/api';
 export default {
   name: "SaturdaySessionRatings",
   components: { Sidebar },
+
   data() {
     return {
       employees: [],
       isMobile: false,
       isSidebarVisible: true,
-      activeTab: 'sessions',
+      activeTab: 'sessions', // 'sessions' | 'leaderboard'
       
       sessions: [],
       totalSessions: 0,
@@ -496,6 +730,16 @@ export default {
       searchTimeout: null,
       selectedMonth: '',
       
+      presetColors: [
+        '#2a5298',
+        '#10b981',
+        '#6366f1',
+        '#f59e0b',
+        '#ec4899',
+        '#06b6d4',
+        '#8b5cf6'
+      ],
+
       months: [
         { value: '1', name: 'January', short: 'Jan' },
         { value: '2', name: 'February', short: 'Feb' },
@@ -523,6 +767,7 @@ export default {
       }
     }
   },
+
   mounted() {
     this.checkIfMobile();
     window.addEventListener('resize', this.checkIfMobile);
@@ -530,25 +775,43 @@ export default {
     this.loadSessions();
     this.loadLeaderboard();
   },
+
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
   },
+
   computed: {
     currentUserId() {
-      const user = JSON.parse(localStorage.getItem('user'));
-      return user?.id || null;
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        return user?.id || null;
+      } catch (e) {
+        return null;
+      }
     }
   },
+
   methods: {
     truncateText(text, length) {
       if (!text) return '';
       return text.length > length ? text.substring(0, length) + '...' : text;
     },
-    toggleRatingsList(session) {
-      if (this.isMobile) {
-        session.ratingsVisible = !session.ratingsVisible;
-      }
+
+    getInitials(name) {
+      if (!name) return '??';
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     },
+
+    getLightAccent(color) {
+      return color ? `${color}18` : '#eef2ff';
+    },
+
+    toggleRatingsList(session) {
+      session.ratingsVisible = !session.ratingsVisible;
+    },
+
     openAddSessionModal() {
       this.resetSessionForm();
       this.showSessionModal = true;
@@ -563,7 +826,7 @@ export default {
       try {
         const response = await fetch(`${API_BASE}/employees`);
         const data = await response.json();
-        this.employees = data;
+        this.employees = Array.isArray(data) ? data : (data.data || []);
       } catch (error) {
         console.error('Error loading employees:', error);
       }
@@ -573,6 +836,7 @@ export default {
       this.isMobile = window.innerWidth <= 768;
       this.isSidebarVisible = !this.isMobile;
     },
+
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
     },
@@ -619,6 +883,7 @@ export default {
     async loadUserRatings() {
       try {
         const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.id) return;
         const userId = user.id;
         const response = await fetch(`${API_BASE}/user-ratings?user_id=${userId}`);
         const data = await response.json();
@@ -697,7 +962,7 @@ export default {
       clearTimeout(this.searchTimeout);
       this.searchTimeout = setTimeout(() => {
         this.loadSessions();
-      }, 500);
+      }, 400);
     },
 
     formatDate(dateString) {
@@ -715,7 +980,7 @@ export default {
     formatDateShort(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     },
 
     isLongText(text) {
@@ -756,8 +1021,8 @@ export default {
       this.ratingSubmitting = session.id;
       try {
         const user = JSON.parse(localStorage.getItem('user'));
-        const userId = user.id;
-        const userName = user.name;
+        const userId = user?.id;
+        const userName = user?.name;
         
         const response = await fetch(`${API_BASE}/ratings`, {
           method: 'POST',
@@ -805,7 +1070,7 @@ export default {
 
     editSession(session) {
       const user = JSON.parse(localStorage.getItem('user'));
-      if (session.created_by !== user.id) {
+      if (session.created_by !== user?.id) {
         toastError('You can edit only your own sessions');
         return;
       }
@@ -832,7 +1097,7 @@ export default {
         const user = JSON.parse(localStorage.getItem('user'));
         const payload = {
           ...this.sessionForm,
-          created_by: user.id
+          created_by: user?.id
         };
         const url = this.editingSession
           ? `${API_BASE}/sessions/${this.editingSession.id}`
@@ -873,7 +1138,7 @@ export default {
         const response = await fetch(`${API_BASE}/sessions/${this.sessionToDelete.id}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ created_by: user.id })
+          body: JSON.stringify({ created_by: user?.id })
         });
         const data = await response.json();
         if (data.success) {
@@ -897,7 +1162,10 @@ export default {
 </script>
 
 <style scoped>
-/* Base Layout */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+/* 🌿 Base Layout */
 .layout {
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -906,8 +1174,8 @@ export default {
 
 .main-content {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: 24px;
+  padding: 20px 24px;
   min-height: 100vh;
 }
 
@@ -916,38 +1184,31 @@ export default {
   background: white;
   border-radius: 28px;
   padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  overflow-x: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  overflow-x: hidden;
 }
 
-/* Mobile Header */
+/* 📱 Mobile Header */
 .mobile-header {
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 14px 18px;
   background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark, #1a1a2e);
-  padding: 8px;
-  cursor: pointer;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .mobile-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--dark, #1a1a2e);
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .mobile-title i {
@@ -958,26 +1219,23 @@ export default {
   background: linear-gradient(135deg, #1e3c72, #2a5298);
   color: white;
   border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(42, 82, 152, 0.25);
 }
 
-.mobile-add-btn:active {
-  transform: scale(0.9);
-}
-
-/* Header */
+/* 🏢 Desktop Header Banner */
 .content-header-modern {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
+  margin-bottom: 26px;
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -989,8 +1247,8 @@ export default {
 }
 
 .title-icon {
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   background: linear-gradient(135deg, #1e3c72, #2a5298);
   border-radius: 18px;
   display: flex;
@@ -998,69 +1256,143 @@ export default {
   justify-content: center;
   color: white;
   font-size: 24px;
+  box-shadow: 0 8px 24px rgba(42, 82, 152, 0.28);
+}
+
+.header-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.header-badge-sub {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #eef2ff;
+  color: #2a5298;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.header-schedule-tag {
+  font-size: 11.5px;
+  color: #10b981;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .content-header-modern h1 {
-  font-size: 20px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: 24px;
+  font-weight: 800;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #0f172a;
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .subtitle-modern {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
+  color: #64748b;
+  font-size: 13.5px;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .stats-badge-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border-radius: 40px;
-  font-size: 14px;
+  padding: 10px 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #2a5298;
+  color: #1e293b;
 }
 
-/* Stats Bar */
+.text-gold {
+  color: #f59e0b;
+}
+
+.btn-primary-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(42, 82, 152, 0.25);
+  transition: all 0.2s;
+}
+
+.btn-primary-header:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(42, 82, 152, 0.35);
+}
+
+/* 📊 Stats Bar */
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  gap: 14px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  transition: all 0.25s ease;
   cursor: pointer;
 }
 
-.stat-card:last-child:hover {
+.stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
 }
 
-.stat-card:active {
-  transform: scale(0.97);
+.stat-card.card-active {
+  border-color: #2a5298;
+  background: #f8faff;
+  box-shadow: 0 4px 14px rgba(42, 82, 152, 0.1);
 }
 
-.stat-card i {
-  font-size: 32px;
-  color: #2a5298;
+.stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
+
+.stat-icon-wrap.blue { background: #eff6ff; color: #2563eb; }
+.stat-icon-wrap.indigo { background: #eef2ff; color: #4f46e5; }
+.stat-icon-wrap.amber { background: #fef3c7; color: #d97706; }
+.stat-icon-wrap.green { background: #ecfdf5; color: #059669; }
 
 .stat-info {
   display: flex;
@@ -1068,163 +1400,329 @@ export default {
 }
 
 .stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a2e;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
 }
 
-.action-stat {
-  font-size: 20px;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.max-rate {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 600;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
 }
 
-/* Tabs */
-.tabs-modern {
+.add-stat-card {
+  border-style: dashed;
+  background: #fafcff;
+}
+
+.action-stat {
+  font-size: 16px;
+  color: #059669;
+}
+
+/* 🗂️ TABS BAR (Clean Segmented Architecture) */
+.etp-tabs-bar-container {
   display: flex;
-  gap: 12px;
-  margin-bottom: 28px;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 0;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eef2f6;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.etp-segmented-tabs {
+  display: inline-flex;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 5px;
+  gap: 6px;
 }
 
 .tab-btn {
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
   border: none;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #6b7280;
+  background: transparent;
+  color: #64748b;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  border-radius: 12px 12px 0 0;
+  transition: all 0.25s ease;
 }
 
 .tab-btn i {
-  margin-right: 8px;
+  font-size: 14px;
+}
+
+.tab-btn:hover:not(.active) {
+  color: #0f172a;
 }
 
 .tab-btn.active {
+  background: #ffffff;
   color: #2a5298;
+  box-shadow: 0 4px 14px rgba(42, 82, 152, 0.12);
+}
+
+.tab-badge-counter {
+  font-size: 11px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 2px 7px;
+  border-radius: 999px;
+  transition: all 0.2s;
+}
+
+.tab-btn.active .tab-badge-counter {
   background: #eef2ff;
-  border-bottom: 3px solid #2a5298;
+  color: #2a5298;
 }
 
-.tab-text {
-  display: inline;
-}
-
-/* Filter Section */
-.filter-section {
+.tab-bar-right-info {
   display: flex;
-  gap: 16px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+/* 🔍 Filter & Search Toolbar (Card) */
+.filter-toolbar-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px 20px;
   margin-bottom: 24px;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .search-wrapper {
   position: relative;
-  flex: 1;
-  max-width: 400px;
+  width: 340px;
+  max-width: 100%;
 }
 
-.search-wrapper i {
+.search-icon {
   position: absolute;
-  left: 16px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: #94a3b8;
+  font-size: 13.5px;
+  pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 16px 12px 42px;
-  border: 1px solid #e5e7eb;
+  height: 42px;
+  box-sizing: border-box !important;
+  padding: 0 36px 0 38px;
+  border: 1.5px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 14px;
-  background: #f9fafb;
-  transition: all 0.2s;
+  font-size: 13.5px;
+  background: #f8fafc;
+  outline: none;
+  transition: all 0.2s ease;
+  color: #0f172a;
 }
 
 .search-input:focus {
-  outline: none;
   border-color: #2a5298;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.12);
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.btn-clear-search {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e2e8f0;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 10px;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-search:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.select-month-wrapper {
+  position: relative;
+  width: 160px;
+}
+
+.select-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #2a5298;
+  font-size: 12.5px;
+  pointer-events: none;
 }
 
 .month-select {
-  padding: 12px 16px;
-  border: 1px solid #e5e7eb;
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box !important;
+  padding: 0 34px 0 36px;
+  border: 1.5px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 14px;
-  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  background: #f8fafc;
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
 }
 
-/* Section Title */
+.month-select:focus {
+  border-color: #2a5298;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.12);
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.results-counter-pill {
+  height: 42px;
+  box-sizing: border-box !important;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0 16px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.btn-add-inline {
+  height: 42px;
+  box-sizing: border-box !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(42, 82, 152, 0.22);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-add-inline:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(42, 82, 152, 0.32);
+}
+
+/* 📋 Section Title */
 .section-title-modern {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
-  font-weight: 600;
-  font-size: 16px;
-  color: #1a1a2e;
   justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .title-left {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
 }
 
-.record-count-mobile {
+.section-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   background: #2a5298;
-  color: white;
-  padding: 2px 10px;
-  border-radius: 12px;
+}
+
+.section-indicator-dot.trophy {
+  background: #f59e0b;
+}
+
+.archive-date-hint {
   font-size: 12px;
-  margin-left: 4px;
-}
-
-.btn-add-small {
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  border: none;
-  padding: 6px 14px;
-  border-radius: 30px;
-  color: white;
-  font-size: 13px;
+  color: #94a3b8;
   font-weight: 500;
-  cursor: pointer;
-  transition: 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
-.btn-add-small:active {
-  transform: scale(0.95);
-}
-
-.btn-text {
-  display: inline;
-}
-
-/* Sessions Grid */
+/* 📦 Sessions Grid */
 .sessions-grid-premium {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
   gap: 24px;
   margin-bottom: 40px;
 }
@@ -1232,292 +1730,297 @@ export default {
 .session-card-premium {
   position: relative;
   background: white;
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-}
-
-.session-card-premium.mobile-card {
-  border-radius: 16px;
+  transition: all 0.25s ease;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
 }
 
 .session-card-premium:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px -8px rgba(42, 82, 152, 0.12);
+  border-color: #cbd5e1;
 }
 
 .card-accent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
+  height: 5px;
+  width: 100%;
 }
 
-.session-header {
+.session-card-header {
   display: flex;
-  padding: 18px;
-  gap: 14px;
+  justify-content: space-between;
   align-items: flex-start;
-  background: #fafbfc;
-  border-bottom: 1px solid #eef2f6;
+  padding: 18px 20px 14px;
+  gap: 12px;
 }
 
-.session-header.mobile-header {
-  flex-direction: column;
-  align-items: stretch;
-  padding: 14px;
+.session-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
 }
 
 .session-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  color: #2a5298;
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
 .session-title-wrap {
   flex: 1;
+  min-width: 0;
 }
 
 .session-title-wrap h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 6px;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .session-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 11px;
-  color: #6c757d;
+  gap: 8px;
 }
 
-.session-meta i {
-  margin-right: 4px;
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
+
+.meta-tag.presenter { background: #eef2ff; color: #2a5298; }
+.meta-tag.date { background: #f1f5f9; color: #475569; }
+.meta-tag.duration { background: #fef3c7; color: #b45309; }
 
 .session-actions {
   display: flex;
   gap: 6px;
 }
 
-.session-actions .action-btn:active {
-  transform: scale(0.9);
-}
-
 .action-btn {
-  background: transparent;
-  border: none;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: 0.2s;
-  font-size: 16px;
-}
-
-.edit-btn { color: #f59e0b; }
-.edit-btn:hover { background: #fed7aa; }
-.delete-btn { color: #ef4444; }
-.delete-btn:hover { background: #fee2e2; }
-
-/* Key Points */
-.key-points {
-  padding: 14px 18px;
-  background: #f0fdf4;
-  border-bottom: 1px solid #dcfce7;
-}
-
-.points-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #166534;
-  margin-bottom: 8px;
-}
-
-.key-points-content {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.key-points-text {
-  font-family: inherit;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #14532d;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin: 0;
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-
-.key-points-text.collapsed {
-  max-height: calc(1.5em * 3 + 12px);
-  overflow: hidden;
-  position: relative;
-}
-
-.key-points-text.collapsed::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 30px;
-  background: linear-gradient(to bottom, transparent, #f0fdf4);
-  pointer-events: none;
-}
-
-.read-more-btn {
-  background: transparent;
-  border: none;
-  color: #2a5298;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 16px;
-  transition: all 0.2s;
-  width: fit-content;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.read-more-btn:active {
-  transform: scale(0.95);
-}
+.edit-btn { color: #2563eb; }
+.edit-btn:hover { background: #eff6ff; border-color: #bfdbfe; }
 
-/* Rating Section */
-.rating-section {
-  padding: 14px 18px;
-  background: #fffbeb;
-  border-bottom: 1px solid #fde68a;
-}
+.delete-btn { color: #ef4444; }
+.delete-btn:hover { background: #fee2e2; border-color: #fecaca; }
 
-.rating-section.mobile-rating {
+/* Key Points Box */
+.key-points-wrapper {
+  margin: 0 20px 14px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  border-radius: 14px;
   padding: 12px 14px;
 }
 
-.rating-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #b45309;
-  margin-bottom: 10px;
-}
-
-.rating-input {
+.points-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
 }
 
-.rating-input.mobile-rating-input {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
+.points-header i { color: #f59e0b; }
+
+.key-points-text {
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.stars-input {
+.key-points-text.collapsed {
+  max-height: 60px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.read-more-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Rating Section Card */
+.rating-section-card {
+  margin: 0 20px 14px;
+  background: #fafcff;
+  border: 1px solid #e0e7ff;
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.rating-header-row {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.rating-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
+.rating-submitted-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.rating-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stars-input-wrap {
+  display: flex;
+  gap: 4px;
+}
+
 .star {
+  font-size: 20px;
+  color: #cbd5e1;
   cursor: pointer;
-  font-size: 22px;
-  color: #d1d5db;
-  transition: 0.2s;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.star:hover:not(.disabled) {
+  transform: scale(1.15);
+  color: #fbbf24;
 }
 
 .star.filled {
   color: #fbbf24;
 }
 
-.star:active {
-  transform: scale(0.9);
+.star.disabled {
+  cursor: default;
 }
 
 .btn-submit-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
   background: linear-gradient(135deg, #10b981, #059669);
-  border: none;
-  padding: 6px 16px;
-  border-radius: 30px;
   color: white;
-  font-size: 12px;
-  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-.btn-submit-rating:active {
-  transform: scale(0.95);
+.btn-submit-rating:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
 }
 
-.rating-submitted-badge {
-  font-size: 12px;
-  color: #10b981;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Individual Ratings List */
+/* Reviews Drawer */
 .ratings-list-section {
-  padding: 12px 18px;
+  margin: 0 20px 14px;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
   background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  overflow: hidden;
 }
 
-.ratings-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 10px;
+.ratings-label-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #f1f5f9;
+}
+
+.reviews-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
 }
 
-.ratings-label .fa-chevron-down {
-  transition: transform 0.3s ease;
-  margin-left: auto;
+.reviews-toggle-icon i {
+  font-size: 11px;
+  color: #64748b;
+  transition: transform 0.2s ease;
 }
 
-.ratings-label .fa-chevron-down.rotated {
+.reviews-toggle-icon i.rotated {
   transform: rotate(180deg);
 }
 
-.ratings-count-badge {
-  background: #cbd5e1;
-  color: #1e293b;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
 .ratings-list {
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 300px;
+  gap: 8px;
+  max-height: 220px;
   overflow-y: auto;
-  transition: all 0.3s ease;
 }
 
 .ratings-list.ratings-hidden {
@@ -1526,20 +2029,13 @@ export default {
 
 .rating-item {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 10px 14px;
+  align-items: center;
+  padding: 6px 10px;
   background: white;
-  border-radius: 12px;
   border: 1px solid #e2e8f0;
-  transition: all 0.2s;
-}
-
-.rating-item.mobile-rating-item {
-  flex-direction: column;
-  align-items: flex-start;
+  border-radius: 8px;
+  font-size: 12px;
 }
 
 .rating-item.current-user-rating {
@@ -1550,36 +2046,29 @@ export default {
 .rating-user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 140px;
-}
-
-.rating-user-info i {
-  color: #2a5298;
-  font-size: 16px;
-}
-
-.rating-user-name {
-  font-size: 13px;
+  gap: 6px;
   font-weight: 600;
   color: #1e293b;
 }
 
 .rating-user-badge {
-  font-size: 11px;
-  color: #3b82f6;
-  font-weight: 500;
+  font-size: 9.5px;
+  font-weight: 700;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
 .rating-stars-display {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .rating-stars-display i {
-  font-size: 14px;
-  color: #d1d5db;
+  font-size: 10px;
+  color: #cbd5e1;
 }
 
 .rating-stars-display i.filled {
@@ -1587,58 +2076,47 @@ export default {
 }
 
 .rating-value-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #2a5298;
-  margin-left: 6px;
-}
-
-.rating-date {
-  font-size: 10px;
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Average Rating */
-.avg-rating {
-  padding: 10px 18px;
-  background: #f9fafb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.avg-rating.mobile-avg {
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-start;
-}
-
-.avg-rating-stars {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.rating-value {
+  font-size: 11px;
   font-weight: 700;
   color: #2a5298;
-}
-
-.star-rating-display {
-  display: inline-flex;
-  gap: 2px;
   margin-left: 4px;
 }
 
-.star-rating-display i {
+.rating-date {
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+/* Card Footer */
+.session-card-footer {
+  margin-top: auto;
+  padding: 12px 20px;
+  background: #fbfcfd;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.avg-rating-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  color: #d1d5db;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.avg-rating-pill i { color: #f59e0b; }
+
+.star-rating-display i {
+  font-size: 10px;
+  color: #cbd5e1;
 }
 
 .star-rating-display i.filled {
@@ -1647,147 +2125,213 @@ export default {
 
 .rating-count {
   font-size: 11px;
-  color: #6b7280;
+  color: #64748b;
 }
 
-/* Session Footer */
-.session-footer {
-  padding: 10px 18px;
-  display: flex;
-  gap: 16px;
-  background: #f9fafb;
-  flex-wrap: wrap;
+.avg-rating-pill.no-rating {
+  color: #94a3b8;
 }
 
-.session-footer.mobile-footer {
-  padding: 8px 14px;
-  gap: 10px;
+.footer-presenter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
 }
 
-.badge-duration, .badge-presenter {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 30px;
-  background: #eef2ff;
-  color: #1e40af;
-}
-
-/* Leaderboard */
-.leaderboard-section {
-  margin-top: 16px;
-}
-
+/* ═══════════════════════════════════════════════════════ */
+/* 🏆 LEADERBOARD STYLES                                  */
+/* ═══════════════════════════════════════════════════════ */
 .leaderboard-table-wrapper {
-  overflow-x: auto;
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
-  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
 }
 
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  text-align: left;
 }
 
 .leaderboard-table th {
-  text-align: left;
-  padding: 16px;
+  padding: 14px 18px;
   background: #f8fafc;
-  font-weight: 600;
-  font-size: 13px;
-  color: #1f2937;
-  border-bottom: 2px solid #e5e7eb;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .leaderboard-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13.5px;
+  color: #1e293b;
+}
+
+.leaderboard-table tr:hover td {
+  background: #f8faff;
+}
+
+.th-rank { width: 90px; }
+
+.rank-cell {
+  font-weight: 700;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.rank-badge.gold { background: #fef3c7; color: #92400e; }
+.rank-badge.silver { background: #f1f5f9; color: #475569; }
+.rank-badge.bronze { background: #fed7aa; color: #9a3412; }
+
+.rank-number {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.presenter-cell-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.presenter-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.presenter-cell-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.stat-bubble {
+  font-size: 12px;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.stat-bubble.gray {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.rating-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avg-rating-value {
+  font-weight: 800;
+  color: #2a5298;
   font-size: 14px;
 }
 
-/* Leaderboard Mobile Cards */
+.stars-mini i {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.stars-mini i.filled {
+  color: #fbbf24;
+}
+
+.progress-cell-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  max-width: 140px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 999px;
+}
+
+.progress-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  min-width: 32px;
+}
+
+/* Mobile Leaderboard Cards */
 .leaderboard-cards {
   display: none;
   flex-direction: column;
-  gap: 16px;
-  padding: 4px;
+  gap: 12px;
+  padding: 12px;
 }
 
 .leaderboard-card {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.card-rank {
-  flex-shrink: 0;
-}
-
-.rank-badge {
-  font-size: 28px;
-}
-
-.rank-number {
-  font-weight: 600;
-  color: #6b7280;
-  font-size: 20px;
-}
-
-.card-content {
-  flex: 1;
-}
-
-.presenter-name {
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.presenter-name i {
-  margin-right: 6px;
-  color: #2a5298;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
 }
 
 .card-stats {
   display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin: 8px 0;
 }
 
 .stat-chip {
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
-  background: #f8fafc;
-  padding: 4px 10px;
-  border-radius: 8px;
   text-align: center;
 }
 
-.stat-label {
-  font-size: 9px;
-  color: #6b7280;
-  text-transform: uppercase;
-}
-
-.stat-number {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.stat-number.rating {
-  color: #2a5298;
-}
+.stat-chip .stat-label { font-size: 9px; }
+.stat-chip .stat-number { font-size: 12.5px; font-weight: 700; }
+.stat-chip .stat-number.rating { color: #2a5298; }
 
 .progress-bar-mini {
-  width: 100%;
-  height: 6px;
-  background: #e5e7eb;
+  height: 5px;
+  background: #e2e8f0;
   border-radius: 3px;
   overflow: hidden;
   margin-bottom: 6px;
@@ -1795,414 +2339,604 @@ export default {
 
 .progress-fill-mini {
   height: 100%;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border-radius: 3px;
-  transition: width 0.3s;
-}
-
-.stars-mini-display {
-  display: flex;
-  gap: 2px;
+  background: #10b981;
 }
 
 .stars-mini-display i {
-  font-size: 12px;
-  color: #d1d5db;
+  font-size: 11px;
+  color: #cbd5e1;
 }
 
-.stars-mini-display i.filled {
-  color: #fbbf24;
-}
+.stars-mini-display i.filled { color: #fbbf24; }
 
-.rank-cell {
-  width: 70px;
-}
-
-.rank-badge.gold {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.rank-badge.silver {
-  background: #e5e7eb;
-  color: #4b5563;
-}
-
-.rank-badge.bronze {
-  background: #fed7aa;
-  color: #9a3412;
-}
-
-.presenter-cell i {
-  margin-right: 8px;
-  color: #2a5298;
-}
-
-.rating-cell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.avg-rating-value {
-  font-weight: 700;
-  color: #2a5298;
-}
-
-.stars-mini {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.stars-mini i {
-  font-size: 12px;
-  color: #d1d5db;
-}
-
-.stars-mini i.filled {
-  color: #fbbf24;
-}
-
-.progress-bar {
-  width: 100px;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border-radius: 4px;
-  transition: width 0.3s;
-}
-
-/* Modal Styles */
+/* ═══════════════════════════════════════════════════════ */
+/* 📝 PROFESSIONAL MODAL FORM STYLES                     */
+/* ═══════════════════════════════════════════════════════ */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-}
-
-.modal-container-premium {
-  background: white;
-  width: 90%;
-  max-width: 650px;
-  border-radius: 32px;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-}
-
-.modal-container-premium.mobile-modal {
-  max-width: 95%;
-  border-radius: 24px;
-}
-
-.modal-container-premium.modal-form {
-  max-width: 700px;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.mobile-modal .modal-header {
-  padding: 16px 20px;
-}
-
-.modal-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0;
-  flex: 1;
-  margin-left: 12px;
-}
-
-.mobile-modal .modal-header h2 {
-  font-size: 17px;
-}
-
-.modal-icon {
-  font-size: 28px;
-  color: #2a5298;
-}
-
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: 0.2s;
-}
-
-.close-modal:active {
-  transform: rotate(90deg);
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.mobile-modal .modal-body {
   padding: 16px;
 }
 
-.form-row-grid {
+.modal-container-premium {
+  background: #ffffff;
+  width: 100%;
+  max-width: 680px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+/* Ensure box-sizing border-box across the entire modal and all form controls */
+.modal-container-premium,
+.modal-container-premium *,
+.modal-container-premium *::before,
+.modal-container-premium *::after {
+  box-sizing: border-box;
+}
+
+.modal-header-pro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 26px;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modal-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #2a5298;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.modal-icon-badge.danger {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.modal-title.danger {
+  color: #b91c1c;
+}
+
+.modal-subtitle {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+.close-modal-pro {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.close-modal-pro:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.modal-body-pro {
+  padding: 24px 28px;
+  overflow-y: auto;
+}
+
+.pro-session-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* 2-Column Grid Row with safe minimum width and generous gap */
+.form-grid-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
 }
 
-.form-row-grid.mobile-grid {
-  grid-template-columns: 1fr;
-  gap: 0;
+.form-group-pro {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
 }
 
-.form-group {
-  margin-bottom: 18px;
+.form-group-pro.full-width {
+  width: 100%;
 }
 
-.mobile-grid .form-group {
-  margin-bottom: 14px;
+.input-wrap-pro,
+.select-wrap-pro {
+  width: 100%;
+  min-width: 0;
+  position: relative;
 }
 
-.form-group label {
+.field-label-pro {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+  letter-spacing: -0.1px;
+}
+
+.field-label-pro i {
+  color: #2a5298;
+  font-size: 12.5px;
+}
+
+.required-star {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.field-label-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.hint-badge-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.form-control-pro {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box !important;
+  padding: 11px 15px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+}
+
+.form-control-pro:focus {
+  background: white;
+  border-color: #2a5298;
+  box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.12);
+}
+
+.form-control-pro::placeholder {
+  color: #94a3b8;
+}
+
+.select-field-pro {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.textarea-pro {
+  resize: vertical;
+  min-height: 95px;
+  line-height: 1.55;
+}
+
+.form-hint-pro {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 6px;
+  display: block;
+}
+
+/* Quick Duration Presets */
+.duration-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.preset-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.preset-pill {
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.preset-pill:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.preset-pill.active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+/* Color Picker Palette */
+.color-picker-palette-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 14px;
+  flex-wrap: wrap;
+  padding-top: 4px;
 }
 
-.mobile-modal .form-group label {
-  font-size: 13px;
-}
-
-.form-group input, 
-.form-group textarea,
-.employee-select {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 14px;
-  font-family: inherit;
-  transition: 0.2s;
-  font-size: 14px;
-}
-
-.mobile-modal .form-group input,
-.mobile-modal .form-group textarea,
-.mobile-modal .employee-select {
-  font-size: 16px;
-  padding: 10px 12px;
-}
-
-.form-group textarea {
-  resize: vertical;
-  line-height: 1.5;
-}
-
-.form-group input:focus, 
-.form-group textarea:focus,
-.employee-select:focus {
-  outline: none;
-  border-color: #2a5298;
-  box-shadow: 0 0 0 2px rgba(42, 82, 152, 0.2);
-}
-
-.form-hint {
-  display: block;
-  font-size: 11px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-.color-picker {
-  height: 48px;
-  padding: 4px;
-}
-
-.employee-select {
-  background-color: white;
+.color-swatch-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 2px solid transparent;
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 11px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-.modal-actions {
+.color-swatch-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-swatch-btn.swatch-active {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 2px white, 0 2px 6px rgba(0, 0, 0, 0.25);
+  transform: scale(1.05);
+}
+
+.custom-color-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px 3px 4px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.custom-color-input {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+}
+
+.custom-color-hex {
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 700;
+  color: #475569;
+}
+
+/* Modal Actions Footer */
+.modal-actions-pro {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 6px;
+  padding-top: 20px;
+  border-top: 1px solid #eef2f6;
 }
 
-.modal-actions.mobile-actions {
-  flex-direction: column;
-}
-
-.modal-actions.mobile-actions button {
-  width: 100%;
-  justify-content: center;
-  padding: 14px;
-}
-
-.btn-primary, .btn-secondary, .btn-danger {
-  padding: 10px 24px;
-  border-radius: 40px;
-  font-weight: 500;
+.btn-cancel-pro {
+  padding: 11px 22px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
-  border: none;
-  transition: 0.2s;
+  transition: all 0.2s;
 }
 
-.btn-primary {
+.btn-cancel-pro:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-submit-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 26px;
   background: linear-gradient(135deg, #1e3c72, #2a5298);
   color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(42, 82, 152, 0.25);
+  transition: all 0.2s;
 }
 
-.btn-primary:active {
-  transform: scale(0.97);
+.btn-submit-pro:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(42, 82, 152, 0.35);
 }
 
-.btn-secondary {
-  background: #e2e8f0;
-  color: #1e293b;
+.btn-submit-pro:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.btn-secondary:active {
-  transform: scale(0.97);
+/* Delete Modal Styling */
+.delete-modal-pro {
+  max-width: 500px;
 }
 
-.btn-danger {
+.delete-warning-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.delete-warning-box p {
+  margin: 0;
+  font-size: 13.5px;
+  color: #7f1d1d;
+}
+
+.delete-topic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #fca5a5;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #991b1b;
+  margin: 10px 0;
+  word-break: break-word;
+}
+
+.delete-warning-note {
+  font-size: 11.5px !important;
+  color: #b91c1c !important;
+}
+
+.btn-danger-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
   background: #ef4444;
   color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.btn-danger:active {
-  transform: scale(0.97);
+.btn-danger-pro:hover:not(:disabled) {
+  background: #dc2626;
 }
 
+/* Empty & Loading States */
 .loading-state {
   text-align: center;
   padding: 60px 20px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .loading-state i {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 36px;
+  color: #2a5298;
+  margin-bottom: 12px;
 }
 
 .empty-state-premium {
   text-align: center;
   padding: 60px 20px;
-  color: #9ca3af;
-  background: #fafbfc;
-  border-radius: 28px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 20px;
 }
 
-.empty-state-premium.empty-mobile {
-  padding: 40px 16px;
+.empty-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #94a3b8;
+  margin-bottom: 14px;
 }
 
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+.empty-state-premium h4 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px;
 }
 
-.empty-mobile .empty-state-premium i {
-  font-size: 48px;
+.empty-state-premium p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 18px;
 }
 
 .btn-primary-empty {
-  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
   background: linear-gradient(135deg, #1e3c72, #2a5298);
-  border: none;
-  padding: 10px 24px;
-  border-radius: 40px;
   color: white;
-  font-weight: 500;
+  border: none;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .main-content { flex-direction: column; padding: 12px; }
-  .session-board-premium { padding: 16px; border-radius: 20px; }
-  .sessions-grid-premium { grid-template-columns: 1fr; gap: 16px; }
-  .form-row-grid { grid-template-columns: 1fr; gap: 0; }
-  .stats-bar { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .filter-section { flex-direction: column; gap: 10px; }
-  .search-wrapper { max-width: 100%; }
-  
-  .mobile-header { display: flex; }
-  .content-header-modern { display: none; }
-  
-  .leaderboard-table { display: none; }
-  .leaderboard-cards { display: flex; }
-  
-  .tab-text { display: inline; }
-  .btn-text { display: none; }
-  .btn-add-small { padding: 6px 12px; }
-  
-  .modal-container-premium { width: 95%; }
-  .modal-header h2 { font-size: 18px; }
-  .rating-item { flex-direction: column; align-items: flex-start; }
-  .rating-user-info { min-width: auto; }
+/* 📱 Responsive Adjustments */
+@media (max-width: 1024px) {
+  .sessions-grid-premium {
+    grid-template-columns: 1fr;
+  }
 }
 
-@media (max-width: 480px) {
-  .main-content { padding: 8px; }
-  .session-board-premium { padding: 12px; border-radius: 16px; }
-  .mobile-title { font-size: 16px; }
-  .mobile-add-btn { width: 32px; height: 32px; font-size: 14px; }
-  .stats-bar { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .stat-card { padding: 12px; flex-direction: column; text-align: center; gap: 6px; }
-  .stat-card i { font-size: 24px; }
-  .stat-value { font-size: 22px; }
-  .action-stat { font-size: 16px; }
-  .stat-label { font-size: 10px; }
-  
-  .session-card-premium.mobile-card { border-radius: 14px; }
-  .session-header.mobile-header { padding: 12px; }
-  .session-title-wrap h3 { font-size: 15px; }
-  
-  .rating-section.mobile-rating { padding: 10px 12px; }
-  .rating-input.mobile-rating-input { gap: 8px; }
-  .star { font-size: 18px; }
-  
-  .rating-item.mobile-rating-item { padding: 8px 12px; }
-  .leaderboard-card { padding: 12px; }
-  .card-rank .rank-badge { font-size: 22px; }
-  .presenter-name { font-size: 13px; }
-  .stat-chip { padding: 2px 8px; }
-  .stat-number { font-size: 12px; }
-  
-  .modal-header h2 { font-size: 16px; }
-  .modal-icon { font-size: 24px; }
-  .modal-body { padding: 12px; }
-  
-  .empty-state-premium i { font-size: 40px; }
-  .empty-state-premium h4 { font-size: 15px; }
-  .search-input { font-size: 15px; padding: 10px 12px 10px 36px; }
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .session-board-premium {
+    padding: 16px 14px;
+    border-radius: 20px;
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+
+  .content-header-modern {
+    display: none;
+  }
+
+  .stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .form-grid-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .filter-toolbar-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .toolbar-left {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .search-wrapper {
+    width: 100%;
+  }
+
+  .select-month-wrapper {
+    width: 100%;
+  }
+
+  .month-select {
+    width: 100%;
+  }
+
+  .toolbar-right {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .leaderboard-table-wrapper .table-responsive-container {
+    display: none;
+  }
+
+  .leaderboard-cards {
+    display: flex;
+  }
+
+  .modal-actions-pro.mobile-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions-pro.mobile-actions button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>

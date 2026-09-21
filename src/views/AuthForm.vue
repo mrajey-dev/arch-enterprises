@@ -334,6 +334,7 @@ export default {
       localStorage.setItem('authTab', 'admin');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      window.dispatchEvent(new CustomEvent('auth-change', { detail: null }));
       const savedEmail = localStorage.getItem('rememberedEmail');
       if (savedEmail) {
         this.loginForm.email = savedEmail;
@@ -438,6 +439,7 @@ export default {
         localStorage.setItem('loginTime', Date.now());
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('authTab', this.isEmployeeLogin ? 'employee' : 'admin');
+        window.dispatchEvent(new CustomEvent('auth-change', { detail: response.data.user }));
         resetActivityTimer();
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
