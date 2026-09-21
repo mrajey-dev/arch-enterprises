@@ -530,6 +530,9 @@
           </div>
         </div>
 
+        <!-- 🌟 Colleague Social Profiles Showcase -->
+        <ColleagueSocials :currentUserId="effectiveUser.id" />
+
       </section>
     </div>
 
@@ -990,11 +993,12 @@
 import axios from 'axios'
 import Sidebar from './components/Sidebar.vue';
 import DataChart from './components/DataChart.vue';
+import ColleagueSocials from './components/ColleagueSocials.vue';
 import { toastSuccess, toastError, toastInfo } from "@/utils/toast.js";
 
 export default {
   name: 'Dashboard',
-  components: { Sidebar, DataChart },
+  components: { Sidebar, DataChart, ColleagueSocials },
   data() {
     return {
       showDownloadMenu: false,

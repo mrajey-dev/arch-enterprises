@@ -27,8 +27,9 @@
               <div class="profile-avatar-wrapper" @click="editMode = true">
                 <div class="profile-avatar">
                   <img 
-                    v-if="profileImageUrl" 
+                    v-if="profileImageUrl && !imageFailed" 
                     :src="profileImageUrl" 
+                    @error="imageFailed = true"
                     alt="Profile Photo"
                     class="profile-photo"
                   />
@@ -120,8 +121,9 @@
                   <div class="profile-upload-container">
                     <div class="profile-preview">
                       <img 
-                        v-if="profilePreview || profileImageUrl" 
+                        v-if="profilePreview || (profileImageUrl && !imageFailed)" 
                         :src="profilePreview || profileImageUrl" 
+                        @error="handleImgError"
                         alt="Profile Preview"
                         class="profile-preview-img"
                       />
@@ -299,6 +301,9 @@ export default {
       editMode: false,
       profileImageFile: null,
       profilePreview: null,
+      removePhotoFlag: false,
+      cacheBuster: Date.now(),
+      imageFailed: false,
       form: {
         mobile: '',
         instagram: '',
@@ -316,10 +321,12 @@ export default {
 
   computed: {
     profileImageUrl() {
-      if (this.user?.profile_photo) {
-        return `https://employees.archenterprises.co.in/backend/storage/app/public/${this.user.profile_photo}`
+      if (!this.user || !this.user.profile_photo) return null
+      const photo = this.user.profile_photo
+      if (typeof photo === 'string' && (photo.startsWith('http://') || photo.startsWith('https://'))) {
+        return photo
       }
-      return null
+      return `https://employees.archenterprises.co.in/backend/public/storage/${photo}?v=${this.cacheBuster}`
     }
   },
 
@@ -391,13 +398,15 @@ export default {
         return
       }
 
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        toastWarning('Image size should be less than 2MB')
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toastWarning('Image size should be less than 5MB')
         return
       }
 
       this.profileImageFile = file
+      this.removePhotoFlag = false
+      this.imageFailed = false
       const reader = new FileReader()
       reader.onload = (event) => {
         this.profilePreview = event.target.result
@@ -405,10 +414,21 @@ export default {
       reader.readAsDataURL(file)
     },
 
+    handleImgError() {
+      if (!this.profilePreview) {
+        this.imageFailed = true
+      }
+    },
+
     removePhoto() {
       this.profileImageFile = null
       this.profilePreview = null
       this.form.profile_photo = null
+      if (this.user) {
+        this.user.profile_photo = null
+      }
+      this.removePhotoFlag = true
+      this.imageFailed = false
     },
 
     checkIfMobile() {
@@ -426,6 +446,8 @@ export default {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
         this.user = res.data.data
+        this.cacheBuster = Date.now()
+        this.imageFailed = false
         this.form = {
           ...this.user,
           instagram: this.user.instagram || '',
@@ -445,6 +467,8 @@ export default {
 
     cancelEdit() {
       this.editMode = false
+      this.removePhotoFlag = false
+      this.imageFailed = false
       this.form = {
         ...this.user,
         instagram: this.user.instagram || '',
@@ -459,6 +483,7 @@ export default {
       this.profileImageFile = null
       this.profilePreview = null
       this.passwordError = ''
+      this.fetchUserProfile()
     },
 
   async updateProfile() {
@@ -496,7 +521,6 @@ export default {
             if (!isNaN(dateValue.getTime())) {
               const formattedDate = dateValue.toISOString().split('T')[0]
               formData.append(key, formattedDate)
-              console.log('Appending dateofbirth:', formattedDate) // Debug log
             } else {
               formData.append(key, this.form[key])
             }
@@ -507,15 +531,12 @@ export default {
       }
     })
 
-    // Add profile photo if changed
+    // Add profile photo if changed or removal flag
     if (this.profileImageFile) {
       formData.append('profile_photo', this.profileImageFile)
-    }
-
-    // Debug: Log all form data entries
-    console.log('FormData entries being sent:')
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ': ' + pair[1])
+      formData.append('photo', this.profileImageFile)
+    } else if (this.removePhotoFlag) {
+      formData.append('remove_photo', '1')
     }
 
     const response = await axios.post('/api/update-profile', formData, {
@@ -525,8 +546,32 @@ export default {
       }
     })
 
-    // Check response for any issues
-    console.log('Update profile response:', response.data)
+    const updatedUser = response.data?.user || this.user
+    this.cacheBuster = Date.now()
+
+    if (updatedUser) {
+      this.user = { ...this.user, ...updatedUser }
+
+      try {
+        const storedUserStr = localStorage.getItem('user')
+        const storedUser = storedUserStr ? JSON.parse(storedUserStr) : {}
+        const mergedUser = { ...storedUser, ...updatedUser }
+        localStorage.setItem('user', JSON.stringify(mergedUser))
+
+        if (updatedUser.id) {
+          if (updatedUser.profile_photo) {
+            const freshPhotoUrl = `https://employees.archenterprises.co.in/backend/public/storage/${updatedUser.profile_photo}?v=${this.cacheBuster}`
+            localStorage.setItem(`profilePhoto_${updatedUser.id}`, freshPhotoUrl)
+          } else if (this.removePhotoFlag) {
+            localStorage.removeItem(`profilePhoto_${updatedUser.id}`)
+          }
+        }
+
+        window.dispatchEvent(new CustomEvent('auth-change', { detail: mergedUser }))
+      } catch (storageErr) {
+        console.error('Failed to sync auth in storage:', storageErr)
+      }
+    }
 
     if (this.form.current_password && this.form.new_password) {
       await this.changePassword()
@@ -535,11 +580,13 @@ export default {
     this.editMode = false
     this.profileImageFile = null
     this.profilePreview = null
-    await this.fetchUserProfile() // Added await to ensure profile is refreshed
+    this.removePhotoFlag = false
+    this.imageFailed = false
+    await this.fetchUserProfile()
     toastSuccess('Profile updated successfully!')
   } catch (err) {
     console.error('Profile update failed:', err)
-    console.error('Error response:', err.response?.data) // Log detailed error
+    console.error('Error response:', err.response?.data)
     toastError('Failed to update profile')
   }
 },

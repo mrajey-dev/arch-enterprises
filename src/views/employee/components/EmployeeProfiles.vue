@@ -103,37 +103,68 @@ export default {
       e.target.src = "https://cdn-icons-png.flaticon.com/512/219/219983.png";
     },
     async fetchUsers() {
-      const res = await axios.get(
-        "https://employees.archenterprises.co.in/api/api/users",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          "https://employees.archenterprises.co.in/api/api/users",
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
           }
-        }
-      );
+        );
 
-      this.users = res.data
-        .map(user => {
-          const storedPhoto = localStorage.getItem(`profilePhoto_${user.id}`);
-          return {
-            ...user,
-            finalPhoto: storedPhoto
-              ? storedPhoto
-              : user.profile_photo
-              ? `https://employees.archenterprises.co.in/${user.profile_photo}?v=${Date.now()}`
-              : null
-          };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name));
+        let myId = null;
+        try {
+          const stored = localStorage.getItem('user');
+          if (stored) myId = JSON.parse(stored)?.id;
+        } catch (e) {}
 
-      this.startAutoScroll();
+        const list = (res.data || [])
+          .filter(u => !myId || Number(u.id) !== Number(myId))
+          .map(user => {
+            const storedPhoto = localStorage.getItem(`profilePhoto_${user.id}`);
+            let finalPhoto = storedPhoto || user.profile_photo || null;
+            if (finalPhoto && !finalPhoto.startsWith('http') && !finalPhoto.startsWith('data:')) {
+              if (finalPhoto.includes('/')) {
+                finalPhoto = `https://employees.archenterprises.co.in/backend/public/storage/${finalPhoto}`;
+              } else {
+                finalPhoto = `https://employees.archenterprises.co.in/${finalPhoto}`;
+              }
+            }
+            return {
+              ...user,
+              finalPhoto,
+              instagram: this.formatUrl(user.instagram),
+              linkedin: this.formatUrl(user.linkedin),
+              youtube: this.formatUrl(user.youtube),
+              portfolio: this.formatUrl(user.portfolio)
+            };
+          })
+          .sort((a, b) => {
+            const aHas = a.instagram || a.linkedin || a.youtube || a.portfolio ? 1 : 0;
+            const bHas = b.instagram || b.linkedin || b.youtube || b.portfolio ? 1 : 0;
+            if (aHas !== bHas) return bHas - aHas;
+            return (a.name || '').localeCompare(b.name || '');
+          });
+
+        this.users = list;
+        this.startAutoScroll();
+      } catch (e) {
+        console.error('Error in EmployeeProfiles fetchUsers:', e);
+      }
+    },
+    formatUrl(url) {
+      if (!url || typeof url !== 'string') return '';
+      url = url.trim();
+      if (url === 'null' || url === 'undefined' || url === '') return '';
+      if (!/^https?:\/\//i.test(url)) return 'https://' + url;
+      return url;
     },
     startAutoScroll() {
       this.intervalId = setInterval(() => {
         if (!this.isPaused && this.users.length > 0) {
           this.currentIndex = (this.currentIndex + 1) % this.users.length;
         }
-      }, 2000); // 2 seconds
+      }, 3500);
     },
     pauseAutoScroll() {
       this.isPaused = true;

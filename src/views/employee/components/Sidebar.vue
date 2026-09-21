@@ -629,6 +629,13 @@ export default {
 
           if (this.user?.id) {
             localStorage.setItem(`profilePhoto_${this.user.id}`, freshUrl);
+
+            try {
+              let storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+              storedUser.profile_photo = response.data.path || storedUser.profile_photo;
+              localStorage.setItem("user", JSON.stringify(storedUser));
+              window.dispatchEvent(new CustomEvent('auth-change', { detail: storedUser }));
+            } catch (e) {}
           }
         }
       } catch (err) {
@@ -696,7 +703,34 @@ export default {
         }
       }
       return false;
+    },
+
+    handleAuthChange(e) {
+      if (e && e.detail) {
+        this.user = { ...this.user, ...e.detail };
+        this.username = e.detail.name || this.username;
+        if (e.detail.id) {
+          const cachedPhoto = localStorage.getItem(`profilePhoto_${e.detail.id}`);
+          if (cachedPhoto) {
+            this.profilePhoto = cachedPhoto;
+          } else if (e.detail.profile_photo) {
+            this.profilePhoto = `https://employees.archenterprises.co.in/backend/public/storage/${e.detail.profile_photo}?v=${Date.now()}`;
+          } else {
+            this.profilePhoto = this.defaultPhoto;
+          }
+        }
+      } else {
+        this.loadUserFromStorage();
+      }
     }
+  },
+
+  created() {
+    window.addEventListener("auth-change", this.handleAuthChange);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("auth-change", this.handleAuthChange);
   },
 
   async mounted() {
