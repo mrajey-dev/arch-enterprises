@@ -3,7 +3,7 @@
     <!-- Main Content -->
     <div class="main-content">
       <!-- Sidebar -->
-      <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <Sidebar ref="sidebarRef" v-if="!isMobile || isSidebarVisible" @collapse-changed="onSidebarCollapseChanged" />
 
       <!-- Content -->
       <section
@@ -495,7 +495,39 @@ export default {
         { title: 'Schedule Meeting', category: 'Operations', route: 'ScheduleMeeting', icon: 'fas fa-calendar-plus', desc: 'Create new meetings and invitations' },
         { title: 'Strategic Business Unit (SBU)', category: 'Strategy', route: 'viewkra', icon: 'fas fa-shield-alt', desc: 'KRA targets, quarterly goals & reviews' },
         { title: 'ARCH Calendar', category: 'Operations', route: 'archcalendar', icon: 'fas fa-calendar-alt', desc: 'Company events & operational calendar' },
-        { title: 'Help & RCA Desk', category: 'Support', route: 'rcahelp', icon: 'fas fa-life-ring', desc: 'Root cause analysis & support tickets' }
+        { title: 'Help & RCA Desk', category: 'Support', route: 'rcahelp', icon: 'fas fa-life-ring', desc: 'Root cause analysis & support tickets' },
+        { 
+          title: 'Announcements & Notice Board', 
+          category: 'Communication', 
+          route: 'announcement', 
+          icon: 'fas fa-bullhorn', 
+          desc: 'Broadcast company updates, news & team notices',
+          keywords: 'announcement announcements announcment announce notice board news updates bulletin broadcast'
+        },
+        { 
+          title: 'Company Apps', 
+          category: 'Applications', 
+          route: 'myapps', 
+          icon: 'fas fa-th-large', 
+          desc: 'Enterprise application suite and tools',
+          keywords: 'apps myapps company applications software'
+        },
+        { 
+          title: 'Security Vault', 
+          category: 'Security', 
+          route: 'vault', 
+          icon: 'fas fa-shield-alt', 
+          desc: 'Confidential documents & digital signatures',
+          keywords: 'vault security documents passwords sensitive'
+        },
+        { 
+          title: 'Workflow & Tasks', 
+          category: 'Operations', 
+          route: 'workflow', 
+          icon: 'fas fa-project-diagram', 
+          desc: 'Task management & pipeline workflows',
+          keywords: 'workflow process tasks operations pipeline'
+        }
       ],
       chartRevenueInstance: null,
       cumulativeChartInstance: null,
@@ -508,6 +540,7 @@ export default {
       currentUserName: 'HR',
       isMobile: false,
       isSidebarVisible: true,
+      isSidebarCollapsed: localStorage.getItem('admin_sidebar_collapsed') === 'true',
       selectedMonth: new Date().getMonth(),
       selectedYear: new Date().getFullYear(),
       months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
@@ -660,11 +693,22 @@ export default {
     filteredSearchResults() {
       if (!this.searchQuery || !this.searchQuery.trim()) return []
       const q = this.searchQuery.trim().toLowerCase()
-      return this.searchCatalog.filter(item =>
-        item.title.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q) ||
-        item.desc.toLowerCase().includes(q)
-      )
+      return this.searchCatalog.filter(item => {
+        const title = (item.title || '').toLowerCase()
+        const category = (item.category || '').toLowerCase()
+        const desc = (item.desc || '').toLowerCase()
+        const keywords = (item.keywords || '').toLowerCase()
+        const route = (item.route || '').toLowerCase()
+
+        return (
+          title.includes(q) ||
+          category.includes(q) ||
+          desc.includes(q) ||
+          keywords.includes(q) ||
+          route.includes(q) ||
+          (q.includes('announc') && (route.includes('announc') || title.includes('announc') || keywords.includes('announc')))
+        )
+      })
     }
   },
 
@@ -1290,6 +1334,19 @@ export default {
       this.isSidebarVisible = !this.isSidebarVisible
     },
 
+    toggleSidebarCollapse() {
+      if (this.$refs.sidebarRef && typeof this.$refs.sidebarRef.toggleCollapse === 'function') {
+        this.$refs.sidebarRef.toggleCollapse()
+      } else {
+        this.isSidebarCollapsed = !this.isSidebarCollapsed
+        localStorage.setItem('admin_sidebar_collapsed', this.isSidebarCollapsed ? 'true' : 'false')
+      }
+    },
+
+    onSidebarCollapseChanged(val) {
+      this.isSidebarCollapsed = val
+    },
+
     goTo(page) {
       this.$router.push({ path: `/${page}` })
     },
@@ -1411,7 +1468,7 @@ export default {
   border-radius: 18px;
   margin-bottom: 18px;
   border: 1px solid var(--border, #e0f0e8);
-  box-shadow: 0 4px 16px var(--primary-glow, rgba(44, 182, 125, 0.06));
+  /* box-shadow: 0 4px 16px var(--primary-glow, rgba(44, 182, 125, 0.06)); */
 }
 
 .mobile-title {
@@ -1462,13 +1519,13 @@ export default {
   color: var(--text, #0f2e22);
   font-weight: 500;
   outline: none;
-  box-shadow: 0 4px 18px var(--primary-glow, rgba(44, 182, 125, 0.04));
+  /* box-shadow: 0 4px 18px var(--primary-glow, rgba(44, 182, 125, 0.04)); */
   transition: all 0.25s ease;
 }
 
 .dashboard-search-input:focus {
   border-color: var(--primary, #2cb67d);
-  box-shadow: 0 0 0 3px var(--primary-glow, rgba(44, 182, 125, 0.18));
+  /* box-shadow: 0 0 0 3px var(--primary-glow, rgba(44, 182, 125, 0.18)); */
 }
 
 /* Search clear button */
@@ -1505,7 +1562,7 @@ export default {
   background: var(--card, #ffffff);
   border-radius: 18px;
   border: 1px solid var(--border, #dff0e7);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12), 0 4px 12px var(--primary-glow, rgba(44, 182, 125, 0.08));
+  /* box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12), 0 4px 12px var(--primary-glow, rgba(44, 182, 125, 0.08)); */
   z-index: 1000;
   overflow: hidden;
   max-height: 420px;
@@ -1671,7 +1728,7 @@ export default {
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 16px var(--primary-glow, rgba(0, 0, 0, 0.04));
+  /* box-shadow: 0 4px 16px var(--primary-glow, rgba(0, 0, 0, 0.04)); */
   transition: all 0.2s ease;
   user-select: none;
   white-space: nowrap;
@@ -1680,7 +1737,7 @@ export default {
 .btn-theme-palette:hover,
 .btn-theme-palette.active {
   border-color: var(--primary, #2cb67d);
-  box-shadow: 0 6px 20px var(--primary-glow, rgba(0, 0, 0, 0.08));
+  /* box-shadow: 0 6px 20px var(--primary-glow, rgba(0, 0, 0, 0.08)); */
   transform: translateY(-1px);
 }
 
@@ -1791,7 +1848,7 @@ export default {
 .palette-card-btn.active {
   background: var(--card, #ffffff);
   border-color: var(--primary, #2cb67d);
-  box-shadow: 0 0 0 3px var(--primary-glow, rgba(44, 182, 125, 0.18));
+  /* box-shadow: 0 0 0 3px var(--primary-glow, rgba(44, 182, 125, 0.18)); */
 }
 
 .palette-color-preview {
@@ -1848,14 +1905,14 @@ export default {
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.3));
+  /* box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.3)); */
   transition: all 0.25s ease;
   white-space: nowrap;
 }
 
 .btn-create-new:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--primary-glow, rgba(44, 182, 125, 0.4));
+  /* box-shadow: 0 8px 24px var(--primary-glow, rgba(44, 182, 125, 0.4)); */
 }
 
 /* 🌟 Multi-Column Master Dashboard Layout */
@@ -1937,18 +1994,18 @@ export default {
 .qa-featured {
   background: var(--primary-gradient, linear-gradient(135deg, #34b782 0%, #209961 100%));
   color: #ffffff;
-  box-shadow: 0 10px 26px var(--primary-glow, rgba(44, 182, 125, 0.3));
+  /* box-shadow: 0 10px 26px var(--primary-glow, rgba(44, 182, 125, 0.3)); */
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .qa-white {
   background: var(--card, #ffffff);
   border: 1px solid var(--border, #dff0e7);
-  box-shadow: 0 6px 20px var(--primary-glow, rgba(44, 182, 125, 0.05));
+  /* box-shadow: 0 6px 20px var(--primary-glow, rgba(44, 182, 125, 0.05)); */
 }
 
 .qa-white:hover {
-  box-shadow: 0 10px 28px var(--primary-glow, rgba(44, 182, 125, 0.12));
+  /* box-shadow: 0 10px 28px var(--primary-glow, rgba(44, 182, 125, 0.12)); */
   border-color: var(--primary, #2cb67d);
 }
 
@@ -2066,7 +2123,7 @@ export default {
   border-radius: 20px;
   padding: 16px 18px;
   border: 1px solid var(--border, #dff0e7);
-  box-shadow: 0 4px 18px var(--primary-glow, rgba(44, 182, 125, 0.04));
+  /* box-shadow: 0 4px 18px var(--primary-glow, rgba(44, 182, 125, 0.04)); */
   cursor: pointer;
   transition: all 0.25s ease;
 }
@@ -2074,7 +2131,7 @@ export default {
 .folder-card:hover {
   transform: translateY(-3px);
   border-color: var(--primary, #2cb67d);
-  box-shadow: 0 8px 24px var(--primary-glow, rgba(44, 182, 125, 0.1));
+  /* box-shadow: 0 8px 24px var(--primary-glow, rgba(44, 182, 125, 0.1)); */
 }
 
 .folder-header {
@@ -2136,7 +2193,7 @@ export default {
   border-radius: 22px;
   padding: 20px 24px;
   border: 1px solid var(--border, #dff0e7);
-  box-shadow: 0 6px 22px var(--primary-glow, rgba(44, 182, 125, 0.05));
+  /* box-shadow: 0 6px 22px var(--primary-glow, rgba(44, 182, 125, 0.05)); */
   overflow-x: auto;
 }
 
@@ -2230,7 +2287,7 @@ export default {
   border-radius: 22px;
   padding: 24px;
   border: 1px solid var(--border, #dff0e7);
-  box-shadow: 0 6px 22px var(--primary-glow, rgba(44, 182, 125, 0.05));
+  /* box-shadow: 0 6px 22px var(--primary-glow, rgba(44, 182, 125, 0.05)); */
 }
 
 .revenue-header {
@@ -2477,7 +2534,7 @@ export default {
   border-radius: 24px;
   padding: 24px 20px;
   border: 1px solid var(--border, #dff0e7);
-  box-shadow: 0 8px 28px var(--primary-glow, rgba(44, 182, 125, 0.06));
+  /* box-shadow: 0 8px 28px var(--primary-glow, rgba(44, 182, 125, 0.06)); */
 }
 
 .gauge-header {
@@ -2626,7 +2683,7 @@ export default {
   justify-content: center;
   font-size: 20px;
   margin: 0 auto;
-  box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.35));
+  /* box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.35)); */
 }
 
 .promo-title {
@@ -2655,13 +2712,13 @@ export default {
   cursor: not-allowed;
   width: 100%;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px var(--primary-glow, rgba(44, 182, 125, 0.25));
+  /* box-shadow: 0 4px 14px var(--primary-glow, rgba(44, 182, 125, 0.25)); */
 }
 
 .promo-cta-btn:hover {
   background: var(--primary-dark, #209961);
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.35));
+  /* box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.35)); */
 }
 
 /* Birthday Side Card */

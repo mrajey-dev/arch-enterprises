@@ -4,11 +4,20 @@
     <aside
       class="sidebar"
       :class="{ collapsed: isCollapsed, 'mobile-open': isMobileOpen }"
-      @mouseenter="handleMouseEnter"
-      @mouseleave="handleMouseLeave"
     >
       <!-- Profile / Header Section -->
       <div class="profile-section">
+        <!-- Collapse / Expand Toggle Button -->
+        <button
+          type="button"
+          class="sidebar-toggle-btn"
+          @click.stop="toggleCollapse"
+          :title="isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+          :aria-label="isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+        >
+          <i :class="isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
+        </button>
+
         <div class="profile-pic-wrapper">
           <img
             :src="profileImage"
@@ -33,6 +42,10 @@
 
           <li @click="goTo('dashboard')" :class="{ 'active-item': isActive('dashboard') }">
             <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+          </li>
+
+          <li @click="goTo('announcement')" :class="{ 'active-item': isActive('announcement') }">
+            <i class="fas fa-bullhorn"></i> <span>Announcements</span>
           </li>
           
           <li @click="goTo('archcalendar')" :class="{ 'active-item': isActive('archcalendar') }">
@@ -175,7 +188,6 @@
 
           <li @click="goTo('vault')" :class="{ 'active-item': isActive('vault') || isActive('security-vault') || isActive('employee/vault') }">
             <i class="fas fa-shield-alt"></i> <span>Security Vault</span>
-            <span class="sidebar-item-badge hot"><i class="fas fa-lock" style="font-size: 0.65rem;"></i></span>
           </li>
 
           <!-- Theme Selector Section -->
@@ -545,7 +557,7 @@ export default {
   data() {
     return {
       isMobileOpen: false,
-      isCollapsed: false,
+      isCollapsed: localStorage.getItem("admin_sidebar_collapsed") === "true",
       currentTheme: localStorage.getItem("theme") || "teal",
       adminEmail: cachedAdmin.email || localStorage.getItem("admin_email") || "",
       adminName: cachedAdmin.name || localStorage.getItem("admin_name") || "",
@@ -674,15 +686,16 @@ export default {
           this.$router.push("/auth");
         });
     },
+    toggleCollapse() {
+      this.isCollapsed = !this.isCollapsed;
+      localStorage.setItem("admin_sidebar_collapsed", this.isCollapsed ? "true" : "false");
+      this.$emit("collapse-changed", this.isCollapsed);
+    },
     handleMouseEnter() {
-      if (window.innerWidth > 768) {
-        this.isCollapsed = false;
-      }
+      // Sticky mode: stays in chosen state, only toggled via button
     },
     handleMouseLeave() {
-      if (window.innerWidth > 768) {
-        this.isCollapsed = false;
-      }
+      // Sticky mode: stays in chosen state, only toggled via button
     },
 
     toggleSidebar() {
@@ -1240,7 +1253,7 @@ export default {
   height: calc(100vh - 110px);
   background: var(--sidebar, #ffffff);
   border: 1px solid var(--border, #dff0e7);
-  box-shadow: 0 10px 35px -5px var(--primary-glow, rgba(44, 182, 125, 0.08)), 0 0 1px 1px var(--primary-glow, rgba(44, 182, 125, 0.04));
+  /* box-shadow: 0 10px 35px -5px var(--primary-glow, rgba(44, 182, 125, 0.08)), 0 0 1px 1px var(--primary-glow, rgba(44, 182, 125, 0.04)); */
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
   z-index: 100;
   overflow: hidden;
@@ -1261,6 +1274,55 @@ export default {
   flex-direction: column;
   align-items: center;
   position: relative;
+}
+
+/* Sidebar Collapse Toggle Button */
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #dff0e7);
+  color: var(--text-muted, #52796f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--primary, #2cb67d);
+  border-color: var(--primary, #2cb67d);
+  color: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.3);
+}
+
+.sidebar.collapsed .sidebar-toggle-btn {
+  position: relative;
+  top: auto;
+  right: auto;
+  margin-bottom: 8px;
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+}
+
+.sidebar.collapsed .profile-section {
+  padding: 12px 6px 10px;
+}
+
+.sidebar.collapsed .profile-pic-wrapper {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
 }
 
 .profile-pic-wrapper {

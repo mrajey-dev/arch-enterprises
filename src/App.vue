@@ -643,7 +643,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 20px var(--primary-glow, rgba(44, 182, 125, 0.05));
+  /* box-shadow: 0 4px 20px var(--primary-glow, rgba(44, 182, 125, 0.05)); */
   border-bottom: 1px solid var(--border, #e0f0e8);
   position: fixed;
   top: 0;
