@@ -1515,7 +1515,16 @@ export default {
           password: this.password
         };
 
-        const res = await axios.post('/api/employee/vault/request-otp', payload);
+        let res;
+        try {
+          res = await axios.post('/api/employee/vault/request-otp', payload);
+        } catch (endpointErr) {
+          if (endpointErr.response?.status === 404) {
+            res = await axios.post('/api/employee/vault/send-otp', payload);
+          } else {
+            throw endpointErr;
+          }
+        }
         if (res.data.success) {
           toastSuccess(res.data.message || 'Verification OTP dispatched to your registered email!');
           this.currentStep = 2;
