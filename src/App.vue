@@ -172,6 +172,7 @@ import NotificationBell from '@views/employee/components/NotificationBell.vue'
 import AdminNotificationBell from './components/AdminNotificationBell.vue'
 import axios from 'axios'
 import { toastInfo } from "@/utils/toast.js";
+import { initSessionTimeout, destroySessionTimeout, clearActivityTimer } from "@/utils/sessionTimeout.js";
 
 export default {
   components: {
@@ -259,6 +260,7 @@ export default {
   mounted() {
     this.loadUser()
     this.fetchNotifications()
+    initSessionTimeout(this.$router)
 
     window.addEventListener('keydown', this.handleEscape)
     
@@ -273,6 +275,7 @@ export default {
   },
 
   beforeUnmount() {
+    destroySessionTimeout()
     window.removeEventListener('keydown', this.handleEscape)
     document.removeEventListener('click', this.closeNotificationPanel)
     if (this.focusTimer) {
@@ -434,7 +437,8 @@ export default {
       if (this.sidebarOpen) {
         this.toggleSidebar()
       }
-      const token = localStorage.getItem("token");
+      clearActivityTimer()
+      const token = localStorage.getItem("token") || localStorage.getItem("admin_token");
       axios
         .post(
           "https://employees.archenterprises.co.in/api/api/logout",
@@ -443,7 +447,9 @@ export default {
         )
         .finally(() => {
           localStorage.removeItem("token");
+          localStorage.removeItem("admin_token");
           localStorage.removeItem("user");
+          localStorage.removeItem("loginTime");
           this.$router.push("/auth");
         });
     }

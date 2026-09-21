@@ -99,38 +99,29 @@
             >
               <i class="fas fa-chart-bar"></i> <span>Visit Schedule</span>
             </li>
-            <li  v-if="canViewSiteOwnership"
+            <li  v-if="canViewFirePump"
               @click="goTo('employee/ManageStock')"
             >
               <i class="fas fa-boxes"></i>
               <span>Manage Stock</span>  
             </li>
             <li 
-              v-if="canViewSiteOwnership"
+              v-if="canViewFirePump"
               @click="goTo('employee/siteownership')"
             >
               <i class="fas fa-sitemap"></i>
               <span>Site Ownership</span>  
             </li>
-             <li 
-              @click="goTo('employee/ETPSession')"
-            >
-              <i class="fas fa-chalkboard-teacher"></i>
-              <span>ETP Session</span>  
-            </li>
+          
             <!-- <li @click="goTo('employee/weeklyworkingschedule')">
               <i class="fas fa-chalkboard-teacher"></i><span>My Weekly Schedule</span>
             </li> -->
-            <li  v-if="canViewITProduct" @click="goTo('archapps')">
-  <i class="fas fa-mobile-alt"></i> <span>My Apps</span>
-</li>
+
 <li  v-if="canViewITProduct" @click="goTo('employee/mobileapplifecycle')">
   <i class="fas fa-mobile-alt"></i> <span>Mobile App Life Cycle</span>
 </li>
-<li v-if="canViewITExpenses" @click="goTo('employee/it-expenses')">
-  <i class="fas fa-file-invoice-dollar"></i> <span>IT Expenses</span>
-</li>
-            <li   v-if="canViewSiteOwnership"
+
+            <li   v-if="canViewFirePump"
               class="desktop-only"
               @click="goTo('employee/visitschedule')"
             >
@@ -158,21 +149,14 @@
             <li @click="goTo('employee/mysalaryadvances')">
               <i class="fas fa-hand-holding-usd"></i><span>Salary Advances</span>
             </li>
-            <li @click="goTo('employee/viewkra')">
-              <i class="fas fa-tasks"></i> <span>View KRA</span>
-            </li>
-            <li  v-if="canViewSiteOwnership" @click="goTo('employee/literature')">
+           
+            <li  v-if="canViewFirePump || onlyViewITLead"  @click="goTo('employee/literature')">
             <i class="fas fa-suitcase"></i><span>Literature </span>
             </li>
             <li @click="goTo('employee/sop')">
               <i class="fas fa-book"></i><span> SOP</span>
             </li>
-            <li @click="goTo('employee/mydsi')">
-              <i class="fas fa-tasks"></i><span> DSI</span>
-            </li>
-            <li @click="goTo('employee/vault')">
-              <i class="fas fa-shield-alt"></i><span> Security Vault</span>
-            </li>
+          
             <li @click="goTo('employee/myprofile')">
               <i class="fa-solid fa-user"></i><span> My Profile</span>
             </li>
@@ -327,9 +311,13 @@ export default {
       const name = (this.username || this.user?.name || "").trim().toLowerCase();
       return name === "ajay" || name.startsWith("ajay ") || name.includes("ajay");
     },
-    canViewSiteOwnership() {
+    canViewFirePump() {
       const dept = (this.user?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
       return dept === 'service' || dept === 'hr' || dept === 'human resources' || dept === 'management' || dept === 'owner';
+    },
+     onlyViewITLead() {
+      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+      return dept === 'it_lead' || dept === 'owner';
     },
     canViewITProduct() {
       const localUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -343,14 +331,10 @@ export default {
       const uid = String(this.user?.id || localUser?.id || localStorage.getItem('user_id') || '');
       const empId = String(this.user?.emp_id || this.user?.employee_id || localUser?.emp_id || localUser?.employee_id || '');
       const dept = String(this.user?.department || localUser?.department || '').trim().toLowerCase();
-      const role = String(this.user?.role || localUser?.role || '').trim().toLowerCase();
 
       return uid === '107' || 
              empId === '107' || 
-             dept === 'owner' || 
-             dept === 'hr' || 
-             role === 'admin' ||
-             role === 'it_manager';
+             dept === 'owner';
     },
   },
   methods: {

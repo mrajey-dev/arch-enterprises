@@ -327,13 +327,13 @@ export default {
       birthdayEvents: [],
       showFilters: {
         meetings: true,
-        services: false,
-        visits: false,
+        services: true,
+        visits: true,
         birthdays: true,
         holidays: true,
         events: true,
         notes: true,
-        attendance: false
+        attendance: true
       },
       showFiltersPanel: false,
       visitEvents: [],

@@ -46,7 +46,7 @@
     </div>
   </div>
 
-  <div class="dashboard-card clickable-card" @click="goTo('employee/Customerregistrations')">
+  <div v-if="canViewCRM" class="dashboard-card clickable-card" @click="goTo('employee/Customerregistrations')">
     <div class="card-icon crm-icon">
       <i class="fas fa-users"></i>
     </div>
@@ -56,7 +56,7 @@
     </div>
   </div>
  
-    <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/viewallpo')">
+    <div v-if="canViewCRM" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/viewallpo')">
       <div class="card-icon po-icon">
         <i class="fas fa-file-invoice"></i>
       </div>
@@ -65,6 +65,77 @@
         <span class="progress-text">Manage Purchase Orders</span>
       </div>
     </div>  
+    <div v-if="onlyViewITTeam || onlyViewMarketing" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/archapps')">
+      <div class="card-icon google-form-icon">
+        <i class="fas fa-mobile-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">My Apps</p>
+        <span class="progress-text">View & Manage Tasks</span>
+      </div>
+    </div>
+
+    <div v-if="onlyViewMarketing" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/socialmediamanagement')">
+      <div class="card-icon google-form-icon">
+        <i class="fas fa-share-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Social Media Management</p>
+        <span class="progress-text">View & Manage Social Media </span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/ETPSession')">
+      <div class="card-icon site-icon">
+        <i class="fas fa-chalkboard-teacher"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">ETP Sessions</p>
+        <span class="progress-text">View & Manage ETP Sessions</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/viewkra')">
+      <div class="card-icon chat-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">KPI's</p>
+        <span class="progress-text">View & Manage KPI's</span>
+      </div>
+    </div>
+
+     <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/mydsi')">
+      <div class="card-icon notifications-icon">
+        <i class="fas fa-lightbulb"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">DSI </p>
+        <span class="progress-text">Daily Small Improvements</span>
+      </div>
+    </div>
+
+    <div class="dashboard-card clickable-card desktop-only" @click="goTo('employee/vault')">
+      <div class="card-icon request-icon">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Secure Vault </p>
+        <span class="progress-text">Manage sensitive information</span>
+      </div>
+    </div>
+     <div v-if="onlyViewITLead" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/empworkreport')">
+      <div class="card-icon todo-icon">
+        <i class="fas fa-folder"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Work Report </p>
+        <span class="progress-text">View & Manage Work Report</span>
+      </div>
+    </div>
+
+    
+
 
     <div v-if="canViewSiteOwnership" class="dashboard-card clickable-card desktop-only" @click="goTo('employee/siteownership')">
       <div class="card-icon site-icon">
@@ -922,6 +993,33 @@ export default {
   },
 
   computed: {
+     canViewITProduct() {
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const uid = String(this.user?.id || localUser?.id || localStorage.getItem('user_id') || '');
+      const empId = String(this.user?.emp_id || this.user?.employee_id || localUser?.emp_id || localUser?.employee_id || '');
+      const dept = (this.user?.department || localUser?.department || '').trim().toLowerCase();
+      return dept === 'it_lead' || dept === 'it' || dept === 'hr' || dept === 'marketing' || dept === 'owner';
+    },
+    canViewCRM() {
+      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+      return dept === 'ownership' || dept === 'owner' || dept === 'service' || dept === 'management';
+    },
+    onlyViewITLead() {
+      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+      return dept === 'it_lead' || dept === 'owner';
+    },
+    onlyViewMarketing() {
+      const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+      return dept === 'marketing' || dept === 'owner';
+    },
+  onlyViewEdior() {
+    const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+    return dept === 'video_editor' || dept === 'owner';
+  },
+  onlyViewITTeam() {
+    const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
+    return dept === 'it_lead' || dept === 'it' || dept === 'owner';
+  },
     canViewSiteOwnership() {
       const dept = (this.currentUser?.department || JSON.parse(localStorage.getItem('user') || '{}')?.department || '').trim().toLowerCase();
       return dept === 'service' || dept === 'hr' || dept === 'management';

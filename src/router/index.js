@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { checkInactivity } from '../utils/sessionTimeout.js'
 import AuthForm from '../views/AuthForm.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Employee from '../views/ManageEmp.vue'
@@ -253,12 +254,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // Check 8-hour inactivity timeout if navigating
+  if (to.path !== '/auth' && to.path !== '/') {
+    if (checkInactivity()) {
+      return next('/auth');
+    }
+  }
+
   // ✅ 1. Always allow public routes FIRST
   if (to.meta.public === true) {
     return next();
   }
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const role = user?.role?.toLowerCase();
 

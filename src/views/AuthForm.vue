@@ -275,6 +275,7 @@
 
 <script>
 import axios from 'axios';
+import { resetActivityTimer } from '@/utils/sessionTimeout.js';
 
 export default {
   data() {
@@ -417,9 +418,13 @@ export default {
         }
 
         localStorage.setItem('token', response.data.token);
+        if (!this.isEmployeeLogin) {
+          localStorage.setItem('admin_token', response.data.token);
+        }
         localStorage.setItem('loginTime', Date.now());
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('authTab', this.isEmployeeLogin ? 'employee' : 'admin');
+        resetActivityTimer();
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
         setTimeout(() => {
