@@ -1179,7 +1179,7 @@ export default {
         normDept === 'owner' ||
         normDept === 'service' ||
         normDept === 'management' ||
-        dept === 'ownership' ||
+        dept === 'account' ||
         dept === 'owner' ||
         dept === 'service' ||
         dept === 'management'

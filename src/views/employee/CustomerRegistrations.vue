@@ -15138,7 +15138,7 @@ background:rgb(0 0 0 / 84%);
 display:flex;
 align-items:center;
 justify-content:center;
-z-index:10050;
+z-index:90050;
 }
 
 .calculation-card{
