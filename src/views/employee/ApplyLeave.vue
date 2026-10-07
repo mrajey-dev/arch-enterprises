@@ -273,7 +273,10 @@ export default {
 
     async checkLeaveBalance() {
       if (this.isHalfDay) {
-        const casualRemaining = (this.baseAllowances.casual || 7) - (this.usedLeaves.casual || 0);
+        const casualRemaining = this.leaveBalance?.casual !== undefined
+          ? this.leaveBalance.casual
+          : ((this.baseAllowances.casual || 7) - (this.usedLeaves.casual || 0));
+
         if (casualRemaining < 0.5) {
           this.submitError = `❌ You have only ${casualRemaining} casual leave left. Half-day requires 0.5 casual leave.`;
         } else {
@@ -299,67 +302,74 @@ export default {
 
       const totalSelectedDays = this.daysBetween(fromDate, toDate);
 
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const user = res.data;
+      const totalAllowed = this.baseAllowances[leaveKey] || 0;
+      const alreadyUsed = this.usedLeaves[leaveKey] || 0;
+      const remaining = this.leaveBalance?.[leaveKey] !== undefined
+        ? this.leaveBalance[leaveKey]
+        : Math.max(0, totalAllowed - alreadyUsed);
 
-        const usedMap = {
-          casual: Number(user.cl_leave_used) || 0,
-          pl: Number(user.pl_leave_used) || 0,
-          sick: Number(user.sl_leave_used) || 0,
-        };
+      this.leaveWarning = `⚠️ You have ${remaining} ${this.beautify(leaveKey)} leave(s) remaining out of ${totalAllowed}.`;
 
-        const totalAllowed = this.baseAllowances[leaveKey] || 0;
-        const alreadyUsed = usedMap[leaveKey] || 0;
-        const remaining = Math.max(0, totalAllowed - alreadyUsed);
-
-        this.leaveWarning = `⚠️ You have ${remaining} ${this.beautify(leaveKey)} leave(s) remaining out of ${totalAllowed}.`;
-
-        if (totalSelectedDays > remaining) {
-          this.submitError = `❌ You have only ${remaining} ${this.beautify(leaveKey)} left. Please reduce your date range.`;
-        } else {
-          this.submitError = '';
-        }
-      } catch (err) {
-        console.warn('Could not verify leave balance via API, using local balance:', err);
-        const totalAllowed = this.baseAllowances[leaveKey] || 0;
-        const alreadyUsed = this.usedLeaves[leaveKey] || 0;
-        const remaining = Math.max(0, totalAllowed - alreadyUsed);
-        if (totalSelectedDays > remaining) {
-          this.submitError = `❌ You have only ${remaining} ${this.beautify(leaveKey)} left. Please reduce your date range.`;
-        }
+      if (totalSelectedDays > remaining) {
+        this.submitError = `❌ You have only ${remaining} ${this.beautify(leaveKey)} left. Please reduce your date range.`;
+      } else {
+        this.submitError = '';
       }
     },
 
     async fetchLeaveBalanceFromDB() {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('https://employees.archenterprises.co.in/api/api/user', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const user = res.data;
+        let user = {};
+        try {
+          user = JSON.parse(localStorage.getItem('user') || '{}');
+        } catch (e) {}
+        const userId = this.userId || user.id;
+        const currentYear = new Date().getFullYear();
 
-        const totals = { casual: 7, sick: 10, pl: 10 };
-        const used = {
-          casual: Number(user.cl_leave_used) || 0,
-          sick: Number(user.sl_leave_used) || 0,
-          pl: Number(user.pl_leave_used) || 0,
-        };
+        if (userId) {
+          const balanceRes = await axios.get(`https://employees.archenterprises.co.in/api/api/leave-balances/user/${userId}`, {
+            params: { year: currentYear },
+            headers: { Authorization: `Bearer ${token}` }
+          });
 
-        const remaining = {};
-        for (const key in totals) {
-          remaining[key] = totals[key] - used[key];
-          if (remaining[key] < 0) remaining[key] = 0;
+          if (balanceRes.data && balanceRes.data.success && balanceRes.data.data) {
+            const b = balanceRes.data.data;
+            const totals = {
+              casual: parseFloat(b.casual_leave) || 7,
+              sick: parseFloat(b.sick_leave) || 10,
+              pl: parseFloat(b.pl_leave) || 10,
+              unpaid: parseFloat(b.unpaid_leave) || 0
+            };
+            const used = {
+              casual: parseFloat(b.used_cl_leave) || 0,
+              sick: parseFloat(b.used_sick_leave) || 0,
+              pl: parseFloat(b.used_pl_leave) || 0,
+              unpaid: parseFloat(b.used_unpaid_leave) || 0
+            };
+            const remaining = {
+              casual: b.remaining_cl_leave !== undefined && b.remaining_cl_leave !== null
+                ? parseFloat(b.remaining_cl_leave)
+                : Math.max(0, totals.casual - used.casual),
+              sick: b.remaining_sick_leave !== undefined && b.remaining_sick_leave !== null
+                ? parseFloat(b.remaining_sick_leave)
+                : Math.max(0, totals.sick - used.sick),
+              pl: b.remaining_pl_leave !== undefined && b.remaining_pl_leave !== null
+                ? parseFloat(b.remaining_pl_leave)
+                : Math.max(0, totals.pl - used.pl),
+              unpaid: b.remaining_unpaid_leave !== undefined && b.remaining_unpaid_leave !== null
+                ? parseFloat(b.remaining_unpaid_leave)
+                : Math.max(0, totals.unpaid - used.unpaid)
+            };
+
+            this.baseAllowances = totals;
+            this.usedLeaves = used;
+            this.leaveBalance = remaining;
+            return;
+          }
         }
-
-        this.baseAllowances = totals;
-        this.usedLeaves = used;
-        this.leaveBalance = remaining;
       } catch (e) {
-        console.error('Failed to fetch leave balance:', e);
+        console.error('Failed to fetch leave balance from leave_balances table:', e);
       }
     },
 
@@ -491,11 +501,7 @@ export default {
         this.form.department = u.department;
         this.userName = u.name;
         this.userDept = u.department;
-        this.usedLeaves = {
-          casual: Number(u.cl_leave_used) || 0,
-          pl: Number(u.pl_leave_used) || 0,
-          sick: Number(u.sl_leave_used) || 0,
-        };
+        this.userId = u.id;
         await this.fetchEarnLeaveCount();
         await this.fetchLeaveBalanceFromDB();
       } catch (e) {
@@ -714,6 +720,7 @@ export default {
 
         this.submitSuccessMsg = '✅ Leave request submitted successfully!';
         toastSuccess('Leave request submitted successfully!');
+        window.dispatchEvent(new CustomEvent('attendance-marked'));
         this.resetForm();
         await this.fetchLeaves();
         await this.fetchLeaveBalanceFromDB();

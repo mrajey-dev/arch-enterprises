@@ -87,7 +87,7 @@
     <div class="late-marks-header" @click="toggleLateMarksDetails">
       <div class="header-left-late">
         <i class="fas fa-clock"></i>
-        <h4>Late Marks</h4>
+        <h4>Late Marks (Current Month)</h4>
         <span class="late-count-badge" :class="{ 'has-penalty': totalPenaltiesApplied > 0 }">
           {{ totalLateMarks }}
         </span>
@@ -95,7 +95,7 @@
       <div class="header-right-late">
         <span v-if="totalPenaltiesApplied > 0" class="penalty-badge">
           <i class="fas fa-exclamation-triangle"></i> 
-          {{ totalPenaltiesApplied }} Penalty(ies) Applied
+          {{ totalPenaltiesApplied }} Penalty(ies) This Month
         </span>
         <i class="fas fa-chevron-down" :class="{ 'rotated': lateMarksVisible }"></i>
       </div>
@@ -105,13 +105,13 @@
       <!-- Late Marks Summary Stats -->
       <div class="late-marks-stats">
         <div class="stat-item">
-          <span class="stat-label">Total Late Marks</span>
+          <span class="stat-label">Current Month Late Marks</span>
           <span class="stat-value" :class="{ 'warning': totalLateMarks >= penaltyThreshold }">
             {{ totalLateMarks }}
           </span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Penalty Threshold</span>
+          <span class="stat-label">Monthly Threshold</span>
           <span class="stat-value">{{ penaltyThreshold }}</span>
         </div>
         <div class="stat-item">
@@ -140,13 +140,10 @@
       <div class="penalty-info-box">
         <i class="fas fa-info-circle"></i>
         <span>
-          <strong>Rule:</strong> Every {{ penaltyThreshold }} late marks = 1 penalty ({{ penaltyPerUnit }} CL deduction)
+          <strong>Rule:</strong> In current month, every {{ penaltyThreshold }} late marks = 1 half-day deduction (0.5 day). <em>Refreshed every month.</em>
           <span v-if="totalLateMarks >= penaltyThreshold">
             <br>
-            <strong>Your {{ totalLateMarks }} late marks</strong> = {{ penaltiesCalculated }} penalty(ies) = {{ totalPenaltyAmount }} CL deduction
-            <span v-if="pendingPenalties > 0" class="pending-warning">
-              ⚠️ {{ pendingPenalties }} penalty(ies) pending to be applied
-            </span>
+            <strong>Your {{ totalLateMarks }} late marks this month</strong> = {{ penaltiesCalculated }} half day(s) deducted from leave balance.
           </span>
         </span>
       </div>
@@ -253,6 +250,190 @@
               <div class="halfday-note">
                 <i class="fas fa-info-circle"></i>
                 <span>Note: 2 half days = 1 full casual leave</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dedicated Separate Section: Late Mark Penalty Leave Deductions -->
+          <div class="late-penalty-leaves-section" :class="{ 'mobile-card': isMobile }">
+            <div class="section-title-modern section-title-clickable" @click="toggleLatePenaltySection">
+              <div class="title-left">
+                <div class="title-icon-badge">
+                  <i class="fas fa-user-clock"></i>
+                </div>
+                <div>
+                  <span class="section-heading">Late Mark Leave Deductions (Current Month)</span>
+                  <span class="section-subheading">Rule: 3 Late Marks in a Month = 1 Half Day Leave (0.5 Day) • Refreshed Monthly</span>
+                </div>
+                <span class="count-badge count-badge-penalty" v-if="latePenaltyRecords.length > 0">
+                  {{ latePenaltyRecords.length }} Half Day(s) This Month
+                </span>
+                <span class="count-badge count-badge-zero" v-else>
+                  0 Penalties
+                </span>
+              </div>
+              <i class="fas fa-chevron-down" :class="{ 'rotated': latePenaltySectionVisible }"></i>
+            </div>
+
+            <div class="late-penalty-content" :class="{ 'list-hidden': !latePenaltySectionVisible }">
+              <!-- Policy Highlights Bar -->
+              <div class="late-penalty-highlights">
+                <!-- Stat 1: Total Late Marks -->
+                <div class="penalty-highlight-card">
+                  <div class="highlight-icon icon-clock">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                  <div class="highlight-info">
+                    <span class="highlight-num">{{ totalLateMarks }}</span>
+                    <span class="highlight-label">Current Month Late Marks</span>
+                    <span class="highlight-sub">Refreshed every month (Threshold: 3)</span>
+                  </div>
+                </div>
+
+                <!-- Stat 2: Casual Leave Half Days -->
+                <div class="penalty-highlight-card" :class="{ 'highlight-active-casual': latePenaltyClDeducted > 0 }">
+                  <div class="highlight-icon icon-cl">
+                    <i class="fas fa-calendar-minus"></i>
+                  </div>
+                  <div class="highlight-info">
+                    <span class="highlight-num">{{ latePenaltyClDeducted }} Day(s)</span>
+                    <span class="highlight-label">Added to Used Casual Leave</span>
+                    <span class="highlight-sub">{{ latePenaltyClDeducted * 2 }} Half Day(s) from CL</span>
+                  </div>
+                </div>
+
+                <!-- Stat 3: Unpaid Half Days -->
+                <div class="penalty-highlight-card" :class="{ 'highlight-active-unpaid': latePenaltyUnpaidDeducted > 0 }">
+                  <div class="highlight-icon icon-unpaid">
+                    <i class="fas fa-hourglass-half"></i>
+                  </div>
+                  <div class="highlight-info">
+                    <span class="highlight-num">{{ latePenaltyUnpaidDeducted }} Day(s)</span>
+                    <span class="highlight-label">Marked as Unpaid Half Day</span>
+                    <span class="highlight-sub">When Casual Leaves are 0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Active Policy Status Callout Banner -->
+              <div class="policy-status-banner" :class="getPenaltyBannerClass()">
+                <div class="banner-icon">
+                  <i :class="getPenaltyBannerIcon()"></i>
+                </div>
+                <div class="banner-text">
+                  <template v-if="latePenaltyUnpaidDeducted > 0 && latePenaltyClDeducted > 0">
+                    <strong>Casual & Unpaid Penalties Active:</strong> {{ latePenaltyClDeducted }} day(s) deducted from Casual Leave, and {{ latePenaltyUnpaidDeducted }} day(s) marked as Unpaid Half Day because your casual leave balance was exhausted.
+                  </template>
+                  <template v-else-if="latePenaltyUnpaidDeducted > 0">
+                    <strong>Casual Leaves Exhausted:</strong> No casual leaves remaining! {{ latePenaltyUnpaidDeducted }} day(s) ({{ latePenaltyUnpaidDeducted * 2 }} half days) has been marked in your <strong>Unpaid Leave</strong> column.
+                  </template>
+                  <template v-else-if="latePenaltyClDeducted > 0">
+                    <strong>Deducted from Casual Leave:</strong> {{ latePenaltyClDeducted }} day(s) ({{ latePenaltyClDeducted * 2 }} half day(s)) has been automatically added to your <strong>Used Casual Leave</strong> column.
+                  </template>
+                  <template v-else-if="totalLateMarks > 0">
+                    <strong>Within Quota:</strong> You have {{ totalLateMarks }} late mark(s). Once you reach {{ penaltyThreshold }} late marks, 1 half-day leave will be deducted from your casual leave (or marked unpaid if casual leave is 0).
+                  </template>
+                  <template v-else>
+                    <strong>No Late Marks:</strong> You currently have 0 late marks for this period. Great punctuality!
+                  </template>
+                </div>
+              </div>
+
+              <!-- Penalty Records Table (Desktop) / Cards (Mobile) -->
+              <div v-if="latePenaltyRecords.length > 0" class="penalty-records-wrap">
+                <div class="penalty-records-title">
+                  <i class="fas fa-history"></i>
+                  <span>Breakdown of Applied Half-Day Deductions ({{ latePenaltyRecords.length }})</span>
+                </div>
+
+                <!-- Mobile Cards -->
+                <div class="mobile-penalty-cards" v-if="isMobile">
+                  <div v-for="(item, idx) in latePenaltyRecords" :key="idx" class="penalty-record-card" :class="item.type === 'unpaid' ? 'card-unpaid' : 'card-casual'">
+                    <div class="card-p-header">
+                      <span class="p-badge" :class="item.type === 'unpaid' ? 'badge-unpaid' : 'badge-casual'">
+                        <i :class="item.type === 'unpaid' ? 'fas fa-hourglass-half' : 'fas fa-calendar-minus'"></i>
+                        {{ item.title }}
+                      </span>
+                      <span class="p-duration">{{ item.duration }} Day</span>
+                    </div>
+                    <div class="card-p-body">
+                      <div class="p-row">
+                        <span class="p-lbl">Trigger</span>
+                        <span class="p-val">{{ item.late_mark_trigger }}th Late Mark</span>
+                      </div>
+                      <div class="p-row" v-if="item.trigger_date">
+                        <span class="p-lbl">Date</span>
+                        <span class="p-val">{{ formatDate(item.trigger_date) }}</span>
+                      </div>
+                      <div class="p-row">
+                        <span class="p-lbl">Deduction Column</span>
+                        <span class="p-val column-target" :class="item.type === 'unpaid' ? 'target-unpaid' : 'target-casual'">
+                          {{ item.type === 'unpaid' ? 'Unpaid Leave Column' : 'Used Casual Leave Column' }}
+                        </span>
+                      </div>
+                      <div class="p-row">
+                        <span class="p-lbl">Status</span>
+                        <span class="p-status-pill" :class="item.type === 'unpaid' ? 'status-pill-unpaid' : 'status-pill-casual'">
+                          {{ item.status }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Desktop Table -->
+                <div class="desktop-penalty-table-wrap" v-else>
+                  <table class="penalty-records-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Trigger Event</th>
+                        <th>Date / Time</th>
+                        <th>Leave Deducted</th>
+                        <th>Applied Column</th>
+                        <th>Deduction Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(item, idx) in latePenaltyRecords" :key="idx" :class="item.type === 'unpaid' ? 'row-p-unpaid' : 'row-p-casual'">
+                        <td class="col-index">{{ idx + 1 }}</td>
+                        <td class="col-trigger">
+                          <span class="trigger-chip">
+                            <i class="fas fa-stopwatch"></i> {{ item.late_mark_trigger }}th Late Mark
+                          </span>
+                        </td>
+                        <td class="col-date">
+                          <span v-if="item.trigger_date">{{ formatDate(item.trigger_date) }}</span>
+                          <span v-else class="text-muted">Accumulated</span>
+                          <span v-if="item.clock_in" class="clock-in-hint">({{ item.clock_in }})</span>
+                        </td>
+                        <td class="col-leave">
+                          <span class="leave-type-pill" :class="item.type === 'unpaid' ? 'pill-unpaid' : 'pill-casual'">
+                            <i :class="item.type === 'unpaid' ? 'fas fa-hourglass-half' : 'fas fa-calendar-minus'"></i>
+                            {{ item.title }} ({{ item.duration }} Day)
+                          </span>
+                        </td>
+                        <td class="col-column">
+                          <span class="column-name-tag" :class="item.type === 'unpaid' ? 'col-tag-unpaid' : 'col-tag-casual'">
+                            <i :class="item.type === 'unpaid' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle'"></i>
+                            {{ item.type === 'unpaid' ? 'Unpaid Leave' : 'Used Casual Leave' }}
+                          </span>
+                        </td>
+                        <td class="col-status">
+                          <span class="status-badge-applied" :class="item.type === 'unpaid' ? 'badge-applied-unpaid' : 'badge-applied-casual'">
+                            {{ item.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Empty state for penalties -->
+              <div v-else class="empty-penalties-state">
+                <i class="fas fa-smile"></i>
+                <span>No late mark leave penalties applied. You have {{ totalLateMarks }} late mark(s) (threshold is 3).</span>
               </div>
             </div>
           </div>
@@ -506,14 +687,22 @@
         unpaidAttendanceRecords: [],
         leaveDetails: [],
         leaveAllocations: {
-          privilege: 0,
           casual: 0,
-          sick: 0
+          sick: 0,
+          privilege: 0,
+          unpaid: 0
         },
         leaveUsed: {
-          privilege: 0,
           casual: 0,
-          sick: 0
+          sick: 0,
+          privilege: 0,
+          unpaid: 0
+        },
+        leaveRemaining: {
+          casual: 0,
+          sick: 0,
+          privilege: 0,
+          unpaid: 0
         },
         unpaidLeaveDays: 0,
         holidayWorkCredits: 0,
@@ -533,34 +722,54 @@
       lateMarksVisible: true,
       lateMarksLoading: false,
       penaltyPerUnit: 0.5,
-      penaltyThreshold: 3
+      penaltyThreshold: 3,
+      // Dedicated Late Mark Penalties Section Data
+      latePenaltySectionVisible: true,
+      latePenaltyRecords: [],
+      latePenaltyClDeducted: 0,
+      latePenaltyUnpaidDeducted: 0
       }
     },
     computed: {
       leaveSummary() {
         return {
-          privilege: { 
-            remaining: Math.max(0, this.leaveAllocations.privilege - this.leaveUsed.privilege), 
-            total: this.leaveAllocations.privilege 
-          },
           casual: { 
-            remaining: Math.max(0, this.leaveAllocations.casual - this.leaveUsed.casual), 
-            total: this.leaveAllocations.casual 
+            remaining: this.leaveRemaining.casual, 
+            total: this.leaveAllocations.casual,
+            used: this.leaveUsed.casual
           },
           sick: { 
-            remaining: Math.max(0, this.leaveAllocations.sick - this.leaveUsed.sick), 
-            total: this.leaveAllocations.sick 
+            remaining: this.leaveRemaining.sick, 
+            total: this.leaveAllocations.sick,
+            used: this.leaveUsed.sick
+          },
+          privilege: { 
+            remaining: this.leaveRemaining.privilege, 
+            total: this.leaveAllocations.privilege,
+            used: this.leaveUsed.privilege
           }
         };
       },
       totalRemaining() {
-        return Object.values(this.leaveSummary).reduce((sum, item) => sum + Math.max(0, (item.remaining || 0)), 0);
+        return (
+          (parseFloat(this.leaveRemaining.casual) || 0) +
+          (parseFloat(this.leaveRemaining.sick) || 0) +
+          (parseFloat(this.leaveRemaining.privilege) || 0)
+        );
       },
       totalUsed() {
-        return Object.values(this.leaveUsed).reduce((sum, item) => sum + (item || 0), 0);
+        return (
+          (parseFloat(this.leaveUsed.casual) || 0) +
+          (parseFloat(this.leaveUsed.sick) || 0) +
+          (parseFloat(this.leaveUsed.privilege) || 0)
+        );
       },
       totalAllocated() {
-        return Object.values(this.leaveAllocations).reduce((sum, item) => sum + (item || 0), 0);
+        return (
+          (parseFloat(this.leaveAllocations.casual) || 0) +
+          (parseFloat(this.leaveAllocations.sick) || 0) +
+          (parseFloat(this.leaveAllocations.privilege) || 0)
+        );
       },
       getFullDaysDeduction() {
       return function() {
@@ -617,6 +826,88 @@
           this.unpaidListVisible = !this.unpaidListVisible;
         }
       },
+      toggleLatePenaltySection() {
+        this.latePenaltySectionVisible = !this.latePenaltySectionVisible;
+      },
+      getPenaltyBannerClass() {
+        if (this.latePenaltyUnpaidDeducted > 0) return 'banner-unpaid';
+        if (this.latePenaltyClDeducted > 0) return 'banner-casual';
+        if (this.totalLateMarks > 0) return 'banner-warning';
+        return 'banner-neutral';
+      },
+      getPenaltyBannerIcon() {
+        if (this.latePenaltyUnpaidDeducted > 0) return 'fas fa-exclamation-triangle';
+        if (this.latePenaltyClDeducted > 0) return 'fas fa-calendar-minus';
+        if (this.totalLateMarks > 0) return 'fas fa-info-circle';
+        return 'fas fa-check-circle';
+      },
+      generatePenaltyRecordsFallback() {
+        const records = [];
+        const count = this.penaltiesCalculated;
+        let availCL = Math.max(0, (this.leaveAllocations.casual || 7) - ((this.leaveUsed.casual || 0) - (this.latePenaltyClDeducted || 0)));
+        let clDeducted = 0;
+        let unpaidDeducted = 0;
+
+        for (let i = 1; i <= count; i++) {
+          const triggerIndex = (i * 3) - 1;
+          const triggerItem = this.lateMarks[triggerIndex] || null;
+          const triggerDate = triggerItem ? triggerItem.date : null;
+          const triggerClockIn = triggerItem ? triggerItem.clock_in : null;
+
+          if (availCL >= 0.5) {
+            clDeducted += 0.5;
+            availCL -= 0.5;
+            records.push({
+              penalty_number: i,
+              late_mark_trigger: i * 3,
+              trigger_date: triggerDate,
+              clock_in: triggerClockIn,
+              duration: 0.5,
+              type: 'casual',
+              deducted_column: 'used_cl_leave',
+              title: 'Half Day Casual Leave',
+              description: `3 Late Marks Penalty` + (triggerDate ? ` (Triggered on ${this.formatDate(triggerDate)})` : ''),
+              status: 'Deducted from Casual Leave'
+            });
+          } else if (availCL > 0) {
+            const clPart = availCL;
+            const unpaidPart = 0.5 - clPart;
+            clDeducted += clPart;
+            unpaidDeducted += unpaidPart;
+            availCL = 0;
+            records.push({
+              penalty_number: i,
+              late_mark_trigger: i * 3,
+              trigger_date: triggerDate,
+              clock_in: triggerClockIn,
+              duration: 0.5,
+              type: 'unpaid',
+              deducted_column: 'used_unpaid_leave',
+              title: 'Unpaid Half Day Leave',
+              description: `3 Late Marks Penalty (${clPart} CL + ${unpaidPart} Unpaid - CL Exhausted)`,
+              status: 'Marked as Unpaid Half Day'
+            });
+          } else {
+            unpaidDeducted += 0.5;
+            records.push({
+              penalty_number: i,
+              late_mark_trigger: i * 3,
+              trigger_date: triggerDate,
+              clock_in: triggerClockIn,
+              duration: 0.5,
+              type: 'unpaid',
+              deducted_column: 'used_unpaid_leave',
+              title: 'Unpaid Half Day Leave',
+              description: `3 Late Marks Penalty (Casual Leave Quota Exhausted)`,
+              status: 'Marked as Unpaid Half Day'
+            });
+          }
+        }
+
+        this.latePenaltyRecords = records;
+        if (!this.latePenaltyClDeducted) this.latePenaltyClDeducted = clDeducted;
+        if (!this.latePenaltyUnpaidDeducted) this.latePenaltyUnpaidDeducted = unpaidDeducted;
+      },
       scrollToSection(section) {
         const element = document.querySelector(`.${section}-section`);
         if (element) {
@@ -632,12 +923,14 @@
           this.approvedListVisible = false;
           this.unpaidListVisible = false;
           this.lateMarksVisible = false;
+          this.latePenaltySectionVisible = false;
         } else {
           this.halfDayVisible = true;
           this.halfDayListVisible = true;
           this.approvedListVisible = true;
           this.unpaidListVisible = true;
           this.lateMarksVisible = true;
+          this.latePenaltySectionVisible = true;
         }
       },
       toggleSidebar() {
@@ -819,17 +1112,16 @@
       
       this.monthlyLateSummary = Object.values(filteredMonthlySummary);
       
-      // Recalculate total late marks from filtered summary
-      this.totalLateMarks = this.monthlyLateSummary.reduce((sum, item) => sum + (item.late_count || 0), 0);
-      
-      // Recalculate penalties based on filtered data
+      // Keep late marks & penalties strictly for the CURRENT MONTH (refreshed every month, not summed across all months)
+      this.totalLateMarks = filteredLateRecords.length;
       const threshold = data.threshold || 3;
       this.penaltiesCalculated = Math.floor(this.totalLateMarks / threshold);
-      this.totalPenaltiesApplied = Math.min(
-        this.penaltiesCalculated,
-        data.total_penalties_applied || 0
-      );
+      this.totalPenaltiesApplied = this.penaltiesCalculated;
       this.totalPenaltyAmount = this.totalPenaltiesApplied * (data.penalty_per_unit || 0.5);
+
+      if (this.latePenaltyRecords.length === 0 && this.penaltiesCalculated > 0) {
+        this.generatePenaltyRecordsFallback();
+      }
     }
     
     this.lateMarksLoading = false;
@@ -874,37 +1166,67 @@
             const balanceData = balanceResponse.data.data;
             
             this.leaveAllocations = {
-              privilege: parseFloat(balanceData.pl_leave) || 0,
-              casual: parseFloat(balanceData.casual_leave) || 0,
-              sick: parseFloat(balanceData.sick_leave) || 0
+              casual: parseFloat(balanceData.casual_leave) || 7,
+              sick: parseFloat(balanceData.sick_leave) || 10,
+              privilege: parseFloat(balanceData.pl_leave) || 10,
+              unpaid: parseFloat(balanceData.unpaid_leave) || 0
             };
             
             this.leaveUsed = {
-              privilege: parseFloat(balanceData.used_pl_leave) || 0,
               casual: parseFloat(balanceData.used_cl_leave) || 0,
-              sick: parseFloat(balanceData.used_sick_leave) || 0
+              sick: parseFloat(balanceData.used_sick_leave) || 0,
+              privilege: parseFloat(balanceData.used_pl_leave) || 0,
+              unpaid: parseFloat(balanceData.used_unpaid_leave) || 0
             };
             
-            const remainingPL = parseFloat(balanceData.remaining_pl_leave) || 0;
-            const remainingCL = parseFloat(balanceData.remaining_cl_leave) || 0;
-            const remainingSick = parseFloat(balanceData.remaining_sick_leave) || 0;
+            const remainingCL = balanceData.remaining_cl_leave !== undefined && balanceData.remaining_cl_leave !== null
+              ? parseFloat(balanceData.remaining_cl_leave)
+              : Math.max(0, this.leaveAllocations.casual - this.leaveUsed.casual);
+
+            const remainingSick = balanceData.remaining_sick_leave !== undefined && balanceData.remaining_sick_leave !== null
+              ? parseFloat(balanceData.remaining_sick_leave)
+              : Math.max(0, this.leaveAllocations.sick - this.leaveUsed.sick);
+
+            const remainingPL = balanceData.remaining_pl_leave !== undefined && balanceData.remaining_pl_leave !== null
+              ? parseFloat(balanceData.remaining_pl_leave)
+              : Math.max(0, this.leaveAllocations.privilege - this.leaveUsed.privilege);
+
+            const remainingUnpaid = balanceData.remaining_unpaid_leave !== undefined && balanceData.remaining_unpaid_leave !== null
+              ? parseFloat(balanceData.remaining_unpaid_leave)
+              : Math.max(0, this.leaveAllocations.unpaid - this.leaveUsed.unpaid);
+
+            this.leaveRemaining = {
+              casual: remainingCL,
+              sick: remainingSick,
+              privilege: remainingPL,
+              unpaid: remainingUnpaid
+            };
             
             this.unpaidLeaveDays = parseFloat(balanceData.used_unpaid_leave) || 0;
+
+            // Extract late penalty breakdown from balance data
+            const penaltyData = balanceData.late_penalty_months || {};
+            if (typeof penaltyData === 'object' && penaltyData !== null) {
+              if (Array.isArray(penaltyData.penalty_records) && penaltyData.penalty_records.length > 0) {
+                this.latePenaltyRecords = penaltyData.penalty_records;
+              }
+              if (penaltyData.late_penalty_cl_deducted !== undefined) {
+                this.latePenaltyClDeducted = parseFloat(penaltyData.late_penalty_cl_deducted) || 0;
+              }
+              if (penaltyData.late_penalty_unpaid_deducted !== undefined) {
+                this.latePenaltyUnpaidDeducted = parseFloat(penaltyData.late_penalty_unpaid_deducted) || 0;
+              }
+            }
             
-            console.log('Leave Data from DB:', {
+            console.log('Leave Data from DB (leave_balances):', {
               allocations: this.leaveAllocations,
               used: this.leaveUsed,
-              remaining: { privilege: remainingPL, casual: remainingCL, sick: remainingSick },
-              unpaidLeave: this.unpaidLeaveDays
+              remaining: this.leaveRemaining,
+              unpaidLeave: this.unpaidLeaveDays,
+              latePenalties: this.latePenaltyRecords
             });
             
             this.leaveDetails = [
-              { 
-                type: 'privilege', 
-                total: this.leaveAllocations.privilege, 
-                used: this.leaveUsed.privilege, 
-                remaining: remainingPL
-              },
               { 
                 type: 'casual', 
                 total: this.leaveAllocations.casual, 
@@ -916,26 +1238,48 @@
                 total: this.leaveAllocations.sick, 
                 used: this.leaveUsed.sick, 
                 remaining: remainingSick
+              },
+              { 
+                type: 'privilege', 
+                total: this.leaveAllocations.privilege, 
+                used: this.leaveUsed.privilege, 
+                remaining: remainingPL
+              },
+              { 
+                type: 'unpaid', 
+                total: this.leaveAllocations.unpaid, 
+                used: this.leaveUsed.unpaid, 
+                remaining: remainingUnpaid
               }
             ];
             
           } else {
             this.leaveAllocations = {
-              privilege: 0,
-              casual: 0,
-              sick: 0
+              casual: 7,
+              sick: 10,
+              privilege: 10,
+              unpaid: 0
             };
             
             this.leaveUsed = {
-              privilege: 0,
               casual: 0,
-              sick: 0
+              sick: 0,
+              privilege: 0,
+              unpaid: 0
+            };
+
+            this.leaveRemaining = {
+              casual: 7,
+              sick: 10,
+              privilege: 10,
+              unpaid: 0
             };
             
             this.leaveDetails = [
-              { type: 'privilege', total: 0, used: 0, remaining: 0 },
-              { type: 'casual', total: 0, used: 0, remaining: 0 },
-              { type: 'sick', total: 0, used: 0, remaining: 0 }
+              { type: 'casual', total: 7, used: 0, remaining: 7 },
+              { type: 'sick', total: 10, used: 0, remaining: 10 },
+              { type: 'privilege', total: 10, used: 0, remaining: 10 },
+              { type: 'unpaid', total: 0, used: 0, remaining: 0 }
             ];
             
             this.unpaidLeaveDays = 0;
@@ -1023,7 +1367,6 @@
               record.status === 'Absent' && 
               this.isDateInFinancialYear(record.date, this.selectedFinancialYear)
             );
-            this.unpaidLeaveDays = this.unpaidAttendanceRecords.length;
           }
           
           this.loading = false;
@@ -1056,6 +1399,7 @@
           privilege: 'fas fa-crown',
           casual: 'fas fa-coffee',
           sick: 'fas fa-thermometer-half',
+          unpaid: 'fas fa-hourglass-half',
           absent: 'fas fa-hourglass-half',
           'half day': 'fas fa-sun',
           default: 'fas fa-calendar-check'
@@ -1067,6 +1411,7 @@
           privilege: 'Privilege',
           casual: 'Casual',
           sick: 'Sick / Medical',
+          unpaid: 'Unpaid Leave',
           absent: 'Unpaid (Absent)',
           'half day': 'Half Day'
         };
@@ -2669,5 +3014,463 @@
     font-size: 11px;
     padding: 8px 10px;
   }
+}
+
+/* ================= LATE MARK PENALTY LEAVES DEDICATED SECTION ================= */
+.late-penalty-leaves-section {
+  background: #ffffff;
+  border: 2px solid #94a3b8;
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
+}
+
+.late-penalty-leaves-section.mobile-card {
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.section-title-clickable {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.section-title-clickable .title-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.title-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1.5px solid #c7d2fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.section-heading {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  display: block;
+  line-height: 1.2;
+}
+
+.section-subheading {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 2px;
+  display: block;
+}
+
+.count-badge-penalty {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1.5px solid #fca5a5;
+  font-weight: 800;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.count-badge-zero {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+  font-weight: 700;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.late-penalty-content {
+  transition: all 0.3s ease;
+}
+
+.late-penalty-content.list-hidden {
+  display: none;
+}
+
+.late-penalty-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.penalty-highlight-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 2px solid #cbd5e1;
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.highlight-active-casual {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.highlight-active-unpaid {
+  background: #fff7ed;
+  border-color: #f97316;
+}
+
+.highlight-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.highlight-icon.icon-clock {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+}
+
+.highlight-icon.icon-cl {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1.5px solid #86efac;
+}
+
+.highlight-icon.icon-unpaid {
+  background: #ffedd5;
+  color: #ea580c;
+  border: 1.5px solid #fdba74;
+}
+
+.highlight-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.highlight-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.highlight-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #334155;
+  margin-top: 3px;
+}
+
+.highlight-sub {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.policy-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  border: 2px solid transparent;
+}
+
+.policy-status-banner.banner-casual {
+  background: #ecfdf5;
+  border-color: #34d399;
+  color: #065f46;
+}
+
+.policy-status-banner.banner-unpaid {
+  background: #fff7ed;
+  border-color: #fb923c;
+  color: #9a3412;
+}
+
+.policy-status-banner.banner-warning {
+  background: #fefce8;
+  border-color: #fde047;
+  color: #854d0e;
+}
+
+.policy-status-banner.banner-neutral {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.policy-status-banner .banner-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.penalty-records-wrap {
+  margin-top: 14px;
+}
+
+.penalty-records-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.penalty-records-title i {
+  color: #4f46e5;
+}
+
+.desktop-penalty-table-wrap {
+  overflow-x: auto;
+  border: 2px solid #94a3b8;
+  border-radius: 12px;
+}
+
+.penalty-records-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.penalty-records-table thead tr {
+  background: #e2e8f0;
+}
+
+.penalty-records-table th {
+  padding: 12px 14px;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  font-size: 11.5px;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #64748b;
+  border-right: 1.5px solid #cbd5e1;
+  text-align: left;
+}
+
+.penalty-records-table th:last-child {
+  border-right: none;
+}
+
+.penalty-records-table td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  border-bottom: 1.5px solid #cbd5e1;
+  border-right: 1.5px solid #cbd5e1;
+  background: #ffffff;
+}
+
+.penalty-records-table td:last-child {
+  border-right: none;
+}
+
+.trigger-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.clock-in-hint {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+.leave-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.leave-type-pill.pill-casual {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1.5px solid #34d399;
+}
+
+.leave-type-pill.pill-unpaid {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1.5px solid #fb923c;
+}
+
+.column-name-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.column-name-tag.col-tag-casual {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1.5px solid #86efac;
+}
+
+.column-name-tag.col-tag-unpaid {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1.5px solid #fdba74;
+}
+
+.status-badge-applied {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.status-badge-applied.badge-applied-casual {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.status-badge-applied.badge-applied-unpaid {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Mobile Penalty Cards */
+.mobile-penalty-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.penalty-record-card {
+  background: #ffffff;
+  border: 2px solid #cbd5e1;
+  border-left-width: 5px;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.penalty-record-card.card-casual {
+  border-left-color: #22c55e;
+}
+
+.penalty-record-card.card-unpaid {
+  border-left-color: #ea580c;
+}
+
+.card-p-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.p-badge {
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.p-badge.badge-casual { color: #15803d; }
+.p-badge.badge-unpaid { color: #c2410c; }
+
+.p-duration {
+  font-size: 12px;
+  font-weight: 800;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.card-p-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.p-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.p-lbl {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.p-val {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.p-val.column-target.target-casual {
+  color: #15803d;
+}
+
+.p-val.column-target.target-unpaid {
+  color: #c2410c;
+}
+
+.empty-penalties-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.empty-penalties-state i {
+  color: #22c55e;
+  font-size: 18px;
 }
 </style>

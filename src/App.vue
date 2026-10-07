@@ -164,12 +164,16 @@
         </div>
       </div>
     </div>
+
+    <!-- 🔒 Daily Mandatory Attendance Modal -->
+    <DailyAttendanceModal />
   </div>
 </template>
 
 <script>
 import NotificationBell from '@views/employee/components/NotificationBell.vue'
 import AdminNotificationBell from './components/AdminNotificationBell.vue'
+import DailyAttendanceModal from './components/DailyAttendanceModal.vue'
 import axios from 'axios'
 import { toastInfo } from "@/utils/toast.js";
 import { initSessionTimeout, destroySessionTimeout, clearActivityTimer } from "@/utils/sessionTimeout.js";
@@ -178,6 +182,7 @@ export default {
   components: {
     NotificationBell,
     AdminNotificationBell,
+    DailyAttendanceModal,
   },
 
   data() {

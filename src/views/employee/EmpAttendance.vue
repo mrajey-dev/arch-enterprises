@@ -434,9 +434,14 @@ export default {
       return date.getDay() === 0;
     },
     availableStatuses() {
-      if (this.isSunday) return ['OnSite', 'Traveling'];
-      if (this.isMobile) return ['OnSite', 'Traveling', 'HalfDay'];
-      return ['Present', 'OnSite', 'Traveling'];
+      const baseStatuses = this.isSunday
+        ? ['OnSite', 'Traveling']
+        : ['Present', 'OnSite', 'Traveling', 'HalfDay'];
+      const statuses = [...baseStatuses];
+      if (this.user.status && !statuses.includes(this.user.status)) {
+        statuses.push(this.user.status);
+      }
+      return statuses;
     },
     // Check if user is currently clocked in
     isClockedIn() {
@@ -576,16 +581,25 @@ export default {
         Present: '✅ Present',
         OnSite: '🏢 On Site',
         Traveling: '✈️ Traveling',
-        HalfDay: '🕒 Half Day'
+        HalfDay: '🕒 Half Day',
+        'Half Day': '🕒 Half Day',
+        Absent: '❌ Absent',
+        Leave: '🏖️ Leave',
+        UnpaidLeave: '⚠️ Unpaid Leave',
+        'Unpaid Leave': '⚠️ Unpaid Leave',
+        Missing: '❓ Missing'
       };
       return labels[status] || status;
     },
     getStatusClass(status) {
-      const s = (status || '').toLowerCase();
+      const s = (status || '').toLowerCase().replace(/[\s-_]/g, '');
       if (s === 'present') return 'present';
       if (s === 'onsite') return 'onsite';
       if (s === 'traveling') return 'traveling';
       if (s === 'halfday') return 'halfday';
+      if (s === 'absent') return 'absent';
+      if (s === 'leave') return 'leave';
+      if (s === 'unpaidleave') return 'unpaid-leave';
       return '';
     },
     formatDate(date) {
@@ -876,6 +890,7 @@ export default {
           date: today
         }, { headers: { Authorization: `Bearer ${token}` } });
         toastSuccess('Attendance saved successfully');
+        window.dispatchEvent(new CustomEvent('attendance-marked'));
       } catch (err) {
         console.error('Attendance save failed', err);
         toastError('Failed to save attendance');
@@ -1013,7 +1028,15 @@ export default {
         });
         const record = response.data?.data;
         if (record && record.status) {
-          this.user.status = record.status;
+          this.user.status = this.normalizeStatus(record.status) || record.status;
+
+          // Proactively ensure Half Day 0.5 leave deduction is synced in leave_balances
+          if (this.user.status === 'HalfDay') {
+            axios.get('https://employees.archenterprises.co.in/api/api/attendance/sync-half-day', {
+              params: { name: this.user.name, date: today },
+              headers: { Authorization: `Bearer ${token}` }
+            }).catch(() => {});
+          }
           
           // Handle time conversion if needed
           this.user.clockIn = this.convertToLocalTime(record.clock_in || '');
@@ -1047,7 +1070,26 @@ export default {
           
           this.$forceUpdate();
         } else {
+          // Record deleted or does not exist in DB: Reset UI and clear cached data
+          this.user.status = '';
+          this.user.clockIn = '';
+          this.user.clockOut = '';
+          this.user.actualTime = '';
+          this.user.siteName = '';
+          this.user.travelFrom = '';
+          this.user.travelTo = '';
+          this.user.statusLocked = false;
           this.disableStatusSelect = false;
+          this.user.isLate = false;
+          this.user.isEarly = false;
+          this.workingHours = 0;
+          if (this.workingHoursInterval) {
+            clearInterval(this.workingHoursInterval);
+            this.workingHoursInterval = null;
+          }
+          const key = `attendance_${this.currentDate}_${this.user.name}`;
+          localStorage.removeItem(key);
+          this.$forceUpdate();
         }
       } catch (err) {
         console.error('Error fetching today\'s attendance:', err);
@@ -1389,52 +1431,8 @@ export default {
     this.checkPreviousDayStatus().then(() => {
       // Fetch holidays from database - NO HARDCODED FALLBACK
       this.fetchPublicHolidays().then(() => {
-        const key = `attendance_${this.currentDate}_${this.user.name}`;
-        console.log('LocalStorage key:', key);
-        const savedData = localStorage.getItem(key);
-        console.log('Saved data from localStorage:', savedData);
-        
-        if (savedData) {
-          try {
-            this.user = JSON.parse(savedData);
-            console.log('Parsed user data:', this.user);
-            console.log('ClockIn value:', this.user.clockIn);
-            console.log('ClockOut value:', this.user.clockOut);
-            
-            // Restore working hours from saved data
-            if (this.user.clockIn && !this.user.clockOut) {
-              console.log('Condition met - starting counter from localStorage');
-              this.startWorkingHoursCounter();
-              console.log('Counter started from localStorage data');
-            } else if (this.user.clockOut && this.user.actualTime) {
-              console.log('User already clocked out, setting final hours');
-              const parts = this.user.actualTime.split(':').map(Number);
-              this.workingHours = parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
-              console.log('Working hours set to:', this.workingHours);
-            } else {
-              console.log('No clock in or clock out data found');
-            }
-            
-            this.$forceUpdate();
-            this.$nextTick(() => {
-              this.$forceUpdate();
-              console.log('After force update - formatted hours:', this.formattedWorkingHours);
-            });
-          } catch (error) {
-            console.error('Error parsing saved data:', error);
-            this.fetchTodayStatus();
-          }
-        } else {
-          console.log('No saved data, fetching from database');
-          this.fetchTodayStatus().then(() => {
-            if (this.user.clockIn && !this.user.clockOut) {
-              console.log('Condition met - starting counter from database');
-              this.startWorkingHoursCounter();
-              console.log('Counter started from database data');
-            }
-            this.$forceUpdate();
-          });
-        }
+        // Always fetch fresh attendance status from database as single source of truth
+        this.fetchTodayStatus();
       });
     });
     
@@ -2214,6 +2212,9 @@ export default {
 .status-select-mobile.onsite { background: #e0e7ff; color: #4338ca; }
 .status-select-mobile.traveling { background: #fef3c7; color: #d97706; }
 .status-select-mobile.halfday { background: #fed7aa; color: #c2410c; }
+.status-select-mobile.absent { background: #fee2e2; color: #b91c1c; }
+.status-select-mobile.leave { background: #e0f2fe; color: #0369a1; }
+.status-select-mobile.unpaid-leave { background: #fef2f2; color: #991b1b; }
 
 .card-detail-row {
   display: flex;
@@ -2297,6 +2298,9 @@ export default {
 .status-select-premium.onsite { background: #e0e7ff; color: #4338ca; }
 .status-select-premium.traveling { background: #fef3c7; color: #d97706; }
 .status-select-premium.halfday { background: #fed7aa; color: #c2410c; }
+.status-select-premium.absent { background: #fee2e2; color: #b91c1c; }
+.status-select-premium.leave { background: #e0f2fe; color: #0369a1; }
+.status-select-premium.unpaid-leave { background: #fef2f2; color: #991b1b; }
 
 .clock-cell {
   font-family: monospace;

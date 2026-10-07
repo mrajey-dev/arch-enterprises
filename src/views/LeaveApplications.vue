@@ -244,12 +244,12 @@
             <table class="modern-table">
               <thead>
                 <tr>
-                  <th class="th-employee">Employee Details</th>
-                  <th class="th-type">Leave Category</th>
-                  <th class="th-dates">Schedule & Duration</th>
-                  <th class="th-reason">Reason & Document</th>
-                  <th class="th-status">Status</th>
-                  <th class="th-actions text-right">Approval Actions</th>
+                  <th class="th-employee"><i class="fas fa-user-circle"></i> Employee Details</th>
+                  <th class="th-type"><i class="fas fa-tag"></i> Leave Category</th>
+                  <th class="th-dates"><i class="fas fa-calendar-alt"></i> Schedule & Duration</th>
+                  <th class="th-reason"><i class="fas fa-comment-alt"></i> Reason & Document</th>
+                  <th class="th-status text-center"><i class="fas fa-shield-alt"></i> Status</th>
+                  <th class="th-actions text-right"><i class="fas fa-sliders-h"></i> Approval Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -261,7 +261,7 @@
                 >
                   <!-- Employee Column -->
                   <td class="td-employee">
-                    <div class="employee-identity" @click="openLeaveBalancePopup(leave.name)">
+                    <div class="employee-identity-card" @click="openLeaveBalancePopup(leave.name)">
                       <div class="avatar-modern" :style="{ background: getAvatarGradient(leave.name) }">
                         {{ getInitials(leave.name) }}
                       </div>
@@ -271,11 +271,11 @@
                         </span>
                         <div class="emp-sub-meta">
                           <span class="dept-pill" v-if="leave.department">
-                            <i class="fas fa-briefcase"></i>
+                            <i class="fas fa-building"></i>
                             {{ leave.department }}
                           </span>
                           <span class="view-balance-prompt">
-                            <i class="fas fa-chart-pie"></i> Balance
+                            <i class="fas fa-chart-pie"></i> Check Quota
                           </span>
                         </div>
                       </div>
@@ -284,7 +284,7 @@
 
                   <!-- Leave Category -->
                   <td class="td-type">
-                    <div class="category-wrapper">
+                    <div class="field-card field-card-type">
                       <span :class="['category-badge', getLeaveTypeClass(leave.leaveType)]">
                         <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
                         {{ leave.leaveType }}
@@ -294,8 +294,8 @@
 
                   <!-- Schedule & Duration -->
                   <td class="td-dates">
-                    <div class="schedule-block">
-                      <div class="date-range">
+                    <div class="field-card field-card-schedule">
+                      <div class="schedule-date-box">
                         <i class="far fa-calendar-alt date-icon"></i>
                         <span class="date-text">
                           {{ formatDate(leave.fromDate) }}
@@ -314,14 +314,13 @@
 
                   <!-- Reason & Attachment -->
                   <td class="td-reason">
-                    <div class="reason-container">
-                      <p
-                        class="reason-text"
-                        :title="leave.reason"
-                        @click="openReasonModal(leave)"
-                      >
-                        {{ truncateText(leave.reason, 60) }}
-                      </p>
+                    <div class="field-card field-card-reason">
+                      <div class="reason-note-box" @click="openReasonModal(leave)" :title="leave.reason || 'Click to view full reason'">
+                        <i class="fas fa-quote-left quote-icon"></i>
+                        <p class="reason-text">
+                          {{ truncateText(leave.reason, 55) || 'No reason specified' }}
+                        </p>
+                      </div>
                       <button
                         v-if="leave.file"
                         class="attachment-pill"
@@ -329,50 +328,54 @@
                         title="View attached document"
                       >
                         <i class="fas fa-paperclip"></i>
-                        <span>Attachment</span>
+                        <span>Document</span>
                       </button>
                     </div>
                   </td>
 
                   <!-- Status -->
                   <td class="td-status">
-                    <span :class="['status-pill', getStatusClass(leave.status)]">
-                      <span class="status-pulse-dot"></span>
-                      <i :class="getStatusIcon(leave.status)"></i>
-                      {{ leave.status }}
-                    </span>
+                    <div class="field-card field-card-status">
+                      <span :class="['status-pill', getStatusClass(leave.status)]">
+                        <span class="status-pulse-dot"></span>
+                        <i :class="getStatusIcon(leave.status)"></i>
+                        {{ leave.status }}
+                      </span>
+                    </div>
                   </td>
 
                   <!-- Actions -->
                   <td class="td-actions text-right">
-                    <div class="action-buttons-wrap">
-                      <!-- Approve Button -->
-                      <button
-                        v-if="leave.status === 'Pending' || leave.status === 'Rejected'"
-                        class="btn-action btn-approve"
-                        :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Approved' }"
-                        :disabled="busyLeave.id === leave.id"
-                        @click="approveLeave(leave)"
-                        :title="leave.status === 'Rejected' ? 'Re-approve leave request' : 'Approve leave request'"
-                      >
-                        <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Approved'" class="fas fa-circle-notch fa-spin"></i>
-                        <i v-else class="fas fa-check"></i>
-                        <span>{{ leave.status === 'Rejected' ? 'Re-Approve' : 'Approve' }}</span>
-                      </button>
+                    <div class="field-card field-card-actions">
+                      <div class="action-buttons-wrap">
+                        <!-- Approve Button -->
+                        <button
+                          v-if="leave.status === 'Pending' || leave.status === 'Rejected'"
+                          class="btn-action btn-approve"
+                          :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Approved' }"
+                          :disabled="busyLeave.id === leave.id"
+                          @click="approveLeave(leave)"
+                          :title="leave.status === 'Rejected' ? 'Re-approve leave request' : 'Approve leave request'"
+                        >
+                          <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Approved'" class="fas fa-circle-notch fa-spin"></i>
+                          <i v-else class="fas fa-check"></i>
+                          <span>{{ leave.status === 'Rejected' ? 'Re-Approve' : 'Approve' }}</span>
+                        </button>
 
-                      <!-- Reject Button -->
-                      <button
-                        v-if="leave.status === 'Pending' || leave.status === 'Approved'"
-                        class="btn-action btn-reject"
-                        :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Rejected' }"
-                        :disabled="busyLeave.id === leave.id"
-                        @click="rejectLeave(leave)"
-                        :title="leave.status === 'Approved' ? 'Revoke and mark as rejected' : 'Reject leave request'"
-                      >
-                        <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Rejected'" class="fas fa-circle-notch fa-spin"></i>
-                        <i v-else class="fas fa-times"></i>
-                        <span>{{ leave.status === 'Approved' ? 'Revoke' : 'Reject' }}</span>
-                      </button>
+                        <!-- Reject Button -->
+                        <button
+                          v-if="leave.status === 'Pending' || leave.status === 'Approved'"
+                          class="btn-action btn-reject"
+                          :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Rejected' }"
+                          :disabled="busyLeave.id === leave.id"
+                          @click="rejectLeave(leave)"
+                          :title="leave.status === 'Approved' ? 'Revoke and mark as rejected' : 'Reject leave request'"
+                        >
+                          <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Rejected'" class="fas fa-circle-notch fa-spin"></i>
+                          <i v-else class="fas fa-times"></i>
+                          <span>{{ leave.status === 'Approved' ? 'Revoke' : 'Reject' }}</span>
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -800,14 +803,22 @@ export default {
       loadingBalance: false,
       popupLeaveDetails: [],
       popupLeaveAllocations: {
-        privilege: 0,
         casual: 0,
-        sick: 0
+        sick: 0,
+        privilege: 0,
+        unpaid: 0
       },
       popupLeaveUsed: {
-        privilege: 0,
         casual: 0,
-        sick: 0
+        sick: 0,
+        privilege: 0,
+        unpaid: 0
+      },
+      popupLeaveRemaining: {
+        casual: 0,
+        sick: 0,
+        privilege: 0,
+        unpaid: 0
       },
       popupUnpaidLeaveDays: 0,
       popupUserId: null,
@@ -883,31 +894,46 @@ export default {
 
     popupLeaveSummary() {
       return {
-        privilege: { 
-          remaining: Math.max(0, this.popupLeaveAllocations.privilege - this.popupLeaveUsed.privilege), 
-          total: this.popupLeaveAllocations.privilege 
-        },
         casual: { 
-          remaining: Math.max(0, this.popupLeaveAllocations.casual - this.popupLeaveUsed.casual), 
-          total: this.popupLeaveAllocations.casual 
+          remaining: this.popupLeaveRemaining?.casual ?? Math.max(0, this.popupLeaveAllocations.casual - this.popupLeaveUsed.casual), 
+          total: this.popupLeaveAllocations.casual,
+          used: this.popupLeaveUsed.casual
         },
         sick: { 
-          remaining: Math.max(0, this.popupLeaveAllocations.sick - this.popupLeaveUsed.sick), 
-          total: this.popupLeaveAllocations.sick 
+          remaining: this.popupLeaveRemaining?.sick ?? Math.max(0, this.popupLeaveAllocations.sick - this.popupLeaveUsed.sick), 
+          total: this.popupLeaveAllocations.sick,
+          used: this.popupLeaveUsed.sick
+        },
+        privilege: { 
+          remaining: this.popupLeaveRemaining?.privilege ?? Math.max(0, this.popupLeaveAllocations.privilege - this.popupLeaveUsed.privilege), 
+          total: this.popupLeaveAllocations.privilege,
+          used: this.popupLeaveUsed.privilege
         }
       }
     },
 
     popupTotalRemaining() {
-      return Object.values(this.popupLeaveSummary).reduce((sum, item) => sum + Math.max(0, (item.remaining || 0)), 0)
+      return (
+        (parseFloat(this.popupLeaveRemaining?.casual) || 0) +
+        (parseFloat(this.popupLeaveRemaining?.sick) || 0) +
+        (parseFloat(this.popupLeaveRemaining?.privilege) || 0)
+      )
     },
 
     popupTotalUsed() {
-      return Object.values(this.popupLeaveUsed).reduce((sum, item) => sum + (item || 0), 0)
+      return (
+        (parseFloat(this.popupLeaveUsed?.casual) || 0) +
+        (parseFloat(this.popupLeaveUsed?.sick) || 0) +
+        (parseFloat(this.popupLeaveUsed?.privilege) || 0)
+      )
     },
 
     popupTotalAllocated() {
-      return Object.values(this.popupLeaveAllocations).reduce((sum, item) => sum + (item || 0), 0)
+      return (
+        (parseFloat(this.popupLeaveAllocations?.casual) || 0) +
+        (parseFloat(this.popupLeaveAllocations?.sick) || 0) +
+        (parseFloat(this.popupLeaveAllocations?.privilege) || 0)
+      )
     }
   },
 
@@ -1443,8 +1469,9 @@ export default {
       this.loadingBalance = true
       this.popupLeaveDetails = []
 
-      this.popupLeaveAllocations = { privilege: 0, casual: 0, sick: 0 }
-      this.popupLeaveUsed = { privilege: 0, casual: 0, sick: 0 }
+      this.popupLeaveAllocations = { casual: 0, sick: 0, privilege: 0, unpaid: 0 }
+      this.popupLeaveUsed = { casual: 0, sick: 0, privilege: 0, unpaid: 0 }
+      this.popupLeaveRemaining = { casual: 0, sick: 0, privilege: 0, unpaid: 0 }
       this.popupUnpaidLeaveDays = 0
 
       try {
@@ -1470,20 +1497,42 @@ export default {
           const balanceData = balanceResponse.data.data
           
           this.popupLeaveAllocations = {
-            privilege: parseFloat(balanceData.pl_leave) || 0,
-            casual: parseFloat(balanceData.casual_leave) || 0,
-            sick: parseFloat(balanceData.sick_leave) || 0
+            casual: parseFloat(balanceData.casual_leave) || 7,
+            sick: parseFloat(balanceData.sick_leave) || 10,
+            privilege: parseFloat(balanceData.pl_leave) || 10,
+            unpaid: parseFloat(balanceData.unpaid_leave) || 0
           }
           
           this.popupLeaveUsed = {
-            privilege: parseFloat(balanceData.used_pl_leave) || 0,
             casual: parseFloat(balanceData.used_cl_leave) || 0,
-            sick: parseFloat(balanceData.used_sick_leave) || 0
+            sick: parseFloat(balanceData.used_sick_leave) || 0,
+            privilege: parseFloat(balanceData.used_pl_leave) || 0,
+            unpaid: parseFloat(balanceData.used_unpaid_leave) || 0
           }
           
-          const remainingPL = parseFloat(balanceData.remaining_pl_leave) || 0
-          const remainingCL = parseFloat(balanceData.remaining_cl_leave) || 0
-          const remainingSick = parseFloat(balanceData.remaining_sick_leave) || 0
+          const remainingCL = balanceData.remaining_cl_leave !== undefined && balanceData.remaining_cl_leave !== null
+            ? parseFloat(balanceData.remaining_cl_leave)
+            : Math.max(0, this.popupLeaveAllocations.casual - this.popupLeaveUsed.casual)
+
+          const remainingSick = balanceData.remaining_sick_leave !== undefined && balanceData.remaining_sick_leave !== null
+            ? parseFloat(balanceData.remaining_sick_leave)
+            : Math.max(0, this.popupLeaveAllocations.sick - this.popupLeaveUsed.sick)
+
+          const remainingPL = balanceData.remaining_pl_leave !== undefined && balanceData.remaining_pl_leave !== null
+            ? parseFloat(balanceData.remaining_pl_leave)
+            : Math.max(0, this.popupLeaveAllocations.privilege - this.popupLeaveUsed.privilege)
+
+          const remainingUnpaid = balanceData.remaining_unpaid_leave !== undefined && balanceData.remaining_unpaid_leave !== null
+            ? parseFloat(balanceData.remaining_unpaid_leave)
+            : Math.max(0, this.popupLeaveAllocations.unpaid - this.popupLeaveUsed.unpaid)
+
+          this.popupLeaveRemaining = {
+            casual: remainingCL,
+            sick: remainingSick,
+            privilege: remainingPL,
+            unpaid: remainingUnpaid
+          }
+
           this.popupUnpaidLeaveDays = parseFloat(balanceData.used_unpaid_leave) || 0
           
           this.popupLeaveDetails = [
@@ -1504,6 +1553,12 @@ export default {
               total: this.popupLeaveAllocations.privilege, 
               used: this.popupLeaveUsed.privilege, 
               remaining: remainingPL
+            },
+            { 
+              type: 'unpaid', 
+              total: this.popupLeaveAllocations.unpaid, 
+              used: this.popupLeaveUsed.unpaid, 
+              remaining: remainingUnpaid
             }
           ]
         }
@@ -2176,62 +2231,201 @@ export default {
   color: #94a3b8;
 }
 
+/* ================= TABLE CARD & SEPARATED LAYOUT ================= */
+.content-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+
+.table-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-bottom: 2px solid #edf2f7;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.results-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-count strong {
+  color: #0f172a;
+}
+
+.results-filter-badge {
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.table-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ================= MODERN SEPARATED TABLE ================= */
+.desktop-table-wrapper {
+  overflow-x: auto;
+  background: #ffffff;
+}
+
 .modern-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
 }
 
+/* Table Header - Distinct Column Headers */
+.modern-table thead tr {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
 .modern-table th {
-  padding: 14px 20px;
+  padding: 16px 18px;
   font-size: 12px;
   font-weight: 700;
-  color: #64748b;
+  color: #475569;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.6px;
+  border-bottom: 2px solid #cbd5e1;
+  border-right: 1.5px solid #e2e8f0;
+  white-space: nowrap;
 }
 
+.modern-table th:last-child {
+  border-right: none;
+}
+
+.modern-table th i {
+  margin-right: 6px;
+  color: #6366f1;
+  font-size: 13px;
+}
+
+/* Column Width Allocations */
+.th-employee, .td-employee {
+  width: 27%;
+  min-width: 250px;
+}
+.th-type, .td-type {
+  width: 14%;
+  min-width: 140px;
+}
+.th-dates, .td-dates {
+  width: 19%;
+  min-width: 190px;
+}
+.th-reason, .td-reason {
+  width: 21%;
+  min-width: 210px;
+}
+.th-status, .td-status {
+  width: 10%;
+  min-width: 130px;
+}
+.th-actions, .td-actions {
+  width: 9%;
+  min-width: 170px;
+}
+
+/* Table Cells - Distinct Column Partitions */
 .modern-table td {
-  padding: 16px 20px;
+  padding: 14px 16px;
   vertical-align: middle;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
+  border-bottom: 2px solid #f1f5f9;
+  border-right: 1.5px solid #eef2f6;
+  background: #ffffff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.modern-table td:last-child {
+  border-right: none;
+}
+
+/* Row-level Styling & Status Indicator on Leftmost Cell */
 .table-row-interactive {
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.table-row-interactive:hover {
+.table-row-interactive td:first-child {
+  border-left: 4px solid transparent;
+}
+
+.row-pending td:first-child {
+  border-left-color: #f59e0b;
+}
+
+.row-approved td:first-child {
+  border-left-color: #10b981;
+}
+
+.row-rejected td:first-child {
+  border-left-color: #ef4444;
+}
+
+/* Interactive Row Hover with Soft Tint */
+.table-row-interactive:hover td {
   background-color: #f8fafc;
 }
 
-/* Row accent indication on hover */
-.row-pending:hover {
-  background-color: #fffdf5;
-}
-.row-approved:hover {
-  background-color: #f6fef9;
-}
-.row-rejected:hover {
-  background-color: #fff8f8;
+.row-pending:hover td {
+  background-color: #fffdf7;
 }
 
-/* ================= TABLE CELLS ================= */
-.employee-identity {
+.row-approved:hover td {
+  background-color: #f6fefb;
+}
+
+.row-rejected:hover td {
+  background-color: #fffafa;
+}
+
+/* ================= FIELD CARDS (INTERNAL CELL CONTAINERS) ================= */
+.field-card {
+  width: 100%;
+}
+
+/* 1. Employee Details Card */
+.employee-identity-card {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   cursor: pointer;
-  width: fit-content;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.employee-identity-card:hover {
+  background: #ffffff;
+  border-color: #c7d2fe;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
 }
 
 .avatar-modern {
   width: 42px;
   height: 42px;
-  border-radius: 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2239,19 +2433,20 @@ export default {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 
-.employee-identity:hover .avatar-modern {
-  transform: scale(1.08);
+.employee-identity-card:hover .avatar-modern {
+  transform: scale(1.06);
 }
 
 .employee-meta {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .emp-name {
@@ -2259,17 +2454,21 @@ export default {
   font-weight: 700;
   color: #0f172a;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: color 0.15s ease;
 }
 
-.employee-identity:hover .emp-name {
+.employee-identity-card:hover .emp-name {
   color: #4f46e5;
 }
 
 .emp-sub-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .dept-pill {
@@ -2278,90 +2477,110 @@ export default {
   gap: 4px;
   font-size: 11px;
   color: #475569;
-  background: #f1f5f9;
-  padding: 2px 8px;
+  background: #edf2f7;
+  padding: 2px 7px;
   border-radius: 6px;
-  font-weight: 500;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .view-balance-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 11px;
-  color: #6366f1;
-  font-weight: 600;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  color: #4338ca;
+  background: #e0e7ff;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.employee-identity:hover .view-balance-prompt {
-  opacity: 1;
+.employee-identity-card:hover .view-balance-prompt {
+  background: #4f46e5;
+  color: #ffffff;
 }
 
-/* Leave Category Badge */
+/* 2. Leave Category Card */
+.field-card-type {
+  display: flex;
+  align-items: center;
+}
+
 .category-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .category-badge.casual {
   background: #ecfdf5;
   color: #047857;
-  border: 1px solid #a7f3d0;
+  border: 1.5px solid #a7f3d0;
 }
 
 .category-badge.sick {
   background: #fffbeb;
   color: #b45309;
-  border: 1px solid #fde68a;
+  border: 1.5px solid #fde68a;
 }
 
 .category-badge.pl {
   background: #eef2ff;
   color: #4338ca;
-  border: 1px solid #c7d2fe;
+  border: 1.5px solid #c7d2fe;
 }
 
 .category-badge.halfday {
   background: #fff7ed;
   color: #c2410c;
-  border: 1px solid #fed7aa;
+  border: 1.5px solid #fed7aa;
 }
 
 .category-badge.default {
   background: #faf5ff;
   color: #7e22ce;
-  border: 1px solid #e9d5ff;
+  border: 1.5px solid #e9d5ff;
 }
 
-/* Schedule & Duration */
-.schedule-block {
+/* 3. Schedule & Duration Card */
+.field-card-schedule {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.date-range {
-  display: flex;
+.schedule-date-box {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12.5px;
   font-weight: 600;
   color: #1e293b;
+  width: fit-content;
 }
 
-.date-icon {
+.schedule-date-box .date-icon {
   color: #6366f1;
-  font-size: 13px;
+  font-size: 12px;
 }
 
-.date-arrow {
+.schedule-date-box .date-arrow {
   color: #94a3b8;
   margin: 0 2px;
+  font-weight: 700;
 }
 
 .duration-badge {
@@ -2372,37 +2591,59 @@ export default {
   font-weight: 700;
   color: #475569;
   background: #f1f5f9;
-  padding: 2px 8px;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  padding: 3px 9px;
+  border-radius: 7px;
   width: fit-content;
 }
 
 .duration-badge.half-day-duration {
   color: #c2410c;
   background: #fff7ed;
-  border: 1px solid #ffedd5;
+  border-color: #fed7aa;
 }
 
-/* Reason & Document */
-.reason-container {
+/* 4. Reason & Attachment Card */
+.field-card-reason {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 320px;
+  max-width: 280px;
+}
+
+.reason-note-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 3.5px solid #6366f1;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reason-note-box:hover {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.1);
+  transform: translateY(-1px);
+}
+
+.reason-note-box .quote-icon {
+  color: #818cf8;
+  font-size: 11px;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .reason-text {
   margin: 0;
-  font-size: 13px;
-  color: #475569;
-  line-height: 1.4;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.reason-text:hover {
-  color: #4f46e5;
-  text-decoration: underline;
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.45;
+  word-break: break-word;
 }
 
 .attachment-pill {
@@ -2410,11 +2651,11 @@ export default {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: #2563eb;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: 8px;
   width: fit-content;
   cursor: pointer;
@@ -2423,19 +2664,28 @@ export default {
 
 .attachment-pill:hover {
   background: #dbeafe;
+  border-color: #93c5fd;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
 }
 
-/* Status Pill */
+/* 5. Status Card */
+.field-card-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: 30px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .status-pulse-dot {
@@ -2447,31 +2697,40 @@ export default {
 .status-pill.pending {
   background: #fffbeb;
   color: #b45309;
-  border: 1px solid #fde68a;
+  border: 1.5px solid #fde68a;
 }
 .status-pill.pending .status-pulse-dot {
   background: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
 }
 
 .status-pill.approved {
   background: #ecfdf5;
   color: #047857;
-  border: 1px solid #a7f3d0;
+  border: 1.5px solid #a7f3d0;
 }
 .status-pill.approved .status-pulse-dot {
   background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .status-pill.rejected {
   background: #fef2f2;
   color: #b91c1c;
-  border: 1px solid #fecaca;
+  border: 1.5px solid #fecaca;
 }
 .status-pill.rejected .status-pulse-dot {
   background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
-/* Action Buttons */
+/* 6. Approval Actions Card */
+.field-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .action-buttons-wrap {
   display: flex;
   align-items: center;
@@ -2490,6 +2749,7 @@ export default {
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
 }
 
 .btn-approve {
@@ -2509,6 +2769,7 @@ export default {
   background: #ffffff;
   color: #dc2626;
   border-color: #fca5a5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .btn-reject:hover:not(:disabled) {
