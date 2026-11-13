@@ -632,16 +632,17 @@ export default {
 
 /* Header */
 .content-header-modern {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background: white;
   border-radius: 20px;
-  padding: 26px 30px;
+  padding: 24px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  color: #ffffff;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
 }
 
 .header-left {
@@ -654,8 +655,13 @@ export default {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #94a3b8;
-  margin-bottom: 4px;
+  color: #4f46e5;
+  background: #eef2ff;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 6px;
 }
 
 .title-icon {
@@ -668,20 +674,23 @@ export default {
   justify-content: center;
   color: white;
   font-size: 22px;
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
+  flex-shrink: 0;
 }
 
 .content-header-modern h1 {
   font-size: 24px;
   font-weight: 800;
-  color: #ffffff;
+  color: #0f172a;
+  letter-spacing: -0.02em;
   margin: 0;
 }
 
 .subtitle-modern {
-  color: #94a3b8;
+  color: #64748b;
   font-size: 13px;
-  margin-top: 3px;
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
 .header-actions {
@@ -694,10 +703,10 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  padding: 9px 16px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #334155;
   border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
@@ -706,7 +715,9 @@ export default {
 }
 
 .btn-refresh:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
   transform: translateY(-1px);
 }
 
@@ -714,13 +725,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
-  background: rgba(99, 102, 241, 0.2);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 9px 16px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
   border-radius: 12px;
   font-size: 13px;
   font-weight: 700;
-  color: #a5b4fc;
+  color: #4f46e5;
 }
 
 /* KPI Cards */

@@ -2,823 +2,728 @@
   <div class="layout">
     <!-- Main Content Area -->
     <div class="main-content">
-      <Sidebar v-if="!isMobile || isSidebarVisible" />
+      <!-- Stationary Fixed Admin Sidebar -->
+      <Sidebar ref="sidebarRef" />
 
-      <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
+      <section class="content">
         <!-- 📱 Mobile Top Header -->
         <div class="mobile-header" v-if="isMobile">
           <div class="mobile-title">
             <i class="fas fa-calendar-plus"></i>
             <span>Schedule Meeting</span>
           </div>
-          <button 
-            type="button" 
-            class="mobile-tab-pill"
-            @click="selectTab(activeTab === 'online' ? 'offline' : 'online')"
-          >
-            <i :class="activeTab === 'online' ? 'fas fa-building' : 'fas fa-video'"></i>
-            <span>Switch to {{ activeTab === 'online' ? 'Offline' : 'Online' }}</span>
-          </button>
-        </div>
-
-        <!-- 🏢 Desktop Header Banner -->
-        <div class="content-header-modern" v-else>
-          <div class="header-left">
-            <div class="title-icon">
-              <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div>
-              <div class="header-badge-row">
-                <span class="badge-accent">Enterprise Hub</span>
-                <span class="badge-status-dot">
-                  <span class="dot-pulse"></span> Synchronized Directory
-                </span>
-              </div>
-              <h1 class="page-title">Schedule a Meeting</h1>
-              <p class="subtitle-modern">
-                Organize video conferences or in-office sessions with targeted employees and teams
-              </p>
-            </div>
-          </div>
-
-          <div class="header-right-actions">
-            <div class="directory-quick-stat">
-              <i class="fas fa-user-check"></i>
-              <span><strong>{{ employees.length }}</strong> Team Members Available</span>
-            </div>
+          <div class="mobile-header-actions">
+            <button 
+              type="button" 
+              class="btn-mobile-mode-switch"
+              @click="selectTab(activeTab === 'online' ? 'offline' : 'online')"
+            >
+              <i :class="activeTab === 'online' ? 'fas fa-building' : 'fas fa-video'"></i>
+              <span>{{ activeTab === 'online' ? 'Offline' : 'Online' }}</span>
+            </button>
+            <button class="btn-mobile-menu" @click="toggleMobileSidebar" aria-label="Toggle menu">
+              <i class="fas fa-bars"></i>
+            </button>
           </div>
         </div>
 
-        <!-- 🌿 Main Card Wrapper -->
-        <div class="schedule-card-wrapper">
-          
-          <!-- Segmented Tab Switcher (Online vs Offline) -->
-          <div class="tabs-header-bar">
-            <div class="tabs-segmented-wrapper">
+        <!-- 🏢 Modern Enterprise Header Banner -->
+        <header class="schedule-top-banner">
+          <div class="banner-left">
+            <div class="banner-badge-row">
+              <span class="portal-badge-pill">
+                <span class="pulse-indicator"></span>
+                <span>OPERATIONAL DISPATCH</span>
+              </span>
+              <span class="status-meta-pill">
+                <i class="fas fa-video"></i> Meeting Scheduler
+              </span>
+              <span class="status-meta-pill" v-if="employees.length > 0">
+                <i class="fas fa-users"></i> {{ employees.length }} Staff Directory
+              </span>
+            </div>
+            <h1 class="page-title">Schedule a Meeting</h1>
+            <p class="page-subtitle">
+              Coordinate video conferences or in-office sessions with targeted employees, departments, and guests.
+            </p>
+          </div>
+
+          <!-- Banner Right Controls: Mode Switcher & Reset -->
+          <div class="banner-controls">
+            <!-- Segmented Mode Switcher -->
+            <div class="mode-segmented-pills">
               <button
                 type="button"
-                :class="['tab-btn', { active: activeTab === 'online' }]"
+                class="segmented-pill-btn"
+                :class="{ active: activeTab === 'online' }"
                 @click="selectTab('online')"
               >
-                <div class="tab-icon-wrap">
-                  <i class="fas fa-video"></i>
-                </div>
-                <div class="tab-text-wrap">
-                  <span class="tab-main-label">Online Meeting</span>
-                  <span class="tab-sub-label">Instant Video Conference</span>
-                </div>
+                <i class="fas fa-video"></i>
+                <span>Virtual Video</span>
               </button>
-
               <button
                 type="button"
-                :class="['tab-btn', { active: activeTab === 'offline' }]"
+                class="segmented-pill-btn"
+                :class="{ active: activeTab === 'offline' }"
                 @click="selectTab('offline')"
               >
-                <div class="tab-icon-wrap">
-                  <i class="fas fa-building"></i>
-                </div>
-                <div class="tab-text-wrap">
-                  <span class="tab-main-label">In-Person Meeting</span>
-                  <span class="tab-sub-label">On-Site Office Session</span>
-                </div>
+                <i class="fas fa-building"></i>
+                <span>In-Person</span>
               </button>
             </div>
 
-            <!-- Quick Attendees Counter in Tab Bar -->
-            <div class="tab-bar-summary">
-              <div class="attendees-badge-pill" :class="{ 'has-attendees': allGuestEmails.length > 0 }">
-                <i class="fas fa-user-friends"></i>
-                <span><strong>{{ allGuestEmails.length }}</strong> Attendee{{ allGuestEmails.length === 1 ? '' : 's' }} Selected</span>
-              </div>
-            </div>
+            <button class="btn-reset-header" @click="resetForm" :disabled="isSubmitting" title="Reset all fields">
+              <i class="fas fa-undo"></i>
+              <span>Reset</span>
+            </button>
           </div>
+        </header>
 
-          <!-- Success Alert Message -->
-          <transition name="fade">
-            <div v-if="successMessage" class="alert-banner success">
-              <div class="alert-content">
-                <i class="fas fa-check-circle alert-icon"></i>
-                <span>{{ successMessage }}</span>
-              </div>
-              <button type="button" class="alert-close" @click="successMessage = ''">
-                <i class="fas fa-times"></i>
-              </button>
+        <!-- Feedback Alert Messages -->
+        <transition name="fade">
+          <div v-if="successMessage" class="alert-banner success">
+            <div class="alert-content">
+              <i class="fas fa-check-circle alert-icon"></i>
+              <span>{{ successMessage }}</span>
             </div>
-          </transition>
+            <button type="button" class="alert-close" @click="successMessage = ''">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </transition>
 
-          <!-- Error Alert Message -->
-          <transition name="fade">
-            <div v-if="errorMessage" class="alert-banner danger">
-              <div class="alert-content">
-                <i class="fas fa-exclamation-circle alert-icon"></i>
-                <span>{{ errorMessage }}</span>
-              </div>
-              <button type="button" class="alert-close" @click="errorMessage = ''">
-                <i class="fas fa-times"></i>
-              </button>
+        <transition name="fade">
+          <div v-if="errorMessage" class="alert-banner danger">
+            <div class="alert-content">
+              <i class="fas fa-exclamation-circle alert-icon"></i>
+              <span>{{ errorMessage }}</span>
             </div>
-          </transition>
+            <button type="button" class="alert-close" @click="errorMessage = ''">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </transition>
 
-          <!-- Form Grid (Left: Form Details & Attendees Selector | Right: Executive Live Preview) -->
-          <div class="schedule-grid">
-            
-            <!-- ◀️ LEFT COLUMN: Form & Attendee Directory -->
-            <div class="form-column-left">
+        <!-- 🌿 Main Responsive 2-Column Layout -->
+        <div class="meeting-workspace-layout">
+          
+          <!-- ◀️ LEFT COLUMN: Forms & Directory Picker -->
+          <div class="workspace-main-column">
 
-              <!-- ============================================== -->
-              <!-- 1. SECTION: MEETING CORE DETAILS                -->
-              <!-- ============================================== -->
-              <div class="form-card-section">
-                <div class="section-title-bar">
-                  <div class="section-title-left">
-                    <span class="step-num">1</span>
-                    <div>
-                      <h3 class="section-heading">Meeting Details</h3>
-                      <p class="section-subheading">Define the agenda, schedule, and environment</p>
-                    </div>
+            <!-- 1. SECTION: MEETING CORE DETAILS -->
+            <div class="enterprise-form-card">
+              <div class="card-section-header">
+                <div class="header-step-badge">1</div>
+                <div class="header-title-wrap">
+                  <h2 class="card-section-title">Meeting Specifications</h2>
+                  <p class="card-section-sub">Set title, date, time, and session parameters</p>
+                </div>
+                <span class="session-type-badge" :class="activeTab">
+                  <i :class="activeTab === 'online' ? 'fas fa-video' : 'fas fa-map-marker-alt'"></i>
+                  {{ activeTab === 'online' ? 'Online Conference' : 'In-Office Session' }}
+                </span>
+              </div>
+
+              <div class="card-section-body">
+                <!-- Meeting Title -->
+                <div class="form-field-group">
+                  <div class="label-row">
+                    <label for="meetingTitle" class="form-label">
+                      Meeting Title <span class="required-star">*</span>
+                    </label>
+                    <span class="char-counter">{{ meetingForm.title.length }}/100</span>
                   </div>
-                  <span class="type-pill" :class="activeTab">
-                    <i :class="activeTab === 'online' ? 'fas fa-globe' : 'fas fa-map-marker-alt'"></i>
-                    {{ activeTab === 'online' ? 'Virtual Video Room' : 'Physical Conference' }}
-                  </span>
+                  <input
+                    type="text"
+                    id="meetingTitle"
+                    v-model="meetingForm.title"
+                    class="form-text-input"
+                    placeholder="e.g. Q4 Performance Strategy & Project Roadmap"
+                    maxlength="100"
+                  />
                 </div>
 
-                <div class="section-body">
-                  <!-- Meeting Title -->
-                  <div class="form-group">
-                    <label for="meetingTitle" class="field-label">
-                      <i class="fas fa-heading"></i> Meeting Title <span class="required-star">*</span>
+                <!-- Description & Agenda -->
+                <div class="form-field-group">
+                  <div class="label-row">
+                    <label for="meetingDescription" class="form-label">
+                      Agenda & Discussion Topics
                     </label>
-                    <div class="input-wrapper">
-                      <input
-                        type="text"
-                        id="meetingTitle"
-                        v-model="meetingForm.title"
-                        class="form-control"
-                        placeholder="e.g. Q4 Performance Strategy & Project Roadmap"
-                        maxlength="100"
-                      />
-                    </div>
-                    <div class="field-footer-info">
-                      <span class="hint-text">Give your meeting a concise, descriptive title</span>
-                      <small class="char-count">{{ meetingForm.title.length }}/100</small>
-                    </div>
+                    <span class="char-counter">{{ meetingForm.description.length }}/1000</span>
                   </div>
+                  <textarea
+                    id="meetingDescription"
+                    v-model="meetingForm.description"
+                    class="form-text-input textarea"
+                    placeholder="Outline key discussion points, goals, deliverables or preparation notes..."
+                    rows="3"
+                    maxlength="1000"
+                  ></textarea>
+                </div>
 
-                  <!-- Description & Agenda -->
-                  <div class="form-group">
-                    <label for="meetingDescription" class="field-label">
-                      <i class="fas fa-align-left"></i> Description & Discussion Topics
+                <!-- Date & Time Row -->
+                <div class="form-two-col-row">
+                  <div class="form-field-group">
+                    <label for="meetingDate" class="form-label">
+                      Meeting Date <span class="required-star">*</span>
                     </label>
-                    <textarea
-                      id="meetingDescription"
-                      v-model="meetingForm.description"
-                      class="form-control textarea"
-                      placeholder="Outline key discussion points, goals, deliverables or preparation notes..."
-                      rows="3"
-                      maxlength="1000"
-                    ></textarea>
-                    <div class="field-footer-info">
-                      <span class="hint-text">Will be included in the invitation email sent to participants</span>
-                      <small class="char-count">{{ meetingForm.description.length }}/1000</small>
+                    <input
+                      type="date"
+                      id="meetingDate"
+                      v-model="meetingForm.date"
+                      class="form-text-input"
+                      :min="today"
+                    />
+                  </div>
+
+                  <div class="form-field-group">
+                    <label for="meetingTime" class="form-label">
+                      Start Time <span class="required-star">*</span>
+                    </label>
+                    <input
+                      type="time"
+                      id="meetingTime"
+                      v-model="meetingForm.time"
+                      class="form-text-input"
+                    />
+                  </div>
+                </div>
+
+                <!-- Duration & Location/Access Row -->
+                <div class="form-two-col-row">
+                  <div class="form-field-group">
+                    <label for="durationSelect" class="form-label">
+                      Duration
+                    </label>
+                    <div class="select-field-wrap">
+                      <select id="durationSelect" v-model="meetingForm.duration" class="form-text-input select">
+                        <option value="15">15 Minutes (Brief Standup)</option>
+                        <option value="30">30 Minutes (Standard Review)</option>
+                        <option value="45">45 Minutes (Extended Discussion)</option>
+                        <option value="60">1 Hour (Deep Dive Session)</option>
+                        <option value="90">1.5 Hours (Workshop / Planning)</option>
+                        <option value="120">2 Hours (Comprehensive Meeting)</option>
+                        <option value="180">3 Hours (Quarterly Board)</option>
+                      </select>
                     </div>
                   </div>
 
-                  <!-- Date & Time Row -->
-                  <div class="form-row-2">
-                    <div class="form-group">
-                      <label for="meetingDate" class="field-label">
-                        <i class="fas fa-calendar-day"></i> Meeting Date <span class="required-star">*</span>
-                      </label>
-                      <div class="input-with-icon">
-                        <input
-                          type="date"
-                          id="meetingDate"
-                          v-model="meetingForm.date"
-                          class="form-control"
-                          :min="today"
-                        />
-                      </div>
-                    </div>
+                  <!-- Location (Offline) OR Access Control (Online) -->
+                  <div class="form-field-group" v-if="activeTab === 'offline'">
+                    <label for="meetingLocation" class="form-label">
+                      Room / Location <span class="optional-tag">Optional</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="meetingLocation"
+                      v-model="meetingForm.location"
+                      class="form-text-input"
+                      placeholder="e.g. Main Conference Room (Floor 2)"
+                      maxlength="120"
+                    />
+                  </div>
 
-                    <div class="form-group">
-                      <label for="meetingTime" class="field-label">
-                        <i class="fas fa-clock"></i> Start Time <span class="required-star">*</span>
-                      </label>
-                      <div class="input-with-icon">
-                        <input
-                          type="time"
-                          id="meetingTime"
-                          v-model="meetingForm.time"
-                          class="form-control"
-                        />
-                      </div>
+                  <div class="form-field-group" v-else>
+                    <label class="form-label">
+                      Access Permission
+                    </label>
+                    <div class="select-field-wrap">
+                      <select v-model="meetingForm.accessType" class="form-text-input select">
+                        <option value="invited">🔒 Restricted: Selected Invitees Only</option>
+                        <option value="anyone">🌐 Open: Anyone with Link</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Video Provider Row (Online) -->
+                <div class="form-two-col-row" v-if="activeTab === 'online'">
+                  <div class="form-field-group">
+                    <label class="form-label">Video Conference Provider</label>
+                    <div class="select-field-wrap">
+                      <select v-model="videoProvider" class="form-text-input select">
+                        <option value="auto">🎥 ARCH360 Video Room (Auto-Generated)</option>
+                        <option value="custom">🔗 Custom Link (Google Meet, Zoom, Teams)</option>
+                      </select>
                     </div>
                   </div>
 
-                  <!-- Duration & Location/Access Row -->
-                  <div class="form-row-2">
-                    <div class="form-group">
-                      <label for="durationSelect" class="field-label">
-                        <i class="fas fa-hourglass-half"></i> Estimated Duration
-                      </label>
-                      <div class="select-wrapper">
-                        <select id="durationSelect" v-model="meetingForm.duration" class="form-control select-field">
-                          <option value="15">15 Minutes (Brief Standup)</option>
-                          <option value="30">30 Minutes (Standard Review)</option>
-                          <option value="45">45 Minutes (Extended Discussion)</option>
-                          <option value="60">1 Hour (Deep Dive Session)</option>
-                          <option value="90">1.5 Hours (Workshop / Planning)</option>
-                          <option value="120">2 Hours (Comprehensive Meeting)</option>
-                          <option value="180">3 Hours (Quarterly Board)</option>
-                        </select>
-                      </div>
-                    </div>
+                  <div class="form-field-group" v-if="videoProvider === 'custom'">
+                    <label class="form-label">
+                      Custom Video URL <span class="required-star">*</span>
+                    </label>
+                    <input
+                      type="url"
+                      v-model="customMeetingUrl"
+                      class="form-text-input"
+                      placeholder="e.g. https://meet.google.com/abc-defg-hij"
+                    />
+                  </div>
 
-                    <!-- Location (Offline) OR Access Control (Online) -->
-                    <div class="form-group" v-if="activeTab === 'offline'">
-                      <label for="meetingLocation" class="field-label">
-                        <i class="fas fa-location-arrow"></i> Room / Location <span class="optional-pill">Optional</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="meetingLocation"
-                        v-model="meetingForm.location"
-                        class="form-control"
-                        placeholder="e.g. Main Conference Room (Floor 2)"
-                        maxlength="120"
-                      />
-                    </div>
-
-                    <div class="form-group" v-else>
-                      <label class="field-label">
-                        <i class="fas fa-shield-alt"></i> Access Permission
-                      </label>
-                      <div class="select-wrapper">
-                        <select v-model="meetingForm.accessType" class="form-control select-field">
-                          <option value="invited">🔒 Restricted: Selected Invitees Only</option>
-                          <option value="anyone">🌐 Open: Anyone with Link</option>
-                        </select>
-                      </div>
+                  <div class="form-field-group" v-else>
+                    <label class="form-label">Conference Status</label>
+                    <div class="generated-link-indicator">
+                      <i class="fas fa-shield-alt"></i>
+                      <span>Built-in encrypted video room will be created</span>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-
-              <!-- ============================================== -->
-              <!-- 2. SECTION: SELECT PARTICIPANTS (CORE FEATURE) -->
-              <!-- ============================================== -->
-              <div class="form-card-section attendees-section">
-                <div class="section-title-bar">
-                  <div class="section-title-left">
-                    <span class="step-num highlight">2</span>
-                    <div>
-                      <h3 class="section-heading">
-                        Select Participants <span class="required-star">*</span>
-                        <span class="badge-count-inline" :class="{ 'zero-count': allGuestEmails.length === 0 }">
-                          {{ selectedEmployeeIds.length + externalGuests.length }} selected (Min 1 required)
-                        </span>
-                      </h3>
-                      <p class="section-subheading">
-                        Pick specific employees from your directory instead of notifying everyone
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Quick Select Modes -->
-                  <div class="attendee-mode-switch">
-                    <button 
-                      type="button" 
-                      class="mode-btn"
-                      :class="{ active: attendeeTab === 'specific' }"
-                      @click="attendeeTab = 'specific'"
-                    >
-                      <i class="fas fa-users"></i>
-                      <span>Employees ({{ employees.length }})</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      class="mode-btn"
-                      :class="{ active: attendeeTab === 'department' }"
-                      @click="attendeeTab = 'department'"
-                    >
-                      <i class="fas fa-sitemap"></i>
-                      <span>By Team</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      class="mode-btn"
-                      :class="{ active: attendeeTab === 'external' }"
-                      @click="attendeeTab = 'external'"
-                    >
-                      <i class="fas fa-envelope-open-text"></i>
-                      <span>External Guests</span>
-                    </button>
-                  </div>
+            <!-- 2. SECTION: PARTICIPANT DIRECTORY -->
+            <div class="enterprise-form-card">
+              <div class="card-section-header">
+                <div class="header-step-badge highlight">2</div>
+                <div class="header-title-wrap">
+                  <h2 class="card-section-title">
+                    Invited Participants <span class="required-star">*</span>
+                    <span class="count-pill" :class="{ 'zero-count': allGuestEmails.length === 0 }">
+                      {{ selectedEmployeeIds.length + externalGuests.length }} Selected
+                    </span>
+                  </h2>
+                  <p class="card-section-sub">Select employees or add external guest emails</p>
                 </div>
 
-                <div class="section-body">
+                <!-- Directory Mode Tabs -->
+                <div class="directory-mode-pills">
+                  <button 
+                    type="button" 
+                    class="mode-pill-btn"
+                    :class="{ active: attendeeTab === 'specific' }"
+                    @click="attendeeTab = 'specific'"
+                  >
+                    <i class="fas fa-users"></i>
+                    <span>Employees ({{ employees.length }})</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="mode-pill-btn"
+                    :class="{ active: attendeeTab === 'department' }"
+                    @click="attendeeTab = 'department'"
+                  >
+                    <i class="fas fa-sitemap"></i>
+                    <span>By Team</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="mode-pill-btn"
+                    :class="{ active: attendeeTab === 'external' }"
+                    @click="attendeeTab = 'external'"
+                  >
+                    <i class="fas fa-envelope"></i>
+                    <span>External</span>
+                  </button>
+                </div>
+              </div>
 
-                  <!-- 🌿 SELECTED EMPLOYEES TRAY (Shown if any employee/guest is chosen) -->
-                  <div v-if="allGuestEmails.length > 0" class="selected-tray-card">
-                    <div class="tray-header">
-                      <div class="tray-title">
-                        <i class="fas fa-check-circle text-emerald"></i>
-                        <span>Invited Participants <strong>({{ allGuestEmails.length }})</strong></span>
-                      </div>
-                      <button type="button" class="btn-clear-all" @click="clearAllAttendees">
-                        <i class="fas fa-trash-alt"></i> Clear All
-                      </button>
-                    </div>
-
-                    <!-- Selected Chips Grid -->
-                    <div class="selected-chips-container">
-                      <!-- Selected Employees -->
-                      <div 
-                        v-for="emp in selectedEmployees" 
-                        :key="'selected-' + emp.id" 
-                        class="participant-chip"
-                      >
-                        <div class="chip-avatar" :style="{ background: getAvatarColor(emp.name) }">
-                          {{ getInitials(emp.name) }}
-                        </div>
-                        <div class="chip-info">
-                          <span class="chip-name">{{ formatName(emp.name) }}</span>
-                          <span class="chip-dept">{{ emp.department || 'General' }}</span>
-                        </div>
-                        <button 
-                          type="button" 
-                          class="chip-remove" 
-                          @click="removeSelectedEmployee(emp.id)" 
-                          title="Remove"
-                        >
-                          <i class="fas fa-times"></i>
-                        </button>
-                      </div>
-
-                      <!-- External Guests -->
-                      <div 
-                        v-for="(guest, gIdx) in externalGuests" 
-                        :key="'guest-' + gIdx" 
-                        class="participant-chip external"
-                      >
-                        <div class="chip-avatar external">
-                          <i class="fas fa-envelope"></i>
-                        </div>
-                        <div class="chip-info">
-                          <span class="chip-name">{{ guest }}</span>
-                          <span class="chip-dept badge-ext">Guest</span>
-                        </div>
-                        <button 
-                          type="button" 
-                          class="chip-remove" 
-                          @click="removeExternalGuest(gIdx)" 
-                          title="Remove guest"
-                        >
-                          <i class="fas fa-times"></i>
-                        </button>
-                      </div>
-                    </div>
+              <div class="card-section-body">
+                <!-- Selected Attendees Pill Tray -->
+                <div v-if="allGuestEmails.length > 0" class="attendees-tray">
+                  <div class="tray-title-row">
+                    <span class="tray-title">
+                      <i class="fas fa-check-circle"></i>
+                      <span>Selected Invitees ({{ allGuestEmails.length }})</span>
+                    </span>
+                    <button type="button" class="btn-clear-tray" @click="clearAllAttendees">
+                      <i class="fas fa-times-circle"></i> Clear All
+                    </button>
                   </div>
 
-                  <!-- Empty Tray Notice with Minimum 1 requirement hint -->
-                  <div v-else class="empty-tray-notice">
-                    <div class="notice-icon">
-                      <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div>
-                      <strong>No individual participants selected yet (Minimum 1 Required)</strong>
-                      <p>Click on employee cards below to invite specific team members to this session.</p>
-                    </div>
-                  </div>
-
-
-                  <!-- ────── SUB-VIEW 1: INDIVIDUAL EMPLOYEE PICKER ────── -->
-                  <div v-if="attendeeTab === 'specific'" class="specific-picker-wrap">
-                    
-                    <!-- Search & Quick Filter Controls -->
-                    <div class="directory-filter-bar">
-                      <div class="directory-search-input-wrap">
-                        <i class="fas fa-search search-icon"></i>
-                        <input
-                          type="text"
-                          v-model="searchQuery"
-                          class="directory-search-input"
-                          placeholder="Search employee by name, email, or department..."
-                        />
-                        <button 
-                          v-if="searchQuery" 
-                          type="button" 
-                          class="clear-search-btn" 
-                          @click="searchQuery = ''"
-                        >
-                          <i class="fas fa-times"></i>
-                        </button>
+                  <div class="attendee-chips-row">
+                    <!-- Selected Staff Chips -->
+                    <div 
+                      v-for="emp in selectedEmployees" 
+                      :key="'selected-' + emp.id" 
+                      class="attendee-chip"
+                    >
+                      <div class="chip-dot" :style="{ background: getAvatarColor(emp.name) }">
+                        {{ getInitials(emp.name) }}
                       </div>
-
-                      <!-- Selection Controls Toolbar -->
-                      <div class="selection-actions-bar">
-                        <button 
-                          type="button" 
-                          class="tool-btn" 
-                          @click="selectAllFiltered"
-                          :disabled="filteredEmployees.length === 0"
-                        >
-                          <i class="fas fa-check-double"></i>
-                          <span>Select All Filtered ({{ filteredEmployees.length }})</span>
-                        </button>
-                        <button 
-                          type="button" 
-                          class="tool-btn secondary" 
-                          @click="deselectAllFiltered"
-                          :disabled="filteredEmployees.length === 0"
-                        >
-                          <i class="fas fa-minus-circle"></i>
-                          <span>Deselect Filtered</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Department Quick Filter Pills -->
-                    <div class="dept-pills-scroll" v-if="departmentList.length > 0">
-                      <button
-                        type="button"
-                        class="dept-pill"
-                        :class="{ active: selectedDeptFilter === 'all' }"
-                        @click="selectedDeptFilter = 'all'"
-                      >
-                        All Staff ({{ employees.length }})
-                      </button>
-                      <button
-                        v-for="dept in departmentList"
-                        :key="dept.name"
-                        type="button"
-                        class="dept-pill"
-                        :class="{ active: selectedDeptFilter === dept.name }"
-                        @click="selectedDeptFilter = dept.name"
-                      >
-                        {{ dept.name }}
-                        <span class="pill-count">{{ dept.count }}</span>
-                      </button>
-                    </div>
-
-                    <!-- Loading State -->
-                    <div v-if="loadingEmployees" class="employees-loading-box">
-                      <i class="fas fa-circle-notch fa-spin"></i>
-                      <span>Loading employee directory...</span>
-                    </div>
-
-                    <!-- Fetch Error Notice -->
-                    <div v-else-if="employeeFetchError" class="employees-error-box">
-                      <i class="fas fa-exclamation-triangle"></i>
-                      <span>{{ employeeFetchError }}</span>
-                      <button type="button" class="btn-retry" @click="fetchEmployees">
-                        <i class="fas fa-redo"></i> Retry
-                      </button>
-                    </div>
-
-                    <!-- Employee Cards Grid -->
-                    <div v-else class="employee-selection-grid">
-                      <div
-                        v-for="emp in filteredEmployees"
-                        :key="emp.id"
-                        class="employee-pick-card"
-                        :class="{ selected: isEmployeeSelected(emp.id) }"
-                        @click="toggleEmployee(emp)"
-                      >
-                        <!-- Checkbox Indicator -->
-                        <div class="pick-checkbox" :class="{ checked: isEmployeeSelected(emp.id) }">
-                          <i class="fas fa-check" v-if="isEmployeeSelected(emp.id)"></i>
-                        </div>
-
-                        <!-- Avatar -->
-                        <div class="pick-avatar" :style="{ background: getAvatarColor(emp.name) }">
-                          {{ getInitials(emp.name) }}
-                        </div>
-
-                        <!-- Employee Meta Details -->
-                        <div class="pick-details">
-                          <div class="pick-name-row">
-                            <span class="pick-name" :title="emp.name">{{ formatName(emp.name) }}</span>
-                            <span class="dept-tag">{{ emp.department || 'General' }}</span>
-                          </div>
-                          <div class="pick-email" :title="emp.email">
-                            <i class="fas fa-envelope"></i> {{ emp.email }}
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Empty State when filtering finds nothing -->
-                      <div v-if="filteredEmployees.length === 0" class="no-employees-found">
-                        <i class="fas fa-user-slash"></i>
-                        <p>No employees match "<strong>{{ searchQuery }}</strong>"</p>
-                        <button type="button" class="btn-reset-filter" @click="searchQuery = ''; selectedDeptFilter = 'all'">
-                          Clear Search Filters
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-
-
-                  <!-- ────── SUB-VIEW 2: SELECT BY DEPARTMENT / TEAM ────── -->
-                  <div v-if="attendeeTab === 'department'" class="department-picker-wrap">
-                    <div class="dept-intro-banner">
-                      <i class="fas fa-sitemap"></i>
-                      <div>
-                        <strong>Team Quick-Add</strong>
-                        <p>Click any department card below to instantly add or remove all its members.</p>
-                      </div>
-                    </div>
-
-                    <div class="dept-cards-grid">
-                      <div
-                        v-for="dept in departmentList"
-                        :key="dept.name"
-                        class="dept-card-item"
-                        :class="{ 'all-selected': isDeptFullySelected(dept.name) }"
-                        @click="toggleDepartment(dept.name)"
-                      >
-                        <div class="dept-card-header">
-                          <div class="dept-card-icon">
-                            <i class="fas fa-building"></i>
-                          </div>
-                          <div class="dept-card-badge">
-                            <i class="fas fa-check-circle" v-if="isDeptFullySelected(dept.name)"></i>
-                            <span v-else>{{ dept.count }} staff</span>
-                          </div>
-                        </div>
-
-                        <h4 class="dept-card-title">{{ dept.name }}</h4>
-                        <p class="dept-card-desc">
-                          {{ dept.count }} active team member{{ dept.count === 1 ? '' : 's' }}
-                        </p>
-
-                        <div class="dept-card-action">
-                          <span v-if="isDeptFullySelected(dept.name)" class="action-selected">
-                            <i class="fas fa-check"></i> Entire Team Added
-                          </span>
-                          <span v-else class="action-add">
-                            <i class="fas fa-plus-circle"></i> Add All {{ dept.count }} Members
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-
-                  <!-- ────── SUB-VIEW 3: EXTERNAL GUEST EMAILS ────── -->
-                  <div v-if="attendeeTab === 'external'" class="external-picker-wrap">
-                    <div class="external-intro-box">
-                      <i class="fas fa-envelope-open-text"></i>
-                      <div>
-                        <strong>Invite External Guests & Partners</strong>
-                        <p>Need to include a client, vendor, or non-staff partner? Enter their email address below.</p>
-                      </div>
-                    </div>
-
-                    <div class="external-input-row">
-                      <div class="ext-input-group">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input
-                          type="email"
-                          v-model="newExternalEmail"
-                          class="form-control ext-input"
-                          placeholder="client.partner@company.com"
-                          @keyup.enter="addExternalGuest"
-                        />
-                      </div>
+                      <span class="chip-name">{{ formatName(emp.name) }}</span>
+                      <span class="chip-dept-pill">{{ emp.department || 'General' }}</span>
                       <button 
                         type="button" 
-                        class="btn-add-external" 
-                        @click="addExternalGuest"
-                        :disabled="!newExternalEmail"
+                        class="chip-remove-btn" 
+                        @click="removeSelectedEmployee(emp.id)" 
+                        title="Remove"
                       >
-                        <i class="fas fa-user-plus"></i>
-                        <span>Add Guest</span>
+                        <i class="fas fa-times"></i>
                       </button>
                     </div>
 
-                    <div v-if="externalGuests.length > 0" class="external-guests-list">
-                      <div class="ext-list-header">
-                        <span>External Guests Added ({{ externalGuests.length }})</span>
+                    <!-- External Guest Chips -->
+                    <div 
+                      v-for="(guest, gIdx) in externalGuests" 
+                      :key="'guest-' + gIdx" 
+                      class="attendee-chip guest"
+                    >
+                      <div class="chip-dot guest">
+                        <i class="fas fa-envelope"></i>
                       </div>
-                      <div class="ext-tags-row">
-                        <span 
-                          v-for="(guest, gIdx) in externalGuests" 
-                          :key="gIdx" 
-                          class="ext-guest-tag"
-                        >
-                          <i class="fas fa-at"></i>
-                          <span>{{ guest }}</span>
-                          <button type="button" @click="removeExternalGuest(gIdx)" title="Remove">
-                            <i class="fas fa-times"></i>
-                          </button>
+                      <span class="chip-name">{{ guest }}</span>
+                      <span class="chip-dept-pill guest">Guest</span>
+                      <button 
+                        type="button" 
+                        class="chip-remove-btn" 
+                        @click="removeExternalGuest(gIdx)" 
+                        title="Remove guest"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Empty Selection Hint -->
+                <div v-else class="empty-selection-box">
+                  <i class="fas fa-user-plus"></i>
+                  <span>No participants chosen yet. Select at least 1 employee or enter a guest email.</span>
+                </div>
+
+                <!-- ────── SUB-VIEW 1: INDIVIDUAL EMPLOYEE DIRECTORY ────── -->
+                <div v-if="attendeeTab === 'specific'" class="specific-directory-wrap">
+                  <!-- Search & Selection Toolbar -->
+                  <div class="directory-toolbar">
+                    <div class="directory-search-box">
+                      <i class="fas fa-search search-icon"></i>
+                      <input
+                        type="text"
+                        v-model="searchQuery"
+                        class="search-input"
+                        placeholder="Search employee by name, email, or department..."
+                      />
+                      <button 
+                        v-if="searchQuery" 
+                        type="button" 
+                        class="clear-search-btn" 
+                        @click="searchQuery = ''"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+
+                    <div class="directory-quick-actions">
+                      <button 
+                        type="button" 
+                        class="quick-action-btn" 
+                        @click="selectAllFiltered"
+                        :disabled="filteredEmployees.length === 0"
+                      >
+                        <i class="fas fa-check-double"></i>
+                        <span>Select All ({{ filteredEmployees.length }})</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="quick-action-btn secondary" 
+                        @click="deselectAllFiltered"
+                        :disabled="filteredEmployees.length === 0"
+                      >
+                        <i class="fas fa-minus-circle"></i>
+                        <span>Deselect</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Department Filter Pills -->
+                  <div class="department-pills-bar" v-if="departmentList.length > 0">
+                    <button
+                      type="button"
+                      class="dept-filter-pill"
+                      :class="{ active: selectedDeptFilter === 'all' }"
+                      @click="selectedDeptFilter = 'all'"
+                    >
+                      <span>All Staff</span>
+                      <span class="count">{{ employees.length }}</span>
+                    </button>
+                    <button
+                      v-for="dept in departmentList"
+                      :key="dept.name"
+                      type="button"
+                      class="dept-filter-pill"
+                      :class="{ active: selectedDeptFilter === dept.name }"
+                      @click="selectedDeptFilter = dept.name"
+                    >
+                      <span>{{ dept.name }}</span>
+                      <span class="count">{{ dept.count }}</span>
+                    </button>
+                  </div>
+
+                  <!-- Loading / Error / Grid -->
+                  <div v-if="loadingEmployees" class="loading-state-box">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    <span>Loading company employee directory...</span>
+                  </div>
+
+                  <div v-else-if="employeeFetchError" class="error-state-box">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>{{ employeeFetchError }}</span>
+                    <button type="button" class="btn-retry" @click="fetchEmployees">Retry</button>
+                  </div>
+
+                  <div v-else class="employee-cards-grid">
+                    <div
+                      v-for="emp in filteredEmployees"
+                      :key="emp.id"
+                      class="employee-card"
+                      :class="{ selected: isEmployeeSelected(emp.id) }"
+                      @click="toggleEmployee(emp)"
+                    >
+                      <div class="card-check" :class="{ checked: isEmployeeSelected(emp.id) }">
+                        <i class="fas fa-check" v-if="isEmployeeSelected(emp.id)"></i>
+                      </div>
+
+                      <div class="card-avatar" :style="{ background: getAvatarColor(emp.name) }">
+                        {{ getInitials(emp.name) }}
+                      </div>
+
+                      <div class="card-meta">
+                        <div class="name-line">
+                          <span class="emp-name" :title="emp.name">{{ formatName(emp.name) }}</span>
+                          <span class="dept-badge">{{ emp.department || 'General' }}</span>
+                        </div>
+                        <span class="emp-email" :title="emp.email">{{ emp.email }}</span>
+                      </div>
+                    </div>
+
+                    <div v-if="filteredEmployees.length === 0" class="no-results-box">
+                      <i class="fas fa-user-slash"></i>
+                      <span>No employees match "{{ searchQuery }}"</span>
+                      <button type="button" class="btn-clear-filter" @click="searchQuery = ''; selectedDeptFilter = 'all'">
+                        Reset Search
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ────── SUB-VIEW 2: SELECT BY DEPARTMENT ────── -->
+                <div v-if="attendeeTab === 'department'" class="department-directory-wrap">
+                  <div class="dept-header-hint">
+                    <i class="fas fa-sitemap"></i>
+                    <span>Click a department card to toggle all active team members at once.</span>
+                  </div>
+
+                  <div class="department-cards-grid">
+                    <div
+                      v-for="dept in departmentList"
+                      :key="dept.name"
+                      class="team-card"
+                      :class="{ 'is-selected': isDeptFullySelected(dept.name) }"
+                      @click="toggleDepartment(dept.name)"
+                    >
+                      <div class="team-card-top">
+                        <div class="team-icon-box">
+                          <i class="fas fa-building"></i>
+                        </div>
+                        <span class="team-status-tag" :class="{ active: isDeptFullySelected(dept.name) }">
+                          {{ isDeptFullySelected(dept.name) ? 'Added' : `${dept.count} Staff` }}
                         </span>
                       </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
-
-            <!-- ▶️ RIGHT COLUMN: Live Executive Preview & Actions -->
-            <div class="form-column-right">
-
-              <!-- Executive Preview Card -->
-              <div class="preview-card-elevated">
-                <div class="preview-card-top">
-                  <div class="preview-badge-pill" :class="activeTab">
-                    <i :class="activeTab === 'online' ? 'fas fa-video' : 'fas fa-building'"></i>
-                    <span>{{ activeTab === 'online' ? 'Online Conference' : 'In-Office Session' }}</span>
-                  </div>
-                  <div class="preview-live-indicator">
-                    <span class="indicator-dot"></span>
-                    <span>Live Preview</span>
-                  </div>
-                </div>
-
-                <!-- Preview Main Body -->
-                <div class="preview-content-box">
-                  <h3 class="preview-title-text">
-                    {{ meetingForm.title || 'Untitled Meeting' }}
-                  </h3>
-                  <p class="preview-description-text" v-if="meetingForm.description">
-                    {{ meetingForm.description }}
-                  </p>
-                  <p class="preview-description-empty" v-else>
-                    No description added yet. Add agenda notes to brief participants.
-                  </p>
-
-                  <div class="preview-divider"></div>
-
-                  <!-- Key Meta Info -->
-                  <div class="preview-meta-grid">
-                    <div class="preview-meta-row">
-                      <div class="meta-icon-bubble">
-                        <i class="fas fa-calendar-alt"></i>
-                      </div>
-                      <div class="meta-content">
-                        <span class="meta-label">Date & Time</span>
-                        <p class="meta-val">
-                          {{ meetingForm.date && meetingForm.time ? formatDateTime() : 'Date & Time not set' }}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="preview-meta-row">
-                      <div class="meta-icon-bubble">
-                        <i class="fas fa-hourglass-half"></i>
-                      </div>
-                      <div class="meta-content">
-                        <span class="meta-label">Duration</span>
-                        <p class="meta-val">{{ meetingForm.duration }} Minutes</p>
-                      </div>
-                    </div>
-
-                    <!-- Offline: Location -->
-                    <div class="preview-meta-row" v-if="activeTab === 'offline'">
-                      <div class="meta-icon-bubble">
-                        <i class="fas fa-map-marker-alt"></i>
-                      </div>
-                      <div class="meta-content">
-                        <span class="meta-label">Location / Room</span>
-                        <p class="meta-val">{{ meetingForm.location || 'Headquarters Office' }}</p>
-                      </div>
-                    </div>
-
-                    <!-- Online: Access Type -->
-                    <div class="preview-meta-row" v-else>
-                      <div class="meta-icon-bubble">
-                        <i class="fas fa-lock"></i>
-                      </div>
-                      <div class="meta-content">
-                        <span class="meta-label">Security & Access</span>
-                        <p class="meta-val">{{ meetingForm.accessType === 'anyone' ? 'Open to link holders' : 'Restricted to invited guests' }}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- 👥 Invited Attendees Visual Pile -->
-                  <div class="preview-attendees-block">
-                    <div class="attendees-header-mini">
-                      <span class="mini-label">Invited Participants</span>
-                      <span class="attendees-count-tag" :class="{ 'zero-tag': allGuestEmails.length === 0 }">
-                        {{ allGuestEmails.length }} Person{{ allGuestEmails.length === 1 ? '' : 's' }}
+                      <h3 class="team-title">{{ dept.name }}</h3>
+                      <span class="team-action-hint">
+                        <i :class="isDeptFullySelected(dept.name) ? 'fas fa-check' : 'fas fa-plus'"></i>
+                        {{ isDeptFullySelected(dept.name) ? 'Remove Team' : 'Add Team Members' }}
                       </span>
                     </div>
+                  </div>
+                </div>
 
-                    <div v-if="allGuestEmails.length > 0" class="attendees-preview-content">
-                      <div class="avatar-stack">
-                        <div 
-                          v-for="emp in previewAvatarList" 
-                          :key="'stack-' + emp.id" 
-                          class="stack-avatar"
-                          :style="{ background: getAvatarColor(emp.name) }"
-                          :title="emp.name"
-                        >
-                          {{ getInitials(emp.name) }}
-                        </div>
-                        <div v-if="remainingAvatarCount > 0" class="stack-avatar more-avatar" :title="`+${remainingAvatarCount} more`">
-                          +{{ remainingAvatarCount }}
-                        </div>
-                      </div>
-                      <p class="attendees-summary-text">
-                        {{ attendeeSummaryText }}
-                      </p>
+                <!-- ────── SUB-VIEW 3: EXTERNAL GUEST EMAILS ────── -->
+                <div v-if="attendeeTab === 'external'" class="external-directory-wrap">
+                  <div class="external-input-bar">
+                    <div class="external-input-box">
+                      <i class="fas fa-envelope"></i>
+                      <input
+                        type="email"
+                        v-model="newExternalEmail"
+                        class="form-text-input external"
+                        placeholder="client.partner@company.com"
+                        @keyup.enter="addExternalGuest"
+                      />
                     </div>
+                    <button 
+                      type="button" 
+                      class="btn-add-external" 
+                      @click="addExternalGuest"
+                      :disabled="!newExternalEmail"
+                    >
+                      <i class="fas fa-plus"></i>
+                      <span>Add Guest</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                    <div v-else class="empty-attendees-preview">
-                      <i class="fas fa-exclamation-circle text-warning"></i>
-                      <span>Please select at least 1 employee to schedule</span>
+          </div>
+
+          <!-- ▶️ RIGHT COLUMN: Sticky Executive Summary Card -->
+          <div class="workspace-side-column">
+            <div class="executive-summary-card">
+              <div class="summary-card-header">
+                <span class="summary-mode-pill" :class="activeTab">
+                  <i :class="activeTab === 'online' ? 'fas fa-video' : 'fas fa-building'"></i>
+                  <span>{{ activeTab === 'online' ? 'Online Conference' : 'In-Office Session' }}</span>
+                </span>
+                <span class="summary-live-dot">
+                  <span class="live-dot"></span> Live Summary
+                </span>
+              </div>
+
+              <!-- Meeting Details Preview -->
+              <div class="summary-body">
+                <h3 class="summary-meeting-title">
+                  {{ meetingForm.title || 'Untitled Meeting' }}
+                </h3>
+                <p class="summary-agenda-text" v-if="meetingForm.description">
+                  {{ meetingForm.description }}
+                </p>
+                <p class="summary-agenda-empty" v-else>
+                  No description added yet. Add agenda notes to brief participants.
+                </p>
+
+                <div class="summary-divider"></div>
+
+                <!-- Meta Rows -->
+                <div class="summary-meta-list">
+                  <div class="summary-meta-item">
+                    <div class="meta-icon">
+                      <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="meta-text">
+                      <span class="label">Date & Time</span>
+                      <span class="value">
+                        {{ meetingForm.date && meetingForm.time ? formatDateTime() : 'Not scheduled' }}
+                      </span>
                     </div>
                   </div>
 
-                  <!-- Online Link Preview (Online meetings only) -->
-                  <div v-if="activeTab === 'online'" class="meeting-link-box">
-                    <span class="mini-label">Generated Video URL</span>
-                    <div class="meeting-link-card">
-                      <span class="link-url-text">{{ meetingLink }}</span>
-                      <button
-                        type="button"
-                        class="copy-link-btn"
-                        @click="copyToClipboard"
-                        :title="copyTooltip"
+                  <div class="summary-meta-item">
+                    <div class="meta-icon">
+                      <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="meta-text">
+                      <span class="label">Duration</span>
+                      <span class="value">{{ meetingForm.duration }} Minutes</span>
+                    </div>
+                  </div>
+
+                  <div class="summary-meta-item" v-if="activeTab === 'offline'">
+                    <div class="meta-icon">
+                      <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="meta-text">
+                      <span class="label">Location</span>
+                      <span class="value">{{ meetingForm.location || 'Headquarters Office' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="summary-meta-item" v-else>
+                    <div class="meta-icon">
+                      <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="meta-text">
+                      <span class="label">Access</span>
+                      <span class="value">{{ meetingForm.accessType === 'anyone' ? 'Open link' : 'Invitees only' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Attendees Stack Preview -->
+                <div class="summary-attendees-section">
+                  <div class="attendees-section-title">
+                    <span>Invited Attendees</span>
+                    <span class="badge" :class="{ zero: allGuestEmails.length === 0 }">
+                      {{ allGuestEmails.length }}
+                    </span>
+                  </div>
+
+                  <div v-if="allGuestEmails.length > 0" class="attendees-stack-wrap">
+                    <div class="avatar-stack-circles">
+                      <div 
+                        v-for="emp in previewAvatarList" 
+                        :key="'stack-' + emp.id" 
+                        class="stack-circle"
+                        :style="{ background: getAvatarColor(emp.name) }"
+                        :title="emp.name"
                       >
+                        {{ getInitials(emp.name) }}
+                      </div>
+                      <div v-if="remainingAvatarCount > 0" class="stack-circle more">
+                        +{{ remainingAvatarCount }}
+                      </div>
+                    </div>
+                    <span class="attendees-summary-caption">{{ attendeeSummaryText }}</span>
+                  </div>
+
+                  <div v-else class="empty-attendee-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Select at least 1 attendee</span>
+                  </div>
+                </div>
+
+                <!-- Virtual Video Link Preview -->
+                <div v-if="activeTab === 'online'" class="video-link-container">
+                  <div class="video-link-header-row">
+                    <span class="video-link-label">Meeting URL</span>
+                    <span class="video-provider-badge">
+                      <i :class="videoProvider === 'custom' ? 'fas fa-link' : 'fas fa-video'"></i>
+                      {{ videoProvider === 'custom' ? 'Custom Provider' : 'ARCH360 Meet' }}
+                    </span>
+                  </div>
+                  <div class="video-link-bar">
+                    <span class="link-text">{{ meetingLink }}</span>
+                    <div class="link-bar-actions">
+                      <button type="button" class="btn-copy-link" @click="copyToClipboard" :title="copyTooltip">
                         <i :class="copyTooltip === 'Copied!' ? 'fas fa-check' : 'fas fa-copy'"></i>
                         <span>{{ copyTooltip === 'Copied!' ? 'Copied' : 'Copy' }}</span>
                       </button>
+                      <a :href="meetingLink" target="_blank" rel="noopener noreferrer" class="btn-test-link" title="Test meeting room">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span>Test</span>
+                      </a>
                     </div>
                   </div>
-
-                  <!-- Media Settings (Online) -->
-                  <div v-if="activeTab === 'online'" class="media-settings-card">
-                    <span class="mini-label">Default Call Controls</span>
-                    <div class="toggle-row">
-                      <div class="toggle-text">
-                        <i class="fas fa-video"></i>
-                        <span>Host Video Enabled</span>
-                      </div>
-                      <label class="switch-toggle">
-                        <input type="checkbox" v-model="meetingForm.hostVideo" />
-                        <span class="slider round"></span>
-                      </label>
-                    </div>
-                    <div class="toggle-row">
-                      <div class="toggle-text">
-                        <i class="fas fa-users"></i>
-                        <span>Participant Video Enabled</span>
-                      </div>
-                      <label class="switch-toggle">
-                        <input type="checkbox" v-model="meetingForm.guestVideo" />
-                        <span class="slider round"></span>
-                      </label>
-                    </div>
-                  </div>
-
                 </div>
 
-                <!-- Submit Button in Preview Card -->
-                <div class="preview-action-block">
+                <!-- Media Controls (Online) -->
+                <div v-if="activeTab === 'online'" class="media-controls-wrap">
+                  <div class="media-toggle-row">
+                    <span class="toggle-name"><i class="fas fa-video"></i> Host Video</span>
+                    <label class="switch-control">
+                      <input type="checkbox" v-model="meetingForm.hostVideo" />
+                      <span class="slider-round"></span>
+                    </label>
+                  </div>
+                  <div class="media-toggle-row">
+                    <span class="toggle-name"><i class="fas fa-users"></i> Participant Video</span>
+                    <label class="switch-control">
+                      <input type="checkbox" v-model="meetingForm.guestVideo" />
+                      <span class="slider-round"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Action CTA Button -->
+                <div class="summary-action-area">
                   <button
                     type="button"
-                    class="btn-schedule-main"
+                    class="btn-submit-schedule"
                     @click="handleSubmitMeeting"
                     :disabled="!isFormValid || isSubmitting"
                   >
                     <span v-if="!isSubmitting">
                       <i class="fas fa-paper-plane"></i>
-                      <span>{{ activeTab === 'online' ? 'Schedule Online Meeting' : 'Schedule In-Person Meeting' }}</span>
+                      <span>{{ activeTab === 'online' ? 'Schedule Video Meeting' : 'Schedule In-Person Meeting' }}</span>
                     </span>
-                    <span v-else class="loading-state">
+                    <span v-else class="loading-wrap">
                       <i class="fas fa-circle-notch fa-spin"></i>
-                      <span>Sending Invitations...</span>
+                      <span>Scheduling...</span>
                     </span>
-                  </button>
-
-                  <div v-if="allGuestEmails.length === 0" class="min-attendee-warning">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Select at least 1 employee to enable scheduling</span>
-                  </div>
-
-                  <button 
-                    type="button" 
-                    class="btn-reset-light" 
-                    @click="resetForm" 
-                    :disabled="isSubmitting"
-                  >
-                    <i class="fas fa-redo-alt"></i>
-                    <span>Reset Form</span>
                   </button>
                 </div>
-
               </div>
-
             </div>
-
           </div>
 
         </div>
@@ -843,7 +748,6 @@ export default {
   data() {
     return {
       isMobile: false,
-      isSidebarVisible: true,
       activeTab: 'online', // 'online' | 'offline'
       attendeeTab: 'specific', // 'specific' | 'department' | 'external'
       today: '',
@@ -854,6 +758,8 @@ export default {
       errorMessage: '',
 
       // Core meeting form model
+      videoProvider: 'auto', // 'auto' | 'custom'
+      customMeetingUrl: '',
       meetingForm: {
         title: '',
         description: '',
@@ -882,20 +788,22 @@ export default {
 
   computed: {
     meetingLink() {
+      if (this.videoProvider === 'custom' && this.customMeetingUrl && this.customMeetingUrl.trim()) {
+        return this.customMeetingUrl.trim()
+      }
       const baseUrl = window.location.origin
       return `${baseUrl}/meet/${this.meetingId}`
     },
 
-    // Form validity requires Title, Date, Time, AND minimum 1 attendee selected
     isFormValid() {
       const hasTitle = !!(this.meetingForm.title && this.meetingForm.title.trim())
       const hasDate = !!this.meetingForm.date
       const hasTime = !!this.meetingForm.time
       const hasMinOneUser = this.allGuestEmails.length >= 1
-      return hasTitle && hasDate && hasTime && hasMinOneUser
+      const hasCustomLink = this.activeTab !== 'online' || this.videoProvider !== 'custom' || !!(this.customMeetingUrl && this.customMeetingUrl.trim())
+      return hasTitle && hasDate && hasTime && hasMinOneUser && hasCustomLink
     },
 
-    // Department grouping list with member counts
     departmentList() {
       const counts = {}
       this.employees.forEach(emp => {
@@ -909,7 +817,6 @@ export default {
       }))
     },
 
-    // Filtered employees list based on search and active department pill
     filteredEmployees() {
       let list = this.employees
 
@@ -930,20 +837,17 @@ export default {
       return list
     },
 
-    // Full objects for all selected employees (type-safe comparison)
     selectedEmployees() {
       return this.employees.filter(emp => 
         this.selectedEmployeeIds.some(id => String(id) === String(emp.id))
       )
     },
 
-    // All combined guest emails (Selected employees + external emails)
     allGuestEmails() {
       const empEmails = this.selectedEmployees.map(e => e.email).filter(Boolean)
       return [...new Set([...empEmails, ...this.externalGuests])]
     },
 
-    // Preview list for avatar stack in the right card
     previewAvatarList() {
       return this.selectedEmployees.slice(0, 4)
     },
@@ -971,8 +875,15 @@ export default {
 
   methods: {
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
+      this.isMobile = window.innerWidth <= 992
+    },
+
+    toggleMobileSidebar() {
+      if (this.$refs.sidebarRef && typeof this.$refs.sidebarRef.toggleMobileMenu === 'function') {
+        this.$refs.sidebarRef.toggleMobileMenu()
+      } else {
+        window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'))
+      }
     },
 
     selectTab(tab) {
@@ -1016,13 +927,13 @@ export default {
 
     getAvatarColor(name) {
       const gradients = [
-        'linear-gradient(135deg, #2cb67d 0%, #16935b 100%)',
+        'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
         'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-        'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-        'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+        'linear-gradient(135deg, #10b981 0%, #047857 100%)',
+        'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
         'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-        'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-        'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
+        'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+        'linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)'
       ]
       let hash = 0
       for (let i = 0; i < (name || '').length; i++) {
@@ -1031,7 +942,6 @@ export default {
       return gradients[Math.abs(hash) % gradients.length]
     },
 
-    // ─── Employee Selection Methods (Type-Safe) ───
     isEmployeeSelected(id) {
       return this.selectedEmployeeIds.some(empId => String(empId) === String(id))
     },
@@ -1071,7 +981,6 @@ export default {
       toastSuccess('All selected participants removed')
     },
 
-    // ─── Department Toggle Methods ───
     isDeptFullySelected(deptName) {
       const deptMembers = this.employees.filter(e => (e.department || 'General') === deptName)
       return deptMembers.length > 0 && deptMembers.every(e => this.isEmployeeSelected(e.id))
@@ -1095,7 +1004,6 @@ export default {
       }
     },
 
-    // ─── External Guests Methods ───
     addExternalGuest() {
       const email = this.newExternalEmail.trim().toLowerCase()
       if (!email) return
@@ -1120,7 +1028,6 @@ export default {
       this.externalGuests.splice(idx, 1)
     },
 
-    // ─── Meeting Links & Form Reset ───
     copyToClipboard() {
       navigator.clipboard.writeText(this.meetingLink).then(() => {
         this.copyTooltip = 'Copied!'
@@ -1133,6 +1040,8 @@ export default {
 
     resetForm() {
       this.generateMeetingId()
+      this.videoProvider = 'auto'
+      this.customMeetingUrl = ''
       this.meetingForm = {
         title: '',
         description: '',
@@ -1157,12 +1066,16 @@ export default {
       this.meetingId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
     },
 
-    // ─── Fetch Active Employees ───
     async fetchEmployees() {
       this.loadingEmployees = true
       this.employeeFetchError = ''
       try {
-        const resp = await axios.get('https://employees.archenterprises.co.in/api/api/users')
+        let resp
+        try {
+          resp = await axios.get('/api/users')
+        } catch {
+          resp = await axios.get('https://employees.archenterprises.co.in/api/api/users')
+        }
         const raw = resp.data || []
         const userList = Array.isArray(raw) ? raw : (raw.data || [])
         this.employees = userList.filter(u => u && u.email && u.status !== 'inactive')
@@ -1174,10 +1087,15 @@ export default {
       }
     },
 
-    // ─── Unified Submit Action ───
     async handleSubmitMeeting() {
       if (!this.meetingForm.title || !this.meetingForm.title.trim() || !this.meetingForm.date || !this.meetingForm.time) {
         this.errorMessage = 'Please complete all required fields (Title, Date, Time).'
+        toastError(this.errorMessage)
+        return
+      }
+
+      if (this.activeTab === 'online' && this.videoProvider === 'custom' && (!this.customMeetingUrl || !this.customMeetingUrl.trim())) {
+        this.errorMessage = 'Please enter a valid custom meeting URL (e.g. Google Meet or Zoom).'
         toastError(this.errorMessage)
         return
       }
@@ -1194,6 +1112,12 @@ export default {
       this.successMessage = ''
 
       try {
+        const scheduleEndpointCandidates = [
+          '/api/meetings/schedule',
+          'https://employees.archenterprises.co.in/api/api/meetings/schedule',
+          '/api/meeting/schedule'
+        ]
+
         if (this.activeTab === 'online') {
           const meetingData = {
             meeting_id: this.meetingId,
@@ -1211,7 +1135,18 @@ export default {
             meeting_link: this.meetingLink
           }
 
-          await axios.post('https://employees.archenterprises.co.in/api/api/meetings/schedule', meetingData)
+          let scheduled = false
+          let lastErr = null
+          for (const endpoint of scheduleEndpointCandidates) {
+            try {
+              await axios.post(endpoint, meetingData)
+              scheduled = true
+              break
+            } catch (e) {
+              lastErr = e
+            }
+          }
+          if (!scheduled && lastErr) throw lastErr
           
           this.successMessage = `Online meeting scheduled successfully! Invitations dispatched to ${guests.length} participant(s).`
           toastSuccess('Online video meeting scheduled successfully!')
@@ -1230,7 +1165,18 @@ export default {
             email_body: `In-Person Meeting Schedule\n\nTitle: ${this.meetingForm.title}\nDate: ${this.meetingForm.date}\nTime: ${this.meetingForm.time}\nLocation: ${this.meetingForm.location || 'Company Office'}\nDescription: ${this.meetingForm.description || '-'}`
           }
 
-          await axios.post('https://employees.archenterprises.co.in/api/api/meetings/schedule', meetingData)
+          let scheduled = false
+          let lastErr = null
+          for (const endpoint of scheduleEndpointCandidates) {
+            try {
+              await axios.post(endpoint, meetingData)
+              scheduled = true
+              break
+            } catch (e) {
+              lastErr = e
+            }
+          }
+          if (!scheduled && lastErr) throw lastErr
           
           this.successMessage = `In-person meeting scheduled successfully! Invitations dispatched to ${guests.length} participant(s).`
           toastSuccess('In-person meeting scheduled successfully!')
@@ -1238,7 +1184,7 @@ export default {
 
         setTimeout(() => {
           this.resetForm()
-        }, 3500)
+        }, 4000)
       } catch (error) {
         console.error('Error scheduling meeting:', error)
         this.errorMessage = error.response?.data?.message || 'Failed to schedule meeting. Please verify details and try again.'
@@ -1273,57 +1219,48 @@ export default {
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* 🌿 Root & Variables - Professional Emerald Theme */
-:root {
-  --primary: #2cb67d;
-  --primary-dark: #209961;
-  --primary-light: #eaf7f1;
-  --text: #0f2e22;
-  --text-light: #6b8f81;
-  --bg-app: #edf7f2;
-  --card: #ffffff;
-  --border: #dff0e7;
-  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-}
-
-* {
-  margin: 0;
-  padding: 0;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
+/* Base Layout & Fixed Sidebar Flow */
 .layout {
   min-height: 100vh;
-  background: var(--bg-app, #edf7f2);
-  font-family: var(--font-body, 'Inter', sans-serif);
-  color: #0f2e22;
+  background-color: #f8fafc;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1e293b;
 }
 
 .main-content {
   display: flex;
-  min-height: 100vh;
-  padding: 18px 24px;
-  gap: 24px;
+  padding: 20px 28px;
+  gap: 28px;
+  min-height: calc(100vh - 78px);
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .content {
   flex: 1;
-  background: transparent;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   overflow-x: hidden;
 }
 
 /* 📱 Mobile Top Header */
 .mobile-header {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 12px 18px;
   background: #ffffff;
-  border-radius: 18px;
-  margin-bottom: 18px;
-  border: 1px solid #e0f0e8;
-  box-shadow: 0 4px 16px rgba(44, 182, 125, 0.06);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
 }
 
 .mobile-title {
@@ -1332,255 +1269,213 @@ export default {
   gap: 10px;
   font-size: 17px;
   font-weight: 700;
-  color: #0f2e22;
-  font-family: var(--font-display, sans-serif);
+  color: #0f172a;
 }
 
 .mobile-title i {
-  color: #2cb67d;
+  color: #4f46e5;
 }
 
-.mobile-tab-pill {
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-mobile-mode-switch {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: #f0fdf4;
-  border: 1px solid #cbe9dc;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: 8px 12px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  color: #4338ca;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #16935b;
   cursor: pointer;
 }
 
-/* 🏢 Desktop Header Banner */
-.content-header-modern {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 22px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.title-icon {
-  width: 52px;
-  height: 52px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
-  border-radius: 18px;
-  display: flex;
+.btn-mobile-menu {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 22px;
-  box-shadow: 0 8px 20px rgba(44, 182, 125, 0.28);
+  font-size: 15px;
+  cursor: pointer;
 }
 
-.header-badge-row {
+/* 🏢 Modern Enterprise Header Banner */
+.schedule-top-banner {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.banner-badge-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 3px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
-.badge-accent {
-  font-size: 11px;
-  font-weight: 800;
-  color: #16935b;
-  background: #eaf7f1;
-  padding: 2px 8px;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.badge-status-dot {
-  font-size: 11.5px;
-  color: #6b8f81;
+.portal-badge-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-weight: 500;
+  gap: 6px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid #c7d2fe;
 }
 
-.dot-pulse {
+.pulse-indicator {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #2cb67d;
-  display: inline-block;
-  box-shadow: 0 0 0 2px rgba(44, 182, 125, 0.3);
+  background: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.status-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+}
+
+.status-meta-pill i {
+  color: #4f46e5;
 }
 
 .page-title {
-  font-size: 23px;
+  font-size: 24px;
   font-weight: 800;
-  color: #0f2e22;
-  font-family: var(--font-display, sans-serif);
-  margin: 0;
-  letter-spacing: -0.3px;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
 }
 
-.subtitle-modern {
-  color: #6b8f81;
+.page-subtitle {
   font-size: 13.5px;
-  margin-top: 3px;
-  font-weight: 500;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.45;
 }
 
-.directory-quick-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #ffffff;
-  border: 1px solid #dff0e7;
-  padding: 10px 16px;
-  border-radius: 14px;
-  font-size: 13px;
-  color: #2b5e4c;
-  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.05);
-}
-
-.directory-quick-stat i {
-  color: #2cb67d;
-  font-size: 15px;
-}
-
-/* 🌿 Main Schedule Card */
-.schedule-card-wrapper {
-  background: #ffffff;
-  border-radius: 24px;
-  border: 1px solid #dff0e7;
-  padding: 24px 28px;
-  box-shadow: 0 6px 24px rgba(44, 182, 125, 0.06);
-}
-
-/* Tabs Header Bar */
-.tabs-header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.tabs-segmented-wrapper {
-  display: flex;
-  background: #f4fbf7;
-  border: 1px solid #e0f0e8;
-  border-radius: 16px;
-  padding: 6px;
-  gap: 8px;
-}
-
-.tab-btn {
+.banner-controls {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 20px;
-  border: none;
-  background: transparent;
-  color: #6b8f81;
+  flex-shrink: 0;
+}
+
+/* Mode Segmented Pills */
+.mode-segmented-pills {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 4px;
   border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  text-align: left;
+  gap: 4px;
 }
 
-.tab-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #e8f6ef;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  color: #2cb67d;
-  transition: all 0.25s ease;
-}
-
-.tab-main-label {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #0f2e22;
-}
-
-.tab-sub-label {
-  display: block;
-  font-size: 11px;
-  color: #7d9e92;
-  margin-top: 1px;
-}
-
-.tab-btn.active {
-  background: #ffffff;
-  box-shadow: 0 4px 14px rgba(44, 182, 125, 0.15);
-}
-
-.tab-btn.active .tab-icon-wrap {
-  background: #2cb67d;
-  color: #ffffff;
-}
-
-.tab-btn.active .tab-main-label {
-  color: #16935b;
-}
-
-.attendees-badge-pill {
+.segmented-pill-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  font-size: 12.5px;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.attendees-badge-pill.has-attendees {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #16935b;
-}
-
-.attendees-badge-pill i {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
   font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-/* Alerts */
+.segmented-pill-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.segmented-pill-btn.active i {
+  color: #4f46e5;
+}
+
+.btn-reset-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reset-header:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* Alert Banners */
 .alert-banner {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
-  border-radius: 16px;
-  margin-bottom: 22px;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: 12px;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .alert-banner.success {
-  background: #eaf7f1;
-  color: #16935b;
-  border: 1px solid #cbe9dc;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
 }
 
 .alert-banner.danger {
-  background: #fee2e2;
-  color: #ef4444;
+  background: #fef2f2;
   border: 1px solid #fecaca;
+  color: #991b1b;
 }
 
 .alert-content {
@@ -1589,872 +1484,763 @@ export default {
   gap: 10px;
 }
 
-.alert-icon {
-  font-size: 16px;
-}
-
 .alert-close {
   background: none;
   border: none;
   color: inherit;
-  cursor: pointer;
-  font-size: 14px;
   opacity: 0.7;
+  cursor: pointer;
 }
 
-.alert-close:hover {
-  opacity: 1;
+/* 🌿 Main Workspace Layout: Form on Left + Summary on Right */
+.meeting-workspace-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
 }
 
-/* 🌟 Grid Layout */
-.schedule-grid {
-  display: grid;
-  grid-template-columns: 1fr 390px;
-  gap: 28px;
-  align-items: start;
-}
-
-/* Form Column Left */
-.form-column-left {
+.workspace-main-column {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
-.form-card-section {
-  background: #fbfdfc;
-  border: 1px solid #e5f2eb;
-  border-radius: 20px;
-  padding: 20px 22px;
+.workspace-side-column {
+  width: 360px;
+  max-width: 360px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 98px;
 }
 
-.section-title-bar {
+/* Enterprise Form Card */
+.enterprise-form-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.card-section-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #eef6f2;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  gap: 14px;
   flex-wrap: wrap;
-  gap: 10px;
 }
 
-.section-title-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.step-num {
-  width: 28px;
-  height: 28px;
+.header-step-badge {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: #eaf7f1;
-  color: #16935b;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 800;
+  flex-shrink: 0;
 }
 
-.step-num.highlight {
-  background: #2cb67d;
+.header-step-badge.highlight {
+  background: #4f46e5;
   color: #ffffff;
 }
 
-.section-heading {
+.header-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-section-title {
   font-size: 16px;
   font-weight: 800;
-  color: #0f2e22;
+  color: #0f172a;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.section-subheading {
-  font-size: 12px;
-  color: #7d9e92;
-  margin-top: 2px;
+.card-section-sub {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 2px 0 0 0;
 }
 
-.type-pill {
+.count-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #10b981;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.count-pill.zero-count {
+  color: #d97706;
+  background: #fffbeb;
+}
+
+.session-type-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.type-pill.online {
+.session-type-badge.online {
   background: #eff6ff;
-  color: #2563eb;
+  color: #1d4ed8;
   border: 1px solid #bfdbfe;
 }
 
-.type-pill.offline {
-  background: #fef3c7;
-  color: #b45309;
-  border: 1px solid #fde68a;
+.session-type-badge.offline {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
-.section-body {
+/* Form Fields */
+.card-section-body {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.form-group {
+.form-field-group {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
-.field-label {
+.label-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #133a2c;
-  margin-bottom: 6px;
+  justify-content: space-between;
 }
 
-.field-label i {
-  color: #2cb67d;
+.form-label {
   font-size: 13px;
+  font-weight: 700;
+  color: #334155;
 }
 
 .required-star {
   color: #ef4444;
 }
 
-.optional-pill {
-  font-size: 10px;
-  font-weight: 600;
+.optional-tag {
+  font-size: 11px;
+  font-weight: 500;
   color: #94a3b8;
-  background: #f1f5f9;
-  padding: 1px 6px;
-  border-radius: 4px;
+  margin-left: 4px;
 }
 
-.form-control {
+.char-counter {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.form-text-input {
+  box-sizing: border-box !important;
   width: 100%;
-  padding: 11px 15px;
-  background: #ffffff;
-  border: 1px solid #d9e7e0;
-  border-radius: 12px;
+  height: 40px;
+  padding: 0 14px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
   font-size: 13.5px;
-  color: #0f2e22;
   font-family: inherit;
+  color: #0f172a;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.form-control:focus {
-  border-color: #2cb67d;
-  box-shadow: 0 0 0 3px rgba(44, 182, 125, 0.16);
+.form-text-input:focus {
+  background: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
-.textarea {
+.form-text-input.textarea {
+  height: auto;
+  padding: 10px 14px;
   resize: vertical;
   min-height: 80px;
   line-height: 1.5;
 }
 
-.field-footer-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-}
-
-.hint-text {
-  font-size: 11px;
-  color: #8da49b;
-}
-
-.char-count {
-  font-size: 11px;
-  color: #94a3b8;
-}
-
-.form-row-2 {
+.form-two-col-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
-.select-wrapper {
+.select-field-wrap {
   position: relative;
 }
 
-.select-field {
+.form-text-input.select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b8f81'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
-  background-size: 16px;
-  padding-right: 40px;
+  background-size: 14px;
+  padding-right: 36px;
+  cursor: pointer;
 }
 
-/* ================================================= */
-/* 👥 PARTICIPANT SELECTION STYLES                  */
-/* ================================================= */
-.badge-count-inline {
-  font-size: 11px;
-  font-weight: 700;
-  background: #eaf7f1;
-  color: #16935b;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.badge-count-inline.zero-count {
-  background: #fee2e2;
-  color: #ef4444;
-}
-
-.attendee-mode-switch {
-  display: flex;
-  background: #f1f7f4;
-  border-radius: 12px;
-  padding: 4px;
+/* 🌿 Directory Mode Pills (Step 2) */
+.directory-mode-pills {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 9px;
   gap: 4px;
 }
 
-.mode-btn {
-  display: flex;
+.mode-pill-btn {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
+  padding: 6px 12px;
   border: none;
   background: transparent;
-  color: #64748b;
+  border-radius: 7px;
   font-size: 12px;
-  font-weight: 700;
-  border-radius: 8px;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.mode-btn.active {
+.mode-pill-btn.active {
   background: #ffffff;
-  color: #16935b;
-  box-shadow: 0 2px 8px rgba(44, 182, 125, 0.15);
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Selected Tray */
-.selected-tray-card {
-  background: #ffffff;
-  border: 1px solid #dff0e7;
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 2px 8px rgba(44, 182, 125, 0.04);
+/* Attendees Tray */
+.attendees-tray {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
 }
 
-.tray-header {
+.tray-title-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 10px;
 }
 
 .tray-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 12.5px;
   font-weight: 700;
-  color: #0f2e22;
+  color: #0f172a;
 }
 
-.text-emerald {
-  color: #2cb67d;
+.tray-title i {
+  color: #10b981;
 }
 
-.btn-clear-all {
+.btn-clear-tray {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #ef4444;
   font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
-  transition: color 0.2s;
 }
 
-.btn-clear-all:hover {
-  color: #ef4444;
-}
-
-.selected-chips-container {
+.attendee-chips-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   max-height: 120px;
   overflow-y: auto;
-  padding-right: 4px;
 }
 
-.participant-chip {
+.attendee-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 4px 10px 4px 5px;
-  transition: all 0.2s;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 3px 8px 3px 3px;
+  font-size: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.participant-chip.external {
-  border-color: #fed7aa;
-  background: #fffbeb;
-}
-
-.chip-avatar {
-  width: 24px;
-  height: 24px;
+.chip-dot {
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 800;
-  flex-shrink: 0;
 }
 
-.chip-avatar.external {
-  background: #f59e0b;
-}
-
-.chip-info {
-  display: flex;
-  flex-direction: column;
+.chip-dot.guest {
+  background: #6366f1;
 }
 
 .chip-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: #0f2e22;
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 600;
+  color: #0f172a;
 }
 
-.chip-dept {
-  font-size: 9.5px;
+.chip-dept-pill {
+  font-size: 10px;
+  font-weight: 600;
+  background: #f1f5f9;
   color: #64748b;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
-.badge-ext {
-  color: #b45309;
+.chip-dept-pill.guest {
+  background: #e0e7ff;
+  color: #4338ca;
 }
 
-.chip-remove {
+.chip-remove-btn {
   background: none;
   border: none;
   color: #94a3b8;
   cursor: pointer;
+  padding: 2px;
   font-size: 11px;
-  padding: 2px 4px;
-  border-radius: 50%;
-  transition: all 0.15s;
 }
 
-.chip-remove:hover {
+.chip-remove-btn:hover {
   color: #ef4444;
-  background: #fee2e2;
 }
 
-.empty-tray-notice {
+.empty-selection-box {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 12px 16px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
-}
-
-.notice-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.empty-tray-notice strong {
-  display: block;
+  background: #fffbeb;
+  border: 1px dashed #fde68a;
+  border-radius: 10px;
+  color: #92400e;
   font-size: 12.5px;
-  color: #334155;
 }
 
-.empty-tray-notice p {
-  font-size: 11px;
-  color: #64748b;
-  margin: 1px 0 0;
+.empty-selection-box i {
+  color: #d97706;
 }
 
-/* Directory Filter Bar */
-.directory-filter-bar {
+/* Directory Toolbar */
+.directory-toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  margin-top: 6px;
   flex-wrap: wrap;
-  margin-top: 14px;
 }
 
-.directory-search-input-wrap {
+.directory-search-box {
   position: relative;
   flex: 1;
   min-width: 240px;
 }
 
-.search-icon {
+.directory-search-box .search-icon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
   font-size: 13px;
 }
 
-.directory-search-input {
+.directory-search-box .search-input {
+  box-sizing: border-box !important;
   width: 100%;
-  padding: 9px 36px 9px 36px;
-  background: #ffffff;
-  border: 1px solid #d9e7e0;
-  border-radius: 10px;
+  height: 38px;
+  padding: 0 32px 0 34px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
   font-size: 13px;
+  color: #0f172a;
   outline: none;
-  transition: border-color 0.2s;
 }
 
-.directory-search-input:focus {
-  border-color: #2cb67d;
+.directory-search-box .search-input:focus {
+  background: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
 .clear-search-btn {
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  font-size: 12px;
+  padding: 4px;
+  font-size: 11px;
 }
 
-.selection-actions-bar {
+.directory-quick-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.tool-btn {
+.quick-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  background: #eaf7f1;
-  color: #16935b;
-  border: 1px solid #cbe9dc;
-  border-radius: 10px;
-  font-size: 11.5px;
-  font-weight: 700;
+  padding: 7px 12px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.tool-btn:hover:not(:disabled) {
-  background: #2cb67d;
-  color: #ffffff;
+.quick-action-btn.secondary {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
 }
 
-.tool-btn.secondary {
-  background: #f1f5f9;
-  color: #64748b;
-  border-color: #e2e8f0;
-}
-
-.tool-btn.secondary:hover:not(:disabled) {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-.tool-btn:disabled {
+.quick-action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Department Scroll Pills */
-.dept-pills-scroll {
+/* Department Filter Pills */
+.department-pills-bar {
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding: 10px 0 4px;
+  padding-bottom: 6px;
+  margin-top: 8px;
+  scrollbar-width: none;
 }
 
-.dept-pill {
-  padding: 5px 12px;
-  background: #ffffff;
-  border: 1px solid #d9e7e0;
-  border-radius: 999px;
-  font-size: 11.5px;
+.department-pills-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.dept-filter-pill {
+  box-sizing: border-box !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  font-size: 12px;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.2s;
 }
 
-.dept-pill:hover {
-  background: #f0fdf4;
-  border-color: #86efac;
-}
-
-.dept-pill.active {
-  background: #16935b;
+.dept-filter-pill.active {
+  background: #4f46e5;
+  border-color: #4338ca;
   color: #ffffff;
-  border-color: #16935b;
 }
 
-.pill-count {
+.dept-filter-pill .count {
   font-size: 10px;
-  opacity: 0.85;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 5px;
+  border-radius: 9999px;
+}
+
+.dept-filter-pill.active .count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 /* Employee Cards Grid */
-.employee-selection-grid {
+.employee-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 10px;
-  max-height: 290px;
+  max-height: 360px;
   overflow-y: auto;
-  padding-right: 4px;
-  margin-top: 6px;
+  margin-top: 8px;
+  padding: 2px;
 }
 
-.employee-pick-card {
+.employee-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 12px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
+  transition: all 0.15s ease;
+  min-width: 0;
 }
 
-.employee-pick-card:hover {
-  border-color: #86efac;
-  background: #f0fdf4;
+.employee-card:hover {
+  border-color: #cbd5e1;
+  background: #fbfbfe;
   transform: translateY(-1px);
 }
 
-.employee-pick-card.selected {
-  background: #f0fdf4;
-  border-color: #2cb67d;
-  box-shadow: 0 2px 8px rgba(44, 182, 125, 0.15);
+.employee-card.selected {
+  border-color: #4f46e5;
+  background: #f5f3ff;
+  box-shadow: 0 0 0 1px #4f46e5;
 }
 
-.pick-checkbox {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  border: 2px solid #cbd5e1;
+.card-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 10px;
   color: #ffffff;
   flex-shrink: 0;
-  transition: all 0.2s;
 }
 
-.pick-checkbox.checked {
-  background: #2cb67d;
-  border-color: #2cb67d;
+.card-check.checked {
+  background: #4f46e5;
+  border-color: #4f46e5;
 }
 
-.pick-avatar {
+.card-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 800;
   flex-shrink: 0;
 }
 
-.pick-details {
-  flex: 1;
+.card-meta {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  gap: 2px;
 }
 
-.pick-name-row {
+.name-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 6px;
 }
 
-.pick-name {
+.emp-name {
   font-size: 12.5px;
   font-weight: 700;
-  color: #0f2e22;
-  white-space: nowrap;
+  color: #0f172a;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.dept-tag {
-  font-size: 9.5px;
-  font-weight: 700;
-  color: #16935b;
-  background: #eaf7f1;
-  padding: 1px 6px;
-  border-radius: 4px;
   white-space: nowrap;
 }
 
-.pick-email {
+.dept-badge {
+  font-size: 9.5px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.emp-email {
   font-size: 11px;
   color: #64748b;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 1px;
+  white-space: nowrap;
 }
 
-.pick-email i {
-  font-size: 9px;
-  margin-right: 2px;
-}
-
-.no-employees-found {
+.no-results-box {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 24px;
+  padding: 28px;
   color: #64748b;
-}
-
-.no-employees-found i {
-  font-size: 28px;
-  color: #cbd5e1;
-  margin-bottom: 8px;
-}
-
-.btn-reset-filter {
-  margin-top: 8px;
-  padding: 6px 14px;
-  background: #eaf7f1;
-  color: #16935b;
-  border: 1px solid #cbe9dc;
-  border-radius: 8px;
-  font-size: 11.5px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* Department Picker View */
-.dept-intro-banner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: #eaf7f1;
-  border: 1px solid #cbe9dc;
-  border-radius: 12px;
-  color: #16935b;
-  margin-top: 10px;
-}
-
-.dept-intro-banner i {
-  font-size: 20px;
-}
-
-.dept-intro-banner strong {
-  display: block;
+  gap: 6px;
   font-size: 13px;
-  color: #0f2e22;
 }
 
-.dept-intro-banner p {
-  font-size: 11.5px;
-  color: #6b8f81;
-  margin: 1px 0 0;
-}
-
-.dept-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.dept-card-item {
-  background: #ffffff;
+/* Team Cards Grid */
+.dept-header-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.dept-card-item:hover {
-  border-color: #86efac;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.08);
-}
-
-.dept-card-item.all-selected {
-  background: #f0fdf4;
-  border-color: #2cb67d;
-  box-shadow: 0 2px 10px rgba(44, 182, 125, 0.15);
-}
-
-.dept-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.dept-card-icon {
-  width: 32px;
-  height: 32px;
   border-radius: 8px;
-  background: #eaf7f1;
-  color: #16935b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-}
-
-.dept-card-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: #16935b;
-}
-
-.dept-card-title {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: #0f2e22;
-  margin: 0 0 2px;
-}
-
-.dept-card-desc {
-  font-size: 11px;
-  color: #64748b;
+  font-size: 12px;
+  color: #475569;
+  margin-top: 6px;
   margin-bottom: 12px;
 }
 
-.dept-card-action {
-  font-size: 11.5px;
-  font-weight: 700;
+.department-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
 }
 
-.action-selected {
-  color: #16935b;
+.team-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.action-add {
-  color: #2563eb;
+.team-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
 }
 
-/* External Picker View */
-.external-intro-box {
+.team-card.is-selected {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.team-card-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: #fffbeb;
-  border: 1px solid #fef3c7;
-  border-radius: 12px;
-  color: #b45309;
-  margin-top: 10px;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.external-intro-box i {
-  font-size: 20px;
+.team-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
 }
 
-.external-intro-box strong {
-  display: block;
+.team-status-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.team-status-tag.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.team-title {
   font-size: 13px;
-  color: #78350f;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
 }
 
-.external-intro-box p {
+.team-action-hint {
   font-size: 11.5px;
-  color: #92400e;
-  margin: 1px 0 0;
+  font-weight: 600;
+  color: #4f46e5;
 }
 
-.external-input-row {
+.team-card.is-selected .team-action-hint {
+  color: #15803d;
+}
+
+/* External Guest Input */
+.external-input-bar {
   display: flex;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 8px;
 }
 
-.ext-input-group {
+.external-input-box {
   position: relative;
   flex: 1;
 }
 
-.ext-input-group .input-icon {
+.external-input-box i {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
   font-size: 13px;
 }
 
-.ext-input {
-  padding-left: 36px;
+.form-text-input.external {
+  padding-left: 34px;
 }
 
 .btn-add-external {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 18px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
-  color: #ffffff;
+  padding: 0 16px;
+  background: #4f46e5;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
+  color: #ffffff;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
 }
 
 .btn-add-external:disabled {
@@ -2462,195 +2248,135 @@ export default {
   cursor: not-allowed;
 }
 
-.external-guests-list {
-  margin-top: 14px;
-}
-
-.ext-list-header {
-  font-size: 11px;
-  font-weight: 700;
+/* Loading & Error States */
+.loading-state-box,
+.error-state-box {
+  padding: 24px;
+  text-align: center;
   color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-
-.ext-tags-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.ext-guest-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #ffffff;
-  border: 1px solid #fef3c7;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: #b45309;
-}
-
-.ext-guest-tag button {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.ext-guest-tag button:hover {
-  color: #ef4444;
-}
-
-/* Loading & Error */
-.employees-loading-box,
-.employees-error-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 30px;
+  gap: 8px;
   font-size: 13px;
-  color: #64748b;
-}
-
-.employees-error-box {
-  color: #dc2626;
-  flex-direction: column;
 }
 
 .btn-retry {
-  padding: 6px 14px;
-  background: #fee2e2;
-  color: #ef4444;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 4px 10px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11.5px;
   cursor: pointer;
 }
 
-/* ================================================= */
-/* 🌟 PREVIEW CARD (RIGHT COLUMN)                    */
-/* ================================================= */
-.preview-card-elevated {
-  background: #f7fcf9;
-  border: 1px solid #dff0e7;
-  border-radius: 24px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  box-shadow: 0 4px 20px rgba(44, 182, 125, 0.05);
-  position: sticky;
-  top: 20px;
+/* ▶️ RIGHT COLUMN: Executive Live Summary Card */
+.executive-summary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.preview-card-top {
+.summary-card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
-.preview-badge-pill {
+.summary-mode-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 3px 9px;
+  border-radius: 9999px;
 }
 
-.preview-badge-pill.online {
-  color: #16935b;
-  background: #eaf7f1;
+.summary-mode-pill.online {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
-.preview-badge-pill.offline {
-  color: #b45309;
-  background: #fef3c7;
+.summary-mode-pill.offline {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
-.preview-live-indicator {
+.summary-live-dot {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #2cb67d;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
 }
 
-.indicator-dot {
-  width: 8px;
-  height: 8px;
+.live-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #2cb67d;
-  box-shadow: 0 0 0 3px rgba(44, 182, 125, 0.25);
+  background: #10b981;
 }
 
-.preview-content-box {
-  background: #ffffff;
-  border: 1px solid #eef6f2;
-  border-radius: 18px;
-  padding: 18px;
-}
-
-.preview-title-text {
-  font-size: 16px;
+.summary-meeting-title {
+  font-size: 17px;
   font-weight: 800;
-  color: #0f2e22;
-  margin: 0 0 6px;
+  color: #0f172a;
+  margin: 0 0 6px 0;
   word-break: break-word;
 }
 
-.preview-description-text {
-  font-size: 12px;
+.summary-agenda-text {
+  font-size: 12.5px;
   color: #475569;
-  line-height: 1.4;
+  line-height: 1.45;
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  word-break: break-word;
+  max-height: 60px;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.preview-description-empty {
-  font-size: 11.5px;
+.summary-agenda-empty {
+  font-size: 12px;
   color: #94a3b8;
-  margin: 0;
   font-style: italic;
+  margin: 0;
 }
 
-.preview-divider {
+.summary-divider {
   height: 1px;
   background: #f1f5f9;
   margin: 14px 0;
 }
 
-.preview-meta-grid {
+.summary-meta-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.preview-meta-row {
-  display: flex;
-  align-items: flex-start;
   gap: 10px;
 }
 
-.meta-icon-bubble {
+.summary-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meta-icon {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: #eaf7f1;
-  color: #16935b;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #4f46e5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2658,234 +2384,268 @@ export default {
   flex-shrink: 0;
 }
 
-.meta-content {
-  flex: 1;
+.meta-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.meta-label {
+.meta-text .label {
   font-size: 10.5px;
-  font-weight: 700;
-  color: #8da49b;
+  font-weight: 600;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: block;
 }
 
-.meta-val {
+.meta-text .value {
   font-size: 12.5px;
   font-weight: 700;
-  color: #0f2e22;
-  margin: 1px 0 0;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Preview Attendees Block */
-.preview-attendees-block {
+/* Summary Attendees */
+.summary-attendees-section {
   margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #f1f5f9;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
 }
 
-.attendees-header-mini {
+.attendees-section-title {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-}
-
-.mini-label {
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #8da49b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.attendees-count-tag {
+  justify-content: space-between;
   font-size: 11px;
   font-weight: 700;
-  color: #16935b;
-  background: #eaf7f1;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.attendees-section-title .badge {
+  font-size: 10.5px;
+  background: #ecfdf5;
+  color: #065f46;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 9999px;
 }
 
-.attendees-count-tag.zero-tag {
-  color: #ef4444;
-  background: #fee2e2;
+.attendees-section-title .badge.zero {
+  background: #fffbeb;
+  color: #92400e;
 }
 
-.attendees-preview-content {
+.avatar-stack-circles {
   display: flex;
   align-items: center;
-  gap: 10px;
+  margin-bottom: 4px;
 }
 
-.avatar-stack {
-  display: flex;
-  align-items: center;
-}
-
-.stack-avatar {
-  width: 28px;
-  height: 28px;
+.stack-circle {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 2px solid #ffffff;
   color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9.5px;
-  font-weight: 800;
   margin-left: -6px;
 }
 
-.stack-avatar:first-child {
+.stack-circle:first-child {
   margin-left: 0;
 }
 
-.more-avatar {
-  background: #64748b !important;
-  font-size: 9px;
+.stack-circle.more {
+  background: #475569;
 }
 
-.attendees-summary-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0f2e22;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.empty-attendees-preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.attendees-summary-caption {
   font-size: 11.5px;
-  color: #dc2626;
-  background: #fee2e2;
-  padding: 8px 12px;
-  border-radius: 10px;
-}
-
-.empty-attendees-preview i {
-  font-size: 13px;
-}
-
-/* Meeting Link Box */
-.meeting-link-box {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.meeting-link-card {
-  display: flex;
-  align-items: center;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 6px 6px 6px 12px;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.link-url-text {
-  flex: 1;
-  font-size: 11.5px;
-  color: #16935b;
-  font-weight: 600;
+  color: #475569;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.copy-link-btn {
+.empty-attendee-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #b45309;
+}
+
+/* Virtual Video Link */
+.video-link-container {
+  margin-top: 12px;
+}
+
+.video-link-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.video-link-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.video-provider-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 2px 7px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
-  color: white;
-  border: none;
+  gap: 4px;
+}
+
+.video-link-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 5px 8px;
+  gap: 8px;
+}
+
+.link-text {
+  font-size: 11.5px;
+  font-family: monospace;
+  color: #4338ca;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.link-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.copy-link-btn:hover {
-  box-shadow: 0 2px 8px rgba(44, 182, 125, 0.35);
+.btn-copy-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-copy-link:hover {
+  background: #4338ca;
 }
 
-/* Media Settings Card */
-.media-settings-card {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #f1f5f9;
+.btn-test-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-test-link:hover {
+  background: #0369a1;
+}
+
+.generated-link-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.generated-link-indicator i {
+  color: #16a34a;
+  font-size: 15px;
+}
+
+/* Media Controls */
+.media-controls-wrap {
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.toggle-row {
+.media-toggle-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  background: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid #f1f5f9;
 }
 
-.toggle-text {
+.toggle-name {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 12px;
-  font-weight: 600;
-  color: #0f2e22;
+  color: #334155;
 }
 
-.toggle-text i {
-  color: #2cb67d;
-  font-size: 12px;
+.toggle-name i {
+  color: #64748b;
+  font-size: 11px;
 }
 
-/* Switch Toggle Component */
-.switch-toggle {
+.switch-control {
   position: relative;
   display: inline-block;
-  width: 34px;
+  width: 32px;
   height: 18px;
 }
 
-.switch-toggle input {
+.switch-control input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.slider {
+.slider-round {
   position: absolute;
   cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background-color: #cbd5e1;
   transition: .3s;
+  border-radius: 34px;
 }
 
-.slider.round {
-  border-radius: 20px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}
-
-.slider:before {
+.slider-round:before {
   position: absolute;
   content: "";
   height: 12px;
@@ -2894,136 +2654,114 @@ export default {
   bottom: 3px;
   background-color: white;
   transition: .3s;
+  border-radius: 50%;
 }
 
-.switch-toggle input:checked + .slider {
-  background-color: #2cb67d;
+input:checked + .slider-round {
+  background-color: #4f46e5;
 }
 
-.switch-toggle input:checked + .slider:before {
-  transform: translateX(16px);
+input:checked + .slider-round:before {
+  transform: translateX(14px);
 }
 
-/* Preview Actions */
-.preview-action-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* Action CTA Area */
+.summary-action-area {
+  margin-top: 16px;
 }
 
-.btn-schedule-main {
+.btn-submit-schedule {
+  box-sizing: border-box !important;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 13px 20px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
+  padding: 11px 16px;
+  background: #4f46e5;
+  border: 1px solid #4338ca;
+  border-radius: 10px;
   color: #ffffff;
-  border: none;
-  border-radius: 14px;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(44, 182, 125, 0.3);
   transition: all 0.2s ease;
-}
-
-.btn-schedule-main:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(44, 182, 125, 0.4);
-}
-
-.btn-schedule-main:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.min-attendee-warning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #b45309;
-  background: #fef3c7;
-  padding: 6px 10px;
-  border-radius: 8px;
-  justify-content: center;
-  font-weight: 600;
-}
-
-.btn-reset-light {
-  width: 100%;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 9px 14px;
-  background: #ffffff;
-  color: #64748b;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-reset-light:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.loading-state {
-  display: flex;
-  align-items: center;
   gap: 8px;
 }
 
-/* 📱 Responsive Design */
-@media (max-width: 1024px) {
-  .schedule-grid {
-    grid-template-columns: 1fr;
+.btn-submit-schedule:hover:not(:disabled) {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+}
+
+.btn-submit-schedule:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 📱 Responsive Breakpoints */
+@media (max-width: 1180px) {
+  .meeting-workspace-layout {
+    flex-direction: column;
   }
 
-  .preview-card-elevated {
+  .workspace-side-column {
+    width: 100%;
+    max-width: 100%;
     position: static;
   }
 }
 
-@media (max-width: 768px) {
-  .mobile-header {
-    display: flex;
-  }
-
-  .content-header-modern {
-    display: none;
-  }
-
+@media (max-width: 992px) {
   .main-content {
-    padding: 12px;
+    padding: 16px;
+    gap: 0;
   }
 
-  .schedule-card-wrapper {
-    padding: 16px 14px;
+  .schedule-top-banner {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .form-row-2 {
-    grid-template-columns: 1fr;
-  }
-
-  .employee-selection-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .tabs-segmented-wrapper {
+  .banner-controls {
     width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-two-col-row {
+    grid-template-columns: 1fr;
+  }
+
+  .card-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .directory-mode-pills {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .directory-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .directory-quick-actions {
+    justify-content: space-between;
+  }
+
+  .external-input-bar {
     flex-direction: column;
   }
 
-  .tab-btn {
-    width: 100%;
+  .btn-add-external {
+    height: 38px;
+    justify-content: center;
   }
 }
 </style>

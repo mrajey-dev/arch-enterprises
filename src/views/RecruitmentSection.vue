@@ -9,293 +9,470 @@
         <!-- 📱 Mobile Header -->
         <div class="mobile-header" v-if="isMobile">
           <div class="mobile-title">
-            <i class="fas fa-user-plus"></i>
-            <span>Recruitment</span>
-          </div>
-          <button class="mobile-add-btn" @click="openAddForm">
-            <i class="fas fa-plus"></i>
-          </button>
-        </div>
-
-        <!-- 🏢 Desktop Header Banner -->
-        <div class="content-header-modern" v-else>
-          <div class="header-left">
-            <div class="title-icon">
+            <div class="mobile-title-icon">
               <i class="fas fa-user-plus"></i>
             </div>
-            <div>
-              <h1 class="page-title">Recruitment & Candidates</h1>
-              <p class="subtitle-modern">Manage candidate applications, hiring pipelines, and interviews</p>
-            </div>
+            <span>Recruitment</span>
           </div>
-          <div class="header-actions">
-            <div class="stats-badge-header">
-              <i class="fas fa-users"></i>
-              <span>{{ candidates.length }} Candidates</span>
-            </div>
-            <button class="add-candidate-btn" @click="openAddForm">
+          <div class="mobile-header-actions">
+            <button class="mobile-add-btn" @click="openAddForm" title="Add Candidate">
               <i class="fas fa-plus"></i>
-              <span>Add Candidate</span>
+              <span>Add</span>
+            </button>
+            <button class="btn-mobile-menu" @click="isSidebarVisible = !isSidebarVisible" aria-label="Toggle menu">
+              <i class="fas fa-bars"></i>
             </button>
           </div>
         </div>
 
-        <!-- 📊 Status Filter Stats Bar -->
-        <div class="stats-bar">
-          <div 
-            class="stat-card pending" 
-            :class="{ active: statusFilter === 'Pending' }"
-            @click="filterByStatus('Pending')"
-          >
-            <div class="stat-icon-wrap amber">
-              <i class="fas fa-clock"></i>
+        <!-- 🏢 Modern Enterprise Top Banner -->
+        <header class="recruitment-top-banner" v-else>
+          <div class="banner-left">
+            <div class="banner-badge-row">
+              <span class="portal-badge-pill">
+                <span class="pulse-indicator"></span>
+                <span>TALENT ACQUISITION & HIRING</span>
+              </span>
+              <span class="status-meta-pill">
+                <i class="fas fa-users"></i> {{ candidates.length }} Applications
+              </span>
+              <span class="status-meta-pill warning" v-if="pendingCount > 0">
+                <i class="fas fa-clock"></i> {{ pendingCount }} Pending
+              </span>
+              <span class="status-meta-pill info" v-if="followUpCount > 0">
+                <i class="fas fa-phone-alt"></i> {{ followUpCount }} Follow Up
+              </span>
+              <span class="status-meta-pill success" v-if="successfulCount > 0">
+                <i class="fas fa-check-circle"></i> {{ successfulCount }} Hired
+              </span>
             </div>
-            <div class="stat-info">
-              <span class="stat-value">{{ pendingCount }}</span>
-              <span class="stat-label">Pending</span>
-            </div>
-            <span class="filter-pill" v-if="statusFilter === 'Pending'">Active</span>
+            <h1 class="page-title">Recruitment & Candidates</h1>
+            <p class="page-subtitle">
+              Manage candidate pipelines, evaluate applicant credentials, schedule interviews, and track recruitment progress in real time.
+            </p>
           </div>
 
-          <div 
-            class="stat-card followup" 
-            :class="{ active: statusFilter === 'Follow Up' }"
-            @click="filterByStatus('Follow Up')"
-          >
-            <div class="stat-icon-wrap sky">
-              <i class="fas fa-phone-alt"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value">{{ followUpCount }}</span>
-              <span class="stat-label">Follow Up</span>
-            </div>
-            <span class="filter-pill" v-if="statusFilter === 'Follow Up'">Active</span>
+          <div class="banner-right-actions">
+            <button class="add-candidate-btn" @click="openAddForm">
+              <i class="fas fa-user-plus"></i>
+              <span>Add Candidate</span>
+            </button>
           </div>
+        </header>
 
+        <!-- 📊 Interactive Status Filter Metric Strip -->
+        <div class="summary-strip">
           <div 
-            class="stat-card successful" 
-            :class="{ active: statusFilter === 'Successful' }"
-            @click="filterByStatus('Successful')"
-          >
-            <div class="stat-icon-wrap emerald">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value">{{ successfulCount }}</span>
-              <span class="stat-label">Successful</span>
-            </div>
-            <span class="filter-pill" v-if="statusFilter === 'Successful'">Active</span>
-          </div>
-
-          <div 
-            class="stat-card rejected" 
-            :class="{ active: statusFilter === 'Rejected' }"
-            @click="filterByStatus('Rejected')"
-          >
-            <div class="stat-icon-wrap rose">
-              <i class="fas fa-times-circle"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-value">{{ rejectedCount }}</span>
-              <span class="stat-label">Rejected</span>
-            </div>
-            <span class="filter-pill" v-if="statusFilter === 'Rejected'">Active</span>
-          </div>
-
-          <div 
-            class="stat-card all" 
+            class="summary-pill" 
             :class="{ active: !statusFilter }"
             @click="clearFilter"
+            title="Show All Applications"
           >
-            <div class="stat-icon-wrap slate">
-              <i class="fas fa-th-list"></i>
+            <div class="pill-icon-halo all"><i class="fas fa-th-list"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Total Applicants</span>
+              <span class="pill-value">{{ candidates.length }}</span>
             </div>
-            <div class="stat-info">
-              <span class="stat-value">{{ candidates.length }}</span>
-              <span class="stat-label">All</span>
+            <span class="active-dot" v-if="!statusFilter"></span>
+          </div>
+
+          <div 
+            class="summary-pill" 
+            :class="{ active: statusFilter === 'Pending' }"
+            @click="filterByStatus('Pending')"
+            title="Filter by Pending"
+          >
+            <div class="pill-icon-halo pending"><i class="fas fa-clock"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Pending</span>
+              <span class="pill-value text-pending">{{ pendingCount }}</span>
             </div>
-            <span class="filter-pill" v-if="!statusFilter">All</span>
+            <span class="active-dot" v-if="statusFilter === 'Pending'"></span>
+          </div>
+
+          <div 
+            class="summary-pill" 
+            :class="{ active: statusFilter === 'Follow Up' }"
+            @click="filterByStatus('Follow Up')"
+            title="Filter by Follow Up"
+          >
+            <div class="pill-icon-halo followup"><i class="fas fa-phone-alt"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Follow Up</span>
+              <span class="pill-value text-followup">{{ followUpCount }}</span>
+            </div>
+            <span class="active-dot" v-if="statusFilter === 'Follow Up'"></span>
+          </div>
+
+          <div 
+            class="summary-pill" 
+            :class="{ active: statusFilter === 'Successful' }"
+            @click="filterByStatus('Successful')"
+            title="Filter by Successful"
+          >
+            <div class="pill-icon-halo successful"><i class="fas fa-check-circle"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Successful</span>
+              <span class="pill-value text-successful">{{ successfulCount }}</span>
+            </div>
+            <span class="active-dot" v-if="statusFilter === 'Successful'"></span>
+          </div>
+
+          <div 
+            class="summary-pill" 
+            :class="{ active: statusFilter === 'Rejected' }"
+            @click="filterByStatus('Rejected')"
+            title="Filter by Rejected"
+          >
+            <div class="pill-icon-halo rejected"><i class="fas fa-times-circle"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Rejected</span>
+              <span class="pill-value text-rejected">{{ rejectedCount }}</span>
+            </div>
+            <span class="active-dot" v-if="statusFilter === 'Rejected'"></span>
           </div>
         </div>
 
-        <!-- 🔍 Search Bar Container -->
-        <div class="search-bar-container">
+        <!-- 🔍 Unified Toolbar: Search + Active Filter + View Switcher -->
+        <div class="recruitment-toolbar">
           <div class="search-input-wrapper">
             <i class="fas fa-search search-icon"></i>
             <input 
               type="text" 
               v-model="searchQuery" 
-              placeholder="Search candidates by name, email, phone, or job title..."
+              placeholder="Search by candidate name, job title, email, phone, or notes..."
               class="search-input"
             />
-            <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''">
+            <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''" title="Clear search">
               <i class="fas fa-times"></i>
             </button>
           </div>
-          <div class="search-counter-badge">
-            <span>Showing <strong>{{ filteredCandidates.length }}</strong> of {{ candidates.length }} Applications</span>
+
+          <div class="toolbar-right">
+            <!-- Active Filter Chip -->
+            <div v-if="statusFilter" class="active-filter-badge" @click="statusFilter = ''" title="Click to clear filter">
+              <span>Status: <strong>{{ statusFilter }}</strong></span>
+              <i class="fas fa-times-circle"></i>
+            </div>
+
+            <!-- Results Counter -->
+            <div class="results-count-pill">
+              <span>Showing <strong>{{ filteredCandidates.length }}</strong> of {{ candidates.length }}</span>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="view-mode-toggle">
+              <button 
+                class="view-toggle-btn" 
+                :class="{ active: viewMode === 'cards' }"
+                @click="viewMode = 'cards'"
+                title="Grid Cards View"
+              >
+                <i class="fas fa-th-large"></i>
+                <span class="view-btn-text">Cards</span>
+              </button>
+              <button 
+                class="view-toggle-btn" 
+                :class="{ active: viewMode === 'table' }"
+                @click="viewMode = 'table'"
+                title="Data Table View"
+              >
+                <i class="fas fa-table-list"></i>
+                <span class="view-btn-text">Table</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- ⏳ Loading Spinner -->
-        <div v-if="loadingLeaves" class="loading-container">
-          <div class="spinner"></div>
-          <p>Loading candidate profiles...</p>
+        <!-- ⏳ Modern Loading State -->
+        <div v-if="loadingLeaves" class="modern-loading-card">
+          <div class="loading-ring-wrap">
+            <div class="loading-ring"></div>
+            <i class="fas fa-user-tie loading-icon"></i>
+          </div>
+          <h3 class="loading-title">Loading Candidate Pipeline...</h3>
+          <p class="loading-subtitle">Retrieving applications, interview status, and attached resumes</p>
+          <div class="loading-progress-bar"><div class="progress-indeterminate"></div></div>
         </div>
 
-        <!-- 👥 Candidate Cards Grid -->
-        <div v-else class="candidates-grid">
-          <div v-for="candidate in filteredCandidates" :key="candidate.id" class="candidate-card-premium">
+        <!-- 👥 Empty State (When no results) -->
+        <div v-else-if="filteredCandidates.length === 0" class="empty-state-card">
+          <div class="empty-icon-halo">
+            <i class="fas fa-user-slash"></i>
+          </div>
+          <h3 class="empty-title">{{ searchQuery || statusFilter ? 'No Matching Candidates' : 'No Candidates Registered Yet' }}</h3>
+          <p class="empty-desc">
+            {{ searchQuery || statusFilter ? 'Try adjusting your search query or reset status filters to see all candidates.' : 'Start tracking talent applications by registering your first candidate.' }}
+          </p>
+          <div class="empty-actions">
+            <button v-if="searchQuery || statusFilter" class="btn-reset-filters" @click="clearFilter">
+              <i class="fas fa-redo"></i> Reset Filters
+            </button>
+            <button class="add-candidate-btn" @click="openAddForm">
+              <i class="fas fa-plus"></i> Add Candidate
+            </button>
+          </div>
+        </div>
+
+        <!-- 👥 View 1: Candidate Cards Grid -->
+        <div v-else-if="viewMode === 'cards'" class="candidates-grid">
+          <div v-for="candidate in filteredCandidates" :key="candidate.id" class="candidate-card-modern">
             <div class="card-accent" :class="getStatusClass(candidate.status)"></div>
             
             <!-- Card Header -->
-            <div class="card-header-premium">
-              <div class="candidate-info">
-                <div class="candidate-avatar">
+            <div class="card-header-modern">
+              <div class="candidate-profile-meta">
+                <div class="candidate-avatar" :class="getAvatarColorClass(candidate.id || candidate.name)">
                   {{ getInitials(candidate.name) }}
                 </div>
-                <div class="candidate-text">
+                <div class="candidate-name-box">
                   <h3 class="candidate-name">{{ candidate.name }}</h3>
-                  <span class="job-title-badge">{{ candidate.job_title }}</span>
+                  <span class="job-role-badge">
+                    <i class="fas fa-briefcase"></i>
+                    {{ candidate.job_title || 'Applicant' }}
+                  </span>
                 </div>
               </div>
-              <select
-                class="status-select-premium"
-                :class="getStatusClass(candidate.status)"
-                v-model="candidate.status"
-                @change="updateStatus(candidate)"
-              >
-                <option value="Pending">⏳ Pending</option>
-                <option value="Follow Up">📞 Follow Up</option>
-                <option value="Successful">✅ Successful</option>
-                <option value="Rejected">❌ Rejected</option>
-              </select>
+
+              <!-- Pipeline Status Dropdown -->
+              <div class="status-dropdown-wrap">
+                <select
+                  class="status-select-pill"
+                  :class="getStatusClass(candidate.status)"
+                  v-model="candidate.status"
+                  @change="updateStatus(candidate)"
+                  title="Update candidate pipeline status"
+                >
+                  <option value="Pending">⏳ Pending</option>
+                  <option value="Follow Up">📞 Follow Up</option>
+                  <option value="Successful">✅ Successful</option>
+                  <option value="Rejected">❌ Rejected</option>
+                </select>
+              </div>
             </div>
 
             <!-- Card Body -->
-            <div class="card-body-premium">
-              <div class="info-row">
-                <div class="info-icon-box">
-                  <i class="fas fa-envelope"></i>
-                </div>
-                <div class="info-details">
-                  <span class="info-label">Email</span>
-                  <p class="info-value">{{ candidate.email }}</p>
-                </div>
-              </div>
-
-              <div class="info-row">
-                <div class="info-icon-box">
-                  <i class="fas fa-phone-alt"></i>
-                </div>
-                <div class="info-details">
-                  <span class="info-label">Phone</span>
-                  <p class="info-value">{{ candidate.phone }}</p>
+            <div class="card-body-modern">
+              <!-- Contact Details Grid -->
+              <div class="contact-details-grid">
+                <a :href="'mailto:' + candidate.email" class="contact-item" title="Send email">
+                  <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                  <span class="contact-text">{{ candidate.email || '—' }}</span>
+                </a>
+                <a :href="'tel:' + candidate.phone" class="contact-item" title="Call phone">
+                  <div class="contact-icon"><i class="fas fa-phone-alt"></i></div>
+                  <span class="contact-text">{{ candidate.phone || '—' }}</span>
+                </a>
+                <div class="contact-item static">
+                  <div class="contact-icon"><i class="fas fa-calendar-alt"></i></div>
+                  <span class="contact-text">Applied: {{ formatDate(candidate.created_at) }}</span>
                 </div>
               </div>
 
-              <div class="info-row">
-                <div class="info-icon-box">
-                  <i class="fas fa-calendar-alt"></i>
+              <!-- Resume File Pill -->
+              <div v-if="candidate.resume" class="resume-chip" @click.stop="viewCV(candidate)" title="Open resume in new tab">
+                <div class="resume-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="resume-info">
+                  <span class="resume-label">Attached Resume</span>
+                  <span class="resume-name">{{ getFileName(candidate.resume) }}</span>
                 </div>
-                <div class="info-details">
-                  <span class="info-label">Applied On</span>
-                  <p class="info-value">{{ formatDate(candidate.created_at) }}</p>
-                </div>
+                <i class="fas fa-external-link-alt resume-arrow"></i>
               </div>
 
-              <div class="info-row message-row">
-                <div class="info-icon-box">
-                  <i class="fas fa-comment"></i>
-                </div>
-                <div class="info-details">
-                  <span class="info-label">Message / Notes</span>
-                  <p :class="{ collapsed: !candidate.expanded }" class="message-text">
-                    {{ candidate.message || 'No message provided' }}
-                  </p>
-                  <button
-                    v-if="candidate.message && candidate.message.length > 120"
-                    class="show-more-btn-premium"
-                    @click="candidate.expanded = !candidate.expanded"
-                  >
-                    <i :class="candidate.expanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-                    {{ candidate.expanded ? 'Show less' : 'Show more' }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Resume File Info -->
-              <div v-if="candidate.resume" class="info-row resume-info">
-                <div class="info-icon-box file-box">
-                  <i class="fas fa-file-pdf"></i>
-                </div>
-                <div class="info-details">
-                  <span class="info-label">Attached Resume</span>
-                  <p class="resume-filename">
-                    {{ getFileName(candidate.resume) }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Interview Info -->
-              <div v-if="candidate.interview" class="info-row interview-info">
-                <div class="info-icon-box interview-box">
-                  <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="info-details">
-                  <span class="info-label">Scheduled Interview</span>
-                  <p class="interview-details">
-                    <span class="interview-status scheduled">
-                      <i class="fas fa-clock"></i> {{ formatInterviewDate(candidate.interview.date) }}
+              <!-- Interview Status Box -->
+              <div v-if="candidate.interview" class="interview-badge-box">
+                <div class="interview-left">
+                  <div class="interview-icon-circle">
+                    <i class="fas fa-video" v-if="candidate.interview.mode === 'online'"></i>
+                    <i class="fas fa-building" v-else-if="candidate.interview.mode === 'in-person'"></i>
+                    <i class="fas fa-phone" v-else></i>
+                  </div>
+                  <div>
+                    <span class="interview-label">Interview Scheduled</span>
+                    <span class="interview-time">
+                      <i class="fas fa-clock"></i> {{ formatInterviewDate(candidate.interview.date) }} {{ candidate.interview.time ? '• ' + candidate.interview.time : '' }}
                     </span>
-                  </p>
-                  <button 
-                    class="view-interview-btn"
-                    @click="viewInterviewDetails(candidate)"
-                  >
-                    <i class="fas fa-eye"></i> View Details
-                  </button>
+                  </div>
                 </div>
+                <button class="btn-view-interview" @click="viewInterviewDetails(candidate)" title="View session details">
+                  <i class="fas fa-eye"></i> Details
+                </button>
+              </div>
+
+              <!-- Notes / Message -->
+              <div v-if="candidate.message" class="candidate-notes-box">
+                <div class="notes-header">
+                  <i class="fas fa-sticky-note"></i>
+                  <span>Notes / Message</span>
+                </div>
+                <p class="notes-content" :class="{ collapsed: !candidate.expanded }">
+                  {{ candidate.message }}
+                </p>
+                <button
+                  v-if="candidate.message && candidate.message.length > 100"
+                  class="btn-show-notes"
+                  @click="candidate.expanded = !candidate.expanded"
+                >
+                  <span>{{ candidate.expanded ? 'Show less' : 'Read more' }}</span>
+                  <i :class="candidate.expanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+                </button>
               </div>
             </div>
 
-            <!-- Card Footer Action Buttons -->
-            <div class="card-footer-premium">
+            <!-- Card Footer -->
+            <div class="card-footer-modern">
               <button
-                class="schedule-interview-btn"
+                class="btn-schedule-action"
                 @click="openScheduleInterview(candidate)"
+                :class="{ 'has-interview': candidate.interview }"
               >
-                <i class="fas fa-calendar-plus"></i> Schedule Interview
+                <i :class="candidate.interview ? 'fas fa-calendar-check' : 'fas fa-calendar-plus'"></i>
+                <span>{{ candidate.interview ? 'Reschedule Interview' : 'Schedule Interview' }}</span>
               </button>
-              <button
-                v-if="candidate.resume"
-                class="view-cv-btn-premium"
-                @click="viewCV(candidate.resume)"
-                title="View Resume PDF"
-              >
-                <i class="fas fa-file-pdf"></i>
-              </button>
-              <button
-                class="delete-candidate-btn"
-                @click="deleteCandidate(candidate)"
-                title="Delete candidate profile"
-              >
-                <i class="fas fa-trash-alt"></i>
-              </button>
+
+              <div class="card-footer-icons">
+                <button
+                  v-if="candidate.resume"
+                  class="btn-icon-cv"
+                  @click.stop="viewCV(candidate)"
+                  title="Open resume in new tab"
+                >
+                  <i class="fas fa-file-pdf"></i>
+                </button>
+                <button
+                  class="btn-icon-delete"
+                  @click="deleteCandidate(candidate)"
+                  title="Delete Candidate Record"
+                >
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- Empty State -->
-          <div v-if="filteredCandidates.length === 0" class="empty-state-premium">
-            <div class="empty-icon-circle">
-              <i class="fas fa-users-slash"></i>
+        <!-- 👥 View 2: High Density Data Table View -->
+        <div v-else class="candidates-table-container">
+          <div class="table-card">
+            <div class="table-responsive">
+              <table class="enterprise-candidates-table">
+                <thead>
+                  <tr>
+                    <th>Candidate</th>
+                    <th>Applied Position</th>
+                    <th>Contact Information</th>
+                    <th>Resume</th>
+                    <th>Interview Session</th>
+                    <th>Hiring Status</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="candidate in filteredCandidates" :key="candidate.id" class="table-row-hover">
+                    <!-- Candidate -->
+                    <td>
+                      <div class="table-candidate-cell">
+                        <div class="table-avatar" :class="getAvatarColorClass(candidate.id || candidate.name)">
+                          {{ getInitials(candidate.name) }}
+                        </div>
+                        <div class="table-candidate-info">
+                          <span class="table-candidate-name">{{ candidate.name }}</span>
+                          <span class="table-applied-date">
+                            <i class="fas fa-calendar-alt"></i> Applied {{ formatDate(candidate.created_at) }}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Applied Position -->
+                    <td>
+                      <span class="table-role-badge">
+                        {{ candidate.job_title || 'General Applicant' }}
+                      </span>
+                    </td>
+
+                    <!-- Contact Information -->
+                    <td>
+                      <div class="table-contact-box">
+                        <a :href="'mailto:' + candidate.email" class="table-contact-line">
+                          <i class="fas fa-envelope"></i> {{ candidate.email || '—' }}
+                        </a>
+                        <a :href="'tel:' + candidate.phone" class="table-contact-line">
+                          <i class="fas fa-phone-alt"></i> {{ candidate.phone || '—' }}
+                        </a>
+                      </div>
+                    </td>
+
+                    <!-- Resume -->
+                    <td>
+                      <button 
+                        v-if="candidate.resume"
+                        class="table-resume-btn" 
+                        @click.stop="viewCV(candidate)"
+                        title="Open resume in new tab"
+                      >
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Resume</span>
+                        <i class="fas fa-external-link-alt resume-ext-icon"></i>
+                      </button>
+                      <span v-else class="text-muted-dash">—</span>
+                    </td>
+
+                    <!-- Interview Session -->
+                    <td>
+                      <div v-if="candidate.interview" class="table-interview-chip" @click="viewInterviewDetails(candidate)" title="View interview details">
+                        <i class="fas fa-calendar-check text-success"></i>
+                        <span>{{ formatInterviewDate(candidate.interview.date) }}</span>
+                      </div>
+                      <span v-else class="table-no-interview">Not scheduled</span>
+                    </td>
+
+                    <!-- Hiring Status -->
+                    <td>
+                      <select
+                        class="status-select-pill sm"
+                        :class="getStatusClass(candidate.status)"
+                        v-model="candidate.status"
+                        @change="updateStatus(candidate)"
+                      >
+                        <option value="Pending">⏳ Pending</option>
+                        <option value="Follow Up">📞 Follow Up</option>
+                        <option value="Successful">✅ Successful</option>
+                        <option value="Rejected">❌ Rejected</option>
+                      </select>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-right">
+                      <div class="table-actions-row">
+                        <button 
+                          class="action-btn-sm primary"
+                          @click="openScheduleInterview(candidate)"
+                          :title="candidate.interview ? 'Reschedule Interview' : 'Schedule Interview'"
+                        >
+                          <i :class="candidate.interview ? 'fas fa-calendar-check' : 'fas fa-calendar-plus'"></i>
+                        </button>
+                        <button 
+                          v-if="candidate.interview"
+                          class="action-btn-sm info"
+                          @click="viewInterviewDetails(candidate)"
+                          title="View Interview Details"
+                        >
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button 
+                          class="action-btn-sm danger"
+                          @click="deleteCandidate(candidate)"
+                          title="Delete Candidate"
+                        >
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <h4>{{ searchQuery || statusFilter ? 'No Matching Candidates Found' : 'No Candidate Applications Yet' }}</h4>
-            <p>{{ searchQuery || statusFilter ? 'Try clearing your search or status filter' : 'Applications from candidates will appear here automatically' }}</p>
-            <button class="add-candidate-btn inline-btn" @click="openAddForm">
-              <i class="fas fa-plus"></i>
-              <span>Add First Candidate</span>
-            </button>
           </div>
         </div>
       </section>
@@ -687,6 +864,17 @@
               <p>{{ selectedCandidate.email }} • {{ selectedCandidate.phone }}</p>
               <span class="job-title-pill">{{ selectedCandidate.job_title }}</span>
             </div>
+            <button
+              v-if="selectedCandidate.resume"
+              type="button"
+              class="summary-resume-btn"
+              @click.stop="viewCV(selectedCandidate)"
+              title="Open resume in new tab"
+            >
+              <i class="fas fa-file-pdf"></i>
+              <span>View Resume</span>
+              <i class="fas fa-external-link-alt"></i>
+            </button>
           </div>
 
           <div class="details-grid">
@@ -788,6 +976,7 @@ export default {
       isSidebarVisible: true,
       loadingLeaves: false,
       candidates: [],
+      viewMode: 'cards', // 'cards' | 'table'
       searchQuery: '',
       statusFilter: '',
       showAddForm: false,
@@ -866,6 +1055,15 @@ export default {
   },
 
   methods: {
+    getAvatarColorClass(val) {
+      const str = String(val || 'cand');
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const classes = ['avatar-indigo', 'avatar-emerald', 'avatar-violet', 'avatar-amber', 'avatar-sky', 'avatar-rose'];
+      return classes[Math.abs(hash) % classes.length];
+    },
     getInitials(name) {
       if (!name) return '?'
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -969,9 +1167,160 @@ export default {
       const i = Math.floor(Math.log(bytes) / Math.log(k))
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
     },
-    viewCV(path) {
-      const RESUME_BASE_URL = 'https://it.archenterprises.co.in'
-      window.open(`${RESUME_BASE_URL}/${path}`, '_blank')
+    getResumeUrl(candidateOrPath) {
+      let candidate = null
+      let path = ''
+
+      if (candidateOrPath && typeof candidateOrPath === 'object') {
+        candidate = candidateOrPath
+        path = candidate.resume || ''
+      } else if (typeof candidateOrPath === 'string') {
+        path = candidateOrPath
+        candidate = this.candidates.find(c => c.resume === path) || { resume: path }
+      }
+
+      const rawResume = String(path || (candidate && candidate.resume) || '').trim()
+      if (!rawResume) return ''
+
+      // If it's an external absolute URL (e.g. Google Drive, S3, external site)
+      if (rawResume.startsWith('http://') || rawResume.startsWith('https://')) {
+        return rawResume
+      }
+
+      // Clean relative path and extract file name
+      const clean = rawResume.replace(/^\/+/, '')
+      const fileName = clean.split('/').pop()
+
+      // Primary streaming endpoint: Uses backend controller streaming in inline mode
+      if (candidate && candidate.id) {
+        return `https://employees.archenterprises.co.in/api/api/recruitment/${candidate.id}/resume`
+      }
+
+      // Fallback direct storage URL if candidate ID is not available
+      if (clean.startsWith('resumes/')) {
+        return `https://employees.archenterprises.co.in/backend/public/storage/${clean}`
+      }
+
+      return `https://employees.archenterprises.co.in/backend/public/storage/resumes/${fileName}`
+    },
+
+    async viewCV(candidateOrPath) {
+      let candidate = null
+      let path = ''
+
+      if (candidateOrPath && typeof candidateOrPath === 'object') {
+        candidate = candidateOrPath
+        path = candidate.resume || ''
+      } else if (typeof candidateOrPath === 'string') {
+        path = candidateOrPath
+        candidate = this.candidates.find(c => c.resume === path) || { resume: path }
+      }
+
+      const rawResume = String(path || (candidate && candidate.resume) || '').trim()
+
+      if (!rawResume) {
+        toastError('No resume document attached to this candidate')
+        return
+      }
+
+      // Open new tab immediately on user click to prevent browser popup blockers from intercepting
+      const newTab = window.open('about:blank', '_blank')
+      if (newTab) {
+        try {
+          newTab.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head><title>Opening Resume...</title></head>
+              <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;">
+                <div style="text-align:center;">
+                  <div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.2);border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;"></div>
+                  <p style="margin:0;font-size:14px;font-weight:600;letter-spacing:0.3px;">Opening resume document...</p>
+                </div>
+                <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+              </body>
+            </html>
+          `)
+          newTab.document.close()
+        } catch (e) {
+          // Ignore if document.write restricted
+        }
+      }
+
+      // 1. If it's an external absolute URL (e.g. Google Drive, S3, external site)
+      if (rawResume.startsWith('http://') || rawResume.startsWith('https://')) {
+        if (newTab) {
+          newTab.location.href = rawResume
+        } else {
+          window.open(rawResume, '_blank', 'noopener,noreferrer')
+        }
+        return
+      }
+
+      // Clean relative path and extract file name
+      const clean = rawResume.replace(/^\/+/, '')
+      const fileName = clean.split('/').pop()
+      const token = localStorage.getItem('token')
+
+      // Fallback public storage URL
+      const storageUrl = clean.startsWith('resumes/')
+        ? `https://employees.archenterprises.co.in/backend/public/storage/${clean}`
+        : `https://employees.archenterprises.co.in/backend/public/storage/resumes/${fileName}`
+
+      // Candidate file URLs to try with authentication
+      const urlsToTry = []
+      if (candidate && candidate.id) {
+        urlsToTry.push(`https://employees.archenterprises.co.in/api/api/recruitment/${candidate.id}/resume`)
+      }
+      urlsToTry.push(storageUrl)
+      if (clean) {
+        urlsToTry.push(`https://employees.archenterprises.co.in/backend/public/storage/${clean}`)
+      }
+
+      let opened = false
+
+      for (const targetUrl of urlsToTry) {
+        try {
+          const config = {
+            responseType: 'blob',
+            timeout: 6000
+          }
+          if (token && targetUrl.includes('/api/')) {
+            config.headers = { Authorization: `Bearer ${token}` }
+          }
+
+          const response = await axios.get(targetUrl, config)
+          const data = response.data
+
+          if (data && data.size > 200 && data.type !== 'text/html') {
+            const isPdf = data.type && data.type.includes('pdf')
+            const pdfBlob = isPdf ? data : new Blob([data], { type: 'application/pdf' })
+            const blobUrl = URL.createObjectURL(pdfBlob)
+
+            if (newTab && !newTab.closed) {
+              newTab.location.href = blobUrl
+            } else {
+              window.open(blobUrl, '_blank')
+            }
+            opened = true
+            break
+          }
+        } catch (err) {
+          // Continue to next candidate URL
+        }
+      }
+
+      if (!opened) {
+        // Fallback: Navigate new tab directly to candidate streaming endpoint or storage URL
+        const fallbackTarget = (candidate && candidate.id)
+          ? `https://employees.archenterprises.co.in/api/api/recruitment/${candidate.id}/resume`
+          : storageUrl
+
+        if (newTab && !newTab.closed) {
+          newTab.location.href = fallbackTarget
+        } else {
+          window.open(fallbackTarget, '_blank', 'noopener,noreferrer')
+        }
+      }
     },
     filterByStatus(status) {
       this.statusFilter = this.statusFilter === status ? '' : status;
@@ -1311,17 +1660,42 @@ export default {
       }
     },
     async updateStatus(candidate) {
+      const prevStatus = candidate._prevStatus || candidate.status;
       try {
-        const token = localStorage.getItem('token')
-        await axios.put(
-          `https://employees.archenterprises.co.in/api/api/recruitment/${candidate.id}`,
-          { status: candidate.status },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        toastSuccess(`Status updated to ${candidate.status}`)
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const payload = { status: candidate.status };
+
+        // The Laravel API expects PATCH /recruitment/{id}/status
+        try {
+          await axios.patch(
+            `https://employees.archenterprises.co.in/api/api/recruitment/${candidate.id}/status`,
+            payload,
+            config
+          );
+        } catch (patchErr) {
+          // Robust fallback for PUT /recruitment/{id}/status or PUT /recruitment/{id}
+          try {
+            await axios.put(
+              `https://employees.archenterprises.co.in/api/api/recruitment/${candidate.id}/status`,
+              payload,
+              config
+            );
+          } catch (putErr) {
+            await axios.put(
+              `https://employees.archenterprises.co.in/api/api/recruitment/${candidate.id}`,
+              payload,
+              config
+            );
+          }
+        }
+        candidate._prevStatus = candidate.status;
+        toastSuccess(`Status updated to ${candidate.status}`);
       } catch (error) {
-        console.error('Error updating status:', error)
-        toastError('Failed to update status')
+        console.error('Error updating status:', error);
+        candidate.status = prevStatus;
+        const msg = (error.response && error.response.data && error.response.data.message) || 'Failed to update status';
+        toastError(msg);
       }
     },
     async deleteCandidate(candidate) {
@@ -1349,6 +1723,7 @@ export default {
         })
         this.candidates = (response.data.data || []).map(c => ({
           ...c,
+          _prevStatus: c.status,
           expanded: false
         }))
       } catch (error) {
@@ -1387,376 +1762,642 @@ export default {
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* 🌿 Root & Variables - Emerald Mint Theme */
-:root {
-  --primary: #2cb67d;
-  --primary-dark: #209961;
-  --primary-light: #eaf7f1;
-  --text: #0f2e22;
-  --text-light: #6b8f81;
-  --bg-app: #edf7f2;
-  --card: #ffffff;
-  --border: #dff0e7;
-  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* ================= 🏢 MODERN ENTERPRISE DESIGN SYSTEM ================= */
 .layout {
   min-height: 100vh;
-  background: var(--bg-app, #edf7f2);
-  font-family: var(--font-body, 'Inter', sans-serif);
-  color: #0f2e22;
+  background: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
 }
 
 .main-content {
   display: flex;
+  gap: 20px;
+  padding: 20px 24px;
   min-height: 100vh;
-  padding: 18px 24px;
-  gap: 24px;
+  box-sizing: border-box;
 }
 
 .content {
   flex: 1;
-  background: transparent;
-  overflow-x: hidden;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -5px rgba(0, 0, 0, 0.02);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  transition: all 0.3s ease;
 }
 
-/* 📱 Mobile Header */
+.expanded-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+/* ================= 📱 MOBILE HEADER ================= */
 .mobile-header {
   display: none;
-  align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  align-items: center;
+  padding: 12px 16px;
   background: #ffffff;
-  border-radius: 18px;
-  margin-bottom: 18px;
-  border: 1px solid #e0f0e8;
-  box-shadow: 0 4px 16px rgba(44, 182, 125, 0.06);
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .mobile-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: #0f2e22;
-  font-family: var(--font-display, sans-serif);
+  color: #0f172a;
 }
 
-.mobile-title i {
-  color: #2cb67d;
+.mobile-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .mobile-add-btn {
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  color: #ffffff;
   border: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+}
+
+.btn-mobile-menu {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.3);
+  font-size: 14px;
 }
 
-/* 🏢 Desktop Header Banner */
-.content-header-modern {
+/* ================= 🏢 MODERN TOP ENTERPRISE BANNER ================= */
+.recruitment-top-banner {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.banner-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.banner-badge-row {
+  display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 16px;
 }
 
-.header-left {
-  display: flex;
+.portal-badge-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid #e0e7ff;
 }
 
-.title-icon {
-  width: 52px;
-  height: 52px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
-  border-radius: 18px;
-  display: flex;
+.pulse-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4f46e5;
+  box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7);
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(79, 70, 229, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.status-meta-pill {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 22px;
-  box-shadow: 0 8px 20px rgba(44, 182, 125, 0.28);
+  gap: 6px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.status-meta-pill.warning {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.status-meta-pill.info {
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.status-meta-pill.success {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
 }
 
 .page-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
-  color: #0f2e22;
-  font-family: var(--font-display, sans-serif);
-  margin: 0;
-  letter-spacing: -0.3px;
+  color: #0f172a;
+  margin: 2px 0 0;
+  letter-spacing: -0.4px;
 }
 
-.subtitle-modern {
-  color: #6b8f81;
+.page-subtitle {
   font-size: 13.5px;
-  margin-top: 3px;
-  font-weight: 500;
+  color: #64748b;
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.45;
 }
 
-.header-actions {
+.banner-right-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.stats-badge-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #dff0e7;
-  font-weight: 700;
-  font-size: 13px;
-  color: #0f2e22;
-  box-shadow: 0 2px 8px rgba(44, 182, 125, 0.04);
-}
-
-.stats-badge-header i {
-  color: #2cb67d;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .add-candidate-btn {
-  padding: 12px 22px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
-  color: white;
-  border: none;
-  border-radius: 16px;
-  font-weight: 700;
-  font-size: 13.5px;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.25s ease;
-  box-shadow: 0 6px 18px rgba(44, 182, 125, 0.3);
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .add-candidate-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(44, 182, 125, 0.4);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
 }
 
-/* 📊 Stats Bar */
-.stats-bar {
+/* ================= 📊 STATUS FILTER METRIC CARDS STRIP ================= */
+.summary-strip {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 14px;
-  margin-bottom: 24px;
 }
 
-.stat-card {
+.summary-pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  background: #ffffff;
-  border-radius: 18px;
-  border: 1px solid #dff0e7;
-  box-shadow: 0 4px 16px rgba(44, 182, 125, 0.04);
+  gap: 12px;
   cursor: pointer;
-  transition: all 0.25s ease;
   position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.stat-card:hover {
+.summary-pill:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(44, 182, 125, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
 }
 
-.stat-card.active {
-  border-color: #2cb67d;
-  background: #f7fcf9;
-  box-shadow: 0 0 0 3px rgba(44, 182, 125, 0.16);
+.summary-pill.active {
+  background: #f8fafc;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15), 0 4px 12px rgba(79, 70, 229, 0.08);
 }
 
-.stat-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+.pill-icon-halo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
-.stat-icon-wrap.amber { background: #fef3c7; color: #d97706; }
-.stat-icon-wrap.sky { background: #e0f2fe; color: #0284c7; }
-.stat-icon-wrap.emerald { background: #eaf7f1; color: #16935b; }
-.stat-icon-wrap.rose { background: #fee2e2; color: #ef4444; }
-.stat-icon-wrap.slate { background: #f1f5f9; color: #475569; }
+.pill-icon-halo.all { background: #f1f5f9; color: #475569; }
+.pill-icon-halo.pending { background: #fef3c7; color: #d97706; }
+.pill-icon-halo.followup { background: #e0f2fe; color: #0284c7; }
+.pill-icon-halo.successful { background: #ecfdf5; color: #059669; }
+.pill-icon-halo.rejected { background: #fee2e2; color: #dc2626; }
 
-.stat-info {
+.pill-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
   flex: 1;
 }
 
-.stat-value {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0f2e22;
-  font-family: var(--font-display, sans-serif);
-  line-height: 1.1;
-  display: block;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #6b8f81;
+.pill-label {
+  font-size: 11.5px;
+  color: #64748b;
   font-weight: 600;
-  margin-top: 3px;
-  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.filter-pill {
-  font-size: 10px;
+.pill-value {
+  font-size: 20px;
   font-weight: 800;
-  padding: 3px 8px;
-  background: #2cb67d;
-  color: #ffffff;
-  border-radius: 999px;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.text-pending { color: #d97706; }
+.text-followup { color: #0284c7; }
+.text-successful { color: #059669; }
+.text-rejected { color: #dc2626; }
+
+.active-dot {
   position: absolute;
   top: 10px;
-  right: 12px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4f46e5;
 }
 
-/* 🔍 Search Bar */
-.search-bar-container {
+/* ================= 🔍 RECRUITMENT TOOLBAR ================= */
+.recruitment-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 22px;
   flex-wrap: wrap;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
 }
 
 .search-input-wrapper {
   position: relative;
   flex: 1;
-  max-width: 540px;
+  min-width: 260px;
+  max-width: 480px;
 }
 
 .search-icon {
   position: absolute;
-  left: 16px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #2cb67d;
-  font-size: 14px;
+  color: #94a3b8;
+  font-size: 13.5px;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 40px 12px 44px;
+  padding: 9px 36px 9px 38px;
   background: #ffffff;
-  border: 1px solid #dff0e7;
-  border-radius: 14px;
-  font-size: 13.5px;
-  color: #0f2e22;
-  font-weight: 500;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #1e293b;
   outline: none;
-  box-shadow: 0 2px 10px rgba(44, 182, 125, 0.04);
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .search-input:focus {
-  border-color: #2cb67d;
-  box-shadow: 0 0 0 3px rgba(44, 182, 125, 0.16);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .clear-search {
   position: absolute;
-  right: 12px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   background: #f1f5f9;
   border: none;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #64748b;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 9px;
 }
 
-.search-counter-badge {
-  font-size: 13px;
-  color: #6b8f81;
+.clear-search:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.active-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.active-filter-badge:hover {
+  background: #dbeafe;
+}
+
+.results-count-pill {
+  font-size: 12.5px;
+  color: #64748b;
   font-weight: 500;
 }
 
-.search-counter-badge strong {
-  color: #16935b;
+.results-count-pill strong {
+  color: #0f172a;
 }
 
-/* ⏳ Loading Spinner */
-.loading-container {
-  padding: 60px 20px;
+.view-mode-toggle {
+  display: inline-flex;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn.active {
+  background: #4f46e5;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* ================= ⏳ MODERN DIRECTORY LOADING CARD ================= */
+.modern-loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
   text-align: center;
-  color: #6b8f81;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.spinner {
-  width: 44px;
-  height: 44px;
-  border: 3px solid #e0f0e8;
-  border-top-color: #2cb67d;
+.loading-ring-wrap {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.loading-ring {
+  position: absolute;
+  inset: 0;
+  border: 3px solid #f1f5f9;
+  border-top-color: #4f46e5;
+  border-right-color: #818cf8;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 16px;
+  animation: loadingRingSpin 0.9s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes loadingRingSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* 👥 Candidates Grid */
+.loading-icon {
+  font-size: 22px;
+  color: #4f46e5;
+  animation: loadingIconPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes loadingIconPulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.loading-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.loading-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 18px;
+}
+
+.loading-progress-bar {
+  width: 220px;
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-indeterminate {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+  border-radius: 999px;
+  animation: indeterminateSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes indeterminateSlide {
+  0% { left: -40%; width: 30%; }
+  50% { left: 40%; width: 50%; }
+  100% { left: 100%; width: 30%; }
+}
+
+/* ================= 👥 EMPTY STATE ================= */
+.empty-state-card {
+  padding: 56px 24px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 18px;
+  border: 1px dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-icon-halo {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 14px;
+}
+
+.empty-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: #64748b;
+  max-width: 460px;
+  margin: 0 0 18px;
+  line-height: 1.45;
+}
+
+.empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-reset-filters {
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-reset-filters:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ================= 👥 CANDIDATES GRID (CARDS VIEW) ================= */
 .candidates-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 20px;
 }
 
-.candidate-card-premium {
+.candidate-card-modern {
   background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #dff0e7;
-  box-shadow: 0 6px 20px rgba(44, 182, 125, 0.05);
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.candidate-card-premium:hover {
+.candidate-card-modern:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(44, 182, 125, 0.1);
-  border-color: #cbe9dc;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
+  border-color: #cbd5e1;
 }
 
 .card-accent {
@@ -1769,7 +2410,7 @@ export default {
 .card-accent.successful { background: #10b981; }
 .card-accent.rejected { background: #ef4444; }
 
-.card-header-premium {
+.card-header-modern {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -1777,83 +2418,177 @@ export default {
   gap: 12px;
 }
 
-.candidate-info {
+.candidate-profile-meta {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .candidate-avatar {
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
   font-size: 15px;
-  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.25);
+  letter-spacing: 0.5px;
   flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Dynamic avatar colors */
+.avatar-indigo { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); }
+.avatar-emerald { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+.avatar-violet { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+.avatar-amber { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+.avatar-sky { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+.avatar-rose { background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%); }
+
+.candidate-name-box {
+  min-width: 0;
+  flex: 1;
 }
 
 .candidate-name {
   font-size: 15px;
   font-weight: 700;
-  color: #0f2e22;
+  color: #0f172a;
   margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.job-title-badge {
+.job-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11.5px;
-  font-weight: 700;
-  color: #16935b;
-  background: #eaf7f1;
-  padding: 2px 9px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 2px 8px;
   border-radius: 6px;
-  display: inline-block;
+  border: 1px solid #e2e8f0;
 }
 
-.status-select-premium {
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12px;
+.job-role-badge i {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.status-dropdown-wrap {
+  flex-shrink: 0;
+}
+
+.status-select-pill {
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
   font-weight: 700;
   border: 1px solid transparent;
   outline: none;
   cursor: pointer;
   background: #f8fafc;
-  color: #0f2e22;
-  transition: all 0.2s ease;
+  color: #1e293b;
+  transition: all 0.15s ease;
 }
 
-.status-select-premium.pending { background: #fef3c7; color: #d97706; border-color: #fde68a; }
-.status-select-premium.followup { background: #e0f2fe; color: #0284c7; border-color: #bae6fd; }
-.status-select-premium.successful { background: #eaf7f1; color: #16935b; border-color: #bbf7d0; }
-.status-select-premium.rejected { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
+.status-select-pill.pending { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.status-select-pill.followup { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; }
+.status-select-pill.successful { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.status-select-pill.rejected { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+.status-select-pill.sm {
+  padding: 4px 8px;
+  font-size: 11px;
+}
 
 /* Card Body */
-.card-body-premium {
-  padding: 0 20px 18px;
+.card-body-modern {
+  padding: 0 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   flex: 1;
 }
 
-.info-row {
+.contact-details-grid {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
 }
 
-.info-icon-box {
-  width: 32px;
-  height: 32px;
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.contact-item:not(.static):hover {
+  color: #4f46e5;
+}
+
+.contact-icon {
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.contact-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-item.static {
+  color: #64748b;
+  font-size: 11.5px;
+}
+
+/* Resume Chip */
+.resume-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
   border-radius: 10px;
-  background: #f4fbf7;
-  color: #2cb67d;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.resume-chip:hover {
+  background: #ffe4e6;
+  border-color: #fda4af;
+  transform: translateY(-1px);
+}
+
+.resume-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #e11d48;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1861,151 +2596,229 @@ export default {
   flex-shrink: 0;
 }
 
-.info-icon-box.file-box { background: #fee2e2; color: #ef4444; }
-.info-icon-box.interview-box { background: #e0f2fe; color: #0284c7; }
-
-.info-details {
+.resume-info {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9f1239;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.resume-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #be123c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resume-arrow {
+  color: #e11d48;
+  font-size: 11px;
+}
+
+/* Interview Badge Box */
+.interview-badge-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+}
+
+.interview-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
-.info-label {
+.interview-icon-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.interview-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #166534;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.interview-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #14532d;
+}
+
+.interview-time i {
+  font-size: 10px;
+}
+
+.btn-view-interview {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  background: #ffffff;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  color: #15803d;
   font-size: 11px;
   font-weight: 700;
-  color: #7d9e92;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-view-interview:hover {
+  background: #dcfce7;
+}
+
+/* Notes / Message */
+.candidate-notes-box {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  display: block;
+  margin-bottom: 4px;
 }
 
-.info-value {
-  font-size: 13px;
-  color: #0f2e22;
-  font-weight: 600;
-  margin: 1px 0 0;
-  word-break: break-all;
+.notes-content {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.45;
+  margin: 0;
 }
 
-.message-text {
-  font-size: 12.5px;
-  color: #475569;
-  line-height: 1.4;
-  margin: 2px 0 0;
-}
-
-.message-text.collapsed {
+.notes-content.collapsed {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.show-more-btn-premium {
-  background: none;
-  border: none;
-  color: #2cb67d;
-  font-size: 11.5px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 2px 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.resume-filename {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #ef4444;
-  margin: 1px 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.interview-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #0284c7;
-  background: #e0f2fe;
-  padding: 2px 10px;
-  border-radius: 999px;
-  margin-top: 2px;
-}
-
-.view-interview-btn {
+.btn-show-notes {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   background: none;
   border: none;
-  color: #0284c7;
-  font-size: 11.5px;
+  color: #4f46e5;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 4px;
+  padding: 4px 0 0;
 }
 
 /* Card Footer */
-.card-footer-premium {
-  padding: 14px 20px;
-  background: #f7fcf9;
-  border-top: 1px solid #eef6f2;
+.card-footer-modern {
+  padding: 12px 18px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.schedule-interview-btn {
+.btn-schedule-action {
   flex: 1;
-  padding: 9px 14px;
-  background: #eaf7f1;
-  color: #16935b;
-  border: 1px solid #cbe9dc;
-  border-radius: 12px;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: all 0.2s ease;
+  padding: 8px 12px;
+  background: #ffffff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.schedule-interview-btn:hover {
-  background: #2cb67d;
+.btn-schedule-action:hover {
+  background: #4f46e5;
   color: #ffffff;
-  border-color: #2cb67d;
+  border-color: #4f46e5;
 }
 
-.view-cv-btn-premium {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: #fee2e2;
-  color: #ef4444;
-  border: 1px solid #fecaca;
+.btn-schedule-action.has-interview {
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.btn-schedule-action.has-interview:hover {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.card-footer-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-icon-cv {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 12px;
+  transition: all 0.15s ease;
 }
 
-.view-cv-btn-premium:hover {
-  background: #ef4444;
+.btn-icon-cv:hover {
+  background: #e11d48;
   color: #ffffff;
 }
 
-.delete-candidate-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+.btn-icon-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   background: #ffffff;
   color: #94a3b8;
   border: 1px solid #e2e8f0;
@@ -2013,23 +2826,252 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 12px;
+  transition: all 0.15s ease;
 }
 
-.delete-candidate-btn:hover {
+.btn-icon-delete:hover {
   background: #fee2e2;
-  color: #ef4444;
-  border-color: #fecaca;
+  color: #dc2626;
+  border-color: #fca5a5;
 }
 
-/* 🌿 Modal Overlay & Content */
+/* ================= 👥 DATA TABLE VIEW ================= */
+.candidates-table-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.enterprise-candidates-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.enterprise-candidates-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.enterprise-candidates-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #334155;
+}
+
+.table-row-hover:hover {
+  background: #f8fafc;
+}
+
+.table-candidate-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.table-candidate-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.table-candidate-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.table-applied-date {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.table-role-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.table-contact-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.table-contact-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.table-contact-line:hover {
+  color: #4f46e5;
+}
+
+.table-contact-line i {
+  color: #94a3b8;
+  font-size: 10px;
+  width: 14px;
+}
+
+.table-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.table-resume-btn:hover {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.text-muted-dash {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.table-interview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #065f46;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.table-interview-chip:hover {
+  background: #d1fae5;
+}
+
+.table-no-interview {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.table-actions-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.action-btn-sm.primary {
+  color: #4f46e5;
+  border-color: #c7d2fe;
+}
+
+.action-btn-sm.primary:hover {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.action-btn-sm.info {
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+.action-btn-sm.info:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.action-btn-sm.danger {
+  color: #94a3b8;
+}
+
+.action-btn-sm.danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+/* ================= 🌿 MODAL STYLES ================= */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 46, 34, 0.45);
+  background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
@@ -2041,92 +3083,91 @@ export default {
 .modal-content {
   position: relative;
   background: #ffffff;
-  border-radius: 28px;
+  border-radius: 22px;
   width: 100%;
   max-width: 620px;
   max-height: 88vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(15, 46, 34, 0.2);
-  border: 1px solid #dff0e7;
-  animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+  animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modalSlideIn {
-  from { opacity: 0; transform: scale(0.96) translateY(-14px); }
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-decoration {
-  height: 5px;
-  background: linear-gradient(90deg, #34b782, #2cb67d, #0284c7);
+  height: 4px;
+  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #10b981 100%);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 28px;
-  background: #f7fcf9;
-  border-bottom: 1px solid #e0f0e8;
+  padding: 18px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .modal-title {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .header-icon-circle {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  box-shadow: 0 4px 12px rgba(44, 182, 125, 0.25);
+  font-size: 16px;
+  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
 }
 
 .modal-title h2 {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
-  color: #0f2e22;
-  font-family: var(--font-display, sans-serif);
+  color: #0f172a;
   margin: 0;
 }
 
 .modal-title p {
   font-size: 12px;
-  color: #6b8f81;
+  color: #64748b;
   margin: 1px 0 0;
 }
 
 .modal-close {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: #ffffff;
-  border: 1px solid #e0f0e8;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
-  color: #6b8f81;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .modal-close:hover {
   background: #fee2e2;
-  color: #ef4444;
-  border-color: #fecaca;
+  color: #dc2626;
+  border-color: #fca5a5;
 }
 
 .modal-body {
-  padding: 24px 28px;
+  padding: 22px 24px;
   overflow-y: auto;
 }
 
@@ -2135,7 +3176,7 @@ export default {
 .interview-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .form-row {
@@ -2154,10 +3195,10 @@ export default {
 }
 
 .field-label {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
-  color: #0f2e22;
-  margin-bottom: 6px;
+  color: #334155;
+  margin-bottom: 5px;
 }
 
 .required {
@@ -2167,18 +3208,18 @@ export default {
 .optional {
   font-weight: 400;
   color: #94a3b8;
-  font-size: 11.5px;
+  font-size: 11px;
 }
 
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: 11px 14px;
+  padding: 10px 12px;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 13.5px;
-  color: #0f2e22;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #0f172a;
   outline: none;
   font-family: inherit;
   transition: all 0.2s ease;
@@ -2187,8 +3228,8 @@ export default {
 .form-input:focus,
 .form-textarea:focus {
   background: #ffffff;
-  border-color: #2cb67d;
-  box-shadow: 0 0 0 3px rgba(44, 182, 125, 0.16);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .form-input.error {
@@ -2198,50 +3239,50 @@ export default {
 
 .error-message {
   color: #ef4444;
-  font-size: 11.5px;
-  margin-top: 4px;
+  font-size: 11px;
+  margin-top: 3px;
   font-weight: 600;
 }
 
 /* File Drop Zone */
 .file-drop-zone {
-  border: 2px dashed #cbe9dc;
-  border-radius: 14px;
-  padding: 20px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 18px;
   text-align: center;
-  background: #f7fcf9;
+  background: #f8fafc;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .file-drop-zone:hover {
-  border-color: #2cb67d;
-  background: #f0fdf4;
+  border-color: #4f46e5;
+  background: #eef2ff;
 }
 
 .file-upload-placeholder i {
-  font-size: 30px;
-  color: #2cb67d;
-  margin-bottom: 6px;
+  font-size: 26px;
+  color: #4f46e5;
+  margin-bottom: 4px;
 }
 
 .file-upload-placeholder p {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #0f2e22;
+  color: #0f172a;
   margin: 0;
 }
 
 .file-upload-placeholder span {
-  font-size: 12px;
-  color: #6b8f81;
+  font-size: 11.5px;
+  color: #64748b;
 }
 
 .file-upload-placeholder small {
   display: block;
-  font-size: 11px;
+  font-size: 10.5px;
   color: #94a3b8;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .file-upload-preview {
@@ -2252,8 +3293,8 @@ export default {
 }
 
 .file-upload-preview i {
-  font-size: 28px;
-  color: #ef4444;
+  font-size: 26px;
+  color: #e11d48;
 }
 
 .file-info {
@@ -2261,20 +3302,20 @@ export default {
 }
 
 .file-name {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #0f2e22;
+  color: #0f172a;
   display: block;
 }
 
 .file-size {
   font-size: 11px;
-  color: #6b8f81;
+  color: #64748b;
 }
 
 .remove-file {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: #fee2e2;
   color: #ef4444;
@@ -2283,27 +3324,32 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 10px;
+}
+
+.file-input-hidden {
+  display: none;
 }
 
 /* Email Toggle */
 .email-toggle-wrapper {
-  background: #f7fcf9;
-  border: 1px solid #e0f0e8;
-  border-radius: 14px;
-  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
 }
 
 .email-toggle-label {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   cursor: pointer;
 }
 
 .toggle-switch {
   position: relative;
-  width: 44px;
-  height: 24px;
+  width: 40px;
+  height: 22px;
   flex-shrink: 0;
 }
 
@@ -2325,8 +3371,8 @@ export default {
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 16px;
+  width: 16px;
   left: 3px;
   bottom: 3px;
   background-color: white;
@@ -2335,25 +3381,25 @@ export default {
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #2cb67d;
+  background-color: #4f46e5;
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
-  transform: translateX(20px);
+  transform: translateX(18px);
 }
 
 .toggle-title {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #0f2e22;
+  color: #0f172a;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .toggle-subtitle {
-  font-size: 11.5px;
-  color: #6b8f81;
+  font-size: 11px;
+  color: #64748b;
   display: block;
 }
 
@@ -2365,74 +3411,75 @@ export default {
 }
 
 .mode-option {
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #f8fafc;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: #475569;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .mode-option i {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .mode-option.active {
-  background: #eaf7f1;
-  border-color: #2cb67d;
-  color: #16935b;
+  background: #eef2ff;
+  border-color: #4f46e5;
+  color: #4338ca;
 }
 
 /* Candidate summary box in schedule modal */
 .candidate-summary {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  background: #f7fcf9;
-  border: 1px solid #e0f0e8;
-  border-radius: 16px;
-  margin-bottom: 18px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  margin-bottom: 16px;
 }
 
 .summary-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .summary-info h4 {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
-  color: #0f2e22;
+  color: #0f172a;
   margin: 0;
 }
 
 .summary-info p {
-  font-size: 12px;
-  color: #6b8f81;
+  font-size: 11.5px;
+  color: #64748b;
   margin: 2px 0 4px;
 }
 
 .job-title-pill {
   font-size: 11px;
   font-weight: 700;
-  color: #16935b;
-  background: #eaf7f1;
+  color: #4338ca;
+  background: #eef2ff;
   padding: 1px 8px;
   border-radius: 6px;
 }
@@ -2441,17 +3488,17 @@ export default {
 .details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .detail-item {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: #f8fafc;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
 }
 
@@ -2460,22 +3507,22 @@ export default {
 }
 
 .detail-item i {
-  color: #2cb67d;
-  font-size: 14px;
+  color: #4f46e5;
+  font-size: 13px;
   margin-top: 2px;
 }
 
 .detail-item label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  color: #6b8f81;
+  color: #64748b;
   text-transform: uppercase;
   display: block;
 }
 
 .detail-item p {
-  font-size: 13px;
-  color: #0f2e22;
+  font-size: 12.5px;
+  color: #0f172a;
   font-weight: 600;
   margin: 2px 0 0;
 }
@@ -2486,7 +3533,7 @@ export default {
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 /* Interview Actions */
@@ -2497,12 +3544,12 @@ export default {
 }
 
 .btn-edit-interview {
-  padding: 10px 18px;
-  background: #eaf7f1;
-  color: #16935b;
-  border: 1px solid #cbe9dc;
-  border-radius: 12px;
-  font-size: 13px;
+  padding: 9px 16px;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -2511,12 +3558,12 @@ export default {
 }
 
 .btn-cancel-interview {
-  padding: 10px 18px;
+  padding: 9px 16px;
   background: #fee2e2;
-  color: #ef4444;
+  color: #dc2626;
   border: 1px solid #fecaca;
-  border-radius: 12px;
-  font-size: 13px;
+  border-radius: 10px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -2528,80 +3575,91 @@ export default {
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .btn-submit {
-  padding: 11px 22px;
-  background: linear-gradient(135deg, #34b782 0%, #209961 100%);
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   color: white;
   border: none;
-  border-radius: 14px;
-  font-size: 13.5px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 14px rgba(44, 182, 125, 0.28);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-cancel {
-  padding: 11px 18px;
+  padding: 10px 16px;
   background: #ffffff;
   color: #64748b;
   border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  font-size: 13.5px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
-/* Empty state */
-.empty-state-premium {
-  grid-column: 1 / -1;
-  padding: 48px 20px;
-  text-align: center;
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #dff0e7;
+.btn-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
-.empty-icon-circle {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #eaf7f1;
-  color: #2cb67d;
-  display: flex;
+/* ================= 📄 RESUME ACTION BUTTONS ================= */
+.resume-ext-icon {
+  font-size: 10px;
+  margin-left: 2px;
+  opacity: 0.85;
+}
+
+.summary-resume-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  margin: 0 auto 14px;
+  gap: 7px;
+  padding: 6px 12px;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
 }
 
-.empty-state-premium h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f2e22;
-  margin: 0 0 6px;
+.summary-resume-btn:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
 }
 
-.empty-state-premium p {
-  font-size: 13px;
-  color: #6b8f81;
-  margin: 0 0 16px;
-}
-
-.inline-btn {
-  margin: 0 auto;
-}
-
-/* 📱 Media Queries */
-@media (max-width: 1024px) {
-  .stats-bar {
+/* ================= 📱 MEDIA QUERIES ================= */
+@media (max-width: 1200px) {
+  .summary-strip {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .candidates-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2610,7 +3668,7 @@ export default {
     display: flex;
   }
 
-  .content-header-modern {
+  .recruitment-top-banner {
     display: none;
   }
 
@@ -2618,16 +3676,40 @@ export default {
     padding: 12px;
   }
 
-  .stats-bar {
+  .content {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .summary-strip {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .candidates-grid {
-    grid-template-columns: 1fr;
+  .recruitment-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input-wrapper {
+    max-width: 100%;
+  }
+
+  .toolbar-right {
+    justify-content: space-between;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-strip {
+    grid-template-columns: 1fr;
+  }
+  
+  .view-btn-text {
+    display: none;
   }
 }
 </style>

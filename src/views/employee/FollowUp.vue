@@ -1,9 +1,13 @@
 <template>
-  <div class="pro-followup-container" v-if="!isMobile || !isSidebarVisible">
+  <div class="pro-followup-container">
     <!-- Desktop & Tablet Hero Header -->
     <div class="pro-followup-hero">
       <div class="pro-hero-top">
         <div class="pro-hero-left">
+          <button type="button" class="pro-hero-back-btn" @click="goBack" title="Back to Dashboard">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+          </button>
           <div class="pro-hero-icon">
             <i class="fas fa-file-invoice-dollar"></i>
           </div>
@@ -637,6 +641,13 @@ export default {
     }
   },
   methods: {
+    goBack() {
+      if (window.history.length > 1) {
+        this.$router.back();
+      } else {
+        this.$router.push('/employee/dashboard');
+      }
+    },
     setStatus(status) {
       if (this.selectedStatus === status) {
         this.selectedStatus = '';
@@ -964,9 +975,11 @@ export default {
    PRO FOLLOW-UP PAGE STYLING
    ========================================================= */
 .pro-followup-container {
+  width: 100%;
+  box-sizing: border-box;
   padding: 1.5rem 2rem;
   background: #f1f5f9;
-  min-height: calc(100vh - 60px);
+  min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
@@ -999,6 +1012,29 @@ export default {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.pro-hero-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.pro-hero-back-btn:hover {
+  background: #ffffff;
+  color: #312e81;
+  border-color: #ffffff;
+  transform: translateX(-2px);
 }
 
 .pro-hero-icon {

@@ -723,9 +723,15 @@ export default {
     },
 
     isEmployeeView() {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const role = String(user.role || '').toLowerCase()
-      return this.$route.path.startsWith('/employee') || (role !== 'admin' && role !== 'superadmin')
+      try {
+        const path = (this.$route?.path || '').toLowerCase()
+        if (path.startsWith('/employee')) return true
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
+        const role = (user.role || '').toLowerCase()
+        return role === 'employee'
+      } catch (e) {
+        return false
+      }
     }
   },
 

@@ -257,7 +257,7 @@ export default {
         }));
       } catch (error) {
         console.error('Failed to load KRAs:', error);
-        toastError('No KRAs found for your account');
+        toastWarning('No KRAs found for your account');
       }
     },
     logout() {

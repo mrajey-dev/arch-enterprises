@@ -91,28 +91,37 @@ export default {
     async fetchNotifications() {
       try {
         // 1️⃣ Fetch unread count
-        const resCount = await axios.get("/api/mentions/unread-count")
-        const newCount = resCount.data.count ?? 0
+        const resCount = await axios.get("/api/mentions/unread-count").catch(err => {
+          console.warn("Unread count fetch warning:", err?.message || err);
+          return { data: { count: 0 } };
+        });
+        const newCount = resCount?.data?.count ?? 0;
 
         // 2️⃣ Fetch latest notification
-        const resNotif = await axios.get("/api/notifications")
+        const resNotif = await axios.get("/api/notifications").catch(err => {
+          console.warn("Notifications fetch warning:", err?.message || err);
+          return { data: [] };
+        });
 
-        if (newCount > 0 && resNotif.data && resNotif.data.length) {
-          let username = 'Team Member'
-          let message = 'You were mentioned in chat'
+        const notifList = Array.isArray(resNotif?.data) ? resNotif.data : [];
+
+        if (newCount > 0 && notifList.length) {
+          let username = 'Team Member';
+          let message = 'You were mentioned in chat';
 
           try {
-            const data = typeof resNotif.data[0].data === 'string' 
-              ? JSON.parse(resNotif.data[0].data) 
-              : resNotif.data[0].data
+            const first = notifList[0];
+            const data = typeof first.data === 'string' 
+              ? JSON.parse(first.data || '{}') 
+              : (first.data || {});
 
-            username = data.mentioned_user ?? 'Greetings'
-            message = 'You are mentioned in comment'
+            username = data.mentioned_user ?? 'Greetings';
+            message = 'You are mentioned in comment';
           } catch (e) {
             // fallback
           }
 
-          this.latestMessage = `${username}, ${message}.`
+          this.latestMessage = `${username}, ${message}.`;
 
           // If count increased and not first check, trigger desktop notification outside app
           if (newCount > this.lastUnreadCount && !this.isFirstCheck) {
@@ -122,23 +131,23 @@ export default {
               icon: '/Arch360.png',
               tag: 'mention_' + Date.now(),
               onClick: () => {
-                this.handleNotificationClick()
+                this.handleNotificationClick();
               }
-            })
+            });
           }
         } else {
-          this.latestMessage = ''
+          this.latestMessage = '';
         }
 
-        this.lastUnreadCount = newCount
-        this.unreadMentionsCount = newCount
-        this.isFirstCheck = false
+        this.lastUnreadCount = newCount;
+        this.unreadMentionsCount = newCount;
+        this.isFirstCheck = false;
 
         if (newCount > 0) {
-          updateTabBadgeCount(newCount)
+          updateTabBadgeCount(newCount);
         }
       } catch (err) {
-        console.error("Notification fetch failed", err)
+        console.error("Notification fetch failed", err);
       }
     }
   },

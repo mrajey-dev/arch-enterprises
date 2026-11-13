@@ -4,14 +4,51 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <!-- Clean, Sweet Header -->
-        <div class="simple-header">
-          <div class="header-titles">
+        <!-- 📱 Mobile Top Header -->
+        <div class="mobile-header" v-if="isMobile">
+          <div class="mobile-title">
+            <i class="fas fa-calendar-check"></i>
+            <span>Daily Attendance</span>
+          </div>
+          <div class="mobile-header-actions">
+            <button class="btn-mark-sm" @click="showMarkAttendancePopup = true" title="Mark Attendance">
+              <i class="fas fa-plus"></i>
+              <span>Mark</span>
+            </button>
+            <button class="btn-mobile-menu" @click="isSidebarVisible = !isSidebarVisible" aria-label="Toggle menu">
+              <i class="fas fa-bars"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 🏢 Modern Enterprise Top Banner -->
+        <header class="attendance-top-banner">
+          <div class="banner-left">
+            <div class="banner-badge-row">
+              <span class="portal-badge-pill">
+                <span class="pulse-indicator"></span>
+                <span>ATTENDANCE & TIME TRACKING</span>
+              </span>
+              <span class="status-meta-pill">
+                <i class="fas fa-calendar-day"></i> {{ displayDateFormatted }}
+              </span>
+              <span class="status-meta-pill success">
+                <i class="fas fa-user-check"></i> {{ presentCount }} Present
+              </span>
+              <span class="status-meta-pill" v-if="displayRecords.length > 0">
+                <i class="fas fa-chart-pie"></i> {{ attendanceRate }}% Attendance Rate
+              </span>
+              <span class="status-meta-pill alert-pill" v-if="todayLateCount > 0">
+                <i class="fas fa-clock"></i> {{ todayLateCount }} Late Today
+              </span>
+            </div>
             <h1 class="page-title">Daily Attendance</h1>
-            <p class="page-subtitle">{{ displayDateFormatted }}</p>
+            <p class="page-subtitle">
+              Real-time staff check-ins, daily status tracking, working hours, and automated late penalty calculations.
+            </p>
           </div>
 
-          <div class="header-buttons">
+          <div class="banner-right-actions">
             <button class="btn-mark" @click="showMarkAttendancePopup = true">
               <i class="fas fa-plus"></i>
               <span>Mark Attendance</span>
@@ -26,142 +63,177 @@
               <span class="late-count-bubble" v-if="totalLateMarks > 0">{{ totalLateMarks }}</span>
             </button>
           </div>
-        </div>
+        </header>
 
-        <!-- Clean Metric Pills (Clickable to Filter) -->
+        <!-- 📊 Clickable Status Metric Cards Strip -->
         <div class="summary-strip">
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'all' }"
             @click="filterByStatus('all')"
+            title="Filter by Total Staff"
           >
-            <span class="pill-dot dot-all"></span>
-            <span class="pill-label">Total Staff</span>
-            <span class="pill-value">{{ displayRecords.length }}</span>
+            <div class="pill-icon-halo all"><i class="fas fa-users"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Total Staff</span>
+              <span class="pill-value">{{ displayRecords.length }}</span>
+            </div>
           </div>
 
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'Present' }"
             @click="filterByStatus('Present')"
+            title="Filter by Present"
           >
-            <span class="pill-dot dot-present"></span>
-            <span class="pill-label">Present</span>
-            <span class="pill-value text-present">{{ presentCount }}</span>
+            <div class="pill-icon-halo present"><i class="fas fa-user-check"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Present</span>
+              <span class="pill-value text-present">{{ presentCount }}</span>
+            </div>
           </div>
 
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'Leave' }"
             @click="filterByStatus('Leave')"
+            title="Filter by Leave"
           >
-            <span class="pill-dot dot-leave"></span>
-            <span class="pill-label">Leave</span>
-            <span class="pill-value text-leave">{{ leaveCount }}</span>
+            <div class="pill-icon-halo leave"><i class="fas fa-calendar-minus"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Leave</span>
+              <span class="pill-value text-leave">{{ leaveCount }}</span>
+            </div>
           </div>
 
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'OnSite' }"
             @click="filterByStatus('OnSite')"
+            title="Filter by On Site"
           >
-            <span class="pill-dot dot-onsite"></span>
-            <span class="pill-label">On Site</span>
-            <span class="pill-value text-onsite">{{ onSiteCount }}</span>
+            <div class="pill-icon-halo onsite"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">On Site</span>
+              <span class="pill-value text-onsite">{{ onSiteCount }}</span>
+            </div>
           </div>
 
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'Traveling' }"
             @click="filterByStatus('Traveling')"
+            title="Filter by Traveling"
           >
-            <span class="pill-dot dot-traveling"></span>
-            <span class="pill-label">Traveling</span>
-            <span class="pill-value text-traveling">{{ travelingCount }}</span>
+            <div class="pill-icon-halo traveling"><i class="fas fa-plane"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Traveling</span>
+              <span class="pill-value text-traveling">{{ travelingCount }}</span>
+            </div>
           </div>
 
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'HalfDay' }"
             @click="filterByStatus('HalfDay')"
+            title="Filter by Half Day"
           >
-            <span class="pill-dot dot-halfday"></span>
-            <span class="pill-label">Half Day</span>
-            <span class="pill-value text-halfday">{{ halfDayCount }}</span>
+            <div class="pill-icon-halo halfday"><i class="fas fa-adjust"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Half Day</span>
+              <span class="pill-value text-halfday">{{ halfDayCount }}</span>
+            </div>
           </div>
 
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'Absent' }"
             @click="filterByStatus('Absent')"
+            title="Filter by Absent"
           >
-            <span class="pill-dot dot-absent"></span>
-            <span class="pill-label">Absent</span>
-            <span class="pill-value text-absent">{{ absentCount }}</span>
+            <div class="pill-icon-halo absent"><i class="fas fa-user-times"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Absent</span>
+              <span class="pill-value text-absent">{{ absentCount }}</span>
+            </div>
           </div>
 
           <div
             class="summary-pill"
             :class="{ active: statusFilter === 'Late' }"
             @click="filterByStatus('Late')"
+            title="Filter by Late Today"
           >
-            <span class="pill-dot dot-late"></span>
-            <span class="pill-label">Late Today</span>
-            <span class="pill-value text-late">{{ todayLateCount }}</span>
+            <div class="pill-icon-halo late"><i class="fas fa-clock"></i></div>
+            <div class="pill-info">
+              <span class="pill-label">Late Today</span>
+              <span class="pill-value text-late">{{ todayLateCount }}</span>
+            </div>
           </div>
         </div>
 
-        <!-- Unified Date Navigator & Search Bar (Single Row!) -->
-        <div class="toolbar-single-row">
+        <!-- 🔍 Unified Toolbar & Date Navigator Card -->
+        <div class="attendance-toolbar-card">
           <!-- Date Navigator -->
           <div class="date-navigator-sweet">
             <button class="nav-arrow" @click="changeDisplayDate(-1)" title="Previous day">
               <i class="fas fa-chevron-left"></i>
             </button>
             <div class="date-pill" @click="openDatePickerModal" title="Click to pick any date">
-              <i class="far fa-calendar-alt"></i>
-              <span>{{ displayDateFormatted }}</span>
+              <i class="far fa-calendar-alt text-indigo"></i>
+              <span class="date-display-text">{{ displayDateFormatted }}</span>
+              <i class="fas fa-chevron-down date-chevron"></i>
             </div>
             <button class="nav-arrow" @click="changeDisplayDate(1)" title="Next day">
               <i class="fas fa-chevron-right"></i>
             </button>
-            <button class="btn-today" @click="goToTodayDisplay">
-              Today
+            <button class="btn-today" :class="{ 'is-active-today': isViewingToday }" @click="goToTodayDisplay" title="Jump to today">
+              <i class="fas fa-dot-circle" v-if="isViewingToday"></i>
+              <span>Today</span>
+            </button>
+            <button v-if="statusFilter !== 'all'" class="btn-filter-active" @click="statusFilter = 'all'" title="Clear status filter">
+              <span>Filter: <strong>{{ statusFilter }}</strong></span>
+              <i class="fas fa-times"></i>
             </button>
           </div>
 
-          <!-- Search Input -->
-          <div class="search-sweet">
-            <i class="fas fa-search search-icon"></i>
-            <input
-              type="text"
-              v-model="searchQuery"
-              placeholder="Search employee..."
-              class="search-input"
-            />
-            <button v-if="searchQuery" class="btn-clear-search" @click="searchQuery = ''">
-              <i class="fas fa-times"></i>
-            </button>
+          <!-- Search & Staff Counter -->
+          <div class="toolbar-right-wrap">
+            <span class="staff-count-label" v-if="displayRecords.length > 0">
+              Showing <strong>{{ filteredDisplayRecords.length }}</strong> of {{ displayRecords.length }}
+            </span>
+            <div class="search-sweet">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                v-model="searchQuery"
+                placeholder="Search employee or site..."
+                class="search-input"
+              />
+              <button v-if="searchQuery" class="btn-clear-search" @click="searchQuery = ''" title="Clear search">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Loading State -->
         <div v-if="displayLoading" class="simple-loading">
           <i class="fas fa-circle-notch fa-spin"></i>
-          <span>Loading attendance...</span>
+          <span>Loading attendance records...</span>
         </div>
 
-        <!-- Clean, Sweet Attendance Table -->
+        <!-- Modern Attendance Table Card -->
         <div v-else class="table-card-sweet">
           <table class="table-sweet">
             <thead>
               <tr>
-                <th>Employee</th>
-                <th>Status</th>
-                <th>Clock In</th>
-                <th>Clock Out</th>
-                <th>Working Time</th>
-                <th class="text-right">History</th>
+                <th><i class="fas fa-user-circle th-icon"></i> Employee</th>
+                <th><i class="fas fa-signal th-icon"></i> Status</th>
+                <th><i class="fas fa-sign-in-alt th-icon"></i> Clock In</th>
+                <th><i class="fas fa-sign-out-alt th-icon"></i> Clock Out</th>
+                <th><i class="fas fa-hourglass-half th-icon"></i> Working Time</th>
+                <th class="text-right"><i class="far fa-calendar-alt th-icon"></i> History</th>
               </tr>
             </thead>
             <tbody>
@@ -178,10 +250,10 @@
                     </div>
                     <div class="emp-info">
                       <span class="emp-name">{{ formatName(record.name) }}</span>
-                      <span class="emp-sub" v-if="record.site_name">
+                      <span class="emp-sub onsite" v-if="record.site_name">
                         <i class="fas fa-map-marker-alt"></i> {{ record.site_name }}
                       </span>
-                      <span class="emp-sub" v-else-if="record.travel_from && record.travel_to">
+                      <span class="emp-sub travel" v-else-if="record.travel_from && record.travel_to">
                         <i class="fas fa-plane"></i> {{ record.travel_from }} &rarr; {{ record.travel_to }}
                       </span>
                     </div>
@@ -216,25 +288,28 @@
                 </td>
 
                 <!-- Clock In -->
-                <td class="time-text">
-                  <span v-if="record.clock_in && record.clock_in !== '-'">
-                    {{ formatTime(record.clock_in) }}
+                <td class="time-col">
+                  <span v-if="record.clock_in && record.clock_in !== '-'" class="time-chip in">
+                    <i class="fas fa-sign-in-alt time-chip-icon"></i>
+                    <span>{{ formatTime(record.clock_in) }}</span>
                   </span>
                   <span v-else class="text-dash">—</span>
                 </td>
 
                 <!-- Clock Out -->
-                <td class="time-text">
-                  <span v-if="record.clock_out && record.clock_out !== '-'">
-                    {{ formatTime(record.clock_out) }}
+                <td class="time-col">
+                  <span v-if="record.clock_out && record.clock_out !== '-'" class="time-chip out">
+                    <i class="fas fa-sign-out-alt time-chip-icon"></i>
+                    <span>{{ formatTime(record.clock_out) }}</span>
                   </span>
                   <span v-else class="text-dash">—</span>
                 </td>
 
                 <!-- Actual Working Time -->
-                <td class="time-text">
-                  <span v-if="record.actual_time && record.actual_time !== '-'" class="font-medium text-emerald">
-                    {{ record.actual_time }}
+                <td class="time-col">
+                  <span v-if="record.actual_time && record.actual_time !== '-'" class="working-time-chip">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>{{ record.actual_time }}</span>
                   </span>
                   <span v-else class="text-dash">—</span>
                 </td>
@@ -242,11 +317,12 @@
                 <!-- Action (View Monthly Calendar) -->
                 <td class="text-right">
                   <button
-                    class="btn-icon-sweet"
+                    class="btn-history-view"
                     @click="viewEmployeeMonthlyAttendance(record.name)"
                     title="View monthly attendance calendar"
                   >
                     <i class="far fa-calendar-alt"></i>
+                    <span>History</span>
                   </button>
                 </td>
               </tr>
@@ -255,10 +331,13 @@
               <tr v-if="filteredDisplayRecords.length === 0">
                 <td colspan="6" class="td-empty">
                   <div class="empty-sweet">
-                    <i class="far fa-calendar-times"></i>
-                    <p>{{ searchQuery || statusFilter !== 'all' ? 'No employees match your search filter' : 'No attendance marked for ' + displayDateFormatted }}</p>
+                    <div class="empty-icon-wrap">
+                      <i class="far fa-calendar-times"></i>
+                    </div>
+                    <h4>No Records Found</h4>
+                    <p>{{ searchQuery || statusFilter !== 'all' ? 'No employees match your search query or status filter.' : 'No attendance marked for ' + displayDateFormatted + '.' }}</p>
                     <button v-if="searchQuery || statusFilter !== 'all'" class="btn-reset-sweet" @click="resetFilters">
-                      Clear Filter
+                      <i class="fas fa-undo"></i> Reset Filters
                     </button>
                   </div>
                 </td>
@@ -1090,9 +1169,20 @@ export default {
       }
 
       return filtered
+    },
+    attendanceRate() {
+      if (!this.displayRecords || !this.displayRecords.length) return 0
+      const activeWorking = this.presentCount + this.onSiteCount + this.travelingCount + this.halfDayCount
+      return Math.min(100, Math.round((activeWorking / this.displayRecords.length) * 100))
+    },
+    isViewingToday() {
+      return this.displayDate === this.today
     }
   },
   methods: {
+    toggleMobileSidebar() {
+      this.isSidebarVisible = !this.isSidebarVisible
+    },
     filterByStatus(status) {
       this.statusFilter = this.statusFilter === status ? 'all' : status
     },
@@ -1141,12 +1231,35 @@ export default {
       })
     },
     formatTime(time) {
-      if (!time || time === '-') return '—'
-      if (time.match(/^\d{2}:\d{2}:\d{2}$/)) {
-        return time.substring(0, 5)
+      if (!time || time === '-' || time === '--' || time === 'null' || time === 'undefined') return '—'
+      const str = String(time).trim()
+      if (!str || str === '-') return '—'
+
+      // If it already has AM/PM (e.g. "09:35 AM", "9:35am")
+      const ampmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)$/i)
+      if (ampmMatch) {
+        const hh = ampmMatch[1].padStart(2, '0')
+        const mm = ampmMatch[2]
+        const ampm = ampmMatch[3].toUpperCase()
+        return `${hh}:${mm} ${ampm}`
       }
+
+      // If it is in 24-hour time format like "08:27:00", "08:27", "18:30:00", "18:30"
+      const timeMatch = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+      if (timeMatch) {
+        let hours = parseInt(timeMatch[1], 10)
+        const minutes = timeMatch[2]
+        const ampm = hours >= 12 ? 'PM' : 'AM'
+        hours = hours % 12
+        if (hours === 0) hours = 12
+        const formattedHours = String(hours).padStart(2, '0')
+        return `${formattedHours}:${minutes} ${ampm}`
+      }
+
+      // If it contains a date string (ISO or "YYYY-MM-DD HH:mm:ss")
       try {
-        const date = new Date(`2000-01-01 ${time}`)
+        const cleanDateStr = str.includes(' ') && !str.includes('T') ? str.replace(' ', 'T') : str
+        const date = new Date(cleanDateStr)
         if (!isNaN(date.getTime())) {
           return date.toLocaleTimeString('en-US', {
             hour: '2-digit',
@@ -1154,10 +1267,21 @@ export default {
             hour12: true
           })
         }
-      } catch (e) {
-        return time
-      }
-      return time
+      } catch (e) {}
+
+      // Fallback with dummy date prefix
+      try {
+        const fallback = new Date(`2000-01-01T${str}`)
+        if (!isNaN(fallback.getTime())) {
+          return fallback.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          })
+        }
+      } catch (e) {}
+
+      return str
     },
     getStatusClass(status) {
       if (!status) return 'status-default'
@@ -2024,7 +2148,7 @@ export default {
 </script>
 
 <style scoped>
-/* ================= SIMPLE & SWEET DESIGN SYSTEM ================= */
+/* ================= 🏢 MODERN ENTERPRISE DESIGN SYSTEM ================= */
 .layout {
   min-height: 100vh;
   background: #f8fafc;
@@ -2035,7 +2159,7 @@ export default {
 .main-content {
   display: flex;
   gap: 20px;
-  padding: 20px;
+  padding: 20px 24px;
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -2045,82 +2169,246 @@ export default {
   background: #ffffff;
   border-radius: 20px;
   padding: 24px 28px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -5px rgba(0, 0, 0, 0.02);
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+  min-width: 0;
+  transition: all 0.3s ease;
 }
 
-/* ================= 1. SIMPLE HEADER ================= */
-.simple-header {
+.expanded-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+/* ================= 📱 MOBILE HEADER ================= */
+.mobile-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.page-title {
-  margin: 0;
-  font-size: 22px;
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
   font-weight: 700;
   color: #0f172a;
 }
 
-.page-subtitle {
-  margin: 2px 0 0 0;
-  font-size: 13px;
-  color: #64748b;
+.mobile-title i {
+  color: #4f46e5;
+  font-size: 18px;
 }
 
-.header-buttons {
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-mark-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-mobile-menu {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ================= 🏢 MODERN TOP ENTERPRISE BANNER ================= */
+.attendance-top-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 22px 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+}
+
+.banner-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.banner-badge-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.btn-mark {
+.portal-badge-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #4f46e5;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+
+.pulse-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.status-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.status-meta-pill.success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.status-meta-pill.alert-pill {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 650px;
+}
+
+.banner-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   color: #ffffff;
   border: none;
-  padding: 8px 14px;
+  padding: 10px 18px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-mark:hover {
-  background: #4338ca;
+  background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
 }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: #f8fafc;
+  gap: 8px;
+  background: #ffffff;
   color: #334155;
-  border: 1px solid #e2e8f0;
-  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.15s ease;
 }
 
 .btn-secondary:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: #f8fafc;
+  border-color: #94a3b8;
   color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.btn-secondary.has-late {
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #b91c1c;
+}
+
+.btn-secondary.has-late:hover {
+  background: #fee2e2;
+  border-color: #f87171;
 }
 
 .late-count-bubble {
@@ -2128,76 +2416,114 @@ export default {
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 10px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.35);
 }
 
-/* ================= 2. CLEAN SUMMARY STRIP ================= */
+/* ================= 📊 CLICKABLE STATUS METRIC CARDS STRIP ================= */
 .summary-strip {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
-  padding: 2px 0;
+  padding: 4px 2px 10px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.summary-strip::-webkit-scrollbar {
+  height: 5px;
+}
+
+.summary-strip::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
 }
 
 .summary-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: #f8fafc;
+  gap: 12px;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   user-select: none;
+  min-width: 136px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .summary-pill:hover {
+  transform: translateY(-2px);
   border-color: #cbd5e1;
-  background: #f1f5f9;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
 }
 
 .summary-pill.active {
   background: #0f172a;
   color: #ffffff;
   border-color: #0f172a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+}
+
+.pill-icon-halo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.pill-icon-halo.all { background: #f1f5f9; color: #475569; }
+.pill-icon-halo.present { background: #ecfdf5; color: #059669; }
+.pill-icon-halo.leave { background: #eef2ff; color: #4f46e5; }
+.pill-icon-halo.onsite { background: #faf5ff; color: #7e22ce; }
+.pill-icon-halo.traveling { background: #f0f9ff; color: #0284c7; }
+.pill-icon-halo.halfday { background: #fff7ed; color: #ea580c; }
+.pill-icon-halo.absent { background: #fef2f2; color: #dc2626; }
+.pill-icon-halo.late { background: #fffbeb; color: #d97706; }
+
+.summary-pill.active .pill-icon-halo {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.pill-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pill-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: capitalize;
 }
 
 .summary-pill.active .pill-label {
   color: #cbd5e1;
 }
 
+.pill-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
 .summary-pill.active .pill-value {
   color: #ffffff !important;
-}
-
-.pill-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.dot-all { background: #64748b; }
-.dot-present { background: #10b981; }
-.dot-leave { background: #6366f1; }
-.dot-onsite { background: #a855f7; }
-.dot-traveling { background: #0ea5e9; }
-.dot-halfday { background: #f97316; }
-.dot-absent { background: #ef4444; }
-.dot-late { background: #f59e0b; }
-
-.pill-label {
-  font-weight: 500;
-  color: #64748b;
-}
-
-.pill-value {
-  font-weight: 700;
-  color: #0f172a;
 }
 
 .text-present { color: #059669; }
@@ -2208,38 +2534,46 @@ export default {
 .text-absent { color: #dc2626; }
 .text-late { color: #d97706; }
 
-/* ================= 3. SINGLE ROW TOOLBAR ================= */
-.toolbar-single-row {
+/* ================= 🔍 UNIFIED TOOLBAR CARD ================= */
+.attendance-toolbar-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   flex-wrap: wrap;
 }
 
 .date-navigator-sweet {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .nav-arrow {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
+  transition: all 0.15s ease;
 }
 
 .nav-arrow:hover {
   background: #f1f5f9;
   color: #0f172a;
+  border-color: #94a3b8;
 }
 
 .date-pill {
@@ -2247,33 +2581,48 @@ export default {
   align-items: center;
   gap: 8px;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 6px 14px;
-  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  padding: 7px 14px;
+  border-radius: 9px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: #0f172a;
   cursor: pointer;
-}
-
-.date-pill i {
-  color: #4f46e5;
+  transition: all 0.15s ease;
 }
 
 .date-pill:hover {
-  border-color: #cbd5e1;
+  border-color: #4f46e5;
   background: #f1f5f9;
 }
 
+.date-display-text {
+  letter-spacing: -0.2px;
+}
+
+.date-chevron {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+.text-indigo {
+  color: #4f46e5;
+}
+
 .btn-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   color: #475569;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 7px 14px;
+  border-radius: 9px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .btn-today:hover {
@@ -2281,9 +2630,55 @@ export default {
   color: #0f172a;
 }
 
+.btn-today.is-active-today {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.btn-filter-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ede9fe;
+  border: 1px solid #ddd6fe;
+  color: #6d28d9;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-filter-active:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.toolbar-right-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 280px;
+}
+
+.staff-count-label {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.staff-count-label strong {
+  color: #0f172a;
+}
+
 .search-sweet {
   position: relative;
-  min-width: 240px;
+  min-width: 220px;
   max-width: 320px;
   flex: 1;
 }
@@ -2299,22 +2694,25 @@ export default {
 
 .search-input {
   width: 100%;
-  padding: 8px 30px 8px 34px;
+  padding: 8px 32px 8px 36px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
-  background: #ffffff;
+  background: #f8fafc;
   box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
 .search-input:focus {
   outline: none;
+  background: #ffffff;
   border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .btn-clear-search {
   position: absolute;
-  right: 8px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -2322,14 +2720,20 @@ export default {
   color: #94a3b8;
   cursor: pointer;
   font-size: 12px;
+  padding: 2px;
 }
 
-/* ================= 4. SWEET TABLE ================= */
+.btn-clear-search:hover {
+  color: #475569;
+}
+
+/* ================= 📋 MODERN ATTENDANCE TABLE CARD ================= */
 .table-card-sweet {
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow-x: auto;
   background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .table-sweet {
@@ -2337,17 +2741,23 @@ export default {
   border-collapse: collapse;
   text-align: left;
   font-size: 13px;
+  min-width: 760px;
 }
 
 .table-sweet th {
-  padding: 12px 18px;
+  padding: 13px 18px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+}
+
+.th-icon {
+  margin-right: 5px;
+  color: #94a3b8;
 }
 
 .table-sweet td {
@@ -2356,8 +2766,16 @@ export default {
   vertical-align: middle;
 }
 
+.row-sweet {
+  transition: background 0.15s ease;
+}
+
 .row-sweet:hover {
   background: #fafbfc;
+}
+
+.td-employee {
+  min-width: 210px;
 }
 
 .emp-identity {
@@ -2368,26 +2786,30 @@ export default {
 }
 
 .avatar-sweet {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
 .emp-info {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .emp-name {
-  font-weight: 600;
+  font-weight: 700;
   color: #0f172a;
+  font-size: 13.5px;
+  transition: color 0.15s ease;
 }
 
 .emp-identity:hover .emp-name {
@@ -2395,11 +2817,21 @@ export default {
 }
 
 .emp-sub {
-  font-size: 11px;
+  font-size: 11.5px;
   color: #64748b;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+}
+
+.emp-sub.onsite {
+  color: #7e22ce;
+  font-weight: 500;
+}
+
+.emp-sub.travel {
+  color: #0369a1;
+  font-weight: 500;
 }
 
 .status-wrap {
@@ -2412,8 +2844,8 @@ export default {
 .badge-sweet {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 6px;
+  padding: 4px 11px;
   border-radius: 14px;
   font-size: 12px;
   font-weight: 600;
@@ -2426,22 +2858,22 @@ export default {
 }
 
 .status-present { background: #ecfdf5; color: #047857; }
-.status-present .dot { background: #10b981; }
+.status-present .dot { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
 
 .status-absent { background: #fef2f2; color: #b91c1c; }
-.status-absent .dot { background: #ef4444; }
+.status-absent .dot { background: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
 
 .status-onsite { background: #faf5ff; color: #7e22ce; }
-.status-onsite .dot { background: #a855f7; }
+.status-onsite .dot { background: #a855f7; box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2); }
 
 .status-halfday { background: #fff7ed; color: #c2410c; }
-.status-halfday .dot { background: #f97316; }
+.status-halfday .dot { background: #f97316; box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2); }
 
 .status-traveling { background: #f0f9ff; color: #0369a1; }
-.status-traveling .dot { background: #0ea5e9; }
+.status-traveling .dot { background: #0ea5e9; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
 
 .status-leave { background: #eef2ff; color: #4338ca; }
-.status-leave .dot { background: #6366f1; }
+.status-leave .dot { background: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
 
 .status-default { background: #f1f5f9; color: #64748b; }
 .status-default .dot { background: #94a3b8; }
@@ -2451,63 +2883,177 @@ export default {
   font-weight: 600;
   color: #b45309;
   background: #fef3c7;
+  border: 1px solid #fde68a;
   padding: 2px 8px;
   border-radius: 6px;
 }
 
-.time-text {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 13px;
-  color: #334155;
+.time-col {
+  white-space: nowrap;
 }
 
-.font-medium { font-weight: 600; }
-.text-emerald { color: #059669; }
-.text-red { color: #dc2626; }
-.text-dash { color: #cbd5e1; }
+.time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
 
-.btn-icon-sweet {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+.time-chip.in {
+  background: #f8fafc;
+}
+
+.time-chip.in .time-chip-icon {
+  color: #10b981;
+  font-size: 11px;
+}
+
+.time-chip.out .time-chip-icon {
+  color: #f59e0b;
+  font-size: 11px;
+}
+
+.working-time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.text-dash {
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.btn-history-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
-  color: #64748b;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.btn-icon-sweet:hover {
+.btn-history-view:hover {
   background: #eef2ff;
   color: #4f46e5;
   border-color: #c7d2fe;
+  transform: translateY(-1px);
 }
 
-/* Late Marks Section on Page */
+.text-right {
+  text-align: right;
+}
+
+/* ================= 🚫 EMPTY STATE ================= */
+.td-empty {
+  padding: 48px 20px !important;
+  text-align: center;
+}
+
+.empty-sweet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #64748b;
+}
+
+.empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: #94a3b8;
+}
+
+.empty-sweet h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.empty-sweet p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  max-width: 380px;
+  line-height: 1.4;
+}
+
+.btn-reset-sweet {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reset-sweet:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ================= ⏰ MONTHLY LATE MARKS SECTION ================= */
 .late-marks-section-sweet {
   margin-top: 24px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 20px;
 }
 
 .section-title-sweet {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .section-title-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .section-title-left h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: #0f172a;
 }
 
 .info-badge-sweet {
@@ -2515,7 +3061,8 @@ export default {
   font-weight: 600;
   color: #64748b;
   background: #f1f5f9;
-  padding: 3px 10px;
+  border: 1px solid #e2e8f0;
+  padding: 4px 12px;
   border-radius: 20px;
 }
 
@@ -2539,45 +3086,12 @@ export default {
   gap: 12px;
 }
 
-.td-empty {
-  padding: 40px !important;
-  text-align: center;
-}
-
-.empty-sweet {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: #94a3b8;
-}
-
-.empty-sweet i {
-  font-size: 32px;
-}
-
-.empty-sweet p {
-  margin: 0;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.btn-reset-sweet {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-/* ================= 5. SWEET MODALS ================= */
+/* ================= 🪟 SWEET MODALS SYSTEM ================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2587,36 +3101,38 @@ export default {
 
 .modal-sweet {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 18px;
   width: 100%;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   max-height: 88vh;
+  border: 1px solid #e2e8f0;
 }
 
 .modal-small { max-width: 480px; }
-.modal-medium { max-width: 620px; }
-.modal-salary { max-width: 800px; }
+.modal-medium { max-width: 640px; }
+.modal-salary { max-width: 820px; }
 
 .modal-sweet-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 18px 22px;
   border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
 }
 
 .modal-sweet-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #0f172a;
 }
 
 .modal-sub {
-  margin: 2px 0 0 0;
+  margin: 3px 0 0 0;
   font-size: 12px;
   color: #64748b;
 }
@@ -2624,10 +3140,11 @@ export default {
 .btn-close {
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 24px;
   color: #94a3b8;
   cursor: pointer;
   padding: 0 4px;
+  line-height: 1;
 }
 
 .btn-close:hover {
@@ -2635,48 +3152,51 @@ export default {
 }
 
 .modal-sweet-body {
-  padding: 20px;
+  padding: 22px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .modal-sweet-footer {
-  padding: 12px 20px;
+  padding: 14px 22px;
   border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
   background: #fafbfc;
 }
 
 .form-group-sweet {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .form-group-sweet label {
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #334155;
 }
 
 .req { color: #ef4444; }
 
 .input-sweet {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 9px;
   font-size: 13px;
   box-sizing: border-box;
+  background: #ffffff;
+  transition: all 0.15s ease;
 }
 
 .input-sweet:focus {
   outline: none;
   border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .two-col {
@@ -2689,33 +3209,51 @@ export default {
   background: #ffffff;
   border: 1px solid #cbd5e1;
   color: #475569;
-  padding: 6px 14px;
-  border-radius: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .btn-save {
-  background: #4f46e5;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   border: none;
   color: #ffffff;
-  padding: 6px 16px;
-  border-radius: 6px;
+  padding: 8px 18px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.35);
 }
 
 .btn-calc {
   background: #4f46e5;
   color: #ffffff;
   border: none;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-calc:hover {
+  background: #4338ca;
 }
 
 .btn-calc:disabled {
@@ -2731,24 +3269,35 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 8px 14px;
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
 }
 
 .step-arrow {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: 7px;
   background: #ffffff;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  transition: all 0.15s ease;
+}
+
+.step-arrow:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .month-label {
   font-weight: 700;
   font-size: 14px;
+  color: #0f172a;
 }
 
 .cal-status-row {
@@ -2760,7 +3309,7 @@ export default {
 .status-summary {
   font-size: 11px;
   font-weight: 600;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 6px;
 }
 
@@ -2778,17 +3327,18 @@ export default {
 }
 
 .cal-table-sweet th {
-  padding: 6px;
+  padding: 8px 6px;
   font-size: 11px;
   color: #94a3b8;
   text-align: center;
+  font-weight: 700;
 }
 
 .cal-table-sweet td {
   padding: 4px;
   text-align: center;
   border: 1px solid #f1f5f9;
-  height: 42px;
+  height: 44px;
   font-size: 12px;
   font-weight: 600;
   vertical-align: middle;
@@ -2828,19 +3378,20 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .date-clicker {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: 1px solid #cbd5e1;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-weight: 700;
   font-size: 13px;
   cursor: pointer;
+  background: #f8fafc;
 }
 
 .hidden-input {
@@ -2853,19 +3404,21 @@ export default {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   background: #f8fafc;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
 }
 
 .salary-modal-note {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 12px;
   color: #64748b;
+  flex: 1;
+  min-width: 240px;
 }
 
 .salary-actions-right {
@@ -2883,8 +3436,8 @@ export default {
   user-select: none;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 5px 12px;
+  border-radius: 9px;
   transition: all 0.15s ease;
 }
 
@@ -2903,8 +3456,8 @@ export default {
 }
 
 .toggle-switch-sweet {
-  width: 34px;
-  height: 18px;
+  width: 36px;
+  height: 20px;
   background: #cbd5e1;
   border-radius: 10px;
   position: relative;
@@ -2918,8 +3471,8 @@ export default {
 }
 
 .toggle-slider-sweet {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   background: #ffffff;
   border-radius: 50%;
   position: absolute;
@@ -2934,21 +3487,22 @@ export default {
 }
 
 .btn-calc-all {
-  background: #4f46e5 !important;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
   color: #ffffff !important;
   border: none !important;
-  padding: 6px 14px !important;
-  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  border-radius: 9px !important;
   font-weight: 600 !important;
   font-size: 12px !important;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
 }
 
 .btn-calc-all:hover {
-  background: #4338ca !important;
+  transform: translateY(-1px);
 }
 
 .emp-dept-sub {
@@ -2964,7 +3518,7 @@ export default {
 .salary-cards-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 16px;
 }
 
 @media (max-width: 600px) {
@@ -2976,8 +3530,8 @@ export default {
 .salary-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 18px;
   text-align: left;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
@@ -2997,7 +3551,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .salary-card-title {
@@ -3027,9 +3581,9 @@ export default {
 }
 
 .salary-big-amount {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
-  margin: 6px 0 10px 0;
+  margin: 6px 0 12px 0;
   line-height: 1.1;
 }
 
@@ -3039,7 +3593,7 @@ export default {
 
 .salary-breakdown-list {
   border-top: 1px solid #f1f5f9;
-  padding-top: 8px;
+  padding-top: 10px;
 }
 
 .breakdown-row {
@@ -3048,13 +3602,13 @@ export default {
   align-items: center;
   font-size: 12px;
   color: #64748b;
-  padding: 3px 0;
+  padding: 4px 0;
 }
 
 .breakdown-row.total-row {
   border-top: 1px dashed #cbd5e1;
-  margin-top: 6px;
-  padding-top: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
   font-weight: 700;
   color: #0f172a;
   font-size: 13px;
@@ -3063,57 +3617,28 @@ export default {
 .breakdown-row.note-row {
   font-size: 11px;
   color: #94a3b8;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .salary-policy-note {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 12px;
   color: #475569;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: 10px;
+  padding: 12px 16px;
   text-align: left;
 }
 
 .salary-policy-note i {
-  font-size: 14px;
+  font-size: 15px;
   flex-shrink: 0;
 }
 
-.salary-name {
-  margin: 0;
-  font-weight: 600;
-  color: #64748b;
-  font-size: 13px;
-}
-
-.salary-big {
-  font-size: 32px;
-  font-weight: 800;
-  color: #059669;
-  margin: 8px 0;
-}
-
-.salary-date {
-  margin: 0;
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.late-count-tag {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 12px;
-}
-
-/* ================= LATE TAGS & WAIVER STYLES ================= */
+/* ================= 🏷️ LATE TAGS & WAIVER STYLES ================= */
 .late-tag-clickable {
   cursor: pointer;
   display: inline-flex;
@@ -3148,6 +3673,7 @@ export default {
   font-weight: 600;
   color: #047857;
   background: #d1fae5;
+  border: 1px solid #a7f3d0;
   padding: 2px 8px;
   border-radius: 6px;
   display: inline-flex;
@@ -3175,9 +3701,9 @@ export default {
 }
 
 .header-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3198,11 +3724,11 @@ export default {
 .record-summary-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .summary-item-row {
@@ -3224,19 +3750,19 @@ export default {
 .info-note-box {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 12px 14px;
   margin-top: 14px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: #1e40af;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .info-note-box i {
-  font-size: 14px;
+  font-size: 15px;
   margin-top: 2px;
   flex-shrink: 0;
 }
@@ -3260,12 +3786,12 @@ export default {
 .late-marks-modal-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .employee-late-card {
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
   overflow: hidden;
   transition: border-color 0.15s ease;
@@ -3279,7 +3805,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
+  padding: 14px 16px;
   cursor: pointer;
   background: #ffffff;
   transition: background 0.15s ease;
@@ -3292,7 +3818,7 @@ export default {
 .emp-identity-sm {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .emp-sub-late {
@@ -3316,32 +3842,32 @@ export default {
 .emp-late-details {
   border-top: 1px solid #f1f5f9;
   background: #f8fafc;
-  padding: 12px 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .block-title {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .late-record-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 6px;
+  border-radius: 9px;
+  margin-bottom: 8px;
 }
 
 .late-record-item:last-child {
@@ -3355,12 +3881,12 @@ export default {
 }
 
 .rec-date {
-  font-size: 12px;
+  font-size: 12.5px;
   color: #0f172a;
 }
 
 .rec-time {
-  font-size: 11px;
+  font-size: 11.5px;
   color: #64748b;
 }
 
@@ -3368,66 +3894,77 @@ export default {
   background: #fef3c7;
   color: #b45309;
   border: 1px solid #fde68a;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   transition: all 0.15s ease;
 }
 
 .btn-waive-action:hover {
   background: #fde68a;
   color: #78350f;
-  transform: scale(1.03);
+  transform: translateY(-1px);
 }
 
 .btn-restore-action {
   background: #ede9fe;
   color: #6d28d9;
   border: 1px solid #ddd6fe;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   transition: all 0.15s ease;
 }
 
 .btn-restore-action:hover {
   background: #ddd6fe;
   color: #5b21b6;
-  transform: scale(1.03);
+  transform: translateY(-1px);
 }
 
 .simple-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 40px;
+  gap: 10px;
+  padding: 50px;
   color: #64748b;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .simple-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 30px;
+  gap: 10px;
+  padding: 36px;
   color: #64748b;
   font-size: 13px;
 }
 
 .simple-empty i {
-  font-size: 28px;
+  font-size: 32px;
+}
+
+/* ================= 📱 RESPONSIVE MEDIA QUERIES ================= */
+@media (max-width: 1024px) {
+  .attendance-top-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .banner-right-actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
@@ -3438,20 +3975,48 @@ export default {
   .content {
     padding: 16px;
     border-radius: 16px;
+    gap: 14px;
   }
-  .simple-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .attendance-top-banner {
+    padding: 16px;
   }
-  .header-buttons {
+  .page-title {
+    font-size: 20px;
+  }
+  .banner-right-actions {
     width: 100%;
   }
-  .toolbar-single-row {
+  .btn-mark,
+  .btn-secondary {
+    flex: 1;
+    justify-content: center;
+  }
+  .attendance-toolbar-card {
     flex-direction: column;
     align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+  }
+  .toolbar-right-wrap {
+    justify-content: stretch;
+    width: 100%;
+    min-width: 0;
   }
   .search-sweet {
     max-width: 100%;
+    width: 100%;
+  }
+  .summary-pill {
+    min-width: 120px;
+    padding: 8px 12px;
+  }
+  .pill-icon-halo {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  .pill-value {
+    font-size: 16px;
   }
 }
 </style>

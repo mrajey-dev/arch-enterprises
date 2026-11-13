@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-root">
+  <div v-if="shouldRender" class="sidebar-root" :class="{ 'is-collapsed': isCollapsed }">
     <div class="layout">
       <!-- Mobile Menu Button -->
       <button class="mobile-menu-btn" @click="isMobileOpen = true">
@@ -115,6 +115,14 @@
               <i class="fas fa-sitemap"></i>
               <span>Site Ownership</span>  
             </li>
+            <li 
+              v-if="canViewFirePump || onlyViewITSales || onlyViewITLead || onlyViewMarketing"
+              @click="goTo('employee/quotations')"
+              :class="{ active: isActive('employee/quotations', ['quotations', 'all-quotations', 'employee/all-quotations', 'employee/quotations', 'quotations-list']) }"
+            >
+              <i class="fas fa-file-invoice-dollar"></i>
+              <span>All Quotations</span>  
+            </li>
           
             <!-- <li @click="goTo('employee/weeklyworkingschedule')">
               <i class="fas fa-chalkboard-teacher"></i><span>My Weekly Schedule</span>
@@ -126,6 +134,9 @@
 
             <li v-if="onlyViewITLead" @click="goTo('employee/empworkreport')" :class="{ active: isActive('employee/empworkreport') }">
               <i class="fas fa-folder"></i> <span>Work Report</span>
+            </li>
+            <li v-if="onlyViewITSales" @click="goTo('employee/lead-management')" :class="{ active: isActive('employee/lead-management', ['lead-management', 'employee/leads', 'leads']) }">
+              <i class="fas fa-funnel-dollar"></i> <span>Lead Management</span>
             </li>
             <li v-if="onlyViewITTeam || onlyViewMarketing" @click="goTo('employee/archapps')" :class="{ active: isActive('employee/archapps', ['archapps', 'myapps', 'employee/myapps', 'apps']) }">
               <i class="fas fa-th-large"></i> <span>My Apps</span>
@@ -210,10 +221,7 @@
         @click="isMobileOpen = false"
       ></div>
       
-      <!-- Main Content -->
-      <main class="main-content" :style="{ marginLeft: isCollapsed ? '80px' : '260px' }">
-        <router-view></router-view>
-      </main>
+
 
       <ChangePasswordForm
         v-if="showChangePassword"
@@ -264,6 +272,20 @@ import {
 
 export default {
   components: { ChangePasswordForm },
+  inject: {
+    hasPersistentSidebar: { default: null }
+  },
+  props: {
+    isLayoutInstance: {
+      type: Boolean,
+      default: false
+    }
+  },
+  watch: {
+    isCollapsed(newVal) {
+      window.dispatchEvent(new CustomEvent('sidebar-collapse-change', { detail: newVal }));
+    }
+  },
   data() {
     const initUser = (() => {
       try {
@@ -313,6 +335,21 @@ export default {
     };
   },
   computed: {
+    shouldRender() {
+      if (this.isLayoutInstance) return true;
+      const currentPath = (this.$route?.path && this.$route.path !== '/')
+        ? this.$route.path
+        : (typeof window !== 'undefined' ? window.location.pathname : '');
+      const path = currentPath.toLowerCase();
+      if (path === '/employee' || path.startsWith('/employee/')) {
+        return false;
+      }
+      const persistentActive = typeof this.hasPersistentSidebar === 'object' && this.hasPersistentSidebar !== null && 'value' in this.hasPersistentSidebar
+        ? Boolean(this.hasPersistentSidebar.value)
+        : Boolean(this.hasPersistentSidebar);
+      if (persistentActive) return false;
+      return true;
+    },
     displayName() {
       const rawName = (this.username || this.user?.name || "").trim();
       if (!rawName) return "";
@@ -442,6 +479,36 @@ export default {
         normRole === 'owner' ||
         role === 'owner'
       );
+    },
+    onlyViewITSales() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase().trim();
+      const role = (u.role || '').toLowerCase().trim();
+      const desig = (u.designation || '').toLowerCase().trim();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      const normRole = role.replace(/[\s_-]+/g, '');
+      const normDesig = desig.replace(/[\s_-]+/g, '');
+
+      const isSales = (
+        normDept === 'itsales' ||
+        dept === 'it sales' ||
+        dept === 'it_sales' ||
+        dept === 'it-sales' ||
+        (normDept.includes('it') && (normDept.includes('sale') || normDept.includes('sales'))) ||
+        (normDesig.includes('it') && (normDesig.includes('sale') || normDesig.includes('sales')))
+      );
+
+      const isOwnerOrAdmin = (
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        normRole === 'owner' ||
+        normRole === 'admin' ||
+        u.role === 'admin'
+      );
+
+      return Boolean(isSales || isOwnerOrAdmin);
     },
     canViewITProduct() {
       if (this.onlyViewITLead || this.onlyViewITTeam) return true;
@@ -722,15 +789,21 @@ export default {
       } else {
         this.loadUserFromStorage();
       }
+    },
+
+    toggleMobileSidebar() {
+      this.isMobileOpen = !this.isMobileOpen;
     }
   },
 
   created() {
     window.addEventListener("auth-change", this.handleAuthChange);
+    window.addEventListener("toggle-employee-sidebar", this.toggleMobileSidebar);
   },
 
   beforeUnmount() {
     window.removeEventListener("auth-change", this.handleAuthChange);
+    window.removeEventListener("toggle-employee-sidebar", this.toggleMobileSidebar);
   },
 
   async mounted() {
@@ -766,14 +839,29 @@ export default {
 </script>
 
 <style scoped>
+/* Sidebar Root Container */
+.sidebar-root {
+  width: 260px;
+  min-width: 260px;
+  flex-shrink: 0;
+  position: relative;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 40;
+}
+
+.sidebar-root.is-collapsed {
+  width: 80px;
+  min-width: 80px;
+}
+
 /* Layout */
 .layout {
   display: flex;
-  position: sticky;
-  background: #f4f6fb;
+  background: transparent;
+  width: 100%;
 }
 
-/* Sidebar */
+/* Sidebar - Fixed on screen, never scrolls when body scrolls */
 .sidebar {
   width: 260px;
   color: var(--text);
@@ -781,16 +869,16 @@ export default {
   flex-direction: column;
   border-radius: 20px;
   position: fixed;
-  top: 95px;
+  top: 96px;
   left: 22px;
-  height: 86vh;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
+  height: calc(100vh - 116px);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  z-index: 100;
+  z-index: 99;
 }
 
 /* Collapsed sidebar */
@@ -1155,6 +1243,12 @@ export default {
 
 /* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 768px) {
+  .sidebar-root {
+    width: 0 !important;
+    min-width: 0 !important;
+    flex-shrink: 1 !important;
+  }
+
   .sidebar {
     position: fixed;
     top: 0;

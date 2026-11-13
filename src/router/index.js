@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { checkInactivity } from '../utils/sessionTimeout.js'
+import NotFound from '../views/NotFound.vue'
 import AuthForm from '../views/AuthForm.vue'
 import Dashboard from '../views/Dashboard.vue'
 import Employee from '../views/ManageEmp.vue'
@@ -106,10 +107,17 @@ const routes = [
     }
   },
   {
-    path: '/meeting/:id',
+    path: '/meet/:id',
+    alias: ['/meeting/:id', '/room/:id', '/join/:id'],
     name: 'MeetingRoom',
     component: () => import('../views/MeetingRoom.vue'),
-    meta: { requiresAuth: true, hideBell: true, hideMenu: true, hideHeader: true }
+    meta: {
+      public: true,
+      requiresAuth: false,
+      hideBell: true,
+      hideMenu: true,
+      hideHeader: true
+    }
   },
 
   { path: '/ScheduleMeeting', name: 'ScheduleMeeting', component: ScheduleMeeting, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true } },
@@ -136,6 +144,13 @@ const routes = [
     path: '/performance',
     name: 'Performance',
     component: PerformancePage,
+    meta: { requiresAuth: true, hideBell: true, hideMenu: true }
+  },
+  {
+    path: '/revenue-analytics',
+    alias: ['/revenue', '/financial-analytics'],
+    name: 'RevenueAnalytics',
+    component: () => import('../views/RevenueAnalytics.vue'),
     meta: { requiresAuth: true, hideBell: true, hideMenu: true }
   },
   { path: '/employee/performance', name: 'EmployeePerformance', component: PerformancePage, meta: { requiresAuth: true, hideBell: true, hideMenu: true } },
@@ -177,7 +192,10 @@ const routes = [
 
   {
     path: '/employee/quotations',
-    component: () => import('@/views/ViewAllQuotations.vue')
+    alias: ['/quotations', '/all-quotations', '/employee/all-quotations', '/quotations-list'],
+    name: 'ViewAllQuotations',
+    component: () => import('@/views/ViewAllQuotations.vue'),
+    meta: { requiresAuth: true }
   },
 
   { path: '/managedepartments', name: 'ManageDepartments', component: ManageDepartments, meta: { requiresAuth: true, adminOnly: true, hideBell: true, hideMenu: true } },
@@ -202,9 +220,9 @@ const routes = [
   { path: '/employee/empattendance', name: 'empattendance', component: EmpAttendance, meta: { requiresAuth: true } },
   { path: '/employee/archcalendar', name: 'ArchCalendarEmp', component: ArchCalendarEmp, meta: { requiresAuth: true } },
   { path: '/employee/viewkra', name: 'ViewKra', component: ViewKra, meta: { requiresAuth: true } },
-  { path: '/employee/amc-visits', name: 'AmcVisitsPage', component: AmcVisitsPage, meta: { requiresAuth: true } },
-  { path: '/employee/service-orders', name: 'ServiceOrdersPage', component: ServiceOrdersPage, meta: { requiresAuth: true } },
-  { path: '/employee/material-supply', name: 'MaterialSupplyPage', component: MaterialSupplyPage, meta: { requiresAuth: true } },
+  { path: '/employee/amc-visits', alias: ['/employee/amc-visits-page', '/amc-visits', '/amc'], name: 'AmcVisitsPage', component: AmcVisitsPage, meta: { requiresAuth: true } },
+  { path: '/employee/service-orders', alias: ['/employee/service-orders-page', '/service-orders', '/service-orders-page'], name: 'ServiceOrdersPage', component: ServiceOrdersPage, meta: { requiresAuth: true } },
+  { path: '/employee/material-supply', alias: ['/employee/material-supply-orders', '/material-supply', '/material-supply-orders'], name: 'MaterialSupplyPage', component: MaterialSupplyPage, meta: { requiresAuth: true } },
   { path: '/employee/siteownership', name: 'SiteOwnership', component: SiteOwnership, meta: { requiresAuth: true } },
   { path: '/employee/site-ownership', name: 'SiteOwnershipHyphen', component: SiteOwnership, meta: { requiresAuth: true } },
   { path: '/employee/report', name: 'Report', component: Report, meta: { requiresAuth: true } },
@@ -221,7 +239,7 @@ const routes = [
     path: '/employee/followup',
     name: 'FollowUp',
     component: FollowUp,
-    meta: { requiresAuth: true, hideBell: true, hideHeader: true }
+    meta: { requiresAuth: true, hideBell: true, hideHeader: true, hideSidebar: true, hideMenu: true }
   },
   { path: '/employee/myleavebalance', name: 'MyLeaveBalance', component: MyLeaveBalance, meta: { requiresAuth: true } },
   {
@@ -240,12 +258,33 @@ const routes = [
   { path: '/employee/mydsi', name: 'MyDsi', component: MyDsi, meta: { requiresAuth: true } },
   { path: '/employee/help', name: 'Help', component: Help, meta: { requiresAuth: true } },
   { path: '/employee/empworkreport', name: 'EmpWorkReport', component: EmpWorkReport, meta: { requiresAuth: true } },
-  { path: '/employee/myprofile', name: 'MyProfile', component: MyProfile },
+  { path: '/employee/lead-management', alias: ['/lead-management', '/employee/leads', '/leads'], name: 'LeadManagement', component: () => import('../views/employee/LeadManagement.vue'), meta: { requiresAuth: true, hideMenu: true, hideSidebar: true } },
+  { path: '/employee/lead-details', alias: ['/lead-details', '/employee/lead-360'], name: 'LeadDetails', component: () => import('../views/employee/LeadDetails.vue'), meta: { requiresAuth: true, hideMenu: true, hideSidebar: true } },
+  { path: '/employee/daily-sales-report', alias: ['/daily-sales-report', '/employee/sales-report', '/today-sales-report', '/daily-report'], name: 'DailySalesReport', component: () => import('../views/employee/DailySalesReport.vue'), meta: { requiresAuth: true, hideMenu: true, hideSidebar: true } },
+  { path: '/employee/client-quotations', alias: ['/client-quotations'], name: 'ClientQuotations', component: () => import('../views/employee/ClientQuotations.vue'), meta: { requiresAuth: true, hideMenu: true } },
+  { path: '/employee/myprofile', alias: ['/myprofile', '/profile', '/employee/profile', '/employee/MyProfile'], name: 'MyProfile', component: MyProfile, meta: { requiresAuth: true } },
   {
     path: '/quotation-report',
     name: 'QuotationReport',
     component: QuotationReport,
     meta: { requiresAuth: true, hideBell: true, hideMenu: true, hideHeader: true }
+  },
+  {
+    path: '/404',
+    name: 'NotFound',
+    component: NotFound,
+    meta: {
+      public: true,
+      requiresAuth: false,
+      hideBell: true,
+      hideMenu: true,
+      hideHeader: true,
+      hideSidebar: true
+    }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/404'
   }
 ]
 
@@ -255,6 +294,11 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // If navigating directly to 404, allow immediately
+  if (to.path === '/404') {
+    return next();
+  }
+
   // Check 8-hour inactivity timeout if navigating
   if (to.path !== '/auth' && to.path !== '/') {
     if (checkInactivity()) {
@@ -269,16 +313,53 @@ router.beforeEach((to, from, next) => {
 
   const token = localStorage.getItem('token') || localStorage.getItem('admin_token');
   const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const role = user?.role?.toLowerCase();
+  const role = (user?.role || '').toLowerCase().trim();
+  const dept = (user?.department || '').toLowerCase().trim();
+  const normDept = dept.replace(/[\s_-]+/g, '');
+
+  const isAdmin = role === 'admin' || role === 'super_admin' || role === 'owner' || normDept === 'admin';
+  const isHr = role === 'hr' || normDept === 'hr' || normDept === 'humanresources';
+  const isHrOrAdmin = isAdmin || isHr;
 
   // 🔐 2. Auth-required routes
   if (to.meta.requiresAuth && !token) {
     return next('/auth');
   }
 
-  // 🛑 3. Admin-only routes
-  if (to.meta.adminOnly === true && role !== 'admin') {
-    return next('/auth');
+  // 🛑 3. Admin-only routes (redirect non-admins to /404)
+  if (to.meta.adminOnly === true && !isAdmin) {
+    return next('/404');
+  }
+
+  // 🛑 4. HR / Admin restricted routes:
+  // When logged in as HR or Admin, employee-only personal task / operational pages automatically redirect to 404
+  if (isHrOrAdmin) {
+    const cleanPath = (to.path || '').toLowerCase().replace(/^\/+|\/+$/g, '');
+    const hrForbiddenRoutes = [
+      'employee/mytask',
+      'employee/weeklyworkingschedule',
+      'employee/empattendance',
+      'employee/viewkra',
+      'employee/amc-visits',
+      'employee/service-orders',
+      'employee/material-supply',
+      'employee/siteownership',
+      'employee/site-ownership',
+      'employee/report',
+      'employee/customerregistrations',
+      'employee/literature',
+      'employee/visitschedule',
+      'employee/mobileapplifecycle',
+      'employee/empworkreport',
+      'employee/daily-sales-report',
+      'employee/client-quotations',
+      'employee/mydsi',
+      'employee/viewallpo'
+    ];
+
+    if (hrForbiddenRoutes.some(r => cleanPath === r || cleanPath.startsWith(r + '/'))) {
+      return next('/404');
+    }
   }
 
   next();

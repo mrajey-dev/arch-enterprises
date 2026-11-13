@@ -1,6 +1,5 @@
 <template>
   <div class="layout">
-
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
@@ -10,183 +9,307 @@
         v-show="!isMobile || !isSidebarVisible"
         :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
       >
-        <!-- Mobile Header -->
+        <!-- 📱 Mobile Top Header -->
         <div class="mobile-header" v-if="isMobile">
-          
           <div class="mobile-title">
             <i class="fas fa-calendar-alt"></i>
             <span>Leave Applications</span>
           </div>
-          <div class="mobile-stats-badge">
-            <span>{{ leaveRequests.length }}</span>
+          <div class="mobile-header-actions">
+            <button class="btn-mobile-apply" @click="$router.push('/employee/applyleave')">
+              <i class="fas fa-plus"></i> Apply
+            </button>
+            <button class="btn-mobile-menu" @click="toggleSidebar" aria-label="Toggle menu">
+              <i class="fas fa-bars"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Desktop Header -->
-        <div class="content-header-modern" v-else>
-          <div class="header-left desktop-only">
-            <div class="title-icon">
-              <i class="fas fa-calendar-alt"></i>
+        <!-- 🏢 Modern Enterprise Header Banner -->
+        <header class="executive-header">
+          <div class="header-main">
+            <div class="header-badge-row">
+              <span class="portal-badge-pill">
+                <span class="pulse-indicator"></span>
+                <span>EMPLOYEE LEAVE PORTAL</span>
+              </span>
+              <span class="status-meta-pill">
+                <i class="fas fa-shield-alt"></i> Self Service
+              </span>
             </div>
-            <div>
-              <h1>Leave Applications</h1>
-              <p class="subtitle-modern">Track and manage your leave requests</p>
+            <div class="title-with-icon">
+              <div class="header-icon-box">
+                <i class="fas fa-calendar-alt"></i>
+              </div>
+              <div>
+                <h1 class="header-title">Leave Applications</h1>
+                <p class="header-subtitle">Track and manage your leave requests, check approvals and balances</p>
+              </div>
             </div>
           </div>
-          <div class="stats-badge-header">
-            <i class="fas fa-chart-line"></i>
-            <span>{{ leaveRequests.length }} Applications</span>
+
+          <div class="header-actions">
+            <button class="btn-secondary-action" @click="$router.push('/employee/myleavebalance')">
+              <i class="fas fa-balance-scale"></i>
+              <span>My Balance</span>
+            </button>
+            <button class="btn-primary-action" @click="$router.push('/employee/applyleave')">
+              <i class="fas fa-plus"></i>
+              <span>Apply for Leave</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- ⚠️ Probation Period Warning Banner -->
+        <div v-if="isProbation" class="probation-warning-banner">
+          <div class="probation-banner-icon">
+            <i class="fas fa-user-clock"></i>
+          </div>
+          <div class="probation-banner-content">
+            <div class="probation-banner-header">
+              <span class="probation-tag"><i class="fas fa-shield-alt"></i> Probation Period Active</span>
+              <span class="probation-days-badge"><i class="fas fa-hourglass-half"></i> {{ probationDaysLeft }} Days Remaining</span>
+            </div>
+            <h3 class="probation-title">Probation Status: Leave Applications Restricted</h3>
+            <p class="probation-desc">
+              You are currently within your 90-day probation period (ending on <strong>{{ probationEndDateFormatted }}</strong>). As per company policy, leave applications cannot be submitted. If you forget to mark attendance, it will be marked as <strong>Unpaid Leave</strong>, and taking a half day will deduct <strong>half-day salary</strong>.
+            </p>
           </div>
         </div>
 
-        <!-- Stats Bar - Mobile Optimized -->
-        <div class="stats-bar">
-          <div class="stat-card pending" @click="filterByStatus('Pending')">
-            <i class="fas fa-clock"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ pendingCount }}</span>
-              <span class="stat-label">Pending</span>
+        <!-- 📊 Executive Metric Cards -->
+        <section class="metrics-grid">
+          <!-- All Applications -->
+          <div
+            class="metric-card"
+            :class="{ 'card-active': statusFilter === '' }"
+            @click="filterByStatus('')"
+          >
+            <div class="metric-header">
+              <span class="metric-title">Total Requests</span>
+              <div class="metric-icon-wrap icon-all">
+                <i class="fas fa-layer-group"></i>
+              </div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ leaveRequests.length }}</span>
+              <span class="metric-tag tag-all">All applications</span>
             </div>
           </div>
-          <div class="stat-card approved" @click="filterByStatus('Approved')">
-            <i class="fas fa-check-circle"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ approvedCount }}</span>
-              <span class="stat-label">Approved</span>
+
+          <!-- Pending Requests -->
+          <div
+            class="metric-card card-pending"
+            :class="{ 'card-active': statusFilter === 'Pending' }"
+            @click="filterByStatus('Pending')"
+          >
+            <div class="metric-header">
+              <span class="metric-title">Pending Approval</span>
+              <div class="metric-icon-wrap icon-pending">
+                <i class="fas fa-clock"></i>
+              </div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ pendingCount }}</span>
+              <span class="metric-tag tag-pending">Awaiting review</span>
             </div>
           </div>
-          <div class="stat-card rejected" @click="filterByStatus('Rejected')">
-            <i class="fas fa-times-circle"></i>
-            <div class="stat-info">
-              <span class="stat-value">{{ rejectedCount }}</span>
-              <span class="stat-label">Rejected</span>
+
+          <!-- Approved Requests -->
+          <div
+            class="metric-card card-approved"
+            :class="{ 'card-active': statusFilter === 'Approved' }"
+            @click="filterByStatus('Approved')"
+          >
+            <div class="metric-header">
+              <span class="metric-title">Approved Leaves</span>
+              <div class="metric-icon-wrap icon-approved">
+                <i class="fas fa-check-circle"></i>
+              </div>
             </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ approvedCount }}</span>
+              <span class="metric-tag tag-approved">Confirmed requests</span>
+            </div>
+          </div>
+
+          <!-- Rejected Requests -->
+          <div
+            class="metric-card card-rejected"
+            :class="{ 'card-active': statusFilter === 'Rejected' }"
+            @click="filterByStatus('Rejected')"
+          >
+            <div class="metric-header">
+              <span class="metric-title">Rejected Requests</span>
+              <div class="metric-icon-wrap icon-rejected">
+                <i class="fas fa-times-circle"></i>
+              </div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ rejectedCount }}</span>
+              <span class="metric-tag tag-rejected">Declined leaves</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 🏷️ Search & Filters Control Strip -->
+        <div class="table-controls-bar">
+          <div class="search-box-wrap">
+            <i class="fas fa-search search-icon"></i>
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Search by reason, leave type, or date..."
+              class="search-input"
+            />
+            <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="filter-pills-wrap">
+            <button
+              class="filter-tab-pill"
+              :class="{ active: statusFilter === '' }"
+              @click="statusFilter = ''"
+            >
+              <span>All Status</span>
+              <span class="pill-count">{{ leaveRequests.length }}</span>
+            </button>
+            <button
+              class="filter-tab-pill pill-pending"
+              :class="{ active: statusFilter === 'Pending' }"
+              @click="statusFilter = 'Pending'"
+            >
+              <i class="fas fa-clock"></i>
+              <span>Pending</span>
+              <span class="pill-count" v-if="pendingCount > 0">{{ pendingCount }}</span>
+            </button>
+            <button
+              class="filter-tab-pill pill-approved"
+              :class="{ active: statusFilter === 'Approved' }"
+              @click="statusFilter = 'Approved'"
+            >
+              <i class="fas fa-check-circle"></i>
+              <span>Approved</span>
+              <span class="pill-count" v-if="approvedCount > 0">{{ approvedCount }}</span>
+            </button>
+            <button
+              class="filter-tab-pill pill-rejected"
+              :class="{ active: statusFilter === 'Rejected' }"
+              @click="statusFilter = 'Rejected'"
+            >
+              <i class="fas fa-times-circle"></i>
+              <span>Rejected</span>
+              <span class="pill-count" v-if="rejectedCount > 0">{{ rejectedCount }}</span>
+            </button>
           </div>
         </div>
 
-        <!-- Filter Bar - Mobile -->
-        <div class="filter-bar-mobile" v-if="isMobile">
-          <div class="filter-group-mobile">
-            <i class="fas fa-search"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search leaves..." class="filter-input-mobile" />
-          </div>
-          <select v-model="statusFilter" class="filter-select-mobile">
-            <option value="">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-        </div>
-
-        <!-- Leave Table -->
+        <!-- 📋 Master Leave Table Card -->
         <div class="table-wrapper-premium">
-          <div class="table-header">
-            <div class="section-title-modern">
-              <i class="fas fa-list-ul"></i>
-              <span>Leave Requests</span>
-              <span class="record-count-mobile" v-if="isMobile">{{ filteredLeaves.length }}</span>
-            </div>
-            <div class="table-info desktop-only">
-              <i class="fas fa-file-alt"></i>
-              <span>{{ leaveRequests.length }} records</span>
-            </div>
-          </div>
-
-          <!-- Mobile Card View -->
-          <div class="mobile-cards" v-if="isMobile">
-            <div v-for="leave in filteredLeaves" :key="leave.id" class="leave-card">
-              <div class="card-header">
-                <div class="card-title">
-                  <span :class="['leave-type-badge-mobile', getLeaveTypeClass(leave.leaveType)]">
-                    <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
-                    {{ leave.leaveType }}
-                  </span>
-                  <span :class="['status-badge-mobile', getStatusClass(leave.status)]">
-                    <i :class="getStatusIcon(leave.status)"></i>
-                    {{ leave.status }}
-                  </span>
-                </div>
+          <div class="table-card-header">
+            <div class="tch-left">
+              <div class="tch-icon">
+                <i class="fas fa-list-ul"></i>
               </div>
-              <div class="card-body">
-                <div class="card-row">
-                  <span class="card-label">Reason</span>
-                  <span class="card-value reason-text">{{ leave.reason || '—' }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label">From</span>
-                  <span class="card-value"><i class="fas fa-calendar-day"></i> {{ formatDate(leave.fromDate) }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label">To</span>
-                  <span class="card-value"><i class="fas fa-calendar-day"></i> {{ formatDate(leave.toDate) }}</span>
-                </div>
-                <div class="card-row">
-                  <span class="card-label">Duration</span>
-                  <span class="card-value duration-badge-mobile">
-                    <i class="fas fa-clock"></i> {{ calculateDuration(leave.fromDate, leave.toDate) }} days
-                  </span>
-                </div>
+              <div>
+                <h3 class="tch-title">Leave History & Records</h3>
+                <span class="tch-sub" v-if="filteredLeaves.length !== leaveRequests.length">
+                  Showing {{ filteredLeaves.length }} of {{ leaveRequests.length }} records
+                </span>
+                <span class="tch-sub" v-else>
+                  Total {{ leaveRequests.length }} records recorded
+                </span>
               </div>
             </div>
 
-            <!-- Mobile Empty State -->
-            <div v-if="filteredLeaves.length === 0" class="empty-state-mobile">
-              <i class="fas fa-calendar-times"></i>
-              <h4>No Leave Applications</h4>
-              <p>{{ searchQuery || statusFilter ? 'No matches found for your filters' : 'You haven\'t submitted any leave requests yet' }}</p>
+            <div class="tch-right">
+              <button class="btn-refresh-table" @click="fetchLeaves" title="Reload requests">
+                <i class="fas fa-sync-alt" :class="{ 'fa-spin': loadingLeaves }"></i>
+                <span>Refresh</span>
+              </button>
             </div>
           </div>
 
           <!-- Desktop Table View -->
-          <div class="table-container" v-else>
+          <div class="table-responsive-wrap">
             <table class="leave-table-premium">
               <thead>
                 <tr>
-                  <th>Leave Type</th>
-                  <th>Reason</th>
-                  <th>From Date</th>
-                  <th>To Date</th>
-                  <th>Duration</th>
-                  <th>Status</th>
+                  <th class="col-type">LEAVE TYPE</th>
+                  <th class="col-reason">REASON / NOTES</th>
+                  <th class="col-date">FROM DATE</th>
+                  <th class="col-date">TO DATE</th>
+                  <th class="col-duration">DURATION</th>
+                  <th class="col-status">STATUS</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="leave in filteredLeaves" :key="leave.id" class="leave-row">
-                  <td class="leave-type-cell">
+                  <!-- Leave Type Badge -->
+                  <td class="col-type">
                     <span :class="['leave-type-badge', getLeaveTypeClass(leave.leaveType)]">
-                      <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
-                      {{ leave.leaveType }}
+                      <span class="lt-icon-wrap">
+                        <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
+                      </span>
+                      <span class="lt-name">{{ leave.leaveType }}</span>
                     </span>
                   </td>
-                  <td class="reason-cell" :title="leave.reason">
-                    {{ truncateText(leave.reason, 60) }}
+
+                  <!-- Reason -->
+                  <td class="col-reason" :title="leave.reason">
+                    <div class="reason-content">
+                      <span class="reason-text">{{ leave.reason || 'No description provided' }}</span>
+                    </div>
                   </td>
-                  <td class="date-cell">
-                    <i class="fas fa-calendar-day"></i> {{ formatDate(leave.fromDate) }}
+
+                  <!-- From Date -->
+                  <td class="col-date">
+                    <div class="date-chip">
+                      <i class="fas fa-calendar-day"></i>
+                      <span>{{ formatDate(leave.fromDate) }}</span>
+                    </div>
                   </td>
-                  <td class="date-cell">
-                    <i class="fas fa-calendar-day"></i> {{ formatDate(leave.toDate) }}
+
+                  <!-- To Date -->
+                  <td class="col-date">
+                    <div class="date-chip">
+                      <i class="fas fa-calendar-day"></i>
+                      <span>{{ formatDate(leave.toDate) }}</span>
+                    </div>
                   </td>
-                  <td class="duration-cell">
+
+                  <!-- Duration -->
+                  <td class="col-duration">
                     <span class="duration-badge">
-                      <i class="fas fa-clock"></i> {{ calculateDuration(leave.fromDate, leave.toDate) }} days
+                      <i class="fas fa-clock"></i>
+                      <span>{{ calculateDuration(leave.fromDate, leave.toDate) }} {{ calculateDuration(leave.fromDate, leave.toDate) > 1 ? 'Days' : 'Day' }}</span>
                     </span>
                   </td>
-                  <td>
+
+                  <!-- Status -->
+                  <td class="col-status">
                     <span :class="['status-badge-premium', getStatusClass(leave.status)]">
+                      <span class="status-pulse-dot"></span>
                       <i :class="getStatusIcon(leave.status)"></i>
-                      {{ leave.status }}
+                      <span>{{ leave.status }}</span>
                     </span>
                   </td>
                 </tr>
 
-                <!-- Desktop Empty State -->
+                <!-- Empty State -->
                 <tr v-if="filteredLeaves.length === 0" class="empty-row">
                   <td colspan="6">
                     <div class="empty-state-premium">
-                      <i class="fas fa-calendar-times"></i>
-                      <h4>No Leave Applications</h4>
-                      <p>You haven't submitted any leave requests yet</p>
+                      <div class="empty-icon-box">
+                        <i class="fas fa-calendar-check"></i>
+                      </div>
+                      <h4>No Leave Applications Found</h4>
+                      <p>{{ searchQuery || statusFilter ? 'No leave records match your active search filters.' : 'You have not submitted any leave applications yet.' }}</p>
+                      <button v-if="!searchQuery && !statusFilter" class="btn-empty-apply" @click="$router.push('/employee/applyleave')">
+                        <i class="fas fa-plus"></i> Submit Your First Application
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -209,6 +332,7 @@ import {
 } from "@/utils/toast.js";
 
 export default {
+  name: "LeaveApplicationsEmp",
   components: {
     Sidebar
   },
@@ -216,34 +340,49 @@ export default {
     return {
       user: null,
       leaveRequests: [],
+      loadingLeaves: false,
       isMobile: false,
       isSidebarVisible: true,
       searchQuery: '',
-      statusFilter: '',
-      selectedDocumentType: '',
-      typedDocuments: {},
-      showPassword: true,
-      users: [],
-      showRegister: false,
-      isEditMode: false,
-      editingId: null,
-      registerForm: {
-        id: '',
-        empId: '',
-        username: '',
-        email: '',
-        gender: '',
-        department: '',
-        city: '',
-        address: '',
-        mobile: '',
-        keyResponsibility: '',
-        password: '',
-        documents: [],
-      }
+      statusFilter: ''
     }
   },
   computed: {
+    isProbation() {
+      if (this.user && this.user.is_probation !== undefined) {
+        return Boolean(this.user.is_probation);
+      }
+      if (this.user && this.user.created_at) {
+        const diff = Math.floor((new Date() - new Date(this.user.created_at)) / (1000 * 60 * 60 * 24));
+        return diff < 90;
+      }
+      return false;
+    },
+    probationDaysLeft() {
+      if (this.user && this.user.probation_days_left !== undefined) {
+        return this.user.probation_days_left;
+      }
+      if (this.user && this.user.created_at) {
+        const diff = Math.floor((new Date() - new Date(this.user.created_at)) / (1000 * 60 * 60 * 24));
+        return Math.max(0, 90 - diff);
+      }
+      return 0;
+    },
+    probationEndDateFormatted() {
+      if (this.user && this.user.probation_end_date) {
+        return new Date(this.user.probation_end_date).toLocaleDateString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+      }
+      if (this.user && this.user.created_at) {
+        const d = new Date(this.user.created_at);
+        d.setDate(d.getDate() + 90);
+        return d.toLocaleDateString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+      }
+      return '90 days from joining';
+    },
     pendingCount() {
       return this.leaveRequests.filter(l => l.status === 'Pending').length;
     },
@@ -258,11 +397,13 @@ export default {
       
       // Search filter
       if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
+        const query = this.searchQuery.toLowerCase().trim();
         filtered = filtered.filter(leave => 
-          leave.leaveType.toLowerCase().includes(query) ||
+          (leave.leaveType && leave.leaveType.toLowerCase().includes(query)) ||
           (leave.reason && leave.reason.toLowerCase().includes(query)) ||
-          leave.status.toLowerCase().includes(query)
+          (leave.status && leave.status.toLowerCase().includes(query)) ||
+          (leave.fromDate && leave.fromDate.includes(query)) ||
+          (leave.toDate && leave.toDate.includes(query))
         );
       }
       
@@ -278,42 +419,37 @@ export default {
     filterByStatus(status) {
       this.statusFilter = this.statusFilter === status ? '' : status;
     },
-    truncateText(text, length) {
-      if (!text) return '—';
-      return text.length > length ? text.substring(0, length) + '...' : text;
-    },
     calculateDuration(fromDate, toDate) {
+      if (!fromDate || !toDate) return 1;
       const from = new Date(fromDate);
       const to = new Date(toDate);
       const diffTime = Math.abs(to - from);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      return diffDays;
+      return isNaN(diffDays) ? 1 : diffDays;
     },
     getStatusClass(status) {
-      switch (status) {
-        case 'Approved': return 'approved';
-        case 'Rejected': return 'rejected';
-        default: return 'pending';
-      }
+      const s = (status || '').toLowerCase();
+      if (s === 'approved') return 'approved';
+      if (s === 'rejected') return 'rejected';
+      return 'pending';
     },
     getStatusIcon(status) {
-      switch (status) {
-        case 'Approved': return 'fas fa-check-circle';
-        case 'Rejected': return 'fas fa-times-circle';
-        default: return 'fas fa-clock';
-      }
+      const s = (status || '').toLowerCase();
+      if (s === 'approved') return 'fas fa-check-circle';
+      if (s === 'rejected') return 'fas fa-times-circle';
+      return 'fas fa-clock';
     },
     getLeaveTypeClass(leaveType) {
       const type = (leaveType || '').toLowerCase();
-      if (type.includes('sick')) return 'sick';
-      if (type.includes('casual') || type === 'cl') return 'casual';
-      if (type.includes('pl') || type.includes('privilege') || type.includes('paid')) return 'pl';
-      if (type.includes('half')) return 'halfday';
-      return 'default';
+      if (type.includes('sick')) return 'type-sick';
+      if (type.includes('casual') || type === 'cl') return 'type-casual';
+      if (type.includes('pl') || type.includes('privilege') || type.includes('paid')) return 'type-pl';
+      if (type.includes('half')) return 'type-halfday';
+      return 'type-default';
     },
     getLeaveTypeIcon(leaveType) {
       const type = (leaveType || '').toLowerCase();
-      if (type.includes('sick')) return 'fas fa-thermometer-half';
+      if (type.includes('sick')) return 'fas fa-stethoscope';
       if (type.includes('casual') || type === 'cl') return 'fas fa-coffee';
       if (type.includes('pl') || type.includes('privilege') || type.includes('paid')) return 'fas fa-star';
       if (type.includes('half')) return 'fas fa-adjust';
@@ -340,191 +476,31 @@ export default {
         this.$router.push('/auth');
       }
     },
-    async updateLeaveStatus(leaveId, status) {
-      try {
-        const token = localStorage.getItem('token');
-        await axios.patch(
-          `https://employees.archenterprises.co.in/api/api/leave-requests/${leaveId}/status`,
-          { status },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toastSuccess('Status updated successfully!');
-        this.fetchLeaves();
-      } catch (error) {
-        console.error('Status update failed', error);
-        toastError('Could not update status – please try again.');
-      }
-    },
-    approveLeave(leave) { this.updateLeaveStatus(leave.id, 'Approved'); },
-    rejectLeave(leave) { this.updateLeaveStatus(leave.id, 'Rejected'); },
     async fetchLeaves() {
+      this.loadingLeaves = true;
       try {
         const token = localStorage.getItem('token');
         const { data } = await axios.get('https://employees.archenterprises.co.in/api/api/leave-requests', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (this.user && this.user.name) {
-          this.leaveRequests = data.filter(leave => leave.name === this.user.name);
+          this.leaveRequests = (data || []).filter(leave => leave.name === this.user.name);
         } else {
-          this.leaveRequests = [];
+          this.leaveRequests = data || [];
         }
       } catch (error) {
         console.error('Failed to fetch leave requests:', error);
         toastError('Error loading leave requests.');
+      } finally {
+        this.loadingLeaves = false;
       }
     },
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
-      if (this.isMobile) {
-        this.isSidebarVisible = false;
-      } else {
-        this.isSidebarVisible = true;
-      }
+      this.isMobile = window.innerWidth <= 992;
+      this.isSidebarVisible = !this.isMobile;
     },
     toggleSidebar() {
       this.isSidebarVisible = !this.isSidebarVisible;
-    },
-    handleTypedFileUpload(event) {
-      const file = event.target.files[0];
-      if (this.selectedDocumentType && file) {
-        this.typedDocuments[this.selectedDocumentType] = file;
-        this.registerForm.documents = Object.values(this.typedDocuments);
-      } else {
-        toastWarning('Please select a document type before uploading.');
-      }
-    },
-    togglePasswordVisibility() {
-      this.showPassword = !this.showPassword;
-    },
-    generatePassword() {
-      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
-      let password = '';
-      for (let i = 0; i < 12; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      this.registerForm.password = password;
-    },
-    goTo(route) {
-      this.$router.push(`/${route}`);
-    },
-    openRegisterForm() {
-      this.resetForm();
-      this.showRegister = true;
-    },
-    closeRegisterForm() {
-      this.showRegister = false;
-      this.resetForm();
-    },
-    async handleRegister() {
-      try {
-        const formData = new FormData();
-        for (const key in this.registerForm) {
-          if (key === 'documents') {
-            this.registerForm.documents.forEach((file) => formData.append('documents', file));
-          } else {
-            formData.append(key, this.registerForm[key]);
-          }
-        }
-        const url = this.isEditMode
-          ? `https://employees.archenterprises.co.in/api/api/users/${this.editingId}`
-          : 'https://employees.archenterprises.co.in/api/api/register';
-        const method = this.isEditMode ? 'put' : 'post';
-        await axios({
-          method,
-          url,
-          data: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        toastSuccess(this.isEditMode ? 'User updated successfully!' : 'Registration successful!');
-        this.showRegister = false;
-        this.resetForm();
-        this.fetchUsers();
-      } catch (error) {
-        console.error('Register error:', error);
-        if (error.response && error.response.data && error.response.data.message) {
-          toastError(`Operation failed`);
-        } else {
-          toastError('Operation failed due to network or server error.');
-        }
-      }
-    },
-    handleFileUpload(event) {
-      this.registerForm.documents = Array.from(event.target.files);
-    },
-    resetForm() {
-      this.registerForm = {
-        id: '',
-        empId: '',
-        username: '',
-        email: '',
-        gender: '',
-        department: '',
-        city: '',
-        address: '',
-        mobile: '',
-        keyResponsibility: '',
-        password: '',
-        documents: [],
-      };
-      this.isEditMode = false;
-      this.editingId = null;
-    },
-    async fetchUsers() {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('https://employees.archenterprises.co.in/api/api/users', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        this.users = response.data;
-      } catch (error) {
-        toastError('Failed to fetch users');
-        console.error(error);
-      }
-    },
-    editUser(user) {
-      this.registerForm = {
-        id: user.id || '',
-        empId: user.empId || '',
-        username: user.username || '',
-        email: user.email || '',
-        gender: user.gender || '',
-        department: user.department || '',
-        city: user.city || '',
-        address: user.address || '',
-        mobile: user.mobile || '',
-        keyResponsibility: user.keyResponsibility || '',
-        password: '',
-        documents: []
-      };
-      this.isEditMode = true;
-      this.editingId = user.id;
-      this.showRegister = true;
-    },
-    async deleteUser(id) {
-      if (confirm('Are you sure you want to delete this user?')) {
-        try {
-          await axios.delete(`https://employees.archenterprises.co.in/api/api/users/${encodeURIComponent(id)}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
-          this.fetchUsers();
-          toastSuccess('User deleted successfully!');
-        } catch (error) {
-          toastError('Failed to delete user.');
-          console.error(error);
-        }
-      }
-    },
-    logout() {
-      const token = localStorage.getItem('token');
-      axios.post('https://employees.archenterprises.co.in/api/api/logout', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).finally(() => {
-        localStorage.removeItem('token');
-        this.$router.push('/auth');
-      });
     }
   },
   mounted() {
@@ -534,7 +510,6 @@ export default {
     if (!token) {
       this.$router.push('/auth');
     } else {
-      this.fetchUsers();
       this.fetchUserInfo();
     }
   },
@@ -546,813 +521,857 @@ export default {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Variables */
-:root {
-  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
-  --primary-color: #667eea;
-  --dark: #1a1a2e;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* ════════ Master Page Layout ════════ */
 .layout {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app, #f8fafc);
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text, #0f172a);
 }
 
-/* Main Content */
 .main-content {
   display: flex;
-  gap: 20px;
-  padding: 20px;
-  min-height: 100vh;
+  flex: 1;
+  padding: 20px 28px;
+  gap: 24px;
 }
 
 .content {
   flex: 1;
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  margin-top: 0;
-  overflow-x: auto;
+  min-width: 0;
+  background: transparent;
+  overflow-x: hidden;
 }
 
-/* Mobile Header */
+/* ════════ Mobile Top Header ════════ */
 .mobile-header {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: white;
-  border-radius: 16px;
+  background: #ffffff;
+  border-radius: 10px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark);
-  padding: 8px;
-  cursor: pointer;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 .mobile-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--dark);
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 .mobile-title i {
-  color: var(--primary-color);
+  color: var(--primary, #0d9488);
 }
 
-.mobile-stats-badge {
-  background: var(--primary);
-  color: white;
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-mobile-apply {
+  background: #0d9488;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-mobile-menu {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-/* Content Header */
-.content-header-modern {
+/* ════════ Top Executive Banner ════════ */
+.executive-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-  gap: 16px;
+  gap: 20px;
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.header-left {
+.header-badge-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.title-icon {
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 18px;
+.portal-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0d9488;
+  letter-spacing: 0.6px;
+}
+
+.pulse-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+.status-meta-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-meta-pill i {
+  color: #10b981;
+}
+
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 24px;
+  color: #ffffff;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.22);
 }
 
-.content-header-modern h1 {
-  font-size: 28px;
-  font-weight: 700;
-  background: var(--primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.header-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: #64748b;
   margin: 0;
 }
 
-.subtitle-modern {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.stats-badge-header {
-  display: flex;
+.btn-secondary-action {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  border-radius: 40px;
-  font-size: 14px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--primary-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-/* Stats Bar */
-.stats-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  margin-bottom: 28px;
+.btn-secondary-action:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
-.stat-card {
+.btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+}
+
+.btn-primary-action:hover {
+  opacity: 0.94;
+  transform: translateY(-1px);
+}
+
+/* ════════ Probation Warning Banner ════════ */
+.probation-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.06);
+}
+
+.probation-banner-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #d97706;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 20px;
-  transition: all 0.3s ease;
-  cursor: pointer;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card:active {
-  transform: scale(0.97);
-}
-
-.stat-card.pending {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-}
-.stat-card.pending i { color: #d97706; }
-
-.stat-card.approved {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-}
-.stat-card.approved i { color: #065f46; }
-
-.stat-card.rejected {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-}
-.stat-card.rejected i { color: #991b1b; }
-
-.stat-card i {
-  font-size: 32px;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a2e;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* Filter Bar - Mobile */
-.filter-bar-mobile {
-  display: none;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 16px;
-}
-
-.filter-group-mobile {
-  position: relative;
+.probation-banner-content {
   flex: 1;
 }
 
-.filter-group-mobile i {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-}
-
-.filter-input-mobile {
-  width: 100%;
-  padding: 10px 12px 10px 38px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  background: white;
-  transition: all 0.3s ease;
-}
-
-.filter-input-mobile:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.filter-select-mobile {
-  width: 100%;
-  padding: 10px 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  background: white;
-  appearance: auto;
-}
-
-/* Table Styles */
-.table-wrapper-premium {
-  background: white;
-  border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.section-title-modern {
+.probation-banner-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 600;
-  color: #1a1a2e;
+  margin-bottom: 6px;
 }
 
-.section-title-modern i {
-  color: var(--primary-color);
+.probation-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.record-count-mobile {
-  background: var(--primary);
-  color: white;
-  padding: 2px 10px;
+.probation-days-badge {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.probation-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #78350f;
+  margin: 0 0 4px;
+}
+
+.probation-desc {
+  font-size: 12.5px;
+  color: #92400e;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ════════ KPI Metric Cards ════════ */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
   border-radius: 12px;
-  font-size: 12px;
-  margin-left: 4px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.table-info {
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+.metric-card.card-active {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15), 0 4px 12px -2px rgba(13, 148, 136, 0.1);
+  background: linear-gradient(180deg, #fafefe 0%, #ffffff 100%);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.metric-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.icon-all { background: #f1f5f9; color: #475569; }
+.icon-pending { background: #fef3c7; color: #d97706; }
+.icon-approved { background: #d1fae5; color: #059669; }
+.icon-rejected { background: #fee2e2; color: #dc2626; }
+
+.metric-body {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.metric-number {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.metric-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.tag-all { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+.tag-pending { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+.tag-approved { background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; }
+.tag-rejected { background: #fff1f2; color: #be123c; border: 1px solid #fee2e2; }
+
+/* ════════ Controls Strip ════════ */
+.table-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.search-box-wrap {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 14px;
+  height: 42px;
+  width: 360px;
+  max-width: 100%;
+  transition: all 0.15s ease;
+}
+
+.search-box-wrap:focus-within {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.search-icon {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-right: 10px;
+}
+
+.search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #0f172a;
+  width: 100%;
+}
+
+.clear-search-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 11px;
+}
+
+.clear-search-btn:hover {
+  color: #0f172a;
+}
+
+.filter-pills-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: #6b7280;
+  flex-wrap: wrap;
 }
 
-.table-container {
+.filter-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-tab-pill:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.filter-tab-pill.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.filter-tab-pill.pill-pending.active {
+  background: #d97706;
+  border-color: #d97706;
+  color: #ffffff;
+}
+
+.filter-tab-pill.pill-approved.active {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+.filter-tab-pill.pill-rejected.active {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.pill-count {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.filter-tab-pill.active .pill-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ════════ Master Table Card ════════ */
+.table-wrapper-premium {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+.table-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.tch-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tch-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  color: #0d9488;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.tch-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.tch-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.btn-refresh-table {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-refresh-table:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* ════════ Table Layout ════════ */
+.table-responsive-wrap {
   overflow-x: auto;
 }
 
 .leave-table-premium {
   width: 100%;
   border-collapse: collapse;
+  text-align: left;
 }
 
 .leave-table-premium thead {
   background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .leave-table-premium th {
-  text-align: left;
-  padding: 16px;
-  font-weight: 600;
-  font-size: 13px;
-  color: #6b7280;
-  border-bottom: 2px solid #e5e7eb;
+  padding: 12px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.leave-table-premium tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.leave-table-premium tbody tr:hover {
+  background: #fafbfc;
 }
 
 .leave-table-premium td {
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
+  padding: 14px 18px;
+  font-size: 13px;
+  vertical-align: middle;
 }
 
-.leave-row {
-  transition: all 0.3s ease;
-}
-
-.leave-row:hover {
-  background: #fafbfc;
-}
+/* Column Dimensions */
+.col-type { width: 180px; }
+.col-reason { min-width: 240px; max-width: 380px; }
+.col-date { width: 140px; }
+.col-duration { width: 120px; }
+.col-status { width: 140px; }
 
 /* Leave Type Badge */
 .leave-type-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: 5px 10px;
+  border-radius: 7px;
   font-size: 12px;
   font-weight: 600;
-}
-
-.leave-type-badge.sick {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.leave-type-badge.casual {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.leave-type-badge.pl {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.leave-type-badge.halfday {
-  background: #fed7aa;
-  color: #c2410c;
-}
-
-.leave-type-badge.default {
-  background: #f3e8ff;
-  color: #7e22ce;
-}
-
-/* Reason Cell */
-.reason-cell {
-  max-width: 250px;
   white-space: nowrap;
+}
+
+.lt-icon-wrap {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.type-casual {
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid #ccfbf1;
+}
+.type-casual .lt-icon-wrap { background: rgba(13, 148, 136, 0.15); color: #0d9488; }
+
+.type-sick {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.type-sick .lt-icon-wrap { background: rgba(245, 158, 11, 0.18); color: #d97706; }
+
+.type-pl {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+.type-pl .lt-icon-wrap { background: rgba(124, 58, 237, 0.15); color: #7c3aed; }
+
+.type-halfday {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.type-halfday .lt-icon-wrap { background: rgba(37, 99, 235, 0.15); color: #2563eb; }
+
+.type-default {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+.type-default .lt-icon-wrap { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+
+/* Reason */
+.reason-content {
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #6b7280;
-}
-
-/* Date Cell */
-.date-cell {
-  font-family: monospace;
-  font-size: 13px;
-  color: #6b7280;
   white-space: nowrap;
+  max-width: 360px;
 }
 
-.date-cell i {
-  margin-right: 6px;
-  font-size: 12px;
+.reason-text {
+  color: #334155;
+  font-size: 12.5px;
+  line-height: 1.4;
 }
 
-/* Duration Cell */
-.duration-cell {
-  white-space: nowrap;
-}
-
-.duration-badge {
+/* Dates */
+.date-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  background: #f3f4f6;
-  border-radius: 20px;
-  font-size: 12px;
+  font-size: 12.5px;
+  color: #475569;
   font-weight: 500;
-  color: #4b5563;
 }
 
-/* Status Badge */
+.date-chip i {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* Duration */
+.duration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.duration-badge i {
+  color: #64748b;
+  font-size: 10px;
+}
+
+/* Status Badges */
 .status-badge-premium {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.status-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
 .status-badge-premium.approved {
-  background: #d1fae5;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
   color: #065f46;
+  border: 1px solid #a7f3d0;
 }
-
-.status-badge-premium.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
+.status-badge-premium.approved .status-pulse-dot { background: #10b981; }
 
 .status-badge-premium.pending {
-  background: #fef3c7;
-  color: #d97706;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #92400e;
+  border: 1px solid #fde68a;
 }
+.status-badge-premium.pending .status-pulse-dot { background: #f59e0b; }
 
-/* Mobile Cards */
-.mobile-cards {
-  display: none;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+.status-badge-premium.rejected {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  color: #9f1239;
+  border: 1px solid #fecdd3;
 }
+.status-badge-premium.rejected .status-pulse-dot { background: #ef4444; }
 
-.leave-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-}
-
-.leave-card:active {
-  transform: scale(0.99);
-}
-
-.card-header {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.card-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.leave-type-badge-mobile {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.leave-type-badge-mobile.sick {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.leave-type-badge-mobile.casual {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.leave-type-badge-mobile.pl {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.leave-type-badge-mobile.halfday {
-  background: #fed7aa;
-  color: #c2410c;
-}
-
-.leave-type-badge-mobile.default {
-  background: #f3e8ff;
-  color: #7e22ce;
-}
-
-.status-badge-mobile {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-badge-mobile.approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge-mobile.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge-mobile.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.card-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  min-width: 60px;
-}
-
-.card-value {
-  font-size: 13px;
-  color: var(--dark);
-  text-align: right;
-  word-break: break-word;
-}
-
-.reason-text {
-  max-width: 60%;
-  text-align: right;
-}
-
-.duration-badge-mobile {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 10px;
-  background: #f3f4f6;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #4b5563;
-}
-
-/* Empty States */
+/* Empty State */
 .empty-state-premium {
+  padding: 48px 20px;
   text-align: center;
-  padding: 60px 20px;
-  color: #9ca3af;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.empty-state-premium i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+.empty-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #f0fdfa;
+  color: #0d9488;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 4px;
 }
 
 .empty-state-premium h4 {
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 8px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
 }
 
 .empty-state-premium p {
-  font-size: 14px;
-}
-
-.empty-state-mobile {
-  text-align: center;
-  padding: 40px 20px;
-  color: #9ca3af;
-}
-
-.empty-state-mobile i {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-state-mobile h4 {
-  font-size: 16px;
-  color: #6b7280;
-  margin-bottom: 6px;
-}
-
-.empty-state-mobile p {
   font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  max-width: 380px;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .leave-table-premium th,
-  .leave-table-premium td {
-    padding: 12px;
-  }
-  
-  .reason-cell {
-    max-width: 150px;
+.btn-empty-apply {
+  margin-top: 10px;
+  background: #0d9488;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ════════ Responsive Adaptations ════════ */
+@media (max-width: 1100px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
   .main-content {
-    flex-direction: column;
     padding: 12px;
   }
-
-  .content {
+  .executive-header {
+    flex-direction: column;
+    align-items: flex-start;
     padding: 16px;
-    border-radius: 20px;
   }
-
-  .mobile-header {
-    display: flex;
-  }
-
-  .content-header-modern {
-    display: none;
-  }
-
-  .stats-bar {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-
-  .stat-card {
-    padding: 14px;
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
-  }
-
-  .stat-card i {
-    font-size: 24px;
-  }
-
-  .stat-value {
-    font-size: 22px;
-  }
-
-  .stat-label {
-    font-size: 11px;
-  }
-
-  .filter-bar-mobile {
-    display: flex;
-  }
-
-  .table-container {
-    display: none;
-  }
-
-  .mobile-cards {
-    display: flex;
-  }
-
-  .table-header {
-    padding: 12px 16px;
-  }
-
-  .section-title-modern {
-    font-size: 14px;
-  }
-
-  .table-info {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .main-content {
-    padding: 8px;
-  }
-
-  .content {
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .stats-bar {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .stat-card {
-    padding: 12px;
-  }
-
-  .stat-card i {
-    font-size: 20px;
-  }
-
-  .stat-value {
-    font-size: 18px;
-  }
-
-  .mobile-title {
-    font-size: 16px;
-  }
-
-  .mobile-stats-badge {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-
-  .leave-card {
-    padding: 12px;
-  }
-
-  .card-title {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .card-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  .card-value {
-    text-align: left;
+  .header-actions {
     width: 100%;
+    justify-content: stretch;
   }
-
-  .reason-text {
-    max-width: 100%;
-    text-align: left;
+  .btn-secondary-action,
+  .btn-primary-action {
+    flex: 1;
+    justify-content: center;
   }
-
-  .card-label {
-    min-width: auto;
-  }
-
-  .filter-input-mobile,
-  .filter-select-mobile {
-    font-size: 15px;
-    padding: 8px 10px;
-  }
-
-  .filter-input-mobile {
-    padding-left: 34px;
-  }
-
-  .leave-type-badge-mobile,
-  .status-badge-mobile {
-    font-size: 10px;
-    padding: 3px 10px;
-  }
-}
-
-@media (max-width: 380px) {
-  .stats-bar {
+  .metrics-grid {
     grid-template-columns: 1fr;
   }
-
-  .stat-card {
-    flex-direction: row;
-    text-align: left;
+  .table-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
-}
-
-/* Utility Classes */
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
+  .search-box-wrap {
+    width: 100%;
   }
-}
-
-@media (min-width: 769px) {
-  .mobile-only {
-    display: none !important;
+  .col-reason {
+    max-width: 200px;
   }
 }
 </style>

@@ -38,6 +38,37 @@
           </div>
         </div>
 
+        <!-- ⚠️ Probation Period Warning Banner -->
+        <div v-if="isProbation" class="probation-warning-banner">
+          <div class="probation-banner-icon">
+            <i class="fas fa-user-clock"></i>
+          </div>
+          <div class="probation-banner-content">
+            <div class="probation-banner-header">
+              <span class="probation-tag"><i class="fas fa-shield-alt"></i> Probation Period Active</span>
+              <span class="probation-days-badge"><i class="fas fa-hourglass-half"></i> {{ probationDaysLeft }} Days Remaining</span>
+            </div>
+            <h3 class="probation-title">Attendance Policy During Probation</h3>
+            <p class="probation-desc">
+              You are currently within your 90-day probation period (ending on <strong>{{ probationEndDateFormatted }}</strong>). Please adhere to the following attendance rules:
+            </p>
+            <div class="probation-rules-grid">
+              <div class="probation-rule-item warning">
+                <i class="fas fa-calendar-times"></i>
+                <span><strong>Forgot Attendance = Unpaid Leave:</strong> If you forget to mark attendance today, it will be automatically recorded as <strong>Unpaid Leave</strong>.</span>
+              </div>
+              <div class="probation-rule-item danger">
+                <i class="fas fa-coins"></i>
+                <span><strong>Half Day = Half Day Salary Deducted:</strong> Taking a half day during probation will deduct <strong>half-day salary</strong> for that day.</span>
+              </div>
+              <div class="probation-rule-item info">
+                <i class="fas fa-ban"></i>
+                <span><strong>Leave Locked:</strong> Regular paid leaves cannot be applied during probation.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Daily Attendance View - Mobile Optimized -->
         <div v-if="viewMode === 'day'" class="attendance-card-premium">
           <div class="card-header-premium">
@@ -117,7 +148,7 @@
                     <span class="travel-place">{{ user.travelTo || '—' }}</span>
                   </div>
                   <div v-else class="clock-info-mobile">
-                    <span class="clock-time">{{ user.clockIn || '—' }}</span>
+                    <span class="clock-time">{{ formatTime(user.clockIn) }}</span>
                     <span v-if="user.status === 'Present' && user.isLate" class="late-badge">
                       <i class="fas fa-exclamation-triangle"></i> Late
                     </span>
@@ -137,8 +168,9 @@
                       class="punch-out-icon-mobile"
                       :class="{ disabled: user.clockOut !== '' }"
                     />
+                    <span v-if="user.clockOut" class="clock-out-time-mobile" style="margin-left: 8px; font-weight: 600; font-size: 0.85rem;">{{ formatTime(user.clockOut) }}</span>
                   </div>
-                  <span v-else>{{ user.clockOut || '—' }}</span>
+                  <span v-else>{{ formatTime(user.clockOut) }}</span>
                 </div>
 
                 <div class="card-detail-row">
@@ -187,7 +219,7 @@
                       <span class="travel-place">{{ user.travelTo || '—' }}</span>
                     </div>
                     <div v-else>
-                      <span class="clock-time">{{ user.clockIn || '—' }}</span>
+                      <span class="clock-time">{{ formatTime(user.clockIn) }}</span>
                       <span v-if="user.status === 'Present' && user.isLate" class="late-badge">
                         <i class="fas fa-exclamation-triangle"></i> Late
                       </span>
@@ -197,7 +229,7 @@
                     </div>
                   </td>
                   <td data-label="Clock Out" class="clock-cell">
-                    <div v-if="['Present', 'HalfDay', 'OnSite'].includes(user.status)">
+                    <div v-if="['Present', 'HalfDay', 'OnSite'].includes(user.status)" class="punch-out-wrapper-desktop" style="display: flex; align-items: center; gap: 8px;">
                       <img
                         src="https://icons.veryicon.com/png/o/internet--web/common-work-social-mobile-terminals/check-in-and-punch-out.png"
                         alt="Punch Out"
@@ -205,8 +237,9 @@
                         class="punch-out-icon"
                         :class="{ disabled: user.clockOut !== '' }"
                       />
+                      <span v-if="user.clockOut" class="clock-out-time-desktop" style="font-weight: 600; font-size: 0.88rem;">{{ formatTime(user.clockOut) }}</span>
                     </div>
-                    <span v-else>{{ user.clockOut || '—' }}</span>
+                    <span v-else>{{ formatTime(user.clockOut) }}</span>
                   </td>
                   <td data-label="Required Time">{{ user.requiredTime }}</td>
                   <td data-label="Actual Time" class="actual-time">{{ user.actualTime || '—' }}</td>
@@ -373,16 +406,18 @@ export default {
     const storedUser = localStorage.getItem('user');
     let userName = 'Unknown';
     let userLeaveBalance = 0;
+    let parsedUser = null;
     if (storedUser) {
       try {
-        const user = JSON.parse(storedUser);
-        userName = user.name || 'Unknown';
-        userLeaveBalance = user.cl_leave_used || 0;
+        parsedUser = JSON.parse(storedUser);
+        userName = parsedUser.name || 'Unknown';
+        userLeaveBalance = parsedUser.cl_leave_used || 0;
       } catch (e) {
         console.error('Error parsing user from localStorage:', e);
       }
     }
     return {
+      currentUserData: parsedUser,
       showTravelPopup: false,
       showOnSitePopup: false,
       disableStatusSelect: false,
@@ -426,6 +461,41 @@ export default {
     }
   },
   computed: {
+    isProbation() {
+      if (this.currentUserData && this.currentUserData.is_probation !== undefined) {
+        return Boolean(this.currentUserData.is_probation);
+      }
+      if (this.currentUserData && this.currentUserData.created_at) {
+        const diff = Math.floor((new Date() - new Date(this.currentUserData.created_at)) / (1000 * 60 * 60 * 24));
+        return diff < 90;
+      }
+      return false;
+    },
+    probationDaysLeft() {
+      if (this.currentUserData && this.currentUserData.probation_days_left !== undefined) {
+        return this.currentUserData.probation_days_left;
+      }
+      if (this.currentUserData && this.currentUserData.created_at) {
+        const diff = Math.floor((new Date() - new Date(this.currentUserData.created_at)) / (1000 * 60 * 60 * 24));
+        return Math.max(0, 90 - diff);
+      }
+      return 0;
+    },
+    probationEndDateFormatted() {
+      if (this.currentUserData && this.currentUserData.probation_end_date) {
+        return new Date(this.currentUserData.probation_end_date).toLocaleDateString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+      }
+      if (this.currentUserData && this.currentUserData.created_at) {
+        const d = new Date(this.currentUserData.created_at);
+        d.setDate(d.getDate() + 90);
+        return d.toLocaleDateString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+      }
+      return '90 days from joining';
+    },
     isTimerRunning() {
       return this.workingHoursInterval !== null;
     },
@@ -609,6 +679,55 @@ export default {
         month: 'short',
         year: 'numeric'
       });
+    },
+    formatTime(time) {
+      if (!time || time === '-' || time === '--' || time === 'null' || time === 'undefined') return '—';
+      const str = String(time).trim();
+      if (!str || str === '-') return '—';
+
+      const ampmMatch = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)$/i);
+      if (ampmMatch) {
+        const hh = ampmMatch[1].padStart(2, '0');
+        const mm = ampmMatch[2];
+        const ampm = ampmMatch[3].toUpperCase();
+        return `${hh}:${mm} ${ampm}`;
+      }
+
+      const timeMatch = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (timeMatch) {
+        let hours = parseInt(timeMatch[1], 10);
+        const minutes = timeMatch[2];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        if (hours === 0) hours = 12;
+        const formattedHours = String(hours).padStart(2, '0');
+        return `${formattedHours}:${minutes} ${ampm}`;
+      }
+
+      try {
+        const cleanDateStr = str.includes(' ') && !str.includes('T') ? str.replace(' ', 'T') : str;
+        const date = new Date(cleanDateStr);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+        }
+      } catch (e) {}
+
+      try {
+        const fallback = new Date(`2000-01-01T${str}`);
+        if (!isNaN(fallback.getTime())) {
+          return fallback.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+        }
+      } catch (e) {}
+
+      return str;
     },
     getCurrentTime() {
       const now = new Date();
@@ -901,6 +1020,9 @@ export default {
       this.startWorkingHoursCounter();
     },
     updateStatus() {
+      if (this.isProbation && (this.user.status === 'HalfDay' || this.user.status === 'Half Day')) {
+        toastWarning("Notice: Taking a Half Day during probation will deduct half a day's salary for today.");
+      }
       if (this.user.status === 'OnSite') {
         this.showOnSitePopup = true;
         return;
@@ -1439,6 +1561,17 @@ export default {
     const token = localStorage.getItem('token');
     if (!token) {
       this.$router.push('/auth');
+    } else {
+      axios.get('https://employees.archenterprises.co.in/api/api/user', {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => {
+        if (res.data) {
+          this.currentUserData = res.data;
+          try {
+            localStorage.setItem('user', JSON.stringify(res.data));
+          } catch (e) {}
+        }
+      }).catch(() => {});
     }
   },
   beforeUnmount() {
@@ -3245,6 +3378,145 @@ export default {
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;
+  }
+}
+
+/* Probation Period Warning Banner */
+.probation-warning-banner {
+  display: flex;
+  gap: 18px;
+  background: linear-gradient(135deg, #fff8e6 0%, #fff1cc 100%);
+  border: 2px solid #f6ad55;
+  border-left: 6px solid #dd6b20;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(221, 107, 32, 0.12);
+  animation: pulseProbation 3s ease-in-out infinite alternate;
+}
+
+@keyframes pulseProbation {
+  0% { box-shadow: 0 4px 16px rgba(221, 107, 32, 0.1); }
+  100% { box-shadow: 0 8px 28px rgba(221, 107, 32, 0.2); }
+}
+
+.probation-banner-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #dd6b20 0%, #c05621 100%);
+  color: #fff;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(192, 86, 33, 0.35);
+}
+
+.probation-banner-content {
+  flex: 1;
+}
+
+.probation-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.probation-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #c05621;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.probation-days-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: #c05621;
+  border: 1.5px solid #dd6b20;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.probation-title {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #7b341e;
+}
+
+.probation-desc {
+  margin: 0 0 14px 0;
+  font-size: 13.5px;
+  color: #7c4424;
+  line-height: 1.5;
+}
+
+.probation-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.probation-rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #4a2c16;
+  border: 1px solid rgba(221, 107, 32, 0.25);
+  backdrop-filter: blur(4px);
+}
+
+.probation-rule-item i {
+  font-size: 15px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.probation-rule-item.danger i {
+  color: #e53e3e;
+}
+
+.probation-rule-item.warning i {
+  color: #dd6b20;
+}
+
+.probation-rule-item.info i {
+  color: #3182ce;
+}
+
+@media (max-width: 600px) {
+  .probation-warning-banner {
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+  }
+  .probation-banner-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  .probation-rules-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

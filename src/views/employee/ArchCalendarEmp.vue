@@ -1,250 +1,504 @@
 <template>
   <div class="layout" :class="{ 'focus-overlay-active': showFocusOverlay }">
-    <!-- Focus Overlay for highlighting SBU button -->
+    <!-- Focus Overlay for SBU discussion popup -->
     <div v-if="showFocusOverlay" class="focus-overlay" @click="dismissFocusOverlay"></div>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <div class="main-content">
+      <!-- Stationary Fixed Employee Sidebar -->
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <!-- Calendar Filters - Mobile Toggle -->
-        <div class="filters-header" @click="toggleFilters">
-          <span class="filters-toggle-label">
-            <i class="fas fa-sliders-h"></i> Filters
-            <span class="filter-count" v-if="activeFilterCount > 0">{{ activeFilterCount }}</span>
+        <!-- 📱 Mobile Top Header -->
+        <div class="mobile-header" v-if="isMobile">
+          <div class="mobile-title">
+            <i class="fas fa-calendar-alt"></i>
+            <span>ARCH Calendar</span>
+          </div>
+          <div class="mobile-header-actions">
+            <button class="btn-mobile-today" @click="goToToday" title="Jump to Today">
+              Today
+            </button>
+            <button class="btn-mobile-menu" @click="toggleSidebar" aria-label="Toggle menu">
+              <i class="fas fa-bars"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 🏢 Modern Enterprise Header Banner -->
+        <header class="calendar-top-banner">
+          <div class="banner-left">
+            <div class="banner-badge-row">
+              <span class="portal-badge-pill">
+                <span class="pulse-indicator"></span>
+                <span>OPERATIONAL SCHEDULE</span>
+              </span>
+              <span class="status-meta-pill">
+                <i class="fas fa-check-circle"></i> Live Sync
+              </span>
+              <span class="status-meta-pill holiday-meta-pill" v-if="currentMonthHolidaysCount > 0">
+                <i class="fas fa-umbrella-beach"></i> {{ currentMonthHolidaysCount }} Holiday{{ currentMonthHolidaysCount > 1 ? 's' : '' }} this month
+              </span>
+            </div>
+            <h1 class="page-title">ARCH Calendar</h1>
+            <p class="page-subtitle">
+              Coordinate schedules, meetings, service visits, employee birthdays, and company holidays.
+            </p>
+          </div>
+
+          <!-- Month Navigation & Controls -->
+          <div class="banner-controls">
+            <div class="month-nav-pill">
+              <button class="nav-arrow-btn" @click="prevMonth" title="Previous Month">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <h2 class="current-month-heading">{{ currentMonthYear }}</h2>
+              <button class="nav-arrow-btn" @click="nextMonth" title="Next Month">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+
+            <div class="calendar-quick-actions">
+              <button class="btn-today" @click="goToToday">
+                <i class="fas fa-dot-circle"></i>
+                <span>Today</span>
+              </button>
+              <button class="btn-add-event" @click="openTodayPopup">
+                <i class="fas fa-plus"></i>
+                <span>Add Note</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- 🏷️ Interactive Filter Pills Bar -->
+        <div class="calendar-filter-bar">
+          <span class="filter-label">
+            <i class="fas fa-filter"></i>
+            <span>Filters:</span>
           </span>
-          <i class="fas fa-chevron-down" :class="{ 'rotated': showFiltersPanel }"></i>
-        </div>
 
-        <div class="calendar-filters" :class="{ 'filters-expanded': showFiltersPanel, 'filters-collapsed': !showFiltersPanel }">
-          <label>
-            <input type="checkbox" v-model="showFilters.meetings" />
-            Meetings
-          </label>
-          <label>
-            <input type="checkbox" v-model="showFilters.services" />
-            Services
-          </label>
-          <label>
-            <input type="checkbox" v-model="showFilters.visits" />
-            Visits
-          </label>
-          <label>
-            <input type="checkbox" v-model="showFilters.birthdays" />
-            Birthdays
-          </label>
-          <label>
-            <input type="checkbox" v-model="showFilters.holidays" />
-            Holidays
-          </label>
-          <label>
-            <input type="checkbox" v-model="showFilters.events" />
-            Events
-          </label>
-          <label>
-            <input type="checkbox" v-model="showFilters.notes" />
-            Notes
-          </label>
-          <label>
-            <input type="checkbox" v-model="showFilters.attendance" />
-            Attendance
-          </label>
-        </div>
-
-        <div v-if="showDatePopup" class="modal-backdrop" @click.self="closeDatePopup">
-          <div class="modal-card calendar-modal">
-            <div class="modal-header">
-              <h3 class="modal-title">{{ selectedDate }}</h3>
-              <button class="icon-close" @click="closeDatePopup">✕</button>
-            </div>
-            <div class="modal-body">
-              <div class="action-buttons">
-                <button class="btn note" @click="openForm('note')">📝 Note</button>
-              </div>
-              <div v-if="formType" class="form-group fade-in">
-                <input v-if="formType !== 'note'" v-model="form.title" placeholder="Enter title" />
-                <textarea v-model="form.description" placeholder="Add description"></textarea>
-                <button class="btn-save" @click="saveCalendarData">
-                  <i class="fa fa-save" style="font-size:13px"></i> Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Calendar Header -->
-        <div class="calendar-header">
-          <button @click="prevMonth" class="nav-arrow" aria-label="Previous month">‹</button>
-          <h3 class="month-year-title">{{ currentMonthYear }}</h3>
-          <button @click="nextMonth" class="nav-arrow" aria-label="Next month">›</button>
-        </div>
-
-        <!-- Calendar Grid -->
-        <div class="calendar-grid">
-          <div class="day-name" v-for="day in days" :key="day">{{ day }}</div>
-
-          <div
-            class="date-cell"
-            v-for="date in calendarDates"
-            :key="date.fullDate"
-            :class="{ today: date.isToday, 'has-events': date.events.length > 0 }"
-            @click="openDatePopup(date)"
-            @dragover.prevent
-            @drop="onDrop(date)"
-          >
-            <span class="date-number">{{ date.day }}</span>
-            <div class="event-dots" v-if="date.events.length > 0">
-              <span class="dot" v-for="(event, idx) in date.events.slice(0, 3)" :key="idx" :class="event.type"></span>
-              <span class="dot more" v-if="date.events.length > 3">+{{ date.events.length - 3 }}</span>
-            </div>
-
-            <div
-              v-for="event in date.events"
-              :key="event.id"
-              class="event"
-              :class="event.type"
-              :draggable="isDraggable(event)"
-              @dragstart="onDragStart(event)"
-              @click.stop="handleEventClick(event)"
+          <div class="filter-pills-list">
+            <!-- Meetings -->
+            <button
+              type="button"
+              class="filter-pill pill-meetings"
+              :class="{ active: showFilters.meetings }"
+              @click="showFilters.meetings = !showFilters.meetings"
             >
-              {{ event.title }}
-              <div v-if="isCustomEvent(event)" class="event-actions">
-                <i class="fa fa-edit" style="font-size:13px"></i>
-                <span @click.stop="editCustomEvent(event)">Edit</span>
-                |
-                🗑️
-                <span @click.stop="deleteCustomEvent(event)">Delete</span>
+              <span class="pill-dot dot-teal"></span>
+              <i class="fas fa-video"></i>
+              <span>Meetings</span>
+              <span class="pill-badge" v-if="monthStats.meetings > 0">{{ monthStats.meetings }}</span>
+            </button>
+
+            <!-- Services -->
+            <button
+              type="button"
+              class="filter-pill pill-services"
+              :class="{ active: showFilters.services }"
+              @click="showFilters.services = !showFilters.services"
+            >
+              <span class="pill-dot dot-blue"></span>
+              <i class="fas fa-tools"></i>
+              <span>Services</span>
+              <span class="pill-badge" v-if="monthStats.services > 0">{{ monthStats.services }}</span>
+            </button>
+
+            <!-- Visits -->
+            <button
+              type="button"
+              class="filter-pill pill-visits"
+              :class="{ active: showFilters.visits }"
+              @click="showFilters.visits = !showFilters.visits"
+            >
+              <span class="pill-dot dot-cyan"></span>
+              <i class="fas fa-car-side"></i>
+              <span>Visits</span>
+              <span class="pill-badge" v-if="monthStats.visits > 0">{{ monthStats.visits }}</span>
+            </button>
+
+            <!-- Birthdays -->
+            <button
+              type="button"
+              class="filter-pill pill-birthdays"
+              :class="{ active: showFilters.birthdays }"
+              @click="showFilters.birthdays = !showFilters.birthdays"
+            >
+              <span class="pill-dot dot-pink"></span>
+              <i class="fas fa-birthday-cake"></i>
+              <span>Birthdays</span>
+              <span class="pill-badge" v-if="monthStats.birthdays > 0">{{ monthStats.birthdays }}</span>
+            </button>
+
+            <!-- Holidays -->
+            <button
+              type="button"
+              class="filter-pill pill-holidays"
+              :class="{ active: showFilters.holidays }"
+              @click="showFilters.holidays = !showFilters.holidays"
+            >
+              <span class="pill-dot dot-red"></span>
+              <i class="fas fa-umbrella-beach"></i>
+              <span>Holidays</span>
+              <span class="pill-badge" v-if="monthStats.holidays > 0">{{ monthStats.holidays }}</span>
+            </button>
+
+            <!-- Events -->
+            <button
+              type="button"
+              class="filter-pill pill-events"
+              :class="{ active: showFilters.events }"
+              @click="showFilters.events = !showFilters.events"
+            >
+              <span class="pill-dot dot-purple"></span>
+              <i class="fas fa-calendar-check"></i>
+              <span>Events</span>
+              <span class="pill-badge" v-if="monthStats.customEvents > 0">{{ monthStats.customEvents }}</span>
+            </button>
+
+            <!-- Notes -->
+            <button
+              type="button"
+              class="filter-pill pill-notes"
+              :class="{ active: showFilters.notes }"
+              @click="showFilters.notes = !showFilters.notes"
+            >
+              <span class="pill-dot dot-amber"></span>
+              <i class="fas fa-sticky-note"></i>
+              <span>Notes</span>
+              <span class="pill-badge" v-if="monthStats.notes > 0">{{ monthStats.notes }}</span>
+            </button>
+
+            <!-- Attendance -->
+            <button
+              type="button"
+              class="filter-pill pill-attendance"
+              :class="{ active: showFilters.attendance }"
+              @click="showFilters.attendance = !showFilters.attendance"
+            >
+              <span class="pill-dot dot-indigo"></span>
+              <i class="fas fa-user-check"></i>
+              <span>Attendance</span>
+              <span class="pill-badge" v-if="monthStats.attendance > 0">{{ monthStats.attendance }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 📅 Master Calendar Grid Card -->
+        <div class="calendar-card-container">
+          <!-- Day Name Headers (Sun to Sat) -->
+          <div class="calendar-day-header">
+            <div class="day-col-header" v-for="day in days" :key="day" :class="{ 'is-weekend': day === 'Sun' || day === 'Sat' }">
+              <span class="day-name-txt">{{ day }}</span>
+              <span class="day-sub-txt" v-if="day === 'Sun' || day === 'Sat'">Weekend</span>
+            </div>
+          </div>
+
+          <!-- Calendar Dates Grid -->
+          <div class="calendar-dates-grid">
+            <div
+              v-for="(date, idx) in calendarDates"
+              :key="idx"
+              class="date-cell"
+              :class="{
+                'empty-cell': !date.day,
+                'is-today': date.isToday,
+                'is-holiday-cell': date.isHoliday,
+                'is-weekend-cell': isWeekend(date.fullDate),
+                'has-events': date.events && date.events.length > 0
+              }"
+              @click="openDatePopup(date)"
+              @dragover.prevent
+              @drop="onDrop(date)"
+            >
+              <!-- Cell Header: Date Number + Quick Add Hint -->
+              <div class="cell-top-row" v-if="date.day">
+                <div class="cell-top-left">
+                  <span class="cell-add-hint" title="Add note on this date">
+                    <i class="fas fa-plus"></i>
+                  </span>
+                  <span class="today-tag-pill" v-if="date.isToday">TODAY</span>
+                  <span class="holiday-tag-pill" v-else-if="date.isHoliday">HOLIDAY</span>
+                </div>
+                <span class="date-badge-num" :class="{ 'today-badge': date.isToday, 'holiday-badge': date.isHoliday && !date.isToday }">
+                  {{ date.day }}
+                </span>
+              </div>
+
+              <!-- Events List inside cell -->
+              <div class="cell-events-list" v-if="date.day">
+                <div
+                  v-for="event in date.events"
+                  :key="event.id"
+                  class="calendar-event-badge"
+                  :class="getEventClass(event)"
+                  :draggable="isDraggable(event)"
+                  @dragstart="onDragStart(event)"
+                  @click.stop="handleEventClick(event)"
+                  :title="event.title"
+                >
+                  <div class="badge-icon-wrap">
+                    <i :class="getEventIcon(event)"></i>
+                  </div>
+                  <span class="event-title-text">{{ event.title }}</span>
+
+                  <!-- Edit / Delete for custom notes -->
+                  <div v-if="isCustomEvent(event)" class="event-quick-actions" @click.stop>
+                    <button class="ev-action-btn" @click.stop="editCustomEvent(event)" title="Edit">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="ev-action-btn delete" @click.stop="deleteCustomEvent(event)" title="Delete">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- View Note / Event Popup -->
-        <div v-if="showViewModal" class="modal-backdrop" @click.self="showViewModal=false">
-          <div class="modal-card small professional">
-            <div class="modal-header">
-              <h3 class="modal-title">{{ viewEvent.title }}</h3>
-              <span class="status-badge">{{ viewEvent.type }}</span>
+        <!-- ════════ MODAL 1: Add/Edit Date Popup (Note) ════════ -->
+        <div v-if="showDatePopup" class="modal-backdrop" @click.self="closeDatePopup">
+          <div class="modal-card-premium calendar-popup-modal">
+            <div class="modal-header-premium">
+              <div class="mhp-title-row">
+                <div class="mhp-icon-box">
+                  <i class="fas fa-calendar-day"></i>
+                </div>
+                <div>
+                  <h3 class="mhp-title">{{ selectedDate }}</h3>
+                  <p class="mhp-subtitle">Manage or add your personal notes</p>
+                </div>
+              </div>
+              <button class="mhp-close-btn" @click="closeDatePopup">✕</button>
             </div>
-            <div class="modal-body">
-              <div class="info-item">
-                <span class="label">Date</span>
-                <span class="value">{{ viewEvent.date }}</span>
-              </div>
-              <div class="info-item" style="margin-top:12px">
-                <span class="label">Description</span>
-                <p style="white-space: pre-line">{{ viewEvent.description }}</p>
-              </div>
-              <div class="info-item" v-if="selectedMeeting.guests?.length">
-                <span class="label">Guests</span>
-                <ul class="guest-list">
-                  <li v-for="(g, i) in displayedGuests" :key="i">{{ g }}</li>
-                </ul>
-                <button v-if="selectedMeeting.guests.length > 2" class="show-btn" @click="showAllGuests = !showAllGuests">
-                  {{ showAllGuests ? "Show Less" : "Show All" }}
+
+            <div class="modal-body-premium">
+              <div class="form-action-pills">
+                <button
+                  type="button"
+                  class="btn-type-pill"
+                  :class="{ active: formType === 'note' }"
+                  @click="openForm('note')"
+                >
+                  <i class="fas fa-sticky-note"></i>
+                  <span>Add Note</span>
                 </button>
               </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn-close" @click="showViewModal=false"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- Interview Popup -->
-        <div v-if="showMeetingModal" class="modal-backdrop" @click.self="closeMeeting">
-          <div class="modal-card small professional">
-            <div class="modal-header">
-              <h3 class="modal-title">{{ selectedMeeting.title }}</h3>
-              <span class="status-badge" :class="selectedMeeting.type">
-                {{ selectedMeeting.type === 'offline' ? 'Offline' : 'Online' }}
-              </span>
-            </div>
-            <div class="modal-body">
-              <div class="info-grid single">
-                <div class="info-item">
-                  <span class="label">Date</span>
-                  <span class="value">{{ selectedMeeting.meeting_date }}</span>
+              <div v-if="formType" class="form-fields-container fade-in">
+                <div class="form-group-field" v-if="formType !== 'note'">
+                  <label class="field-label">Title</label>
+                  <input
+                    type="text"
+                    v-model="form.title"
+                    class="form-input-text"
+                    placeholder="Enter title..."
+                  />
                 </div>
-                <div class="info-item">
-                  <span class="label">Time</span>
-                  <span class="value">{{ selectedMeeting.meeting_time }}</span>
+
+                <div class="form-group-field">
+                  <label class="field-label">Description / Details</label>
+                  <textarea
+                    v-model="form.description"
+                    class="form-textarea-field"
+                    rows="4"
+                    placeholder="Write details or observations here..."
+                  ></textarea>
                 </div>
-                <div class="info-item" v-if="selectedMeeting.description">
-                  <span class="label">Description</span>
-                  <span class="value">{{ selectedMeeting.description }}</span>
-                </div>
-                <span class="label">Meeting Topics</span>
-                <button class="btn-edit-topics" @click="enableTopicEdit">
-                  <i class="fa fa-edit" style="font-size:13px"></i> Edit Topics
-                </button>
-                <div class="info-item full-width">
-                  <div v-if="!isEditingTopics" class="topics-view">
-                    <div v-if="selectedMeeting.topics" v-html="sanitizedTopics" class="topics-content"></div>
-                    <p v-else class="no-topics">No topics added.</p>
-                  </div>
-                  <div v-else class="topics-edit fade-in">
-                    <QuillEditor v-model:content="meetingTopics" contentType="html" theme="snow" :toolbar="toolbarOptions" style="height: 220px" />
-                    <div class="topic-actions">
-                      <button class="btn-save-topics" @click="saveTopics"><i class="fa fa-save" style="font-size:13px"></i> Save</button>
-                      <button class="btn-cancel-topics" @click="cancelTopicEdit"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="info-item" v-if="selectedMeeting.meeting_link">
-                  <span class="label">Meeting Link</span>
-                  <a :href="selectedMeeting.meeting_link" target="_blank" class="join-btn">
-                    <i class="fas fa-video"></i> Join Meeting
-                  </a>
+
+                <div class="form-submit-row">
+                  <button class="btn-cancel-modal" @click="closeDatePopup">Cancel</button>
+                  <button class="btn-save-modal" @click="saveCalendarData">
+                    <i class="fas fa-check"></i>
+                    <span>{{ editingId ? 'Update Note' : 'Save Note' }}</span>
+                  </button>
                 </div>
               </div>
             </div>
-            <div class="modal-footer">
-              <button class="btn-close" @click="closeMeeting"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
-            </div>
           </div>
         </div>
 
-        <div v-if="showServiceModal" class="modal-backdrop" @click.self="showServiceModal=false">
-          <div class="modal-card medium professional">
-            <div class="modal-header">
-              <h3 class="modal-title">{{ selectedService.company_name }}</h3>
-              <span class="status-badge" :class="selectedService.status?.toLowerCase()">
-                {{ selectedService.status }}
-              </span>
-            </div>
-            <div class="modal-body">
-              <div class="info-grid">
-                <div class="info-item">
-                  <span class="label">PO Number</span>
-                  <span class="value">{{ selectedService.po_number || '—' }}</span>
+        <!-- ════════ MODAL 2: View Event / Holiday Details ════════ -->
+        <div v-if="showViewModal" class="modal-backdrop" @click.self="showViewModal = false">
+          <div class="modal-card-premium view-event-modal">
+            <div class="modal-header-premium">
+              <div class="mhp-title-row">
+                <div class="mhp-icon-box" :class="getEventClass(viewEvent)">
+                  <i :class="getEventIcon(viewEvent)"></i>
                 </div>
-                <div class="info-item">
-                  <span class="label">Visit Date</span>
-                  <span class="value">{{ selectedService.visit_date }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">Assigned To</span>
-                  <span class="value">{{ selectedService.assign_to_name }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="label">Service Type</span>
-                  <span class="value">
-                    {{ selectedService.isVisit ? selectedService.service_type : selectedService.type_of_service }}
+                <div>
+                  <h3 class="mhp-title">{{ viewEvent.title }}</h3>
+                  <span class="status-badge-pill" :class="viewEvent.type">
+                    {{ viewEvent.isOfficial ? (viewEvent.holidayClassification === 'company' ? 'Company Holiday' : 'Public Holiday') : viewEvent.type }}
                   </span>
                 </div>
               </div>
+              <button class="mhp-close-btn" @click="showViewModal = false">✕</button>
             </div>
-            <div class="modal-footer">
-              <button class="btn-close" @click="showServiceModal=false"><i class="fa fa-close" style="font-size:13px"></i> Close</button>
+
+            <div class="modal-body-premium">
+              <div class="view-details-grid">
+                <div class="detail-row">
+                  <span class="detail-label">
+                    <i class="fas fa-calendar"></i> Date
+                  </span>
+                  <span class="detail-val">{{ viewEvent.date }}</span>
+                </div>
+
+                <div class="detail-row" v-if="viewEvent.holidayClassification">
+                  <span class="detail-label">
+                    <i class="fas fa-award"></i> Classification
+                  </span>
+                  <span class="detail-val highlight-val">
+                    {{ viewEvent.holidayClassification === 'company' ? 'Company Specific Holiday' : 'Public Holiday (Mandatory Observance)' }}
+                  </span>
+                </div>
+
+                <div class="detail-row full-width" v-if="viewEvent.description">
+                  <span class="detail-label">
+                    <i class="fas fa-align-left"></i> Description
+                  </span>
+                  <div class="detail-val text-box">
+                    <p>{{ viewEvent.description }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer-premium">
+              <button class="btn-primary-modal" @click="showViewModal = false">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════ MODAL 3: Interview / Meeting Modal ════════ -->
+        <div v-if="showMeetingModal" class="modal-backdrop" @click.self="closeMeeting">
+          <div class="modal-card-premium meeting-detail-modal">
+            <div class="modal-header-premium">
+              <div class="mhp-title-row">
+                <div class="mhp-icon-box bg-teal-tint">
+                  <i class="fas fa-video text-teal"></i>
+                </div>
+                <div>
+                  <h3 class="mhp-title">{{ selectedMeeting.title }}</h3>
+                  <span class="status-badge-pill" :class="selectedMeeting.type">
+                    {{ selectedMeeting.type === 'offline' ? 'Offline Meeting' : 'Online Meeting' }}
+                  </span>
+                </div>
+              </div>
+              <button class="mhp-close-btn" @click="closeMeeting">✕</button>
+            </div>
+
+            <div class="modal-body-premium">
+              <div class="meeting-details-grid">
+                <div class="detail-card">
+                  <span class="dc-label">Date</span>
+                  <span class="dc-val">{{ selectedMeeting.meeting_date || selectedMeeting.date }}</span>
+                </div>
+                <div class="detail-card">
+                  <span class="dc-label">Time</span>
+                  <span class="dc-val">{{ selectedMeeting.meeting_time || 'Scheduled' }}</span>
+                </div>
+                <div class="detail-card full-width" v-if="selectedMeeting.description">
+                  <span class="dc-label">Description</span>
+                  <span class="dc-val">{{ selectedMeeting.description }}</span>
+                </div>
+                <div class="detail-card full-width" v-if="selectedMeeting.meeting_link">
+                  <span class="dc-label">Meeting Room</span>
+                  <a :href="selectedMeeting.meeting_link" target="_blank" class="join-meet-btn">
+                    <i class="fas fa-external-link-alt"></i> Join Meeting
+                  </a>
+                </div>
+              </div>
+
+              <!-- Meeting Topics section with Quill -->
+              <div class="meeting-topics-section">
+                <div class="section-title-row">
+                  <span class="section-heading">Meeting Agenda / Topics</span>
+                  <button v-if="!isEditingTopics" class="btn-edit-sm" @click="enableTopicEdit">
+                    <i class="fas fa-pen"></i> Edit Topics
+                  </button>
+                </div>
+
+                <div v-if="!isEditingTopics" class="topics-display-box">
+                  <div v-if="selectedMeeting.topics" v-html="sanitizedTopics" class="topics-html"></div>
+                  <p v-else class="empty-topics-text">No topics added for this meeting yet.</p>
+                </div>
+
+                <div v-else class="topics-editor-box">
+                  <QuillEditor
+                    v-model:content="meetingTopics"
+                    contentType="html"
+                    theme="snow"
+                    :toolbar="toolbarOptions"
+                    style="height: 180px;"
+                  />
+                  <div class="editor-action-row">
+                    <button class="btn-ghost-sm" @click="cancelTopicEdit">Cancel</button>
+                    <button class="btn-save-sm" @click="saveTopics">
+                      <i class="fas fa-save"></i> Save Topics
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer-premium">
+              <button class="btn-primary-modal" @click="closeMeeting">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════════ MODAL 4: Service Assignment Modal ════════ -->
+        <div v-if="showServiceModal" class="modal-backdrop" @click.self="showServiceModal = false">
+          <div class="modal-card-premium service-detail-modal">
+            <div class="modal-header-premium">
+              <div class="mhp-title-row">
+                <div class="mhp-icon-box bg-blue-tint">
+                  <i class="fas fa-tools text-blue"></i>
+                </div>
+                <div>
+                  <h3 class="mhp-title">{{ selectedService.company_name }}</h3>
+                  <span class="status-badge-pill" :class="selectedService.status?.toLowerCase()">
+                    {{ selectedService.status || 'Active' }}
+                  </span>
+                </div>
+              </div>
+              <button class="mhp-close-btn" @click="showServiceModal = false">✕</button>
+            </div>
+
+            <div class="modal-body-premium">
+              <div class="service-details-grid">
+                <div class="srv-detail-card">
+                  <span class="srv-label">PO Number</span>
+                  <span class="srv-value">{{ selectedService.po_number || '—' }}</span>
+                </div>
+                <div class="srv-detail-card">
+                  <span class="srv-label">Visit Date</span>
+                  <span class="srv-value">{{ selectedService.visit_date }}</span>
+                </div>
+                <div class="srv-detail-card">
+                  <span class="srv-label">Assigned Technician</span>
+                  <span class="srv-value">{{ selectedService.assign_to_name || 'Unassigned' }}</span>
+                </div>
+                <div class="srv-detail-card">
+                  <span class="srv-label">Service Type</span>
+                  <span class="srv-value">{{ selectedService.isVisit ? selectedService.service_type : selectedService.type_of_service }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer-premium">
+              <button class="btn-primary-modal" @click="showServiceModal = false">Close</button>
             </div>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- Google Form Popup Modal -->
+    <!-- Google Form / SBU Modal -->
     <div class="modal-overlay" v-if="showGoogleFormModal">
       <div class="modal google-form-modal">
         <div class="modal-header google-form-header">
@@ -281,11 +535,12 @@ import {
 } from "@/utils/toast.js";
 
 export default {
+  name: "ArchCalendarEmp",
   components: { Sidebar, QuillEditor },
 
   data() {
     return {
-      // Header related data
+      // Header / Auth
       currentUser: {},
       unreadMentionsCount: 0,
       showNotificationPanel: false,
@@ -297,7 +552,8 @@ export default {
       focusTimer: null,
       refreshTimer: null,
 
-      // Calendar data
+      // Calendar Data
+      officialHolidays: [],
       attendanceEvents: [],
       isEditingTopics: false,
       showAllGuests: false,
@@ -327,15 +583,14 @@ export default {
       birthdayEvents: [],
       showFilters: {
         meetings: true,
-        services: true,
-        visits: true,
+        services: false,
+        visits: false,
         birthdays: true,
         holidays: true,
         events: true,
         notes: true,
-        attendance: true
+        attendance: false
       },
-      showFiltersPanel: false,
       visitEvents: [],
       events: [],
       serviceEvents: [],
@@ -351,71 +606,109 @@ export default {
   },
 
   computed: {
-    activeFilterCount() {
-      let count = 0;
-      for (const key in this.showFilters) {
-        if (this.showFilters[key]) count++;
-      }
-      return count;
-    },
     displayedGuests() {
       if (!this.selectedMeeting?.guests) return [];
       return this.showAllGuests ? this.selectedMeeting.guests : this.selectedMeeting.guests.slice(0, 2);
     },
+
     currentMonthYear() {
       return this.currentDate.toLocaleDateString('en-US', {
         month: 'long',
         year: 'numeric'
-      })
+      });
     },
+
     sanitizedTopics() {
-      return DOMPurify.sanitize(this.selectedMeeting.topics || '')
+      return DOMPurify.sanitize(this.selectedMeeting.topics || '');
     },
+
     recentNotifications() {
       return this.notifications.slice(0, 4);
     },
+
+    currentMonthHolidaysCount() {
+      const monthDates = this.calendarDates;
+      let count = 0;
+      monthDates.forEach(d => {
+        if (d.events) {
+          count += d.events.filter(e => e.type === 'holiday').length;
+        }
+      });
+      return count;
+    },
+
+    monthStats() {
+      const year = this.currentDate.getFullYear();
+      const month = this.currentDate.getMonth();
+      const padM = String(month + 1).padStart(2, '0');
+      const yearMonth = `${year}-${padM}`;
+
+      const meetings = this.events.filter(e => e.date && e.date.startsWith(yearMonth)).length;
+      const services = this.serviceEvents.filter(s => s.date && s.date.startsWith(yearMonth)).length;
+      const visits = this.visitEvents.filter(v => v.date && v.date.startsWith(yearMonth)).length;
+      const attendance = this.attendanceEvents.filter(a => a.date && a.date.startsWith(yearMonth)).length;
+      const birthdays = this.birthdayEvents.filter(b => b.month === month + 1).length;
+      const customEvents = this.customCalendarEvents.filter(c => c.date && c.date.startsWith(yearMonth) && c.type === 'event').length;
+      const notes = this.customCalendarEvents.filter(c => c.date && c.date.startsWith(yearMonth) && c.type === 'note').length;
+      const holidays = this.currentMonthHolidaysCount;
+
+      return {
+        meetings,
+        services,
+        visits,
+        attendance,
+        birthdays,
+        customEvents,
+        notes,
+        holidays
+      };
+    },
+
     calendarDates() {
-      const year = this.currentDate.getFullYear()
-      const month = this.currentDate.getMonth()
-      const firstDay = new Date(year, month, 1).getDay()
-      const totalDays = new Date(year, month + 1, 0).getDate()
-      const dates = []
+      const year = this.currentDate.getFullYear();
+      const month = this.currentDate.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      const dates = [];
 
       for (let i = 0; i < firstDay; i++) {
-        dates.push({ day: '', events: [], fullDate: null })
+        dates.push({ day: '', events: [], fullDate: null });
       }
 
       for (let day = 1; day <= totalDays; day++) {
-        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+        const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const mmDd = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+        const dayHolidays = this.showFilters.holidays ? this.getHolidaysForDate(fullDate, mmDd, year) : [];
 
         dates.push({
           day,
           fullDate,
           isToday: fullDate === new Date().toISOString().split('T')[0],
+          isHoliday: dayHolidays.length > 0,
           events: [
+            ...dayHolidays,
             ...(this.showFilters.meetings ? this.events.filter(e => e.date === fullDate) : []),
             ...(this.showFilters.services ? this.serviceEvents.filter(s => s.date === fullDate) : []),
             ...(this.showFilters.visits ? this.visitEvents.filter(v => v.date === fullDate) : []),
             ...(this.showFilters.attendance ? this.attendanceEvents.filter(a => a.date === fullDate) : []),
-            ...(this.customCalendarEvents.filter(c =>
+            ...this.customCalendarEvents.filter(c =>
               c.date === fullDate &&
-              ((c.type === 'holiday' && this.showFilters.holidays) ||
-               (c.type === 'event' && this.showFilters.events) ||
-               (c.type === 'note' && this.showFilters.notes))
-            )),
+              (
+                (c.type === 'holiday' && this.showFilters.holidays && !dayHolidays.some(dh => dh.title.toLowerCase() === (c.rawTitle || c.title).toLowerCase())) ||
+                (c.type === 'event' && this.showFilters.events) ||
+                (c.type === 'note' && this.showFilters.notes)
+              )
+            ),
             ...(this.showFilters.birthdays ? this.birthdayEvents.filter(b => b.month === month + 1 && b.day === day) : [])
           ]
-        })
+        });
       }
-      return dates
+      return dates;
     }
   },
 
   methods: {
-    toggleFilters() {
-      this.showFiltersPanel = !this.showFiltersPanel;
-    },
-    // Header methods
     getAuthHeaders() {
       return { Authorization: `Bearer ${localStorage.getItem('token')}` };
     },
@@ -462,7 +755,7 @@ export default {
       const diffMins = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMs / 3600000);
       const diffDays = Math.floor(diffMs / 86400000);
-      
+
       if (diffMins < 1) return 'Just now';
       if (diffMins < 60) return `${diffMins}m ago`;
       if (diffHours < 24) return `${diffHours}h ago`;
@@ -500,9 +793,11 @@ export default {
     downloadApk() {
       toastInfo('APK download starting...');
     },
+
     downloadIos() {
       toastInfo('iOS app coming soon!');
     },
+
     toggleDownloadMenu() {
       this.showDownloadMenu = !this.showDownloadMenu;
     },
@@ -547,42 +842,164 @@ export default {
       localStorage.setItem('hasSeenSBUFocus', 'true');
     },
 
-    // Calendar methods
+    goToToday() {
+      this.currentDate = new Date();
+      this.fetchOfficialHolidays();
+    },
+
+    openTodayPopup() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      this.openDatePopup({ fullDate: todayStr, day: new Date().getDate() });
+    },
+
+    prevMonth() {
+      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+      this.fetchOfficialHolidays();
+    },
+
+    nextMonth() {
+      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+      this.fetchOfficialHolidays();
+    },
+
+    async fetchOfficialHolidays(month, year) {
+      const m = month || (this.currentDate.getMonth() + 1);
+      const y = year || this.currentDate.getFullYear();
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(
+          `https://employees.archenterprises.co.in/api/api/holidays?month=${m}&year=${y}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        const data = await res.json();
+        const incoming = (data && data.success && Array.isArray(data.data))
+          ? data.data
+          : (Array.isArray(data) ? data : []);
+
+        const prefix = `${y}-${String(m).padStart(2, '0')}`;
+        const remaining = this.officialHolidays.filter(h => {
+          const d = h.full_date || h.date;
+          return !d || !d.startsWith(prefix);
+        });
+        this.officialHolidays = [...remaining, ...incoming];
+      } catch (e) {
+        console.error('Failed to fetch official holidays for month:', e);
+      }
+    },
+
+    getLocalDateStr(dateVal) {
+      if (!dateVal) return '';
+      if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+        return dateVal;
+      }
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    },
+
+    getHolidaysForDate(fullDate, mmDd, year) {
+      if (!this.officialHolidays || !this.officialHolidays.length) return [];
+
+      const matched = [];
+      const seenTitles = new Set();
+
+      for (const h of this.officialHolidays) {
+        if (h.is_active === false || h.is_active === 0 || h.is_active === '0') continue;
+
+        let isMatch = false;
+        const isRecurring = Boolean(h.is_recurring) || Boolean(h.month_day && !h.date);
+        if (isRecurring) {
+          let targetMonthDay = h.month_day;
+          if (!targetMonthDay && h.date) {
+            const localDateStr = this.getLocalDateStr(h.date);
+            if (localDateStr) {
+              targetMonthDay = localDateStr.substring(5, 10);
+            }
+          }
+          if (targetMonthDay) {
+            const parts = String(targetMonthDay).split('-');
+            if (parts.length === 2) {
+              targetMonthDay = `${String(parts[0]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`;
+            }
+          }
+          isMatch = (targetMonthDay === mmDd);
+        } else {
+          const holidayDate = h.full_date || h.date;
+          if (holidayDate) {
+            const localDateStr = this.getLocalDateStr(holidayDate);
+            isMatch = (localDateStr === fullDate);
+          }
+        }
+
+        if (isMatch) {
+          const cleanTitle = (h.name || '').trim();
+          const titleKey = cleanTitle.toLowerCase();
+          if (!seenTitles.has(titleKey)) {
+            seenTitles.add(titleKey);
+            const isPublic = (h.type || '').toLowerCase() === 'public';
+            const typeLabel = isPublic ? 'Public Holiday' : 'Company Holiday';
+            matched.push({
+              id: `official-holiday-${h.id || h.full_date || h.date || cleanTitle}`,
+              rawId: h.id,
+              date: fullDate,
+              title: cleanTitle,
+              rawTitle: cleanTitle,
+              description: h.description || `${typeLabel} observance for all employees.`,
+              type: 'holiday',
+              holidayClassification: h.type || 'public',
+              isOfficial: true,
+              isRecurring: Boolean(h.is_recurring)
+            });
+          }
+        }
+      }
+
+      return matched;
+    },
+
     openAttendance(event) {
-      if (!event) return
-      const employeeName = event.name || 'Missing Name'
-      const travelFrom = event.travel_from || '-'
-      const travelTo = event.travel_to || '-'
-      const siteName = event.site_name || '-'
-      let description = ''
+      if (!event) return;
+      const employeeName = event.name || 'Missing Name';
+      const travelFrom = event.travel_from || '-';
+      const travelTo = event.travel_to || '-';
+      const siteName = event.site_name || '-';
+      let description = '';
       if (event.status === 'Traveling') {
-        description = `Employee: ${employeeName}\nTravel From: ${travelFrom}\nTravel To: ${travelTo}`
+        description = `Employee: ${employeeName}\nTravel From: ${travelFrom}\nTravel To: ${travelTo}`;
       } else if (event.status === 'OnSite') {
-        description = `Employee: ${employeeName}\nSite: ${siteName}`
+        description = `Employee: ${employeeName}\nSite: ${siteName}`;
       }
       this.viewEvent = {
         title: event.title || 'Attendance',
         description,
         type: 'attendance',
         date: event.date
-      }
-      this.showViewModal = true
+      };
+      this.showViewModal = true;
     },
 
     async fetchAttendanceCalendar() {
       try {
         const res = await fetch('https://employees.archenterprises.co.in/api/api/attendance/calendar', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        const data = await res.json()
-        this.attendanceEvents = data
+        });
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : (data.data || []);
+        this.attendanceEvents = arr
           .filter(a => a.status === 'Traveling' || a.status === 'OnSite')
           .map(a => {
-            let title = ''
+            let title = '';
             if (a.status === 'Traveling') {
-              title = `🚗 ${a.travel_from} → ${a.travel_to}`
+              title = `🚗 ${a.travel_from} → ${a.travel_to}`;
             } else if (a.status === 'OnSite') {
-              title = `📍 ${a.site_name}`
+              title = `📍 ${a.site_name}`;
             }
             return {
               id: a.id,
@@ -594,38 +1011,39 @@ export default {
               site_name: a.site_name,
               status: a.status,
               type: 'attendance'
-            }
-          })
+            };
+          });
       } catch (e) {
-        console.error('Attendance fetch failed', e)
+        console.error('Attendance fetch failed', e);
       }
     },
 
     enableTopicEdit() {
-      this.meetingTopics = this.selectedMeeting.topics || ''
-      this.isEditingTopics = true
+      this.meetingTopics = this.selectedMeeting.topics || '';
+      this.isEditingTopics = true;
     },
 
     cancelTopicEdit() {
-      this.isEditingTopics = false
+      this.isEditingTopics = false;
     },
 
     isCustomEvent(event) {
-      return event.type === 'note'
+      if (event.isOfficial) return false;
+      return event.type === 'note';
     },
 
     isDraggable(event) {
-      return event.type === 'note'
+      return event.type === 'note';
     },
 
     onDragStart(event) {
-      if (!this.isCustomEvent(event)) return
-      this.draggedEvent = event
+      if (!this.isCustomEvent(event)) return;
+      this.draggedEvent = event;
     },
 
     async onDrop(date) {
-      if (!this.draggedEvent || !date.fullDate) return
-      if (this.draggedEvent.date === date.fullDate) return
+      if (!this.draggedEvent || !date.fullDate) return;
+      if (this.draggedEvent.date === date.fullDate) return;
       try {
         await fetch(`https://employees.archenterprises.co.in/api/api/arch-calendar/${this.draggedEvent.id}`, {
           method: 'PUT',
@@ -634,49 +1052,50 @@ export default {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify({ calendar_date: date.fullDate })
-        })
-        this.draggedEvent = null
-        this.fetchCustomCalendarData()
+        });
+        this.draggedEvent = null;
+        this.fetchCustomCalendarData();
       } catch (e) {
-        console.error('Drag update failed', e)
+        console.error('Drag update failed', e);
       }
     },
 
     editCustomEvent(event) {
-      this.selectedDate = event.date
-      this.formType = event.type
+      this.selectedDate = event.date;
+      this.formType = event.type;
       this.form = {
         title: event.rawTitle || event.title.replace(/^(Public Holiday: |Event: |📝 )/, ''),
         description: event.description || ''
-      }
-      this.editingId = event.id
-      this.showDatePopup = true
+      };
+      this.editingId = event.id;
+      this.showDatePopup = true;
     },
 
     openDatePopup(date) {
-      if (!date.fullDate) return
-      this.selectedDate = date.fullDate
-      this.showDatePopup = true
-      this.formType = null
-      this.form = { title: '', description: '' }
+      if (!date.fullDate) return;
+      this.selectedDate = date.fullDate;
+      this.showDatePopup = true;
+      this.formType = 'note';
+      this.form = { title: '', description: '' };
     },
 
     openForm(type) {
-      this.formType = type
-      this.form = { title: '', description: '' }
+      this.formType = type;
+      this.form = { title: '', description: '' };
     },
 
     closeDatePopup() {
-      this.showDatePopup = false
-      this.selectedDate = null
+      this.showDatePopup = false;
+      this.selectedDate = null;
+      this.editingId = null;
     },
 
     async saveCalendarData() {
       try {
         const url = this.editingId
           ? `https://employees.archenterprises.co.in/api/api/arch-calendar/${this.editingId}`
-          : 'https://employees.archenterprises.co.in/api/api/arch-calendar'
-        const method = this.editingId ? 'PUT' : 'POST'
+          : 'https://employees.archenterprises.co.in/api/api/arch-calendar';
+        const method = this.editingId ? 'PUT' : 'POST';
         await fetch(url, {
           method,
           headers: {
@@ -685,64 +1104,74 @@ export default {
           },
           body: JSON.stringify({
             calendar_date: this.selectedDate,
-            type: this.formType,
-            title: this.form.title,
+            type: this.formType || 'note',
+            title: this.form.title || 'Note',
             description: this.form.description
           })
-        })
-        this.editingId = null
-        this.closeDatePopup()
-        this.fetchCustomCalendarData()
+        });
+        toastSuccess('Note saved successfully');
+        this.editingId = null;
+        this.closeDatePopup();
+        this.fetchCustomCalendarData();
       } catch (e) {
-        console.error('Save failed', e)
+        console.error('Save failed', e);
+        toastError('Failed to save note');
       }
     },
 
     async deleteCustomEvent(event) {
-      if (!confirm('Delete this item?')) return
+      if (!confirm('Delete this note?')) return;
       try {
         await fetch(`https://employees.archenterprises.co.in/api/api/arch-calendar/${event.id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        this.fetchCustomCalendarData()
+        });
+        toastSuccess('Note deleted');
+        this.fetchCustomCalendarData();
       } catch (e) {
-        console.error('Delete failed', e)
+        console.error('Delete failed', e);
       }
     },
 
     async fetchCustomCalendarData() {
-      const res = await fetch('https://employees.archenterprises.co.in/api/api/arch-calendar', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      })
-      const data = await res.json()
-      this.customCalendarEvents = data.map(d => ({
-        id: d.id,
-        date: d.calendar_date,
-        title: d.type === 'holiday' ? `Public Holiday: ${d.title}` : d.type === 'event' ? `Event: ${d.title}` : d.type === 'note' ? `Note` : '',
-        description: d.description,
-        type: d.type
-      }))
+      try {
+        const res = await fetch('https://employees.archenterprises.co.in/api/api/arch-calendar', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : (data.data || []);
+        this.customCalendarEvents = arr.map(d => ({
+          id: d.id,
+          date: d.calendar_date,
+          rawTitle: d.title,
+          title: d.type === 'holiday' ? `Public Holiday: ${d.title}` : d.type === 'event' ? `Event: ${d.title}` : d.type === 'note' ? `📝 Note` : (d.title || 'Note'),
+          description: d.description,
+          type: d.type
+        }));
+      } catch (e) {
+        console.error(e);
+      }
     },
 
     async fetchBirthdays() {
       try {
         const res = await fetch('https://employees.archenterprises.co.in/api/api/birthdays/calendar', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        const data = await res.json()
-        this.birthdayEvents = data.map(b => {
-          const dob = new Date(b.date)
+        });
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : (data.data || []);
+        this.birthdayEvents = arr.map(b => {
+          const dob = new Date(b.date);
           return {
             id: b.id,
             month: dob.getMonth() + 1,
             day: dob.getDate(),
             title: `🎂 ${b.name}`,
             type: 'birthday'
-          }
-        })
+          };
+        });
       } catch (e) {
-        console.error('Birthday fetch failed', e)
+        console.error('Birthday fetch failed', e);
       }
     },
 
@@ -750,16 +1179,17 @@ export default {
       try {
         const res = await fetch('https://employees.archenterprises.co.in/api/api/visit-assign/calendar', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        const data = await res.json()
-        this.visitEvents = data.map(v => ({
+        });
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : (data.data || []);
+        this.visitEvents = arr.map(v => ({
           id: v.id,
           date: v.visit_date,
           title: v.company_name,
           type: 'visit'
-        }))
+        }));
       } catch (e) {
-        console.error(e)
+        console.error(e);
       }
     },
 
@@ -767,38 +1197,38 @@ export default {
       try {
         const res = await fetch(`https://employees.archenterprises.co.in/api/api/visit-assign/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        const result = await res.json()
+        });
+        const result = await res.json();
         this.selectedService = {
           ...result.data,
           isVisit: true
-        }
-        this.showServiceModal = true
+        };
+        this.showServiceModal = true;
       } catch (e) {
-        console.error(e)
+        console.error(e);
       }
     },
 
     handleEventClick(event) {
       switch (event.type) {
         case 'attendance':
-          this.openAttendance(event)
-          break
+          this.openAttendance(event);
+          break;
         case 'service':
-          this.openService(event.id)
-          break
+          this.openService(event.id);
+          break;
         case 'visit':
-          this.openVisit(event.id)
-          break
+          this.openVisit(event.id);
+          break;
         case 'online':
         case 'offline':
-          this.openMeeting(event)
-          break
+          this.openMeeting(event);
+          break;
         case 'note':
         case 'event':
         case 'holiday':
-          this.openViewEvent(event)
-          break
+          this.openViewEvent(event);
+          break;
       }
     },
 
@@ -807,34 +1237,42 @@ export default {
         title: event.title,
         description: event.description || '—',
         type: event.type,
-        date: event.date
-      }
-      this.showViewModal = true
+        date: event.date,
+        isOfficial: event.isOfficial || false,
+        holidayClassification: event.holidayClassification || '',
+        isRecurring: event.isRecurring || false
+      };
+      this.showViewModal = true;
     },
 
     async openService(id) {
-      const res = await fetch(`https://employees.archenterprises.co.in/api/api/service-assign/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      })
-      const result = await res.json()
-      this.selectedService = result.data
-      this.showServiceModal = true
+      try {
+        const res = await fetch(`https://employees.archenterprises.co.in/api/api/service-assign/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        const result = await res.json();
+        this.selectedService = result.data || {};
+        this.showServiceModal = true;
+      } catch (e) {
+        console.error(e);
+      }
     },
 
     async fetchServiceAssignments() {
       try {
         const res = await fetch('https://employees.archenterprises.co.in/api/api/service-assign/calendar', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        const data = await res.json()
-        this.serviceEvents = data.map(s => ({
+        });
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : (data.data || []);
+        this.serviceEvents = arr.map(s => ({
           id: s.id,
           date: s.visit_date,
           title: s.company_name,
           type: 'service'
-        }))
+        }));
       } catch (e) {
-        console.error(e)
+        console.error(e);
       }
     },
 
@@ -842,21 +1280,21 @@ export default {
       try {
         const res = await fetch(`https://employees.archenterprises.co.in/api/api/meetings/${event.id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        const result = await res.json()
-        this.selectedMeeting = result.data
-        this.meetingTopics = this.selectedMeeting.topics || ''
-        this.showMeetingModal = true
+        });
+        const result = await res.json();
+        this.selectedMeeting = result.data || {};
+        this.meetingTopics = this.selectedMeeting.topics || '';
+        this.showMeetingModal = true;
       } catch (err) {
-        console.error('Failed to fetch meeting', err)
+        console.error('Failed to fetch meeting', err);
       }
     },
 
     async saveTopics() {
-      const meetingId = this.selectedMeeting.id
+      const meetingId = this.selectedMeeting.id;
       if (!meetingId) {
-        toastError("Meeting ID not found")
-        return
+        toastError("Meeting ID not found");
+        return;
       }
       try {
         await fetch(`https://employees.archenterprises.co.in/api/api/meetings/${meetingId}/topics`, {
@@ -866,122 +1304,134 @@ export default {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify({ topics: this.meetingTopics })
-        })
-        this.selectedMeeting.topics = this.meetingTopics
-        toastSuccess('Topics saved successfully')
+        });
+        this.selectedMeeting.topics = this.meetingTopics;
+        toastSuccess('Topics saved successfully');
       } catch (e) {
-        console.error('Failed to save topics', e)
+        console.error('Failed to save topics', e);
       }
     },
 
     closeMeeting() {
-      this.showMeetingModal = false
-      this.selectedMeeting = {}
-      this.isEditingTopics = false
+      this.showMeetingModal = false;
+      this.selectedMeeting = {};
+      this.isEditingTopics = false;
     },
 
     async fetchMeetings() {
       try {
         const res = await fetch('https://employees.archenterprises.co.in/api/api/meetings/interviews', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        })
-        const data = await res.json()
-        this.events = data.map(m => ({
+        });
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : (data.data || []);
+        this.events = arr.map(m => ({
           id: m.id,
           date: m.date,
           title: m.title,
           type: m.type === 'offline' ? 'offline' : 'online'
-        }))
+        }));
       } catch (err) {
-        console.error('Failed to load meetings', err)
+        console.error('Failed to load meetings', err);
       }
     },
 
+    getEventClass(event) {
+      if (!event) return 'ev-default';
+      if (event.type === 'holiday') return 'ev-holiday';
+      if (event.type === 'attendance') return 'ev-attendance';
+      if (event.type === 'birthday') return 'ev-birthday';
+      if (event.type === 'online') return 'ev-online';
+      if (event.type === 'offline') return 'ev-offline';
+      if (event.type === 'service') return 'ev-service';
+      if (event.type === 'visit') return 'ev-visit';
+      if (event.type === 'event') return 'ev-custom-event';
+      if (event.type === 'note') return 'ev-note';
+      return 'ev-default';
+    },
+
+    getEventIcon(event) {
+      if (!event) return 'fas fa-circle';
+      if (event.type === 'holiday') return 'fas fa-umbrella-beach';
+      if (event.type === 'attendance') return 'fas fa-user-check';
+      if (event.type === 'birthday') return 'fas fa-birthday-cake';
+      if (event.type === 'online') return 'fas fa-video';
+      if (event.type === 'offline') return 'fas fa-handshake';
+      if (event.type === 'service') return 'fas fa-tools';
+      if (event.type === 'visit') return 'fas fa-car-side';
+      if (event.type === 'event') return 'fas fa-calendar-check';
+      if (event.type === 'note') return 'fas fa-sticky-note';
+      return 'fas fa-circle';
+    },
+
+    isWeekend(dateStr) {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      const day = d.getDay();
+      return day === 0 || day === 6;
+    },
+
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
+      this.isMobile = window.innerWidth <= 992;
+      this.isSidebarVisible = !this.isMobile;
     },
 
     toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible
-    },
-
-    prevMonth() {
-      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1)
-    },
-
-    nextMonth() {
-      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1)
+      this.isSidebarVisible = !this.isSidebarVisible;
     }
   },
 
   mounted() {
-    this.checkIfMobile()
-    window.addEventListener('resize', this.checkIfMobile)
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
 
     document.addEventListener('click', (e) => {
       if (!this.$el.querySelector('.download-app')?.contains(e.target)) {
-        this.showDownloadMenu = false
+        this.showDownloadMenu = false;
       }
-    })
+    });
 
-    const token = localStorage.getItem('token')
-    if (!token) this.$router.push('/auth')
+    const token = localStorage.getItem('token');
+    if (!token) this.$router.push('/auth');
 
-    this.fetchCurrentUser()
-    this.fetchNotifications()
-    this.fetchAttendanceCalendar()
-    this.fetchServiceAssignments()
-    this.fetchVisitAssignments()
-    this.fetchMeetings()
-    this.fetchBirthdays()
-    this.fetchCustomCalendarData()
-    this.showFocusOnSBUButton()
+    this.fetchCurrentUser();
+    this.fetchNotifications();
+    this.fetchOfficialHolidays();
+    this.fetchAttendanceCalendar();
+    this.fetchServiceAssignments();
+    this.fetchVisitAssignments();
+    this.fetchMeetings();
+    this.fetchBirthdays();
+    this.fetchCustomCalendarData();
+    this.showFocusOnSBUButton();
   },
 
   beforeUnmount() {
-    window.removeEventListener('resize', this.checkIfMobile)
-    document.body.style.overflow = ''
+    window.removeEventListener('resize', this.checkIfMobile);
+    document.body.style.overflow = '';
     if (this.focusTimer) {
-      clearTimeout(this.focusTimer)
+      clearTimeout(this.focusTimer);
     }
-    document.removeEventListener('click', this.closeNotificationPanel)
+    document.removeEventListener('click', this.closeNotificationPanel);
   }
 }
 </script>
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
-  --primary: #4361ee;
-  --primary-dark: #3a56d4;
-  --secondary: #06ffa5;
-  --dark: #1e293b;
-  --gray: #64748b;
-  --light: #f8fafc;
-  --border: #e2e8f0;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
-  --text: #1f7f6f;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* ════════ Master Page Layout ════════ */
 .layout {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app, #f8fafc);
   min-height: 100vh;
-  background: #f1f5f9;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text, #0f172a);
   position: relative;
 }
 
-/* Focus Overlay Styles */
 .layout.focus-overlay-active {
   overflow: hidden;
 }
@@ -1003,1021 +1453,1317 @@ export default {
   to { opacity: 1; }
 }
 
-/* Main Layout */
 .main-content {
   display: flex;
-  padding: 1.5rem;
-  gap: 1.5rem;
-  max-width: 1600px;
-  margin: 0 auto;
+  flex: 1;
+  padding: 20px 28px;
+  gap: 24px;
 }
 
 .content {
   flex: 1;
+  min-width: 0;
   background: transparent;
-  border-radius: 24px;
-  transition: all 0.3s ease;
-  margin-top: 0;
-  padding: 30px 40px;
-  background-color: #a5d5cf33;
-  border-radius: 15px;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
-/* Filters Header - Mobile Toggle */
-.filters-header {
-  display: none;
-  background: white;
-  padding: 12px 16px;
-  border-radius: 12px;
-  cursor: pointer;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  justify-content: space-between;
+/* ════════ Mobile Top Header ════════ */
+.mobile-header {
+  display: flex;
   align-items: center;
-  user-select: none;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
-.filters-toggle-label {
-  font-weight: 600;
-  color: var(--dark);
+.mobile-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.mobile-title i {
+  color: var(--primary, #0d9488);
+}
+
+.mobile-header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.filter-count {
-  background: var(--primary);
-  color: white;
-  font-size: 11px;
-  padding: 1px 8px;
-  border-radius: 20px;
-}
-
-.filters-header i {
-  transition: transform 0.3s ease;
-  color: var(--gray);
-}
-
-.filters-header i.rotated {
-  transform: rotate(180deg);
-}
-
-/* Calendar Filters */
-.calendar-filters {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-  font-size: 14px;
-  flex-wrap: wrap;
-  transition: all 0.3s ease;
-}
-
-.calendar-filters label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
+.btn-mobile-today {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text);
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background 0.2s;
+  color: #0f172a;
 }
 
-.calendar-filters label:hover {
-  background: rgba(31, 127, 111, 0.08);
-}
-
-.calendar-filters input {
-  accent-color: var(--text);
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-/* Calendar Header */
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 0 4px;
-}
-
-.calendar-header button {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  font-size: 18px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 44px;
-  min-height: 44px;
+.btn-mobile-menu {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.calendar-header button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
-
-.calendar-header button:active {
-  transform: scale(0.95);
-}
-
-.month-year-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--dark);
-  margin: 0;
-}
-
-/* Calendar Grid */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-
-.day-name {
-  text-align: center;
-  font-weight: 700;
-  color: var(--primary);
-  padding: 8px 0;
-  font-size: 14px;
-}
-
-.date-cell {
-  background: #fff;
-  border-radius: 12px;
-  cursor: pointer;
-  padding: 8px;
-  min-height: 90px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  position: relative;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-}
-
-.date-cell:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-}
-
-.date-cell.today {
-  border-color: var(--primary);
-  background: #f0f4ff;
-}
-
-.date-cell.has-events {
-  background: #fafafa;
-}
-
-.date-number {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--dark);
 }
 
-/* Event Dots - Mobile Friendly */
-.event-dots {
+/* ════════ Top Banner ════════ */
+.calendar-top-banner {
   display: flex;
-  gap: 3px;
-  margin-top: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.banner-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.portal-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary, #0d9488);
+  letter-spacing: 0.6px;
+}
+
+.pulse-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary, #0d9488);
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+.status-meta-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-meta-pill i {
+  color: #10b981;
+}
+
+.holiday-meta-pill {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.holiday-meta-pill i {
+  color: #e11d48;
+}
+
+.page-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.banner-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
+.month-nav-pill {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.nav-arrow-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.nav-arrow-btn:hover {
+  background: var(--primary, #0d9488);
+  color: #ffffff;
+  border-color: var(--primary, #0d9488);
+}
+
+.current-month-heading {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.calendar-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid var(--border, #e2e8f0);
+  color: #334155;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-today:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-add-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-gradient, linear-gradient(135deg, #0d9488 0%, #0f766e 100%));
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.2);
+}
+
+.btn-add-event:hover {
+  opacity: 0.94;
+  transform: translateY(-1px);
+}
+
+/* ════════ Filter Pills Bar ════════ */
+.calendar-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 10px 18px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.filter-pills-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.filter-pill:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.pill-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   display: inline-block;
 }
 
-.dot.meeting { background: #4caf50; }
-.dot.service { background: #17a2b8; }
-.dot.visit { background: #20c997; }
-.dot.birthday { background: #fd20dc; }
-.dot.holiday { background: #dc3545; }
-.dot.event { background: #6f42c1; }
-.dot.note { background: #c084fc; }
-.dot.attendance { background: #35ff50; }
-.dot.more {
-  background: var(--gray);
-  color: white;
-  font-size: 7px;
+.dot-teal { background: #0d9488; }
+.dot-blue { background: #2563eb; }
+.dot-cyan { background: #0891b2; }
+.dot-pink { background: #db2777; }
+.dot-red { background: #ef4444; }
+.dot-purple { background: #7c3aed; }
+.dot-amber { background: #f59e0b; }
+.dot-indigo { background: #4f46e5; }
+
+.pill-badge {
+  font-size: 10px;
   font-weight: 700;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  margin-left: 2px;
+  transition: all 0.15s ease;
+}
+
+.filter-pill.active {
+  color: #0f172a;
+  box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.filter-pill.active .pill-badge {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.filter-pill.pill-meetings.active { border-color: #99f6e4; background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%); color: #0f766e; }
+.filter-pill.pill-services.active { border-color: #bfdbfe; background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%); color: #1d4ed8; }
+.filter-pill.pill-visits.active { border-color: #a5f3fc; background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); color: #0e7490; }
+.filter-pill.pill-birthdays.active { border-color: #fbcfe8; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); color: #be185d; }
+.filter-pill.pill-holidays.active { border-color: #fecaca; background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); color: #b91c1c; }
+.filter-pill.pill-events.active { border-color: #ddd6fe; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); color: #6d28d9; }
+.filter-pill.pill-notes.active { border-color: #fde68a; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); color: #b45309; }
+.filter-pill.pill-attendance.active { border-color: #c7d2fe; background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); color: #4338ca; }
+
+/* ════════ Calendar Card & Grid ════════ */
+.calendar-card-container {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.calendar-day-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+.day-col-header {
+  padding: 13px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.day-name-txt {
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.day-sub-txt {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fb7185;
+  letter-spacing: 0.2px;
+}
+
+.day-col-header.is-weekend .day-name-txt {
+  color: #e11d48;
+}
+
+.calendar-dates-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #e2e8f0;
+  gap: 1px;
+}
+
+.date-cell {
+  background: #ffffff;
+  min-height: 124px;
+  padding: 9px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.date-cell:hover:not(.empty-cell) {
+  background: #fcfdfe;
+  box-shadow: inset 0 0 0 1.5px rgba(13, 148, 136, 0.4);
+  z-index: 2;
+}
+
+.date-cell:hover .cell-add-hint {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.empty-cell {
+  background: #f8fafc;
+  cursor: default;
+}
+
+.is-weekend-cell:not(.empty-cell):not(.is-today):not(.is-holiday-cell) {
+  background: #fafcff;
+}
+
+.is-today {
+  background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%) !important;
+  border-top: 3px solid #0d9488 !important;
+}
+
+.is-holiday-cell {
+  background: linear-gradient(180deg, #fffbf9 0%, #ffffff 100%) !important;
+  border-top: 3px solid #f43f5e !important;
+}
+
+.cell-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  min-height: 24px;
+}
+
+.cell-top-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cell-add-hint {
+  opacity: 0;
+  font-size: 10px;
+  color: #64748b;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f1f5f9;
+  transition: all 0.15s ease;
+  transform: scale(0.9);
 }
 
-.event {
-  margin-top: 4px;
-  padding: 3px 6px;
-  font-size: 11px;
-  border-radius: 6px;
+.cell-add-hint:hover {
+  background: var(--primary, #0d9488);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.today-tag-pill {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #0d9488;
+  color: #ffffff;
+  text-transform: uppercase;
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.25);
+}
+
+.holiday-tag-pill {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #ffe4e6;
+  color: #e11d48;
+  text-transform: uppercase;
+  border: 1px solid #fecdd3;
+}
+
+.date-badge-num {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #334155;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.today-badge {
+  background: #0d9488 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
+  font-weight: 800;
+}
+
+.holiday-badge {
+  color: #e11d48;
+  font-weight: 800;
+}
+
+.cell-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.calendar-event-badge {
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  border-left: 3.5px solid transparent;
+}
+
+.calendar-event-badge:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  z-index: 5;
+}
+
+.badge-icon-wrap {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.event-title-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  font-size: 11.5px;
+  letter-spacing: -0.1px;
+}
+
+.event-quick-actions {
   display: none;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
 }
 
-/* Show events only on larger screens */
-@media (min-width: 769px) {
-  .event {
-    display: block;
-  }
-  .event-dots {
-    display: none;
-  }
+.calendar-event-badge:hover .event-quick-actions {
+  display: flex;
 }
 
-/* Event Types */
-.event.service { background: #17a2b8; color: white; }
-.event.interview { background: #6f42c1; color: white; }
-.event.resource { background: #fd7e14; color: white; }
-.event.holiday { background: #dc3545!important; color: white; }
-.event.online { background: #4caf50; cursor: help; color: white; }
-.event.offline { cursor: help; background: #ff9800; color: white; }
-.event.birthday { cursor: not-allowed; background: linear-gradient(135deg, #fd20dc, #83067a); color: #ffffff; font-weight: 600; }
-.event.visit { cursor: help; background: linear-gradient(135deg, #20c997, #63e6be); color: #053b2e; font-weight: 600; }
-.event.note { cursor: help; background: linear-gradient(135deg, #c084fc, #e9d5ff); color: #3b0764; font-weight: 600; }
-.event.attendance { background: #35ff50; }
+.ev-action-btn {
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
 
-/* Modal Styles */
+.ev-action-btn:hover {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.ev-action-btn.delete:hover {
+  color: #ef4444;
+}
+
+/* 🎨 Event Color Schemes - Premium Gradients & Accents */
+.ev-holiday {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+  border-left: 3.5px solid #f43f5e;
+}
+.ev-holiday .badge-icon-wrap {
+  background: rgba(244, 63, 94, 0.15);
+  color: #e11d48;
+}
+
+.ev-attendance {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+  border-left: 3.5px solid #6366f1;
+}
+.ev-attendance .badge-icon-wrap {
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+}
+
+.ev-birthday {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+  color: #9d174d;
+  border: 1px solid #fbcfe8;
+  border-left: 3.5px solid #ec4899;
+}
+.ev-birthday .badge-icon-wrap {
+  background: rgba(236, 72, 153, 0.15);
+  color: #db2777;
+}
+
+.ev-online {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-left: 3.5px solid #10b981;
+}
+.ev-online .badge-icon-wrap {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.ev-offline {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-left: 3.5px solid #f59e0b;
+}
+.ev-offline .badge-icon-wrap {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.ev-service {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  border-left: 3.5px solid #3b82f6;
+}
+.ev-service .badge-icon-wrap {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.ev-visit {
+  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+  color: #155e75;
+  border: 1px solid #a5f3fc;
+  border-left: 3.5px solid #06b6d4;
+}
+.ev-visit .badge-icon-wrap {
+  background: rgba(6, 182, 212, 0.15);
+  color: #0891b2;
+}
+
+.ev-custom-event {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+  border-left: 3.5px solid #8b5cf6;
+}
+.ev-custom-event .badge-icon-wrap {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+}
+
+.ev-note {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  border-left: 3.5px solid #ea580c;
+}
+.ev-note .badge-icon-wrap {
+  background: rgba(234, 88, 12, 0.15);
+  color: #c2410c;
+}
+
+.ev-default {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-left: 3.5px solid #64748b;
+}
+.ev-default .badge-icon-wrap {
+  background: rgba(100, 116, 139, 0.15);
+  color: #475569;
+}
+
+/* ════════ Modal Styles ════════ */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
-  backdrop-filter: blur(4px);
-  padding: 16px;
-}
-
-.calendar-modal {
-  width: 420px;
-  max-width: 95%;
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
-  animation: scaleIn 0.25s ease;
-  overflow: hidden;
-  font-family: "Inter", system-ui, sans-serif;
-  max-height: 90vh;
-}
-
-@keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.modal-header {
-  background: linear-gradient(135deg, var(--primary), var(--text))!important;
-  color: #fff;
-  padding: 18px 22px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 700;
-  word-break: break-word;
-}
-
-.icon-close {
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  opacity: 0.8;
-  padding: 4px 8px;
-}
-
-.icon-close:hover {
-  opacity: 1;
-}
-
-.modal-body {
-  padding: 22px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.action-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.btn {
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: 0.2s ease;
-}
-
-.btn.holiday { background: #ffe8cc; color: #b45309; }
-.btn.event { background: #e0f2fe; color: #0369a1; }
-.btn.note { background: #f3e8ff; color: #7e22ce; }
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 13px;
-  resize: vertical;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #1f7f6f;
-}
-
-.btn-save {
-  width: 100%;
-  background: var(--text);
-  color: white;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-save:hover {
-  background: #176b5e;
-}
-
-.fade-in {
-  animation: fadeUp 0.3s ease;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.modal-card.professional {
-  padding: 0;
-  overflow: hidden;
-  border-radius: 14px;
-  max-width: 95%;
-  background: #ffffff;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
-}
-
-.modal-card.medium {
-  width: 520px;
-  max-width: 95%;
-}
-
-.modal-card.small {
-  width: 80%;
-  max-width: 500px;
-}
-
-.status-badge {
-  padding: 5px 12px;
-  font-size: 12px;
-  border-radius: 20px;
-  font-weight: 600;
-  background: rgba(255,255,255,0.2);
-  text-transform: capitalize;
-}
-
-.status-badge.online { background: #dcfce7; color: #16a34a; }
-.status-badge.offline { background: #fee2e2; color: #dc2626; }
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-}
-
-.info-grid.single {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 6px;
-  border-bottom-style: inset;
-}
-
-.info-item.full-width {
-  margin-top: 10px;
-  border: ridge;
-  padding: 12px;
-  max-height: 340px;
-  overflow: auto;
-}
-
-.label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.value {
-  font-size: 14px;
-  color: #111827;
-  word-break: break-word;
-}
-
-.modal-footer {
-  padding: 16px 22px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: flex-end;
-  background: #f9fafb;
-  gap: 8px;
-}
-
-.btn-close {
-  background: var(--text);
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.btn-close:hover {
-  background: var(--primary);
-}
-
-.join-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  padding: 9px 16px;
-  background: linear-gradient(135deg, var(--primary), var(--text));
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: all 0.25s ease;
-  box-shadow: 0 6px 14px rgba(31, 127, 111, 0.25);
-}
-
-.join-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(31, 127, 111, 0.35);
-}
-
-.event-actions {
-  font-size: 10px;
-  margin-top: 3px;
-  opacity: 0.85;
-  cursor: pointer;
-}
-
-.event-actions span:hover {
-  text-decoration: underline;
-}
-
-.topics-display {
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 14px;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.show-btn {
-  margin-top: 6px;
-  background: none;
-  border: none;
-  color: #2563eb;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.btn-edit-topics {
-  margin-top: 14px;
-  padding: 9px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  width: 156px;
-  border-radius: 8px;
-  border: none;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.btn-save-topics {
-  margin-top: 10px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  background: #4f46e5;
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.btn-cancel-topics {
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  color: #374151;
-  cursor: pointer;
-  margin-left: 8px;
-}
-
-.guest-list {
-  padding-left: 18px;
-  margin: 0;
-}
-
-/* Google Form Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
   z-index: 1000;
   padding: 16px;
 }
 
-.google-form-modal {
-  background: white;
-  border-radius: 28px;
-  width: 90%;
-  max-width: 900px;
-  height: 85vh;
-  max-height: 700px;
-  padding: 0;
-  overflow: hidden;
-  animation: slideUp 0.3s ease;
+.modal-card-premium {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border, #e2e8f0);
+  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header-premium {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fafbfc;
+}
+
+.mhp-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mhp-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  color: var(--primary, #0d9488);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.bg-teal-tint { background: #f0fdfa !important; }
+.text-teal { color: #0d9488 !important; }
+.bg-blue-tint { background: #eff6ff !important; }
+.text-blue { color: #2563eb !important; }
+
+.mhp-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.mhp-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+.mhp-close-btn {
+  background: #f1f5f9;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mhp-close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-body-premium {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.status-badge-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 4px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.status-badge-pill.holiday { background: #ffe4e6; color: #e11d48; }
+.status-badge-pill.online { background: #d1fae5; color: #059669; }
+.status-badge-pill.offline { background: #fef3c7; color: #d97706; }
+
+/* Modal Form Controls */
+.form-action-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-type-pill.active {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #0f766e;
+}
+
+.form-fields-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.form-input-text {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.form-input-text:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.form-textarea-field {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.form-textarea-field:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.form-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-cancel-modal {
+  padding: 8px 14px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save-modal {
+  padding: 8px 18px;
+  border-radius: 7px;
+  background: #0d9488;
+  border: none;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-save-modal:hover {
+  background: #0f766e;
+}
+
+.modal-footer-premium {
+  padding: 14px 22px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: #fafbfc;
+}
+
+.btn-primary-modal {
+  padding: 8px 18px;
+  border-radius: 7px;
+  background: #0d9488;
+  border: none;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* View Details Modal Grid */
+.view-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-val {
+  font-size: 13.5px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.detail-val.highlight-val {
+  color: #e11d48;
+}
+
+.detail-val.text-box {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.detail-val.text-box p {
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* Meeting & Service Details */
+.meeting-details-grid,
+.service-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.detail-card,
+.srv-detail-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.detail-card.full-width {
+  grid-column: span 2;
+}
+
+.dc-label,
+.srv-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.dc-val,
+.srv-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.join-meet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #0d9488;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.meeting-topics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-heading {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.btn-edit-sm {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.topics-display-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #1e293b;
+  min-height: 60px;
+}
+
+.empty-topics-text {
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+}
+
+.topics-editor-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editor-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-ghost-sm {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-save-sm {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #0d9488;
+  border: none;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Google Form / SBU Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+}
+
+.google-form-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 900px;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .google-form-header {
-  background: var(--primary);
+  padding: 16px 20px;
+  background: #1e293b;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.google-form-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.close-btn {
+  font-size: 22px;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+.close-btn:hover {
+  color: #ffffff;
 }
 
 .google-form-body {
   flex: 1;
-  overflow: hidden;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
 }
 
 .form-info-banner {
-  background: #e8f0fe;
-  padding: 0.75rem 1rem;
-  font-size: 0.85rem;
-  color: #1967d2;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: #0f766e;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  gap: 6px;
 }
 
 .google-form-iframe {
+  flex: 1;
   width: 100%;
-  height: calc(100% - 45px);
-  border: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
 
 .google-form-footer {
-  padding: 1rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  border-top: 1px solid var(--border);
-  background: var(--light);
-  flex-wrap: wrap;
-}
-
-.remind-later-btn, .open-new-tab-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 40px;
-  cursor: pointer;
-  transition: all 0.2s;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 14px;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .remind-later-btn {
-  border: 1px solid var(--border);
-  background: white;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
 }
 
 .open-new-tab-btn {
+  background: #0d9488;
   border: none;
-  background: var(--primary);
-  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #ffffff;
+  cursor: pointer;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ============================================
-   RESPONSIVE STYLES
-   ============================================ */
-
-/* Tablet */
-@media (max-width: 1024px) {
-  .content {
-    padding: 20px;
+/* ════════ Responsive Adaptations ════════ */
+@media (max-width: 1100px) {
+  .calendar-top-banner {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  .calendar-grid {
-    gap: 6px;
-  }
-  .date-cell {
-    min-height: 75px;
-    padding: 6px;
+  .banner-controls {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
-/* Mobile */
 @media (max-width: 768px) {
   .main-content {
-    flex-direction: column;
-    padding: 0.75rem;
-    gap: 0.75rem;
-  }
-  
-  .content {
-    padding: 16px;
-    border-radius: 12px;
-    margin-left: 0;
-    overflow-x: visible;
-  }
-  
-  .expanded-content {
-    margin-left: 0 !important;
-  }
-  
-  /* Filters */
-  .filters-header {
-    display: flex;
-  }
-  
-  .calendar-filters {
-    display: none;
-    gap: 8px;
-    margin-bottom: 12px;
     padding: 12px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
-  
-  .calendar-filters.filters-expanded {
-    display: flex;
+  .calendar-top-banner {
+    padding: 16px;
   }
-  
-  .calendar-filters.filters-collapsed {
-    display: none;
-  }
-  
-  .calendar-filters label {
-    font-size: 13px;
-    padding: 4px 6px;
-  }
-  
-  .calendar-filters label input {
-    width: 14px;
-    height: 14px;
-  }
-  
-  /* Calendar */
-  .calendar-grid {
-    gap: 4px;
-  }
-  
-  .day-name {
-    font-size: 11px;
-    padding: 4px 0;
-  }
-  
   .date-cell {
-    min-height: 60px;
-    padding: 4px;
-    border-radius: 8px;
+    min-height: 90px;
+    padding: 6px;
   }
-  
-  .date-number {
-    font-size: 11px;
+  .calendar-event-badge {
+    padding: 3px 5px;
+    font-size: 10px;
   }
-  
-  .month-year-title {
-    font-size: 16px;
+  .event-title-text {
+    font-size: 10px;
   }
-  
-  .calendar-header button {
-    padding: 6px 12px;
-    font-size: 16px;
-    min-width: 36px;
-    min-height: 36px;
-  }
-  
-  /* Event dots on mobile */
-  .dot {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .dot.more {
-    width: 12px;
-    height: 12px;
-    font-size: 6px;
-  }
-  
-  /* Modals */
-  .modal-backdrop {
-    padding: 12px;
-  }
-  
-  .calendar-modal {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 8px;
-    border-radius: 16px;
-  }
-  
-  .modal-card.small {
-    width: 95%;
-    max-width: 95%;
-  }
-  
-  .modal-card.medium {
-    width: 95%;
-    max-width: 95%;
-  }
-  
-  .modal-header {
-    padding: 14px 16px;
-  }
-  
-  .modal-title {
-    font-size: 16px;
-  }
-  
-  .modal-body {
-    padding: 16px;
-  }
-  
-  .action-buttons {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-  
-  .info-grid {
+  .meeting-details-grid,
+  .service-details-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
   }
-  
-  .modal-footer {
-    padding: 12px 16px;
-    flex-direction: column;
-  }
-  
-  .modal-footer button {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  /* Google Form Modal */
-  .google-form-modal {
-    width: 98%;
-    height: 92vh;
-    max-height: 92vh;
-    border-radius: 16px;
-  }
-  
-  .google-form-header h2 {
-    font-size: 16px;
-  }
-  
-  .form-info-banner {
-    font-size: 12px;
-    padding: 0.5rem 0.75rem;
-  }
-  
-  .google-form-footer {
-    flex-direction: column;
-    padding: 0.75rem;
-  }
-  
-  .google-form-footer button {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .join-btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .btn-edit-topics {
-    width: 100%;
-  }
-  
-  .topic-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .topic-actions button {
-    width: 100%;
-  }
-  
-  .btn-cancel-topics {
-    margin-left: 0;
-  }
-}
-
-/* Small phones */
-@media (max-width: 480px) {
-  .main-content {
-    padding: 0.5rem;
-  }
-  
-  .content {
-    padding: 12px;
-    border-radius: 10px;
-  }
-  
-  .calendar-grid {
-    gap: 3px;
-  }
-  
-  .date-cell {
-    min-height: 50px;
-    padding: 3px;
-    border-radius: 6px;
-  }
-  
-  .date-number {
-    font-size: 10px;
-  }
-  
-  .day-name {
-    font-size: 10px;
-    padding: 3px 0;
-  }
-  
-  .month-year-title {
-    font-size: 14px;
-  }
-  
-  .calendar-header button {
-    padding: 4px 10px;
-    font-size: 14px;
-    min-width: 32px;
-    min-height: 32px;
-  }
-  
-  .dot {
-    width: 5px;
-    height: 5px;
-  }
-  
-  .dot.more {
-    width: 10px;
-    height: 10px;
-    font-size: 5px;
-  }
-  
-  .filters-header {
-    padding: 10px 12px;
-    font-size: 14px;
-  }
-  
-  .calendar-filters {
-    padding: 8px;
-    gap: 4px;
-  }
-  
-  .calendar-filters label {
-    font-size: 11px;
-    padding: 2px 4px;
-  }
-  
-  .calendar-filters label input {
-    width: 12px;
-    height: 12px;
-  }
-  
-  .modal-header {
-    padding: 12px 14px;
-  }
-  
-  .modal-title {
-    font-size: 14px;
-  }
-  
-  .modal-body {
-    padding: 12px;
-  }
-  
-  .modal-card.professional {
-    max-width: 100%;
-  }
-  
-  .action-buttons {
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-  
-  .btn {
-    font-size: 12px;
-    padding: 8px;
-  }
-  
-  .google-form-header h2 {
-    font-size: 14px;
-  }
-  
-  .form-info-banner {
-    font-size: 10px;
-    flex-wrap: wrap;
-  }
-  
-  .close-btn {
-    font-size: 24px;
-  }
-}
-
-/* Touch-friendly improvements */
-@media (hover: none) and (pointer: coarse) {
-  .date-cell,
-  .calendar-header button,
-  .filters-header,
-  .btn,
-  .modal-close,
-  .btn-close,
-  .join-btn,
-  .google-form-footer button {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  .date-cell:hover {
-    transform: none;
-  }
-  
-  .calendar-header button:hover {
-    transform: none;
+  .detail-card.full-width {
+    grid-column: span 1;
   }
 }
 </style>

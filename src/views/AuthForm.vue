@@ -417,14 +417,35 @@ export default {
       this.error = '';
       
       try {
-        const url = this.isEmployeeLogin
-          ? 'https://employees.archenterprises.co.in/api/api/login'
-          : 'https://employees.archenterprises.co.in/api/api/admin-login';
+        let emailInput = (this.loginForm.email || '').trim();
+        // If user entered username 'test' (or 'Test'), map to test@gmail.com
+        if (emailInput.toLowerCase() === 'test') {
+          emailInput = 'test@gmail.com';
+        }
+        const passwordInput = (this.loginForm.password || '').trim();
 
-        const response = await axios.post(url, {
-          email: this.loginForm.email,
-          password: this.loginForm.password
-        });
+        const employeeUrl = 'https://employees.archenterprises.co.in/api/api/login';
+        const adminUrl = 'https://employees.archenterprises.co.in/api/api/admin-login';
+
+        let targetUrl = this.isEmployeeLogin ? employeeUrl : adminUrl;
+        let response;
+
+        try {
+          response = await axios.post(targetUrl, {
+            email: emailInput,
+            password: passwordInput
+          });
+        } catch (firstErr) {
+          // If admin login failed with 401/404/500, attempt fallback to employee login
+          if (!this.isEmployeeLogin && (firstErr.response?.status === 401 || firstErr.response?.status === 404)) {
+            response = await axios.post(employeeUrl, {
+              email: emailInput,
+              password: passwordInput
+            });
+          } else {
+            throw firstErr;
+          }
+        }
 
         if (this.rememberMe) {
           localStorage.setItem('rememberedEmail', this.loginForm.email);
@@ -432,27 +453,35 @@ export default {
           localStorage.removeItem('rememberedEmail');
         }
 
+        const userData = response.data.user || {};
+        const isAdmin = userData.role === 'admin' || userData.role === 'super_admin';
+
         localStorage.setItem('token', response.data.token);
-        if (!this.isEmployeeLogin) {
+        if (isAdmin) {
           localStorage.setItem('admin_token', response.data.token);
+          localStorage.setItem('authTab', 'admin');
+        } else {
+          localStorage.removeItem('admin_token');
+          localStorage.setItem('authTab', 'employee');
+          this.isEmployeeLogin = true;
         }
+
         localStorage.setItem('loginTime', Date.now());
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('authTab', this.isEmployeeLogin ? 'employee' : 'admin');
-        window.dispatchEvent(new CustomEvent('auth-change', { detail: response.data.user }));
+        localStorage.setItem('user', JSON.stringify(userData));
+        window.dispatchEvent(new CustomEvent('auth-change', { detail: userData }));
         resetActivityTimer();
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
         setTimeout(() => {
-          if (this.isEmployeeLogin) {
-            this.$router.push('/employee/dashboard');
-          } else {
+          if (isAdmin) {
             this.$router.push('/dashboard');
+          } else {
+            this.$router.push('/employee/dashboard');
           }
-        }, 500);
+        }, 300);
 
       } catch (err) {
-        const message = err.response?.data?.message;
+        const message = err.response?.data?.message || err.response?.data?.error;
         if (err.response?.status === 403) {
           this.error = "Your account is inactive. Please contact Admin.";
         } else if (message) {

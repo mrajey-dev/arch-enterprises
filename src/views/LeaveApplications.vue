@@ -49,7 +49,6 @@
             :class="{ 'card-active': statusFilter === '' }"
             @click="filterByStatus('')"
           >
-            <div class="metric-card-bg"></div>
             <div class="metric-header">
               <span class="metric-title">Total Requests</span>
               <div class="metric-icon-wrap icon-all">
@@ -71,7 +70,6 @@
             :class="{ 'card-active': statusFilter === 'Pending' }"
             @click="filterByStatus('Pending')"
           >
-            <div class="metric-card-bg"></div>
             <div class="metric-header">
               <span class="metric-title">Pending Review</span>
               <div class="metric-icon-wrap icon-pending">
@@ -93,7 +91,6 @@
             :class="{ 'card-active': statusFilter === 'Approved' }"
             @click="filterByStatus('Approved')"
           >
-            <div class="metric-card-bg"></div>
             <div class="metric-header">
               <span class="metric-title">Approved</span>
               <div class="metric-icon-wrap icon-approved">
@@ -115,7 +112,6 @@
             :class="{ 'card-active': statusFilter === 'Rejected' }"
             @click="filterByStatus('Rejected')"
           >
-            <div class="metric-card-bg"></div>
             <div class="metric-header">
               <span class="metric-title">Rejected</span>
               <div class="metric-icon-wrap icon-rejected">
@@ -261,7 +257,7 @@
                 >
                   <!-- Employee Column -->
                   <td class="td-employee">
-                    <div class="employee-identity-card" @click="openLeaveBalancePopup(leave.name)">
+                    <div class="employee-identity" @click="openLeaveBalancePopup(leave.name)" title="Click to view leave quota & balance">
                       <div class="avatar-modern" :style="{ background: getAvatarGradient(leave.name) }">
                         {{ getInitials(leave.name) }}
                       </div>
@@ -275,7 +271,7 @@
                             {{ leave.department }}
                           </span>
                           <span class="view-balance-prompt">
-                            <i class="fas fa-chart-pie"></i> Check Quota
+                            <i class="fas fa-chart-pie"></i> Quota
                           </span>
                         </div>
                       </div>
@@ -284,98 +280,86 @@
 
                   <!-- Leave Category -->
                   <td class="td-type">
-                    <div class="field-card field-card-type">
-                      <span :class="['category-badge', getLeaveTypeClass(leave.leaveType)]">
-                        <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
-                        {{ leave.leaveType }}
-                      </span>
-                    </div>
+                    <span :class="['category-badge', getLeaveTypeClass(leave.leaveType)]">
+                      <i :class="getLeaveTypeIcon(leave.leaveType)"></i>
+                      {{ leave.leaveType }}
+                    </span>
                   </td>
 
                   <!-- Schedule & Duration -->
                   <td class="td-dates">
-                    <div class="field-card field-card-schedule">
-                      <div class="schedule-date-box">
-                        <i class="far fa-calendar-alt date-icon"></i>
-                        <span class="date-text">
-                          {{ formatDate(leave.fromDate) }}
-                          <template v-if="leave.fromDate !== leave.toDate">
-                            <span class="date-arrow">&rarr;</span>
-                            {{ formatDate(leave.toDate) }}
-                          </template>
-                        </span>
+                    <div class="schedule-info">
+                      <div class="schedule-date">
+                        <i class="far fa-calendar-alt"></i>
+                        <span class="date-val">{{ formatDate(leave.fromDate) }}</span>
+                        <template v-if="leave.fromDate !== leave.toDate">
+                          <span class="date-arrow">&rarr;</span>
+                          <span class="date-val">{{ formatDate(leave.toDate) }}</span>
+                        </template>
                       </div>
-                      <div class="duration-badge" :class="{ 'half-day-duration': isHalfDayLeave(leave) }">
+                      <span class="duration-badge" :class="{ 'half-day-duration': isHalfDayLeave(leave) }">
                         <i class="fas" :class="isHalfDayLeave(leave) ? 'fa-adjust' : 'fa-clock'"></i>
-                        <span>{{ getLeaveDurationDisplay(leave) }}</span>
-                      </div>
+                        {{ getLeaveDurationDisplay(leave) }}
+                      </span>
                     </div>
                   </td>
 
                   <!-- Reason & Attachment -->
                   <td class="td-reason">
-                    <div class="field-card field-card-reason">
-                      <div class="reason-note-box" @click="openReasonModal(leave)" :title="leave.reason || 'Click to view full reason'">
-                        <i class="fas fa-quote-left quote-icon"></i>
-                        <p class="reason-text">
-                          {{ truncateText(leave.reason, 55) || 'No reason specified' }}
-                        </p>
-                      </div>
+                    <div class="reason-cell">
+                      <p class="reason-text-inline" @click="openReasonModal(leave)" :title="leave.reason || 'Click to view full reason'">
+                        {{ truncateText(leave.reason, 60) || 'No reason specified' }}
+                      </p>
                       <button
                         v-if="leave.file"
-                        class="attachment-pill"
+                        class="attachment-chip"
                         @click.stop="openAttachmentModal(leave)"
                         title="View attached document"
                       >
                         <i class="fas fa-paperclip"></i>
-                        <span>Document</span>
+                        <span>Doc</span>
                       </button>
                     </div>
                   </td>
 
                   <!-- Status -->
-                  <td class="td-status">
-                    <div class="field-card field-card-status">
-                      <span :class="['status-pill', getStatusClass(leave.status)]">
-                        <span class="status-pulse-dot"></span>
-                        <i :class="getStatusIcon(leave.status)"></i>
-                        {{ leave.status }}
-                      </span>
-                    </div>
+                  <td class="td-status text-center">
+                    <span :class="['status-pill', getStatusClass(leave.status)]">
+                      <span class="status-pulse-dot"></span>
+                      {{ leave.status }}
+                    </span>
                   </td>
 
                   <!-- Actions -->
                   <td class="td-actions text-right">
-                    <div class="field-card field-card-actions">
-                      <div class="action-buttons-wrap">
-                        <!-- Approve Button -->
-                        <button
-                          v-if="leave.status === 'Pending' || leave.status === 'Rejected'"
-                          class="btn-action btn-approve"
-                          :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Approved' }"
-                          :disabled="busyLeave.id === leave.id"
-                          @click="approveLeave(leave)"
-                          :title="leave.status === 'Rejected' ? 'Re-approve leave request' : 'Approve leave request'"
-                        >
-                          <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Approved'" class="fas fa-circle-notch fa-spin"></i>
-                          <i v-else class="fas fa-check"></i>
-                          <span>{{ leave.status === 'Rejected' ? 'Re-Approve' : 'Approve' }}</span>
-                        </button>
+                    <div class="action-buttons-wrap">
+                      <!-- Approve Button -->
+                      <button
+                        v-if="leave.status === 'Pending' || leave.status === 'Rejected'"
+                        class="btn-act btn-act-approve"
+                        :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Approved' }"
+                        :disabled="busyLeave.id === leave.id"
+                        @click="approveLeave(leave)"
+                        :title="leave.status === 'Rejected' ? 'Re-approve leave request' : 'Approve leave request'"
+                      >
+                        <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Approved'" class="fas fa-circle-notch fa-spin"></i>
+                        <i v-else class="fas fa-check"></i>
+                        <span>{{ leave.status === 'Rejected' ? 'Re-Approve' : 'Approve' }}</span>
+                      </button>
 
-                        <!-- Reject Button -->
-                        <button
-                          v-if="leave.status === 'Pending' || leave.status === 'Approved'"
-                          class="btn-action btn-reject"
-                          :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Rejected' }"
-                          :disabled="busyLeave.id === leave.id"
-                          @click="rejectLeave(leave)"
-                          :title="leave.status === 'Approved' ? 'Revoke and mark as rejected' : 'Reject leave request'"
-                        >
-                          <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Rejected'" class="fas fa-circle-notch fa-spin"></i>
-                          <i v-else class="fas fa-times"></i>
-                          <span>{{ leave.status === 'Approved' ? 'Revoke' : 'Reject' }}</span>
-                        </button>
-                      </div>
+                      <!-- Reject Button -->
+                      <button
+                        v-if="leave.status === 'Pending' || leave.status === 'Approved'"
+                        class="btn-act btn-act-reject"
+                        :class="{ 'btn-loading': busyLeave.id === leave.id && busyLeave.action === 'Rejected' }"
+                        :disabled="busyLeave.id === leave.id"
+                        @click="rejectLeave(leave)"
+                        :title="leave.status === 'Approved' ? 'Revoke and mark as rejected' : 'Reject leave request'"
+                      >
+                        <i v-if="busyLeave.id === leave.id && busyLeave.action === 'Rejected'" class="fas fa-circle-notch fa-spin"></i>
+                        <i v-else class="fas fa-times"></i>
+                        <span>{{ leave.status === 'Approved' ? 'Revoke' : 'Reject' }}</span>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1893,59 +1877,61 @@ export default {
   100% { opacity: 0.5; }
 }
 
-/* ================= METRICS CARDS ================= */
+/* ================= EXECUTIVE STAT TILES (COMPACT & PROPORTIONAL) ================= */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
 .metric-card {
   position: relative;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 12px 14px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .metric-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
   border-color: #cbd5e1;
 }
 
 .metric-card.card-active {
   border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25), 0 10px 20px -3px rgba(99, 102, 241, 0.1);
+  background: #fafafa;
+  box-shadow: 0 0 0 1.5px #6366f1, 0 4px 12px rgba(99, 102, 241, 0.08);
 }
 
 .metric-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
 }
 
 .metric-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
 }
 
 .metric-icon-wrap {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .icon-all { background: #eef2ff; color: #4f46e5; }
@@ -1957,21 +1943,23 @@ export default {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 14px;
+  gap: 8px;
 }
 
 .metric-number {
-  font-size: 32px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 22px;
   font-weight: 800;
   color: #0f172a;
   line-height: 1;
 }
 
 .metric-tag {
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 8px;
+  padding: 1.5px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 .tag-all { background: #f1f5f9; color: #475569; }
@@ -1981,16 +1969,17 @@ export default {
 
 .metric-bar {
   width: 100%;
-  height: 5px;
+  height: 3px;
   background: #f1f5f9;
-  border-radius: 10px;
+  border-radius: 9999px;
   overflow: hidden;
+  margin-top: 2px;
 }
 
 .metric-bar-fill {
   height: 100%;
-  border-radius: 10px;
-  transition: width 0.6s ease;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
 }
 
 .fill-all { background: #6366f1; }
@@ -2278,7 +2267,53 @@ export default {
   color: #94a3b8;
 }
 
-/* ================= MODERN SEPARATED TABLE ================= */
+/* ================= TABLE CARD & HIGH-DENSITY ENTERPRISE TABLE ================= */
+.content-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.table-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.results-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-count strong {
+  color: #0f172a;
+}
+
+.results-filter-badge {
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.table-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
 .desktop-table-wrapper {
   overflow-x: auto;
   background: #ffffff;
@@ -2286,85 +2321,54 @@ export default {
 
 .modern-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   text-align: left;
 }
 
-/* Table Header - Distinct Column Headers */
 .modern-table thead tr {
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .modern-table th {
-  padding: 16px 18px;
-  font-size: 12px;
+  padding: 10px 14px;
+  font-size: 11px;
   font-weight: 700;
-  color: #475569;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  border-bottom: 2px solid #cbd5e1;
-  border-right: 1.5px solid #e2e8f0;
+  letter-spacing: 0.5px;
   white-space: nowrap;
-}
-
-.modern-table th:last-child {
-  border-right: none;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .modern-table th i {
-  margin-right: 6px;
+  margin-right: 5px;
   color: #6366f1;
-  font-size: 13px;
+  font-size: 11px;
 }
 
-/* Column Width Allocations */
-.th-employee, .td-employee {
-  width: 27%;
-  min-width: 250px;
-}
-.th-type, .td-type {
-  width: 14%;
-  min-width: 140px;
-}
-.th-dates, .td-dates {
-  width: 19%;
-  min-width: 190px;
-}
-.th-reason, .td-reason {
-  width: 21%;
-  min-width: 210px;
-}
-.th-status, .td-status {
-  width: 10%;
-  min-width: 130px;
-}
-.th-actions, .td-actions {
-  width: 9%;
-  min-width: 170px;
-}
+/* Width allocations */
+.th-employee, .td-employee { width: 26%; min-width: 210px; }
+.th-type, .td-type { width: 14%; min-width: 125px; }
+.th-dates, .td-dates { width: 18%; min-width: 170px; }
+.th-reason, .td-reason { width: 23%; min-width: 200px; }
+.th-status, .td-status { width: 9%; min-width: 105px; }
+.th-actions, .td-actions { width: 10%; min-width: 155px; }
 
-/* Table Cells - Distinct Column Partitions */
 .modern-table td {
-  padding: 14px 16px;
+  padding: 10px 14px;
   vertical-align: middle;
-  border-bottom: 2px solid #f1f5f9;
-  border-right: 1.5px solid #eef2f6;
+  border-bottom: 1px solid #f1f5f9;
   background: #ffffff;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.15s ease;
 }
 
-.modern-table td:last-child {
-  border-right: none;
-}
-
-/* Row-level Styling & Status Indicator on Leftmost Cell */
 .table-row-interactive {
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .table-row-interactive td:first-child {
-  border-left: 4px solid transparent;
+  border-left: 3px solid transparent;
 }
 
 .row-pending td:first-child {
@@ -2379,88 +2383,60 @@ export default {
   border-left-color: #ef4444;
 }
 
-/* Interactive Row Hover with Soft Tint */
 .table-row-interactive:hover td {
   background-color: #f8fafc;
 }
 
 .row-pending:hover td {
-  background-color: #fffdf7;
+  background-color: #fffdf5;
 }
 
-.row-approved:hover td {
-  background-color: #f6fefb;
-}
-
-.row-rejected:hover td {
-  background-color: #fffafa;
-}
-
-/* ================= FIELD CARDS (INTERNAL CELL CONTAINERS) ================= */
-.field-card {
-  width: 100%;
-}
-
-/* 1. Employee Details Card */
-.employee-identity-card {
+/* 1. Employee Details Column */
+.employee-identity {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-.employee-identity-card:hover {
-  background: #ffffff;
-  border-color: #c7d2fe;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.12);
-  transform: translateY(-1px);
 }
 
 .avatar-modern {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  letter-spacing: 0.3px;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.employee-identity-card:hover .avatar-modern {
-  transform: scale(1.06);
+.employee-identity:hover .avatar-modern {
+  transform: scale(1.05);
 }
 
 .employee-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 
 .emp-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1.2;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: color 0.15s ease;
 }
 
-.employee-identity-card:hover .emp-name {
+.employee-identity:hover .emp-name {
   color: #4f46e5;
 }
 
@@ -2468,18 +2444,17 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
 }
 
 .dept-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #475569;
-  background: #edf2f7;
-  padding: 2px 7px;
-  border-radius: 6px;
+  gap: 3px;
+  font-size: 10.5px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2488,299 +2463,256 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 11px;
-  color: #4338ca;
-  background: #e0e7ff;
-  padding: 2px 7px;
-  border-radius: 6px;
+  font-size: 10.5px;
+  color: #4f46e5;
+  background: #eef2ff;
+  border: 1px solid #e0e7ff;
+  padding: 1px 6px;
+  border-radius: 4px;
   font-weight: 700;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.employee-identity-card:hover .view-balance-prompt {
+.employee-identity:hover .view-balance-prompt {
   background: #4f46e5;
   color: #ffffff;
+  border-color: #4f46e5;
 }
 
-/* 2. Leave Category Card */
-.field-card-type {
-  display: flex;
-  align-items: center;
-}
-
+/* 2. Leave Category */
 .category-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .category-badge.casual {
   background: #ecfdf5;
   color: #047857;
-  border: 1.5px solid #a7f3d0;
+  border: 1px solid #a7f3d0;
 }
 
 .category-badge.sick {
   background: #fffbeb;
   color: #b45309;
-  border: 1.5px solid #fde68a;
+  border: 1px solid #fde68a;
 }
 
 .category-badge.pl {
   background: #eef2ff;
   color: #4338ca;
-  border: 1.5px solid #c7d2fe;
+  border: 1px solid #c7d2fe;
 }
 
 .category-badge.halfday {
   background: #fff7ed;
   color: #c2410c;
-  border: 1.5px solid #fed7aa;
+  border: 1px solid #fed7aa;
 }
 
 .category-badge.default {
   background: #faf5ff;
   color: #7e22ce;
-  border: 1.5px solid #e9d5ff;
+  border: 1px solid #e9d5ff;
 }
 
-/* 3. Schedule & Duration Card */
-.field-card-schedule {
+/* 3. Schedule & Duration */
+.schedule-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
-.schedule-date-box {
+.schedule-date {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 6px 10px;
-  border-radius: 10px;
-  font-size: 12.5px;
+  gap: 5px;
+  font-size: 12px;
   font-weight: 600;
   color: #1e293b;
-  width: fit-content;
 }
 
-.schedule-date-box .date-icon {
+.schedule-date i {
   color: #6366f1;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.schedule-date-box .date-arrow {
+.schedule-date .date-arrow {
   color: #94a3b8;
-  margin: 0 2px;
-  font-weight: 700;
+  margin: 0 1px;
 }
 
 .duration-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
   background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 3px 9px;
-  border-radius: 7px;
+  padding: 1px 6px;
+  border-radius: 4px;
   width: fit-content;
 }
 
 .duration-badge.half-day-duration {
   color: #c2410c;
   background: #fff7ed;
-  border-color: #fed7aa;
+  border: 1px solid #fed7aa;
 }
 
-/* 4. Reason & Attachment Card */
-.field-card-reason {
+/* 4. Reason & Attachment */
+.reason-cell {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 280px;
-}
-
-.reason-note-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-left: 3.5px solid #6366f1;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.reason-note-box:hover {
-  background: #ffffff;
-  border-color: #6366f1;
-  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.1);
-  transform: translateY(-1px);
-}
-
-.reason-note-box .quote-icon {
-  color: #818cf8;
-  font-size: 11px;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.reason-text {
-  margin: 0;
-  font-size: 12.5px;
-  color: #334155;
-  line-height: 1.45;
-  word-break: break-word;
-}
-
-.attachment-pill {
-  display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  cursor: pointer;
+}
+
+.reason-text-inline {
+  margin: 0;
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.4;
+  word-break: break-word;
+  flex: 1;
+  transition: color 0.15s ease;
+}
+
+.reason-cell:hover .reason-text-inline {
+  color: #4f46e5;
+}
+
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
   font-weight: 700;
   color: #2563eb;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
-  padding: 4px 10px;
-  border-radius: 8px;
-  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.attachment-pill:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+.attachment-chip:hover {
+  background: #2563eb;
+  color: #ffffff;
 }
 
-/* 5. Status Card */
-.field-card-status {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
+/* 5. Status */
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 16px;
-  border-radius: 30px;
-  font-size: 12px;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.3px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .status-pulse-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 
 .status-pill.pending {
   background: #fffbeb;
   color: #b45309;
-  border: 1.5px solid #fde68a;
+  border: 1px solid #fde68a;
 }
 .status-pill.pending .status-pulse-dot {
   background: #f59e0b;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
 }
 
 .status-pill.approved {
   background: #ecfdf5;
   color: #047857;
-  border: 1.5px solid #a7f3d0;
+  border: 1px solid #a7f3d0;
 }
 .status-pill.approved .status-pulse-dot {
   background: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .status-pill.rejected {
   background: #fef2f2;
   color: #b91c1c;
-  border: 1.5px solid #fecaca;
+  border: 1px solid #fecaca;
 }
 .status-pill.rejected .status-pulse-dot {
   background: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
-/* 6. Approval Actions Card */
-.field-card-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
+/* 6. Action Buttons */
 .action-buttons-wrap {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
-.btn-action {
+.btn-act {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 12px;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
   font-weight: 700;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.btn-approve {
-  background: #10b981;
+.btn-act-approve,
+.btn-action.btn-approve {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.btn-act-approve:hover:not(:disabled),
+.btn-action.btn-approve:hover:not(:disabled) {
+  background: #059669;
   color: #ffffff;
   border-color: #059669;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
-}
-
-.btn-approve:hover:not(:disabled) {
-  background: #059669;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
 }
 
-.btn-reject {
+.btn-act-reject,
+.btn-action.btn-reject {
   background: #ffffff;
   color: #dc2626;
-  border-color: #fca5a5;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #fecaca;
 }
 
-.btn-reject:hover:not(:disabled) {
-  background: #fef2f2;
-  border-color: #ef4444;
-  color: #b91c1c;
+.btn-act-reject:hover:not(:disabled),
+.btn-action.btn-reject:hover:not(:disabled) {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
 }
 
+.btn-act:disabled,
 .btn-action:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
 }

@@ -14,6 +14,7 @@
     <div class="crm-hero-top">
       <div class="crm-hero-title-area">
         <div class="crm-eyebrow-pill">
+          <span class="crm-pulse-dot"></span>
           <i class="fas fa-chart-line"></i> CRM DASHBOARD
         </div>
         <h1 class="crm-main-heading">Customers & Purchase Orders</h1>
@@ -23,19 +24,19 @@
       <!-- Grouped Modern Action Pills -->
       <div class="crm-header-action-group">
         <button class="crm-btn-pill crm-btn-secondary" @click="openAssignPoForm">
-          <i class="fas fa-tasks"></i>
+          <i class="fas fa-tasks text-indigo"></i>
           <span>Manage PO</span>
         </button>
-        <button class="crm-btn-pill crm-btn-outline" @click="showViewAllQuotationPopup = true">
-          <i class="fas fa-file-invoice-dollar"></i>
+        <button class="crm-btn-pill crm-btn-outline" @click="$router.push('/employee/quotations')">
+          <i class="fas fa-file-invoice-dollar text-amber"></i>
           <span>Quotations</span>
         </button>
         <button class="crm-btn-pill crm-btn-outline" @click="goTo('employee/followup')">
-          <i class="fas fa-phone-volume"></i>
+          <i class="fas fa-phone-volume text-emerald"></i>
           <span>Follow Up</span>
         </button>
         <button class="crm-btn-pill crm-btn-outline" @click="showEmailModal = true">
-          <i class="fas fa-envelope"></i>
+          <i class="fas fa-envelope text-sky"></i>
           <span>Emails</span>
         </button>
         <button class="crm-btn-pill crm-btn-primary" @click="openRegisterForm()">
@@ -50,28 +51,40 @@
       <div class="crm-stat-card card-blue">
         <div class="crm-stat-icon-wrap"><i class="fas fa-building"></i></div>
         <div class="crm-stat-content">
-          <span class="crm-stat-count">{{ customers.length }}</span>
+          <div class="crm-stat-top">
+            <span class="crm-stat-count">{{ customers.length }}</span>
+            <span class="crm-stat-badge badge-blue">Directory</span>
+          </div>
           <span class="crm-stat-label">Total Customers</span>
         </div>
       </div>
       <div class="crm-stat-card card-amber">
         <div class="crm-stat-icon-wrap"><i class="fas fa-file-signature"></i></div>
         <div class="crm-stat-content">
-          <span class="crm-stat-count">{{ quotations.length }}</span>
+          <div class="crm-stat-top">
+            <span class="crm-stat-count">{{ quotations.length }}</span>
+            <span class="crm-stat-badge badge-amber">Active Deals</span>
+          </div>
           <span class="crm-stat-label">Open Quotations</span>
         </div>
       </div>
       <div class="crm-stat-card card-purple">
         <div class="crm-stat-icon-wrap"><i class="fas fa-truck-ramp-box"></i></div>
         <div class="crm-stat-content">
-          <span class="crm-stat-count">{{ supplies.length }}</span>
+          <div class="crm-stat-top">
+            <span class="crm-stat-count">{{ supplies.length }}</span>
+            <span class="crm-stat-badge badge-purple">Fulfillment</span>
+          </div>
           <span class="crm-stat-label">Supply Orders</span>
         </div>
       </div>
       <div class="crm-stat-card card-emerald">
         <div class="crm-stat-icon-wrap"><i class="fas fa-calendar-check"></i></div>
         <div class="crm-stat-content">
-          <span class="crm-stat-count">{{ visit_assign.length }}</span>
+          <div class="crm-stat-top">
+            <span class="crm-stat-count">{{ visit_assign.length }}</span>
+            <span class="crm-stat-badge badge-emerald">Scheduled</span>
+          </div>
           <span class="crm-stat-label">AMC Visits</span>
         </div>
       </div>
@@ -89,11 +102,12 @@
           placeholder="Search customers by company name, contact, or customer number..."
           class="crm-search-input"
         />
-        <button v-if="searchQuery" class="crm-search-clear" @click="searchQuery = ''; searchFocused = false">
+        <button v-if="searchQuery" class="crm-search-clear" @click="searchQuery = ''; searchFocused = false" title="Clear Search">
           <i class="fas fa-times-circle"></i>
         </button>
       </div>
       <div class="crm-search-summary-pill" v-if="filteredCustomers">
+        <i class="fas fa-users text-blue"></i>
         <span>Showing <strong>{{ filteredCustomers.length }}</strong> of {{ customers.length }} Customers</span>
       </div>
     </div>
@@ -248,7 +262,7 @@
 </div>
 
 <!-- AWESOME QUOTATION MODAL (CREATE / EDIT) -->
-<div v-if="showQuotation" class="quotation-backdrop pro-modal-backdrop-top" @click.self="showQuotation = false; refreshForm();">
+<div v-if="showQuotation" class="quotation-backdrop pro-modal-backdrop-top" @click.self="requestCloseQuotation">
   <div class="quotation-modal pro-quotation-modal">
     
     <!-- TOP STICKY HEADER -->
@@ -280,7 +294,7 @@
           <span>View Quotations</span>
         </button>
 
-        <button type="button" class="pro-btn-header-close" @click="showQuotation = false; refreshForm();" title="Close">
+        <button type="button" class="pro-btn-header-close" @click="requestCloseQuotation" title="Close">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -288,6 +302,22 @@
 
     <!-- SCROLLABLE FORM BODY -->
     <div class="pro-modal-body">
+
+      <!-- SAVED DRAFT NOTIFICATION BANNER -->
+      <div v-if="hasAvailableDraft" class="pro-draft-alert-banner">
+        <div class="pro-draft-alert-left">
+          <i class="fas fa-clock-rotate-left text-amber"></i>
+          <span><strong>Saved Draft Found:</strong> You have an unsaved draft from {{ draftSavedAt }}.</span>
+        </div>
+        <div class="pro-draft-alert-actions">
+          <button type="button" class="pro-draft-btn-restore" @click="restoreDraft">
+            <i class="fas fa-arrow-rotate-left"></i> Restore Draft
+          </button>
+          <button type="button" class="pro-draft-btn-discard" @click="discardDraft">
+            <i class="fas fa-trash-alt"></i> Discard
+          </button>
+        </div>
+      </div>
 
       <!-- SECTION 1: CUSTOMER & SALE INFO -->
       <div class="pro-card-section">
@@ -370,8 +400,18 @@
             <div class="pro-select-wrap">
               <select v-model="form.recommended_by" class="pro-select">
                 <option value="">-- Select Employee --</option>
-                <option v-for="user in users" :key="user.id" :value="user.emp_id">
-                  {{ user.emp_id }}
+                <option
+                  v-if="form.recommended_by && !recommenderEmployees.some(u => u.name === form.recommended_by || u.empId === form.recommended_by)"
+                  :value="form.recommended_by"
+                >
+                  {{ form.recommended_by }}
+                </option>
+                <option
+                  v-for="user in recommenderEmployees"
+                  :key="user.id"
+                  :value="user.name"
+                >
+                  {{ user.name }}{{ user.department ? ' (' + user.department + ')' : '' }}
                 </option>
               </select>
               <i class="fas fa-chevron-down pro-arrow"></i>
@@ -721,9 +761,20 @@
                     <option value="Set">Set</option>
                     <option value="K.G.">K.G.</option>
                     <option value="Day">Day</option>
+                    <option value="Other">Other</option>
+                    <option v-if="item.uom && !['Lit.', 'NOS.', 'Box', 'Set', 'K.G.', 'Day', 'Other'].includes(item.uom)" :value="item.uom">
+                      {{ item.uom }}
+                    </option>
                   </select>
                   <i class="fas fa-chevron-down pro-arrow"></i>
                 </div>
+                <input
+                  v-if="item.uom === 'Other'"
+                  v-model="item.custom_uom"
+                  type="text"
+                  placeholder="Enter UOM"
+                  class="pro-input mt-2"
+                />
               </div>
 
               <!-- Rate -->
@@ -880,7 +931,7 @@
       </div>
 
       <div class="pro-footer-actions">
-        <button type="button" class="pro-btn-footer-cancel" @click="showQuotation = false; refreshForm();">
+        <button type="button" class="pro-btn-footer-cancel" @click="requestCloseQuotation">
           Cancel
         </button>
 
@@ -891,6 +942,60 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- UNSAVED QUOTATION CHANGES CONFIRMATION PROMPT MODAL -->
+<div v-if="showQuotationPromptModal" class="pro-confirm-backdrop" @click.self="showQuotationPromptModal = false">
+  <div class="pro-confirm-card">
+    <div class="pro-confirm-header">
+      <div class="pro-confirm-icon-wrap">
+        <i class="fas fa-floppy-disk text-amber"></i>
+      </div>
+      <div>
+        <h3 class="pro-confirm-title">Unsaved Changes in Quotation</h3>
+        <p class="pro-confirm-desc">You have unsaved changes in this quotation. Would you like to save it, save as draft, or discard your changes?</p>
+      </div>
+    </div>
+
+    <div class="pro-confirm-options">
+      <!-- Option 1: Save Quotation -->
+      <button type="button" class="pro-confirm-option-btn opt-save" @click="handlePromptSave">
+        <div class="pro-opt-icon icon-emerald"><i class="fas fa-check"></i></div>
+        <div class="pro-opt-text">
+          <span class="pro-opt-title">Save Quotation</span>
+          <span class="pro-opt-desc">Submit and save quotation to the system now</span>
+        </div>
+        <i class="fas fa-chevron-right pro-opt-arrow"></i>
+      </button>
+
+      <!-- Option 2: Save as Draft -->
+      <button type="button" class="pro-confirm-option-btn opt-draft" @click="handlePromptDraft">
+        <div class="pro-opt-icon icon-amber"><i class="fas fa-file-pen"></i></div>
+        <div class="pro-opt-text">
+          <span class="pro-opt-title">Save as Draft</span>
+          <span class="pro-opt-desc">Keep your changes saved as a draft to finish later</span>
+        </div>
+        <i class="fas fa-chevron-right pro-opt-arrow"></i>
+      </button>
+
+      <!-- Option 3: Discard Changes -->
+      <button type="button" class="pro-confirm-option-btn opt-discard" @click="handlePromptDiscard">
+        <div class="pro-opt-icon icon-rose"><i class="fas fa-trash-can"></i></div>
+        <div class="pro-opt-text">
+          <span class="pro-opt-title">Discard Changes</span>
+          <span class="pro-opt-desc">Close without saving any edits made in this session</span>
+        </div>
+        <i class="fas fa-chevron-right pro-opt-arrow"></i>
+      </button>
+    </div>
+
+    <div class="pro-confirm-footer">
+      <button type="button" class="pro-btn-continue" @click="showQuotationPromptModal = false">
+        <i class="fas fa-arrow-left"></i>
+        <span>Continue Editing</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -956,89 +1061,144 @@
   </div>
 </div>
 
-<!-- Popup Modal -->
-<div v-if="showAssignPoModal" class="modal-backdrop">
-  
-<!-- Manage Purchase Order Modal -->
-<div v-if="showAssignPoModal" class="modal-backdrop" @click.self="showAssignPoModal = false">
-  <div class="modal-card large po-management-modal">
-    
-    <!-- Header with Back Button -->
-    <div class="modal-header-custom">
-      <button class="btn-back" @click="showAssignPoModal = false">
+<!-- Manage Purchase Orders Modal -->
+<div v-if="showAssignPoModal" class="mpo-backdrop" @click.self="showAssignPoModal = false">
+  <div class="mpo-modal-container">
+    <!-- Top Decorative Rainbow Strip -->
+    <div class="mpo-top-stripe"></div>
+
+    <!-- Modal Header -->
+    <div class="mpo-header">
+      <button class="mpo-btn-back" @click="showAssignPoModal = false" title="Back to CRM">
         <i class="fas fa-arrow-left"></i>
         <span>Back</span>
       </button>
-      <div class="modal-title-wrapper">
-        <div class="modal-icon-badge">
-          <i class="fas fa-tasks"></i>
+
+      <div class="mpo-header-center">
+        <div class="mpo-header-badge">
+          <i class="fas fa-clipboard-list"></i>
         </div>
-        <h2 class="modal-title">Manage Purchase Orders</h2>
-        <p class="modal-subtitle">Create and manage different types of purchase orders</p>
+        <h2 class="mpo-title">Manage Purchase Orders</h2>
+        <p class="mpo-subtitle">Create, monitor, and manage customer contracts, service requests, and material supply orders</p>
       </div>
+
+      <button class="mpo-btn-close" @click="showAssignPoModal = false" title="Close">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
     <!-- Action Cards Grid -->
-    <div class="po-action-grid">
-      <div class="po-action-card" @click="openVisitPopup">
-        <div class="card-icon-wrapper amc">
+    <div class="mpo-cards-grid">
+      <!-- AMC Card -->
+      <div class="mpo-card mpo-card-amc" @click="openVisitPopup">
+        <div class="mpo-card-header">
+          <div class="mpo-icon-box mpo-icon-amc">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <span class="mpo-counter-chip chip-amc">
+            <i class="fas fa-shield-alt"></i> {{ visit_assign.length || 0 }} Active
+          </span>
+        </div>
+        
+        <div class="mpo-card-body">
+          <h3 class="mpo-card-title">AMC Contracts</h3>
+          <p class="mpo-card-desc">Annual maintenance contracts, scheduled site visits & periodic inspections.</p>
+        </div>
+
+        <div class="mpo-card-footer">
+          <span class="mpo-action-pill pill-amc">
+            <span>Manage Visits</span>
+            <i class="fas fa-arrow-right"></i>
+          </span>
+        </div>
+      </div>
+
+      <!-- Service Orders Card -->
+      <div class="mpo-card mpo-card-service" @click="openServicePopup">
+        <div class="mpo-card-header">
+          <div class="mpo-icon-box mpo-icon-service">
+            <i class="fas fa-screwdriver-wrench"></i>
+          </div>
+          <span class="mpo-counter-chip chip-service">
+            <i class="fas fa-wrench"></i> {{ servicePoList.length || 0 }} Orders
+          </span>
+        </div>
+        
+        <div class="mpo-card-body">
+          <h3 class="mpo-card-title">Service Orders</h3>
+          <p class="mpo-card-desc">Breakdown repairs, technical maintenance calls, and engineer assignments.</p>
+        </div>
+
+        <div class="mpo-card-footer">
+          <span class="mpo-action-pill pill-service">
+            <span>Assign &amp; Track</span>
+            <i class="fas fa-arrow-right"></i>
+          </span>
+        </div>
+      </div>
+
+      <!-- Material Supply Card -->
+      <div class="mpo-card mpo-card-supply" @click="openSupplyPopup">
+        <div class="mpo-card-header">
+          <div class="mpo-icon-box mpo-icon-supply">
+            <i class="fas fa-boxes-stacked"></i>
+          </div>
+          <span class="mpo-counter-chip chip-supply">
+            <i class="fas fa-truck-fast"></i> {{ supplies.length || 0 }} Orders
+          </span>
+        </div>
+        
+        <div class="mpo-card-body">
+          <h3 class="mpo-card-title">Material Supply</h3>
+          <p class="mpo-card-desc">Supply chain fulfillment, spare parts procurement, delivery & tracking.</p>
+        </div>
+
+        <div class="mpo-card-footer">
+          <span class="mpo-action-pill pill-supply">
+            <span>Track Supply</span>
+            <i class="fas fa-arrow-right"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats Bar -->
+    <div class="mpo-stats-bar">
+      <div class="mpo-stat-unit" @click="openVisitPopup" title="Click to view Active AMC">
+        <div class="mpo-stat-icon-wrap amc-accent">
           <i class="fas fa-calendar-check"></i>
         </div>
-        <div class="card-content">
-          <h3>AMC</h3>
-          <p>Annual Maintenance Contract</p>
-          <span class="card-tag">Manage Visits</span>
+        <div class="mpo-stat-content">
+          <span class="mpo-stat-num">{{ visit_assign.length || 0 }}</span>
+          <span class="mpo-stat-label">Active AMC</span>
         </div>
-       
       </div>
 
-      <div class="po-action-card" @click="openServicePopup">
-        <div class="card-icon-wrapper service">
-          <i class="fas fa-tools"></i>
+      <div class="mpo-stat-sep"></div>
+
+      <div class="mpo-stat-unit" @click="openServicePopup" title="Click to view Service Orders">
+        <div class="mpo-stat-icon-wrap service-accent">
+          <i class="fas fa-screwdriver-wrench"></i>
         </div>
-        <div class="card-content">
-          <h3>Service Orders</h3>
-          <p>Service & maintenance requests</p>
-          <span class="card-tag">Assign Service</span>
+        <div class="mpo-stat-content">
+          <span class="mpo-stat-num">{{ servicePoList.length || 0 }}</span>
+          <span class="mpo-stat-label">Service Orders</span>
         </div>
-       
       </div>
 
-      <div class="po-action-card" @click="openSupplyPopup">
-        <div class="card-icon-wrapper supply">
-          <i class="fas fa-boxes"></i>
+      <div class="mpo-stat-sep"></div>
+
+      <div class="mpo-stat-unit" @click="openSupplyPopup" title="Click to view Supply Orders">
+        <div class="mpo-stat-icon-wrap supply-accent">
+          <i class="fas fa-boxes-stacked"></i>
         </div>
-        <div class="card-content">
-          <h3>Material Supply</h3>
-          <p>Supply chain & delivery management</p>
-          <span class="card-tag">Track Supply</span>
+        <div class="mpo-stat-content">
+          <span class="mpo-stat-num">{{ supplies.length || 0 }}</span>
+          <span class="mpo-stat-label">Supply Orders</span>
         </div>
-       
       </div>
     </div>
-
-    <!-- Quick Stats / Info Section -->
-    <div class="po-quick-stats">
-      <div class="stat-item">
-        <span class="stat-number">{{ visit_assign.length || 0 }}</span>
-        <span class="stat-label">Active AMC</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-number">{{ servicePoList.length || 0 }}</span>
-        <span class="stat-label">Service Orders</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-number">{{ supplies.length || 0 }}</span>
-        <span class="stat-label">Supply Orders</span>
-      </div>
-    </div>
-
-    <!-- Footer Note -->
-    
   </div>
-</div>
 </div>
 <div v-if="isLoadingCustomers" class="table-state">
   <div class="loader-panel">
@@ -1061,10 +1221,29 @@
     <table class="crm-customer-table">
       <thead>
         <tr>
-          <th style="width: 8%; text-align: center;">Sr. No.</th>
-          <th style="width: 48%;">Customer Company</th>
-          <th style="width: 16%; text-align: center;">Customer ID</th>
-          <th style="width: 28%; text-align: center;">Quick Actions</th>
+          <th style="width: 7%; text-align: center;">
+            <div class="th-content th-center">
+              <span>Sr. No.</span>
+            </div>
+          </th>
+          <th style="width: 48%;">
+            <div class="th-content">
+              <i class="fas fa-building text-blue"></i>
+              <span>Customer Company</span>
+            </div>
+          </th>
+          <th style="width: 17%; text-align: center;">
+            <div class="th-content th-center">
+              <i class="fas fa-fingerprint text-indigo"></i>
+              <span>Customer ID</span>
+            </div>
+          </th>
+          <th style="width: 28%; text-align: center;">
+            <div class="th-content th-center">
+              <i class="fas fa-bolt text-amber"></i>
+              <span>Quick Actions</span>
+            </div>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -1074,21 +1253,48 @@
           </td>
           <td>
             <div class="crm-company-cell">
-              <div class="crm-company-avatar">
-                <i class="fas fa-building"></i>
-              </div>
-              <a
-                href="#"
-                class="crm-company-link tooltip-link"
-                data-tooltip="View customer & add PO"
-                @click.prevent="viewCustomerDetails(cust)"
+              <div 
+                class="crm-company-avatar" 
+                :style="{ 
+                  background: getAvatarTheme(cust.company_name).bg, 
+                  color: getAvatarTheme(cust.company_name).color, 
+                  borderColor: getAvatarTheme(cust.company_name).border 
+                }"
               >
-                {{ formatCompanyName(cust.company_name) }}
-              </a>
+                <span>{{ getCompanyInitials(cust.company_name) }}</span>
+              </div>
+              <div class="crm-company-meta-col">
+                <a
+                  href="#"
+                  class="crm-company-link tooltip-link"
+                  data-tooltip="View customer & add PO"
+                  @click.prevent="viewCustomerDetails(cust)"
+                >
+                  <span>{{ formatCompanyName(cust.company_name) }}</span>
+                  <i class="fas fa-arrow-up-right-from-square crm-link-icon"></i>
+                </a>
+                <div class="crm-company-submeta">
+                  <span class="crm-meta-chip" v-if="cust.contact_person">
+                    <i class="fas fa-user-tie"></i> {{ cust.contact_person }}
+                  </span>
+                  <span class="crm-meta-chip" v-if="cust.city">
+                    <i class="fas fa-location-dot"></i> {{ cust.city }}
+                  </span>
+                  <span class="crm-meta-chip" v-if="cust.contact_number">
+                    <i class="fas fa-phone-alt"></i> {{ cust.contact_number }}
+                  </span>
+                  <span class="crm-meta-chip crm-meta-status" v-if="!cust.contact_person && !cust.city">
+                    <i class="fas fa-shield-check"></i> Enterprise Account
+                  </span>
+                </div>
+              </div>
             </div>
           </td>
           <td style="text-align: center;">
-            <span class="crm-cust-no-badge">{{ formatNumber(cust.id) }}</span>
+            <div class="crm-cust-no-badge">
+              <i class="fas fa-hashtag"></i>
+              <span>{{ formatNumber(cust.id) }}</span>
+            </div>
           </td>
           <td style="text-align: center;">
             <div class="crm-action-buttons-wrap">
@@ -1448,8 +1654,8 @@
                   @change="assignVisit(visit)"
                   class="pro-assign-select"
                 >
-                  <option disabled value="">-- Assign Employee --</option>
-                  <option v-for="emp in employees" :key="emp.id" :value="emp.id">
+                  <option disabled value="">-- Assign Service Engineer --</option>
+                  <option v-for="emp in filteredServiceEmployees" :key="emp.id" :value="emp.id">
                     {{ emp.name }}
                   </option>
                 </select>
@@ -1746,9 +1952,9 @@
                   @change="onAssignChange(order)"
                   class="pro-assign-select"
                 >
-                  <option disabled value="">-- Assign Employee --</option>
+                  <option disabled value="">-- Assign Service Engineer --</option>
                   <option
-                    v-for="emp in employees"
+                    v-for="emp in filteredServiceEmployees"
                     :key="emp.id"
                     :value="emp.id"
                   >
@@ -2017,6 +2223,7 @@
           <tr>
             <th>Company</th>
             <th>PO Number</th>
+            <th>PO Value</th>
             <th>Quotation No</th>
             <th>Payment Terms</th>
             <th>Delivery Terms</th>
@@ -2041,6 +2248,11 @@
               </div>
             </td>
             <td><span class="pro-po-pill">{{ supply.po_number }}</span></td>
+            <td>
+              <span class="pro-val-pill" style="display:inline-flex; align-items:center; gap:0.25rem; font-weight:700; color:#4338ca; background:#ffffff; padding:0.25rem 0.6rem; border-radius:6px; border:1px solid rgba(67,56,202,0.15);">
+                <i class="fas fa-indian-rupee-sign"></i> {{ supply.value_of_po ? Number(supply.value_of_po).toLocaleString('en-IN') : '-' }}
+              </span>
+            </td>
             <td><span class="pro-text-sub">{{ supply.quotation_against_po || '-' }}</span></td>
             <td><span class="pro-text-sub">{{ supply.payment_terms || '-' }}</span></td>
             <td><span class="pro-text-sub">{{ supply.delivery_terms || '-' }}</span></td>
@@ -3257,656 +3469,926 @@
 
 
 <!-- Customer Detail View Modal -->
-<div class="modal-backdrop" v-if="showDetailsModal">
-  <div class="modal-card">
-   <div class="modal-header-custom">
-  <h2 class="modal-title">
-    Customer Details 
+<div class="modal-backdrop" v-if="showDetailsModal" @click.self="closeDetailsModal">
+  <div class="modal-card pro-customer-modal">
+    <!-- Top Rainbow Brand Strip -->
+    <div class="pro-modal-rainbow-strip"></div>
 
-     <i
-      class="fas fa-pencil-alt edit-icon"style="color:blue"
-      title="Edit Customer"
-      @click="editCustomer(selectedCustomer)"
-    ></i>
-     <i class="fa fa-trash-o edit-icon" style="color:red" title="Delete Customer" 
-    @click="deleteCustomer(selectedCustomer.id)"
-  >
- </i>
+    <!-- Modal Header -->
+    <div class="pro-cust-header">
+      <div class="pro-cust-header-left">
+        <div class="pro-cust-avatar">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="pro-cust-title-group">
+          <div class="pro-cust-title-row">
+            <h2 class="pro-cust-title">Customer Details</h2>
+            <span class="pro-cust-badge">Active Account</span>
+          </div>
+          <p class="pro-cust-subtitle">{{ selectedCustomer.company_name || 'Customer Profile & Equipment Record' }}</p>
+        </div>
+      </div>
 
-  </h2>
-  <br>
-</div>
-
-
-    <table class="details-table">
-      <tbody>
-        <tr>
-          <th>Company Name</th>
-          <td>{{ selectedCustomer.company_name }}</td>
-        </tr>
-        <tr>
-          <th>Contact Number</th>
-          <td>{{ selectedCustomer.contact_number }}</td>
-        </tr>
-        <tr>
-          <th>Secondary Contact</th>
-          <td>{{ selectedCustomer.secondary_contact_number }}</td>
-        </tr>
-        <tr>
-          <th>Contact Person</th>
-          <td>{{ selectedCustomer.contact_person }}</td>
-        </tr>
-        <tr>
-          <th>Email</th>
-          <td>{{ selectedCustomer.email }}</td>
-        </tr>
-        <tr>
-          <th>Vendor Number</th>
-          <td>{{ selectedCustomer.vendor_number }}</td>
-        </tr>
-        <tr>
-          <th>Office Policy</th>
-          <td>{{ selectedCustomer.office_policy }}</td>
-        </tr>
-        <tr>
-          <th>GST Number</th>
-          <td>{{ selectedCustomer.gst_number }}</td>
-        </tr>
-        <tr>
-          <th>PAN Number</th>
-          <td>{{ selectedCustomer.pan_number }}</td>
-        </tr>
-        <tr>
-          <th>Billing Address</th>
-          <td>{{ selectedCustomer.billing_address }}</td>
-        </tr>
-
-        <tr>
-          <th>Shipping Address</th>
-          <td>{{ selectedCustomer.shipping_address }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div v-if="selectedCustomer.equipment_details && Object.keys(selectedCustomer.equipment_details).length" class="equipment-section">
-      <h3>Equipment Details</h3>
-      <div v-for="(list, type) in selectedCustomer.equipment_details" :key="type" class="equipment-type">
-        <h4>{{ type }}</h4>
-        <table class="equipment-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Make</th>
-              <th>Model No</th>
-              <th>Serial No</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(eq, index) in list" :key="index">
-              <td>{{ index + 1 }}</td>
-              <td>{{ eq.make || '-' }}</td>
-              <td>{{ eq.model_no || '-' }}</td>
-              <td>{{ eq.serial_no || '-' }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="pro-cust-header-actions">
+        <button
+          type="button"
+          class="pro-action-pill btn-edit-pill"
+          title="Edit Customer"
+          @click="editCustomer(selectedCustomer)"
+        >
+          <i class="fas fa-pencil-alt"></i>
+          <span>Edit</span>
+        </button>
+        <button
+          type="button"
+          class="pro-action-pill btn-delete-pill"
+          title="Delete Customer"
+          @click="deleteCustomer(selectedCustomer.id)"
+        >
+          <i class="fas fa-trash-alt"></i>
+          <span>Delete</span>
+        </button>
+        <button
+          type="button"
+          class="pro-cust-close-btn"
+          @click="closeDetailsModal"
+          title="Close Modal"
+        >
+          <i class="fas fa-times"></i>
+        </button>
       </div>
     </div>
 
-    <div class="modal-buttons">.
-  <button
-    class="btn btn-primary"
-    @click="openPoModal"
-  >
-  <i class="fa fa-plus" style="font-size:15px"></i>  Add PO
-  </button>
+    <!-- Modal Scrollable Body -->
+    <div class="pro-cust-body">
+      <!-- 2-Column Information Grid -->
+      <div class="pro-cust-grid">
+        <!-- Section 1: Contact Information -->
+        <div class="pro-info-card">
+          <div class="pro-card-header">
+            <i class="fas fa-address-card text-blue"></i>
+            <span>Primary Contact & Identity</span>
+          </div>
+          <div class="pro-card-content">
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-building"></i> Company Name</span>
+              <span class="pro-field-value font-bold">{{ selectedCustomer.company_name || '—' }}</span>
+            </div>
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-user-tie"></i> Contact Person</span>
+              <span class="pro-field-value">{{ selectedCustomer.contact_person || '—' }}</span>
+            </div>
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-phone"></i> Primary Contact</span>
+              <span class="pro-field-value" v-if="selectedCustomer.contact_number">
+                <a :href="'tel:' + selectedCustomer.contact_number" class="pro-link-contact">
+                  {{ selectedCustomer.contact_number }}
+                </a>
+              </span>
+              <span class="pro-field-value text-muted" v-else>—</span>
+            </div>
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-mobile-alt"></i> Secondary Contact</span>
+              <span class="pro-field-value" v-if="selectedCustomer.secondary_contact_number">
+                <a :href="'tel:' + selectedCustomer.secondary_contact_number" class="pro-link-contact">
+                  {{ selectedCustomer.secondary_contact_number }}
+                </a>
+              </span>
+              <span class="pro-field-value text-muted" v-else>—</span>
+            </div>
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-envelope"></i> Email Address</span>
+              <span class="pro-field-value" v-if="selectedCustomer.email">
+                <a :href="'mailto:' + selectedCustomer.email" class="pro-link-email">
+                  {{ selectedCustomer.email }}
+                </a>
+              </span>
+              <span class="pro-field-value text-muted" v-else>—</span>
+            </div>
+          </div>
+        </div>
 
- 
+        <!-- Section 2: Business & Tax Identification -->
+        <div class="pro-info-card">
+          <div class="pro-card-header">
+            <i class="fas fa-file-invoice text-indigo"></i>
+            <span>Taxation & Commercial Details</span>
+          </div>
+          <div class="pro-card-content">
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-receipt"></i> GST Number</span>
+              <span class="pro-field-value font-mono text-indigo font-bold" v-if="selectedCustomer.gst_number">
+                {{ selectedCustomer.gst_number }}
+              </span>
+              <span class="pro-field-value text-muted" v-else>—</span>
+            </div>
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-id-card"></i> PAN Number</span>
+              <span class="pro-field-value font-mono text-purple font-bold" v-if="selectedCustomer.pan_number">
+                {{ selectedCustomer.pan_number }}
+              </span>
+              <span class="pro-field-value text-muted" v-else>—</span>
+            </div>
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-hashtag"></i> Vendor Number</span>
+              <span class="pro-field-value" v-if="selectedCustomer.vendor_number">
+                {{ selectedCustomer.vendor_number }}
+              </span>
+              <span class="pro-field-value text-muted" v-else>—</span>
+            </div>
+            <div class="pro-field-row">
+              <span class="pro-field-label"><i class="fas fa-shield-halved"></i> Office Policy</span>
+              <span class="pro-field-value" v-if="selectedCustomer.office_policy">
+                {{ selectedCustomer.office_policy }}
+              </span>
+              <span class="pro-field-value text-muted" v-else>—</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
- 
+      <!-- Section 3: Addresses Row -->
+      <div class="pro-addresses-grid">
+        <div class="pro-address-box">
+          <div class="pro-addr-header">
+            <i class="fas fa-map-pin text-amber"></i>
+            <span>Billing Address</span>
+          </div>
+          <p class="pro-addr-text" v-if="selectedCustomer.billing_address">
+            {{ selectedCustomer.billing_address }}
+          </p>
+          <p class="pro-addr-text text-muted" v-else>No billing address recorded.</p>
+        </div>
 
-  <button
-    class="btn btn-secondary"
-    @click="closeDetailsModal"
-  >
-   <i class="fa fa-close" style="font-size:15px"></i> Close
-  </button>
-</div>
+        <div class="pro-address-box">
+          <div class="pro-addr-header">
+            <i class="fas fa-truck text-emerald"></i>
+            <span>Shipping Address</span>
+          </div>
+          <p class="pro-addr-text" v-if="selectedCustomer.shipping_address">
+            {{ selectedCustomer.shipping_address }}
+          </p>
+          <p class="pro-addr-text text-muted" v-else>No shipping address recorded.</p>
+        </div>
+      </div>
 
+      <!-- Loading State for Equipment / Deep Details -->
+      <div v-if="isLoadingCustomerDetails" class="pro-loading-banner">
+        <i class="fas fa-spinner fa-spin text-blue"></i>
+        <span>Loading registered engines, equipment, and records...</span>
+      </div>
+
+      <!-- Equipment Details Section -->
+      <div v-if="selectedCustomer.equipment_details && Object.keys(selectedCustomer.equipment_details).length" class="pro-equipment-card">
+        <div class="pro-equip-header">
+          <div class="pro-equip-title">
+            <i class="fas fa-cogs text-blue"></i>
+            <span>Registered Engines & Equipment</span>
+          </div>
+        </div>
+        <div v-for="(list, type) in selectedCustomer.equipment_details" :key="type" class="pro-equip-group">
+          <div class="pro-equip-type-badge">
+            <i :class="getCategoryIcon(type)"></i>
+            <span>{{ type }} ({{ list.length }})</span>
+          </div>
+          <div class="pro-equip-table-wrap">
+            <table class="pro-equip-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Make / Manufacturer</th>
+                  <th>Model Number</th>
+                  <th>Serial Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(eq, index) in list" :key="index">
+                  <td class="font-bold text-slate">{{ index + 1 }}</td>
+                  <td>{{ eq.make || '—' }}</td>
+                  <td><span class="font-mono text-purple font-bold">{{ eq.model_no || '—' }}</span></td>
+                  <td><span class="font-mono text-indigo font-bold">{{ eq.serial_no || '—' }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- When no equipment is registered -->
+      <div v-else-if="!isLoadingCustomerDetails" class="pro-no-equip-banner">
+        <i class="fas fa-circle-info text-slate"></i>
+        <span>No engines or equipment registered under this customer account.</span>
+      </div>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="pro-cust-footer">
+      <button
+        type="button"
+        class="pro-btn-add-po"
+        @click="openPoModal(selectedCustomer.company_name)"
+      >
+        <i class="fas fa-plus-circle"></i>
+        <span>Add Purchase Order</span>
+      </button>
+
+      <button
+        type="button"
+        class="pro-btn-modal-close"
+        @click="closeDetailsModal"
+      >
+        <i class="fas fa-times"></i>
+        <span>Close</span>
+      </button>
+    </div>
   </div>
 </div>
 
 
-<!-- Add PO Modal -->
-<div class="modal-backdrop" v-if="showPoModal">
-  <div class="modal-card small po-modal">
-    <div class="modal-header-icon">
-      <i class="fas fa-plus-circle"></i>
-    </div>
-    <h2 class="modal-title">Add Purchase Order</h2>
-    <p class="modal-subtitle">Choose the type of purchase order you want to create</p>
+<!-- Add PO Modal (Type Selector) -->
+<div class="modal-backdrop" v-if="showPoModal" @click.self="closePoModal">
+  <div class="modal-card pro-po-type-modal">
+    <!-- Top Rainbow Brand Strip -->
+    <div class="pro-modal-rainbow-strip"></div>
 
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-list"></i>
-          PO Type
-        </label>
-        <select v-model="poType" @change="handlePoTypeChange" class="po-type-select">
-          <option value="">Select Type</option>
-          <option value="AMC">AMC (Annual Maintenance Contract)
-          </option>
-          <option value="Service">Service
-          </option>
-          <option value="Supply">Supply
-          </option>
-          <option value="Service+Supply">Service + Supply
-          </option>
+    <!-- Header -->
+    <div class="pro-po-modal-header">
+      <div class="pro-po-header-left">
+        <div class="pro-po-header-avatar avatar-indigo">
+          <i class="fas fa-file-circle-plus"></i>
+        </div>
+        <div>
+          <div class="pro-po-title-row">
+            <h2 class="pro-po-modal-title">Create Purchase Order</h2>
+            <span class="pro-badge-soft badge-indigo">PO Setup</span>
+          </div>
+          <p class="pro-po-modal-subtitle">Choose the type of contract or commercial order to configure</p>
+        </div>
+      </div>
+      <button type="button" class="pro-cust-close-btn" @click="closePoModal" title="Close Modal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Customer Reference Banner -->
+    <div class="pro-po-customer-banner" v-if="selectedCustomer && selectedCustomer.company_name">
+      <div class="pro-po-customer-left">
+        <i class="fas fa-building text-indigo"></i>
+        <span class="pro-po-customer-label">Account:</span>
+        <span class="pro-po-customer-name">{{ selectedCustomer.company_name }}</span>
+      </div>
+      <span class="pro-client-tag">Active Customer</span>
+    </div>
+
+    <!-- Interactive PO Selection Grid -->
+    <div class="pro-po-grid-cards">
+      <!-- AMC Card -->
+      <div class="pro-po-select-card" :class="{ 'is-selected': poType === 'AMC' }" @click="selectPoType('AMC')">
+        <div class="pro-po-card-top">
+          <div class="pro-po-card-icon icon-blue">
+            <i class="fas fa-shield-halved"></i>
+          </div>
+          <span class="pro-po-card-pill pill-blue">Maintenance</span>
+        </div>
+        <h4 class="pro-po-card-title">AMC Contract</h4>
+        <p class="pro-po-card-desc">Annual maintenance agreement, scheduled service visits & periodic health checkups.</p>
+        <div class="pro-po-card-action text-blue">
+          <span>Configure AMC</span>
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+
+      <!-- Service Card -->
+      <div class="pro-po-select-card" :class="{ 'is-selected': poType === 'Service' }" @click="selectPoType('Service')">
+        <div class="pro-po-card-top">
+          <div class="pro-po-card-icon icon-emerald">
+            <i class="fas fa-wrench"></i>
+          </div>
+          <span class="pro-po-card-pill pill-emerald">Technical Order</span>
+        </div>
+        <h4 class="pro-po-card-title">Service Order</h4>
+        <p class="pro-po-card-desc">Equipment breakdown repairs, routine inspections, and engineer site visits.</p>
+        <div class="pro-po-card-action text-emerald">
+          <span>Configure Service</span>
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+
+      <!-- Supply Card -->
+      <div class="pro-po-select-card" :class="{ 'is-selected': poType === 'Supply' }" @click="selectPoType('Supply')">
+        <div class="pro-po-card-top">
+          <div class="pro-po-card-icon icon-sky">
+            <i class="fas fa-boxes-packing"></i>
+          </div>
+          <span class="pro-po-card-pill pill-sky">Material Order</span>
+        </div>
+        <h4 class="pro-po-card-title">Supply Order</h4>
+        <p class="pro-po-card-desc">Material fulfillment, spare parts procurement, delivery timelines & terms.</p>
+        <div class="pro-po-card-action text-sky">
+          <span>Configure Supply</span>
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+
+      <!-- Service + Supply Card -->
+      <div class="pro-po-select-card" :class="{ 'is-selected': poType === 'Service+Supply' }" @click="selectPoType('Service+Supply')">
+        <div class="pro-po-card-top">
+          <div class="pro-po-card-icon icon-amber">
+            <i class="fas fa-toolbox"></i>
+          </div>
+          <span class="pro-po-card-pill pill-amber">All-In-One</span>
+        </div>
+        <h4 class="pro-po-card-title">Service + Supply</h4>
+        <p class="pro-po-card-desc">Comprehensive order combining material supply with on-site service execution.</p>
+        <div class="pro-po-card-action text-amber">
+          <span>Configure Both</span>
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Dropdown Fallback -->
+    <div class="pro-po-select-fallback">
+      <div class="pro-input-wrap full-width">
+        <label><i class="fas fa-list text-slate"></i> Or select directly from dropdown:</label>
+        <select v-model="poType" @change="handlePoTypeChange" class="pro-select-control">
+          <option value="">Select PO Type</option>
+          <option value="AMC">AMC (Annual Maintenance Contract)</option>
+          <option value="Service">Service</option>
+          <option value="Supply">Supply</option>
+          <option value="Service+Supply">Service + Supply</option>
         </select>
       </div>
     </div>
 
-    <div class="modal-buttons">
-      <button class="btn btn-secondary" @click="closePoModal">
-        <i class="fa fa-times"></i>
-        Close
+    <!-- Modal Footer -->
+    <div class="pro-modal-bottom-actions">
+      <button type="button" class="pro-btn-secondary" @click="closePoModal">
+        <i class="fas fa-times"></i>
+        <span>Close</span>
       </button>
     </div>
   </div>
 </div>
 
 <!-- Service + Supply Modal -->
-<div class="modal-backdrop" v-if="showServiceSupplyModal">
-  <div class="modal-card medium service-supply-modal">
-    <div class="modal-header-icon">
-      <i class="fas fa-tools"></i>
-    </div>
-    <h2 class="modal-title">Service + Supply Purchase Order</h2>
-    <p class="modal-subtitle">Create a comprehensive purchase order combining service and supply requirements</p>
+<div class="modal-backdrop" v-if="showServiceSupplyModal" @click.self="dismissAllPoModals">
+  <div class="modal-card pro-po-form-modal">
+    <!-- Top Rainbow Strip -->
+    <div class="pro-modal-rainbow-strip"></div>
 
-    <!-- Company Name -->
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-building"></i>
-          Company Name
-        </label>
-        <div class="readonly-field">{{ selectedCustomer.company_name }}</div>
+    <!-- Header -->
+    <div class="pro-po-modal-header">
+      <div class="pro-po-header-left">
+        <div class="pro-po-header-avatar avatar-amber">
+          <i class="fas fa-toolbox"></i>
+        </div>
+        <div>
+          <div class="pro-po-title-row">
+            <h2 class="pro-po-modal-title">Service + Supply Purchase Order</h2>
+            <span class="pro-badge-soft badge-amber">Combined Order</span>
+          </div>
+          <p class="pro-po-modal-subtitle">Create a comprehensive purchase order combining material supply & technical service</p>
+        </div>
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-hashtag"></i>
-          PO Number *
-        </label>
-        <input type="text" v-model="serviceSupply.poNumber" placeholder="Enter PO number" />
-      </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-calendar"></i>
-          PO Receive Date *
-        </label>
-        <input type="date" v-model="serviceSupply.date" />
-      </div>
+      <button type="button" class="pro-cust-close-btn" @click="dismissAllPoModals" title="Close Modal">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-rupee-sign"></i>
-          Value Of PO *
-        </label>
-        <input type="number" v-model="serviceSupply.totalValue" placeholder="Enter PO value" />
+    <!-- Customer Banner -->
+    <div class="pro-po-customer-banner">
+      <div class="pro-po-customer-left">
+        <i class="fas fa-building text-amber"></i>
+        <span class="pro-po-customer-label">Client Company:</span>
+        <span class="pro-po-customer-name">{{ selectedCustomer.company_name }}</span>
       </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-user"></i>
-          Recommended By
-        </label>
-        <select v-model="serviceSupply.recommendedBy">
-          <option value="">Select Name</option>
-          <option v-for="user in users" :key="user.id" :value="user.name">
-            {{ user.name }}
-          </option>
-        </select>
+      <span class="pro-client-tag">Requisition</span>
+    </div>
+
+    <!-- Form Content Body -->
+    <div class="pro-po-form-body">
+      <!-- Section: Order Identifiers -->
+      <div class="pro-form-section-title">
+        <i class="fas fa-file-invoice text-amber"></i>
+        <span>Order Details & Commercials</span>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-hashtag text-indigo"></i> PO Number <span class="text-danger">*</span></label>
+          <input type="text" v-model="serviceSupply.poNumber" placeholder="Enter PO number (e.g., PO-2026-001)" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-day text-blue"></i> PO Receive Date <span class="text-danger">*</span></label>
+          <input type="date" v-model="serviceSupply.date" class="pro-input-control" />
+        </div>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-indian-rupee-sign text-emerald"></i> Value Of PO (₹) <span class="text-danger">*</span></label>
+          <input type="number" v-model="serviceSupply.totalValue" placeholder="Enter total value" class="pro-input-control font-mono" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-user-check text-purple"></i> Recommended By</label>
+          <select v-model="serviceSupply.recommendedBy" class="pro-select-control">
+            <option value="">Select Employee</option>
+            <option v-for="user in (users && users.length ? users : employees)" :key="user.id" :value="user.name">{{ user.name }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-file-lines text-sky"></i> Quotation Against PO</label>
+          <select v-model="supplyDetails.quotationAgainstPo" class="pro-select-control">
+            <option value="">Select Associated Quotation</option>
+            <option v-for="q in quotationsByCompany" :key="q.id" :value="`AE/QUOTE/${getFinancialYear()}/${q.id}`">
+              AE/QUOTE/{{ getFinancialYear() }}/{{ q.id }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section: Logistics & Terms -->
+      <div class="pro-form-section-title">
+        <i class="fas fa-truck-ramp-box text-sky"></i>
+        <span>Logistics, Terms & Service Type</span>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-credit-card text-slate"></i> Payment Terms</label>
+          <input type="text" v-model="supplyDetails.paymentTerms" placeholder="e.g., 30 days from invoice" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-truck text-slate"></i> Delivery Terms</label>
+          <input type="text" v-model="supplyDetails.deliveryTerms" placeholder="e.g., Ex-Works, FOB, CIF" class="pro-input-control" />
+        </div>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-check text-emerald"></i> Delivery Due Date</label>
+          <input type="date" v-model="supplyDetails.deliveryDueDate" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-wrench text-amber"></i> Type of Service <span class="text-danger">*</span></label>
+          <select v-model="serviceSupply.serviceType" class="pro-select-control">
+            <option value="">Select Service Scope</option>
+            <option value="AMC Service">AMC Service</option>
+            <option value="B-Check Service">B-Check Service</option>
+            <option value="C-Check Service">C-Check Service</option>
+            <option value="Overhauling Service">Overhauling Service</option>
+            <option value="Pump Performance Test">Pump Performance Test</option>
+            <option value="Inspection Service">Inspection Service</option>
+            <option value="Breakdown Maintenance Service">Breakdown Maintenance Service</option>
+            <option value="Pump Service">Pump Service</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- File Attachment -->
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-cloud-arrow-up text-indigo"></i> PO Document Attachment</label>
+          <div class="pro-file-upload-card">
+            <i class="fas fa-file-arrow-up text-amber pro-upload-icon"></i>
+            <div class="pro-upload-info">
+              <span class="pro-upload-title">Choose PO Document Copy</span>
+              <span class="pro-upload-hint">Supported formats: PDF, PNG, JPG, DOCX</span>
+            </div>
+            <input type="file" @change="handleServiceSupplyFile" class="pro-file-input" />
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-file-invoice"></i>
-          Quotation Against PO
-        </label>
-        <select v-model="supplyDetails.quotationAgainstPo">
-          <option value="">Select Quotation</option>
-          <option v-for="q in quotationsByCompany" :key="q.id" :value="`AE/QUOTE/${getFinancialYear()}/${q.id}`">
-            AE/QUOTE/{{ getFinancialYear() }}/{{ q.id }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-credit-card"></i>
-          Payment Terms
-        </label>
-        <input type="text" v-model="supplyDetails.paymentTerms" placeholder="e.g., 30 days from invoice" />
-      </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-truck"></i>
-          Delivery Terms
-        </label>
-        <input type="text" v-model="supplyDetails.deliveryTerms" placeholder="e.g., FOB, CIF, EXW" />
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-calendar-check"></i>
-          Delivery Due Date
-        </label>
-        <input type="date" v-model="supplyDetails.deliveryDueDate" />
-      </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-wrench"></i>
-          Type of Service *
-        </label>
-        <select v-model="serviceSupply.serviceType">
-          <option value="">Select Service</option>
-          <option value="Breakdown">Breakdown</option>
-          <option value="Inspection">Inspection</option>
-          <option value="B-Check / Maintenance">B-Check / Maintenance</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-file-upload"></i>
-          PO File
-        </label>
-        <input type="file" @change="handleServiceSupplyFile" />
-      </div>
-    </div>
-
-    <!-- BUTTONS -->
-    <div class="modal-buttons">
-      <button
-        class="btn btn-success"
-        :disabled="isSavingServiceSupply"
-        @click="saveServiceSupply"
-      >
-        <span v-if="isSavingServiceSupply" class="loader"></span>
-        <i class="fa fa-save"></i>
-        Save
+    <!-- Modal Footer Actions -->
+    <div class="pro-modal-bottom-actions">
+      <button type="button" class="pro-btn-secondary" @click="closeServiceSupplyModal">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Types</span>
       </button>
 
-      <button class="btn btn-secondary" @click="closeServiceSupplyModal">
-        <i class="fa fa-times"></i>
-        Cancel
+      <button type="button" class="pro-btn-primary btn-amber" :disabled="isSavingServiceSupply" @click="saveServiceSupply">
+        <span v-if="isSavingServiceSupply" class="fas fa-spinner fa-spin"></span>
+        <i v-else class="fas fa-save"></i>
+        <span>{{ isSavingServiceSupply ? 'Saving PO...' : 'Save Purchase Order' }}</span>
       </button>
     </div>
   </div>
 </div>
-
 
 <!-- Supply Modal -->
-<div class="modal-backdrop" v-if="showSupplyModal">
-  <div class="modal-card medium supply-modal">
-    <div class="modal-header-icon">
-      <i class="fas fa-boxes"></i>
-    </div>
-    <h2 class="modal-title">Supply Purchase Order</h2>
-    <p class="modal-subtitle">Create a purchase order for material supply requirements</p>
+<div class="modal-backdrop" v-if="showSupplyModal" @click.self="dismissAllPoModals">
+  <div class="modal-card pro-po-form-modal">
+    <!-- Top Rainbow Strip -->
+    <div class="pro-modal-rainbow-strip"></div>
 
-    <!-- Auto-filled Company Name -->
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-building"></i>
-          Company Name
-        </label>
-        <div class="readonly-field">{{ selectedCustomer.company_name }}</div>
+    <!-- Header -->
+    <div class="pro-po-modal-header">
+      <div class="pro-po-header-left">
+        <div class="pro-po-header-avatar avatar-sky">
+          <i class="fas fa-boxes-packing"></i>
+        </div>
+        <div>
+          <div class="pro-po-title-row">
+            <h2 class="pro-po-modal-title">Supply Purchase Order</h2>
+            <span class="pro-badge-soft badge-sky">Material Supply</span>
+          </div>
+          <p class="pro-po-modal-subtitle">Create a purchase order for material fulfillment and spare parts</p>
+        </div>
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-hashtag"></i>
-          PO Number *
-        </label>
-        <input type="text" v-model="supplyDetails.poNumber" placeholder="Enter PO number" />
-      </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-calendar"></i>
-          PO Date *
-        </label>
-        <input type="date" v-model="supplyDetails.date" />
-      </div>
+      <button type="button" class="pro-cust-close-btn" @click="dismissAllPoModals" title="Close Modal">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-rupee-sign"></i>
-          Value of PO *
-        </label>
-        <input type="number" v-model="supplyDetails.value" min="0" @keydown="blockNegative" placeholder="Enter PO value" />
+    <!-- Customer Banner -->
+    <div class="pro-po-customer-banner">
+      <div class="pro-po-customer-left">
+        <i class="fas fa-building text-sky"></i>
+        <span class="pro-po-customer-label">Client Company:</span>
+        <span class="pro-po-customer-name">{{ selectedCustomer.company_name }}</span>
       </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-user"></i>
-          Recommended By
-        </label>
-        <select v-model="supplyDetails.recommendedBy">
-          <option value="">Select Name</option>
-          <option v-for="user in users" :key="user.id" :value="user.name">
-            {{ user.name }}
-          </option>
-        </select>
+      <span class="pro-client-tag">Requisition</span>
+    </div>
+
+    <!-- Form Content Body -->
+    <div class="pro-po-form-body">
+      <!-- Section: Order Identifiers -->
+      <div class="pro-form-section-title">
+        <i class="fas fa-file-invoice text-sky"></i>
+        <span>Order Details & Commercials</span>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-hashtag text-indigo"></i> PO Number <span class="text-danger">*</span></label>
+          <input type="text" v-model="supplyDetails.poNumber" placeholder="Enter PO number" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-day text-blue"></i> PO Date <span class="text-danger">*</span></label>
+          <input type="date" v-model="supplyDetails.date" class="pro-input-control" />
+        </div>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-indian-rupee-sign text-emerald"></i> Value of PO (₹) <span class="text-danger">*</span></label>
+          <input type="number" v-model="supplyDetails.value" min="0" @keydown="blockNegative" placeholder="Enter PO value" class="pro-input-control font-mono" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-user-check text-purple"></i> Recommended By</label>
+          <select v-model="supplyDetails.recommendedBy" class="pro-select-control">
+            <option value="">Select Employee</option>
+            <option v-for="user in (users && users.length ? users : employees)" :key="user.id" :value="user.name">{{ user.name }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-file-lines text-sky"></i> Quotation Against PO</label>
+          <select v-model="supplyDetails.quotationAgainstPo" class="pro-select-control">
+            <option value="">Select Associated Quotation</option>
+            <option v-for="q in quotationsByCompany" :key="q.id" :value="`AE/QUOTE/${getFinancialYear()}/${q.id}`">
+              AE/QUOTE/{{ getFinancialYear() }}/{{ q.id }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section: Delivery & Terms -->
+      <div class="pro-form-section-title">
+        <i class="fas fa-truck text-sky"></i>
+        <span>Terms & Delivery Schedule</span>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-credit-card text-slate"></i> Payment Terms</label>
+          <input type="text" v-model="supplyDetails.paymentTerms" placeholder="e.g., 30 days from invoice" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-truck text-slate"></i> Delivery Terms</label>
+          <input type="text" v-model="supplyDetails.deliveryTerms" placeholder="e.g., Ex-Works, FOB, CIF" class="pro-input-control" />
+        </div>
+      </div>
+
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-check text-emerald"></i> Delivery Due Date</label>
+          <input type="date" v-model="supplyDetails.deliveryDueDate" class="pro-input-control" />
+        </div>
+      </div>
+
+      <!-- File Attachment -->
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-cloud-arrow-up text-indigo"></i> PO Document File</label>
+          <div class="pro-file-upload-card">
+            <i class="fas fa-file-arrow-up text-sky pro-upload-icon"></i>
+            <div class="pro-upload-info">
+              <span class="pro-upload-title">Attach PO Copy</span>
+              <span class="pro-upload-hint">Supported formats: PDF, PNG, JPG, DOCX</span>
+            </div>
+            <input type="file" @change="handleSupplyFileUpload" class="pro-file-input" />
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-file-invoice"></i>
-          Quotation Against PO
-        </label>
-        <select v-model="supplyDetails.quotationAgainstPo">
-          <option value="">Select Quotation</option>
-          <option v-for="q in quotationsByCompany" :key="q.id" :value="`AE/QUOTE/${getFinancialYear()}/${q.id}`">
-            AE/QUOTE/{{ getFinancialYear() }}/{{ q.id }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-credit-card"></i>
-          Payment Terms
-        </label>
-        <input type="text" v-model="supplyDetails.paymentTerms" placeholder="e.g., 30 days from invoice" />
-      </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-truck"></i>
-          Delivery Terms
-        </label>
-        <input type="text" v-model="supplyDetails.deliveryTerms" placeholder="e.g., FOB, CIF, EXW" />
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-calendar-check"></i>
-          Delivery Due Date
-        </label>
-        <input type="date" v-model="supplyDetails.deliveryDueDate" />
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-file-upload"></i>
-          PO File
-        </label>
-        <input type="file" @change="handleSupplyFileUpload" />
-      </div>
-    </div>
-
-    <div class="modal-buttons">
-      <button
-        class="btn btn-success"
-        :disabled="isSavingSupply"
-        @click="saveSupplyDetails"
-      >
-        <span v-if="isSavingSupply" class="loader"></span>
-        <i class="fa fa-save"></i>
-        Save
+    <!-- Modal Footer Actions -->
+    <div class="pro-modal-bottom-actions">
+      <button type="button" class="pro-btn-secondary" @click="closeSupplyModal">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Types</span>
       </button>
 
-      <button class="btn btn-secondary" @click="closeSupplyModal">
-        <i class="fa fa-times"></i>
-        Cancel
+      <button type="button" class="pro-btn-primary btn-sky" :disabled="isSavingSupply" @click="saveSupplyDetails">
+        <span v-if="isSavingSupply" class="fas fa-spinner fa-spin"></span>
+        <i v-else class="fas fa-save"></i>
+        <span>{{ isSavingSupply ? 'Saving PO...' : 'Save Supply Order' }}</span>
       </button>
     </div>
   </div>
 </div>
-
 
 <!-- Service Details Modal -->
-<div class="modal-backdrop" v-if="showServiceModal">
-  <div class="modal-card medium service-modal">
-    <div class="modal-header-icon">
-      <i class="fas fa-wrench"></i>
-    </div>
-    <h2 class="modal-title">Service Purchase Order</h2>
-    <p class="modal-subtitle">Create a purchase order for service requirements</p>
+<div class="modal-backdrop" v-if="showServiceModal" @click.self="dismissAllPoModals">
+  <div class="modal-card pro-po-form-modal">
+    <!-- Top Rainbow Strip -->
+    <div class="pro-modal-rainbow-strip"></div>
 
-    <!-- Auto-filled Company Name -->
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-building"></i>
-          Company Name
-        </label>
-        <div class="readonly-field">{{ selectedCustomer.company_name }}</div>
+    <!-- Header -->
+    <div class="pro-po-modal-header">
+      <div class="pro-po-header-left">
+        <div class="pro-po-header-avatar avatar-emerald">
+          <i class="fas fa-wrench"></i>
+        </div>
+        <div>
+          <div class="pro-po-title-row">
+            <h2 class="pro-po-modal-title">Service Purchase Order</h2>
+            <span class="pro-badge-soft badge-emerald">Service Work</span>
+          </div>
+          <p class="pro-po-modal-subtitle">Create a purchase order for equipment breakdown, maintenance or technical service</p>
+        </div>
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-hashtag"></i>
-          PO Number *
-        </label>
-        <input type="text" v-model="serviceDetails.poNumber" placeholder="Enter PO number" />
-      </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-calendar"></i>
-          PO Date *
-        </label>
-        <input type="date" v-model="serviceDetails.date" />
-      </div>
+      <button type="button" class="pro-cust-close-btn" @click="dismissAllPoModals" title="Close Modal">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
-    <div class="form-row">
-      <div class="input-group">
-        <label>
-          <i class="fas fa-tools"></i>
-          Type of Service *
-        </label>
-        <select v-model="serviceDetails.serviceType">
-          <option value="">Select Service</option>
-          <option value="Breakdown">Breakdown</option>
-          <option value="Inspection">Inspection</option>
-          <option value="B-Check / Maintenance">B-Check / Maintenance</option>
-        </select>
+    <!-- Customer Banner -->
+    <div class="pro-po-customer-banner">
+      <div class="pro-po-customer-left">
+        <i class="fas fa-building text-emerald"></i>
+        <span class="pro-po-customer-label">Client Company:</span>
+        <span class="pro-po-customer-name">{{ selectedCustomer.company_name }}</span>
       </div>
-      <div class="input-group">
-        <label>
-          <i class="fas fa-rupee-sign"></i>
-          Value of PO *
-        </label>
-        <input type="number" v-model="serviceDetails.poValue" min="0" @keydown="blockNegative" placeholder="Enter PO value" />
+      <span class="pro-client-tag">Requisition</span>
+    </div>
+
+    <!-- Form Content Body -->
+    <div class="pro-po-form-body">
+      <!-- Section: Order Info -->
+      <div class="pro-form-section-title">
+        <i class="fas fa-file-invoice text-emerald"></i>
+        <span>Service Order Specifications</span>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-hashtag text-indigo"></i> PO Number <span class="text-danger">*</span></label>
+          <input type="text" v-model="serviceDetails.poNumber" placeholder="Enter PO number" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-day text-blue"></i> PO Date <span class="text-danger">*</span></label>
+          <input type="date" v-model="serviceDetails.date" class="pro-input-control" />
+        </div>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-tools text-amber"></i> Type of Service <span class="text-danger">*</span></label>
+          <select v-model="serviceDetails.serviceType" class="pro-select-control">
+            <option value="">Select Service Scope</option>
+            <option value="AMC Service">AMC Service</option>
+            <option value="B-Check Service">B-Check Service</option>
+            <option value="C-Check Service">C-Check Service</option>
+            <option value="Overhauling Service">Overhauling Service</option>
+            <option value="Pump Performance Test">Pump Performance Test</option>
+            <option value="Inspection Service">Inspection Service</option>
+            <option value="Breakdown Maintenance Service">Breakdown Maintenance Service</option>
+            <option value="Pump Service">Pump Service</option>
+          </select>
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-indian-rupee-sign text-emerald"></i> Value of PO (₹) <span class="text-danger">*</span></label>
+          <input type="number" v-model="serviceDetails.poValue" min="0" @keydown="blockNegative" placeholder="Enter PO value" class="pro-input-control font-mono" />
+        </div>
+      </div>
+
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-user-gear text-purple"></i> Assign to Service Engineer / Employee</label>
+          <select v-model="serviceDetails.assignTo" class="pro-select-control">
+            <option value="" disabled>Select Engineer / Staff</option>
+            <template v-if="serviceEmployees && serviceEmployees.length">
+              <optgroup label="Service Engineers">
+                <option v-for="user in serviceEmployees" :key="'serv-' + user.id" :value="user.id">
+                  {{ user.name }} (Service)
+                </option>
+              </optgroup>
+              <optgroup label="Other Staff / Employees" v-if="(users && users.length) || (employees && employees.length)">
+                <option v-for="user in (users && users.length ? users : employees)" :key="'u-' + user.id" :value="user.id">
+                  {{ user.name }} {{ user.department ? `(${user.department})` : '' }}
+                </option>
+              </optgroup>
+            </template>
+            <template v-else>
+              <option v-for="user in (users && users.length ? users : employees)" :key="user.id" :value="user.id">
+                {{ user.name }} {{ user.department ? `(${user.department})` : '' }}
+              </option>
+            </template>
+          </select>
+        </div>
+      </div>
+
+      <!-- File Attachment -->
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-cloud-arrow-up text-indigo"></i> PO File Attachment</label>
+          <div class="pro-file-upload-card">
+            <i class="fas fa-file-arrow-up text-emerald pro-upload-icon"></i>
+            <div class="pro-upload-info">
+              <span class="pro-upload-title">Attach PO Copy</span>
+              <span class="pro-upload-hint">Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX</span>
+            </div>
+            <input type="file" @change="handlePoFile" accept=".png,.jpg,.jpeg,.pdf,.doc,.docx" class="pro-file-input" />
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-file-upload"></i>
-          PO File
-        </label>
-        <input
-          type="file"
-          @change="handlePoFile"
-          accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
-        />
-        <small style="color:#666; text-align: left;">
-          Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX
-        </small>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>
-          <i class="fas fa-user"></i>
-          Assign to Employee
-        </label>
-        <select v-model="serviceDetails.assignTo">
-          <option value="" disabled>Select User</option>
-          <option v-for="user in users" :key="user.id" :value="user.id">
-            {{ user.name }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <div class="modal-buttons">
-      <button
-        class="btn btn-success"
-        :disabled="isSavingService"
-        @click="saveServiceDetails"
-      >
-        <span v-if="isSavingService" class="loader"></span>
-        <i class="fa fa-save"></i>
-       Save
+    <!-- Modal Footer Actions -->
+    <div class="pro-modal-bottom-actions">
+      <button type="button" class="pro-btn-secondary" @click="closeServiceModal">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Types</span>
       </button>
 
-      <button class="btn btn-secondary" @click="closeServiceModal">
-        <i class="fa fa-times"></i>
-        Cancel
+      <button type="button" class="pro-btn-primary btn-emerald" :disabled="isSavingService" @click="saveServiceDetails">
+        <span v-if="isSavingService" class="fas fa-spinner fa-spin"></span>
+        <i v-else class="fas fa-save"></i>
+        <span>{{ isSavingService ? 'Saving Order...' : 'Save Service Order' }}</span>
       </button>
     </div>
   </div>
 </div>
 
-
-
 <!-- AMC Details Modal -->
-<div class="modal-backdrop" v-if="showAmcModal">
-  <div class="modal-card medium">
-    <h2 class="modal-title">AMC Details</h2>
+<div class="modal-backdrop" v-if="showAmcModal" @click.self="dismissAllPoModals">
+  <div class="modal-card pro-po-form-modal">
+    <!-- Top Rainbow Strip -->
+    <div class="pro-modal-rainbow-strip"></div>
 
-    <!-- Auto-filled Company Name -->
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>Company Name</label>
-        <p style="text-align-last: left;">{{ selectedCustomer.company_name }}</p>
+    <!-- Header -->
+    <div class="pro-po-modal-header">
+      <div class="pro-po-header-left">
+        <div class="pro-po-header-avatar avatar-blue">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <div>
+          <div class="pro-po-title-row">
+            <h2 class="pro-po-modal-title">AMC Details & Contract Setup</h2>
+            <span class="pro-badge-soft badge-blue">Annual Contract</span>
+          </div>
+          <p class="pro-po-modal-subtitle">Register Annual Maintenance Contract (AMC), set contract duration & scheduled visit intervals</p>
+        </div>
+      </div>
+      <button type="button" class="pro-cust-close-btn" @click="dismissAllPoModals" title="Close Modal">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Customer Banner -->
+    <div class="pro-po-customer-banner">
+      <div class="pro-po-customer-left">
+        <i class="fas fa-building text-blue"></i>
+        <span class="pro-po-customer-label">Client Company:</span>
+        <span class="pro-po-customer-name">{{ selectedCustomer.company_name }}</span>
+      </div>
+      <span class="pro-client-tag">Contract</span>
+    </div>
+
+    <!-- Form Content Body -->
+    <div class="pro-po-form-body">
+      <!-- Section: Contract Terms -->
+      <div class="pro-form-section-title">
+        <i class="fas fa-file-contract text-blue"></i>
+        <span>Contract Details & Commercials</span>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-hashtag text-indigo"></i> PO Number <span class="text-danger">*</span></label>
+          <input type="text" v-model="amcDetails.PONumber" maxlength="250" placeholder="Enter PO Number" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-award text-purple"></i> Type of AMC <span class="text-danger">*</span></label>
+          <select v-model="amcDetails.type" class="pro-select-control">
+            <option value="">Select Contract Type</option>
+            <option value="Comprehensive">Comprehensive (Parts + Labor)</option>
+            <option value="Non-comprehensive">Non-comprehensive (Labor Only)</option>
+            <option value="AMC Service">AMC Service</option>
+            <option value="B-Check Service">B-Check Service</option>
+            <option value="C-Check Service">C-Check Service</option>
+            <option value="Overhauling Service">Overhauling Service</option>
+            <option value="Pump Performance Test">Pump Performance Test</option>
+            <option value="Inspection Service">Inspection Service</option>
+            <option value="Breakdown Maintenance Service">Breakdown Maintenance Service</option>
+            <option value="Pump Service">Pump Service</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-day text-blue"></i> PO Date <span class="text-danger">*</span></label>
+          <input type="date" v-model="amcDetails.PODate" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-indian-rupee-sign text-emerald"></i> Value of PO (₹) <span class="text-danger">*</span></label>
+          <input type="number" v-model="amcDetails.value_of_po" min="0" @keydown="blockNegative" placeholder="Enter Contract Amount" class="pro-input-control font-mono" />
+        </div>
+      </div>
+
+      <div class="pro-form-grid-2">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-plus text-emerald"></i> Start Period <span class="text-danger">*</span></label>
+          <input type="date" v-model="amcDetails.start_period" class="pro-input-control" />
+        </div>
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-calendar-xmark text-rose"></i> End Period <span class="text-danger">*</span></label>
+          <input type="date" v-model="amcDetails.end_period" class="pro-input-control" />
+        </div>
+      </div>
+
+      <!-- Section: Scheduled Visits -->
+      <div class="pro-form-section-title">
+        <i class="fas fa-calendar-check text-indigo"></i>
+        <span>Scheduled Maintenance Visits</span>
+      </div>
+
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-list-ol text-indigo"></i> Total Number of Scheduled Visits <span class="text-danger">*</span></label>
+          <input type="number" v-model.number="amcDetails.visits" @keydown="blockNegative" min="1" @input="generateVisitDates" placeholder="e.g., 4" class="pro-input-control" />
+        </div>
+      </div>
+
+      <!-- Dynamic Visit Dates Grid -->
+      <div class="pro-visits-container" v-if="visitDates && visitDates.length > 0">
+        <div class="pro-visits-grid">
+          <div class="pro-visit-item-card" v-for="(visit, index) in visitDates" :key="index">
+            <div class="pro-visit-badge"><i class="fas fa-calendar-check"></i> Visit {{ index + 1 }}</div>
+            <input type="date" v-model="visitDates[index]" class="pro-input-control" />
+          </div>
+        </div>
+      </div>
+
+      <!-- File Attachment -->
+      <div class="pro-form-grid-1">
+        <div class="pro-input-wrap">
+          <label><i class="fas fa-cloud-arrow-up text-indigo"></i> PO File Attachment</label>
+          <div class="pro-file-upload-card">
+            <i class="fas fa-file-arrow-up text-blue pro-upload-icon"></i>
+            <div class="pro-upload-info">
+              <span class="pro-upload-title">Attach Signed AMC PO Copy</span>
+              <span class="pro-upload-hint">Supported formats: PDF, PNG, JPG, DOCX</span>
+            </div>
+            <input type="file" @change="handlePoFileUpload" class="pro-file-input" />
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="form-row">
-      <!-- PO Number -->
-       <div class="input-group">
-  <label>PO Number *</label>
-  <input 
-    type="text" 
-    v-model="amcDetails.PONumber" 
-    maxlength="250" 
-    placeholder="Enter PO Number"
-  />
-</div>
+    <!-- Modal Footer Actions -->
+    <div class="pro-modal-bottom-actions">
+      <button type="button" class="pro-btn-secondary" @click="closeAmcModal">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Types</span>
+      </button>
 
-      <!-- Type of AMC -->
-      <div class="input-group">
-        <label>Type of AMC *</label>
-        <select v-model="amcDetails.type">
-          <option value="">Select Type</option>
-          <option value="Comprehensive">Comprehensive</option>
-          <option value="Non-comprehensive">Non-comprehensive</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- NEW: PO Date & Value of PO -->
-    <div class="form-row">
-      <div class="input-group">
-        <label>PO Date *</label>
-        <input type="date" v-model="amcDetails.PODate" />
-      </div>
-
-      <div class="input-group">
-        <label>Value of PO *</label>
-        <input type="number" v-model="amcDetails.value_of_po"  min="0"
-    @keydown="blockNegative" placeholder="Enter Amount" />
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="input-group">
-        <label>Start Period *</label>
-        <input type="date" v-model="amcDetails.start_period" />
-      </div>
-
-      <div class="input-group">
-        <label>End Period *</label>
-        <input type="date" v-model="amcDetails.end_period" />
-      </div>
-    </div>
-
-    <!-- No. of Visits -->
-    <div class="input-group">
-      <label>No. of Visits *</label>
-      <input 
-        type="number" 
-        v-model.number="amcDetails.visits"
-    @keydown="blockNegative"
-        min="1" 
-        @input="generateVisitDates" 
-      />
-    </div>
-
-    <!-- Dynamic Visit Dates -->
-    <div class="form-row" v-if="visitDates.length > 0">
-      <div 
-        class="input-group full-width" 
-        v-for="(visit, index) in visitDates" 
-        :key="index"
-      >
-        <label>Visit {{ index + 1 }}</label>
-        <input type="date" v-model="visitDates[index]" />
-      </div>
-    </div>
-
-    <!-- PO File -->
-    <div class="form-row">
-      <div class="input-group full-width">
-        <label>PO File</label>
-        <input type="file" @change="handlePoFileUpload" />
-      </div>
-    </div>
-
-    <div class="modal-buttons">
-      <button 
-  class="btn btn-success" style="background-color: #d0d0d0;"
-  :disabled="isSavingAmc"
-  @click="saveAmcDetails"
->
-  <span v-if="isSavingAmc" class="loader"></span>
-  <span v-else><i class="fa fa-save" style="font-size:13px"></i> Save</span>
-</button>
-
-      <button class="btn btn-secondary" @click="closeAmcModal"><i class="fa fa-close" style="font-size:13px"></i> Cancel</button>
+      <button type="button" class="pro-btn-primary btn-blue" :disabled="isSavingAmc" @click="saveAmcDetails">
+        <span v-if="isSavingAmc" class="fas fa-spinner fa-spin"></span>
+        <i v-else class="fas fa-save"></i>
+        <span>{{ isSavingAmc ? 'Saving AMC...' : 'Save AMC Contract' }}</span>
+      </button>
     </div>
   </div>
 </div>
@@ -4523,6 +5005,7 @@ import { saveAs } from "file-saver"
     },
     data() {
       return {
+        isLoadingCustomerDetails: false,
        // New equipment-related properties
         equipmentInputMode: 'select',
     equipmentTypes: [
@@ -4675,6 +5158,10 @@ isSavingServiceSupply: false,
     allQuotations: [],      
     quotations: [],
          showQuotation: false,
+         showQuotationPromptModal: false,
+         initialQuotationSnapshot: null,
+         hasAvailableDraft: false,
+         draftSavedAt: null,
         showQuoteModal: false,
         showVisitsPopup: false,
     assignedVisits: [],
@@ -4701,6 +5188,7 @@ showSupplyPopup: false,
         showAssignPoModal: false,
         companies: [],
         employees: [],
+        serviceEmployees: [],
       
         poData: {
           po_type: '',
@@ -4857,6 +5345,7 @@ PODate: "",
              manual_hsn: '',
             qty: '',
             uom: "",
+            custom_uom: "",
             rate: '',
             total: 0,
             discount: '',
@@ -4927,6 +5416,28 @@ this.calculations = JSON.parse(saved)
 
     },
   computed: {
+    recommenderEmployees() {
+      const source = (this.users && this.users.length) ? this.users : (this.employees || []);
+      const map = new Map();
+      source.forEach(u => {
+        const name = (u.name || u.username || u.empId || u.emp_id || '').trim();
+        if (name && !map.has(name.toLowerCase())) {
+          map.set(name.toLowerCase(), {
+            id: u.id || name,
+            name: name,
+            empId: u.empId || u.emp_id || '',
+            department: u.department || ''
+          });
+        }
+      });
+      return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    },
+    filteredServiceEmployees() {
+      if (this.serviceEmployees && this.serviceEmployees.length) {
+        return this.serviceEmployees;
+      }
+      return (this.employees || []).filter(e => String(e.department || '').trim().toLowerCase() === 'service');
+    },
 isLocalMode(){
 return this.calculations.some(r=>r.type=="Local")
 },
@@ -5462,6 +5973,11 @@ watch: {
   },
   
   showQuotation(newVal) {
+    if (newVal) {
+      if (!this.users || !this.users.length) {
+        this.fetchUsers();
+      }
+    }
     // When quotation form opens, ensure we have all data
     if (newVal && this.isEdit === false && this.duplicateQuotationData) {
       // This ensures the form is properly populated
@@ -5832,7 +6348,7 @@ prepareItemsForSubmit() {
     description: item.description,
     hsn: item.hsn,
     qty: parseFloat(item.qty) || 0,
-    uom: item.uom,
+    uom: item.uom === 'Other' ? (item.custom_uom ? item.custom_uom.trim() : item.uom) : item.uom,
     rate: parseFloat(item.rate) || 0,
     total: parseFloat(item.total) || 0,
     discount: parseFloat(item.discount) || 0,
@@ -5975,26 +6491,31 @@ async confirmDuplicateWithCompany() {
   
   // Ensure each item has all required fields
  // Ensure each item has all required fields
-const processedItems = parsedItems.map((item, index) => ({
-  sr: index + 1,
-  description: item.description || "",
-  hsn: item.hsn || "",
-  manual_hsn: item.manual_hsn || '',
-  qty: item.qty || '',
-  uom: item.uom || "",
-  rate: item.rate || '',
-  total: item.total || 0,
-  discount: item.discount || '',
-  taxable: item.taxable || 0,
-  cgst_rate: item.cgst_rate || '9',
-  cgst_amt: item.cgst_amt || '',
-  sgst_rate: item.sgst_rate || '9',
-  sgst_amt: item.sgst_amt || '',
-  igst_rate: item.igst_rate || 18,
-  igst_amt: item.igst_amt || '',
-  line_total: item.line_total || 0,
-  calculation_data: item.calculation_data || null
-}));
+const standardUoms = ['Lit.', 'NOS.', 'Box', 'Set', 'K.G.', 'Day'];
+const processedItems = parsedItems.map((item, index) => {
+  const isCustomUom = item.uom && !standardUoms.includes(item.uom);
+  return {
+    sr: index + 1,
+    description: item.description || "",
+    hsn: item.hsn || "",
+    manual_hsn: item.manual_hsn || '',
+    qty: item.qty || '',
+    uom: isCustomUom ? 'Other' : (item.uom || ""),
+    custom_uom: isCustomUom ? item.uom : (item.custom_uom || ''),
+    rate: item.rate || '',
+    total: item.total || 0,
+    discount: item.discount || '',
+    taxable: item.taxable || 0,
+    cgst_rate: item.cgst_rate || '9',
+    cgst_amt: item.cgst_amt || '',
+    sgst_rate: item.sgst_rate || '9',
+    sgst_amt: item.sgst_amt || '',
+    igst_rate: item.igst_rate || 18,
+    igst_amt: item.igst_amt || '',
+    line_total: item.line_total || 0,
+    calculation_data: item.calculation_data || null
+  };
+});
 
 // Load the form with ALL duplicated data - items should be an array, not string
 this.form = {
@@ -6676,6 +7197,31 @@ setNewEngineTerms() {
       })
       .join(' ')
   },
+
+  getCompanyInitials(name) {
+    if (!name) return 'AE'
+    const clean = String(name).replace(/^(M\/s|M\/S|Shree|Sri)\.?\s+/i, '').trim()
+    const parts = clean.split(/\s+/).filter(Boolean)
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  },
+
+  getAvatarTheme(name) {
+    const themes = [
+      { bg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', color: '#1d4ed8', border: '#bfdbfe' },
+      { bg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', color: '#15803d', border: '#bbf7d0' },
+      { bg: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)', color: '#7e22ce', border: '#e9d5ff' },
+      { bg: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)', color: '#c2410c', border: '#fed7aa' },
+      { bg: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)', color: '#0f766e', border: '#99f6e4' },
+      { bg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)', color: '#be185d', border: '#fbcfe8' }
+    ]
+    let hash = 0
+    const str = String(name || '')
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    return themes[Math.abs(hash) % themes.length]
+  },
   loadVisitAssign() {
     axios.get('/api/visit-assign-for-vue')
       .then(res => {
@@ -7165,6 +7711,11 @@ async openQuotationlist(cust) {
       console.error("Failed to load shipping address", error);
       this.form.shipping_address = "";
     }
+
+    this.checkForDraft(cust.company_name);
+    this.$nextTick(() => {
+      this.initialQuotationSnapshot = JSON.stringify(this.form);
+    });
   },
 
 
@@ -7249,6 +7800,7 @@ refreshForm() {
         manual_hsn: '',
         qty: '',
         uom: '',
+        custom_uom: '',
         rate: '',
         total: 0,
         discount: '',
@@ -7288,6 +7840,110 @@ refreshForm() {
     };
 },
 
+  hasQuotationChanged() {
+    if (!this.showQuotation) return false;
+    if (this.initialQuotationSnapshot) {
+      return JSON.stringify(this.form) !== this.initialQuotationSnapshot;
+    }
+    const hasItems = this.form.items && this.form.items.some(it => it.description || it.qty || it.rate);
+    const hasReference = !!this.form.customer_reference;
+    const hasNature = !!this.form.nature_of_sale;
+    return hasItems || hasReference || hasNature;
+  },
+
+  requestCloseQuotation() {
+    if (this.hasQuotationChanged()) {
+      this.showQuotationPromptModal = true;
+    } else {
+      this.closeQuotationDirectly();
+    }
+  },
+
+  closeQuotationDirectly() {
+    this.showQuotation = false;
+    this.showQuotationPromptModal = false;
+    this.initialQuotationSnapshot = null;
+    this.hasAvailableDraft = false;
+    this.refreshForm();
+  },
+
+  handlePromptSave() {
+    this.showQuotationPromptModal = false;
+    this.submitQuotation();
+  },
+
+  handlePromptDraft() {
+    const draftKey = this.isEdit && this.form.id ? `quotation_draft_edit_${this.form.id}` : `quotation_draft_${this.form.company_name || 'general'}`;
+    const draftPayload = {
+      form: JSON.parse(JSON.stringify(this.form)),
+      equipmentInputMode: this.equipmentInputMode,
+      selectedEngine: this.selectedEngine,
+      selectedPump: this.selectedPump,
+      selectedController: this.selectedController,
+      selectedMotor: this.selectedMotor,
+      selectedJockey: this.selectedJockey,
+      savedAt: new Date().toLocaleString()
+    };
+    localStorage.setItem(draftKey, JSON.stringify(draftPayload));
+    toastSuccess("Quotation draft saved successfully!");
+    this.closeQuotationDirectly();
+  },
+
+  handlePromptDiscard() {
+    const draftKey = this.isEdit && this.form.id ? `quotation_draft_edit_${this.form.id}` : `quotation_draft_${this.form.company_name || 'general'}`;
+    localStorage.removeItem(draftKey);
+    this.closeQuotationDirectly();
+    toastInfo("Changes discarded.");
+  },
+
+  checkForDraft(companyName, editId = null) {
+    const draftKey = editId ? `quotation_draft_edit_${editId}` : `quotation_draft_${companyName || 'general'}`;
+    const draft = localStorage.getItem(draftKey);
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        this.hasAvailableDraft = true;
+        this.draftSavedAt = parsed.savedAt || 'earlier session';
+      } catch (_) {
+        this.hasAvailableDraft = false;
+      }
+    } else {
+      this.hasAvailableDraft = false;
+      this.draftSavedAt = null;
+    }
+  },
+
+  restoreDraft() {
+    const draftKey = this.isEdit && this.form.id ? `quotation_draft_edit_${this.form.id}` : `quotation_draft_${this.form.company_name || 'general'}`;
+    const draftStr = localStorage.getItem(draftKey);
+    if (draftStr) {
+      try {
+        const parsed = JSON.parse(draftStr);
+        if (parsed.form) {
+          this.form = { ...this.form, ...parsed.form };
+          if (parsed.equipmentInputMode) this.equipmentInputMode = parsed.equipmentInputMode;
+          if (parsed.selectedEngine) this.selectedEngine = parsed.selectedEngine;
+          if (parsed.selectedPump) this.selectedPump = parsed.selectedPump;
+          if (parsed.selectedController) this.selectedController = parsed.selectedController;
+          if (parsed.selectedMotor) this.selectedMotor = parsed.selectedMotor;
+          if (parsed.selectedJockey) this.selectedJockey = parsed.selectedJockey;
+        }
+        this.hasAvailableDraft = false;
+        toastSuccess("Draft restored successfully!");
+      } catch (err) {
+        console.error("Error restoring draft", err);
+      }
+    }
+  },
+
+  discardDraft() {
+    const draftKey = this.isEdit && this.form.id ? `quotation_draft_edit_${this.form.id}` : `quotation_draft_${this.form.company_name || 'general'}`;
+    localStorage.removeItem(draftKey);
+    this.hasAvailableDraft = false;
+    this.draftSavedAt = null;
+    toastInfo("Draft removed.");
+  },
+
 async editQuotation(quotation) {
     console.log("Editing quotation:", quotation);
     
@@ -7321,6 +7977,15 @@ async editQuotation(quotation) {
           items = JSON.parse(JSON.stringify(fullQuotation.items));
         }
       }
+      const standardUoms = ['Lit.', 'NOS.', 'Box', 'Set', 'K.G.', 'Day'];
+      items = items.map(item => {
+        const isCustomUom = item.uom && !standardUoms.includes(item.uom);
+        return {
+          ...item,
+          custom_uom: isCustomUom ? item.uom : (item.custom_uom || ''),
+          uom: isCustomUom ? 'Other' : (item.uom || '')
+        };
+      });
       
       this.form = {
         id: fullQuotation.id,
@@ -7384,6 +8049,10 @@ async editQuotation(quotation) {
       }
       
       console.log("Form loaded for edit:", this.form);
+      this.checkForDraft(fullQuotation.company_name, fullQuotation.id);
+      this.$nextTick(() => {
+        this.initialQuotationSnapshot = JSON.stringify(this.form);
+      });
       
     } catch (error) {
       console.error("Failed to load quotation data:", error);
@@ -7532,14 +8201,15 @@ addItem() {
   // 2️⃣ Validate the last item (if exists)
   if (this.form.items.length > 0) {
     const lastItem = this.form.items[this.form.items.length - 1];
+    const isLastUomValid = lastItem.uom === 'Other' ? !!(lastItem.custom_uom && lastItem.custom_uom.trim()) : !!lastItem.uom;
     if (
       !lastItem.description ||
       !lastItem.hsn ||
       !lastItem.qty ||
-      !lastItem.uom ||
+      !isLastUomValid ||
       !lastItem.rate
     ) {
-      toastSuccess(
+      toastWarning(
         "⚠ Please fill all required fields (*) in the current item before adding a new one."
       );
       return;
@@ -7551,8 +8221,10 @@ addItem() {
     sr: this.form.items.length + 1,
     description: "",
     hsn: "",
+    manual_hsn: '',
     qty: '',
     uom: "",
+    custom_uom: '',
     rate: '',
     total: '',
     discount: '',
@@ -7684,20 +8356,23 @@ submitQuotation() {
     return;
   }
 
-  // Process HSN codes
-  this.form.items.forEach(item => {
+  // Process HSN codes & UOM
+  for (let i = 0; i < this.form.items.length; i++) {
+    const item = this.form.items[i];
     if (item.hsn === 'manual') {
       if (!item.manual_hsn) {
         toastWarning("⚠ Please enter HSN number");
-        throw new Error('HSN missing');
+        return;
       }
       item.hsn = item.manual_hsn;
     }
-  });
-
-  // Validate required fields for each item
-  for (let i = 0; i < this.form.items.length; i++) {
-    const item = this.form.items[i];
+    if (item.uom === 'Other') {
+      if (!item.custom_uom || !item.custom_uom.trim()) {
+        toastWarning("⚠ Please enter custom UOM");
+        return;
+      }
+      item.uom = item.custom_uom.trim();
+    }
     if (!item.description || !item.hsn || !item.qty || !item.uom || !item.rate) {
       toastWarning("⚠ Please fill all required fields (*)");
       return;
@@ -7735,6 +8410,12 @@ submitQuotation() {
           }
         }
       }
+
+      // Clear saved draft if any
+      const draftKey = this.isEdit && this.form.id ? `quotation_draft_edit_${this.form.id}` : `quotation_draft_${selectedCompany || 'general'}`;
+      localStorage.removeItem(draftKey);
+      this.initialQuotationSnapshot = null;
+      this.hasAvailableDraft = false;
 
       this.showQuotation = false;
       await this.fetchQuotations();
@@ -7811,17 +8492,8 @@ submitQuotation() {
       // You can add axios POST here
     },
     openAssignedVisits() {
-    this.showVisitsPopup = true;
-
-    axios
-      .get("https://employees.archenterprises.co.in/api/api/get-assigned-visits")
-      .then((res) => {
-        this.assignedVisits = res.data;
-      })
-      .catch((err) => {
-        console.error("Error loading assigned visits:", err);
-      });
-  },
+      this.$router.push({ path: '/employee/amc-visits', query: { tab: 'completed' } });
+    },
 fetchCurrentMonthVisits() {
   const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
 
@@ -7853,29 +8525,27 @@ fetchCurrentMonthVisits() {
       });
   },
     openAssignedServicePopup() {
-    this.showAssignedServicePopup = true;
-    this.fetchAssignedServices();
+      this.$router.push({ path: '/employee/service-orders', query: { tab: 'completed' } });
+    },
+
+    async fetchAssignedServices() {
+      try {
+        const res = await axios.get('/api/get-assigned-services');
+        this.assignedServiceList = res.data;
+      } catch (error) {
+        console.error("Error fetching assigned services:", error);
+      }
+    },
+  openVisitPopup() {
+    this.$router.push('/employee/amc-visits');
   },
 
-  async fetchAssignedServices() {
-    try {
-      const res = await axios.get('/api/get-assigned-services');
-      this.assignedServiceList = res.data;
-    } catch (error) {
-      console.error("Error fetching assigned services:", error);
-    }
+  openServicePopup() {
+    this.$router.push('/employee/service-orders');
   },
-openVisitPopup() {
-  this.showVisitPopup = true;
-  this.fetchVisitOrders();
-},
-
-openServicePopup() {
-  this.showServicePopup = true;
-},
 
 openSupplyPopup() {
-  this.showSupplyPopup = true;
+  this.$router.push('/employee/material-supply');
 },
 
 // CLOSE PO
@@ -8098,10 +8768,14 @@ assignVisit(visit) {
   // Fetch employees
     async fetchEmployees() {
       try {
-        const res = await axios.get('/api/employees')
-        this.employees = res.data
+        const [empRes, servRes] = await Promise.all([
+          axios.get('/api/employees'),
+          axios.get('/api/users/service')
+        ]);
+        this.employees = empRes.data || [];
+        this.serviceEmployees = servRes.data || [];
       } catch (err) {
-        console.error('Error fetching employees:', err)
+        console.error('Error fetching employees:', err);
       }
     },
 
@@ -8434,8 +9108,10 @@ setTimeout(() => {
           toastError("Failed to fetch PO numbers");
         });
     },
-    openPoModal(companyName) {
+  openPoModal(companyName) {
     this.selectedCompany = companyName;
+    this.fetchUsers();
+    this.fetchEmployees();
 
     // Use the correct route
     axios.get(`/api/add_po?company_name=${encodeURIComponent(companyName)}`)
@@ -8445,36 +9121,50 @@ setTimeout(() => {
       })
       .catch(err => {
         console.error(err);
-        toastError("Failed to fetch PO numbers");
+        this.showPoModal = true;
       });
   },
     // Handle PO type selection
    handlePoTypeChange() {
-  if (this.poType === "Service") {
-    this.showPoModal = false;
-    this.showServiceModal = true;
+    this.fetchUsers();
+    this.fetchEmployees();
 
-  } else if (this.poType === "AMC") {
-    this.showPoModal = false;
-    this.showAmcModal = true;
+    if (this.poType === "Service") {
+      this.showPoModal = false;
+      this.showServiceModal = true;
+    } else if (this.poType === "AMC") {
+      this.showPoModal = false;
+      this.showAmcModal = true;
+    } else if (this.poType === "Supply") {
+      this.showPoModal = false;
+      this.showSupplyModal = true;
+    } else if (this.poType === "Service+Supply") {
+      this.showPoModal = false;
+      this.showServiceSupplyModal = true;
+    }
+  },
 
-  } else if (this.poType === "Supply") {
-    this.showPoModal = false;
-    this.showSupplyModal = true;
-    this.fetchUsers(); // load dropdown data
+    selectPoType(type) {
+      this.poType = type;
+      this.handlePoTypeChange();
+    },
 
-  } else if (this.poType === "Service+Supply") {
-    this.showPoModal = false;
-    this.showServiceSupplyModal = true;
-    this.fetchUsers(); // needed for recommendedBy + assignTo
-  }
-},
-closeServiceSupplyModal(){
-  this.showServiceSupplyModal = false;
-},
+    dismissAllPoModals() {
+      this.showPoModal = false;
+      this.showServiceSupplyModal = false;
+      this.showSupplyModal = false;
+      this.showServiceModal = false;
+      this.showAmcModal = false;
+    },
+
+    closeServiceSupplyModal() {
+      this.showServiceSupplyModal = false;
+      this.showPoModal = true;
+    },
 
     closeSupplyModal() {
       this.showSupplyModal = false;
+      this.showPoModal = true;
     },
     // Service PO file upload
     handlePoFile(event) {
@@ -8731,22 +9421,112 @@ setTimeout(() => {
     // Fetch AMC/Service related data
     async fetchUsers() {
       try {
-        const response = await fetch("/api/api/users");
-        this.users = await response.json();
+        const [usersRes, servRes, empRes] = await Promise.allSettled([
+          axios.get('/api/users'),
+          axios.get('/api/users/service'),
+          axios.get('/api/employees')
+        ]);
+        if (usersRes.status === 'fulfilled' && usersRes.value && usersRes.value.data) {
+          const uData = usersRes.value.data;
+          this.users = Array.isArray(uData) ? uData : (uData.users || []);
+        } else if (empRes.status === 'fulfilled' && empRes.value && empRes.value.data) {
+          this.users = Array.isArray(empRes.value.data) ? empRes.value.data : [];
+        }
+        if (servRes.status === 'fulfilled' && servRes.value && servRes.value.data) {
+          const sData = servRes.value.data;
+          this.serviceEmployees = Array.isArray(sData) ? sData : [];
+        }
       } catch (error) {
         console.error("Error fetching users:", error);
       }
     },
 
-    // View customer details
-    viewCustomerDetails(customer) {
-      this.selectedCustomer = customer;
+    // View customer details (fetching full relational data including engines and equipment)
+    async viewCustomerDetails(customer) {
+      this.selectedCustomer = { ...customer };
       this.showDetailsModal = true;
+      this.isLoadingCustomerDetails = true;
+
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`https://employees.archenterprises.co.in/api/api/customers/full/${customer.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.data) {
+          const fullData = res.data;
+          let equipment = {};
+
+          // Check if relational equipment arrays exist
+          const types = [
+            { key: 'Engine', data: fullData.engine },
+            { key: 'Pump', data: fullData.pump },
+            { key: 'Controller', data: fullData.controller },
+            { key: 'Motor', data: fullData.motor },
+            { key: 'Jockey Pump', data: fullData.jockey_pump || fullData.jockeyPump }
+          ];
+
+          types.forEach(t => {
+            if (Array.isArray(t.data) && t.data.length > 0) {
+              const validItems = t.data
+                .map(e => ({
+                  make: e.make || '',
+                  model_no: e.model || e.model_no || '',
+                  serial_no: e.controller || e.serial_no || ''
+                }))
+                .filter(e => e.make || e.model_no || e.serial_no);
+
+              if (validItems.length > 0) {
+                equipment[t.key] = validItems;
+              }
+            }
+          });
+
+          // Also merge equipment_details JSON object if present
+          if (fullData.equipment_details) {
+            let eqDetails = fullData.equipment_details;
+            if (typeof eqDetails === 'string') {
+              try { eqDetails = JSON.parse(eqDetails); } catch (_) {}
+            }
+            if (typeof eqDetails === 'object' && eqDetails !== null) {
+              Object.keys(eqDetails).forEach(k => {
+                if (Array.isArray(eqDetails[k])) {
+                  const valid = eqDetails[k].filter(x => x && (x.make || x.model_no || x.serial_no));
+                  if (valid.length > 0 && !equipment[k]) {
+                    equipment[k] = valid;
+                  }
+                }
+              });
+            }
+          }
+
+          this.selectedCustomer = {
+            ...customer,
+            ...fullData,
+            equipment_details: equipment
+          };
+        }
+      } catch (err) {
+        console.error('Failed to load full customer details:', err);
+      } finally {
+        this.isLoadingCustomerDetails = false;
+      }
     },
 
     closeDetailsModal() {
       this.showDetailsModal = false;
       this.selectedCustomer = {};
+      this.isLoadingCustomerDetails = false;
+    },
+
+    getCategoryIcon(type) {
+      const norm = String(type || '').toLowerCase();
+      if (norm.includes('engine')) return 'fas fa-gauge-high text-amber';
+      if (norm.includes('pump') && !norm.includes('jockey')) return 'fas fa-water text-blue';
+      if (norm.includes('controller')) return 'fas fa-microchip text-purple';
+      if (norm.includes('motor')) return 'fas fa-bolt text-indigo';
+      if (norm.includes('jockey')) return 'fas fa-circle-nodes text-emerald';
+      return 'fas fa-cogs text-blue';
     },
 
     // Fetch all customers
@@ -9046,6 +9826,1219 @@ setTimeout(() => {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+
+/* =========================================================
+   ENHANCED CUSTOMER DETAILS MODAL STYLING
+   ========================================================= */
+.pro-customer-modal {
+  width: 92% !important;
+  max-width: 820px !important;
+  max-height: 90vh !important;
+  padding: 0 !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+}
+
+.pro-modal-rainbow-strip {
+  height: 5px;
+  width: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #10b981 33%, #f59e0b 66%, #ef4444 100%);
+  flex-shrink: 0;
+}
+
+.pro-cust-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+.pro-cust-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.pro-cust-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.pro-cust-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.pro-cust-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pro-cust-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.pro-cust-badge {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.pro-cust-subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pro-cust-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.pro-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.btn-edit-pill {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+.btn-edit-pill:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.btn-delete-pill {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+.btn-delete-pill:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.pro-cust-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.pro-cust-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.pro-cust-body {
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex: 1;
+}
+
+.pro-cust-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.pro-info-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pro-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pro-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pro-field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.84rem;
+}
+
+.pro-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.pro-field-value {
+  color: #0f172a;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.pro-link-contact {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.15s;
+}
+.pro-link-contact:hover {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+
+.pro-link-email {
+  color: #0284c7;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.pro-link-email:hover {
+  text-decoration: underline;
+  color: #0369a1;
+}
+
+.pro-addresses-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.pro-address-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pro-addr-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pro-addr-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.pro-equipment-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pro-equip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pro-equip-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pro-equip-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pro-equip-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.pro-equip-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.pro-equip-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.pro-equip-table th {
+  background: #f8fafc;
+  padding: 8px 12px;
+  font-weight: 700;
+  color: #475569;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pro-equip-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.pro-loading-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 1.25rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  color: #166534;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.pro-no-equip-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.pro-po-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pro-po-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pro-po-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pro-po-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.pro-po-type-pill {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.pro-po-status-badge {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   PREMIUM PURCHASE ORDER MODALS (PO SELECTOR, AMC, SERVICE, SUPPLY, SERVICE+SUPPLY)
+   ========================================================================== */
+
+.pro-po-type-modal {
+  width: 100%;
+  max-width: 680px !important;
+  background: #ffffff !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: proModalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.pro-po-form-modal {
+  width: 100%;
+  max-width: 720px !important;
+  max-height: 90vh !important;
+  background: #ffffff !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.3) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: proModalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.pro-po-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.75rem 1rem;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.pro-po-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pro-po-header-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.avatar-indigo { background: #eef2ff; color: #4f46e5; }
+.avatar-blue { background: #eff6ff; color: #2563eb; }
+.avatar-emerald { background: #ecfdf5; color: #059669; }
+.avatar-sky { background: #f0f9ff; color: #0284c7; }
+.avatar-amber { background: #fffbeb; color: #d97706; }
+
+.pro-po-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pro-po-modal-title {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.pro-po-modal-subtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 3px 0 0 0;
+}
+
+.badge-indigo { background: #e0e7ff; color: #3730a3; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-emerald { background: #d1fae5; color: #065f46; }
+.badge-sky { background: #e0f2fe; color: #0369a1; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+
+.pro-po-customer-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.7rem 1.75rem;
+  flex-shrink: 0;
+}
+
+.pro-po-customer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+}
+
+.pro-po-customer-label {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pro-po-customer-name {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.pro-client-tag {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 12px;
+}
+
+/* 4-Tile Grid for Type Selection */
+.pro-po-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 1.5rem 1.75rem 1rem;
+}
+
+.pro-po-select-card {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  position: relative;
+}
+
+.pro-po-select-card:hover {
+  transform: translateY(-3px);
+  border-color: #3b82f6;
+  box-shadow: 0 12px 28px -6px rgba(59, 130, 246, 0.18);
+}
+
+.pro-po-select-card.is-selected {
+  border-color: #2563eb;
+  background: #f0f7ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.pro-po-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pro-po-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.icon-blue { background: #eff6ff; color: #2563eb; }
+.icon-emerald { background: #ecfdf5; color: #059669; }
+.icon-sky { background: #f0f9ff; color: #0284c7; }
+.icon-amber { background: #fffbeb; color: #d97706; }
+
+.pill-blue { background: #dbeafe; color: #1e40af; }
+.pill-emerald { background: #d1fae5; color: #065f46; }
+.pill-sky { background: #e0f2fe; color: #0369a1; }
+.pill-amber { background: #fef3c7; color: #92400e; }
+
+.pro-po-card-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pro-po-card-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.pro-po-card-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0 0 14px 0;
+  flex: 1;
+}
+
+.pro-po-card-action {
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.pro-po-select-fallback {
+  padding: 0 1.75rem 1.25rem;
+}
+
+/* PO Forms Body */
+.pro-po-form-body {
+  overflow-y: auto;
+  padding: 1.35rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.pro-form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px dashed #e2e8f0;
+  margin-top: 0.35rem;
+}
+
+.pro-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pro-form-grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.pro-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.pro-input-wrap label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.pro-input-control,
+.pro-select-control {
+  width: 100% !important;
+  height: 42px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  padding: 0 12px !important;
+  font-size: 0.85rem !important;
+  color: #0f172a !important;
+  background: #ffffff !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  box-sizing: border-box !important;
+}
+
+.pro-input-control:focus,
+.pro-select-control:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+/* File Upload Drop Area */
+.pro-file-upload-card {
+  position: relative;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.pro-file-upload-card:hover {
+  border-color: #3b82f6;
+  background: #f0f7ff;
+}
+
+.pro-file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.pro-upload-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.pro-upload-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pro-upload-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pro-upload-hint {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+/* Visits Grid */
+.pro-visits-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pro-visits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.pro-visit-item-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pro-visit-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Bottom Actions */
+.pro-modal-bottom-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 1.15rem 1.75rem;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.pro-btn-primary {
+  height: 42px;
+  padding: 0 1.35rem;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+}
+
+.pro-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -2px rgba(0, 0, 0, 0.22);
+}
+
+.pro-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.btn-emerald { background: linear-gradient(135deg, #059669, #047857); }
+.btn-sky { background: linear-gradient(135deg, #0284c7, #0369a1); }
+.btn-amber { background: linear-gradient(135deg, #d97706, #b45309); }
+
+.pro-btn-secondary {
+  height: 42px;
+  padding: 0 1.25rem;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.pro-btn-secondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+@media (max-width: 640px) {
+  .pro-po-grid-cards,
+  .pro-form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   UNSAVED QUOTATION PROMPT MODAL (SAVE, DRAFT, DISCARD)
+   ========================================================================== */
+.pro-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999999;
+  padding: 1.5rem;
+  animation: proFadeIn 0.2s ease-out;
+}
+
+.pro-confirm-card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: proModalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid #e2e8f0;
+}
+
+.pro-confirm-header {
+  padding: 1.5rem 1.75rem 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pro-confirm-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #fffbeb;
+  color: #d97706;
+  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pro-confirm-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.pro-confirm-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.pro-confirm-options {
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+}
+
+.pro-confirm-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.pro-confirm-option-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.1);
+}
+
+.pro-confirm-option-btn.opt-save:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.pro-confirm-option-btn.opt-draft:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.pro-confirm-option-btn.opt-discard:hover {
+  border-color: #f43f5e;
+  background: #fff1f2;
+}
+
+.pro-opt-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.pro-opt-icon.icon-emerald { background: #d1fae5; color: #059669; }
+.pro-opt-icon.icon-amber { background: #fef3c7; color: #d97706; }
+.pro-opt-icon.icon-rose { background: #ffe4e6; color: #e11d48; }
+
+.pro-opt-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.pro-opt-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pro-opt-desc {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.pro-opt-arrow {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+}
+
+.pro-confirm-option-btn:hover .pro-opt-arrow {
+  transform: translateX(3px);
+  color: #0f172a;
+}
+
+.pro-confirm-footer {
+  padding: 1rem 1.75rem;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pro-btn-continue {
+  height: 38px;
+  padding: 0 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.pro-btn-continue:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Saved Draft Alert Banner Inside Quotation Modal */
+.pro-draft-alert-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+  animation: proFadeIn 0.3s ease;
+}
+
+.pro-draft-alert-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: #92400e;
+}
+
+.pro-draft-alert-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pro-draft-btn-restore {
+  background: #d97706;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease;
+}
+
+.pro-draft-btn-restore:hover {
+  background: #b45309;
+}
+
+.pro-draft-btn-discard {
+  background: transparent;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pro-draft-btn-discard:hover {
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.pro-cust-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.15rem 1.75rem;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+.pro-btn-add-po {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.pro-btn-add-po:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.pro-btn-modal-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #475569;
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(71, 85, 105, 0.2);
+}
+
+.pro-btn-modal-close:hover {
+  background: #334155;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(71, 85, 105, 0.3);
+}
+
+@media (max-width: 768px) {
+  .pro-cust-grid, .pro-addresses-grid {
+    grid-template-columns: 1fr;
+  }
+  .pro-cust-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pro-cust-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
 .save-shipp-address{
       background-color: #d9e3e3;
     cursor: pointer;
@@ -19085,17 +21078,22 @@ textarea.pro-input {
    CRM MAIN SCREEN & CUSTOMER TABLE (PROFESSIONAL ALIGNMENT)
    ========================================================= */
 
-/* Hero Header */
+/* =========================================================
+   CRM MAIN SCREEN & CUSTOMER TABLE (EXECUTIVE REDESIGN)
+   ========================================================= */
+
+/* Hero Header Card */
 .crm-hero-header {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 1.75rem 2rem;
-  margin-bottom: 1.75rem;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 22px;
+  padding: 1.85rem 2.25rem;
+  margin-bottom: 2rem;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.6rem;
+  position: relative;
 }
 
 .crm-hero-top {
@@ -19109,33 +21107,50 @@ textarea.pro-input {
 .crm-hero-title-area {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
 .crm-eyebrow-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: #0284c7;
-  background: #e0f2fe;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+  background: #eff6ff;
+  padding: 0.3rem 0.85rem;
+  border-radius: 30px;
   width: fit-content;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+}
+
+.crm-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+  animation: crmPulse 2s infinite ease-in-out;
+}
+
+@keyframes crmPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
 }
 
 .crm-main-heading {
-  font-size: 1.75rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
 .crm-sub-heading {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: #64748b;
   margin: 0;
   font-weight: 500;
@@ -19145,116 +21160,170 @@ textarea.pro-input {
 .crm-header-action-group {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
 .crm-btn-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1.15rem;
-  border-radius: 10px;
-  font-size: 0.84rem;
+  gap: 0.55rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .crm-btn-primary {
-  background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  box-shadow: 0 6px 16px -2px rgba(2, 132, 199, 0.35);
 }
 
 .crm-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px -2px rgba(2, 132, 199, 0.45);
+  color: #ffffff;
 }
 
 .crm-btn-secondary {
-  background: #f1f5f9;
-  color: #334155;
+  background: #ffffff;
+  color: #1e293b;
   border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 .crm-btn-secondary:hover {
-  background: #e2e8f0;
+  background: #f8fafc;
+  border-color: #94a3b8;
   color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .crm-btn-outline {
   background: #ffffff;
   color: #475569;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 .crm-btn-outline:hover {
   background: #f8fafc;
   border-color: #0284c7;
   color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12);
 }
 
-/* 4-Column Stats Grid */
+/* 4-Column Modern Stats Grid */
 .crm-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.15rem;
 }
 
 .crm-stat-card {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 1.1rem 1.25rem;
+  border-radius: 16px;
+  padding: 1.15rem 1.35rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  transition: all 0.15s ease;
+  gap: 1.1rem;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+  position: relative;
+  overflow: hidden;
 }
 
+.crm-stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.crm-stat-card.card-blue::after { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.crm-stat-card.card-amber::after { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.crm-stat-card.card-purple::after { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+.crm-stat-card.card-emerald::after { background: linear-gradient(90deg, #059669, #34d399); }
+
 .crm-stat-card:hover {
-  background: #ffffff;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-  transform: translateY(-1px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+
+.crm-stat-card:hover::after {
+  opacity: 1;
 }
 
 .crm-stat-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
-.crm-stat-card.card-blue .crm-stat-icon-wrap { background: #e0f2fe; color: #0284c7; }
-.crm-stat-card.card-amber .crm-stat-icon-wrap { background: #fef3c7; color: #d97706; }
-.crm-stat-card.card-purple .crm-stat-icon-wrap { background: #ede9fe; color: #7c3aed; }
-.crm-stat-card.card-emerald .crm-stat-icon-wrap { background: #dcfce7; color: #059669; }
+.crm-stat-card.card-blue .crm-stat-icon-wrap { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #0284c7; }
+.crm-stat-card.card-amber .crm-stat-icon-wrap { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); color: #d97706; }
+.crm-stat-card.card-purple .crm-stat-icon-wrap { background: linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%); color: #7c3aed; }
+.crm-stat-card.card-emerald .crm-stat-icon-wrap { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; }
 
 .crm-stat-content {
   display: flex;
   flex-direction: column;
 }
 
+.crm-stat-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
 .crm-stat-count {
-  font-size: 1.55rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: #0f172a;
   line-height: 1.1;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  letter-spacing: -0.02em;
 }
 
+.crm-stat-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-blue { background: #eff6ff; color: #0284c7; }
+.badge-amber { background: #fffbeb; color: #d97706; }
+.badge-purple { background: #faf5ff; color: #7c3aed; }
+.badge-emerald { background: #ecfdf5; color: #059669; }
+
 .crm-stat-label {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #64748b;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
 }
 
 /* Search Bar Wrap */
@@ -19262,58 +21331,63 @@ textarea.pro-input {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
-  padding-top: 0.5rem;
+  padding-top: 1rem;
   border-top: 1px solid #f1f5f9;
 }
 
 .crm-search-input-box {
   position: relative;
   flex: 1;
-  max-width: 620px;
+  max-width: 640px;
 }
 
 .crm-search-icon {
   position: absolute;
-  left: 1rem;
+  left: 1.15rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
-  font-size: 0.9rem;
+  color: #0284c7;
+  font-size: 0.95rem;
   pointer-events: none;
 }
 
 .crm-search-input {
   width: 100%;
-  height: 44px;
-  padding: 0.5rem 2.5rem 0.5rem 2.75rem;
-  border-radius: 12px;
+  height: 48px;
+  padding: 0.5rem 2.75rem 0.5rem 3rem;
+  border-radius: 14px;
   border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  font-size: 0.88rem;
+  background: #ffffff;
+  font-size: 0.92rem;
   color: #0f172a;
   outline: none;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
   box-sizing: border-box;
 }
 
 .crm-search-input:focus {
   background: #ffffff;
   border-color: #0284c7;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+  box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.12);
 }
 
 .crm-search-clear {
   position: absolute;
-  right: 0.85rem;
+  right: 0.95rem;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
   border: none;
   color: #94a3b8;
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
+  transition: color 0.15s ease;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
 }
 
 .crm-search-clear:hover {
@@ -19321,25 +21395,29 @@ textarea.pro-input {
 }
 
 .crm-search-summary-pill {
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #64748b;
+  color: #475569;
   background: #f1f5f9;
-  padding: 0.4rem 0.85rem;
-  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
 /* =========================================================
-   MAIN CUSTOMER TABLE CARD
+   MAIN CUSTOMER TABLE CARD (EXECUTIVE DIRECTORY)
    ========================================================= */
 
 .crm-table-card {
   background: #ffffff;
-  border-radius: 20px;
+  border-radius: 22px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 14px 36px -10px rgba(15, 23, 42, 0.06);
   overflow: hidden;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .crm-table-responsive {
@@ -19349,24 +21427,36 @@ textarea.pro-input {
 
 .crm-customer-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .crm-customer-table thead th {
-  background: #f8fafc;
-  color: #475569;
-  font-size: 0.76rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #334155;
+  font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 1rem 1.35rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1.15rem 1.4rem;
+  border-bottom: 2px solid #e2e8f0;
   white-space: nowrap;
+}
+
+.crm-customer-table thead th .th-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.crm-customer-table thead th .th-content.th-center {
+  justify-content: center;
 }
 
 .crm-table-row {
   border-bottom: 1px solid #f1f5f9;
-  transition: all 0.12s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
 .crm-table-row:hover {
@@ -19374,116 +21464,195 @@ textarea.pro-input {
 }
 
 .crm-table-row td {
-  padding: 1rem 1.35rem;
+  padding: 1.15rem 1.4rem;
   vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .crm-sr-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 28px;
   background: #f1f5f9;
   color: #475569;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  padding: 0.2rem 0.55rem;
-  border-radius: 6px;
+  padding: 0 0.55rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .crm-company-cell {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1.1rem;
 }
 
 .crm-company-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #e0f2fe;
-  color: #0284c7;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
   flex-shrink: 0;
 }
 
+.crm-company-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
 .crm-company-link {
-  font-size: 0.94rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: #0f172a;
   text-decoration: none;
   transition: color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .crm-company-link:hover {
   color: #0284c7;
-  text-decoration: underline;
+}
+
+.crm-link-icon {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: all 0.15s ease;
+}
+
+.crm-company-link:hover .crm-link-icon {
+  opacity: 1;
+  transform: translateX(0);
+  color: #0284c7;
+}
+
+.crm-company-submeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.crm-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.crm-meta-chip i {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.crm-meta-status {
+  color: #059669;
+  font-weight: 600;
+}
+
+.crm-meta-status i {
+  color: #10b981;
 }
 
 .crm-cust-no-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   background: #eff6ff;
   color: #1d4ed8;
-  font-family: monospace;
-  font-size: 0.84rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.86rem;
   font-weight: 800;
-  padding: 0.3rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #dbeafe;
+  padding: 0.35rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.06);
+  letter-spacing: 0.04em;
+}
+
+.crm-cust-no-badge i {
+  font-size: 0.7rem;
+  opacity: 0.7;
 }
 
 /* Quick Action Buttons Group */
 .crm-action-buttons-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
 }
 
 .crm-action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
-  border-radius: 8px;
-  font-size: 0.78rem;
+  gap: 0.45rem;
+  padding: 0.48rem 0.95rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
   font-weight: 700;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
 }
 
 .crm-action-btn.btn-view-po {
   background: #eff6ff;
   color: #0284c7;
-  border: 1px solid #bae6fd;
+  border-color: #bae6fd;
 }
 
 .crm-action-btn.btn-view-po:hover {
   background: #0284c7;
   color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(2, 132, 199, 0.3);
 }
 
 .crm-action-btn.btn-quotation {
-  background: #fef3c7;
-  color: #d97706;
-  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
 }
 
 .crm-action-btn.btn-quotation:hover {
   background: #d97706;
   color: #ffffff;
+  border-color: #d97706;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(217, 119, 6, 0.3);
 }
 
 .crm-action-btn.btn-report {
   background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
+  color: #047857;
+  border-color: #a7f3d0;
 }
 
 .crm-action-btn.btn-report:hover {
   background: #059669;
   color: #ffffff;
+  border-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(5, 150, 105, 0.3);
 }
 
 /* Responsive */
@@ -19727,6 +21896,442 @@ textarea.pro-input {
   padding: 4px 10px !important;
   border-radius: 12px !important;
   border: 1px solid #e2e8f0 !important;
+}
+
+/* =========================================================
+   ENHANCED MANAGE PURCHASE ORDERS MODAL (MPO)
+   ========================================================= */
+.mpo-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1.5rem !important;
+  z-index: 10000 !important;
+  animation: mpoFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes mpoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mpo-modal-container {
+  width: 100% !important;
+  max-width: 960px !important;
+  background: #ffffff !important;
+  border-radius: 24px !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.9) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  animation: mpoScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes mpoScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.mpo-top-stripe {
+  height: 5px !important;
+  width: 100% !important;
+  background: linear-gradient(90deg, #3b82f6 0%, #10b981 33%, #f59e0b 66%, #8b5cf6 100%) !important;
+  flex-shrink: 0 !important;
+}
+
+.mpo-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  padding: 1.75rem 2.25rem 1.25rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  position: relative !important;
+  gap: 1rem !important;
+  background: #ffffff !important;
+}
+
+.mpo-btn-back,
+.mpo-btn-close {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #475569 !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  flex-shrink: 0 !important;
+}
+
+.mpo-btn-back:hover,
+.mpo-btn-close:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+}
+
+.mpo-btn-close {
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  font-size: 15px !important;
+}
+
+.mpo-header-center {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  padding: 0 0.5rem !important;
+}
+
+.mpo-header-badge {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 22px !important;
+  box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.4) !important;
+  margin-bottom: 10px !important;
+}
+
+.mpo-title {
+  font-size: 1.55rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin: 0 0 5px 0 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.mpo-subtitle {
+  font-size: 0.88rem !important;
+  color: #64748b !important;
+  margin: 0 !important;
+  max-width: 540px !important;
+  line-height: 1.45 !important;
+}
+
+/* Cards Grid */
+.mpo-cards-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 1.25rem !important;
+  padding: 1.75rem 2.25rem 1.25rem !important;
+  background: #ffffff !important;
+}
+
+.mpo-card {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 20px !important;
+  padding: 1.4rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.mpo-card:hover {
+  transform: translateY(-4px) !important;
+}
+
+.mpo-card-amc:hover {
+  border-color: #93c5fd !important;
+  box-shadow: 0 18px 30px -10px rgba(59, 130, 246, 0.18) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%) !important;
+}
+
+.mpo-card-service:hover {
+  border-color: #86efac !important;
+  box-shadow: 0 18px 30px -10px rgba(16, 185, 129, 0.18) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%) !important;
+}
+
+.mpo-card-supply:hover {
+  border-color: #fde68a !important;
+  box-shadow: 0 18px 30px -10px rgba(245, 158, 11, 0.18) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fffbeb 100%) !important;
+}
+
+.mpo-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 1rem !important;
+}
+
+.mpo-icon-box {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  transition: transform 0.3s ease !important;
+}
+
+.mpo-card:hover .mpo-icon-box {
+  transform: scale(1.08) rotate(-4deg) !important;
+}
+
+.mpo-icon-amc {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #dbeafe !important;
+}
+
+.mpo-icon-service {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+.mpo-icon-supply {
+  background: #fffbeb !important;
+  color: #d97706 !important;
+  border: 1px solid #fde68a !important;
+}
+
+.mpo-counter-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  letter-spacing: 0.01em !important;
+}
+
+.chip-amc {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+.chip-service {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+.chip-supply {
+  background: #fffbeb !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a !important;
+}
+
+.mpo-card-body {
+  flex: 1 !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.mpo-card-title {
+  font-size: 1.15rem !important;
+  font-weight: 750 !important;
+  color: #0f172a !important;
+  margin: 0 0 6px 0 !important;
+}
+
+.mpo-card-desc {
+  font-size: 0.83rem !important;
+  color: #64748b !important;
+  line-height: 1.48 !important;
+  margin: 0 !important;
+}
+
+.mpo-card-footer {
+  margin-top: auto !important;
+}
+
+.mpo-action-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 9px 14px !important;
+  border-radius: 12px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  transition: all 0.25s ease !important;
+}
+
+.pill-amc {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #dbeafe !important;
+}
+
+.mpo-card-amc:hover .pill-amc {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+.pill-service {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+.mpo-card-service:hover .pill-service {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.pill-supply {
+  background: #fffbeb !important;
+  color: #d97706 !important;
+  border: 1px solid #fde68a !important;
+}
+
+.mpo-card-supply:hover .pill-supply {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #d97706 !important;
+}
+
+.mpo-action-pill i {
+  transition: transform 0.25s ease !important;
+}
+
+.mpo-card:hover .mpo-action-pill i {
+  transform: translateX(4px) !important;
+}
+
+/* Bottom Stats Strip */
+.mpo-stats-bar {
+  margin: 0.5rem 2.25rem 2rem !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  border-radius: 18px !important;
+  padding: 1.15rem 1.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.mpo-stat-unit {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+  padding: 6px 14px !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mpo-stat-unit:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.mpo-stat-icon-wrap {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 17px !important;
+}
+
+.mpo-stat-icon-wrap.amc-accent {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+.mpo-stat-icon-wrap.service-accent {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.mpo-stat-icon-wrap.supply-accent {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.mpo-stat-content {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+}
+
+.mpo-stat-num {
+  font-size: 1.45rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+}
+
+.mpo-stat-label {
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+}
+
+.mpo-stat-sep {
+  width: 1px !important;
+  height: 32px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .mpo-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 1.25rem 1.5rem 1rem !important;
+  }
+  .mpo-header {
+    padding: 1.25rem 1.5rem 1rem !important;
+  }
+  .mpo-stats-bar {
+    margin: 0.5rem 1.5rem 1.5rem !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .mpo-stat-sep {
+    display: none !important;
+  }
+  .mpo-stat-unit {
+    justify-content: flex-start !important;
+  }
 }
 </style>
 

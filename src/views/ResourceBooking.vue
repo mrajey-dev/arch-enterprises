@@ -114,41 +114,48 @@
             <div class="tabs-group">
               <button class="nav-tab" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">
                 <i class="fas fa-list-ul"></i>
-                <span>All ({{ bookings.length }})</span>
+                <span>All</span>
+                <span class="tab-count-badge">{{ bookings.length }}</span>
               </button>
               <button class="nav-tab" :class="{ active: activeTab === 'active' }" @click="activeTab = 'active'">
-                <i class="fas fa-check-circle"></i>
-                <span>Active & Upcoming ({{ activeBookingsCount }})</span>
+                <i class="fas fa-bolt"></i>
+                <span>Active & Upcoming</span>
+                <span class="tab-count-badge active">{{ activeBookingsCount }}</span>
               </button>
               <button class="nav-tab" :class="{ active: activeTab === 'past' }" @click="activeTab = 'past'">
                 <i class="fas fa-history"></i>
-                <span>Past ({{ pastBookingsCount }})</span>
+                <span>Past</span>
+                <span class="tab-count-badge">{{ pastBookingsCount }}</span>
               </button>
               <button class="nav-tab" :class="{ active: activeTab === 'catalog' }" @click="activeTab = 'catalog'">
-                <i class="fas fa-th-large"></i>
+                <i class="fas fa-boxes"></i>
                 <span>Resource Types</span>
+                <span class="tab-count-badge">{{ resourceTypes.length }}</span>
               </button>
             </div>
 
             <!-- Controls (Search, Filter, View Switch) -->
             <div class="toolbar-controls" v-if="activeTab !== 'catalog'">
-              <div class="search-box">
+              <div class="search-box-pill">
                 <i class="fas fa-search search-icon"></i>
                 <input 
                   type="text" 
                   v-model="searchQuery" 
-                  placeholder="Search by employee, resource, or purpose..." 
+                  placeholder="Search by employee, resource, purpose..." 
+                  class="search-input"
                 />
-                <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''">
+                <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''" title="Clear Search">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
 
-              <div class="select-filter" v-if="resourceTypes.length > 0">
-                <select v-model="selectedResourceTypeFilter">
+              <div class="filter-dropdown-pill" v-if="resourceTypes.length > 0">
+                <i class="fas fa-filter filter-icon"></i>
+                <select v-model="selectedResourceTypeFilter" class="filter-select">
                   <option value="">All Resource Types</option>
                   <option v-for="r in resourceTypes" :key="r.id" :value="r.name">{{ r.name }}</option>
                 </select>
+                <i class="fas fa-chevron-down chevron-icon"></i>
               </div>
 
               <!-- View Switcher (Cards vs Table) -->
@@ -1422,129 +1429,217 @@ export default {
   flex-wrap: wrap;
   gap: 16px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border, #e2e8f0);
   margin-bottom: 24px;
 }
 
 .tabs-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: #f8fafc;
-  padding: 5px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border, #e2e8f0);
+  flex-wrap: wrap;
 }
 
 .nav-tab {
   background: transparent;
   border: none;
-  padding: 8px 16px;
-  border-radius: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #64748b;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
+  gap: 7px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  color: var(--text, #0f172a);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .nav-tab.active {
   background: #ffffff;
-  color: #4f46e5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: var(--primary, #0d9488);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+}
+
+.tab-count-badge {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.tab-count-badge.active {
+  background: #ccfbf1;
+  color: #0f766e;
 }
 
 .toolbar-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.search-box {
+/* Dedicated Search Input Box */
+.search-box-pill {
   position: relative;
-  min-width: 280px;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 10px 14px 10px 38px;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 13px;
-  color: #1e293b;
-  outline: none;
-  transition: all 0.2s;
-}
-
-.search-box input:focus {
+  display: flex;
+  align-items: center;
   background: #ffffff;
-  border-color: #818cf8;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 10px;
+  padding: 0 12px;
+  height: 38px;
+  min-width: 250px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
-.search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+.search-box-pill:focus-within {
+  border-color: var(--primary, #0d9488);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.search-box-pill .search-icon {
   color: #94a3b8;
   font-size: 13px;
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
-.clear-search {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+.search-box-pill .search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13px;
+  color: var(--text, #0f172a);
+  font-family: inherit;
+}
+
+.search-box-pill .search-input::placeholder {
+  color: #94a3b8;
+}
+
+.search-box-pill .clear-search-btn {
   background: none;
   border: none;
   color: #94a3b8;
   cursor: pointer;
+  padding: 4px;
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border-radius: 50%;
+  transition: color 0.15s;
 }
 
-.select-filter select {
-  padding: 10px 16px;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-  outline: none;
+.search-box-pill .clear-search-btn:hover {
+  color: #0f172a;
+}
+
+/* Dedicated Filter Dropdown Box */
+.filter-dropdown-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 10px;
+  padding: 0 30px 0 12px;
+  height: 38px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
+.filter-dropdown-pill:focus-within,
+.filter-dropdown-pill:hover {
+  border-color: var(--primary, #0d9488);
+}
+
+.filter-dropdown-pill .filter-icon {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.filter-dropdown-pill .filter-select {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #334155);
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+}
+
+.filter-dropdown-pill .chevron-icon {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* View Mode Segmented Switcher */
 .view-switch-btns {
   display: flex;
   background: #f1f5f9;
-  padding: 4px;
+  padding: 3px;
   border-radius: 10px;
-  gap: 4px;
+  gap: 3px;
+  border: 1px solid var(--border, #e2e8f0);
+  height: 38px;
+  box-sizing: border-box;
+  align-items: center;
 }
 
 .switch-btn {
   background: transparent;
   border: none;
   width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  height: 30px;
+  border-radius: 7px;
   color: #64748b;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  font-size: 13px;
+  transition: all 0.18s ease;
+}
+
+.switch-btn:hover {
+  color: #0f172a;
 }
 
 .switch-btn.active {
   background: #ffffff;
-  color: #4f46e5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  color: var(--primary, #0d9488);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* Cards Grid View */
@@ -2415,13 +2510,17 @@ export default {
   .bookings-cards-grid {
     grid-template-columns: 1fr;
   }
-  .search-box {
+  .search-box-pill {
     min-width: 100%;
-  }
-  .select-filter {
     width: 100%;
   }
-  .select-filter select {
+  .filter-dropdown-pill {
+    width: 100%;
+  }
+  .filter-dropdown-pill .filter-select {
+    width: 100%;
+  }
+  .toolbar-controls {
     width: 100%;
   }
   .form-grid-2 {

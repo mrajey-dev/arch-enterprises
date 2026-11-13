@@ -1,135 +1,455 @@
 <template>
   <div class="layout">
-
     <!-- Main Content -->
     <div class="main-content">
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
-      <!-- Leave Form -->
-      <div class="leave-form-wrapper" v-if="!isMobile || !isSidebarVisible">
-        <!-- Mobile Header -->
+      <section
+        class="content"
+        v-show="!isMobile || !isSidebarVisible"
+        :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
+      >
+        <!-- 📱 Mobile Top Header -->
         <div class="mobile-header" v-if="isMobile">
-       
           <div class="mobile-title">
-            <i class="fas fa-calendar-alt"></i>
-            <span>Leave Application</span>
+            <i class="fas fa-paper-plane text-teal"></i>
+            <span>Apply for Leave</span>
           </div>
-         
-        </div>
-
-       
-      
-        
-        <form @submit.prevent="submitForm" class="premium-form">
-          <div class="form-grid-premium">
-            <div class="form-field">
-              <label><i class="fas fa-user"></i> Name</label>
-              <input v-model="form.name" type="text" disabled class="readonly-field" />
-            </div>
-
-            <div class="form-field">
-              <label><i class="fas fa-building"></i> Department</label>
-              <input v-model="form.department" type="text" disabled class="readonly-field" />
-            </div>
-
-            <div class="form-field">
-              <label><i class="fas fa-tag"></i> Leave Type <span class="required">*</span></label>
-              <select v-model="form.leaveType" required @change="onLeaveTypeChange">
-                <option disabled value="">Select leave type</option>
-                <option v-for="type in leaveTypes" :key="type.id" :value="type.leave_name">
-                  {{ type.leave_name }}
-                </option>
-                <option value="Half Day">Half Day</option>
-              </select>
-              <p v-if="leaveWarning" class="warning-text">
-                <i class="fas fa-exclamation-triangle"></i> {{ leaveWarning }}
-              </p>
-            </div>
-
-            <div class="form-field" v-if="isHalfDay">
-              <label><i class="fas fa-clock"></i> Time Slot <span class="required">*</span></label>
-              <select v-model="form.timeSlot" required>
-                <option disabled value="">Select time</option>
-                <option value="9:30 AM - 1:30 PM">9:30 AM - 1:30 PM</option>
-                <option value="1:30 PM - 5:30 PM">1:30 PM - 5:30 PM</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label><i class="fas fa-calendar-day"></i> From Date <span class="required">*</span></label>
-              <input 
-                v-model="form.fromDate" 
-                type="date" 
-                :min="dateMin" 
-                required 
-                @change="onDateChange"
-              />
-              <small v-if="isSickLeave" class="field-note">Previous dates allowed for sick leave</small>
-            </div>
-
-            <div class="form-field" :class="{ 'disabled-field': isHalfDay }">
-              <label><i class="fas fa-calendar-day"></i> To Date</label>
-              <input 
-                v-model="form.toDate" 
-                type="date" 
-                :min="toDateMin" 
-                :disabled="isHalfDay" 
-                :required="!isHalfDay" 
-                @change="onDateChange"
-              />
-              <small v-if="isHalfDay" class="field-note">Auto-set to same date for half day</small>
-            </div>
-
-            <div class="form-field full-width">
-              <label>
-                <i class="fas fa-comment"></i> Reason
-                <span class="char-counter">{{ form.reason.length }}/250</span>
-                <small v-if="isCasualLeave" class="optional">(optional)</small>
-                <small v-else class="required-text">*</small>
-              </label>
-              <textarea v-model="form.reason" rows="4" maxlength="250" placeholder="Enter reason for leave" :required="!isCasualLeave"></textarea>
-            </div>
-
-            <div class="form-field full-width">
-              <label><i class="fas fa-paperclip"></i> Attach Document <small class="optional">(optional)</small></label>
-              <div class="file-upload-wrapper">
-                <input type="file" @change="handleFileUpload" class="file-input" accept=".pdf,.doc,.docx,.jpg,.png" />
-                <div class="file-upload-placeholder" v-if="!form.file">
-                  <i class="fas fa-cloud-upload-alt"></i>
-                  <span>Click to upload or drag & drop</span>
-                </div>
-                <div class="file-uploaded" v-else>
-                  <i class="fas fa-file"></i>
-                  <span>{{ form.file.name }}</span>
-                  <button type="button" class="remove-file" @click="removeFile">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-              <small class="file-hint">Supported: PDF, DOC, DOCX, JPG, PNG (Max 5MB)</small>
-            </div>
-          </div>
-
-          <div v-if="submitError" class="error-alert">
-            <i class="fas fa-times-circle"></i> {{ submitError }}
-          </div>
-
-          <div v-if="submitSuccessMsg" class="success-alert">
-            <i class="fas fa-check-circle"></i> {{ submitSuccessMsg }}
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-submit-premium" :disabled="submitLoading">
-              <span v-if="submitLoading">
-                <i class="fas fa-spinner fa-spin"></i> Submitting...
-              </span>
-              <span v-else>
-                <i class="fas fa-paper-plane"></i> Submit Leave Request
-              </span>
+          <div class="mobile-header-actions">
+            <button class="btn-mobile-secondary" @click="$router.push('/employee/leaveapplicationsemp')">
+              <i class="fas fa-list"></i>
+            </button>
+            <button class="btn-mobile-menu" @click="toggleSidebar" aria-label="Toggle menu">
+              <i class="fas fa-bars"></i>
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+
+        <!-- 🏢 Modern Enterprise Header Banner -->
+        <header class="executive-header">
+          <div class="header-main">
+            <div class="header-badge-row">
+              <span class="portal-badge-pill">
+                <span class="pulse-indicator"></span>
+                <span>EMPLOYEE SELF-SERVICE</span>
+              </span>
+              <span class="status-meta-pill">
+                <i class="fas fa-bolt text-teal"></i> Direct Approval Workflow
+              </span>
+            </div>
+            <div class="title-with-icon">
+              <div class="header-icon-box">
+                <i class="fas fa-paper-plane"></i>
+              </div>
+              <div>
+                <h1 class="header-title">Apply for Leave</h1>
+                <p class="header-subtitle">Submit a new leave request or half-day notification for manager and HR approval</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button class="btn-secondary-action" @click="$router.push('/employee/myleavebalance')">
+              <i class="fas fa-balance-scale"></i>
+              <span>My Balance</span>
+            </button>
+            <button class="btn-secondary-action" @click="$router.push('/employee/leaveapplicationsemp')">
+              <i class="fas fa-list"></i>
+              <span>All Leaves</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- ⚠️ Probation Period Warning Banner -->
+        <div v-if="isProbation" class="probation-warning-banner">
+          <div class="probation-banner-icon">
+            <i class="fas fa-user-clock"></i>
+          </div>
+          <div class="probation-banner-content">
+            <div class="probation-banner-header">
+              <span class="probation-tag"><i class="fas fa-shield-alt"></i> Probation Period Active</span>
+              <span class="probation-days-badge"><i class="fas fa-hourglass-half"></i> {{ probationDaysLeft }} Days Remaining</span>
+            </div>
+            <h3 class="probation-title">Leave Applications Disabled During Probation</h3>
+            <p class="probation-desc">
+              As per company policy, employees in their <strong>90-day probation period</strong> (ending <strong>{{ probationEndDateFormatted }}</strong>) are not eligible to apply for leaves.
+            </p>
+            <div class="probation-rules-grid">
+              <div class="probation-rule-item danger">
+                <i class="fas fa-ban"></i>
+                <span><strong>No Leave Eligibility:</strong> You cannot apply for Casual, Sick, Privilege Leave, or Half Day.</span>
+              </div>
+              <div class="probation-rule-item warning">
+                <i class="fas fa-calendar-times"></i>
+                <span><strong>Forgot Attendance = Unpaid Leave:</strong> If you forget to mark attendance, it will be automatically recorded as <strong>Unpaid Leave</strong>.</span>
+              </div>
+              <div class="probation-rule-item info">
+                <i class="fas fa-coins"></i>
+                <span><strong>Half Day Salary Deduction:</strong> Taking a half day will deduct <strong>half-day salary</strong> for that day.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 📊 Live Balance Cards Strip -->
+        <section class="balance-strip">
+          <div class="balance-card casual">
+            <div class="bc-icon-box">
+              <i class="fas fa-coffee"></i>
+            </div>
+            <div class="bc-info">
+              <span class="bc-label">Casual Leave</span>
+              <div class="bc-values">
+                <span class="bc-number">{{ leaveBalance.casual !== undefined ? leaveBalance.casual : (baseAllowances.casual || 7) }}</span>
+                <span class="bc-total">/ {{ baseAllowances.casual || 7 }} days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="balance-card sick">
+            <div class="bc-icon-box">
+              <i class="fas fa-thermometer-half"></i>
+            </div>
+            <div class="bc-info">
+              <span class="bc-label">Sick Leave</span>
+              <div class="bc-values">
+                <span class="bc-number">{{ leaveBalance.sick !== undefined ? leaveBalance.sick : (baseAllowances.sick || 10) }}</span>
+                <span class="bc-total">/ {{ baseAllowances.sick || 10 }} days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="balance-card pl">
+            <div class="bc-icon-box">
+              <i class="fas fa-star"></i>
+            </div>
+            <div class="bc-info">
+              <span class="bc-label">Privilege Leave</span>
+              <div class="bc-values">
+                <span class="bc-number">{{ leaveBalance.pl !== undefined ? leaveBalance.pl : (baseAllowances.pl || 10) }}</span>
+                <span class="bc-total">/ {{ baseAllowances.pl || 10 }} days left</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="balance-card earn" v-if="baseAllowances.earn !== undefined">
+            <div class="bc-icon-box">
+              <i class="fas fa-coins"></i>
+            </div>
+            <div class="bc-info">
+              <span class="bc-label">Earned Leave</span>
+              <div class="bc-values">
+                <span class="bc-number">{{ leaveBalance.earn || 0 }}</span>
+                <span class="bc-total">earned balance</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 📝 Main Form & Policy Guidelines Grid -->
+        <div class="application-layout-grid">
+          <!-- Main Form Card -->
+          <div class="form-card-container">
+            <div class="form-card-header">
+              <div class="fch-left">
+                <div class="fch-icon-box">
+                  <i class="fas fa-edit text-teal"></i>
+                </div>
+                <div>
+                  <h3 class="fch-title">Leave Request Form</h3>
+                  <span class="fch-sub">Fill out the mandatory fields marked with an asterisk (*)</span>
+                </div>
+              </div>
+
+              <!-- Live Duration Indicator Badge -->
+              <div class="fch-duration-chip" v-if="selectedDuration > 0">
+                <i class="fas fa-clock"></i>
+                <span>Duration: <strong>{{ selectedDuration }} {{ selectedDuration > 1 ? 'Days' : 'Day' }}</strong></span>
+              </div>
+            </div>
+
+            <!-- Employee Meta Badge Bar -->
+            <div class="applicant-meta-bar">
+              <div class="meta-item">
+                <span class="meta-label">APPLICANT</span>
+                <div class="meta-value">
+                  <i class="fas fa-user-circle"></i>
+                  <span>{{ form.name || userName || 'Employee' }}</span>
+                </div>
+              </div>
+              <div class="meta-divider"></div>
+              <div class="meta-item">
+                <span class="meta-label">DEPARTMENT</span>
+                <div class="meta-value">
+                  <i class="fas fa-building"></i>
+                  <span>{{ form.department || userDept || 'General' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <form @submit.prevent="submitForm" class="leave-form-body" :class="{ 'form-disabled': isProbation }">
+              <div class="fields-grid">
+                <!-- Leave Type -->
+                <div class="field-group">
+                  <label class="field-label">
+                    <span>Leave Type</span>
+                    <span class="required">*</span>
+                  </label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-tag input-icon"></i>
+                    <select
+                      v-model="form.leaveType"
+                      class="custom-select"
+                      :required="!isProbation"
+                      :disabled="isProbation"
+                      @change="onLeaveTypeChange"
+                    >
+                      <option disabled value="">Select leave type</option>
+                      <option v-for="type in leaveTypes" :key="type.id" :value="type.leave_name">
+                        {{ type.leave_name }}
+                      </option>
+                      <option value="Half Day">Half Day (0.5 Day)</option>
+                    </select>
+                  </div>
+                  <p v-if="leaveWarning" class="field-warning-text">
+                    <i class="fas fa-exclamation-triangle"></i> {{ leaveWarning }}
+                  </p>
+                </div>
+
+                <!-- Time Slot (Conditional for Half Day) -->
+                <div class="field-group" v-if="isHalfDay">
+                  <label class="field-label">
+                    <span>Time Slot</span>
+                    <span class="required">*</span>
+                  </label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-clock input-icon"></i>
+                    <select v-model="form.timeSlot" class="custom-select" required>
+                      <option disabled value="">Select slot</option>
+                      <option value="9:30 AM - 1:30 PM">First Half (9:30 AM - 1:30 PM)</option>
+                      <option value="1:30 PM - 5:30 PM">Second Half (1:30 PM - 5:30 PM)</option>
+                    </select>
+                  </div>
+                  <span class="field-hint">Half-day leaves deduct 0.5 from your Casual Leave balance</span>
+                </div>
+
+                <!-- From Date -->
+                <div class="field-group">
+                  <label class="field-label">
+                    <span>From Date</span>
+                    <span class="required">*</span>
+                  </label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-calendar-day input-icon"></i>
+                    <input
+                      v-model="form.fromDate"
+                      type="date"
+                      :min="dateMin"
+                      class="custom-input"
+                      :required="!isProbation"
+                      :disabled="isProbation"
+                      @change="onDateChange"
+                    />
+                  </div>
+                  <span v-if="isSickLeave" class="field-hint hint-info">
+                    <i class="fas fa-info-circle"></i> Past dates are permitted for sick leave
+                  </span>
+                </div>
+
+                <!-- To Date -->
+                <div class="field-group" :class="{ 'field-group-disabled': isHalfDay }">
+                  <label class="field-label">
+                    <span>To Date</span>
+                    <span class="required" v-if="!isHalfDay">*</span>
+                  </label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-calendar-check input-icon"></i>
+                    <input
+                      v-model="form.toDate"
+                      type="date"
+                      :min="toDateMin"
+                      class="custom-input"
+                      :disabled="isHalfDay || isProbation"
+                      :required="!isHalfDay && !isProbation"
+                      @change="onDateChange"
+                    />
+                  </div>
+                  <span v-if="isHalfDay" class="field-hint">Auto-locked to the same date for Half Day</span>
+                </div>
+
+                <!-- Reason / Description (Full Width) -->
+                <div class="field-group full-span">
+                  <div class="field-label-row">
+                    <label class="field-label">
+                      <span>Reason / Description</span>
+                      <span class="required" v-if="!isCasualLeave">*</span>
+                      <small v-if="isCasualLeave" class="optional-tag">(Optional)</small>
+                    </label>
+                    <span class="char-counter" :class="{ 'char-limit-near': form.reason.length > 220 }">
+                      {{ form.reason.length }} / 250
+                    </span>
+                  </div>
+                  <textarea
+                    v-model="form.reason"
+                    rows="4"
+                    maxlength="250"
+                    class="custom-textarea"
+                    placeholder="Provide detailed reason or context for this leave request..."
+                    :required="!isCasualLeave && !isProbation"
+                    :disabled="isProbation"
+                  ></textarea>
+                </div>
+
+                <!-- Document Attachment (Full Width) -->
+                <div class="field-group full-span">
+                  <label class="field-label">
+                    <span>Supporting Document</span>
+                    <small class="optional-tag">(Optional for general leave, recommended for sick leave)</small>
+                  </label>
+
+                  <div class="dropzone-box" :class="{ 'has-file': form.file }">
+                    <input
+                      type="file"
+                      @change="handleFileUpload"
+                      class="dropzone-input"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      :disabled="isProbation"
+                    />
+
+                    <!-- Placeholder -->
+                    <div class="dropzone-placeholder" v-if="!form.file">
+                      <div class="dropzone-icon-circle">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                      </div>
+                      <div class="dropzone-text">
+                        <span class="dz-primary">Click to browse or drag & drop file</span>
+                        <span class="dz-sub">PDF, DOC, DOCX, JPG or PNG (Up to 5MB)</span>
+                      </div>
+                    </div>
+
+                    <!-- File Attached -->
+                    <div class="dropzone-attached" v-else>
+                      <div class="dz-attached-left">
+                        <div class="dz-attached-icon">
+                          <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="dz-file-info">
+                          <span class="dz-filename">{{ form.file.name }}</span>
+                          <span class="dz-filesize">{{ (form.file.size / 1024 / 1024).toFixed(2) }} MB</span>
+                        </div>
+                      </div>
+                      <button type="button" class="btn-remove-attachment" @click.stop="removeFile" title="Remove file">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Alerts -->
+              <div v-if="submitError" class="alert-box alert-error">
+                <i class="fas fa-times-circle"></i>
+                <div class="alert-content">
+                  <span class="alert-title">Submission Error</span>
+                  <span class="alert-text">{{ submitError }}</span>
+                </div>
+              </div>
+
+              <div v-if="submitSuccessMsg" class="alert-box alert-success">
+                <i class="fas fa-check-circle"></i>
+                <div class="alert-content">
+                  <span class="alert-title">Request Submitted</span>
+                  <span class="alert-text">{{ submitSuccessMsg }}</span>
+                </div>
+              </div>
+
+              <!-- Form Action Footer -->
+              <div class="form-actions-footer">
+                <button
+                  type="button"
+                  class="btn-form-reset"
+                  @click="resetForm"
+                  :disabled="submitLoading || isProbation"
+                >
+                  <i class="fas fa-undo"></i>
+                  <span>Clear</span>
+                </button>
+
+                <button
+                  type="submit"
+                  class="btn-form-submit"
+                  :disabled="submitLoading || isProbation"
+                  :class="{ 'btn-locked': isProbation }"
+                >
+                  <span v-if="isProbation">
+                    <i class="fas fa-lock"></i> Application Locked (Probation)
+                  </span>
+                  <span v-else-if="submitLoading">
+                    <i class="fas fa-spinner fa-spin"></i> Submitting Request...
+                  </span>
+                  <span v-else>
+                    <i class="fas fa-paper-plane"></i> Submit Leave Request
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right Side: Policy Guidelines & Notes -->
+          <aside class="guidelines-card">
+            <div class="guide-header">
+              <div class="guide-icon-box">
+                <i class="fas fa-info-circle text-teal"></i>
+              </div>
+              <h4 class="guide-title">Leave Guidelines</h4>
+            </div>
+
+            <div class="guide-list">
+              <div class="guide-item">
+                <div class="gi-bullet bg-teal"></div>
+                <div class="gi-content">
+                  <span class="gi-title">Casual Leave (CL)</span>
+                  <p class="gi-desc">Should ideally be submitted at least 24 hours in advance for approval.</p>
+                </div>
+              </div>
+
+              <div class="guide-item">
+                <div class="gi-bullet bg-amber"></div>
+                <div class="gi-content">
+                  <span class="gi-title">Sick Leave (SL)</span>
+                  <p class="gi-desc">Past dates allowed. For sick leave exceeding 2 consecutive days, attach a medical certificate.</p>
+                </div>
+              </div>
+
+              <div class="guide-item">
+                <div class="gi-bullet bg-indigo"></div>
+                <div class="gi-content">
+                  <span class="gi-title">Half-Day Leaves</span>
+                  <p class="gi-desc">Requires selecting either morning or afternoon shift slot; deducts 0.5 from your casual leave balance.</p>
+                </div>
+              </div>
+
+              <div class="guide-item">
+                <div class="gi-bullet bg-emerald"></div>
+                <div class="gi-content">
+                  <span class="gi-title">Automatic Notifications</span>
+                  <p class="gi-desc">Once submitted, your direct reporting lead and HR receive instant notification for decisioning.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Links Box -->
+            <div class="guide-quick-links">
+              <button class="btn-guide-link" @click="$router.push('/employee/myleavebalance')">
+                <i class="fas fa-balance-scale"></i> View Complete Leave Ledger
+              </button>
+              <button class="btn-guide-link" @click="$router.push('/employee/leaveapplicationsemp')">
+                <i class="fas fa-history"></i> Check Application Status
+              </button>
+            </div>
+          </aside>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -144,6 +464,7 @@ import {
 } from "@/utils/toast.js";
 
 export default {
+  name: "ApplyLeave",
   components: { Sidebar },
 
   data() {
@@ -170,6 +491,8 @@ export default {
         file: null,
         timeSlot: ''
       },
+      userInfo: null,
+      userCreatedAt: null,
       leaveTypes: [],
       today: new Date().toISOString().split('T')[0],
       holidayMMDD: ['01-26', '08-15', '10-02', '07-25'],
@@ -177,6 +500,41 @@ export default {
   },
 
   computed: {
+    isProbation() {
+      if (this.userInfo && this.userInfo.is_probation !== undefined) {
+        return Boolean(this.userInfo.is_probation);
+      }
+      if (this.userCreatedAt) {
+        const diff = Math.floor((new Date() - new Date(this.userCreatedAt)) / (1000 * 60 * 60 * 24));
+        return diff < 90;
+      }
+      return false;
+    },
+    probationDaysLeft() {
+      if (this.userInfo && this.userInfo.probation_days_left !== undefined) {
+        return this.userInfo.probation_days_left;
+      }
+      if (this.userCreatedAt) {
+        const diff = Math.floor((new Date() - new Date(this.userCreatedAt)) / (1000 * 60 * 60 * 24));
+        return Math.max(0, 90 - diff);
+      }
+      return 0;
+    },
+    probationEndDateFormatted() {
+      if (this.userInfo && this.userInfo.probation_end_date) {
+        return new Date(this.userInfo.probation_end_date).toLocaleDateString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+      }
+      if (this.userCreatedAt) {
+        const d = new Date(this.userCreatedAt);
+        d.setDate(d.getDate() + 90);
+        return d.toLocaleDateString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+      }
+      return '90 days from joining';
+    },
     isHalfDay() {
       return (this.form.leaveType || '').toLowerCase() === 'half day';
     },
@@ -187,25 +545,21 @@ export default {
       return (this.form.leaveType || '').toLowerCase().includes('sick') || 
              (this.form.leaveType || '').toLowerCase().includes('medical');
     },
-    overlapWarning() {
-      return this.findOverlapMessage();
+    selectedDuration() {
+      if (this.isHalfDay) return 0.5;
+      if (!this.form.fromDate || !this.form.toDate) return 0;
+      return this.daysBetween(this.form.fromDate, this.form.toDate);
     },
-    // Dynamic min date based on leave type
     dateMin() {
-      // If sick leave, allow any date (no min restriction)
       if (this.isSickLeave) {
-        return null; // No minimum date
+        return null;
       }
-      // For other leaves, restrict to today
       return this.today;
     },
-    // Dynamic min date for "To Date" field
     toDateMin() {
       if (this.isSickLeave && this.form.fromDate) {
-        // For sick leave, allow from the selected fromDate or earlier
         return this.form.fromDate;
       }
-      // For other leaves, min is today
       return this.today;
     }
   },
@@ -219,13 +573,13 @@ export default {
     window.addEventListener('resize', this.checkIfMobile);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile);
   },
 
   watch: {
     'form.reason'(val) {
-      if (val.length > 250) this.form.reason = val.slice(0, 250);
+      if (val && val.length > 250) this.form.reason = val.slice(0, 250);
     },
     'form.fromDate': 'checkLeaveBalance',
     'form.toDate': 'checkLeaveBalance',
@@ -237,24 +591,12 @@ export default {
   },
 
   methods: {
-    getIconClass(key) {
-      const icons = {
-        casual: 'fas fa-umbrella-beach',
-        sick: 'fas fa-ambulance',
-        pl: 'fas fa-plane-departure',
-        earn: 'fas fa-coins'
-      };
-      return icons[key] || 'fas fa-calendar';
-    },
-    viewLeaveHistory() {
-      // Navigate to leave history or show modal
-      this.$router.push('/leave-history');
-    },
     removeFile() {
       this.form.file = null;
-      const input = this.$el.querySelector('.file-input');
+      const input = this.$el.querySelector('.dropzone-input');
       if (input) input.value = '';
     },
+
     findOverlapMessage() {
       if (!this.form.fromDate || !this.form.toDate) return '';
       const start = new Date(this.form.fromDate);
@@ -308,7 +650,7 @@ export default {
         ? this.leaveBalance[leaveKey]
         : Math.max(0, totalAllowed - alreadyUsed);
 
-      this.leaveWarning = `⚠️ You have ${remaining} ${this.beautify(leaveKey)} leave(s) remaining out of ${totalAllowed}.`;
+      this.leaveWarning = `You have ${remaining} ${this.beautify(leaveKey)} leave(s) remaining out of ${totalAllowed}.`;
 
       if (totalSelectedDays > remaining) {
         this.submitError = `❌ You have only ${remaining} ${this.beautify(leaveKey)} left. Please reduce your date range.`;
@@ -497,6 +839,8 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         const u = res.data;
+        this.userInfo = u;
+        this.userCreatedAt = u.created_at;
         this.form.name = u.name;
         this.form.department = u.department;
         this.userName = u.name;
@@ -511,27 +855,12 @@ export default {
       }
     },
 
-    findOverlap() {
-      if (!this.form.fromDate || !this.form.toDate) return null;
-      const A = new Date(this.form.fromDate);
-      const B = new Date(this.form.toDate);
-      return this.leaveRequests.find(lv => {
-        if (!this.isMine(lv)) return false;
-        const status = (lv.status || '').toLowerCase().trim();
-        if (status === 'rejected') return false;
-        const C = new Date(lv.fromDate || lv.from_date);
-        const D = new Date(lv.toDate || lv.to_date);
-        return C <= B && A <= D;
-      }) || null;
-    },
-
     isMine(lv) {
       const lvName = (lv.name || '').trim().toLowerCase();
       const myName = (this.userName || '').trim().toLowerCase();
       return lvName === myName && !!myName;
     },
 
-    // Handle leave type change
     onLeaveTypeChange() {
       this.form.fromDate = '';
       this.form.toDate = '';
@@ -539,7 +868,6 @@ export default {
       this.leaveWarning = '';
     },
 
-    // Handle date change
     onDateChange() {
       if (!this.isSickLeave) {
         const today = new Date();
@@ -574,6 +902,12 @@ export default {
     },
 
     async submitForm() {
+      if (this.isProbation) {
+        this.submitError = 'Leave applications are not allowed during the 90-day probation period.';
+        toastError(`You cannot apply for leave during your probation period (${this.probationDaysLeft} days remaining).`);
+        return;
+      }
+
       if (!this.form.leaveType) {
         this.submitError = 'Please select a leave type.';
         toastWarning(this.submitError);
@@ -601,7 +935,6 @@ export default {
         }
       }
 
-      // For non-sick leaves, validate dates are not in the past
       if (!this.isSickLeave) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -718,7 +1051,7 @@ export default {
           await this.sendAdminNotification(data.leave_id);
         }
 
-        this.submitSuccessMsg = '✅ Leave request submitted successfully!';
+        this.submitSuccessMsg = 'Leave request submitted successfully!';
         toastSuccess('Leave request submitted successfully!');
         window.dispatchEvent(new CustomEvent('attendance-marked'));
         this.resetForm();
@@ -760,7 +1093,7 @@ export default {
     },
 
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
+      this.isMobile = window.innerWidth <= 992;
       this.isSidebarVisible = !this.isMobile;
     },
 
@@ -776,16 +1109,6 @@ export default {
         earn: 'Earn'
       };
       return map[k.toLowerCase()] || `${k.charAt(0).toUpperCase()}${k.slice(1)}`;
-    },
-
-    logout() {
-      const token = localStorage.getItem('token');
-      axios.post('https://employees.archenterprises.co.in/api/api/logout', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).finally(() => {
-        localStorage.removeItem('token');
-        this.$router.push('/auth');
-      });
     }
   }
 }
@@ -793,339 +1116,650 @@ export default {
 
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Premium Variables */
-:root {
-  --primary: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
-  --primary-color: #667eea;
-  --dark: #1a1a2e;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* ════════ Master Page Layout ════════ */
 .layout {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app, #f8fafc);
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text, #0f172a);
 }
 
-/* Main Content */
 .main-content {
   display: flex;
-  gap: 20px;
-  padding: 20px;
-  min-height: 100vh;
-}
-
-.leave-form-wrapper {
   flex: 1;
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 20px 28px;
+  gap: 24px;
 }
 
-/* Mobile Header */
+.content {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  overflow-x: hidden;
+}
+
+.text-teal { color: #0d9488 !important; }
+
+/* ════════ Mobile Top Header ════════ */
 .mobile-header {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: white;
-  border-radius: 16px;
+  background: #ffffff;
+  border-radius: 10px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.menu-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--dark);
-  padding: 8px;
-  cursor: pointer;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 .mobile-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--dark);
-}
-
-.mobile-title i {
-  color: var(--primary-color);
-}
-
-.mobile-status-badge {
-  background: var(--primary);
-  color: white;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mobile-status-badge:hover {
-  transform: scale(1.05);
-}
-
-/* Content Header */
-.content-header-modern {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.title-icon {
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.content-header-modern h1 {
-  font-size: 28px;
+  gap: 8px;
+  font-size: 16px;
   font-weight: 700;
-  background: var(--primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin: 0;
+  color: #0f172a;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
-.subtitle-modern {
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: 4px;
-}
-
-/* Leave Balance Summary - Desktop */
-.leave-balance-summary {
-  display: flex;
-  gap: 20px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 16px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.balance-item {
+.mobile-header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.balance-label {
+.btn-mobile-secondary {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 13px;
-  color: #6b7280;
 }
 
-.balance-value {
-  font-size: 16px;
+.btn-mobile-menu {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+/* ════════ Top Executive Banner ════════ */
+.executive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.header-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.portal-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--dark);
+  color: #0d9488;
+  letter-spacing: 0.6px;
 }
 
-/* Leave Balance Cards - Mobile */
-.leave-balance-cards {
-  display: none;
-  grid-template-columns: repeat(2, 1fr);
+.pulse-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+.status-meta-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 20px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+
+.header-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
   gap: 10px;
+}
+
+.btn-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary-action:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ════════ Probation Period Banner ════════ */
+.probation-warning-banner {
+  display: flex;
+  gap: 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 5px solid #d97706;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.probation-banner-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.probation-banner-content {
+  flex: 1;
+}
+
+.probation-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.probation-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.probation-days-badge {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.probation-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 6px;
+}
+
+.probation-desc {
+  font-size: 12.5px;
+  color: #78350f;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.probation-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.probation-rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: #ffffff;
+  border: 1px solid #fef3c7;
+}
+
+.probation-rule-item.danger i { color: #dc2626; }
+.probation-rule-item.warning i { color: #d97706; }
+.probation-rule-item.info i { color: #2563eb; }
+
+/* ════════ Live Balance Strip ════════ */
+.balance-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
   margin-bottom: 20px;
 }
 
 .balance-card {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 14px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.balance-card:active {
-  transform: scale(0.97);
+.balance-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-.balance-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+.balance-card.casual { border-left: 3px solid #16a34a; }
+.balance-card.sick { border-left: 3px solid #d97706; }
+.balance-card.pl { border-left: 3px solid #6366f1; }
+.balance-card.earn { border-left: 3px solid #0d9488; }
+
+.bc-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: white;
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
-.balance-icon.casual {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-}
+.balance-card.casual .bc-icon-box { background: #f0fdf4; color: #16a34a; }
+.balance-card.sick .bc-icon-box { background: #fffbeb; color: #d97706; }
+.balance-card.pl .bc-icon-box { background: #eef2ff; color: #6366f1; }
+.balance-card.earn .bc-icon-box { background: #f0fdfa; color: #0d9488; }
 
-.balance-icon.sick {
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
-}
-
-.balance-icon.pl {
-  background: linear-gradient(135deg, #34d399, #10b981);
-}
-
-.balance-icon.earn {
-  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
-}
-
-.balance-info {
+.bc-info {
   display: flex;
   flex-direction: column;
 }
 
-.balance-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--dark);
-}
-
-.balance-label {
+.bc-label {
   font-size: 11px;
-  color: #6b7280;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
-/* Premium Form */
-.premium-form {
+.bc-values {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.bc-number {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.bc-total {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+/* ════════ Application Layout Grid ════════ */
+.application-layout-grid {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ════════ Form Card Container ════════ */
+.form-card-container {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.form-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  background: #fafbfd;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fch-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fch-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.fch-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.fch-sub {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.fch-duration-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  color: #0d9488;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+/* Applicant Meta Bar */
+.applicant-meta-bar {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 24px;
   gap: 24px;
 }
 
-.form-grid-premium {
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meta-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.6px;
+}
+
+.meta-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.meta-value i {
+  color: #0d9488;
+  font-size: 13px;
+}
+
+.meta-divider {
+  width: 1px;
+  height: 18px;
+  background: #cbd5e1;
+}
+
+/* ════════ Form Body ════════ */
+.leave-form-body {
+  padding: 24px;
+}
+
+.form-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.fields-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+  margin-bottom: 24px;
 }
 
-.form-field {
+.field-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
-.form-field.full-width {
-  grid-column: span 2;
+.field-group.full-span {
+  grid-column: 1 / -1;
 }
 
-.form-field label {
-  font-size: 13px;
+.field-group-disabled {
+  opacity: 0.65;
+}
+
+.field-label {
+  font-size: 12.5px;
   font-weight: 600;
-  color: #374151;
+  color: #334155;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
-.form-field label i {
-  color: var(--primary-color);
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .required {
-  color: var(--danger);
+  color: #ef4444;
+  font-weight: 700;
 }
 
-.required-text {
-  color: var(--danger);
+.optional-tag {
+  color: #94a3b8;
   font-size: 11px;
-}
-
-.optional {
-  color: #6b7280;
-  font-size: 11px;
+  font-weight: 400;
 }
 
 .char-counter {
-  margin-left: auto;
-  font-size: 11px;
-  color: #9ca3af;
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
-.form-field input,
-.form-field select,
-.form-field textarea {
-  padding: 12px 14px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  font-family: inherit;
-  width: 100%;
+.char-limit-near {
+  color: #d97706;
+  font-weight: 700;
 }
 
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.readonly-field {
-  background: #f3f4f6;
-  cursor: not-allowed;
-}
-
-.disabled-field {
-  opacity: 0.7;
-}
-
-.field-note {
-  font-size: 11px;
-  color: #6b7280;
-  font-style: italic;
-}
-
-/* File Upload */
-.file-upload-wrapper {
-  border: 2px dashed #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.input-with-icon {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.file-upload-wrapper:hover {
-  border-color: var(--primary-color);
-  background: #f8faff;
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
 }
 
-.file-input {
+.custom-input,
+.custom-select {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  background: #ffffff;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0f172a;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.custom-input:focus,
+.custom-select:focus,
+.custom-textarea:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.custom-input:disabled,
+.custom-select:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+  color: #64748b;
+}
+
+.custom-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0f172a;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.5;
+  transition: all 0.15s ease;
+}
+
+.field-hint {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.hint-info {
+  color: #0d9488;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-warning-text {
+  font-size: 12px;
+  color: #d97706;
+  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ════════ Modern Dropzone ════════ */
+.dropzone-box {
+  position: relative;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.dropzone-box:hover {
+  border-color: #0d9488;
+  background: #f0fdfa;
+}
+
+.dropzone-box.has-file {
+  background: #ffffff;
+  border: 1px solid #ccfbf1;
+  padding: 14px 18px;
+}
+
+.dropzone-input {
   position: absolute;
   top: 0;
   left: 0;
@@ -1135,276 +1769,376 @@ export default {
   cursor: pointer;
 }
 
-.file-upload-placeholder {
-  text-align: center;
-  color: #6b7280;
+.dropzone-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.file-upload-placeholder i {
-  font-size: 32px;
-  color: #9ca3af;
-}
-
-.file-uploaded {
+.dropzone-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: #f3f4f6;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.dropzone-box:hover .dropzone-icon-circle {
+  background: #ccfbf1;
+  color: #0d9488;
+}
+
+.dropzone-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dz-primary {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dz-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.dropzone-attached {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.dz-attached-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dz-attached-icon {
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
-}
-
-.file-uploaded i {
-  color: var(--primary-color);
-}
-
-.file-uploaded span {
-  flex: 1;
-  font-size: 13px;
-  color: var(--dark);
-  word-break: break-all;
-}
-
-.remove-file {
-  background: none;
-  border: none;
-  color: var(--danger);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.remove-file:hover {
-  background: #fee2e2;
-}
-
-.file-hint {
-  font-size: 11px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-/* Alerts */
-.error-alert, .success-alert {
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 13px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: #0d9488;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
-.error-alert {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.success-alert {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-/* Form Actions */
-.form-actions {
+.dz-file-info {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
 }
 
-.btn-submit-premium {
-  padding: 12px 28px;
-  background: var(--primary);
-  border: none;
-  border-radius: 14px;
-  color: white;
+.dz-filename {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dz-filesize {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.btn-remove-attachment {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-remove-attachment:hover {
+  background: #fee2e2;
+}
+
+/* ════════ Alerts ════════ */
+.alert-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.alert-error i {
+  font-size: 16px;
+  margin-top: 1px;
+  color: #ef4444;
+}
+
+.alert-success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
+.alert-success i {
+  font-size: 16px;
+  margin-top: 1px;
+  color: #10b981;
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alert-title {
+  font-weight: 700;
+}
+
+.alert-text {
+  font-size: 12.5px;
+}
+
+/* ════════ Footer Actions ════════ */
+.form-actions-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-form-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.15s ease;
+}
+
+.btn-form-reset:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.btn-form-submit {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  border: none;
+  color: #ffffff;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-form-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  transform: translateY(-1px);
+}
+
+.btn-form-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-form-submit.btn-locked {
+  background: #94a3b8;
+  box-shadow: none;
+}
+
+/* ════════ Right Policy Guidelines ════════ */
+.guidelines-card {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.guide-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #f0fdfa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
 }
 
-.btn-submit-premium:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+.guide-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
 }
 
-.btn-submit-premium:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
 }
 
-/* Warning Text */
-.warning-text {
+.guide-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gi-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.bg-teal { background: #0d9488; }
+.bg-amber { background: #f59e0b; }
+.bg-indigo { background: #6366f1; }
+.bg-emerald { background: #10b981; }
+
+.gi-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gi-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.gi-desc {
   font-size: 12px;
-  color: var(--warning);
+  color: #64748b;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.guide-quick-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-guide-link {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 8px;
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .form-grid-premium {
-    gap: 16px;
-  }
+.btn-guide-link:hover {
+  background: #f1f5f9;
+  color: #0d9488;
+  border-color: #cbd5e1;
 }
 
-@media (max-width: 768px) {
+.btn-guide-link i {
+  color: #0d9488;
+  font-size: 12px;
+}
+
+/* ════════ Responsive ════════ */
+@media (max-width: 992px) {
   .main-content {
-    flex-direction: column;
-    padding: 12px;
-  }
-
-  .leave-form-wrapper {
-    padding: 16px;
-    border-radius: 20px;
-  }
-
-  .mobile-header {
-    display: flex;
-  }
-
-  .content-header-modern {
-    display: none;
-  }
-
-  .leave-balance-cards {
-    display: grid;
-  }
-
-  .leave-balance-summary {
-    display: none;
-  }
-
-  .form-grid-premium {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .form-field.full-width {
-    grid-column: span 1;
-  }
-
-  .form-field input,
-  .form-field select,
-  .form-field textarea {
-    font-size: 16px; /* Prevents iOS zoom */
-    padding: 10px 12px;
-  }
-
-  .form-actions {
-    justify-content: stretch;
-  }
-
-  .btn-submit-premium {
-    width: 100%;
-    justify-content: center;
     padding: 14px;
   }
 
-  .file-upload-wrapper {
-    padding: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .main-content {
-    padding: 8px;
+  .executive-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .leave-form-wrapper {
-    padding: 12px;
-    border-radius: 16px;
+  .header-actions {
+    width: 100%;
   }
 
-  .mobile-title {
-    font-size: 16px;
+  .btn-secondary-action {
+    flex: 1;
+    justify-content: center;
   }
 
-  .mobile-status-badge {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-
-  .leave-balance-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
-  .balance-card {
-    padding: 10px 12px;
-  }
-
-  .balance-icon {
-    width: 34px;
-    height: 34px;
-    font-size: 14px;
-  }
-
-  .balance-value {
-    font-size: 17px;
-  }
-
-  .balance-label {
-    font-size: 10px;
-  }
-
-  .form-field label {
-    font-size: 12px;
-  }
-
-  .form-field input,
-  .form-field select,
-  .form-field textarea {
-    font-size: 15px;
-    padding: 8px 10px;
-  }
-
-  .btn-submit-premium {
-    font-size: 13px;
-    padding: 12px;
-  }
-
-  .error-alert,
-  .success-alert {
-    font-size: 12px;
-    padding: 10px 12px;
-  }
-}
-
-@media (max-width: 380px) {
-  .leave-balance-cards {
+  .probation-rules-grid {
     grid-template-columns: 1fr;
   }
 
-  .mobile-title {
-    font-size: 14px;
+  .application-layout-grid {
+    grid-template-columns: 1fr;
   }
 
-  .mobile-title i {
-    font-size: 16px;
-  }
-}
-
-/* Utility Classes */
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none !important;
-  }
-}
-
-@media (min-width: 769px) {
-  .mobile-only {
-    display: none !important;
+  .fields-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

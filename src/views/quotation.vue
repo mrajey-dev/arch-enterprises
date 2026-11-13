@@ -10,13 +10,13 @@
     <!-- LEFT SIDE : COMPANY INFORMATION -->
   <div class="company-info-box">
   <div class="company-left">
-    <img src="https://archenterprises.co.in/ajay/ajay1.png" 
+    <img :src="isItQuotation ? itLogoUrl : 'https://archenterprises.co.in/ajay/ajay1.png'" 
          alt="Company Logo" 
-         class="company-logo" />
+         :class="['company-logo', { 'it-logo': isItQuotation }]" />
   </div>
 
   <div class="company-right">
-    <h2 class="company-title">ARCH ENTERPRISES</h2>
+    <h2 class="company-title">{{ isItQuotation ? 'ARCH IT SOLUTIONS' : 'ARCH ENTERPRISES' }}</h2>
 
     <p class="company-text">
       <strong>Address:</strong> Plot No. 49, Prathamesh, Khutwadnagar, Nashik, 
@@ -28,7 +28,7 @@
     </p>
 
     <p class="company-text">
-      <strong>Email:</strong> prasad@archenterprises.co.in / contact@archenterprises.co.in
+      <strong>Email:</strong> {{ isItQuotation ? 'prasad@archenterprises.co.in / contact@archenterprises.co.in' : 'prasad@archenterprises.co.in / contact@archenterprises.co.in' }}
     </p>
   </div>
 </div>
@@ -43,7 +43,7 @@
   <div class="row-field">
   <label>Quotation No.</label>
   <div class="static-field">
-    {{ "AE/QUOTE/" + financialYear + "/" + form.quote_no }}
+    {{ displayQuoteNo }}
   </div>
 </div>
 
@@ -318,7 +318,7 @@
     <strong style="font-size:9px; color:black; text-decoration:underline;">
       Bank Details for Payment Transfer
     </strong><br>
-    <div>Beneficiary Name: Arch Enterprises</div>
+    <div>Beneficiary Name: {{ isItQuotation ? 'Arch IT Solutions' : 'Arch Enterprises' }}</div>
     <div>Bank Name: EEFC ICICI BANK</div>
     <div>Bank Address: Ambad Branch, Nashik</div>
     <div>Account Number: 108806000024</div>
@@ -332,7 +332,7 @@
     <strong style="font-size:9px; color:black; text-decoration:underline;">
       Account Details for Payment
     </strong><br>
-    <div>Beneficiary: Arch Enterprises</div>
+    <div>Beneficiary: {{ isItQuotation ? 'Arch IT Solutions' : 'Arch Enterprises' }}</div>
     <div>Bank: Union Bank of India</div>
     <div>Branch: Ambad, Nashik</div>
     <div>A/C No.: 696901010050076</div>
@@ -395,7 +395,7 @@
     <div style="flex: 0 0 25%; text-align:right;     margin-top: 35px;
     margin-left: -12px;">
      
-      <h6 style="margin-top:5px;">For Arch Enterprises</h6><br>
+      <h6 style="margin-top:5px;">For {{ isItQuotation ? 'Arch IT Solutions' : 'Arch Enterprises' }}</h6><br>
        <label style="font-size: 9px">Authorized Signatory</label>
     </div>
 
@@ -433,6 +433,8 @@
 
 
 <script>
+import axios from "axios";
+import archItLogo from "@/assets/arch-it-solutions-logo.png";
 import {
   toastSuccess,
   toastError,
@@ -442,6 +444,8 @@ import {
 export default {
   data() {
     return {
+      isItQuotation: false,
+      itLogoUrl: archItLogo,
       loggedInUser: "",
       form: {
         engine_serial: "",
@@ -512,15 +516,32 @@ export default {
 
   mounted() {
     this.getLoggedInUser();
-    this.fetchQuotation();
     this.initUserSession();
 
-    const savedId = localStorage.getItem("selectedQuotationId");
+    const queryType = this.$route?.query?.type || localStorage.getItem("selectedQuotationType");
+    if (queryType === "it") {
+      this.isItQuotation = true;
+    }
+
+    const queryId = this.$route?.query?.id || this.$route?.query?.quote_no;
+    const savedId = queryId || localStorage.getItem("selectedQuotationId");
     if (savedId) {
+      if (typeof savedId === "string" && (savedId.includes("IT") || savedId.includes("it"))) {
+        this.isItQuotation = true;
+      }
       this.form.quote_no = savedId;
+      this.fetchQuotation(savedId);
     }
   },
   computed: {
+    displayQuoteNo() {
+      if (!this.form.quote_no) return "";
+      const q = String(this.form.quote_no);
+      if (q.startsWith("AE/") || q.includes("/")) {
+        return q;
+      }
+      return "AE/QUOTE/" + this.financialYear + "/" + q;
+    },
     columnTotals() {
       let total = 0;
       let taxable = 0;
@@ -832,73 +853,157 @@ export default {
       }
     },
     async fetchQuotation(id) {
+      const quoteId = id || this.form.quote_no || localStorage.getItem("selectedQuotationId");
+      if (!quoteId) return;
+
       try {
-        const res = await fetch(`/api/api/quotation/${id}`);
-        if (!res.ok) {
-          console.log("Quotation not found");
+        let data = null;
+        let isIt = false;
+        // 1. Try IT quotations endpoint first
+        try {
+          const res = await axios.get(`/api/it-quotations/${quoteId}`);
+          if (res.data && (res.data.id || res.data.data)) {
+            data = res.data?.data || res.data;
+            isIt = true;
+          }
+        } catch (err) {
+          // If not found, try legacy endpoint as fallback
+          try {
+            const resLegacy = await axios.get(`/api/quotation/${quoteId}`);
+            data = resLegacy.data?.data || resLegacy.data;
+            isIt = false;
+          } catch (e2) {
+            console.warn("Quotation not found on legacy endpoint:", e2);
+          }
+        }
+
+        if (!data || typeof data !== 'object') {
+          console.warn("Quotation data not found for ID:", quoteId);
           return;
         }
 
-        const data = await res.json();
+        if (data.quote_no && (String(data.quote_no).includes('IT-QT') || String(data.quote_no).includes('IT'))) {
+          isIt = true;
+        }
+        if (this.$route?.query?.type === 'it' || localStorage.getItem('selectedQuotationType') === 'it') {
+          isIt = true;
+        }
+        this.isItQuotation = isIt;
 
         // ---------------- FILL MAIN FORM ----------------
-        this.form.nature_of_sale = data.nature_of_sale ?? "";
+        this.form.nature_of_sale = data.nature_of_sale ?? "Intrastate";
         this.form.currency = data.currency ?? "INR";
-        this.form.bill_to.company = data.company_name ?? "";
-        this.form.ship_to.company = data.company_name ?? "";
+        this.form.quote_no = data.quote_no || String(quoteId);
+        this.form.date = data.date ? data.date.substring(0, 10) : (data.created_at ? data.created_at.substring(0, 10) : "");
         this.form.customer_reference = data.customer_reference ?? "";
         this.form.recommended_by = data.recommended_by ?? "";
         this.form.terms_conditions = data.terms_conditions ?? "";
         this.form.engine_serial = data.engine_serial ?? "";
         this.form.model_no = data.model_no ?? "";
-        // SET DATE FROM created_at COLUMN
-        this.form.date = data.created_at ? data.created_at.substring(0, 10) : "";
-        this.form.created_by = this.form.created_by || data.created_by || "";
-        // ---------------------------------------------------
-        // 🔥 FETCH CUSTOMER DETAILS WHERE company matches
-        // ---------------------------------------------------
-        if (data.company_name) {
-          const custRes = await fetch(`/api/api/customer/by-name/${encodeURIComponent(data.company_name)}`);
+        this.form.created_by = data.created_by || this.form.created_by || "";
+        this.form.subtotal = data.subtotal ?? "";
+        this.form.total_tax = data.tax_total ?? "";
+        this.form.grand_total = data.grand_total ?? "";
+        this.form.amount_words = data.amount_words || "";
 
-          if (custRes.ok) {
-            const cust = await custRes.json();
+        // Billing info
+        let billTo = data.bill_to;
+        if (typeof billTo === 'string') {
+          try { billTo = JSON.parse(billTo); } catch (e) {}
+        }
+        billTo = billTo || {};
 
-            // ---------------- BILLING INFO ----------------
-            this.form.bill_to.address = cust.billing_address ?? "";
-            this.form.bill_to.gst = cust.gst_number ?? "";
-            this.form.bill_to.contact = cust.contact_person ?? "";
-            this.form.bill_to.phone = cust.contact_number ?? "";
-            this.form.bill_to.sphone = cust.secondary_contact_number ?? "";
+        this.form.bill_to = {
+          company: billTo.company || data.company_name || "",
+          address: billTo.address || "",
+          state: billTo.state || "",
+          state_code: billTo.state_code || "",
+          gst: billTo.gst || billTo.gst_number || "",
+          contact: billTo.contact || billTo.contact_person || "",
+          phone: billTo.phone || billTo.contact_number || "",
+          sphone: billTo.sphone || ""
+        };
 
-            // ---------------- SHIPPING INFO ----------------
-            this.form.ship_to.address = cust.shipping_address ?? "";
-            this.form.ship_to.gst = cust.gst_number ?? "";   // Usually same GST
-            this.form.ship_to.contact = cust.contact_person ?? "";
-            this.form.ship_to.phone = cust.contact_number ?? "";
-            this.form.ship_to.sphone = cust.secondary_contact_number ?? "";
+        // Shipping info
+        let shipTo = data.ship_to;
+        if (typeof shipTo === 'string') {
+          try { shipTo = JSON.parse(shipTo); } catch (e) {}
+        }
+        shipTo = shipTo || {};
+
+        this.form.ship_to = {
+          company: shipTo.company || data.company_name || "",
+          address: shipTo.address || "",
+          state: shipTo.state || "",
+          state_code: shipTo.state_code || "",
+          gst: shipTo.gst || shipTo.gst_number || "",
+          contact: shipTo.contact || shipTo.contact_person || "",
+          phone: shipTo.phone || shipTo.contact_number || "",
+          sphone: shipTo.sphone || ""
+        };
+
+        // If billing info lacks address/gst, attempt fetch from customer master
+        if (data.company_name && (!this.form.bill_to.address || !this.form.bill_to.gst)) {
+          try {
+            const custRes = await axios.get(`/api/customer/by-name/${encodeURIComponent(data.company_name)}`);
+            const cust = custRes.data;
+            if (cust) {
+              if (!this.form.bill_to.address) this.form.bill_to.address = cust.billing_address ?? "";
+              if (!this.form.bill_to.gst) this.form.bill_to.gst = cust.gst_number ?? "";
+              if (!this.form.bill_to.contact) this.form.bill_to.contact = cust.contact_person ?? "";
+              if (!this.form.bill_to.phone) this.form.bill_to.phone = cust.contact_number ?? "";
+              if (!this.form.bill_to.sphone) this.form.bill_to.sphone = cust.secondary_contact_number ?? "";
+
+              if (!this.form.ship_to.address) this.form.ship_to.address = cust.shipping_address ?? cust.billing_address ?? "";
+              if (!this.form.ship_to.gst) this.form.ship_to.gst = cust.gst_number ?? "";
+              if (!this.form.ship_to.contact) this.form.ship_to.contact = cust.contact_person ?? "";
+              if (!this.form.ship_to.phone) this.form.ship_to.phone = cust.contact_number ?? "";
+              if (!this.form.ship_to.sphone) this.form.ship_to.sphone = cust.secondary_contact_number ?? "";
+            }
+          } catch (e) {
+            // Non-blocking
           }
         }
 
         // ---------------- FILL ITEMS TABLE ----------------
-        if (Array.isArray(data.items)) {
-          this.items = data.items.map((item, index) => ({
-            sr: item.sr ?? index + 1,
-            desc: item.description ?? item.desc ?? "",
-            hsn: item.hsn ?? "",
-            qty: item.qty ?? 0,
-            uom: item.uom ?? "",
-            rate: item.rate ?? 0,
-            discount: item.discount ?? 0,
-            total: item.total ?? 0,
-            taxable: item.taxable ?? 0,
-            cgst_rate: item.cgst_rate ?? 0,
-            cgst_amt: item.cgst_amt ?? 0,
-            sgst_rate: item.sgst_rate ?? 0,
-            sgst_amt: item.sgst_amt ?? 0,
-            igst_rate: item.igst_rate ?? 0,
-            igst_amt: item.igst_amt ?? 0,
-            line_total: item.line_total ?? 0
-          }));
+        let rawItems = data.items;
+        if (typeof rawItems === 'string') {
+          try { rawItems = JSON.parse(rawItems); } catch (e) {}
+        }
+
+        if (Array.isArray(rawItems) && rawItems.length > 0) {
+          this.items = rawItems.map((item, index) => {
+            const qty = Number(item.qty) || 0;
+            const rate = Number(item.rate) || 0;
+            const total = Number(item.total) || (qty * rate);
+            const taxable = Number(item.taxable) || total;
+            const cgstRate = Number(item.cgst_rate ?? item.cgst_pct ?? 0);
+            const cgstAmt = Number(item.cgst_amt ?? 0);
+            const sgstRate = Number(item.sgst_rate ?? item.sgst_pct ?? 0);
+            const sgstAmt = Number(item.sgst_amt ?? 0);
+            const igstRate = Number(item.igst_rate ?? item.igst_pct ?? 0);
+            const igstAmt = Number(item.igst_amt ?? 0);
+            const lineTotal = Number(item.line_total) || (taxable + cgstAmt + sgstAmt + igstAmt);
+
+            return {
+              sr: item.sr ?? (index + 1),
+              desc: item.desc ?? item.description ?? item.item_name ?? "",
+              hsn: item.hsn ?? "",
+              qty: qty,
+              uom: item.uom ?? "Nos",
+              rate: rate,
+              discount: Number(item.discount ?? item.disc ?? 0),
+              total: total.toFixed(2),
+              taxable: taxable.toFixed(2),
+              cgst_rate: cgstRate,
+              cgst_amt: cgstAmt.toFixed(2),
+              sgst_rate: sgstRate,
+              sgst_amt: sgstAmt.toFixed(2),
+              igst_rate: igstRate,
+              igst_amt: igstAmt.toFixed(2),
+              line_total: lineTotal.toFixed(2)
+            };
+          });
         }
 
         // Recalculate totals
@@ -939,8 +1044,38 @@ export default {
       }
     },
 
-    saveQuotation() {
-      toastSuccess("Quotation Saved Successfully!");
+    async saveQuotation() {
+      try {
+        const payload = {
+          quote_no: this.form.quote_no,
+          nature_of_sale: this.form.nature_of_sale,
+          company_name: this.form.bill_to?.company || this.form.ship_to?.company || "Customer",
+          customer_reference: this.form.customer_reference,
+          payment_terms: this.form.payment_terms,
+          delivery: this.form.delivery,
+          recommended_by: this.form.recommended_by,
+          created_by: this.form.created_by,
+          terms_conditions: this.form.terms_conditions,
+          currency: this.form.currency,
+          subtotal: this.form.subtotal,
+          grand_total: this.columnTotals?.total || this.form.grand_total,
+          amount_words: this.form.amount_words,
+          date: this.form.date,
+          bill_to: this.form.bill_to,
+          ship_to: this.form.ship_to,
+          items: this.items
+        };
+        const quoteId = localStorage.getItem("selectedQuotationId") || this.$route?.query?.id || this.form.quote_no;
+        if (quoteId) {
+          await axios.put(`/api/it-quotations/${quoteId}`, payload);
+        } else {
+          await axios.post('/api/it-quotations', payload);
+        }
+        toastSuccess("Quotation Saved Successfully!");
+      } catch (err) {
+        console.error("Save quotation error:", err);
+        toastError("Failed to save quotation to database.");
+      }
     },
 
     printQuotation() {
@@ -949,8 +1084,8 @@ export default {
       const company = (this.form.bill_to.company || "Customer")
         .replace(/\./g, ""); // ❌ remove dot only
 
-      const originalTitle = document.title;
-      document.title = `Quotation-${quoteId}-${company}`;
+      const prefix = this.isItQuotation ? "Arch-IT-Solutions" : "Arch-Enterprises";
+      document.title = `${prefix}-Quotation-${quoteId}-${company}`;
 
       this.$nextTick(() => {
         window.print();
@@ -1027,6 +1162,15 @@ tfoot {
 .company-logo {
   width: 39px;
   margin-bottom: 68px;
+}
+
+.company-logo.it-logo {
+  width: 75px;
+  max-width: 85px;
+  height: auto;
+  max-height: 80px;
+  object-fit: contain;
+  margin-bottom: 0px;
 }
 
 .company-title {

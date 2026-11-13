@@ -1,5 +1,8 @@
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :class="{ 'employee-mode': isEmployeeRoute }">
+    <!-- 🪔 Diwali Decoration Overlay (shown only during Diwali window: -2 to +1 days) -->
+    <DiwaliDecoration v-if="isLoggedIn" />
+
     <!-- 🔔 Floating Notification Bell (Only for pages without top header) -->
     <NotificationBell v-if="showBell && !showHeader" />
     
@@ -43,8 +46,22 @@
       </div>
     </header>
 
+    <!-- Persistent Employee Sidebar (Stays mounted, never refreshes during employee navigation) -->
+    <EmployeeSidebar
+      v-if="showEmployeeSidebar"
+      :isLayoutInstance="true"
+    />
+
     <!-- Main Content Area -->
-    <div class="main-content-area" :class="{ 'no-margin': $route.meta.hideHeader }">
+    <div
+      ref="mainContentArea"
+      class="main-content-area"
+      :class="{
+        'no-margin': $route.meta.hideHeader,
+        'with-employee-sidebar': showEmployeeSidebar,
+        'sidebar-collapsed': isSidebarCollapsed
+      }"
+    >
       <router-view />
     </div>
     
@@ -106,6 +123,12 @@
           </li>
           <li class="mobile-only" @click="goTo('employee/Customerregistrations')" :class="{ active: isActive('employee/Customerregistrations', ['employee/customerregistrations']) }">
             <i class="fas fa-user-friends"></i><span> CRM</span>
+          </li>
+          <li class="mobile-only" @click="goTo('employee/quotations')" :class="{ active: isActive('employee/quotations', ['quotations', 'all-quotations', 'employee/all-quotations', 'quotations-list']) }">
+            <i class="fas fa-file-invoice-dollar"></i><span> All Quotations</span>
+          </li>
+          <li v-if="onlyViewITSales" @click="goTo('employee/lead-management')" :class="{ active: isActive('employee/lead-management', ['lead-management', 'employee/leads', 'leads']) }">
+            <i class="fas fa-funnel-dollar"></i><span> Lead Management</span>
           </li>
           <li @click="goTo('employee/viewAnnouncement')" :class="{ active: isActive('employee/viewAnnouncement', ['employee/viewannouncement']) }">
             <i class="fas fa-bullhorn"></i><span> Announcement</span>
@@ -171,9 +194,13 @@
 </template>
 
 <script>
+import { computed } from 'vue'
 import NotificationBell from '@views/employee/components/NotificationBell.vue'
 import AdminNotificationBell from './components/AdminNotificationBell.vue'
 import DailyAttendanceModal from './components/DailyAttendanceModal.vue'
+import DiwaliDecoration from './components/DiwaliDecoration.vue'
+import AdminSidebar from './components/Sidebar.vue'
+import EmployeeSidebar from './views/employee/components/Sidebar.vue'
 import axios from 'axios'
 import { toastInfo } from "@/utils/toast.js";
 import { initSessionTimeout, destroySessionTimeout, clearActivityTimer } from "@/utils/sessionTimeout.js";
@@ -183,10 +210,20 @@ export default {
     NotificationBell,
     AdminNotificationBell,
     DailyAttendanceModal,
+    DiwaliDecoration,
+    AdminSidebar,
+    EmployeeSidebar,
+  },
+
+  provide() {
+    return {
+      hasPersistentSidebar: computed(() => this.showEmployeeSidebar)
+    };
   },
 
   data() {
     return {
+      isSidebarCollapsed: false,
       // Header data
       unreadMentionsCount: 0,
       showNotificationPanel: false,
@@ -242,6 +279,9 @@ export default {
   },
 
   computed: {
+    isLoggedIn() {
+      return !!localStorage.getItem('token');
+    },
     showHelpWidget() {
       return !this.$route.meta?.hideHelp
     },
@@ -262,6 +302,107 @@ export default {
       const role = String(this.user?.role || localUser?.role || '').toLowerCase();
       return role === 'admin' || role === 'superadmin';
     },
+    isAdminRoute() {
+      const path = (this.$route.path || '').toLowerCase();
+      if (path === '/' || path === '/auth' || path.startsWith('/quotation') || path.startsWith('/employee/')) {
+        return false;
+      }
+      try {
+        const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const role = String(this.user?.role || localUser?.role || '').toLowerCase();
+        if (role === 'employee') return false;
+      } catch (_) {}
+      return !!localStorage.getItem('token');
+    },
+    isEmployeeRoute() {
+      const currentPath = (this.$route?.path && this.$route.path !== '/')
+        ? this.$route.path
+        : (typeof window !== 'undefined' ? window.location.pathname : '');
+      const path = currentPath.toLowerCase();
+      if (path === '/' || path === '/auth' || path.startsWith('/quotation') || path === '/quotation-report') {
+        return false;
+      }
+      if (path === '/employee' || path.startsWith('/employee/')) {
+        return true;
+      }
+      const employeeStandaloneRoutes = [
+        '/archapps',
+        '/myapps',
+        '/salaryslip',
+        '/revenue-analytics',
+        '/performance'
+      ];
+      if (employeeStandaloneRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+        try {
+          const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+          const role = String(this.user?.role || localUser?.role || '').toLowerCase();
+          return role === 'employee';
+        } catch (_) {}
+      }
+      return false;
+    },
+    showEmployeeSidebar() {
+      if (!this.isEmployeeRoute) return false;
+      if (this.$route?.meta?.hideSidebar) return false;
+      const currentPath = (this.$route?.path && this.$route.path !== '/')
+        ? this.$route.path
+        : (typeof window !== 'undefined' ? window.location.pathname : '');
+      const path = currentPath.toLowerCase();
+      const hideSidebarRoutes = [
+        '/employee/lead-management',
+        '/lead-management',
+        '/employee/leads',
+        '/leads',
+        '/employee/lead-details',
+        '/lead-details',
+        '/employee/lead-360',
+        '/employee/daily-sales-report',
+        '/daily-sales-report',
+        '/employee/sales-report',
+        '/today-sales-report',
+        '/daily-report',
+        '/employee/followup',
+        '/followup'
+      ];
+      if (hideSidebarRoutes.some(r => path === r || path.startsWith(r + '/'))) {
+        return false;
+      }
+      return true;
+    },
+    onlyViewITSales() {
+      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const dept = String(this.user?.department || localUser?.department || '').toLowerCase().trim();
+      const role = String(this.user?.role || localUser?.role || '').toLowerCase().trim();
+      const desig = String(this.user?.designation || localUser?.designation || '').toLowerCase().trim();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      const normRole = role.replace(/[\s_-]+/g, '');
+      const normDesig = desig.replace(/[\s_-]+/g, '');
+
+      const isSales = (
+        normDept === 'itsales' ||
+        dept === 'it sales' ||
+        dept === 'it_sales' ||
+        dept === 'it-sales' ||
+        (normDept.includes('it') && (normDept.includes('sale') || normDept.includes('sales'))) ||
+        (normDesig.includes('it') && (normDesig.includes('sale') || normDesig.includes('sales')))
+      );
+
+      const isOwnerOrAdmin = (
+        normDept === 'owner' ||
+        normDept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        normRole === 'owner' ||
+        normRole === 'itlead' ||
+        normRole === 'it lead' ||
+        dept === 'it lead' ||
+        role === 'it_lead' ||
+        normRole === 'admin' ||
+        this.isAdmin
+      );
+
+      return Boolean(isSales || isOwnerOrAdmin);
+    },
     isLeavesActive() {
       const current = (this.$route?.path || '').toLowerCase().replace(/^\/+|\/+$/g, '');
       return [
@@ -281,6 +422,9 @@ export default {
     $route: {
       immediate: true,
       handler(to) {
+        if (this.$refs.mainContentArea) {
+          this.$refs.mainContentArea.scrollTop = 0;
+        }
         if (this.isLeavesActive) {
           this.leavesOpen = true;
         }
@@ -300,6 +444,7 @@ export default {
     window.addEventListener('auth-change', this.handleAuthChange)
     window.addEventListener('storage', this.handleStorageChange)
     window.addEventListener('keydown', this.handleEscape)
+    window.addEventListener('sidebar-collapse-change', this.handleSidebarCollapse)
     
     // Close download menu when clicking outside
     document.addEventListener('click', (e) => {
@@ -316,6 +461,7 @@ export default {
     window.removeEventListener('auth-change', this.handleAuthChange)
     window.removeEventListener('storage', this.handleStorageChange)
     window.removeEventListener('keydown', this.handleEscape)
+    window.removeEventListener('sidebar-collapse-change', this.handleSidebarCollapse)
     document.removeEventListener('click', this.closeNotificationPanel)
     if (this.focusTimer) {
       clearTimeout(this.focusTimer)
@@ -334,13 +480,19 @@ export default {
         const [mentionsRes, unreadRes] = await Promise.all([
           axios.get('https://employees.archenterprises.co.in/api/api/notifications', {
             headers: { Authorization: `Bearer ${token}` }
+          }).catch(err => {
+            console.warn('Notifications fetch warning:', err?.message || err);
+            return { data: [] };
           }),
           axios.get('https://employees.archenterprises.co.in/api/api/mentions/unread-count', {
             headers: { Authorization: `Bearer ${token}` }
+          }).catch(err => {
+            console.warn('Mentions unread-count warning:', err?.message || err);
+            return { data: { count: 0 } };
           })
         ]);
-        this.notifications = mentionsRes.data || [];
-        this.unreadMentionsCount = unreadRes.data?.count || 0;
+        this.notifications = Array.isArray(mentionsRes?.data) ? mentionsRes.data : [];
+        this.unreadMentionsCount = unreadRes?.data?.count || 0;
       } catch (err) {
         console.error('Failed to fetch notifications:', err);
       }
@@ -447,6 +599,11 @@ export default {
       });
     },
 
+    toggleSidebar() {
+      this.sidebarOpen = !this.sidebarOpen;
+      window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'));
+    },
+
     // Existing methods
     goTo(route) {
       this.$router.push(`/${route}`)
@@ -501,7 +658,15 @@ export default {
       this.user.id = null
     },
 
+    handleSidebarCollapse(e) {
+      this.isSidebarCollapsed = Boolean(e?.detail);
+    },
+
     toggleSidebar() {
+      if (this.isEmployeeRoute) {
+        window.dispatchEvent(new CustomEvent('toggle-employee-sidebar'));
+        return;
+      }
       this.sidebarOpen = !this.sidebarOpen
       if (this.sidebarOpen) {
         document.body.style.overflow = 'hidden'
@@ -546,52 +711,52 @@ export default {
 
 /* Root Variables */
 :root {
-  --primary: #2cb67d;
-  --primary-dark: #229b66;
-  --primary-light: #eaf7f1;
-  --sidebar: #ffffff;
-  --sidebar-bg: #edf8f3;
-  --card: #ffffff;
-  --text: #113329;
-  --text-white: #ffffff;
-  --gray: #6b8f81;
-  --light: #f4fbf7;
-  --border: #e0f0e8;
-  --danger: #ef4444;
-  --bg-app: #edf7f2;
-}
-
-/* Theme Support - Default Mystic Teal */
-:root, [data-theme="default"], [data-theme="Default"], [data-theme="teal"] {
-  --primary: #14b8a6; 
+  --primary: #0d9488;
   --primary-dark: #0f766e;
   --primary-light: #f0fdfa;
-  --primary-gradient: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
-  --primary-glow: rgba(20, 184, 166, 0.28);
+  --sidebar: #ffffff;
+  --sidebar-bg: #ffffff;
+  --card: #ffffff;
+  --text: #0f172a;
+  --text-white: #ffffff;
+  --gray: #64748b;
+  --light: #f8fafc;
+  --border: #e2e8f0;
+  --danger: #ef4444;
+  --bg-app: #f1f5f9;
+}
+
+/* Theme Support - Professional Clean Palettes */
+:root, [data-theme="default"], [data-theme="Default"], [data-theme="teal"] {
+  --primary: #0d9488; 
+  --primary-dark: #0f766e;
+  --primary-light: #f0fdfa;
+  --primary-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  --primary-glow: rgba(13, 148, 136, 0.16);
   --sidebar: #ffffff; 
   --card: #ffffff; 
-  --text: #134e4a;
+  --text: #0f172a;
   --text-muted: #64748b;
-  --border: #ccfbf1;
-  --bg: #f2fbf9;
-  --bg-app: #f2fbf9;
-  --surface-tint: #f0fdfa;
+  --border: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-app: #f1f5f9;
+  --surface-tint: #f1f5f9;
 }
 
 [data-theme="emerald"] {
-  --primary: #2cb67d; 
-  --primary-dark: #209961;
-  --primary-light: #eaf7f1;
-  --primary-gradient: linear-gradient(135deg, #2cb67d 0%, #10b981 100%);
-  --primary-glow: rgba(44, 182, 125, 0.28);
+  --primary: #10b981; 
+  --primary-dark: #059669;
+  --primary-light: #ecfdf5;
+  --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --primary-glow: rgba(16, 185, 129, 0.16);
   --sidebar: #ffffff; 
   --card: #ffffff; 
-  --text: #0f2e22;
-  --text-muted: #6b8f81;
-  --border: #dff0e7;
-  --bg: #edf7f2;
-  --bg-app: #edf7f2;
-  --surface-tint: #f4fbf7;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-app: #f1f5f9;
+  --surface-tint: #f1f5f9;
 }
 
 [data-theme="blue"] {
@@ -599,15 +764,15 @@ export default {
   --primary-dark: #1d4ed8;
   --primary-light: #eff6ff;
   --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  --primary-glow: rgba(59, 130, 246, 0.28);
+  --primary-glow: rgba(59, 130, 246, 0.16);
   --sidebar: #ffffff;
   --card: #ffffff;
   --text: #0f172a;
   --text-muted: #64748b;
-  --border: #dbeafe;
-  --bg: #f0f6ff;
-  --bg-app: #f0f6ff;
-  --surface-tint: #f5f9ff;
+  --border: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-app: #f1f5f9;
+  --surface-tint: #f1f5f9;
 }
 
 [data-theme="purple"] {
@@ -615,47 +780,47 @@ export default {
   --primary-dark: #6d28d9;
   --primary-light: #f5f3ff;
   --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  --primary-glow: rgba(139, 92, 246, 0.28);
+  --primary-glow: rgba(139, 92, 246, 0.16);
   --sidebar: #ffffff;
   --card: #ffffff;
-  --text: #1e1b4b;
-  --text-muted: #6b7280;
-  --border: #ede9fe;
-  --bg: #f8f6ff;
-  --bg-app: #f8f6ff;
-  --surface-tint: #fbf9ff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-app: #f1f5f9;
+  --surface-tint: #f1f5f9;
 }
 
 [data-theme="green"] {
-  --primary: #10b981;
-  --primary-dark: #047857;
-  --primary-light: #ecfdf5;
-  --primary-gradient: linear-gradient(135deg, #10b981 0%, #047857 100%);
-  --primary-glow: rgba(16, 185, 129, 0.28);
+  --primary: #16a34a;
+  --primary-dark: #15803d;
+  --primary-light: #f0fdf4;
+  --primary-gradient: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  --primary-glow: rgba(22, 163, 74, 0.16);
   --sidebar: #ffffff;
   --card: #ffffff;
-  --text: #064e3b;
-  --text-muted: #6b7280;
-  --border: #d1fae5;
-  --bg: #f0fdf4;
-  --bg-app: #f0fdf4;
-  --surface-tint: #f6fef9;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-app: #f1f5f9;
+  --surface-tint: #f1f5f9;
 }
 
 [data-theme="orange"] {
-  --primary: #f97316;
+  --primary: #ea580c;
   --primary-dark: #c2410c;
   --primary-light: #fff7ed;
-  --primary-gradient: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
-  --primary-glow: rgba(249, 115, 22, 0.28);
+  --primary-gradient: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  --primary-glow: rgba(234, 88, 12, 0.16);
   --sidebar: #ffffff;
   --card: #ffffff;
-  --text: #431407;
-  --text-muted: #78716c;
-  --border: #fed7aa;
-  --bg: #fffbf5;
-  --bg-app: #fffbf5;
-  --surface-tint: #fff8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-app: #f1f5f9;
+  --surface-tint: #f1f5f9;
 }
 
 [data-theme="red"] {
@@ -663,31 +828,15 @@ export default {
   --primary-dark: #b91c1c;
   --primary-light: #fef2f2;
   --primary-gradient: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  --primary-glow: rgba(239, 68, 68, 0.28);
+  --primary-glow: rgba(239, 68, 68, 0.16);
   --sidebar: #ffffff;
   --card: #ffffff;
-  --text: #450a0a;
-  --text-muted: #71717a;
-  --border: #fecaca;
-  --bg: #fff5f5;
-  --bg-app: #fff5f5;
-  --surface-tint: #fff0f0;
-}
-
-[data-theme="teal"] {
-  --primary: #14b8a6;
-  --primary-dark: #0f766e;
-  --primary-light: #f0fdfa;
-  --primary-gradient: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
-  --primary-glow: rgba(20, 184, 166, 0.28);
-  --sidebar: #ffffff;
-  --card: #ffffff;
-  --text: #134e4a;
+  --text: #0f172a;
   --text-muted: #64748b;
-  --border: #ccfbf1;
-  --bg: #f2fbf9;
-  --bg-app: #f2fbf9;
-  --surface-tint: #f0fdfa;
+  --border: #e2e8f0;
+  --bg: #f1f5f9;
+  --bg-app: #f1f5f9;
+  --surface-tint: #f1f5f9;
 }
 
 [data-theme="dark"] {
@@ -695,7 +844,7 @@ export default {
   --primary-dark: #0284c7;
   --primary-light: #1e293b;
   --primary-gradient: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-  --primary-glow: rgba(56, 189, 248, 0.35);
+  --primary-glow: rgba(56, 189, 248, 0.25);
   --sidebar: #0f172a;
   --card: #1e293b;
   --text: #f8fafc;
@@ -711,11 +860,22 @@ export default {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
 }
 
-/* Layout */
+/* Global & Layout Base */
+html, body {
+  background-color: var(--bg-app, #f1f5f9);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
 .app-layout {
   min-height: 100vh;
-  background: var(--bg-app, #edf7f2);
+  background: var(--bg-app, #f1f5f9);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.app-layout.employee-mode {
+  background: #f1f5f9 !important;
 }
 
 /* Modern Header - Fixed */
@@ -1032,6 +1192,23 @@ export default {
   /* padding: 1.5rem; */
   min-height: calc(100vh - 78px);
   overflow-y: auto;
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .main-content-area.with-employee-sidebar {
+    padding-left: 284px;
+  }
+  .main-content-area.with-employee-sidebar.sidebar-collapsed {
+    padding-left: 104px;
+    transition: padding-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content-area.with-employee-sidebar {
+    padding-left: 0 !important;
+  }
 }
 
 /* Custom scrollbar */
@@ -1379,5 +1556,37 @@ export default {
   margin-top: 0;
   min-height: 100vh;
   overflow-y: hidden;
+}
+
+/* ════════ Completely Invisible Scrollbars for Admin Sidebar ════════ */
+.sidebar,
+.sidebar *,
+.menu-scroll,
+.menu-scroll * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.sidebar::-webkit-scrollbar,
+.menu-scroll::-webkit-scrollbar,
+.sidebar *::-webkit-scrollbar,
+.menu-scroll *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+.menu-scroll::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-track,
+.menu-scroll::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-button,
+.menu-scroll::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  border: none !important;
 }
 </style>

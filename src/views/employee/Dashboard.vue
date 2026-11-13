@@ -9,11 +9,241 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <!-- Welcome Banner -->
-        <div class="welcome-banner">
+        <!-- ================= DIWALI SPECIAL FESTIVE SUITE ================= -->
+        <!-- 🪔 Shown only: 2 days before Diwali holiday → 1 day after Diwali holiday -->
+        <template v-if="isDiwaliSeason">
+
+        <!-- 🪔 2. Diwali Enhanced Welcome Banner with Sky Lanterns & Animated Diyas -->
+        <div class="welcome-banner diwali-banner-theme">
+          <!-- Left & Right Hanging Akash Kandil (Traditional Lanterns) -->
+          <div class="akash-kandil kandil-left">
+            <div class="kandil-thread"></div>
+            <div class="kandil-body">
+              <div class="kandil-core"></div>
+              <div class="kandil-rays"></div>
+            </div>
+            <div class="kandil-tassels">
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <div class="akash-kandil kandil-right">
+            <div class="kandil-thread"></div>
+            <div class="kandil-body">
+              <div class="kandil-core"></div>
+              <div class="kandil-rays"></div>
+            </div>
+            <div class="kandil-tassels">
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <div class="banner-content diwali-banner-content">
+            <div class="diwali-greeting-ribbon">
+              <i class="fas fa-star"></i>
+              <span>शुभ दीपावली • SHUBH DEEPAVALI 2026 • HAPPY DIWALI</span>
+              <i class="fas fa-star"></i>
+            </div>
+
+            <div class="banner-title-diya-row">
+              <div class="banner-diya-art left-diya">
+                <div class="diya-flame-wrapper">
+                  <div class="flame-glow"></div>
+                  <div class="flame-core"></div>
+                </div>
+                <div class="diya-clay-base"></div>
+              </div>
+
+              <h1>Welcome back, {{ formatFirstName(currentUser.name) }}!</h1>
+
+              <div class="banner-diya-art right-diya">
+                <div class="diya-flame-wrapper">
+                  <div class="flame-glow"></div>
+                  <div class="flame-core"></div>
+                </div>
+                <div class="diya-clay-base"></div>
+              </div>
+            </div>
+
+            <p class="diwali-quote-text">
+              ✨ May the divine festival of lights illuminate your life with infinite joy, good health & roaring success! ✨
+            </p>
+          </div>
+
+          <!-- Banner Controls & Date Badge -->
+          <div class="banner-diwali-actions">
+            <div class="date-badge">
+              <i class="fas fa-calendar-alt"></i>
+              <span>{{ formattedDate }}</span>
+            </div>
+
+            <button 
+              type="button" 
+              class="diwali-action-chip cracker-btn" 
+              @click="burstDiwaliCrackers"
+              title="Burst celebratory Diwali fireworks"
+            >
+              <i class="fas fa-fire"></i>
+              <span>Burst Crackers 🎆</span>
+            </button>
+
+            <button 
+              type="button" 
+              class="diwali-action-chip wishes-btn" 
+              @click="showDiwaliWishesModal = true"
+              title="View Arch Enterprises Diwali Message"
+            >
+              <i class="fas fa-envelope-open-text"></i>
+              <span>Diwali Message 💌</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 🪔 3. "Arch Diwali Mahotsav 2026" Interactive Showcase & Festive Cards -->
+        <div v-if="showDiwaliCelebration" class="diwali-mahotsav-card">
+          <div class="mahotsav-header">
+            <div class="mahotsav-title-box">
+              <div class="diya-icon-emblem">
+                <i class="fas fa-sun"></i>
+              </div>
+              <div>
+                <h3>Arch IT Solutions & Enterprises • Diwali Mahotsav 2026</h3>
+                <p>Festival of Lights Celebration & Interactive Diya Lighting</p>
+              </div>
+            </div>
+
+            <div class="mahotsav-tools">
+              <span class="diyas-status-pill">
+                <i class="fas fa-fire"></i>
+                <strong>{{ litDiyasCount }} / 5</strong> Diyas Illuminated
+              </span>
+              <button class="btn-light-all-diyas" @click="lightAllDiyas">
+                <i class="fas fa-magic"></i> Light All Diyas
+              </button>
+            </div>
+          </div>
+
+          <div class="mahotsav-grid">
+            <!-- Left: 5 Sacred Diyas Interactive Station -->
+            <div class="diya-station-box">
+              <div class="station-label">
+                <i class="fas fa-star text-amber"></i>
+                <span>Light the 5 Sacred Diyas for Blessings & Prosperity</span>
+              </div>
+
+              <div class="diyas-rack">
+                <div 
+                  v-for="(diya, idx) in diwaliBlessings" 
+                  :key="'blessing-' + idx"
+                  class="diya-rack-item"
+                  :class="{ 'is-lit': litDiyas[idx] }"
+                  @click="toggleDiya(idx)"
+                  :title="litDiyas[idx] ? 'Click to unlight' : 'Click to light this Diya!'"
+                >
+                  <div class="diya-lamp">
+                    <div class="diya-lamp-flame">
+                      <div class="flame-aura"></div>
+                      <div class="flame-teardrop"></div>
+                    </div>
+                    <div class="diya-earthen-cup">
+                      <div class="cup-lip"></div>
+                      <div class="cup-wick"></div>
+                    </div>
+                  </div>
+                  <span class="diya-blessing-name">{{ diya.name }}</span>
+                  <span class="diya-blessing-desc">{{ diya.desc }}</span>
+                  <span class="diya-tap-hint">{{ litDiyas[idx] ? '● Illuminated' : 'Tap to Light' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Corporate Holiday Notice & Sweets Distribution -->
+            <div class="diwali-notices-box">
+              <div class="station-label">
+                <i class="fas fa-gift text-rose"></i>
+                <span>Diwali Festivities & Holidays Notice</span>
+              </div>
+
+              <div class="festive-notices-list">
+                <div class="notice-row holiday-row">
+                  <div class="notice-icon holiday-icon"><i class="fas fa-calendar-alt"></i></div>
+                  <div class="notice-text">
+                    <strong>Diwali Holidays 2026</strong>
+                    <span>Dhanteras, Naraka Chaturdashi, Lakshmi Pujan & Diwali Padwa</span>
+                  </div>
+                  <span class="notice-chip green">Confirmed</span>
+                </div>
+
+                <div class="notice-row sweet-row">
+                  <div class="notice-icon sweet-icon"><i class="fas fa-gift"></i></div>
+                  <div class="notice-text">
+                    <strong>Festive Gift & Faral Sweet Hamper</strong>
+                    <span>Please collect your Diwali Gift Box from the HR Desk today!</span>
+                  </div>
+                  <span class="notice-chip amber">HR Desk</span>
+                </div>
+
+                <div class="notice-row bonus-row">
+                  <div class="notice-icon bonus-icon"><i class="fas fa-award"></i></div>
+                  <div class="notice-text">
+                    <strong>Leadership Message</strong>
+                    <span>"Gratitude to all engineers & staff for an extraordinary year of innovation!"</span>
+                  </div>
+                  <span class="notice-chip purple">Arch Leadership</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🪔 4. Diwali Special Wishes Modal -->
+        <div v-if="showDiwaliWishesModal" class="diwali-modal-backdrop" @click.self="showDiwaliWishesModal = false">
+          <div class="diwali-wishes-modal">
+            <button class="modal-close-x" @click="showDiwaliWishesModal = false">
+              <i class="fas fa-times"></i>
+            </button>
+
+            <div class="modal-rangoli-header">
+              <div class="modal-diya-glow">
+                <i class="fas fa-sun"></i>
+              </div>
+              <h2>✨ शुभ दीपावली ✨</h2>
+              <p class="modal-sub">Warm Diwali Greetings from Arch IT Solutions & Enterprises</p>
+            </div>
+
+            <div class="modal-letter-content">
+              <p>Dear <strong>{{ currentUser.name || 'Ajay' }}</strong> and Arch Family,</p>
+              <p>
+                On this auspicious festival of lights, we express our heartfelt appreciation for your dedication, excellence, and passion. May the divine glow of Diwali illuminate your paths with endless wisdom, good health, and professional triumphs.
+              </p>
+              <p>
+                May Goddess Lakshmi and Lord Ganesha bless you and your loved ones with peace, joy, and prosperous new beginnings.
+              </p>
+              <div class="modal-signoff">
+                <div class="signoff-signature">Prasad Kothawade</div>
+                <span>Management & HR Team</span>
+                <small>Arch IT Solutions & Arch Enterprises</small>
+              </div>
+            </div>
+
+            <div class="modal-actions-row">
+              <button class="modal-cracker-burst-btn" @click="burstDiwaliCrackers">
+                <i class="fas fa-sparkles"></i> Burst Fireworks 🎆
+              </button>
+              <button class="modal-done-btn" @click="showDiwaliWishesModal = false">
+                Thank You & Happy Diwali! 🪔
+              </button>
+            </div>
+          </div>
+        </div>
+
+        </template><!-- end v-if="isDiwaliSeason" -->
+
+        <!-- Regular Welcome Banner (Non-Diwali Season) -->
+        <div v-else class="welcome-banner">
           <div class="banner-content">
             <h1>Welcome back, {{ formatFirstName(currentUser.name) || 'Employee' }}!</h1>
-            <!-- <p>Here's what's happening with your work today.</p> -->
+            <p>Here's what's happening with your work today.</p>
           </div>
           <div class="date-badge">
             <i class="fas fa-calendar-alt"></i>
@@ -21,11 +251,47 @@
           </div>
         </div>
 
+
+        <!-- Probation Status Banner -->
+        <div v-if="isProbation" class="dashboard-probation-banner">
+          <div class="dp-header">
+            <div class="dp-badge">
+              <i class="fas fa-shield-alt"></i> Probation Period Active
+            </div>
+            <div class="dp-countdown">
+              <i class="fas fa-hourglass-half"></i> <strong>{{ probationDaysLeft }}</strong> Days Remaining (Ends: {{ probationEndDateFormatted }})
+            </div>
+          </div>
+          <div class="dp-rules-grid">
+            <div class="dp-rule-item warning-rule">
+              <div class="dp-rule-icon"><i class="fas fa-calendar-times"></i></div>
+              <div class="dp-rule-text">
+                <strong>Leave Applications Locked</strong>
+                <span>Employees in probation cannot apply for leaves.</span>
+              </div>
+            </div>
+            <div class="dp-rule-item danger-rule">
+              <div class="dp-rule-icon"><i class="fas fa-user-clock"></i></div>
+              <div class="dp-rule-text">
+                <strong>Unmarked Attendance = Unpaid Leave</strong>
+                <span>If attendance is missed, it is marked as Unpaid Leave.</span>
+              </div>
+            </div>
+            <div class="dp-rule-item info-rule">
+              <div class="dp-rule-icon"><i class="fas fa-adjust"></i></div>
+              <div class="dp-rule-text">
+                <strong>Half Day = Salary Deduction</strong>
+                <span>Taking a half day incurs a half-day salary deduction.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- KPI Cards Grid -->
      <!-- KPI Cards Grid - Organized for Mobile -->
 <div class="dashboard-row">
-  <!-- Primary Cards (Always Visible) -->
-  <div class="dashboard-card clickable-card" @click="goTo('employee/mytask')">
+  <!-- Primary Cards (Always Visible for regular staff) -->
+  <div v-if="!isHrOrAdmin" class="dashboard-card clickable-card" @click="goTo('employee/mytask')">
     <div class="active-tag">Active: {{ activeTasks.length }}</div>
     <div class="card-icon tasks-icon">
       <i class="fas fa-tasks"></i>
@@ -62,6 +328,16 @@
     <div class="card-info">
       <p class="label">CRM</p>
       <span class="progress-text">Manage customers & add PO</span>
+    </div>
+  </div>
+
+  <div v-if="onlyViewITSales" class="dashboard-card clickable-card" @click="goTo('employee/lead-management')">
+    <div class="card-icon leads-icon">
+      <i class="fas fa-funnel-dollar"></i>
+    </div>
+    <div class="card-info">
+      <p class="label">Lead Management</p>
+      <span class="progress-text">Track & convert IT sales leads</span>
     </div>
   </div>
  
@@ -226,6 +502,16 @@
       <div class="card-info">
         <p class="label">Site ownership</p>
         <span class="progress-text">Site assignments by engineer</span>
+      </div>
+    </div>
+
+    <div v-if="onlyViewITSales" class="dashboard-card clickable-card mobile-only" @click="goTo('employee/lead-management')">
+      <div class="card-icon leads-icon">
+        <i class="fas fa-funnel-dollar"></i>
+      </div>
+      <div class="card-info">
+        <p class="label">Lead Management</p>
+        <span class="progress-text">Track & convert IT sales leads</span>
       </div>
     </div>
 
@@ -991,6 +1277,7 @@
 
 <script>
 import axios from 'axios'
+import confetti from 'canvas-confetti';
 import Sidebar from './components/Sidebar.vue';
 import DataChart from './components/DataChart.vue';
 import ColleagueSocials from './components/ColleagueSocials.vue';
@@ -1001,6 +1288,19 @@ export default {
   components: { Sidebar, DataChart, ColleagueSocials },
   data() {
     return {
+      // 🪔 Diwali Special Festivities State
+      isDiwaliSeason: false,       // set dynamically by checkDiwaliSeason() — do NOT hardcode true
+      showDiwaliCelebration: false, // kept for template v-if on mahotsav card, driven by isDiwaliSeason
+      showDiwaliWishesModal: false,
+      litDiyas: [true, true, true, true, true],
+      diwaliBlessings: [
+        { name: 'Wisdom (ज्ञान)', desc: 'Clear intellect & visionary foresight', icon: 'fas fa-brain' },
+        { name: 'Health (आरोग्य)', desc: 'Energy, vitality and wellness', icon: 'fas fa-heartbeat' },
+        { name: 'Prosperity (समृद्धि)', desc: 'Abundance, wealth & progress', icon: 'fas fa-coins' },
+        { name: 'Success (यश)', desc: 'Breakthrough victories in every endeavor', icon: 'fas fa-trophy' },
+        { name: 'Peace (शांति)', desc: 'Serenity, harmony & family bliss', icon: 'fas fa-dove' }
+      ],
+
       showDownloadMenu: false,
       isMobile: false,
       upcomingTasks: [],
@@ -1073,6 +1373,49 @@ export default {
         designation: (current.designation || localUser.designation || current.keyresponsibility || localUser.keyresponsibility || '').toString().trim(),
         role: (current.role || localUser.role || '').toString().trim()
       };
+    },
+    isProbation() {
+      const u = this.effectiveUser;
+      if (!u) return false;
+      if (typeof u.is_probation !== 'undefined') {
+        return Boolean(u.is_probation);
+      }
+      if (u.created_at) {
+        const created = new Date(u.created_at);
+        const diffDays = (new Date() - created) / (1000 * 60 * 60 * 24);
+        return diffDays < 90;
+      }
+      return false;
+    },
+    probationDaysLeft() {
+      const u = this.effectiveUser;
+      if (!u) return 0;
+      if (typeof u.probation_days_left !== 'undefined' && u.probation_days_left !== null) {
+        return u.probation_days_left;
+      }
+      if (u.created_at) {
+        const created = new Date(u.created_at);
+        const diffDays = Math.floor((new Date() - created) / (1000 * 60 * 60 * 24));
+        return Math.max(0, 90 - diffDays);
+      }
+      return 0;
+    },
+    probationEndDateFormatted() {
+      const u = this.effectiveUser;
+      if (!u) return '';
+      if (u.probation_end_date) {
+        try {
+          return new Date(u.probation_end_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        } catch (e) {
+          return u.probation_end_date;
+        }
+      }
+      if (u.created_at) {
+        const created = new Date(u.created_at);
+        const endDate = new Date(created.getTime() + 90 * 24 * 60 * 60 * 1000);
+        return endDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+      return '';
     },
     onlyViewITLead() {
       const u = this.effectiveUser;
@@ -1200,6 +1543,26 @@ export default {
         dept === 'ownership'
       );
     },
+    isHrOrAdmin() {
+      const u = this.effectiveUser;
+      const role = (u.role || '').toLowerCase().trim();
+      const dept = (u.department || '').toLowerCase().trim();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      return Boolean(
+        role === 'admin' ||
+        role === 'super_admin' ||
+        role === 'hr' ||
+        role === 'owner' ||
+        normDept === 'admin' ||
+        normDept === 'hr' ||
+        normDept === 'humanresources' ||
+        normDept === 'ownership' ||
+        normDept === 'owner' ||
+        dept === 'admin' ||
+        dept === 'hr' ||
+        dept === 'human resources'
+      );
+    },
     onlyViewMarketing() {
       const u = this.effectiveUser;
       const dept = (u.department || '').toLowerCase();
@@ -1241,6 +1604,37 @@ export default {
         dept === 'management'
       );
     },
+    onlyViewITSales() {
+      const u = this.effectiveUser;
+      const dept = (u.department || '').toLowerCase().trim();
+      const role = (u.role || '').toLowerCase().trim();
+      const desig = (u.designation || '').toLowerCase().trim();
+      const normDept = dept.replace(/[\s_-]+/g, '');
+      const normRole = role.replace(/[\s_-]+/g, '');
+      const normDesig = desig.replace(/[\s_-]+/g, '');
+
+      const isSales = (
+        normDept === 'itsales' ||
+        dept === 'it sales' ||
+        dept === 'it lead' ||
+        dept === 'it-sales' ||
+        dept === 'hr' ||
+        (normDept.includes('it') && (normDept.includes('sale') || normDept.includes('sales'))) ||
+        (normDesig.includes('it') && (normDesig.includes('sale') || normDesig.includes('sales')))
+      );
+
+      const isOwnerOrAdmin = (
+        normDept === 'hr' ||
+        normDept === 'ownership' ||
+        dept === 'owner' ||
+        dept === 'ownership' ||
+        normRole === 'owner' ||
+        normRole === 'admin' ||
+        u.role === 'admin'
+      );
+
+      return Boolean(isSales || isOwnerOrAdmin);
+    },
     activeTasks() {
       if (!this.allTasks.length) return [];
       return this.allTasks.filter(task => {
@@ -1262,6 +1656,9 @@ export default {
     formattedDate() {
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       return new Date().toLocaleDateString(undefined, options);
+    },
+    litDiyasCount() {
+      return (this.litDiyas || []).filter(Boolean).length;
     },
 
     // Site Ownership Computed Properties
@@ -1361,6 +1758,137 @@ export default {
   },
 
   methods: {
+    // 🪔 Diwali Season Check — reads from Holiday Management API
+    // Shows Diwali theme ONLY during: (diwali_date - 2 days) to (diwali_date + 1 day)
+    parseDateLocal(dateStr) {
+      if (!dateStr) return null;
+      const datePart = String(dateStr).slice(0, 10); // "YYYY-MM-DD" – strips time/TZ
+      const [y, m, d] = datePart.split('-').map(Number);
+      if (!y || !m || !d) return null;
+      return new Date(y, m - 1, d); // LOCAL midnight – no UTC shift
+    },
+
+    async checkDiwaliSeason() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const res = await axios.get(
+          'https://employees.archenterprises.co.in/api/api/holidays/all',
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.data?.success) return;
+
+        const holidays = res.data.data || [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const thisYear = today.getFullYear();
+
+        // All active holidays whose name contains "diwali"
+        const diwaliEntries = holidays.filter(h =>
+          h.is_active !== false &&
+          h.name && h.name.toLowerCase().includes('diwali')
+        );
+
+        for (const diwali of diwaliEntries) {
+          let diwaliDate = null;
+
+          if (diwali.is_recurring && diwali.month_day) {
+            const parts = String(diwali.month_day).split('-');
+            if (parts.length === 2) {
+              const mm = parseInt(parts[0], 10);
+              const dd = parseInt(parts[1], 10);
+              diwaliDate = new Date(thisYear, mm - 1, dd);
+
+              // If today is already past the window for this year → next year
+              const weThis = new Date(diwaliDate);
+              weThis.setDate(weThis.getDate() + 1); // +1 day boundary
+              if (today > weThis) {
+                diwaliDate = new Date(thisYear + 1, mm - 1, dd);
+              }
+            }
+          } else if (diwali.date) {
+            diwaliDate = this.parseDateLocal(diwali.date); // safe local parse
+          }
+
+          if (!diwaliDate || isNaN(diwaliDate.getTime())) continue;
+
+          // Window: diwaliDate - 2 days (inclusive) to diwaliDate + 1 day (inclusive)
+          const windowStart = new Date(diwaliDate);
+          windowStart.setDate(windowStart.getDate() - 2);
+
+          const windowEnd = new Date(diwaliDate);
+          windowEnd.setDate(windowEnd.getDate() + 1);
+
+          if (today >= windowStart && today <= windowEnd) {
+            this.isDiwaliSeason = true;
+            this.showDiwaliCelebration = true;
+            return; // found — no need to check further
+          }
+        }
+
+        // No matching window found → keep decoration off
+        this.isDiwaliSeason = false;
+        this.showDiwaliCelebration = false;
+      } catch (err) {
+        console.debug('[Dashboard] Diwali check failed:', err?.message);
+        this.isDiwaliSeason = false;
+      }
+    },
+
+    // 🪔 Diwali Special Celebration Methods
+    burstDiwaliCrackers() {
+      const duration = 2.5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 32, spread: 360, ticks: 70, zIndex: 99999 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+        const particleCount = 45 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.35), y: Math.random() - 0.2 },
+          colors: ['#f59e0b', '#fbbf24', '#dc2626', '#9333ea', '#10b981', '#ffffff', '#ec4899']
+        }));
+        confetti(Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.65, 0.9), y: Math.random() - 0.2 },
+          colors: ['#f59e0b', '#fbbf24', '#f97316', '#dc2626', '#a855f7', '#38bdf8', '#fbbf24']
+        }));
+      }, 250);
+    },
+
+    toggleDiya(idx) {
+      const updated = [...this.litDiyas];
+      updated[idx] = !updated[idx];
+      this.litDiyas = updated;
+
+      if (this.litDiyas[idx]) {
+        confetti({
+          particleCount: 35,
+          spread: 60,
+          origin: { y: 0.65 },
+          colors: ['#f59e0b', '#fbbf24', '#f97316', '#dc2626']
+        });
+
+        if (this.litDiyas.every(Boolean)) {
+          this.burstDiwaliCrackers();
+        }
+      }
+    },
+
+    lightAllDiyas() {
+      this.litDiyas = [true, true, true, true, true];
+      this.burstDiwaliCrackers();
+    },
+
     getAuthHeaders() {
       return { Authorization: `Bearer ${localStorage.getItem('token')}` };
     },
@@ -1550,6 +2078,7 @@ export default {
     },
 
     goToTask(taskId) {
+      if (this.isHrOrAdmin) return;
       this.$router.push(`/employee/mytask`);
     },
 
@@ -1863,6 +2392,7 @@ export default {
     await this.fetchCurrentUser();
     await this.refreshAllData();
     await this.fetchDepartments();
+    await this.checkDiwaliSeason(); // 🪔 Diwali window check — sets isDiwaliSeason
     
     this.showFocusOnSBUButton();
 
@@ -1911,7 +2441,7 @@ export default {
 
 .layout {
   min-height: 100vh;
-  background: #f1f5f9;
+  background: transparent;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
 }
@@ -2232,9 +2762,929 @@ export default {
 
 .content {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border-radius: 24px;
   transition: all 0.3s ease;
+}
+
+/* ================= DIWALI FESTIVE CELEBRATION SUITE ================= */
+/* 🪔 1. Authentic Lush Marigold & Mango Leaves Garland (Toran) */
+.diwali-garlands-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 22px;
+  padding-bottom: 6px;
+  z-index: 10;
+  pointer-events: none;
+  padding: 0 4px;
+}
+
+.garland-rope-line {
+  position: relative;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #15803d 0%, #166534 50%, #15803d 100%);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.garland-fairy-lights {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -5px;
+  padding: 0 15px;
+}
+
+.garland-fairy-bulb {
+  width: 9px;
+  height: 13px;
+  border-radius: 50% 50% 45% 45%;
+  animation: bulbTwinkle 1.8s infinite alternate ease-in-out;
+}
+
+.fbulb-0 { background: #fbbf24; color: #fbbf24; animation-delay: 0s; }
+.fbulb-1 { background: #f97316; color: #f97316; animation-delay: 0.35s; }
+.fbulb-2 { background: #ef4444; color: #ef4444; animation-delay: 0.7s; }
+.fbulb-3 { background: #10b981; color: #10b981; animation-delay: 1.05s; }
+.fbulb-4 { background: #c084fc; color: #c084fc; animation-delay: 1.4s; }
+
+@keyframes bulbTwinkle {
+  0% { opacity: 0.45; transform: scale(0.85); box-shadow: 0 0 2px currentColor; }
+  100% { opacity: 1; transform: scale(1.18); box-shadow: 0 0 10px currentColor; }
+}
+
+.garland-swags-row {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-top: -6px;
+  overflow: visible;
+}
+
+.garland-swag-section {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* Node Junctions */
+.swag-junction-node {
+  position: absolute;
+  left: -7px;
+  top: -2px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.swag-junction-node.end-node {
+  left: auto;
+  right: -7px;
+}
+
+.mango-leaves-bunch {
+  position: relative;
+  width: 16px;
+  height: 12px;
+  margin-bottom: -8px;
+  z-index: 1;
+}
+
+.m-leaf {
+  position: absolute;
+  width: 5px;
+  height: 12px;
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 60%, #14532d 100%);
+  border-radius: 50% 50% 15% 15%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.leaf-1 { left: 1px; transform: rotate(-35deg); }
+.leaf-2 { left: 5.5px; top: -1px; transform: rotate(0deg); }
+.leaf-3 { right: 1px; transform: rotate(35deg); }
+
+/* Small Dainty Marigold Flowers */
+.marigold-flower {
+  position: relative;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.orange-flower {
+  background: radial-gradient(circle, #fed7aa 15%, #fb923c 40%, #ea580c 75%, #9a3412 100%);
+}
+
+.yellow-flower {
+  background: radial-gradient(circle, #fef9c3 15%, #fef08a 40%, #facc15 75%, #a16207 100%);
+}
+
+.flower-lg {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(254, 215, 170, 0.5);
+}
+
+.flower-md {
+  width: 11px;
+  height: 11px;
+  margin-top: -2px;
+}
+
+.flower-sm {
+  width: 9px;
+  height: 9px;
+  margin-top: -2px;
+}
+
+.marigold-center {
+  width: 4px;
+  height: 4px;
+  background: #fef08a;
+  border-radius: 50%;
+  box-shadow: 0 0 2px #ea580c;
+}
+
+/* Hanging Pendant Drop (Ladi) */
+.swag-pendant-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -1px;
+  animation: pendantGentleSway 3.5s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+
+@keyframes pendantGentleSway {
+  0% { transform: rotate(-3deg); }
+  100% { transform: rotate(3deg); }
+}
+
+.pendant-cord {
+  width: 1.5px;
+  height: 3px;
+  background: #15803d;
+}
+
+.pendant-bell {
+  color: #fbbf24;
+  font-size: 9px;
+  margin-top: 1px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  animation: bellShine 2s infinite alternate ease-in-out;
+}
+
+@keyframes bellShine {
+  0% { transform: scale(1); color: #f59e0b; }
+  100% { transform: scale(1.1); color: #fef08a; }
+}
+
+/* Curving Swag Festoon */
+.swag-curved-arc {
+  flex: 1;
+  width: 100%;
+  height: 28px;
+  overflow: visible;
+}
+
+.garland-arc-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+/* 🪔 2. Diwali Enhanced Welcome Banner */
+.welcome-banner.diwali-banner-theme {
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 35%, #9d174d 70%, #b45309 100%);
+  border-radius: 26px;
+  padding: 2.2rem 2.8rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  box-shadow: 
+    0 16px 40px -10px rgba(107, 33, 168, 0.5),
+    0 0 0 1px rgba(251, 191, 36, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hanging Akash Kandil (Traditional Lanterns) */
+.akash-kandil {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+  animation: kandilSway 4s ease-in-out infinite alternate;
+}
+
+.kandil-left { left: 24px; animation-delay: 0s; }
+.kandil-right { right: 24px; animation-delay: 2s; }
+
+@keyframes kandilSway {
+  0% { transform: rotate(-5deg); }
+  100% { transform: rotate(5deg); }
+}
+
+.kandil-thread {
+  width: 1.5px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.kandil-body {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #8b5cf6 100%);
+  transform: rotate(45deg);
+  border-radius: 4px;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.kandil-core {
+  width: 14px;
+  height: 14px;
+  background: #fef08a;
+  border-radius: 2px;
+  box-shadow: 0 0 10px #fef08a;
+}
+
+.kandil-tassels {
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.kandil-tassels span {
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(180deg, #f59e0b, #ec4899);
+  border-radius: 1px;
+}
+
+.diwali-banner-content {
+  position: relative;
+  z-index: 3;
+}
+
+.diwali-greeting-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fde047;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.banner-title-diya-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.banner-title-diya-row h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Animated 3D Earthen Diya */
+.banner-diya-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.diya-flame-wrapper {
+  position: relative;
+  width: 14px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flame-glow {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.6) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: flamePulse 1.2s infinite alternate ease-in-out;
+}
+
+.flame-core {
+  width: 12px;
+  height: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fef08a 25%, #f97316 80%, #b91c1c 100%);
+  border-radius: 50% 50% 20% 20% / 60% 60% 30% 30%;
+  box-shadow: 0 0 10px #f59e0b, 0 0 20px #f97316;
+  animation: flameFlicker 0.15s infinite alternate ease-in-out;
+}
+
+@keyframes flameFlicker {
+  0% { transform: scale(1) rotate(-2deg); }
+  100% { transform: scale(1.08, 0.95) rotate(2deg); }
+}
+
+@keyframes flamePulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.2); opacity: 1; }
+}
+
+.diya-clay-base {
+  width: 26px;
+  height: 10px;
+  background: linear-gradient(180deg, #c2410c 0%, #7c2d12 100%);
+  border-radius: 2px 2px 14px 14px;
+  border-top: 1.5px solid #fdba74;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+  margin-top: -2px;
+}
+
+.diwali-quote-text {
+  font-size: 0.95rem;
+  color: #fef08a;
+  font-weight: 500;
+  margin-top: 6px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.banner-diwali-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  z-index: 3;
+}
+
+.diwali-action-chip {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cracker-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #000;
+  border: 1px solid #fde047;
+}
+
+.cracker-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.wishes-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.wishes-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* 🪔 3. "Arch Diwali Mahotsav 2026" Special Card */
+.diwali-mahotsav-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fffbeb 100%);
+  border: 1.5px solid #fde68a;
+  border-radius: 24px;
+  padding: 24px 28px;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.diwali-mahotsav-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.mahotsav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed #fde68a;
+  margin-bottom: 20px;
+}
+
+.mahotsav-title-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.diya-icon-emblem {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.mahotsav-title-box h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #78350f;
+  margin: 0;
+}
+
+.mahotsav-title-box p {
+  font-size: 13px;
+  color: #92400e;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.mahotsav-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.diyas-status-pill {
+  padding: 6px 14px;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diyas-status-pill i {
+  color: #f59e0b;
+}
+
+.btn-light-all-diyas {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+}
+
+.btn-light-all-diyas:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+/* Mahotsav Grid: Left Diyas & Right Notices */
+.mahotsav-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+}
+
+.station-label {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #92400e;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.text-amber { color: #d97706; }
+.text-rose { color: #e11d48; }
+
+.diyas-rack {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.diya-rack-item {
+  background: #ffffff;
+  border: 1.5px solid #fde68a;
+  border-radius: 16px;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.diya-rack-item:hover {
+  transform: translateY(-3px);
+  border-color: #f59e0b;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.15);
+}
+
+.diya-rack-item.is-lit {
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  border-color: #f59e0b;
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.2);
+}
+
+.diya-lamp {
+  position: relative;
+  width: 36px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.diya-lamp-flame {
+  position: relative;
+  width: 16px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.diya-rack-item.is-lit .diya-lamp-flame {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.flame-aura {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.7) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: flamePulse 1.2s infinite alternate;
+}
+
+.flame-teardrop {
+  width: 14px;
+  height: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fef08a 25%, #f97316 75%, #dc2626 100%);
+  border-radius: 50% 50% 20% 20% / 60% 60% 30% 30%;
+  box-shadow: 0 0 12px #f59e0b;
+  animation: flameFlicker 0.2s infinite alternate;
+}
+
+.diya-earthen-cup {
+  width: 36px;
+  height: 16px;
+  background: linear-gradient(180deg, #c2410c 0%, #7c2d12 100%);
+  border-radius: 2px 2px 18px 18px;
+  border-top: 2px solid #fed7aa;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  margin-top: -3px;
+}
+
+.cup-wick {
+  width: 3px;
+  height: 5px;
+  background: #1e293b;
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+.diya-blessing-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #78350f;
+  margin-bottom: 2px;
+}
+
+.diya-blessing-desc {
+  font-size: 9px;
+  color: #92400e;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  min-height: 22px;
+}
+
+.diya-tap-hint {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.diya-rack-item.is-lit .diya-tap-hint {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* Right: Notices List */
+.festive-notices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notice-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+.notice-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #fffbeb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #d97706;
+}
+
+.notice-icon.holiday-icon {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.notice-icon.sweet-icon {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.notice-icon.bonus-icon {
+  background: #fdf4ff;
+  color: #9333ea;
+}
+
+.notice-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.notice-text strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.notice-text span {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.notice-chip {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.notice-chip.green { background: #dcfce7; color: #15803d; }
+.notice-chip.amber { background: #fef3c7; color: #b45309; }
+.notice-chip.purple { background: #f3e8ff; color: #7e22ce; }
+
+/* 🪔 4. Diwali Special Wishes Modal */
+.diwali-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.diwali-wishes-modal {
+  background: #ffffff;
+  border: 2px solid #fbbf24;
+  border-radius: 28px;
+  max-width: 540px;
+  width: 100%;
+  padding: 32px;
+  position: relative;
+  box-shadow: 0 25px 60px -15px rgba(245, 158, 11, 0.4);
+  text-align: center;
+  animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(30px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.modal-close-x {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close-x:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-rangoli-header {
+  margin-bottom: 20px;
+}
+
+.modal-diya-glow {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: white;
+  font-size: 30px;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.6);
+}
+
+.modal-rangoli-header h2 {
+  font-size: 26px;
+  font-weight: 800;
+  color: #78350f;
+  margin-bottom: 4px;
+}
+
+.modal-sub {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.modal-letter-content {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 22px;
+  text-align: left;
+  line-height: 1.6;
+  font-size: 13.5px;
+  color: #334155;
+}
+
+.modal-letter-content p {
+  margin-bottom: 12px;
+}
+
+.modal-signoff {
+  border-top: 1px dashed #fde68a;
+  padding-top: 12px;
+  margin-top: 14px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.signoff-signature {
+  font-family: 'Brush Script MT', cursive;
+  font-size: 22px;
+  color: #b45309;
+}
+
+.modal-signoff span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-signoff small {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.modal-actions-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-cracker-burst-btn {
+  padding: 12px 22px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+
+.modal-done-btn {
+  padding: 12px 22px;
+  background: #009688;
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-done-btn:hover {
+  background: #00796b;
 }
 
 /* Welcome Banner */
@@ -2346,6 +3796,7 @@ export default {
 .mentions-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
 .visits-icon { background: linear-gradient(135deg, #f97316, #ea580c); }
 .crm-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.leads-icon { background: linear-gradient(135deg, #0ea5e9, #10b981); }
 .po-icon { background: linear-gradient(135deg, #c023d1, #a51ab4); }
 .todo-icon { background: linear-gradient(135deg, #2b2b2a, #686866); }
 .social-icon {background: linear-gradient(135deg, #00e1ff, #000000); }
@@ -3019,7 +4470,47 @@ textarea {
   .user-greeting i {
     font-size: 1.25rem;
   }
-  
+
+  /* Diwali Suite Mobile Adaptations */
+  .welcome-banner.diwali-banner-theme {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.4rem;
+    text-align: center;
+  }
+
+  .akash-kandil {
+    display: none;
+  }
+
+  .banner-title-diya-row {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .banner-diwali-actions {
+    margin-top: 16px;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .diwali-action-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mahotsav-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .diyas-rack {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fairy-lights-string {
+    padding: 0 5px;
+  }
   .logout-btn-modern span {
     display: none;
   }
@@ -3038,6 +4529,8 @@ textarea {
   
   .main-content {
     padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
   }
   
   .welcome-banner {
@@ -4225,6 +5718,118 @@ textarea {
     padding: 1rem;
   }
   .form-row-site {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dashboard Probation Banner */
+.dashboard-probation-banner {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(239, 68, 68, 0.08));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-left: 5px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08);
+}
+
+.dp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed rgba(245, 158, 11, 0.25);
+}
+
+.dp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #fde68a;
+}
+
+.dp-countdown {
+  font-size: 0.88rem;
+  color: #78350f;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dp-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.9rem;
+}
+
+.dp-rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dp-rule-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.warning-rule .dp-rule-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.danger-rule .dp-rule-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.info-rule .dp-rule-icon {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.dp-rule-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dp-rule-text strong {
+  font-size: 0.84rem;
+  color: #1f2937;
+}
+
+.dp-rule-text span {
+  font-size: 0.78rem;
+  color: #4b5563;
+  line-height: 1.35;
+}
+
+@media (max-width: 768px) {
+  .dp-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dp-rules-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -121,8 +121,29 @@
             </div>
           </div>
 
+          <!-- Loading State -->
+          <div v-if="loading" class="work-reports-loading-box">
+            <div class="loader-spinner-wrapper">
+              <i class="fas fa-circle-notch fa-spin"></i>
+            </div>
+            <h3>Loading Work Reports...</h3>
+            <p>Fetching employee task sheets and daily updates</p>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else-if="reports.length === 0" class="empty-reports-state">
+            <div class="empty-icon-wrap">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3>No Work Reports Found</h3>
+            <p>No reports match your current filters or search criteria.</p>
+            <button class="clear-filter-btn" @click="clearFilters" style="margin-top: 14px;">
+              <i class="fas fa-redo"></i> Reset Filters
+            </button>
+          </div>
+
           <!-- Report Cards Grid - Mobile Optimized -->
-          <div class="report-grid-premium">
+          <div v-else class="report-grid-premium">
             <transition-group name="card-fade" tag="div" class="cards-grid-two">
               <div
                 class="report-card-premium"
@@ -192,7 +213,7 @@
           </div>
 
           <!-- Load More Button -->
-          <div v-if="visibleCount < reports.length" class="load-more-wrapper">
+          <div v-if="!loading && visibleCount < reports.length" class="load-more-wrapper">
             <button class="load-more-btn-premium" @click="loadMore">
               <i class="fas fa-chevron-down"></i> Load More
             </button>
@@ -401,98 +422,230 @@
     <!-- Assigned Report Modal - Mobile Optimized -->
     <transition name="modal-fade">
       <div class="modal-backdrop" v-if="showAssignedReport" @click.self="showAssignedReport = false">
-        <div class="premium-modal report-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
+        <div class="premium-modal report-modal modern-assigned-modal" :class="{ 'mobile-modal': isMobile }" @click.stop>
           <div class="modal-decoration"></div>
           
-          <div class="modal-header-premium">
-            <div class="header-icon-premium">
-              <i class="fas fa-chart-line"></i>
+          <div class="modal-header-premium assigned-modal-header">
+            <div class="header-left-group">
+              <div class="header-icon-premium assigned-icon-glow">
+                <i class="fas fa-clipboard-check"></i>
+              </div>
+              <div class="header-text">
+                <div class="title-with-pill">
+                  <h2>{{ isMobile ? 'Assigned Tasks' : 'Assigned Task Report' }}</h2>
+                  <span class="task-counter-pill">{{ filteredAssignedReports.length }} Tasks</span>
+                </div>
+                <p>{{ isMobile ? 'Overview of assigned tasks' : 'Track and manage all tasks assigned across departments' }}</p>
+              </div>
             </div>
-            <div class="header-text">
-              <h2>{{ isMobile ? 'Assigned Tasks' : 'Assigned Task Report' }}</h2>
-              <p>{{ isMobile ? 'Overview of assigned tasks' : 'Overview of all assigned tasks' }}</p>
-            </div>
-            <button class="close-btn-premium" @click="showAssignedReport = false">
+            <button class="close-btn-premium modern-close-btn" @click="showAssignedReport = false" title="Close Modal">
               <i class="fas fa-times"></i>
             </button>
           </div>
 
-          <div class="modal-body-premium report-body">
-            <div class="report-filters" :class="{ 'mobile-filters': isMobile }">
-              <div class="search-wrapper-small">
-                <i class="fas fa-search"></i>
-                <input type="text" v-model="reportSearch" placeholder="Search tasks..." />
+          <!-- Quick Status Tabs / Overview Pills -->
+          <div class="assigned-quick-stats">
+            <div 
+              class="stat-chip" 
+              :class="{ active: !reportFilters.status }"
+              @click="reportFilters.status = ''"
+            >
+              <span class="chip-label">All Tasks</span>
+              <span class="chip-count">{{ assignedStats.total }}</span>
+            </div>
+            <div 
+              class="stat-chip pending" 
+              :class="{ active: reportFilters.status === 'Pending' }"
+              @click="reportFilters.status = reportFilters.status === 'Pending' ? '' : 'Pending'"
+            >
+              <span class="chip-dot pending"></span>
+              <span class="chip-label">Pending</span>
+              <span class="chip-count">{{ assignedStats.pending }}</span>
+            </div>
+            <div 
+              class="stat-chip progress" 
+              :class="{ active: reportFilters.status === 'In Progress' }"
+              @click="reportFilters.status = reportFilters.status === 'In Progress' ? '' : 'In Progress'"
+            >
+              <span class="chip-dot progress"></span>
+              <span class="chip-label">In Progress</span>
+              <span class="chip-count">{{ assignedStats.inProgress }}</span>
+            </div>
+            <div 
+              class="stat-chip completed" 
+              :class="{ active: reportFilters.status === 'Completed' }"
+              @click="reportFilters.status = reportFilters.status === 'Completed' ? '' : 'Completed'"
+            >
+              <span class="chip-dot completed"></span>
+              <span class="chip-label">Completed</span>
+              <span class="chip-count">{{ assignedStats.completed }}</span>
+            </div>
+          </div>
+
+          <div class="modal-body-premium report-body assigned-body">
+            <div class="report-filters modern-filters-bar" :class="{ 'mobile-filters': isMobile }">
+              <div class="search-wrapper-small modern-search-wrap">
+                <i class="fas fa-search search-icon"></i>
+                <input 
+                  type="text" 
+                  v-model="reportSearch" 
+                  placeholder="Search by task name, employee..." 
+                />
+                <button 
+                  v-if="reportSearch" 
+                  class="search-clear-btn" 
+                  @click="reportSearch = ''" 
+                  title="Clear search"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
               </div>
-              <select v-model="reportFilters.status" class="filter-select-small">
-                <option value="">All Status</option>
-                <option>Pending</option>
-                <option>In Progress</option>
-                <option>Completed</option>
-              </select>
-              <input type="date" v-model="reportFilters.date" class="filter-date-small" />
+
+              <div class="filter-controls-group">
+                <div class="select-wrapper-styled">
+                  <i class="fas fa-filter select-icon"></i>
+                  <select v-model="reportFilters.status" class="filter-select-small modern-select">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+
+                <div class="date-wrapper-styled">
+                  <input type="date" v-model="reportFilters.date" class="filter-date-small modern-date" />
+                </div>
+
+                <button 
+                  v-if="reportSearch || reportFilters.status || reportFilters.date" 
+                  class="btn-reset-filters" 
+                  @click="clearReportFilters"
+                  title="Reset Filters"
+                >
+                  <i class="fas fa-undo-alt"></i>
+                  <span>Reset</span>
+                </button>
+              </div>
             </div>
 
             <!-- Mobile Report Cards -->
             <div class="mobile-report-cards" v-if="isMobile">
               <div v-for="(task, index) in filteredAssignedReports" :key="task.id" class="report-mini-card">
                 <div class="mini-card-header">
-                  <span class="mini-task-name">{{ truncateText(task.name, 30) }}</span>
-                  <span :class="['status-badge-premium small', getStatusClass(task.status)]">
+                  <div class="mini-title-wrap">
+                    <span class="mini-index">#{{ index + 1 }}</span>
+                    <span class="mini-task-name">{{ task.name }}</span>
+                  </div>
+                  <span :class="['status-badge-pill', getStatusClass(task.status)]">
+                    <span class="status-pulse-dot"></span>
                     {{ task.status }}
                   </span>
                 </div>
                 <div class="mini-card-body">
-                  <div class="mini-row">
-                    <span class="mini-label">Assigned To:</span>
-                    <span>{{ task.username }}</span>
+                  <div class="mini-row" v-if="task.summary && task.summary !== '-'">
+                    <span class="mini-label">Summary:</span>
+                    <span class="mini-val">{{ truncateText(task.summary, 60) }}</span>
                   </div>
                   <div class="mini-row">
-                    <span class="mini-label">Due:</span>
-                    <span>{{ task.date }}</span>
+                    <span class="mini-label">Assigned To:</span>
+                    <span class="mini-val highlight">{{ task.username }}</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-label">Assign By:</span>
+                    <span class="mini-val">{{ task.assign_by_name || task.manager_name || loggedUserName }}</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-label">Department:</span>
+                    <span :class="['dept-badge-pill', getDeptColor(task.department)]">{{ task.department }}</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-label">Due Date:</span>
+                    <span class="mini-val due-val"><i class="far fa-calendar-alt"></i> {{ formatDate(task.date) }}</span>
                   </div>
                 </div>
               </div>
-              <div v-if="filteredAssignedReports.length === 0" class="empty-state-small">
-                <i class="fas fa-inbox"></i>
-                <p>No assigned tasks found</p>
+              <div v-if="filteredAssignedReports.length === 0" class="empty-state-modern">
+                <div class="empty-icon-circle">
+                  <i class="fas fa-clipboard-check"></i>
+                </div>
+                <h4>No assigned tasks found</h4>
+                <p>Try adjusting your search query or status filter.</p>
+                <button class="btn-clear-inline" @click="clearReportFilters">Clear Filters</button>
               </div>
             </div>
 
             <!-- Desktop Report Table -->
-            <div class="table-wrapper-premium" v-else>
-              <table class="report-table">
+            <div class="table-wrapper-premium modern-table-container" v-else>
+              <table class="report-table modern-task-table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Task</th>
-                    <th>Summary</th>
-                    <th>Assigned To</th>
-                    <th>Assign By</th>
-                    <th>Department</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
+                    <th class="th-index">#</th>
+                    <th class="th-task">Task Details</th>
+                    <th class="th-summary">Summary</th>
+                    <th class="th-user">Assigned To</th>
+                    <th class="th-assigner">Assign By</th>
+                    <th class="th-dept">Department</th>
+                    <th class="th-date">Due Date</th>
+                    <th class="th-status">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(task, index) in filteredAssignedReports" :key="task.id">
-                    <td class="task-title-cell">{{ index + 1 }}</td>
-                    <td class="task-title-cell">{{ task.name }}</td>
-                    <td class="summary-cell">{{ truncateText(task.summary, 60) }}</td>
-                    <td>{{ task.username }}</td>
-                    <td>{{ task.assign_by_name || task.manager_name || loggedUserName }}</td>
-                    <td><span class="dept-badge">{{ task.department }}</span></td>
-                    <td>{{ task.date }}</td>
-                    <td>
-                      <span :class="['status-badge-premium small', getStatusClass(task.status)]">
+                  <tr v-for="(task, index) in filteredAssignedReports" :key="task.id" class="task-table-row">
+                    <td class="td-index">
+                      <span class="index-pill">{{ index + 1 }}</span>
+                    </td>
+                    <td class="td-task">
+                      <div class="task-title-group">
+                        <span class="task-name-text">{{ task.name }}</span>
+                      </div>
+                    </td>
+                    <td class="td-summary">
+                      <span v-if="task.summary && task.summary !== '-'" class="summary-text" :title="task.summary">
+                        {{ truncateText(task.summary, 120) }}
+                      </span>
+                      <span v-else class="text-muted-dash">—</span>
+                    </td>
+                    <td class="td-user">
+                      <div class="user-info-cell">
+                        <div class="user-avatar-initials">{{ getInitials(task.username) }}</div>
+                        <span class="user-name-label">{{ task.username }}</span>
+                      </div>
+                    </td>
+                    <td class="td-assigner">
+                      <div class="assigner-cell">
+                        <i class="fas fa-user-check assigner-icon"></i>
+                        <span>{{ task.assign_by_name || task.manager_name || loggedUserName }}</span>
+                      </div>
+                    </td>
+                    <td class="td-dept">
+                      <span :class="['dept-badge-pill', getDeptColor(task.department)]">
+                        {{ task.department }}
+                      </span>
+                    </td>
+                    <td class="td-date">
+                      <div class="due-date-pill">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>{{ formatDate(task.date) }}</span>
+                      </div>
+                    </td>
+                    <td class="td-status">
+                      <span :class="['status-badge-pill', getStatusClass(task.status)]">
+                        <span class="status-pulse-dot"></span>
                         {{ task.status }}
                       </span>
                     </td>
                   </tr>
                   <tr v-if="filteredAssignedReports.length === 0">
                     <td colspan="8" class="empty-state-cell">
-                      <div class="empty-state-small">
-                        <i class="fas fa-inbox"></i>
-                        <p>No assigned tasks found</p>
+                      <div class="empty-state-modern">
+                        <div class="empty-icon-circle">
+                          <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <h4>No assigned tasks found</h4>
+                        <p>No tasks matched your current search and filter criteria.</p>
+                        <button class="btn-clear-inline" @click="clearReportFilters">
+                          <i class="fas fa-undo-alt"></i> Reset Filters
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -501,10 +654,17 @@
             </div>
           </div>
 
-          <div class="modal-footer-premium" :class="{ 'mobile-footer': isMobile }">
-            <button class="btn-submit-premium" @click="showAssignedReport = false">
-              <i class="fas fa-check"></i> Close
-            </button>
+          <!-- Refined Modal Footer -->
+          <div class="modal-footer-premium modern-assigned-footer" :class="{ 'mobile-footer': isMobile }">
+            <div class="footer-left-info" v-if="!isMobile">
+              <i class="fas fa-info-circle"></i>
+              <span>Showing <strong>{{ filteredAssignedReports.length }}</strong> tasks</span>
+            </div>
+            <div class="footer-actions">
+              <button class="btn-modern-close" @click="showAssignedReport = false">
+                <i class="fas fa-check"></i> Done
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -542,6 +702,7 @@ export default {
     }
     
     return {
+      loading: true,
       showAssignedReport: false,
       reportSearch: '',
       reportFilters: { status: '', date: '' },
@@ -588,7 +749,7 @@ export default {
     completedTasks() {
       return this.reports.filter(r => r.status === 'Completed').length
     },
-    filteredAssignedReports() {
+    allAssignedReports() {
       const today = new Date()
       const lastYear = new Date()
       lastYear.setFullYear(today.getFullYear() - 1)
@@ -615,13 +776,30 @@ export default {
         })
         .filter(task => {
           const taskDate = new Date(task.date)
-          const lastYearMatch = taskDate >= lastYear
-          const assignedMatch = task.priority === 'Task Assigned'
-          const search = this.reportSearch.toLowerCase()
-          const searchMatch = !search || task.name.toLowerCase().includes(search) || task.username.toLowerCase().includes(search)
-          const statusMatch = !this.reportFilters.status || task.status === this.reportFilters.status
-          return lastYearMatch && assignedMatch && searchMatch && statusMatch
+          return taskDate >= lastYear && task.priority === 'Task Assigned'
         })
+    },
+    assignedStats() {
+      const all = this.allAssignedReports
+      return {
+        total: all.length,
+        pending: all.filter(t => t.status === 'Pending').length,
+        inProgress: all.filter(t => t.status === 'In Progress').length,
+        completed: all.filter(t => t.status === 'Completed').length,
+      }
+    },
+    filteredAssignedReports() {
+      const search = this.reportSearch.toLowerCase().trim()
+      return this.allAssignedReports.filter(task => {
+        const searchMatch = !search ||
+          (task.name && task.name.toLowerCase().includes(search)) ||
+          (task.username && task.username.toLowerCase().includes(search)) ||
+          (task.department && task.department.toLowerCase().includes(search)) ||
+          (task.summary && task.summary.toLowerCase().includes(search))
+        const statusMatch = !this.reportFilters.status || task.status === this.reportFilters.status
+        const dateMatch = !this.reportFilters.date || task.date === this.reportFilters.date
+        return searchMatch && statusMatch && dateMatch
+      })
     },
     filteredEmployeesDropdown() {
       return this.employeesDropdown.filter(emp => emp.department !== 'Ownership')
@@ -743,6 +921,41 @@ export default {
     clearFilters() {
       this.filters = { name: '', date: '', month: '', status: '', search: '' }
     },
+    clearReportFilters() {
+      this.reportSearch = ''
+      this.reportFilters = { status: '', date: '' }
+    },
+    formatDate(dateStr) {
+      if (!dateStr) return '-'
+      try {
+        const parts = String(dateStr).split('-')
+        if (parts.length === 3) {
+          const d = new Date(dateStr)
+          if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          }
+        }
+      } catch (e) {}
+      return dateStr
+    },
+    getInitials(name) {
+      if (!name || name === 'Unknown') return '?'
+      return name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(n => n[0].toUpperCase())
+        .join('')
+    },
+    getDeptColor(dept) {
+      const d = (dept || '').toLowerCase()
+      if (d.includes('video') || d.includes('editor') || d.includes('creative')) return 'dept-purple'
+      if (d.includes('sales') || d.includes('it sales')) return 'dept-blue'
+      if (d.includes('marketing') || d.includes('seo')) return 'dept-amber'
+      if (d.includes('develop') || d.includes('tech') || d.includes('it')) return 'dept-emerald'
+      if (d.includes('hr') || d.includes('admin')) return 'dept-rose'
+      return 'dept-gray'
+    },
     checkIfMobile() {
       this.isMobile = window.innerWidth <= 768
       this.isSidebarVisible = !this.isMobile
@@ -800,6 +1013,7 @@ export default {
       })
     },
     fetchReports() {
+      this.loading = true
       axios.get('https://employees.archenterprises.co.in/api/api/employee-reports', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
@@ -814,6 +1028,9 @@ export default {
         this.employeeList = Array.from(namesSet).map(name => ({ name }))
       })
       .catch(error => { console.error(error) })
+      .finally(() => {
+        this.loading = false
+      })
     }
   },
   mounted() {
@@ -1801,106 +2018,656 @@ export default {
   box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Report Modal Specific */
-.report-body {
-  padding: 20px;
-}
+/* ===================================================
+   MODERN ASSIGNED TASK REPORT MODAL
+   =================================================== */
 
-.mobile-modal .report-body {
-  padding: 12px;
-}
-
-.report-filters {
+.modern-assigned-modal {
+  max-width: 96vw;
+  width: 96vw;
+  height: 92vh;
+  max-height: 92vh;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8);
   display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.assigned-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.header-left-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.assigned-icon-glow {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 20px;
+  box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.35);
+}
+
+.title-with-pill {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+}
+
+.title-with-pill h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.task-counter-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+.assigned-modal-header p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 3px 0 0 0;
+}
+
+.modern-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modern-close-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fecaca;
+  transform: scale(1.05);
+}
+
+/* Quick Stats Bar */
+.assigned-quick-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
   flex-wrap: wrap;
 }
 
-.report-filters.mobile-filters {
-  flex-direction: column;
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
-.search-wrapper-small {
+.stat-chip:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.stat-chip.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+}
+
+.stat-chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chip-dot.pending { background: #f59e0b; }
+.chip-dot.progress { background: #3b82f6; }
+.chip-dot.completed { background: #10b981; }
+
+.chip-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Body & Filters */
+.assigned-body {
+  padding: 16px 28px;
+  background: #ffffff;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.modern-filters-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.modern-search-wrap {
   position: relative;
   flex: 1;
-  min-width: 200px;
+  min-width: 260px;
 }
 
-.search-wrapper-small i {
+.modern-search-wrap .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.modern-search-wrap input {
+  width: 100%;
+  height: 42px;
+  padding: 0 38px 0 38px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.modern-search-wrap input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+}
+
+.search-clear-btn:hover {
+  color: #0f172a;
+}
+
+.filter-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.select-wrapper-styled {
+  position: relative;
+}
+
+.select-wrapper-styled .select-icon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
-  font-size: 14px;
+  color: #94a3b8;
+  font-size: 12px;
+  pointer-events: none;
 }
 
-.search-wrapper-small input {
-  width: 100%;
-  padding: 10px 12px 10px 38px;
-  border: 2px solid #e5e7eb;
+.modern-select {
+  height: 42px;
+  padding: 0 32px 0 32px;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 13px;
-}
-
-.filter-select-small,
-.filter-date-small {
-  padding: 10px 14px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 13px;
-}
-
-.report-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.report-table th {
+  color: #334155;
   background: #f8fafc;
-  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.modern-date {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #334155;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modern-date:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.btn-reset-filters {
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #ea580c;
+  font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
-  border-bottom: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-filters:hover {
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+/* Modern Table */
+.modern-table-container {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow-x: auto;
+  overflow-y: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-height: 0;
+}
+
+.modern-task-table {
+  width: 100%;
+  min-width: 1150px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.modern-task-table thead {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.modern-task-table th {
+  padding: 14px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e2e8f0;
+  background: #f8fafc;
   text-align: left;
-}
-
-.report-table td {
-  padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.task-title-cell {
-  font-weight: 500;
-  color: #1a1a2e;
-}
-
-.summary-cell {
-  color: #6b7280;
-  max-width: 250px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.dept-badge {
-  padding: 3px 10px;
+.modern-task-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.modern-task-table tbody tr:not(:last-child) td {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modern-task-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.modern-task-table td {
+  padding: 14px 18px;
+  vertical-align: middle;
+}
+
+.th-index, .td-index { width: 50px; min-width: 50px; text-align: center; }
+.th-task, .td-task { min-width: 250px; max-width: 380px; }
+.th-summary, .td-summary { min-width: 240px; max-width: 440px; }
+.th-user, .td-user { min-width: 180px; }
+.th-assigner, .td-assigner { min-width: 180px; }
+.th-dept, .td-dept { min-width: 140px; }
+.th-date, .td-date { min-width: 130px; }
+.th-status, .td-status { min-width: 130px; }
+
+/* Columns styling */
+.index-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.task-name-text {
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+  display: block;
+}
+
+.summary-text {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.text-muted-dash {
+  color: #cbd5e1;
+  font-weight: bold;
+}
+
+.user-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-initials {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   background: #e0e7ff;
-  color: var(--primary-color);
-  border-radius: 20px;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-name-label {
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.assigner-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.assigner-icon {
+  color: #94a3b8;
   font-size: 11px;
 }
 
-.status-badge-premium.small {
-  padding: 3px 10px;
-  font-size: 10px;
+/* Department Badges */
+.dept-badge-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.empty-state-cell {
+.dept-purple {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
+.dept-blue {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.dept-amber {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.dept-emerald {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.dept-rose {
+  background: #ffe4e6;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+
+.dept-gray {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* Due Date Pill */
+.due-date-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.due-date-pill i {
+  color: #94a3b8;
+}
+
+/* Status Pill with Dot */
+.status-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-badge-pill.pending {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fef3c7;
+}
+.status-badge-pill.pending .status-pulse-dot {
+  background: #f59e0b;
+}
+
+.status-badge-pill.in-progress {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #dbeafe;
+}
+.status-badge-pill.in-progress .status-pulse-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.status-badge-pill.completed {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #d1fae5;
+}
+.status-badge-pill.completed .status-pulse-dot {
+  background: #10b981;
+}
+
+/* Empty State Modern */
+.empty-state-modern {
+  padding: 48px 24px;
   text-align: center;
-  padding: 40px;
+}
+
+.empty-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 12px;
+}
+
+.empty-state-modern h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.empty-state-modern p {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+.btn-clear-inline {
+  padding: 8px 18px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-inline:hover {
+  background: #1d4ed8;
+}
+
+/* Refined Modal Footer */
+.modern-assigned-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+}
+
+.footer-left-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.footer-left-info i {
+  color: #3b82f6;
+}
+
+.btn-modern-close {
+  padding: 10px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-modern-close:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 }
 
 /* Mobile Report Cards */
@@ -1913,41 +2680,141 @@ export default {
 .report-mini-card {
   background: #f8fafc;
   border-radius: 12px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
 }
 
 .mini-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.mini-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-index {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 6px;
 }
 
 .mini-task-name {
   font-weight: 600;
   font-size: 13px;
-  color: var(--dark);
+  color: #0f172a;
 }
 
 .mini-card-body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .mini-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 12px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .mini-label {
   font-weight: 500;
-  color: #4b5563;
+  color: #64748b;
+}
+
+.mini-val.highlight {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.mini-val.due-val {
+  color: #475569;
+  font-weight: 500;
+}
+
+/* Loading & Empty States for Work Reports */
+.work-reports-loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  text-align: center;
+  margin: 16px 0 24px;
+}
+
+.loader-spinner-wrapper {
+  font-size: 38px;
+  color: #4f46e5;
+  margin-bottom: 16px;
+  display: inline-flex;
+}
+
+.work-reports-loading-box h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.work-reports-loading-box p {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.empty-reports-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px dashed #cbd5e1;
+  text-align: center;
+  margin: 16px 0 24px;
+}
+
+.empty-reports-state .empty-icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 14px;
+}
+
+.empty-reports-state h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.empty-reports-state p {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
 }
 
 /* Empty States */

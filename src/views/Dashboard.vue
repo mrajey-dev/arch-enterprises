@@ -3,20 +3,20 @@
     <!-- Main Content -->
     <div class="main-content">
       <!-- Sidebar -->
-      <Sidebar ref="sidebarRef" v-if="!isMobile || isSidebarVisible" @collapse-changed="onSidebarCollapseChanged" />
+      <Sidebar ref="sidebarRef" @collapse-changed="onSidebarCollapseChanged" />
 
       <!-- Content -->
-      <section
-        class="content"
-        v-if="(!isMobile || !isSidebarVisible)"
-        :class="{ 'expanded-content': isMobile && !isSidebarVisible }"
-      >
+      <section class="content">
         <!-- Mobile Header -->
         <div class="mobile-header" v-if="isMobile">
           <div class="mobile-title">
             <i class="fas fa-chart-pie"></i>
             <span>Dashboard</span>
           </div>
+          <button type="button" class="mobile-menu-toggle-btn" @click="toggleSidebar" aria-label="Toggle menu">
+            <i class="fas fa-bars"></i>
+            <span>Menu</span>
+          </button>
         </div>
 
         <!-- 🔍 Top Search & Action Bar -->
@@ -80,149 +80,213 @@
           <!-- ◀️ LEFT COLUMN (72%): Main Content -->
           <div class="dashboard-left-col">
 
+            <!-- 🌟 Executive Pulse Strip: High-Level Core Metrics -->
+            <div class="executive-pulse-grid">
+              <div class="pulse-stat-card" @click="goTo('employees')">
+                <div class="pulse-icon-box pulse-blue">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="pulse-info">
+                  <span class="pulse-label">Workforce</span>
+                  <h3 class="pulse-value">{{ totalEmployees }}</h3>
+                  <span class="pulse-sub">Active Staff & Records</span>
+                </div>
+              </div>
+
+              <div class="pulse-stat-card pulse-attendance-card" @click="goTo('empattendanceadmin')" title="Click to view Today's Attendance Master">
+                <div class="pulse-icon-box pulse-teal">
+                  <i class="fas fa-user-check"></i>
+                </div>
+                <div class="pulse-info">
+                  <div class="pulse-header-row">
+                    <span class="pulse-label">Today's Attendance</span>
+                    <span class="pulse-ratio-tag" v-if="totalEmployees > 0">
+                      {{ attendanceStats.activeToday || 0 }}/{{ totalEmployees }} Active
+                    </span>
+                  </div>
+                  <h3 class="pulse-value">{{ attendanceRate }}%</h3>
+                  <div class="pulse-status-chips" v-if="attendanceStats.activeToday > 0">
+                    <span class="pulse-chip chip-present" title="Present in office">
+                      <i class="fas fa-check"></i> {{ attendanceStats.present || 0 }} Present
+                    </span>
+                    <span class="pulse-chip chip-onsite" title="Working On Site" v-if="attendanceStats.onSite > 0">
+                      <i class="fas fa-map-marker-alt"></i> {{ attendanceStats.onSite }} Onsite
+                    </span>
+                    <span class="pulse-chip chip-travel" title="Traveling on duty" v-if="attendanceStats.traveling > 0">
+                      <i class="fas fa-plane"></i> {{ attendanceStats.traveling }} Travel
+                    </span>
+                    <span class="pulse-chip chip-halfday" title="Half-Day attendance" v-if="attendanceStats.halfDay > 0">
+                      <i class="fas fa-adjust"></i> {{ attendanceStats.halfDay }} Half-Day
+                    </span>
+                  </div>
+                  <span class="pulse-sub" v-else>
+                    {{ attendanceStats.activeToday || 0 }} of {{ totalEmployees || 0 }} staff logged in today
+                  </span>
+                </div>
+              </div>
+
+              <div class="pulse-stat-card pulse-analytics-link" @click="goTo('revenue-analytics')">
+                <div class="pulse-icon-box pulse-amber">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="pulse-info">
+                  <span class="pulse-label">FY Target Achievement</span>
+                  <h3 class="pulse-value">{{ overallAchievement }}%</h3>
+                  <span class="pulse-sub pulse-action-hint">View full analytics <i class="fas fa-arrow-right"></i></span>
+                </div>
+              </div>
+            </div>
+
             <!-- 1. Quick Access Section -->
             <div class="dashboard-section-block">
               <div class="section-title-row">
                 <h3 class="section-heading">Quick Access</h3>
+                <span class="section-subtitle">Key daily workflows</span>
               </div>
 
               <div class="quick-access-grid">
-                <!-- Featured Emerald Card (Attendance Overview) -->
-                <div class="qa-card qa-featured" @click="goTo('empattendanceadmin')">
+                <!-- Card 1: Attendance Master -->
+                <div class="qa-card" @click="goTo('empattendanceadmin')">
                   <div class="qa-top-row">
-                    <div class="qa-icon-box white-box">
-                      <i class="fas fa-calendar-check"></i>
+                    <div class="qa-icon-box qa-teal">
+                      <i class="fas fa-user-clock"></i>
                     </div>
-                    <div class="qa-avatar-stack">
-                      <span class="qa-avatar"><i class="fas fa-user-check"></i></span>
-                     
-                    </div>
+                    <span class="qa-pill-badge">Today's Hub</span>
                   </div>
                   <div class="qa-info">
                     <h4 class="qa-title">Attendance Master</h4>
-                    <p class="qa-subtitle">Check Attendance</p>
+                    <p class="qa-subtitle">Real-time attendance logs & punch records</p>
+                  </div>
+                  <div class="qa-action-row">
+                    <span>Manage logs</span>
+                    <i class="fas fa-arrow-right"></i>
                   </div>
                 </div>
 
-                <!-- White Card 1: Work Reports -->
-                <div class="qa-card qa-white" @click="goTo('workreport')">
+                <!-- Card 2: Work Reports -->
+                <div class="qa-card" @click="goTo('workreport')">
                   <div class="qa-top-row">
-                    <div class="qa-icon-box red-tint">
-                      <i class="fas fa-file-alt"></i>
+                    <div class="qa-icon-box qa-blue">
+                      <i class="fas fa-clipboard-check"></i>
                     </div>
-                    <div class="qa-avatar-stack">
-                      <span class="qa-avatar"><i class="fas fa-user-check"></i></span>
-                  
-                    </div>
+                    <span class="qa-stat-pill">{{ workReportStats.completed || 28 }} Done</span>
                   </div>
                   <div class="qa-info">
                     <h4 class="qa-title">Work Reports</h4>
-                    <p class="qa-subtitle">{{ workReportStats.completed || 28 }} Tasks Done</p>
+                    <p class="qa-subtitle">Employee task sheets, submissions & reviews</p>
+                  </div>
+                  <div class="qa-action-row">
+                    <span>View reports</span>
+                    <i class="fas fa-arrow-right"></i>
                   </div>
                 </div>
 
-                <!-- White Card 2: Resource Bookings -->
-                <div class="qa-card qa-white" @click="goTo('resourcebooking')">
+                <!-- Card 3: Resource Booking -->
+                <div class="qa-card" @click="goTo('resourcebooking')">
                   <div class="qa-top-row">
-                    <div class="qa-icon-box blue-tint">
+                    <div class="qa-icon-box qa-purple">
                       <i class="fas fa-video"></i>
                     </div>
-                    <div class="qa-avatar-stack">
-                      <span class="qa-avatar"><i class="fas fa-building"></i></span>
-                    </div>
+                    <span class="qa-pill-badge">Reservations</span>
                   </div>
                   <div class="qa-info">
                     <h4 class="qa-title">Resource Booking</h4>
-                    <p class="qa-subtitle">Meeting Rooms & Assets</p>
+                    <p class="qa-subtitle">Meeting rooms, conference gear & assets</p>
+                  </div>
+                  <div class="qa-action-row">
+                    <span>Reserve space</span>
+                    <i class="fas fa-arrow-right"></i>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- 2. Folders / Modules Shortcuts -->
+            <!-- 2. Operational Modules Shortcuts -->
             <div class="dashboard-section-block">
               <div class="section-title-row">
-                <h3 class="section-heading">Folders</h3>
-              
+                <h3 class="section-heading">Operational Modules</h3>
+                <span class="section-subtitle">Core directories & data</span>
               </div>
 
               <div class="folders-grid">
-                <!-- Folder 1: Employees -->
+                <!-- Module 1: Employees -->
                 <div class="folder-card" @click="goTo('employees')">
                   <div class="folder-header">
-                    <div class="folder-icon-wrap">
-                      <i class="fas fa-folder folder-icon"></i>
+                    <div class="folder-icon-wrap icon-emp">
+                      <i class="fas fa-users"></i>
                     </div>
-                    
+                    <span class="folder-badge">Active</span>
                   </div>
                   <h4 class="folder-name">Employees</h4>
                   <div class="folder-meta">
-                    <span>{{ totalEmployees }} files</span>
-                    <span class="folder-size">Active</span>
+                    <span><strong>{{ totalEmployees }}</strong> Active Staff</span>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
                   </div>
                 </div>
 
-                <!-- Folder 2: Departments -->
+                <!-- Module 2: Departments -->
                 <div class="folder-card" @click="goTo('managedepartments')">
                   <div class="folder-header">
-                    <div class="folder-icon-wrap">
-                      <i class="fas fa-folder folder-icon"></i>
+                    <div class="folder-icon-wrap icon-dept">
+                      <i class="fas fa-sitemap"></i>
                     </div>
-                  
+                    <span class="folder-badge">Org Hub</span>
                   </div>
                   <h4 class="folder-name">Departments</h4>
                   <div class="folder-meta">
-                    <span>Teams Hub</span>
-                    <span class="folder-size">Master</span>
+                    <span>Teams & Structure</span>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
                   </div>
                 </div>
 
-                <!-- Folder 3: Expenses -->
+                <!-- Module 3: Expenses -->
                 <div class="folder-card" @click="goTo('expensemanage')">
                   <div class="folder-header">
-                    <div class="folder-icon-wrap">
-                      <i class="fas fa-folder folder-icon"></i>
+                    <div class="folder-icon-wrap icon-exp">
+                      <i class="fas fa-receipt"></i>
                     </div>
-                  
+                    <span class="folder-badge">{{ expenseStats.categories || 0 }} Cats</span>
                   </div>
                   <h4 class="folder-name">Expenses</h4>
                   <div class="folder-meta">
-                    <span>₹ {{ formatExpenseAmount(expenseStats.total) }}</span>
-                    <span class="folder-size">{{ expenseStats.categories || 0 }} Categories</span>
+                    <span>₹ <strong>{{ formatExpenseAmount(expenseStats.total) }}</strong></span>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
                   </div>
                 </div>
 
-                <!-- Folder 4: Leaves -->
+                <!-- Module 4: Leaves Center -->
                 <div class="folder-card" @click="goToLeaveApplications">
                   <div class="folder-header">
-                    <div class="folder-icon-wrap">
-                      <i class="fas fa-folder folder-icon"></i>
+                    <div class="folder-icon-wrap icon-leave">
+                      <i class="fas fa-calendar-check"></i>
                     </div>
-                  
+                    <span class="folder-badge pending" v-if="leaveStats.pending > 0">{{ leaveStats.pending }} Pending</span>
+                    <span class="folder-badge" v-else>Clear</span>
                   </div>
                   <h4 class="folder-name">Leaves Center</h4>
                   <div class="folder-meta">
-                    <span>{{ leaveStats.total }} Requests</span>
-                    <span class="folder-size">{{ leaveStats.pending }} Pending</span>
+                    <span><strong>{{ leaveStats.total }}</strong> Requests</span>
+                    <i class="fas fa-chevron-right folder-arrow"></i>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- 3. Recent Activity Table ("Recent Files") -->
+            <!-- 3. Recent Activity & Operations Table -->
             <div class="dashboard-section-block">
               <div class="section-title-row">
-                <h3 class="section-heading">Recent Files & Operations</h3>
-             
+                <h3 class="section-heading">Recent Operations & Registers</h3>
+                <span class="section-subtitle">Quick access registers</span>
               </div>
 
               <div class="recent-files-card">
                 <table class="recent-files-table">
                   <thead>
                     <tr>
-                      <th>NAME</th>
-                      <th>LAST MODIFIED</th>
-                      <th>MEMBER</th>
+                      <th>OPERATION / DOCUMENT</th>
+                      <th>STATUS / PERIOD</th>
+                      <th>DEPARTMENT</th>
+                      <th class="col-action">ACTION</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -233,30 +297,33 @@
                           <span class="file-title-text">Work Reports & Daily Tasks</span>
                         </div>
                       </td>
-                      <td>{{ todayLabel }}</td>
+                      <td class="text-secondary-cell">{{ todayLabel }}</td>
                       <td><span class="member-tag">All Employees</span></td>
+                      <td class="col-action"><i class="fas fa-arrow-right row-arrow"></i></td>
                     </tr>
 
-                    <tr class="highlighted-row" @click="goTo('offerletter')">
+                    <tr @click="goTo('offerletter')">
                       <td>
                         <div class="file-name-cell">
-                          <span class="file-pill pill-orange">DOC</span>
+                          <span class="file-pill pill-amber">DOC</span>
                           <span class="file-title-text">Offer Letters & Onboarding</span>
                         </div>
                       </td>
-                      <td>Active Hub</td>
+                      <td class="text-secondary-cell">Active Hub</td>
                       <td><span class="member-tag success">HR Desk</span></td>
+                      <td class="col-action"><i class="fas fa-arrow-right row-arrow"></i></td>
                     </tr>
 
                     <tr @click="goTo('empattendanceadmin')">
                       <td>
                         <div class="file-name-cell">
-                          <span class="file-pill pill-red">PDF</span>
+                          <span class="file-pill pill-teal">PDF</span>
                           <span class="file-title-text">Monthly Attendance Register</span>
                         </div>
                       </td>
-                      <td>{{ attendanceRate }}% Present</td>
+                      <td class="text-secondary-cell"><strong>{{ attendanceRate }}%</strong> Present</td>
                       <td><span class="member-tag">Attendance Master</span></td>
+                      <td class="col-action"><i class="fas fa-arrow-right row-arrow"></i></td>
                     </tr>
 
                     <tr @click="goTo('salaryadvances')">
@@ -266,192 +333,121 @@
                           <span class="file-title-text">Salary Advances & Payroll</span>
                         </div>
                       </td>
-                      <td>FY {{ financialYear }}</td>
+                      <td class="text-secondary-cell">FY {{ financialYear }}</td>
                       <td><span class="member-tag">Finance</span></td>
+                      <td class="col-action"><i class="fas fa-arrow-right row-arrow"></i></td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
-            <!-- 4. Monthly Revenue Section -->
-            <div class="monthly-revenue-row">
-              <div class="revenue-card">
-                <div class="revenue-header">
-                  <div class="revenue-title">
-                    <h3>Revenue Overview</h3>
-                    <p>FY {{ financialYear }}</p>
-                  </div>
-                  <div class="target-input">
-                    <label>🎯 Yearly Target (₹) </label>
-                    <input
-                      type="number"
-                      v-model.number="yearlyTarget"
-                      placeholder="Enter target"
-                      min="0"
-                    />
-                  </div>
-                </div>
-
-                <!-- KPI Summary Cards -->
-                <div class="revenue-kpis">
-                  <div class="kpi success">
-                    <h4>₹ {{ totalRevenueFY.toLocaleString() }}</h4>
-                    <p>Total Revenue</p>
-                  </div>
-                  <div class="kpi info">
-                    <h4>₹ {{ yearlyTarget.toLocaleString() }}</h4>
-                    <p>Yearly Target</p>
-                  </div>
-                  <div class="kpi warning">
-                    <h4>{{ overallAchievement }}%</h4>
-                    <p>Achievement</p>
-                  </div>
-                  <div class="kpi primary">
-                    <h4>{{ topCompanies.length }}</h4>
-                    <p>Active Companies</p>
-                  </div>
-                </div>
-
-                <!-- Top 5 Companies Revenue Breakdown -->
-                <div class="companies-breakdown">
-                  <h4 class="breakdown-title">🏢 Top 5 Companies Revenue (Closed Orders)</h4>
-                  <div class="companies-grid">
-                    <div 
-                      v-for="(company, index) in topCompanies" 
-                      :key="company.name"
-                      class="company-card"
-                      :class="getCompanyClass(index)"
-                    >
-                      <div class="company-rank">{{ index + 1 }}</div>
-                      <div class="company-info">
-                        <div class="company-name">{{ company.name }}</div>
-                        <div class="company-details">
-                          <span class="company-revenue">₹ {{ company.revenue.toLocaleString() }}</span>
-                          <span class="company-percent">{{ company.percentage }}%</span>
-                          <span class="company-orders">📦 {{ company.orderCount }} orders</span>
-                        </div>
-                      </div>
-                      <div class="company-bar">
-                        <div 
-                          class="company-bar-fill"
-                          :style="{ width: company.percentage + '%' }"
-                          :class="getBarColor(index)"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                  <p v-if="topCompanies.length === 0" class="no-data-message">
-                    No closed orders found for the current financial year
-                  </p>
-                </div>
-
-                <!-- Quarter Grid -->
-                <div class="quarter-grid">
-                  <div
-                    v-for="q in ['Q1','Q2','Q3','Q4']"
-                    :key="q"
-                    class="quarter-card"
-                    :class="quarterAnalytics[q].percent >= 100 ? 'success' : 'danger'"
-                  >
-                    <h4>{{ q }}</h4>
-                    <p>₹ {{ quarterAnalytics[q].revenue.toLocaleString() }}</p>
-                    <small>{{ quarterAnalytics[q].percent }}%</small>
-                  </div>
-                </div>
-
-                <!-- Charts -->
-                <div class="bar-chart-wrapper">
-                  <canvas id="monthlyRevenueBarChart"></canvas>
-                </div>
-
-                <div class="analytics-card">
-                  <h4><i class="fas fa-chart-line"></i> Cumulative Revenue vs Target</h4>
-                  <div class="chart-height">
-                    <canvas id="cumulativeChart"></canvas>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </div>
 
-          <!-- ▶️ RIGHT COLUMN (28%): Widgets & Capacity Panel -->
+          <!-- ▶️ RIGHT COLUMN (28%): Widgets & Executive Panel -->
           <div class="dashboard-right-col">
 
-            <!-- Widget 1: Capacity & Annual Goal Arc Card -->
-            <div class="side-widget-card arc-gauge-card">
-              <!-- Rainbow Arc Meter -->
+            <!-- Widget 1: Annual Target Meter -->
+            <div class="side-widget-card annual-target-widget">
+              <div class="widget-header">
+                <div>
+                  <h4 class="widget-title">Annual Performance</h4>
+                  <p class="widget-subtitle">FY {{ financialYear }} Target</p>
+                </div>
+                <span class="widget-badge" :class="overallAchievement >= 70 ? 'badge-good' : 'badge-neutral'">
+                  {{ overallAchievement >= 70 ? 'On Track' : 'In Progress' }}
+                </span>
+              </div>
+
+              <!-- Clean Modern Progress Arc -->
               <div class="arc-meter-container">
                 <svg class="arc-svg" viewBox="0 0 200 115">
                   <defs>
-                    <linearGradient id="arcRainbowGrad" x1="0%" y1="100%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#ef4444" />
-                      <stop offset="22%" stop-color="#f43f5e" />
-                      <stop offset="38%" stop-color="#10b981" />
-                      <stop offset="68%" stop-color="#2cb67d" />
-                      <stop offset="84%" stop-color="#f59e0b" />
-                      <stop offset="100%" stop-color="#38bdf8" />
+                    <linearGradient id="arcModernGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#3b82f6" />
+                      <stop offset="100%" stop-color="#10b981" />
                     </linearGradient>
                   </defs>
-                  <!-- Gray background track -->
+                  <!-- Track -->
                   <path
                     d="M 28,105 A 72,72 0 0,1 172,105"
                     fill="none"
-                    stroke="#e8f5ee"
-                    stroke-width="17"
+                    stroke="#f1f5f9"
+                    stroke-width="15"
                     stroke-linecap="round"
                   />
-                  <!-- Continuous Smooth Rainbow Arc -->
+                  <!-- Progress Arc -->
                   <path
                     d="M 28,105 A 72,72 0 0,1 172,105"
                     fill="none"
-                    stroke="url(#arcRainbowGrad)"
-                    stroke-width="17"
+                    stroke="url(#arcModernGrad)"
+                    stroke-width="15"
                     stroke-linecap="round"
+                    :stroke-dasharray="226"
+                    :stroke-dashoffset="226 - (226 * Math.min(overallAchievement, 100) / 100)"
+                    style="transition: stroke-dashoffset 0.8s ease;"
                   />
                 </svg>
                 <div class="arc-center-text">
                   <h2 class="arc-big-val">{{ overallAchievement }}%</h2>
-                  <p class="arc-sub-val">of ₹ {{ formatNumber(yearlyTarget) }} Target</p>
+                  <p class="arc-sub-val">of ₹ {{ formatNumber(yearlyTarget) }}</p>
                 </div>
               </div>
 
-              <!-- Strategic Business Unit Box (PRO Box style from mockup) -->
-              <div class="pro-promo-card">
-                <div class="promo-illustration">
-                  <div class="shield-circle">
-                    <i class="fas fa-shield-alt"></i>
-                  </div>
+              <!-- Quick Target Stats -->
+              <div class="target-stats-row">
+                <div class="target-stat-item">
+                  <span class="stat-label">Total Closed</span>
+                  <span class="stat-value">₹ {{ formatNumber(totalRevenueFY) }}</span>
                 </div>
-                <h4 class="promo-title">Strategic Business Unit</h4>
-                <p class="promo-desc">Review quarterly goals, KRA targets & strategic performance.</p>
-                <button class="promo-cta-btn" disabled @click="goTo('#')">
-                  <span>Open SBU Portal</span>
-                </button>
+                <div class="target-stat-divider"></div>
+                <div class="target-stat-item">
+                  <span class="stat-label">Remaining</span>
+                  <span class="stat-value">₹ {{ formatNumber(Math.max(0, yearlyTarget - totalRevenueFY)) }}</span>
+                </div>
               </div>
+
+              <!-- Dedicated Analytics Hub Link -->
+              <button class="target-details-btn" @click="goTo('revenue-analytics')">
+                <span>Detailed Revenue Analytics</span>
+                <i class="fas fa-arrow-right"></i>
+              </button>
             </div>
 
-            <!-- Widget 2: Birthday Reminders -->
+
+            <!-- Widget 3: Birthday Reminders -->
             <div class="side-widget-card birthday-side-card">
               <div class="side-card-header">
-                <h4>🎉 Birthdays - {{ months[new Date().getMonth()] }}</h4>
+                <div class="birthday-header-title">
+                  <i class="fas fa-birthday-cake birthday-icon"></i>
+                  <h4>Birthdays &middot; {{ months[new Date().getMonth()] }}</h4>
+                </div>
+                <span class="birthday-count-pill" v-if="birthdays.length">{{ birthdays.length }}</span>
               </div>
 
               <div v-if="birthdays.length > 0" class="side-birthdays-list">
                 <div v-for="(emp, index) in birthdays" :key="index" class="side-birthday-item">
-                  <img
-                    :src="emp.photo || 'https://img.icons8.com/color/48/000000/user-male-circle.png'"
-                    alt="Employee"
-                    class="birthday-avatar"
-                  />
+                  <div class="birthday-avatar-wrap">
+                    <img
+                      v-if="emp.photo"
+                      :src="emp.photo"
+                      alt="Employee"
+                      class="birthday-avatar"
+                    />
+                    <div v-else class="birthday-initials">
+                      {{ (emp.name || 'E').charAt(0) }}
+                    </div>
+                  </div>
                   <div class="birthday-details">
                     <p class="birthday-emp-name">{{ emp.name }}</p>
-                    <span class="birthday-emp-date">🎂 {{ formatBirthday(emp.dateofbirth) }}</span>
+                    <span class="birthday-emp-date">
+                      <i class="far fa-calendar-alt"></i>
+                      {{ formatBirthday(emp.dateofbirth) }}
+                    </span>
                   </div>
                 </div>
               </div>
-              <p v-else class="no-birthdays-side">No birthdays this month 🎈</p>
+              <p v-else class="no-birthdays-side">No birthdays this month</p>
             </div>
 
           </div>
@@ -521,6 +517,14 @@ export default {
           keywords: 'vault security documents passwords sensitive'
         },
         { 
+          title: 'Revenue & Analytics', 
+          category: 'Finance', 
+          route: 'revenue-analytics', 
+          icon: 'fas fa-chart-line', 
+          desc: 'FY Target, closed orders, quarterly performance & charts',
+          keywords: 'revenue analytics financial target orders companies turnover graph'
+        },
+        { 
           title: 'Workflow & Tasks', 
           category: 'Operations', 
           route: 'workflow', 
@@ -573,14 +577,15 @@ export default {
       birthdays: [],
       workReportStats: { total: 0, completed: 0, pending: 0, completionRate: 0 },
       expenseStats: { total: 0, categories: 0, data: {} },
-      attendanceStats: { present: 0, late: 0, absent: 0, total: 0 },
+      attendanceStats: { present: 0, onSite: 0, traveling: 0, halfDay: 0, absent: 0, leave: 0, late: 0, activeToday: 0, totalActive: 0, total: 0, rate: 0 },
       leaveStats: { total: 0, approved: 0, pending: 0, rejected: 0 },
       topPerformers: [],
       topCompanies: [],
       poData: [],
       isLoading: false,
       closedOrdersCount: 0,
-      currentTheme: localStorage.getItem("theme") || "teal",
+      currentTheme: "blue",
+      previousTheme: null,
       showThemePalette: false,
       themeList: [
         { value: "default", label: "Emerald Mint", color: "#2cb67d", gradient: "linear-gradient(135deg, #2cb67d 0%, #10b981 100%)" },
@@ -654,7 +659,16 @@ export default {
     },
 
     attendanceRate() {
-      return this.attendanceStats.present || 92
+      if (this.attendanceStats && this.attendanceStats.rate !== undefined && this.attendanceStats.rate !== null) {
+        return this.attendanceStats.rate
+      }
+      const total = this.totalEmployees || 0
+      if (!total) return 0
+      const active = (this.attendanceStats.present || 0) +
+                     (this.attendanceStats.onSite || 0) +
+                     (this.attendanceStats.traveling || 0) +
+                     (this.attendanceStats.halfDay || 0)
+      return Math.min(100, Math.round((active / total) * 100))
     },
 
     pendingLeaves() {
@@ -797,19 +811,102 @@ export default {
           this.expenseStats = { total: 0, categories: 0, count: 0, data: {} }
         }
 
+        // 1. Fetch total active employees
+        let totalActiveStaff = this.totalEmployees || 0
+        try {
+          const usersRes = await axios.get('https://employees.archenterprises.co.in/api/api/users', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          })
+          const allUsers = Array.isArray(usersRes.data) ? usersRes.data : []
+          const activeUsers = allUsers.filter(u => {
+            const s = (u.status || '').toLowerCase().trim()
+            const d = (u.department || '').toLowerCase().trim()
+            return s !== 'inactive' && d !== 'ownership'
+          })
+          if (activeUsers.length > 0) {
+            totalActiveStaff = activeUsers.length
+            this.totalEmployees = totalActiveStaff
+          } else if (allUsers.length > 0) {
+            totalActiveStaff = allUsers.length
+            this.totalEmployees = totalActiveStaff
+          }
+        } catch (uErr) {
+          console.warn('Could not fetch active users list:', uErr)
+        }
+
+        // 2. Fetch attendance and strictly filter for TODAY's date
         const attendanceRes = await axios.get('https://employees.archenterprises.co.in/api/api/attendance', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
-        const attendance = attendanceRes.data || []
-        const present = attendance.filter(a => a.status === 'Present').length
-        const late = attendance.filter(a => a.isLate === true).length
-        const absent = attendance.filter(a => a.status === 'Absent').length
-        const total = attendance.length || 1
+        const allAttendance = Array.isArray(attendanceRes.data) ? attendanceRes.data : []
+
+        const now = new Date()
+        const yyyy = now.getFullYear()
+        const mm = String(now.getMonth() + 1).padStart(2, '0')
+        const dd = String(now.getDate()).padStart(2, '0')
+        const todayStr = `${yyyy}-${mm}-${dd}`
+
+        const todayRecords = allAttendance.filter(record => {
+          if (!record.date) return false
+          let recordDate = String(record.date).split('T')[0].split(' ')[0]
+          if (recordDate.includes('/')) {
+            const parts = recordDate.split('/')
+            recordDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
+          }
+          return recordDate === todayStr
+        })
+
+        // De-duplicate by unique employee name or user_id
+        const employeeStatusMap = new Map()
+        todayRecords.forEach(r => {
+          const key = (r.user_id ? `uid_${r.user_id}` : (r.name || '')).trim().toLowerCase()
+          if (!key) return
+          const rawStatus = (r.status || '').toLowerCase().replace(/[\s-_/]+/g, '')
+          if (!employeeStatusMap.has(key)) {
+            employeeStatusMap.set(key, rawStatus)
+          } else {
+            const prev = employeeStatusMap.get(key)
+            const isWorking = ['present', 'onsite', 'traveling', 'halfday'].includes(rawStatus)
+            if (isWorking || prev === 'notmarked') {
+              employeeStatusMap.set(key, rawStatus)
+            }
+          }
+        })
+
+        let presentCount = 0
+        let onSiteCount = 0
+        let travelingCount = 0
+        let halfDayCount = 0
+        let leaveCount = 0
+        let absentCount = 0
+
+        employeeStatusMap.forEach(status => {
+          if (status === 'present') presentCount++
+          else if (status === 'onsite') onSiteCount++
+          else if (status === 'traveling') travelingCount++
+          else if (status === 'halfday') halfDayCount++
+          else if (status === 'leave') leaveCount++
+          else if (status === 'absent') absentCount++
+        })
+
+        const activeLoggedCount = presentCount + onSiteCount + travelingCount + halfDayCount
+        const denominator = totalActiveStaff > 0 ? totalActiveStaff : (activeLoggedCount || 1)
+        const calculatedRate = Math.min(100, Math.round((activeLoggedCount / denominator) * 100))
+
+        const lateCount = todayRecords.filter(a => a.isLate === true || a.is_late === true || a.is_late === 1 || a.is_late === '1').length
+
         this.attendanceStats = {
-          present: Math.round((present / total) * 100),
-          late: Math.round((late / total) * 100),
-          absent: Math.round((absent / total) * 100),
-          total: attendance.length
+          rate: calculatedRate,
+          present: presentCount,
+          onSite: onSiteCount,
+          traveling: travelingCount,
+          halfDay: halfDayCount,
+          leave: leaveCount,
+          absent: absentCount,
+          late: lateCount,
+          activeToday: activeLoggedCount,
+          totalActive: denominator,
+          total: activeLoggedCount
         }
 
         const leaveRes = await axios.get('https://employees.archenterprises.co.in/api/api/leave-requests', {
@@ -1326,12 +1423,13 @@ export default {
     },
 
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
-      this.isSidebarVisible = !this.isMobile
+      this.isMobile = window.innerWidth <= 992
     },
 
     toggleSidebar() {
-      this.isSidebarVisible = !this.isSidebarVisible
+      if (this.$refs.sidebarRef) {
+        this.$refs.sidebarRef.isMobileOpen = !this.$refs.sidebarRef.isMobileOpen
+      }
     },
 
     toggleSidebarCollapse() {
@@ -1372,7 +1470,7 @@ export default {
     },
     getThemeColor(themeVal) {
       const match = this.themeList.find(t => t.value === themeVal);
-      return match ? match.color : "#2cb67d";
+      return match ? match.color : "#3b82f6";
     },
     selectTheme(theme) {
       this.currentTheme = theme;
@@ -1399,12 +1497,30 @@ export default {
     setTimeout(() => { this.showSkeleton = false }, 1000)
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
-    document.documentElement.setAttribute("data-theme", this.currentTheme)
+    this.previousTheme = document.documentElement.getAttribute("data-theme") || localStorage.getItem("theme") || "teal"
+    document.documentElement.setAttribute("data-theme", "blue")
     document.addEventListener("click", this.handleClickOutsideTheme)
 
-    axios.get('https://employees.archenterprises.co.in/api/api/total-employees')
-      .then(response => { this.totalEmployees = response.data.count })
-      .catch(err => console.error(err))
+    // Fetch active workforce count (excluding inactive and ownership)
+    axios.get('https://employees.archenterprises.co.in/api/api/users', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
+      const allUsers = Array.isArray(res.data) ? res.data : []
+      const active = allUsers.filter(u => {
+        const s = (u.status || '').toLowerCase().trim()
+        const d = (u.department || '').toLowerCase().trim()
+        return s !== 'inactive' && d !== 'ownership'
+      })
+      if (active.length > 0) {
+        this.totalEmployees = active.length
+      } else if (allUsers.length > 0) {
+        this.totalEmployees = allUsers.length
+      }
+    }).catch(() => {
+      axios.get('https://employees.archenterprises.co.in/api/api/total-employees')
+        .then(response => { if (!this.totalEmployees) this.totalEmployees = response.data.count })
+        .catch(err => console.error(err))
+    })
 
     axios.get('https://employees.archenterprises.co.in/api/api/admin-info', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -1428,6 +1544,11 @@ export default {
   beforeUnmount() {
     window.removeEventListener('resize', this.checkIfMobile)
     document.removeEventListener("click", this.handleClickOutsideTheme)
+    if (this.previousTheme && this.previousTheme !== 'blue') {
+      document.documentElement.setAttribute("data-theme", this.previousTheme)
+    } else {
+      document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "teal")
+    }
   }
 }
 </script>
@@ -1439,21 +1560,22 @@ export default {
 .layout {
   display: flex;
   flex-direction: column;
-  background: var(--bg-app, var(--bg, #edf7f2));
+  background: var(--bg-app, #f8fafc);
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: var(--text, #0f2e22);
+  color: var(--text, #0f172a);
 }
 
 .main-content {
   display: flex;
   flex: 1;
-  padding: 18px 24px;
+  padding: 20px 28px;
   gap: 24px;
 }
 
 .content {
   flex: 1;
+  min-width: 0;
   background: transparent;
   overflow-x: hidden;
 }
@@ -1463,26 +1585,25 @@ export default {
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 12px 16px;
   background: var(--card, #ffffff);
-  border-radius: 18px;
-  margin-bottom: 18px;
-  border: 1px solid var(--border, #e0f0e8);
-  /* box-shadow: 0 4px 16px var(--primary-glow, rgba(44, 182, 125, 0.06)); */
+  border-radius: 10px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 .mobile-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 18px;
+  gap: 8px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--text, #0f2e22);
+  color: var(--text, #0f172a);
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 .mobile-title i {
-  color: var(--primary, #2cb67d);
+  color: var(--primary, #0d9488);
 }
 
 /* 🔍 Top Search & Action Bar */
@@ -1490,148 +1611,134 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .search-box-wrapper {
   flex: 1;
   position: relative;
-  max-width: 680px;
+  max-width: 640px;
 }
 
 .search-icon {
   position: absolute;
-  left: 18px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--primary, #2cb67d);
-  font-size: 15px;
+  color: #94a3b8;
+  font-size: 14px;
 }
 
 .dashboard-search-input {
   width: 100%;
-  padding: 13px 18px 13px 48px;
+  padding: 11px 16px 11px 44px;
   background: var(--card, #ffffff);
-  border: 1px solid var(--border, #dff0e7);
-  border-radius: 16px;
-  font-size: 14px;
-  color: var(--text, #0f2e22);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--text, #0f172a);
   font-weight: 500;
   outline: none;
-  /* box-shadow: 0 4px 18px var(--primary-glow, rgba(44, 182, 125, 0.04)); */
-  transition: all 0.25s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .dashboard-search-input:focus {
-  border-color: var(--primary, #2cb67d);
-  /* box-shadow: 0 0 0 3px var(--primary-glow, rgba(44, 182, 125, 0.18)); */
+  border-color: var(--primary, #0d9488);
+  box-shadow: 0 0 0 3px var(--primary-glow, rgba(13, 148, 136, 0.12));
 }
 
-/* Search clear button */
 .search-clear-btn {
   position: absolute;
-  right: 14px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  background: var(--surface-tint, #f1f5f9);
+  background: #f1f5f9;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted, #64748b);
+  color: #64748b;
   cursor: pointer;
-  font-size: 11px;
-  transition: all 0.2s ease;
+  font-size: 10px;
+  transition: all 0.15s ease;
 }
 
 .search-clear-btn:hover {
-  background: var(--border, #e2e8f0);
-  color: var(--text, #0f172a);
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 /* Live Search Dropdown */
 .search-results-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: var(--card, #ffffff);
-  border-radius: 18px;
-  border: 1px solid var(--border, #dff0e7);
-  /* box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12), 0 4px 12px var(--primary-glow, rgba(44, 182, 125, 0.08)); */
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
   z-index: 1000;
   overflow: hidden;
-  max-height: 420px;
+  max-height: 380px;
   display: flex;
   flex-direction: column;
-  animation: searchFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes searchFadeIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .search-dropdown-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 18px;
-  background: var(--surface-tint, #f7fcf9);
-  border-bottom: 1px solid var(--border, #eef6f2);
-  font-size: 12px;
+  padding: 10px 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--primary-dark, #16935b);
+  color: var(--text, #0f172a);
 }
 
 .search-esc-hint {
   font-size: 11px;
-  color: var(--text-muted, #6b8f81);
+  color: #94a3b8;
   font-weight: 500;
 }
 
 .search-results-list {
   overflow-y: auto;
-  max-height: 350px;
-  padding: 6px;
+  max-height: 320px;
+  padding: 4px;
 }
 
 .search-result-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 14px;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: background 0.15s ease;
 }
 
 .search-result-item:hover {
-  background: var(--surface-tint, #f0f9f4);
-  transform: translateX(3px);
+  background: #f8fafc;
 }
 
 .search-item-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--primary-light, #eaf7f1);
-  color: var(--primary, #2cb67d);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: var(--primary, #0d9488);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 14px;
   flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.search-result-item:hover .search-item-icon {
-  background: var(--primary, #2cb67d);
-  color: #ffffff;
 }
 
 .search-item-info {
@@ -1643,27 +1750,27 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .search-item-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--text, #0f2e22);
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .search-item-cat {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--primary-dark, #16935b);
-  background: var(--primary-light, #eaf7f1);
-  padding: 1px 7px;
-  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .search-item-desc {
   font-size: 11.5px;
-  color: var(--text-muted, #6b8f81);
+  color: #64748b;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -1671,254 +1778,66 @@ export default {
 }
 
 .search-item-arrow {
-  color: var(--border, #c0ded2);
-  font-size: 12px;
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.search-result-item:hover .search-item-arrow {
-  color: var(--primary, #2cb67d);
-  transform: translateX(2px);
+  color: #cbd5e1;
+  font-size: 11px;
 }
 
 .search-no-results {
-  padding: 28px 20px;
+  padding: 24px;
   text-align: center;
-  color: var(--text-muted, #6b8f81);
+  color: #64748b;
 }
 
 .search-no-results i {
-  font-size: 32px;
-  color: var(--border, #cbe9dc);
-  margin-bottom: 8px;
+  font-size: 24px;
+  color: #cbd5e1;
+  margin-bottom: 6px;
 }
 
 .search-no-results p {
-  font-size: 13.5px;
-  color: var(--text, #0f2e22);
+  font-size: 13px;
+  color: #0f172a;
   margin: 0 0 4px;
 }
 
 .search-no-results small {
   font-size: 11.5px;
-  color: var(--text-muted, #6b8f81);
+  color: #94a3b8;
 }
 
-/* Topbar Actions Group */
+/* Topbar Actions */
 .dashboard-topbar-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Theme Palette Selector */
-.theme-palette-wrapper {
-  position: relative;
-}
-
-.btn-theme-palette {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: var(--card, #ffffff);
-  color: var(--text, #0f2e22);
-  border: 1px solid var(--border, #dff0e7);
-  padding: 11px 18px;
-  border-radius: 16px;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  /* box-shadow: 0 4px 16px var(--primary-glow, rgba(0, 0, 0, 0.04)); */
-  transition: all 0.2s ease;
-  user-select: none;
-  white-space: nowrap;
-}
-
-.btn-theme-palette:hover,
-.btn-theme-palette.active {
-  border-color: var(--primary, #2cb67d);
-  /* box-shadow: 0 6px 20px var(--primary-glow, rgba(0, 0, 0, 0.08)); */
-  transform: translateY(-1px);
-}
-
-.btn-theme-palette i.fa-palette {
-  color: var(--primary, #2cb67d);
-  font-size: 15px;
-}
-
-.theme-active-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--card, #ffffff);
-  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.15);
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.theme-caret {
-  font-size: 11px;
-  color: var(--text-muted, #64748b);
-  transition: transform 0.2s ease;
-}
-
-.theme-caret.rotate-180 {
-  transform: rotate(180deg);
-}
-
-/* Floating Popover Palette */
-.theme-palette-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 340px;
-  background: var(--card, #ffffff);
-  border-radius: 20px;
-  border: 1px solid var(--border, #e0f0e8);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.16), 0 6px 16px rgba(0, 0, 0, 0.06);
-  z-index: 1050;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.palette-dropdown-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border, #f1f5f9);
-}
-
-.palette-header-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--text, #0f172a);
-}
-
-.palette-header-title i {
-  color: var(--primary, #2cb67d);
-}
-
-.palette-close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted, #94a3b8);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: color 0.15s ease;
-}
-
-.palette-close-btn:hover {
-  color: var(--text, #0f172a);
-}
-
-.palette-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 9px;
-}
-
-.palette-card-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: var(--surface-tint, #f8fafc);
-  border: 1.5px solid var(--border, #edf2f7);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-}
-
-.palette-card-btn:hover {
-  background: var(--card, #ffffff);
-  border-color: var(--primary, #cbd5e1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.palette-card-btn.active {
-  background: var(--card, #ffffff);
-  border-color: var(--primary, #2cb67d);
-  /* box-shadow: 0 0 0 3px var(--primary-glow, rgba(44, 182, 125, 0.18)); */
-}
-
-.palette-color-preview {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.palette-check-icon {
-  color: #ffffff;
-  font-size: 11px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
-}
-
-.palette-card-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text, #334155);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.palette-card-btn.active .palette-card-label {
-  color: var(--primary, #2cb67d);
-}
-
-/* Transitions */
-.palette-pop-enter-active,
-.palette-pop-leave-active {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.palette-pop-enter-from,
-.palette-pop-leave-to {
-  opacity: 0;
-  transform: translateY(-8px) scale(0.96);
-}
-
 .btn-create-new {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--primary-gradient, linear-gradient(135deg, #34b782 0%, #209961 100%));
+  background: var(--primary-gradient, linear-gradient(135deg, #0d9488 0%, #0f766e 100%));
   color: #ffffff;
   border: none;
-  padding: 12px 22px;
-  border-radius: 16px;
-  font-size: 13.5px;
-  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  /* box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.3)); */
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   white-space: nowrap;
 }
 
 .btn-create-new:hover {
-  transform: translateY(-2px);
-  /* box-shadow: 0 8px 24px var(--primary-glow, rgba(44, 182, 125, 0.4)); */
+  opacity: 0.94;
+  transform: translateY(-1px);
 }
 
 /* 🌟 Multi-Column Master Dashboard Layout */
 .dashboard-main-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 330px;
   gap: 24px;
   align-items: start;
 }
@@ -1926,87 +1845,69 @@ export default {
 .dashboard-left-col {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
   min-width: 0;
 }
 
 .dashboard-right-col {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 /* Section Title Row */
 .dashboard-section-block {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .section-title-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
 }
 
 .section-heading {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--text, #0f2e22);
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0;
   letter-spacing: -0.2px;
 }
 
-.see-all-link {
-  color: var(--primary, #2cb67d);
-  cursor: pointer;
-  font-size: 14px;
-  transition: transform 0.2s ease;
-}
-
-.see-all-link:hover {
-  transform: translateX(3px);
+.section-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 400;
 }
 
 /* 1. Quick Access Cards */
 .quick-access-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 14px;
 }
 
 .qa-card {
-  border-radius: 20px;
-  padding: 20px;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 18px;
   cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 130px;
+  min-height: 145px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .qa-card:hover {
-  transform: translateY(-4px);
-}
-
-.qa-featured {
-  background: var(--primary-gradient, linear-gradient(135deg, #34b782 0%, #209961 100%));
-  color: #ffffff;
-  /* box-shadow: 0 10px 26px var(--primary-glow, rgba(44, 182, 125, 0.3)); */
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.qa-white {
-  background: var(--card, #ffffff);
-  border: 1px solid var(--border, #dff0e7);
-  /* box-shadow: 0 6px 20px var(--primary-glow, rgba(44, 182, 125, 0.05)); */
-}
-
-.qa-white:hover {
-  /* box-shadow: 0 10px 28px var(--primary-glow, rgba(44, 182, 125, 0.12)); */
-  border-color: var(--primary, #2cb67d);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
 }
 
 .qa-top-row {
@@ -2016,158 +1917,136 @@ export default {
 }
 
 .qa-icon-box {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 15px;
 }
 
-.qa-icon-box.white-box {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  backdrop-filter: blur(4px);
+.qa-teal {
+  background: #f0fdfa;
+  color: #0d9488;
 }
 
-.qa-icon-box.red-tint {
-  background: #fee2e2;
-  color: #ef4444;
+.qa-blue {
+  background: #eff6ff;
+  color: #2563eb;
 }
 
-.qa-icon-box.blue-tint {
-  background: #e0f2fe;
-  color: #0284c7;
+.qa-purple {
+  background: #f5f3ff;
+  color: #7c3aed;
 }
 
-.qa-avatar-stack {
-  display: flex;
-  align-items: center;
-}
-
-.qa-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid var(--primary, #2cb67d);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.qa-pill-badge {
   font-size: 11px;
-  color: var(--primary-dark, #16935b);
-  margin-left: -6px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
-.qa-white .qa-avatar {
-  border-color: var(--card, #ffffff);
-  background: var(--surface-tint, #f1f5f9);
-  color: var(--text-muted, #475569);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.qa-badge-pill {
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  margin-left: -4px;
-}
-
-.qa-badge-pill.light {
-  background: var(--surface-tint, #f1f5f9);
-  color: var(--text-muted, #475569);
-  border: 1px solid var(--border, #e2e8f0);
+.qa-stat-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
 .qa-title {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
-  margin: 12px 0 2px;
-}
-
-.qa-featured .qa-title {
-  color: #ffffff;
-}
-
-.qa-white .qa-title {
-  color: var(--text, #0f2e22);
+  color: #0f172a;
+  margin: 12px 0 3px;
 }
 
 .qa-subtitle {
   font-size: 12px;
+  color: #64748b;
   margin: 0;
+  line-height: 1.45;
 }
 
-.qa-featured .qa-subtitle {
-  color: rgba(255, 255, 255, 0.88);
+.qa-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  transition: color 0.15s ease;
 }
 
-.qa-white .qa-subtitle {
-  color: var(--text-muted, #6b8f81);
+.qa-card:hover .qa-action-row {
+  color: var(--primary, #0d9488);
 }
 
-/* 2. Folders Grid */
+/* 2. Folders / Operational Modules */
 .folders-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
 }
 
 .folder-card {
   background: var(--card, #ffffff);
-  border-radius: 20px;
-  padding: 16px 18px;
-  border: 1px solid var(--border, #dff0e7);
-  /* box-shadow: 0 4px 18px var(--primary-glow, rgba(44, 182, 125, 0.04)); */
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border, #e2e8f0);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .folder-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--primary, #2cb67d);
-  /* box-shadow: 0 8px 24px var(--primary-glow, rgba(44, 182, 125, 0.1)); */
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
 }
 
 .folder-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .folder-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--primary-light, #eaf7f1);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease;
+  font-size: 15px;
 }
 
-.folder-icon {
-  font-size: 20px;
-  color: var(--primary, #2cb67d);
-}
-
-.folder-options {
-  color: var(--text-muted, #94a3b8);
-  font-size: 12px;
-}
+.icon-emp { background: #eff6ff; color: #2563eb; }
+.icon-dept { background: #f0fdfa; color: #0d9488; }
+.icon-exp { background: #fef3c7; color: #d97706; }
+.icon-leave { background: #ecfdf5; color: #16a34a; }
 
 .folder-name {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
-  color: var(--text, #0f2e22);
-  margin: 0 0 6px;
+  color: #0f172a;
+  margin: 0 0 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2178,22 +2057,42 @@ export default {
   align-items: center;
   justify-content: space-between;
   font-size: 11.5px;
-  color: var(--text-muted, #6b8f81);
-  font-weight: 500;
+  color: #64748b;
 }
 
-.folder-size {
-  color: var(--primary-dark, #16935b);
-  font-weight: 700;
+.folder-arrow {
+  font-size: 10px;
+  color: #cbd5e1;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
-/* 3. Recent Activity Table */
+.folder-card:hover .folder-arrow {
+  color: #0f172a;
+  transform: translateX(2px);
+}
+
+.folder-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 1.5px 7px;
+  border-radius: 6px;
+}
+
+.folder-badge.pending {
+  color: #ea580c;
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+/* 3. Recent Activity & Operations Table */
 .recent-files-card {
   background: var(--card, #ffffff);
-  border-radius: 22px;
-  padding: 20px 24px;
-  border: 1px solid var(--border, #dff0e7);
-  /* box-shadow: 0 6px 22px var(--primary-glow, rgba(44, 182, 125, 0.05)); */
+  border-radius: 12px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   overflow-x: auto;
 }
 
@@ -2204,369 +2103,349 @@ export default {
 
 .recent-files-table th {
   font-size: 11px;
-  font-weight: 800;
-  color: var(--text-muted, #7d9e92);
-  letter-spacing: 0.6px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   text-align: left;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border, #eef6f2);
+  padding: 12px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
 }
 
 .recent-files-table td {
-  padding: 14px 12px;
+  padding: 13px 18px;
   font-size: 13px;
-  color: var(--text, #0f2e22);
-  border-bottom: 1px solid var(--border, #f2faf6);
+  color: #0f172a;
+  border-bottom: 1px solid #f8fafc;
 }
 
-.recent-files-table tr {
+.recent-files-table tbody tr {
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.15s ease;
 }
 
 .recent-files-table tbody tr:hover {
-  background: var(--surface-tint, #f4fbf7);
+  background: #f8fafc;
 }
 
-.highlighted-row {
-  background: var(--primary-light, #eef9f4);
+.recent-files-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .file-name-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .file-pill {
   font-size: 10px;
-  font-weight: 800;
-  padding: 3px 7px;
-  border-radius: 6px;
-  color: #ffffff;
-  letter-spacing: 0.2px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-.pill-blue { background: #3b82f6; }
-.pill-orange { background: #f97316; }
-.pill-red { background: #ef4444; }
-.pill-purple { background: #8b5cf6; }
+.pill-blue { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+.pill-amber { background: #fffbeb; color: #d97706; border: 1px solid #fef3c7; }
+.pill-teal { background: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; }
+.pill-purple { background: #f5f3ff; color: #7c3aed; border: 1px solid #ede9fe; }
 
 .file-title-text {
   font-weight: 600;
-  color: var(--text, #0f2e22);
+  color: #0f172a;
+}
+
+.text-secondary-cell {
+  color: #64748b;
+  font-size: 12.5px;
 }
 
 .member-tag {
   font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-muted, #475569);
-  background: var(--surface-tint, #f1f5f9);
-  padding: 3px 10px;
-  border-radius: 999px;
+  font-weight: 500;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
   display: inline-block;
 }
 
 .member-tag.success {
-  background: var(--primary-light, #eaf7f1);
-  color: var(--primary-dark, #16935b);
+  background: #ecfdf5;
+  color: #059669;
 }
 
-.action-dot {
-  color: var(--text-muted, #94a3b8);
-  font-size: 12px;
+.col-action {
+  text-align: right;
+  width: 60px;
 }
 
-/* 4. Revenue Overview Section */
-.monthly-revenue-row {
-  margin-top: 6px;
-}
-
-.revenue-card {
-  background: var(--card, #ffffff);
-  border-radius: 22px;
-  padding: 24px;
-  border: 1px solid var(--border, #dff0e7);
-  /* box-shadow: 0 6px 22px var(--primary-glow, rgba(44, 182, 125, 0.05)); */
-}
-
-.revenue-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 22px;
-}
-
-.revenue-title h3 {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 19px;
-  font-weight: 800;
-  color: var(--text, #0f2e22);
-  margin-bottom: 4px;
-}
-
-.revenue-title p {
-  font-size: 13px;
-  color: var(--text-muted, #6b8f81);
-  margin: 0;
-}
-
-.target-input {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.target-input label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-muted, #6b8f81);
-}
-
-.target-input input {
-  padding: 8px 14px;
-  border: 1px solid var(--border, #cbe9dc);
-  border-radius: 12px;
-  font-size: 14px;
-  width: 170px;
-  background: var(--surface-tint, #f7fcf9);
-  outline: none;
-  font-weight: 600;
-  color: var(--text, #0f2e22);
-  transition: border-color 0.2s ease;
-}
-
-.target-input input:focus {
-  border-color: var(--primary, #2cb67d);
-}
-
-.revenue-kpis {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 22px;
-}
-
-.kpi {
-  border-radius: 16px;
-  padding: 14px 12px;
-  text-align: center;
-  border: 1px solid var(--border, #e2e8f0);
-  background: var(--surface-tint, #f8fafc);
-}
-
-.kpi h4 {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 17px;
-  font-weight: 800;
-  margin: 0 0 3px;
-}
-
-.kpi p {
+.row-arrow {
+  color: #cbd5e1;
   font-size: 11px;
-  color: var(--text-muted, #6b8f81);
-  font-weight: 600;
-  text-transform: uppercase;
-  margin: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.kpi.success { background: var(--primary-light, #eaf7f1); border-color: var(--border, #cbe9dc); }
-.kpi.success h4 { color: var(--primary-dark, #16935b); }
-.kpi.info { background: #f0f7ff; border-color: #dbeafe; }
-.kpi.info h4 { color: #2563eb; }
-.kpi.warning { background: #fffbeb; border-color: #fef3c7; }
-.kpi.warning h4 { color: #d97706; }
-.kpi.primary { background: var(--surface-tint, #f0fdfa); border-color: var(--border, #ccfbf1); }
-.kpi.primary h4 { color: var(--primary, #0d9488); }
-
-.companies-breakdown {
-  margin-bottom: 22px;
+.recent-files-table tbody tr:hover .row-arrow {
+  color: var(--primary, #0d9488);
+  transform: translateX(3px);
 }
 
-.breakdown-title {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 14.5px;
-  font-weight: 700;
-  margin-bottom: 14px;
-  color: var(--text, #0f2e22);
-}
-
-.companies-grid {
+/* 🌟 Executive Pulse Strip: High-Level Metrics */
+.executive-pulse-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
 }
 
-.company-card {
-  display: grid;
-  grid-template-columns: 32px 1fr 120px;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--surface-tint, #f7fcf9);
+.pulse-stat-card {
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
   border-radius: 12px;
-  border: 1px solid var(--border, #e5f2eb);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.company-rank {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+.pulse-stat-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.pulse-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--primary-dark, #16935b);
-  background: var(--primary-light, #eaf7f1);
+  font-size: 17px;
+  flex-shrink: 0;
 }
 
-.company-name {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--text, #0f2e22);
-}
+.pulse-blue { background: #eff6ff; color: #2563eb; }
+.pulse-teal { background: #f0fdfa; color: #0d9488; }
+.pulse-green { background: #ecfdf5; color: #059669; }
+.pulse-amber { background: #fffbeb; color: #d97706; }
 
-.company-details {
+.pulse-info {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: 12px;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.company-revenue {
-  font-weight: 700;
-  color: var(--primary-dark, #16935b);
-}
-
-.company-percent {
-  color: var(--text-muted, #6b8f81);
-}
-
-.company-orders {
-  color: var(--primary-dark, #0f766e);
-  background: var(--primary-light, #ccfbf1);
-  padding: 1px 7px;
-  border-radius: 10px;
+.pulse-label {
   font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
-.company-bar {
-  height: 6px;
-  background: var(--border, #e5f2eb);
-  border-radius: 6px;
-  overflow: hidden;
-  width: 100%;
-  grid-column: 1 / -1;
-}
-
-.company-bar-fill {
-  height: 100%;
-  border-radius: 6px;
-}
-
-.bar-gold { background: linear-gradient(90deg, #fbbf24, #d97706); }
-.bar-silver { background: linear-gradient(90deg, #94a3b8, #64748b); }
-.bar-bronze { background: linear-gradient(90deg, #fb923c, #ea580c); }
-.bar-blue { background: linear-gradient(90deg, #60a5fa, #2563eb); }
-.bar-green { background: var(--primary-gradient, linear-gradient(90deg, #34b782, #10b981)); }
-
-.no-data-message {
-  text-align: center;
-  padding: 18px;
-  color: var(--text-muted, #6b8f81);
-  font-size: 13px;
-  background: var(--surface-tint, #f7fcf9);
-  border-radius: 12px;
-}
-
-.quarter-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.quarter-card {
-  background: var(--surface-tint, #f7fcf9);
-  border-radius: 14px;
-  padding: 14px 10px;
-  text-align: center;
-  border: 1px solid var(--border, #e5f2eb);
-}
-
-.quarter-card h4 {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text, #0f2e22);
-  margin: 0 0 4px;
-}
-
-.quarter-card p {
-  font-size: 13.5px;
+.pulse-value {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 20px;
   font-weight: 800;
-  margin: 0 0 3px;
+  color: #0f172a;
+  margin: 2px 0;
+  line-height: 1.2;
 }
 
-.quarter-card small {
-  font-size: 10.5px;
+.pulse-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulse-action-hint {
+  color: var(--primary, #0d9488);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pulse-action-hint i {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+.pulse-stat-card:hover .pulse-action-hint i {
+  transform: translateX(3px);
+}
+
+/* Attendance Pulse Card Enhancements */
+.pulse-attendance-card .pulse-info {
+  flex: 1;
+}
+
+.pulse-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pulse-ratio-tag {
+  font-size: 10px;
   font-weight: 700;
-  color: var(--text-muted, #6b8f81);
+  color: #0d9488;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
-.quarter-card.success p { color: var(--primary-dark, #16935b); }
-.quarter-card.danger p { color: #ef4444; }
-
-.bar-chart-wrapper {
-  height: 200px;
-  margin-bottom: 20px;
+.pulse-status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
 }
 
-.chart-height {
-  height: 200px;
+.pulse-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.pulse-chip i {
+  font-size: 8px;
+}
+
+.chip-present {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.chip-onsite {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.chip-travel {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.chip-halfday {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+/* Dedicated Target Details Button */
+.target-details-btn {
+  margin-top: 12px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--surface-tint, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.target-details-btn i {
+  font-size: 11px;
+  color: var(--primary, #0d9488);
+  transition: transform 0.2s ease;
+}
+
+.target-details-btn:hover {
+  background: var(--primary-light, #f0fdfa);
+  border-color: var(--primary, #0d9488);
+  color: var(--primary, #0d9488);
+}
+
+.target-details-btn:hover i {
+  transform: translateX(3px);
 }
 
 /* ▶️ RIGHT COLUMN WIDGETS */
 .side-widget-card {
   background: var(--card, #ffffff);
-  border-radius: 24px;
-  padding: 24px 20px;
-  border: 1px solid var(--border, #dff0e7);
-  /* box-shadow: 0 8px 28px var(--primary-glow, rgba(44, 182, 125, 0.06)); */
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.gauge-header {
+.widget-header {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 12px;
 }
 
-.gauge-user-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--surface-tint, #f4fbf7);
-  border: 1px solid var(--border, #e2efe8);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
+.widget-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 13.5px;
   font-weight: 700;
-  color: var(--text, #0f2e22);
+  color: #0f172a;
+  margin: 0 0 2px;
 }
 
-.gauge-user-pill i {
-  color: var(--primary, #2cb67d);
+.widget-subtitle {
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 0;
 }
 
-/* Arc Gauge */
+.widget-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.badge-good {
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+}
+
+.badge-neutral {
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+/* Progress Arc */
 .arc-meter-container {
   position: relative;
   width: 100%;
-  max-width: 220px;
-  margin: 0 auto 20px;
+  max-width: 190px;
+  margin: 0 auto 10px;
   text-align: center;
 }
 
@@ -2577,7 +2456,7 @@ export default {
 
 .arc-center-text {
   position: absolute;
-  bottom: 6px;
+  bottom: 4px;
   left: 0;
   right: 0;
   text-align: center;
@@ -2585,226 +2464,366 @@ export default {
 
 .arc-big-val {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
-  color: var(--text, #0f2e22);
+  color: #0f172a;
   margin: 0;
   line-height: 1;
 }
 
 .arc-sub-val {
   font-size: 11px;
-  color: var(--text-muted, #6b8f81);
-  font-weight: 600;
-  margin: 4px 0 0;
+  color: #64748b;
+  font-weight: 500;
+  margin: 3px 0 0;
 }
 
-/* Side Stats List */
-.side-stats-list {
+.target-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #fafbfc;
+  border-radius: 8px;
+  margin-top: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.target-stat-item {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
 }
 
-.side-stat-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+.target-stat-divider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
 }
 
-.side-stat-item:hover {
-  background: var(--surface-tint, #f7fcf9);
+.stat-label {
+  font-size: 10.5px;
+  color: #64748b;
+  font-weight: 500;
 }
 
-.side-stat-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.side-stat-icon.red-box { background: #fee2e2; color: #ef4444; }
-.side-stat-icon.green-box { background: var(--primary-light, #eaf7f1); color: var(--primary-dark, #16935b); }
-.side-stat-icon.amber-box { background: #fef3c7; color: #d97706; }
-.side-stat-icon.blue-box { background: #e0f2fe; color: #0284c7; }
-
-.side-stat-info {
-  flex: 1;
-}
-
-.side-stat-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text, #0f2e22);
-  margin: 0 0 2px;
-}
-
-.side-stat-count {
-  font-size: 11px;
-  color: var(--text-muted, #6b8f81);
-}
-
-.side-stat-value {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text, #0f2e22);
-}
-
-/* PRO Promo Card */
-.pro-promo-card {
-  background: linear-gradient(135deg, var(--primary-light, #eaf8f2) 0%, var(--surface-tint, #f7fcf9) 100%);
-  border: 1px solid var(--border, #d4ede1);
-  border-radius: 20px;
-  padding: 20px;
-  text-align: center;
-}
-
-.promo-illustration {
-  margin-bottom: 12px;
-}
-
-.shield-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--primary-gradient, linear-gradient(135deg, #34b782, #209961));
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  margin: 0 auto;
-  /* box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.35)); */
-}
-
-.promo-title {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text, #0f2e22);
-  margin: 0 0 6px;
-}
-
-.promo-desc {
-  font-size: 11.5px;
-  color: var(--text-muted, #6b8f81);
-  margin: 0 0 14px;
-  line-height: 1.4;
-}
-
-.promo-cta-btn {
-  background: var(--primary, #2cb67d);
-  color: #ffffff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 999px;
+.stat-value {
   font-size: 12.5px;
   font-weight: 700;
-  cursor: not-allowed;
-  width: 100%;
-  transition: all 0.2s ease;
-  /* box-shadow: 0 4px 14px var(--primary-glow, rgba(44, 182, 125, 0.25)); */
+  color: #0f172a;
+  margin-top: 1px;
 }
 
-.promo-cta-btn:hover {
-  background: var(--primary-dark, #209961);
-  transform: translateY(-2px);
-  /* box-shadow: 0 6px 18px var(--primary-glow, rgba(44, 182, 125, 0.35)); */
+/* SBU Widget */
+.sbu-widget {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* Birthday Side Card */
-.birthday-side-card .side-card-header h4 {
+.sbu-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sbu-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  color: #0d9488;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.sbu-title {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  font-size: 14.5px;
-  font-weight: 800;
-  color: var(--text, #0f2e22);
-  margin: 0 0 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.sbu-tag {
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.sbu-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 10px 0 14px;
+}
+
+.sbu-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fafbfc;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sbu-btn:hover {
+  background: var(--primary, #0d9488);
+  color: #ffffff;
+  border-color: var(--primary, #0d9488);
+}
+
+/* Birthday Reminders */
+.birthday-side-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.side-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.birthday-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.birthday-header-title h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.birthday-icon {
+  color: #f59e0b;
+  font-size: 13px;
+}
+
+.birthday-count-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #d97706;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  padding: 1px 7px;
+  border-radius: 6px;
 }
 
 .side-birthdays-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
 }
 
 .side-birthday-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  background: var(--surface-tint, #f7fcf9);
-  border-radius: 12px;
-  border: 1px solid var(--border, #e5f2eb);
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.side-birthday-item:last-child {
+  border-bottom: none;
 }
 
 .birthday-avatar {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  border: 1.5px solid var(--primary, #2cb67d);
   object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.birthday-initials {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.birthday-details {
+  flex: 1;
+  min-width: 0;
 }
 
 .birthday-emp-name {
   font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text, #0f2e22);
-  margin: 0 0 2px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .birthday-emp-date {
   font-size: 11px;
-  color: #d97706;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid var(--border, #e2e8f0);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text, #0f172a);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.no-birthdays-side {
-  text-align: center;
-  color: var(--text-muted, #6b8f81);
-  font-size: 12px;
-  padding: 16px 0;
-  margin: 0;
+.mobile-menu-toggle-btn:hover {
+  background: #e2e8f0;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
+/* ════════ Complete Responsive System ════════ */
+@media (max-width: 1400px) {
   .dashboard-main-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 310px;
+    gap: 18px;
+  }
+
+  .folders-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1180px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .dashboard-right-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .quick-access-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .executive-pulse-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
   .main-content {
-    padding: 12px;
+    padding: 16px 14px;
+    gap: 16px;
+    flex-direction: column;
   }
 
   .mobile-header {
     display: flex;
   }
 
+  .dashboard-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .search-box-wrapper {
+    max-width: 100%;
+  }
+
+  .dashboard-topbar-actions {
+    width: 100%;
+  }
+
+  .btn-create-new {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 12px 10px;
+  }
+
+  .executive-pulse-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .pulse-stat-card {
+    padding: 14px 16px;
+  }
+
   .quick-access-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .folders-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
-  .revenue-kpis {
-    grid-template-columns: repeat(2, 1fr);
+  .dashboard-right-col {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
-  .quarter-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .recent-files-card {
+    border-radius: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .recent-files-table {
+    min-width: 520px;
+  }
+}
+
+@media (max-width: 480px) {
+  .folders-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recent-files-table {
+    min-width: 480px;
   }
 }
 </style>

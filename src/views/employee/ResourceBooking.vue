@@ -5,59 +5,136 @@
       <Sidebar v-if="!isMobile || isSidebarVisible" />
 
       <section class="content" :class="{ 'expanded-content': isMobile && !isSidebarVisible }">
-        <!-- Mobile Top Navigation Header -->
+        <!-- 📱 Mobile Top Navigation Header -->
         <div class="mobile-header" v-if="isMobile">
           <div class="mobile-title">
-            <div class="mobile-icon-box">
-              <i class="fas fa-calendar-check"></i>
-            </div>
-            <div>
-              <span class="m-title-text">Book a Resource</span>
-              <span class="m-sub-text">Company Asset Booking</span>
-            </div>
+            <i class="fas fa-calendar-check text-teal"></i>
+            <span>Resource Booking</span>
           </div>
-          <button class="m-action-btn primary" @click="toggleForm" :title="formVisible ? 'Hide Form' : 'New Booking'">
-            <i class="fas" :class="formVisible ? 'fa-chevron-up' : 'fa-plus'"></i>
-          </button>
-        </div>
-
-        <!-- Desktop Hero Banner -->
-        <div class="hero-banner" v-else>
-          <div class="hero-content">
-            <div class="hero-tag">
-              <i class="fas fa-sparkles"></i>
-              <span>ARCH ASSET CONCIERGE</span>
-            </div>
-            <h1 class="hero-title">Book Company Resources</h1>
-            <p class="hero-subtitle">
-              Reserve meeting rooms, development hardware, projection units, and company vehicles seamlessly.
-            </p>
-          </div>
-
-          <div class="hero-stats-badge">
-            <div class="hero-stat-item">
-              <span class="h-stat-num">{{ resources.length }}</span>
-              <span class="h-stat-lbl">Resources Available</span>
-            </div>
-            <div class="hero-stat-sep"></div>
-            <div class="hero-stat-item">
-              <span class="h-stat-num text-emerald">{{ activeBookingsCount }}</span>
-              <span class="h-stat-lbl">My Active Bookings</span>
-            </div>
+          <div class="mobile-header-actions">
+            <button class="btn-mobile-action" @click="toggleForm" :title="formVisible ? 'Hide Form' : 'New Booking'">
+              <i class="fas" :class="formVisible ? 'fa-chevron-up' : 'fa-plus'"></i>
+            </button>
+            <button class="btn-mobile-menu" @click="toggleSidebar" aria-label="Toggle menu">
+              <i class="fas fa-bars"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Quick Resource Catalog Carousel / Grid -->
+        <!-- 🏢 Modern Enterprise Header Banner -->
+        <header class="executive-header">
+          <div class="header-main">
+            <div class="header-badge-row">
+              <span class="portal-badge-pill">
+                <span class="pulse-indicator"></span>
+                <span>ARCH ASSET CONCIERGE</span>
+              </span>
+              <span class="status-meta-pill">
+                <i class="fas fa-cube text-teal"></i> Equipment & Room Reservations
+              </span>
+            </div>
+            <div class="title-with-icon">
+              <div class="header-icon-box">
+                <i class="fas fa-calendar-check"></i>
+              </div>
+              <div>
+                <h1 class="header-title">Book Company Resources</h1>
+                <p class="header-subtitle">
+                  Reserve meeting rooms, testing hardware, projection units, and company vehicles seamlessly
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button class="btn-secondary-action" @click="fetchBookings" :disabled="loadingBookings" title="Reload bookings">
+              <i class="fas fa-sync-alt" :class="{ 'fa-spin': loadingBookings }"></i>
+              <span>Refresh</span>
+            </button>
+            <button class="btn-primary-action" @click="focusBookingForm">
+              <i class="fas fa-plus"></i>
+              <span>{{ editId ? 'Edit Booking' : 'New Booking' }}</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- 📊 KPI Metrics Grid -->
+        <section class="metrics-grid">
+          <!-- Available Pool -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Resource Pool</span>
+              <div class="metric-icon-wrap icon-pool">
+                <i class="fas fa-cubes"></i>
+              </div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ resources.length }}</span>
+              <span class="metric-tag tag-pool">Ready to book</span>
+            </div>
+          </div>
+
+          <!-- Active & Upcoming -->
+          <div class="metric-card card-active-res" :class="{ 'card-active': filterType === 'active' }" @click="filterType = 'active'">
+            <div class="metric-header">
+              <span class="metric-title">Active & Upcoming</span>
+              <div class="metric-icon-wrap icon-active">
+                <i class="fas fa-calendar-check"></i>
+              </div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ activeBookingsCount }}</span>
+              <span class="metric-tag tag-active">Scheduled</span>
+            </div>
+          </div>
+
+          <!-- Past Reservations -->
+          <div class="metric-card card-past-res" :class="{ 'card-active': filterType === 'past' }" @click="filterType = 'past'">
+            <div class="metric-header">
+              <span class="metric-title">Past Reservations</span>
+              <div class="metric-icon-wrap icon-past">
+                <i class="fas fa-history"></i>
+              </div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ pastBookingsCount }}</span>
+              <span class="metric-tag tag-past">Completed</span>
+            </div>
+          </div>
+
+          <!-- Total Reservations -->
+          <div class="metric-card card-total-res" :class="{ 'card-active': filterType === 'all' }" @click="filterType = 'all'">
+            <div class="metric-header">
+              <span class="metric-title">My Total Bookings</span>
+              <div class="metric-icon-wrap icon-total">
+                <i class="fas fa-bookmark"></i>
+              </div>
+            </div>
+            <div class="metric-body">
+              <span class="metric-number">{{ myBookings.length }}</span>
+              <span class="metric-tag tag-total">All records</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 🚀 Quick Resource Catalog Cards Grid -->
         <div class="catalog-section" v-if="resources.length > 0">
           <div class="section-header-row">
             <div class="sec-title-wrap">
-              <i class="fas fa-layer-group text-indigo"></i>
-              <h3>Available Company Resources</h3>
+              <div class="sec-icon-box">
+                <i class="fas fa-layer-group text-teal"></i>
+              </div>
+              <div>
+                <h3 class="sec-heading">Available Company Resources</h3>
+                <span class="sec-sub">Click any asset below to select and autofill reservation details</span>
+              </div>
             </div>
-            <span class="sec-hint desktop-only">Click any resource below to autofill and book instantly</span>
+            <span class="sec-hint desktop-only">
+              <i class="fas fa-mouse-pointer"></i> Instant Select
+            </span>
           </div>
 
-          <div class="catalog-cards-carousel">
+          <div class="catalog-cards-grid">
             <div 
               v-for="res in resources" 
               :key="res.id" 
@@ -69,29 +146,29 @@
                 <i :class="getResourceIcon(res.name)"></i>
               </div>
               <div class="quick-text">
-                <h4>{{ res.name }}</h4>
-                <p>{{ res.description || 'Ready for reservation' }}</p>
+                <h4 class="quick-title">{{ res.name }}</h4>
+                <p class="quick-desc">{{ res.description || 'Ready for reservation' }}</p>
               </div>
               <div class="quick-book-action">
-                <span class="btn-quick-select">
-                  <i class="fas" :class="form.resource_type === res.name ? 'fa-check-circle' : 'fa-arrow-right'"></i>
-                  {{ form.resource_type === res.name ? 'Selected' : 'Book Now' }}
+                <span class="btn-quick-select" :class="{ 'is-selected': form.resource_type === res.name }">
+                  <i class="fas" :class="form.resource_type === res.name ? 'fa-check' : 'fa-arrow-right'"></i>
+                  <span>{{ form.resource_type === res.name ? 'Selected' : 'Book Now' }}</span>
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Booking Form Container (Collapsible Card) -->
-        <div class="booking-form-card" id="bookingFormSection">
+        <!-- 📝 Booking Form Container (Collapsible Card) -->
+        <div class="booking-form-card" id="bookingFormSection" :class="{ 'form-card-editing': editId }">
           <div class="form-header" @click="toggleForm">
             <div class="form-header-left">
-              <div class="form-icon-circle">
+              <div class="form-icon-circle" :class="editId ? 'icon-amber' : 'icon-teal'">
                 <i class="fas" :class="editId ? 'fa-edit' : 'fa-calendar-plus'"></i>
               </div>
               <div>
-                <h2>{{ editId ? 'Modify Your Booking' : 'Create a New Resource Booking' }}</h2>
-                <p>{{ editId ? 'Update your reservation details below' : 'Select time slot, duration, and purpose' }}</p>
+                <h2 class="form-title">{{ editId ? 'Modify Reservation' : 'Create a New Resource Booking' }}</h2>
+                <p class="form-sub">{{ editId ? 'Update your booking dates, duration, or purpose' : 'Select asset, time slot, duration preset, and meeting context' }}</p>
               </div>
             </div>
             <button class="btn-toggle-form" :title="formVisible ? 'Collapse' : 'Expand'">
@@ -106,12 +183,13 @@
                   <!-- Resource Selection -->
                   <div class="form-group-modern full-span">
                     <label class="input-label">
-                      <i class="fas fa-cube"></i> Select Resource <span class="req">*</span>
+                      <span>Select Resource Asset</span>
+                      <span class="req">*</span>
                     </label>
                     <div class="custom-select-wrapper">
-                      <i class="fas fa-list select-icon"></i>
+                      <i class="fas fa-cube select-icon"></i>
                       <select v-model="form.resource_type" required class="form-input select-input">
-                        <option disabled value="">Choose a resource from the list...</option>
+                        <option disabled value="">Choose a resource from the company fleet...</option>
                         <option v-for="r in resources" :key="r.id" :value="r.name">{{ r.name }}</option>
                       </select>
                     </div>
@@ -120,7 +198,8 @@
                   <!-- Quick Duration Helpers -->
                   <div class="form-group-modern full-span">
                     <label class="input-label">
-                      <i class="fas fa-magic"></i> Quick Duration Preset
+                      <span>Quick Duration Presets</span>
+                      <small class="hint-small">(Auto-adjusts To Date based on duration)</small>
                     </label>
                     <div class="duration-presets">
                       <button type="button" class="preset-pill" @click="applyDurationPreset(1)">+ 1 Hour</button>
@@ -134,10 +213,11 @@
                   <!-- From Datetime -->
                   <div class="form-group-modern">
                     <label class="input-label">
-                      <i class="fas fa-calendar-alt"></i> From Date & Time <span class="req">*</span>
+                      <span>From Date & Time</span>
+                      <span class="req">*</span>
                     </label>
                     <div class="input-field-wrapper">
-                      <i class="fas fa-clock field-icon"></i>
+                      <i class="fas fa-calendar-alt field-icon"></i>
                       <input 
                         type="datetime-local" 
                         v-model="form.from_date" 
@@ -150,10 +230,11 @@
                   <!-- To Datetime -->
                   <div class="form-group-modern">
                     <label class="input-label">
-                      <i class="fas fa-calendar-check"></i> To Date & Time <span class="req">*</span>
+                      <span>To Date & Time</span>
+                      <span class="req">*</span>
                     </label>
                     <div class="input-field-wrapper">
-                      <i class="fas fa-clock field-icon"></i>
+                      <i class="fas fa-calendar-check field-icon"></i>
                       <input 
                         type="datetime-local" 
                         v-model="form.to_date" 
@@ -166,14 +247,15 @@
                   <!-- Purpose -->
                   <div class="form-group-modern full-span">
                     <label class="input-label">
-                      <i class="fas fa-comment-dots"></i> Purpose of Booking
+                      <span>Purpose / Meeting Agenda</span>
+                      <small class="hint-small">(Optional)</small>
                     </label>
                     <div class="input-field-wrapper">
-                      <i class="fas fa-align-left field-icon textarea-icon"></i>
+                      <i class="fas fa-comment-dots field-icon textarea-icon"></i>
                       <textarea 
                         v-model="form.purpose" 
                         rows="2" 
-                        placeholder="e.g., Client meeting, QA release verification, site inspection..."
+                        placeholder="e.g., Client demo, cross-functional sprint planning, site audit..."
                         class="form-input textarea-input"
                       ></textarea>
                     </div>
@@ -183,9 +265,10 @@
                 <!-- Live Duration Preview & Form Actions -->
                 <div class="form-footer-bar">
                   <div class="duration-live-preview" v-if="calculatedDuration">
-                    <i class="fas fa-hourglass-half text-indigo"></i>
+                    <i class="fas fa-hourglass-half text-teal"></i>
                     <span>Booking Duration: <strong>{{ calculatedDuration }}</strong></span>
                   </div>
+                  <div v-else></div>
 
                   <div class="action-buttons-group">
                     <button 
@@ -212,13 +295,18 @@
           </transition>
         </div>
 
-        <!-- My Bookings Workspace -->
+        <!-- 📋 My Bookings Workspace -->
         <div class="my-bookings-card">
           <div class="bookings-header-toolbar">
             <div class="toolbar-left">
               <div class="b-title-wrap">
-                <i class="fas fa-bookmark text-indigo"></i>
-                <h2>My Bookings</h2>
+                <div class="b-icon-box">
+                  <i class="fas fa-bookmark text-teal"></i>
+                </div>
+                <div>
+                  <h3 class="b-heading">My Reservations</h3>
+                  <span class="b-sub">Manage and review your active and past resource allocations</span>
+                </div>
               </div>
 
               <!-- Filter Tabs -->
@@ -270,24 +358,25 @@
           </div>
 
           <!-- Loading State -->
-          <div v-if="loadingBookings" class="loading-box">
-            <div class="spinner-custom"></div>
-            <p>Loading your reservations...</p>
+          <div v-if="loadingBookings" class="state-container">
+            <i class="fas fa-circle-notch fa-spin state-spinner text-teal"></i>
+            <h4>Loading your reservations...</h4>
+            <p>Fetching scheduled assets from database</p>
           </div>
 
           <!-- Empty State -->
-          <div v-else-if="filteredBookings.length === 0" class="empty-bookings-box">
+          <div v-else-if="filteredBookings.length === 0" class="state-container empty-state">
             <div class="empty-icon-wrap">
               <i class="fas fa-calendar-times"></i>
             </div>
-            <h3>No Bookings Found</h3>
-            <p>{{ searchQuery ? 'No bookings matched your search query.' : 'You have not made any bookings in this tab yet.' }}</p>
+            <h4>No Bookings Found</h4>
+            <p>{{ searchQuery ? 'No bookings matched your search query.' : 'You have not made any bookings in this view yet.' }}</p>
             <button class="btn-book-now-empty" @click="focusBookingForm">
               <i class="fas fa-plus"></i> Book a Resource Now
             </button>
           </div>
 
-          <!-- Bookings Cards / Grid -->
+          <!-- Bookings Cards Grid -->
           <div v-else class="my-bookings-grid">
             <div 
               v-for="b in filteredBookings" 
@@ -301,14 +390,14 @@
                     <i :class="getResourceIcon(b.resource_type)"></i>
                   </div>
                   <div>
-                    <h4>{{ b.resource_type }}</h4>
+                    <h4 class="b-res-name">{{ b.resource_type }}</h4>
                     <span class="b-id-tag">#BK-{{ b.id }}</span>
                   </div>
                 </div>
 
                 <span class="b-status-pill" :class="getBookingStatusClass(b)">
-                  <span class="pip"></span>
-                  {{ getBookingStatusLabel(b) }}
+                  <span class="status-pulse-dot"></span>
+                  <span>{{ getBookingStatusLabel(b) }}</span>
                 </span>
               </div>
 
@@ -337,7 +426,7 @@
 
                 <div class="b-actions-group">
                   <button class="btn-b-action edit" @click="editBooking(b)" title="Edit this booking">
-                    <i class="fas fa-pen"></i> Edit
+                    <i class="fas fa-pen"></i> <span>Edit</span>
                   </button>
                   <button class="btn-b-action delete" @click="deleteBooking(b.id)" title="Cancel booking">
                     <i class="fas fa-trash-alt"></i>
@@ -384,7 +473,6 @@ export default {
 
   computed: {
     myBookings() {
-      // Return all bookings loaded for the current employee
       return this.bookings
     },
     activeBookingsCount() {
@@ -458,7 +546,6 @@ export default {
       this.form.resource_type = name
       this.formVisible = true
       
-      // If dates not set, set default start & end
       if (!this.form.from_date) {
         this.applyDurationPreset(2)
       }
@@ -481,6 +568,16 @@ export default {
       this.form.to_date = this.formatToDatetimeLocal(end)
     },
 
+    formatToDatetimeLocal(dateObj) {
+      const pad = n => (n < 10 ? '0' + n : n)
+      const yyyy = dateObj.getFullYear()
+      const mm = pad(dateObj.getMonth() + 1)
+      const dd = pad(dateObj.getDate())
+      const hh = pad(dateObj.getHours())
+      const mi = pad(dateObj.getMinutes())
+      return `${yyyy}-${mm}-${dd}T${hh}:${mi}`
+    },
+
     async fetchResources() {
       const endpoints = [
         '/resources',
@@ -499,14 +596,13 @@ export default {
         } catch (err) {}
       }
 
-      // Default fallback
+      // Default company fleet fallback
       if (this.resources.length === 0) {
         this.resources = [
-          { id: 1, name: 'Conference Room', description: 'Main Meeting & Board Room' },
-          { id: 2, name: 'Projector', description: 'HD Wireless Presentation Projector' },
-          { id: 3, name: 'Testing Laptop', description: 'QA Development Laptop' },
-          { id: 4, name: 'Company Vehicle', description: 'Official Site Visit Vehicle' },
-          { id: 5, name: 'Camera Kit', description: 'Photography & Event Recording Kit' }
+          { id: 1, name: 'Company Car', description: 'Official Site Visit & Client Transportation' },
+          { id: 2, name: 'Meeting Room', description: 'Conference Room A with VC System' },
+          { id: 3, name: 'Projector Screen', description: 'HD Wireless Presentation Projector' },
+          { id: 4, name: 'Whiteboard', description: 'Collaboration & Brainstorming Board' }
         ]
       }
     },
@@ -582,7 +678,7 @@ export default {
               break
             } catch (err) {}
           }
-          if (success) toastSuccess('Resource booked successfully!')
+          if (success) toastSuccess('Resource reserved successfully!')
         }
 
         if (success) {
@@ -658,10 +754,67 @@ export default {
     },
 
     getBookingStatusLabel(b) {
-      const cls = this.getBookingStatusClass(b)
-      if (cls === 'active-now') return 'Active Now'
-      if (cls === 'upcoming') return 'Upcoming'
-      return 'Completed'
+      if (!b.to_date || !b.from_date) return 'Finished'
+      const now = new Date()
+      const start = new Date(b.from_date)
+      const end = new Date(b.to_date)
+
+      if (now >= start && now <= end) return 'Active Now'
+      if (now < start) return 'Upcoming'
+      return 'Finished'
+    },
+
+    getResourceIcon(name) {
+      const n = (name || '').toLowerCase()
+      if (n.includes('car') || n.includes('vehicle')) return 'fas fa-car'
+      if (n.includes('room') || n.includes('hall') || n.includes('conference')) return 'fas fa-door-open'
+      if (n.includes('projector') || n.includes('screen') || n.includes('video')) return 'fas fa-video'
+      if (n.includes('whiteboard') || n.includes('board')) return 'fas fa-chalkboard'
+      if (n.includes('laptop') || n.includes('macbook') || n.includes('computer')) return 'fas fa-laptop'
+      if (n.includes('camera')) return 'fas fa-camera'
+      return 'fas fa-cube'
+    },
+
+    getResourceStyle(name) {
+      const n = (name || '').toLowerCase()
+      if (n.includes('car') || n.includes('vehicle')) {
+        return { background: '#ecfdf5', color: '#059669', borderColor: '#a7f3d0' }
+      }
+      if (n.includes('room') || n.includes('hall')) {
+        return { background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }
+      }
+      if (n.includes('projector') || n.includes('screen')) {
+        return { background: '#fffbeb', color: '#d97706', borderColor: '#fde68a' }
+      }
+      if (n.includes('whiteboard') || n.includes('board')) {
+        return { background: '#f5f3ff', color: '#7c3aed', borderColor: '#ddd6fe' }
+      }
+      return { background: '#f0fdfa', color: '#0d9488', borderColor: '#ccfbf1' }
+    },
+
+    formatDate(dt) {
+      if (!dt) return '—'
+      try {
+        return new Date(dt).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        })
+      } catch (e) {
+        return dt
+      }
+    },
+
+    formatTime(dt) {
+      if (!dt) return ''
+      try {
+        return new Date(dt).toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (e) {
+        return ''
+      }
     },
 
     calculateDuration(from, to) {
@@ -672,71 +825,15 @@ export default {
       if (isNaN(diffMs) || diffMs <= 0) return '—'
 
       const diffMins = Math.round(diffMs / 60000)
-      if (diffMins < 60) return `${diffMins} min${diffMins === 1 ? '' : 's'}`
+      if (diffMins < 60) return `${diffMins} min`
       const diffHrs = (diffMins / 60).toFixed(1)
-      if (parseFloat(diffHrs) < 24) return `${parseFloat(diffHrs)} hr${parseFloat(diffHrs) === 1 ? '' : 's'}`
+      if (parseFloat(diffHrs) < 24) return `${parseFloat(diffHrs)} hrs`
       const diffDays = Math.round(diffMins / (60 * 24))
-      return `${diffDays} day${diffDays === 1 ? '' : 's'}`
-    },
-
-    getResourceIcon(type) {
-      const t = (type || '').toLowerCase()
-      if (t.includes('room') || t.includes('conference') || t.includes('cabin')) return 'fas fa-door-open'
-      if (t.includes('laptop') || t.includes('computer') || t.includes('mac') || t.includes('pc')) return 'fas fa-laptop'
-      if (t.includes('projector') || t.includes('screen') || t.includes('tv')) return 'fas fa-video'
-      if (t.includes('car') || t.includes('vehicle') || t.includes('van') || t.includes('bike')) return 'fas fa-car'
-      if (t.includes('camera') || t.includes('dslr') || t.includes('mic')) return 'fas fa-camera'
-      return 'fas fa-cube'
-    },
-
-    getResourceStyle(type) {
-      const t = (type || '').toLowerCase()
-      if (t.includes('room') || t.includes('conference')) return { background: 'linear-gradient(135deg, #e0e7ff, #c7d2fe)', color: '#4338ca' }
-      if (t.includes('laptop') || t.includes('computer')) return { background: 'linear-gradient(135deg, #e0f2fe, #bae6fd)', color: '#0369a1' }
-      if (t.includes('projector') || t.includes('screen')) return { background: 'linear-gradient(135deg, #fef3c7, #fde68a)', color: '#b45309' }
-      if (t.includes('car') || t.includes('vehicle')) return { background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)', color: '#15803d' }
-      if (t.includes('camera')) return { background: 'linear-gradient(135deg, #fce7f3, #fbcfe8)', color: '#be185d' }
-      return { background: 'linear-gradient(135deg, #f3e8ff, #e9d5ff)', color: '#7e22ce' }
-    },
-
-    formatDate(dateStr) {
-      if (!dateStr) return '—'
-      try {
-        return new Date(dateStr).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        })
-      } catch (e) {
-        return dateStr
-      }
-    },
-
-    formatTime(dateStr) {
-      if (!dateStr) return ''
-      try {
-        return new Date(dateStr).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        })
-      } catch (e) {
-        return ''
-      }
-    },
-
-    formatToDatetimeLocal(dateObj) {
-      const pad = n => (n < 10 ? '0' + n : n)
-      const year = dateObj.getFullYear()
-      const month = pad(dateObj.getMonth() + 1)
-      const day = pad(dateObj.getDate())
-      const hours = pad(dateObj.getHours())
-      const mins = pad(dateObj.getMinutes())
-      return `${year}-${month}-${day}T${hours}:${mins}`
+      return `${diffDays} Day${diffDays === 1 ? '' : 's'}`
     },
 
     checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768
+      this.isMobile = window.innerWidth <= 992
       this.isSidebarVisible = !this.isMobile
     },
 
@@ -749,15 +846,7 @@ export default {
     this.checkIfMobile()
     window.addEventListener('resize', this.checkIfMobile)
     this.fetchResources()
-
-    const token = localStorage.getItem('token') || localStorage.getItem('admin_token')
-    if (!token) {
-      this.$router.push('/auth')
-      return
-    }
-
     this.fetchBookings()
-    this.applyDurationPreset(2)
   },
 
   beforeUnmount() {
@@ -767,194 +856,325 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 
+/* ════════ Master Page Layout ════════ */
 .layout {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app, #f8fafc);
   min-height: 100vh;
-  background: #f8fafc;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  color: #1e293b;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text, #0f172a);
 }
 
 .main-content {
   display: flex;
+  flex: 1;
+  padding: 20px 28px;
   gap: 24px;
-  padding: 24px;
-  min-height: 100vh;
 }
 
 .content {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  background: transparent;
+  overflow-x: hidden;
 }
 
-/* Hero Banner */
-.hero-banner {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
-  border-radius: 24px;
-  padding: 32px 36px;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 10px 30px rgba(49, 46, 129, 0.2);
-  position: relative;
-  overflow: hidden;
-}
+.text-teal { color: #0d9488 !important; }
 
-.hero-banner::before {
-  content: '';
-  position: absolute;
-  top: -50px;
-  right: -50px;
-  width: 250px;
-  height: 250px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent 70%);
-  pointer-events: none;
-}
-
-.hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  margin-bottom: 10px;
-}
-
-.hero-title {
-  font-size: 28px;
-  font-weight: 800;
-  margin: 0 0 6px;
-  letter-spacing: -0.5px;
-}
-
-.hero-subtitle {
-  font-size: 14px;
-  color: #c7d2fe;
-  margin: 0;
-  max-width: 550px;
-  line-height: 1.5;
-}
-
-.hero-stats-badge {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 16px 28px;
-}
-
-.hero-stat-item {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-}
-
-.h-stat-num {
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.h-stat-lbl {
-  font-size: 11px;
-  font-weight: 600;
-  color: #c7d2fe;
-  margin-top: 2px;
-}
-
-.hero-stat-sep {
-  width: 1px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.text-emerald { color: #34d399; }
-.text-indigo { color: #4f46e5; }
-
-/* Mobile Header */
+/* ════════ Mobile Top Header ════════ */
 .mobile-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 12px 16px;
   background: #ffffff;
-  padding: 14px 18px;
-  border-radius: 18px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 .mobile-title {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.mobile-icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-
-.m-title-text {
+  gap: 8px;
   font-size: 16px;
   font-weight: 700;
   color: #0f172a;
-  display: block;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
-.m-sub-text {
-  font-size: 11px;
-  color: #64748b;
-  display: block;
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.m-action-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+.btn-mobile-action {
+  background: #0d9488;
   color: #ffffff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  cursor: pointer;
+  font-size: 13px;
 }
 
-/* Catalog Carousel Section */
+.btn-mobile-menu {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+/* ════════ Executive Header Banner ════════ */
+.executive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.header-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.portal-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0d9488;
+  letter-spacing: 0.6px;
+}
+
+.pulse-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+.status-meta-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 20px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+}
+
+.header-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary-action:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  border: none;
+  color: #ffffff;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-primary-action:hover {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  transform: translateY(-1px);
+}
+
+/* ════════ KPI Metrics Grid (4 Columns) ════════ */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+}
+
+.metric-card.card-active {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+.metric-card.card-active-res { border-left: 3px solid #10b981; }
+.metric-card.card-past-res { border-left: 3px solid #8b5cf6; }
+.metric-card.card-total-res { border-left: 3px solid #3b82f6; }
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.metric-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.metric-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.icon-pool { background: #f0fdfa; color: #0d9488; }
+.icon-active { background: #ecfdf5; color: #059669; }
+.icon-past { background: #f5f3ff; color: #7c3aed; }
+.icon-total { background: #eff6ff; color: #2563eb; }
+
+.metric-body {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.metric-number {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.metric-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.tag-pool { background: #f0fdfa; color: #0d9488; }
+.tag-active { background: #ecfdf5; color: #047857; }
+.tag-past { background: #f5f3ff; color: #6d28d9; }
+.tag-total { background: #eff6ff; color: #1d4ed8; }
+
+/* ════════ Quick Resource Catalog Section ════════ */
 .catalog-section {
   background: #ffffff;
-  border-radius: 24px;
-  padding: 24px 28px;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .section-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .sec-title-wrap {
@@ -963,78 +1183,99 @@ export default {
   gap: 10px;
 }
 
-.sec-title-wrap i {
-  font-size: 18px;
+.sec-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
 }
 
-.sec-title-wrap h3 {
-  font-size: 17px;
-  font-weight: 800;
+.sec-heading {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
   color: #0f172a;
   margin: 0;
 }
 
-.sec-hint {
+.sec-sub {
   font-size: 12px;
   color: #64748b;
-  font-weight: 600;
 }
 
-.catalog-cards-carousel {
+.sec-hint {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0d9488;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.catalog-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
 }
 
 .quick-resource-card {
   background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 18px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .quick-resource-card:hover {
-  transform: translateY(-3px);
-  border-color: #818cf8;
   background: #ffffff;
-  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
 }
 
 .quick-resource-card.selected {
-  border-color: #4f46e5;
-  background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%);
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.12);
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.18);
 }
 
 .quick-icon {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
 }
 
-.quick-text h4 {
-  font-size: 15px;
-  font-weight: 800;
+.quick-text {
+  flex: 1;
+}
+
+.quick-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
   color: #0f172a;
   margin: 0 0 4px;
 }
 
-.quick-text p {
+.quick-desc {
   font-size: 12px;
   color: #64748b;
   margin: 0;
   line-height: 1.4;
-  min-height: 34px;
 }
 
 .btn-quick-select {
@@ -1042,201 +1283,168 @@ export default {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 800;
-  color: #4f46e5;
-  background: #eef2ff;
-  padding: 6px 12px;
-  border-radius: 20px;
-  transition: all 0.2s;
+  font-weight: 600;
+  color: #0d9488;
 }
 
-.quick-resource-card:hover .btn-quick-select,
-.quick-resource-card.selected .btn-quick-select {
-  background: #4f46e5;
-  color: #ffffff;
+.btn-quick-select.is-selected {
+  color: #047857;
+  font-weight: 700;
 }
 
-/* Booking Form Card */
+/* ════════ Booking Form Card ════════ */
 .booking-form-card {
   background: #ffffff;
-  border-radius: 24px;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
   overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
 }
 
-/* Ensure box-sizing border-box across the entire booking card and form controls */
-.booking-form-card,
-.booking-form-card *,
-.booking-form-card *::before,
-.booking-form-card *::after {
-  box-sizing: border-box !important;
+.form-card-editing {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
 }
 
 .form-header {
-  padding: 22px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  background: #fafbfd;
   cursor: pointer;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid #f1f5f9;
+  user-select: none;
 }
 
 .form-header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .form-icon-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 15px;
 }
 
-.form-header-left h2 {
-  font-size: 18px;
-  font-weight: 800;
+.icon-teal { background: #f0fdfa; border: 1px solid #ccfbf1; color: #0d9488; }
+.icon-amber { background: #fffbeb; border: 1px solid #fde68a; color: #d97706; }
+
+.form-title {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15.5px;
+  font-weight: 700;
   color: #0f172a;
-  margin: 0 0 2px;
+  margin: 0;
 }
 
-.form-header-left p {
+.form-sub {
   font-size: 12px;
   color: #64748b;
   margin: 0;
 }
 
 .btn-toggle-form {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   background: #f1f5f9;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  color: #64748b;
+  border: 1px solid #e2e8f0;
+  color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 11px;
   cursor: pointer;
-  transition: transform 0.25s ease;
+  transition: transform 0.2s ease;
 }
 
-.btn-toggle-form i.rotated {
-  transform: rotate(-90deg);
+.btn-toggle-form .rotated {
+  transform: rotate(180deg);
 }
 
 .form-body {
-  padding: 28px;
+  padding: 20px;
 }
 
-/* 2-Column Grid with Safe Minmax and Generous Gap */
 .form-grid-layout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-  width: 100%;
-}
-
-.full-span {
-  grid-column: 1 / -1;
-  width: 100%;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .form-group-modern {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-  width: 100%;
+  gap: 6px;
+}
+
+.form-group-modern.full-span {
+  grid-column: 1 / -1;
 }
 
 .input-label {
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   color: #334155;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 2px;
+  gap: 5px;
 }
 
-.input-label i {
-  color: #6366f1;
-  font-size: 13px;
-}
-
-.req { 
-  color: #ef4444; 
-  font-weight: 800;
-}
+.req { color: #ef4444; font-weight: 700; }
+.hint-small { font-size: 11px; color: #94a3b8; font-weight: 400; }
 
 .custom-select-wrapper,
 .input-field-wrapper {
   position: relative;
-  width: 100%;
-  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 .select-icon,
 .field-icon {
   position: absolute;
   left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
   color: #94a3b8;
-  font-size: 14px;
+  font-size: 13px;
   pointer-events: none;
 }
 
 .textarea-icon {
-  top: 16px;
-  transform: none;
+  top: 14px;
 }
 
 .form-input {
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box !important;
-  padding: 12px 16px 12px 42px;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
-  font-size: 13.5px;
-  font-family: inherit;
-  color: #0f172a;
-  outline: none;
-  transition: all 0.2s ease;
-  line-height: 1.4;
-}
-
-.form-input:focus {
+  padding: 10px 14px 10px 38px;
   background: #ffffff;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
-.select-input {
-  appearance: none;
-  cursor: pointer;
-  padding-right: 38px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 14px;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0f172a;
+  font-family: inherit;
+  transition: all 0.15s ease;
 }
 
 .textarea-input {
-  padding-top: 14px;
   resize: vertical;
-  min-height: 85px;
   line-height: 1.5;
+  min-height: 70px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
 }
 
 .duration-presets {
@@ -1249,99 +1457,104 @@ export default {
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   color: #475569;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 7px 16px;
-  border-radius: 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .preset-pill:hover {
-  background: #e0e7ff;
-  color: #4338ca;
-  border-color: #c7d2fe;
-  transform: translateY(-1px);
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
+/* Form Footer */
 .form-footer-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 24px;
-  padding-top: 20px;
+  padding-top: 16px;
+  margin-top: 16px;
   border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .duration-live-preview {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-  background: #eef2ff;
-  border: 1px solid #e0e7ff;
-  padding: 9px 18px;
-  border-radius: 12px;
+  gap: 6px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: #0d9488;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
 }
 
 .action-buttons-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .btn-form-cancel {
-  background: #f1f5f9;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .btn-form-submit {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  color: #ffffff;
-  border: none;
-  padding: 12px 28px;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.25s;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+  gap: 7px;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  border: none;
+  color: #ffffff;
+  padding: 9px 20px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+  transition: all 0.15s ease;
 }
 
 .btn-form-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(79, 70, 229, 0.4);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  transform: translateY(-1px);
 }
 
-/* My Bookings Section */
+.btn-form-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ════════ My Bookings Workspace ════════ */
 .my-bookings-card {
   background: #ffffff;
-  border-radius: 24px;
-  padding: 24px 28px;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .bookings-header-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  background: #fafbfd;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 14px;
 }
 
 .toolbar-left {
@@ -1354,44 +1567,61 @@ export default {
 .b-title-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.b-title-wrap h2 {
-  font-size: 20px;
-  font-weight: 800;
+.b-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.b-heading {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
   color: #0f172a;
   margin: 0;
 }
 
+.b-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
 .bookings-tabs {
   display: flex;
-  background: #f8fafc;
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
   gap: 4px;
 }
 
 .b-tab {
   background: transparent;
   border: none;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
   color: #64748b;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .b-tab.active {
   background: #ffffff;
-  color: #4f46e5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .live-pip {
@@ -1404,196 +1634,229 @@ export default {
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .search-wrap {
   position: relative;
-  min-width: 240px;
+  width: 240px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .search-input {
   width: 100%;
-  padding: 8px 12px 8px 34px;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 12px;
+  padding: 8px 28px 8px 34px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: #0f172a;
+  font-family: inherit;
+}
+
+.search-input:focus {
   outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.12);
 }
 
 .btn-clear-search {
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  background: transparent;
   border: none;
   color: #94a3b8;
   cursor: pointer;
+  padding: 2px;
+  font-size: 11px;
 }
 
 .btn-refresh-bookings {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 12px;
   cursor: pointer;
 }
 
 /* My Bookings Grid */
 .my-bookings-grid {
+  padding: 20px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
 }
 
 .my-booking-card {
   background: #ffffff;
-  border-radius: 18px;
-  border: 1.5px solid #f1f5f9;
-  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
-  transition: all 0.2s;
+  gap: 12px;
+  transition: all 0.2s ease;
 }
 
 .my-booking-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
   border-color: #cbd5e1;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
 }
 
 .my-booking-card.active-now {
-  border-color: #a7f3d0;
-  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+  border-left: 4px solid #10b981;
+}
+
+.my-booking-card.upcoming {
+  border-left: 4px solid #0d9488;
+}
+
+.my-booking-card.completed {
+  border-left: 4px solid #94a3b8;
 }
 
 .b-card-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
 }
 
 .b-res-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .b-res-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 15px;
 }
 
-.b-res-info h4 {
-  font-size: 15px;
-  font-weight: 800;
+.b-res-name {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
   color: #0f172a;
   margin: 0;
 }
 
 .b-id-tag {
   font-size: 11px;
-  font-weight: 700;
   color: #94a3b8;
+  font-weight: 600;
 }
 
 .b-status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
   font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-weight: 700;
 }
 
-.b-status-pill .pip {
+.b-status-pill.active-now {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.b-status-pill.upcoming {
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid #ccfbf1;
+}
+
+.b-status-pill.completed {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.status-pulse-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
+  background: currentColor;
 }
-
-.b-status-pill.active-now { background: #d1fae5; color: #065f46; }
-.b-status-pill.active-now .pip { background: #10b981; }
-
-.b-status-pill.upcoming { background: #e0f2fe; color: #0369a1; }
-.b-status-pill.upcoming .pip { background: #0284c7; }
-
-.b-status-pill.completed { background: #f1f5f9; color: #64748b; }
-.b-status-pill.completed .pip { background: #94a3b8; }
 
 .b-time-box {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.b-time-item {
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+.b-time-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .b-time-lbl {
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .b-time-val {
   font-size: 12px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 600;
+  color: #1e293b;
 }
 
 .b-time-divider {
-  height: 1px;
-  background: #e2e8f0;
+  width: 1px;
+  height: 24px;
+  background: #cbd5e1;
 }
 
 .b-purpose-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 10px;
-  padding: 8px 10px;
   font-size: 12px;
   color: #475569;
+  background: #fafbfd;
+  padding: 6px 10px;
+  border-radius: 6px;
+  line-height: 1.4;
 }
 
 .purpose-icon {
   color: #94a3b8;
   font-size: 10px;
-  margin-top: 2px;
-}
-
-.b-purpose-row p {
-  margin: 0;
-  line-height: 1.4;
+  margin-top: 3px;
 }
 
 .b-card-footer {
@@ -1605,15 +1868,12 @@ export default {
 }
 
 .b-duration-tag {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #4f46e5;
-  background: #eef2ff;
-  padding: 4px 10px;
-  border-radius: 20px;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .b-actions-group {
@@ -1623,123 +1883,148 @@ export default {
 }
 
 .btn-b-action {
-  border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.btn-b-action.edit { background: #f1f5f9; color: #334155; }
-.btn-b-action.edit:hover { background: #e2e8f0; }
+.btn-b-action.edit:hover {
+  background: #f0fdfa;
+  color: #0d9488;
+  border-color: #99f6e4;
+}
 
-.btn-b-action.delete { background: #fee2e2; color: #dc2626; width: 28px; height: 28px; padding: 0; justify-content: center; }
-.btn-b-action.delete:hover { background: #fca5a5; }
+.btn-b-action.delete {
+  padding: 4px 8px;
+}
 
-/* Empty & Loading */
-.loading-box {
+.btn-b-action.delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* State Containers */
+.state-container {
+  padding: 50px 20px;
   text-align: center;
-  padding: 40px;
   color: #64748b;
+  max-width: 380px;
+  margin: 0 auto;
 }
 
-.spinner-custom {
-  width: 36px;
-  height: 36px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #4f46e5;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 12px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.empty-bookings-box {
-  text-align: center;
-  padding: 48px 20px;
+.state-spinner {
+  font-size: 32px;
+  margin-bottom: 12px;
 }
 
 .empty-icon-wrap {
   width: 56px;
   height: 56px;
-  border-radius: 18px;
-  background: #f1f5f9;
-  color: #94a3b8;
+  border-radius: 14px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: #0d9488;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  margin: 0 auto 12px;
+  margin: 0 auto 14px;
 }
 
-.empty-bookings-box h3 {
-  font-size: 17px;
-  font-weight: 800;
+.state-container h4 {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
   color: #0f172a;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
 }
 
-.empty-bookings-box p {
-  font-size: 13px;
+.state-container p {
+  font-size: 12.5px;
   color: #64748b;
   margin: 0 0 16px;
+  line-height: 1.5;
 }
 
 .btn-book-now-empty {
-  background: #4f46e5;
+  background: #0d9488;
   color: #ffffff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
 }
 
-/* Transitions */
-.expand-form-enter-active,
-.expand-form-leave-active {
-  transition: all 0.3s ease;
-  max-height: 800px;
-  overflow: hidden;
-}
-
-.expand-form-enter-from,
-.expand-form-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
+/* ════════ Responsive ════════ */
+@media (max-width: 992px) {
   .main-content {
-    padding: 12px;
+    padding: 14px;
+  }
+
+  .executive-header {
     flex-direction: column;
+    align-items: flex-start;
   }
-  .catalog-section,
-  .booking-form-card,
-  .my-bookings-card {
-    padding: 16px;
-    border-radius: 20px;
+
+  .header-actions {
+    width: 100%;
   }
-  .catalog-cards-carousel {
-    grid-template-columns: 1fr;
+
+  .btn-secondary-action, .btn-primary-action {
+    flex: 1;
+    justify-content: center;
   }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .form-grid-layout {
     grid-template-columns: 1fr;
   }
-  .my-bookings-grid {
+
+  .bookings-header-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-left, .toolbar-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-wrap {
+    width: 100%;
+  }
+
+  .bookings-tabs {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .metrics-grid {
     grid-template-columns: 1fr;
   }
-  .search-wrap {
-    min-width: 100%;
+
+  .catalog-cards-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

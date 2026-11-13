@@ -143,16 +143,6 @@
               <span>Chat</span>
               <span class="tab-count" v-if="categoryCounts.chat">{{ categoryCounts.chat }}</span>
             </button>
-            <button 
-              v-if="categoryCounts.general"
-              class="tab-btn" 
-              :class="{ active: activeCategory === 'general' }"
-              @click.stop="activeCategory = 'general'"
-            >
-              <i class="fas fa-bell"></i>
-              <span>General</span>
-              <span class="tab-count">{{ categoryCounts.general }}</span>
-            </button>
           </div>
         </div>
 
@@ -277,13 +267,14 @@ export default {
   },
   computed: {
     unseenItems() {
-      return this.items.filter(item => !this.seenIds.has(item.id))
+      return this.items.filter(item => !this.seenIds.has(item.id) && !this.isSystemNotification(item))
     },
     unseenCount() {
       return this.unseenItems.length
     },
     displayedItems() {
-      return this.viewMode === 'unseen' ? this.unseenItems : this.items
+      const list = this.viewMode === 'unseen' ? this.unseenItems : this.items
+      return list.filter(item => !this.isSystemNotification(item))
     },
     categoryCounts() {
       const source = this.displayedItems
@@ -291,16 +282,12 @@ export default {
         leave: source.filter(i => i.type === 'leave').length,
         request_desk: source.filter(i => i.type === 'request_desk').length,
         resource_booking: source.filter(i => i.type === 'resource_booking').length,
-        chat: source.filter(i => i.type === 'chat').length,
-        general: source.filter(i => i.type === 'general' || (i.type !== 'leave' && i.type !== 'request_desk' && i.type !== 'resource_booking' && i.type !== 'chat')).length
+        chat: source.filter(i => i.type === 'chat').length
       }
     },
     filteredItems() {
       const source = this.displayedItems
       if (this.activeCategory === 'all') return source
-      if (this.activeCategory === 'general') {
-        return source.filter(item => item.type === 'general' || (item.type !== 'leave' && item.type !== 'request_desk' && item.type !== 'resource_booking' && item.type !== 'chat'))
-      }
       return source.filter(item => item.type === this.activeCategory)
     }
   },
@@ -310,6 +297,23 @@ export default {
     }
   },
   methods: {
+    isSystemNotification(item) {
+      if (!item) return false
+      const id = String(item.id || '').toLowerCase()
+      const title = String(item.title || '').toLowerCase()
+      const userName = String(item.user_name || '').toLowerCase()
+      const type = String(item.type || '').toLowerCase()
+      const cat = String(item.category_label || '').toLowerCase()
+
+      if (id.startsWith('notif_')) return true
+      if (title.includes('system notification')) return true
+      if (userName === 'system') return true
+      if (type === 'general' || type === 'system' || type === 'question') return true
+      if (cat.includes('system') || cat === 'question' || cat === 'general') return true
+
+      return false
+    },
+
     async enableDesktopNotifications() {
       const granted = await requestNotificationPermission()
       this.notifPermission = getNotificationPermission()
@@ -437,7 +441,8 @@ export default {
 
         if (res && res.data && res.data.counts) {
           this.counts = res.data.counts
-          const incomingItems = res.data.items || []
+          const rawItems = res.data.items || []
+          const incomingItems = rawItems.filter(item => !this.isSystemNotification(item))
 
           // Detect brand new unseen items to trigger Desktop Notification outside the app
           if (!this.isFirstFetch) {
